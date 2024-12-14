@@ -1,0 +1,20 @@
+{
+    "2000": {
+        "Integra GS Coupe L4-1834cc 1.8L DOHC MFI": {
+            "Alarm Module": {
+                "text": "---\n\n1. Remove the steering column covers.2. Disconnect the 5P and 7P connectors from the immobilizer receiver unit.3. Remove the screws and the immobilizer receiver unit from the ignition key cylinder.4. Install in the reverse order of removal.5. After replacement, check the immobilizer system.",
+                "images": [
+                    "https://charm.li/images/IMP01Q313/asian110/97440087/",
+                    "https://charm.li/images/IMP01Q313/asian110/97440087/"
+                ]
+            },
+            "Crankshaft Pulley Torque": {
+                "text": "1. Remove the crankshaft pulley bolt using a suitable tool.\n2. Align the pulley marks with the engine timing marks.\n3. Tighten the pulley bolt to 130 lb-ft (176 Nm).",
+                "images": [
+                    "https://example.com/image1.jpg",
+                    "https://example.com/image2.jpg"
+                ]
+            }
+        }
+    }
+}
