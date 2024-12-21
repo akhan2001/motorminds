@@ -41,7 +41,7 @@ def parse_arguments():
 def setup_files():
     # Ensure the /data/make directory exists
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(current_dir, "data", make, year)  # Create the make/year-specific directory under /data
+    data_dir = os.path.join(current_dir, "data", make)  # Create the make/year-specific directory under /data
 
     try:
         os.makedirs(data_dir, exist_ok=True)
@@ -52,7 +52,7 @@ def setup_files():
     print(f"Directory created or already exists: {data_dir}")
 
     csv_file_path = os.path.join(current_dir, f"links\{make}", f"{make}_{year}_repair_links.csv")
-    output_json_path = os.path.join(data_dir, f"{year}_repair_data.json")
+    output_json_path = os.path.join(data_dir, f"{year}_{make}.json")
     print(f"CSV Path: {csv_file_path}")
     print(f"JSON Path: {output_json_path}")
     return csv_file_path, output_json_path
@@ -73,73 +73,44 @@ def scrape_images(soup, url):
     return image_links
 
 # Scrape content
-def scrape_content(url, depth=0, max_depth=2):
+def scrape_content(url):
     """
-    Scrapes content from the <div class='main'> tag of the URL.
-    If 'Service and Repair' or 'Testing and Inspection' links are found, follows them recursively.
-    Limits the recursion depth to prevent infinite loops.
-    Excludes first-page content and <h1> tags.
-    Includes images as part of the scraped content.
+    Scrapes content and images from the given URL based on the specified process.
     """
     try:
-        # Check recursion depth
-        if depth > max_depth:
-            return {
-                "text": f"Max recursion depth ({max_depth}) reached. Skipping further links.",
-                "images": []
-            }
-
         # Fetch the page content
         response = requests.get(url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # Extract content from the <div class="main">
+        # Check for "Service and Repair" or "Testing and Inspection" links
         content_div = soup.find("div", class_="main")
         if not content_div:
             return {"text": "No content found", "images": []}
 
-        # Remove the <h1> tag if present
-        h1_tag = content_div.find("h1")
-        if h1_tag:
-            h1_tag.decompose()  # Remove the <h1> tag entirely
-
-        # Extract text content
-        content = content_div.get_text(strip=True)
-
-        # Extract images from the current page
-        images = scrape_images(content_div, url)
-
-        # Skip the first page content if depth == 0
-        if depth == 0:
-            content = ""  # Discard the first page content
-
-        # Look for pagination links with the desired text
+        # Check for pagination links
         pagination_links = []
         for link in content_div.find_all("a", href=True):
             if "Service and Repair" in link.text or "Testing and Inspection" in link.text:
                 pagination_links.append(link['href'])
 
-        # Recursively follow the pagination links
-        for link in pagination_links:
-            full_url = requests.compat.urljoin(url, link)  # Resolve relative URLs
-            print(f"Processing link: {full_url}")
-
-            # Fetch and scrape the child page content
-            response = requests.get(full_url)
+        # If matching links are found, process the first one
+        if pagination_links:
+            next_url = requests.compat.urljoin(url, pagination_links[0])
+            print(f"Navigating to: {next_url}")
+            response = requests.get(next_url)
             response.raise_for_status()
-            child_soup = BeautifulSoup(response.text, "html.parser")
+            soup = BeautifulSoup(response.text, "html.parser")
+            content_div = soup.find("div", class_="main")
 
-            child_content = scrape_content(full_url, depth=depth + 1, max_depth=max_depth)
-            
-            # Extract images from the child page
-            child_images = scrape_images(child_soup.find("div", class_="main"), full_url)
-            images.extend(child_images)
+        # Check for the "Expand All" button by its content
+        expand_all_button = soup.find(lambda tag: tag.name == "button" and "Expand All (for easy ctrl-f)" in tag.get_text())
+        if expand_all_button:
+            return {"text": "", "images": []}  # Return empty content if the button is found
 
-            if child_content["text"].strip() and child_content["text"] != "No content found":
-                # Append child content with the separator
-                content += f"\n\n---\n\n{child_content['text']}"
-                images.extend(child_content["images"])  # Collect images from child links
+        # Extract text and images
+        content = content_div.get_text(strip=True) if content_div else "No content found"
+        images = scrape_images(content_div, url) if content_div else []
 
         return {"text": content.strip(), "images": images}
 

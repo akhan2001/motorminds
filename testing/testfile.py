@@ -1,48 +1,86 @@
-import json
+import requests
+from bs4 import BeautifulSoup
+import os
+import csv
 
-def add_repair(file_path, year, model, repair_name, repair_data):
+def scrape_images(content_div, base_url):
     """
-    Adds a repair entry to the specified model in the JSON file.
-    
-    :param file_path: Path to the JSON file
-    :param year: Year of the vehicle (e.g., "2000")
-    :param model: Model of the vehicle (e.g., "Integra GS Coupe L4-1834cc 1.8L DOHC MFI")
-    :param repair_name: Name of the repair (e.g., "Crankshaft Pulley Torque")
-    :param repair_data: Dictionary containing the repair data (text and images)
+    Extracts image URLs from a given content div and resolves relative URLs.
+    """
+    images = []
+    for img_tag in content_div.find_all("img", src=True):
+        img_url = requests.compat.urljoin(base_url, img_tag["src"])
+        images.append(img_url)
+    return images
+
+def scrape_content(url):
+    """
+    Scrapes content and images from the given URL based on the specified process.
     """
     try:
-        # Load existing JSON data
-        with open(file_path, "r", encoding="utf-8") as f:
-            json_data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Start with an empty structure if the file does not exist or is malformed
-        json_data = {}
+        # Fetch the page content
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
 
-    # Ensure the hierarchy exists
-    if year not in json_data:
-        json_data[year] = {}
-    if model not in json_data[year]:
-        json_data[year][model] = {}
+        # Check for "Service and Repair" or "Testing and Inspection" links
+        content_div = soup.find("div", class_="main")
+        if not content_div:
+            return {"text": "No content found", "images": []}
 
-    # Add or update the repair
-    json_data[year][model][repair_name] = repair_data
+        # Check for pagination links
+        pagination_links = []
+        for link in content_div.find_all("a", href=True):
+            if "Service and Repair" in link.text or "Testing and Inspection" in link.text:
+                pagination_links.append(link['href'])
 
-    # Save back to the file
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(json_data, f, indent=4)
-    print(f"Added/Updated repair '{repair_name}' under {year} -> {model}.")
+        # If matching links are found, process the first one
+        if pagination_links:
+            next_url = requests.compat.urljoin(url, pagination_links[0])
+            print(f"Navigating to: {next_url}")
+            response = requests.get(next_url)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            content_div = soup.find("div", class_="main")
+
+        # Check for the "Expand All" button
+        expand_all_button = soup.find("button", id="expand-all", class_="hidden")
+        if expand_all_button:
+            print("Skipping page: Expand All button found")
+            return {"text": "Skipped due to Expand All button", "images": []}
+
+        # Extract text and images
+        content = content_div.get_text(strip=True) if content_div else "No content found"
+        images = scrape_images(content_div, url) if content_div else []
+
+        return {"text": content.strip(), "images": images}
+
+    except requests.RequestException as e:
+        print(f"Error fetching {url}: {e}")
+        return {"text": "Error fetching content", "images": []}
+
+# Example process for reading from a CSV and scraping each URL
+def process_csv(csv_file_path):
+    """
+    Reads URLs from a CSV file and processes them using scrape_content.
+    """
+    results = []
+    try:
+        with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if row:  # Ensure the row is not empty
+                    url = row[0]
+                    print(f"Processing URL: {url}")
+                    result = scrape_content(url)
+                    results.append({"url": url, "result": result})
+    except Exception as e:
+        print(f"Error reading CSV file: {e}")
+    return results
 
 # Example usage
-file_path = "testfile.json"
-year = "2000"
-model = "Integra GS Coupe L4-1834cc 1.8L DOHC MFI"
-repair_name = "Crankshaft Pulley Torque"
-repair_data = {
-    "text": "1. Remove the crankshaft pulley bolt using a suitable tool.\n2. Align the pulley marks with the engine timing marks.\n3. Tighten the pulley bolt to 130 lb-ft (176 Nm).",
-    "images": [
-        "https://example.com/image1.jpg",
-        "https://example.com/image2.jpg"
-    ]
-}
-
-add_repair(file_path, year, model, repair_name, repair_data)
+if __name__ == "__main__":
+    csv_path = "path_to_csv.csv"  # Replace with your CSV file path
+    scraped_data = process_csv(csv_path)
+    for data in scraped_data:
+        print(data)

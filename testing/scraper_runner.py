@@ -1,29 +1,40 @@
-import subprocess
+import json
 
-def run_scraper_for_year(make, start_year, end_year):
-    """
-    Run the charm-li_scraper.py script for each year in the specified range.
-    """
-    for year in range(start_year, end_year + 1):
-        print(f"Starting scraping for {make} {year}...")
-        # Run the scraper script with the make and year as arguments
-        try:
-            result = subprocess.run(
-                ["python", "charm-li_scraper.py", make, str(year)], 
-                check=True,  # Raise an exception if the command fails
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            print(f"Successfully completed scraping for {make} {year}.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error occurred while scraping {make} {year}: {e.stderr.decode()}")
-            continue  # Move to the next year if there's an error
+# Function to load the existing JSON file
+def load_json(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        # If the file doesn't exist, return an empty dictionary
+        return {}
 
-if __name__ == "__main__":
-    # Define the make and the range of years
-    make = "Toyota"
-    start_year = 2000
-    end_year = 2013
+# Function to save the modified JSON back to the file
+def save_json(data, file_path):
+    with open(file_path, 'w') as file:
+        json.dump(data, file, indent=4)
 
-    # Run the scraper for each year in the range
-    run_scraper_for_year(make, start_year, end_year)
+# Function to append a new vehicle
+def append_vehicle(file_path, year, vehicle_name, details):
+    data = load_json(file_path)
+    
+    # If the year key doesn't exist, create it
+    if year not in data:
+        data[year] = {}
+    
+    # Add the new vehicle under the year and vehicle name
+    data[year][vehicle_name] = details
+    
+    # Save the updated data to the file
+    save_json(data, file_path)
+
+# Example usage
+file_path = '2001_repair_data.json'  # path to your JSON file
+
+# New vehicle information to append
+new_vehicle = "Civic EX Sedan L4-1998cc 2.0L DOHC VTEC MFI"
+new_vehicle_details = {}
+
+# Append the new vehicle to the year "2000"
+append_vehicle(file_path, "2000", new_vehicle, new_vehicle_details)

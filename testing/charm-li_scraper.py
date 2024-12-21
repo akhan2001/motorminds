@@ -8,6 +8,19 @@ import csv
 # Global variables
 make = ""
 year = ""
+# List of folders to skip
+SKIP_FOLDERS = [
+    "Testing and Inspection",
+    "Locations",
+    "Diagrams",
+    "Specifications",
+    "Technical Service Bulletins",
+    "Tools and Equipment",
+    "Diagnostic Trouble Codes",
+    "Maintenance",
+    "Normal Service",
+    "Severe Service"
+]
 
 # Setup argument parser
 def parse_arguments():
@@ -124,8 +137,10 @@ def scrape_model_page(model_url):
 def scrape_repair_page(repair_url):
     """
     Scrape the 'Repair and Diagnosis' page and extract all links.
+    Skip links belonging to specific folders like 'Testing and Inspection', 'Locations', etc.
     Call the save_links_to_csv function to save the links into a CSV file.
     """
+
     try:
         response = requests.get(repair_url)
         response.raise_for_status()
@@ -135,7 +150,7 @@ def scrape_repair_page(repair_url):
 
         # Extract all <a> tags within this page
         repair_links = soup.select("a")
-        
+
         # Prepare a list to store the links
         links = []
 
@@ -145,6 +160,12 @@ def scrape_repair_page(repair_url):
             if href:
                 full_url = urljoin(repair_url, href)
                 link_name = link.get_text(strip=True)
+
+                # Skip links that match the folders to skip
+                if any(folder.lower() in full_url.lower() for folder in SKIP_FOLDERS):
+                    print(f"Skipping link: {full_url} (belongs to a skipped folder)")
+                    continue
+
                 # Append the link name and URL as a tuple to the links list
                 links.append((link_name, full_url))
 
