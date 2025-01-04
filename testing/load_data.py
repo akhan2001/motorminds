@@ -31,17 +31,13 @@ def load_data():
             storage_client.storage_accounts.list_by_resource_group(group.name)
             print(f"\tStorage accounts in {group.name}:")
             for storage_account in storage_client.storage_accounts.list_by_resource_group(group.name):
-                print(f"\t\t- {storage_account.name}")
+                if storage_account.name == "motormindsdata":
+                    print(f"\t\t- {storage_account.name}")
+                    STORAGE_CONNECTION_STRING = storage_account.properties.primary_connection_string
         except Exception as e:
             print(f"Error listing storage accounts in {group.name}: {e}")
-
-    # # List all storage accounts in the subscription
-    # print("\nAll Storage Accounts in Subscription:")
-    # for storage_account in storage_client.storage_accounts.list():
-    #     print(f"- Account: {storage_account.name}")
-    #     print(f"- Resource Group: {storage_account.id.split('/')[4]}")
-
     
+    print(f"Using Storage Connection String: {STORAGE_CONNECTION_STRING}")
 
 if __name__ == "__main__":
     load_data()
