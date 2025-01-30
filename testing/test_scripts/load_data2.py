@@ -28,9 +28,9 @@ if __name__ == "__main__":
     blob_service_client = BlobServiceClient(account_url, credential=credential)
 
     # Define container name, file path, and blob name
-    container_name = "training-data"  # Replace with your container name
-    file_path = "data/honda/2000/2000_repair_data.json"  # Replace with your file path
-    blob_name = "transformed_data/honda/2000_honda_repair_data.json"  # Updated to include folder-like path
+    container_name = "motormindscontainer"  # Replace with your container name
+    file_path = "../../data/honda/2000_repair_data.json"  # Replace with your file path
+    blob_name = "honda/2000_honda_repair_data.json"  # Updated to include folder-like path
 
     # Call the function to upload the file
     upload_blob_file(blob_service_client, container_name, file_path, blob_name)
