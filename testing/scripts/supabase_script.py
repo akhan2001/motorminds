@@ -14,14 +14,14 @@ key: str = os.environ.get("SUPABASE_KEY")
 # Initialize Supabase client
 supabase: Client = create_client(url, key)
 
-def process_directory(json_dir_path):
+def process_directory(json_dir_path, table_name):
     # Iterate through each file in the directory
     for filename in os.listdir(json_dir_path):
         if filename.endswith('.json'):
             json_file_path = os.path.join(json_dir_path, filename)
-            process_file(json_file_path)
+            process_file(json_file_path, table_name)
 
-def process_file(json_file_path):
+def process_file(json_file_path, table_name):
     with open(json_file_path, 'r') as file:
         data = json.load(file)
 
@@ -45,8 +45,8 @@ def process_file(json_file_path):
 
                         try:
                             # Insert data into the table
-                            response = supabase.table('test-table').insert(row).execute()
-                            print(response)
+                            response = supabase.table(table_name).insert(row).execute()
+                            # print(response)
                         except Exception as e:
                             print("Error:", e)
     print(f"Processed file: {json_file_path}")
@@ -94,8 +94,9 @@ def remove_duplicate_rows():
 
 def main():
     # Process all files in a directory
-    # json_dir_path = '../scripts/data/Acura/'
-    # process_directory(json_dir_path)
+    json_dir_path = '../scripts/data/Toyota/'
+    table_name = 'toyota-table'
+    process_directory(json_dir_path, table_name)
 
     # Delete all rows in the table
     # delete_all_rows()
@@ -109,7 +110,7 @@ def main():
     # process_file(specific_file_path)
 
     # Remove duplicate rows
-    remove_duplicate_rows()
+    # remove_duplicate_rows()
 
     print("\nDone")
 
