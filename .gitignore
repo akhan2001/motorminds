@@ -143,5 +143,5 @@ __azurite_db*__.json
 node_modules
 
 package-lock.json
-package.json
+# package.json
 eslint.config.js

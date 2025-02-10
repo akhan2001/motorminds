@@ -3,7 +3,7 @@ import json
 from supabase import create_client, Client
 from openai import OpenAI
 import dotenv
-
+from typing import List
 
 print("Starting script...")
 
@@ -32,19 +32,40 @@ def query_table():
         print("Error querying table:", e)
         return []
 
+def filter_relevant_rows(rows: List[dict], keywords: List[str]) -> List[dict]:
+    relevant_rows = []
+    for row in rows:
+        row_text = json.dumps(row).lower()
+        if all(keyword.lower() in row_text for keyword in keywords):
+            relevant_rows.append(row)
+    return relevant_rows
+
 def generate_response(question, rows):
-    # Use the rows directly to create a prompt
-    sources = json.dumps(rows, indent=2)
+    # Define keywords for filtering
+    keywords = question.split()  # Simple split, can be improved with NLP techniques
+
+    # Filter rows to include only those relevant to the question
+    relevant_rows = filter_relevant_rows(rows, keywords)
+    if not relevant_rows:
+        print("No relevant data found for the query.")
+        return "No relevant data found for the query."
+
+    # Limit the number of rows to avoid exceeding token limits
+    limited_rows = relevant_rows[:5]  # Adjust the number as needed
+    sources = json.dumps(limited_rows, indent=2)
     prompt = f"Answer the following question using the provided sources:\nQuestion: {question}\nSources:\n{sources}"
 
     print("Calling OpenAI API...")
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150
-    )
-
-    return response.choices[0].message['content'].strip()
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=150
+        )
+        return response.choices[0].message.content.strip()
+    except client.chat.error.RateLimitError as e:
+        print(f"Rate limit error: {e}")
+        return "Request exceeded token limits. Please try again with a smaller input."
 
 def main():
     question = input("Enter your question: ")
