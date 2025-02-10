@@ -139,3 +139,9 @@ __azurite_db*__.json
 
 /testing/data
 /testing/links
+
+node_modules
+
+package-lock.json
+package.json
+eslint.config.js
