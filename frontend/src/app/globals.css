@@ -17,5 +17,12 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Bricolage Grotesque', sans-serif;
+  font-family: var(--font-bricolage-grotesque);
 }
+
+/* .bricolage-grotesque {
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+} */
