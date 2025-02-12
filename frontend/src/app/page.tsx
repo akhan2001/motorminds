@@ -2,12 +2,20 @@ import { Nav } from "./components/nav";
 import { ChatInput } from "./components/chat-input";
 import Image from "next/image";
 import { cookies } from "next/headers";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { redirect } from "next/navigation";
 
-export default function Page() {
+export default async function Page() {
 
-  return (
+	const supabase = createServerComponentClient({ cookies });
+
+	const { data: { session } } = await supabase.auth.getSession();
+
+	if (!session) {
+		redirect("/auth");
+	}
+
+  	return (
     // Mia AI
     <div className="min-h-screen bg-[#131313]">
       <Nav />
