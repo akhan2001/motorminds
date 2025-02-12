@@ -15,10 +15,10 @@ export default function AuthComponent() {
             }
         });
 
-        if (!error) {
-            window.location.href = `${location.origin}/auth/callback`;
-        } else {
+        if (error) {
             console.error('Sign-in error:', error.message);
+        } else {
+            console.log('Redirecting to GitHub for authentication...');
         }
     };
 
