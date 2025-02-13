@@ -2,11 +2,12 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { redirect } from "next/navigation";
 import React from "react";
 import { cookies } from "next/headers";
+import { FaDatabase } from "react-icons/fa";
+import Forms from "./components/forms";
 
 export default async function Page() {
 
     const supabase = createServerComponentClient({ cookies });
-
 	const { data: { session } } = await supabase.auth.getSession();
 
 	if (!session) {
@@ -34,10 +35,12 @@ export default async function Page() {
 
     return (
         <div className="max-w-4xl mx-auto h-screen flex justify-center items-center">
-            <div className="w-full p-5">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Motorminds AI Dataset</h1>
+            <div className="w-full p-5 space-y-5">
+                <div className="flex items-center gap-5">
+                    <FaDatabase size={30} />
+                    <h1 className="text-2xl font-bold">Mia AI Dataset</h1>
                 </div>
+                <Forms />
             </div>
         </div>
     )
