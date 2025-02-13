@@ -10,8 +10,8 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
 
     const cookieStore = await cookies();
-    const isAuthenticated = cookieStore.get("supabase-auth-token");
 
+    // const isAuthenticated = cookieStore.get("supabase-auth-token");
     // if (!isAuthenticated) {
     //     return NextResponse.json({
     //         message: "Unauthorized"

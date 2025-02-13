@@ -41,10 +41,10 @@ export default function Forms() {
     return (
         <>
             <Textarea placeholder="Enter your prompt here" className="resize-none" ref={inputRef} />
-            <Button className="w-full" onClick={handleSubmit}>
+            <Button className="w-full flex gap-2" onClick={handleSubmit}>
                 {loading && (
                     <>
-                        <AiOutlineLoading3Quarters className="animate-spin" />
+                        <AiOutlineLoading3Quarters className="w-3 h-3 animate-spin"/>
                         <span>Submitting...</span>
                     </>
                 )}
