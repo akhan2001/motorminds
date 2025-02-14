@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { ArrowRight } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
+import { PiSealQuestionThin } from "react-icons/pi";
+import Image from "next/image";
 
 export function ChatInput() {
 	const supabase = createClientComponentClient();
 	const inputRef = useRef() as React.MutableRefObject<HTMLInputElement>;
+	const [question, setQuestion] = useState<string[]>([]);
+	const [answer, setAnswer] = useState<string[]>([]);
+	const [loading, setLoading] = useState<boolean>(false);
 
 	const toastError = (message: string) => {
 	alert(message);
@@ -27,9 +32,11 @@ export function ChatInput() {
 	}
 
 	const handleSearch = async () => {
+		setLoading(true);
 		const searchText = inputRef.current.value;
 
 		if (searchText && searchText.trim()) {
+			setQuestion(currentQuestions => [...currentQuestions, searchText]);
 			const res = await fetch(location.origin + "/embedding", {
 				method: "POST",
 				body: JSON.stringify({ text: searchText.replace(/\n/g, " ") }),
@@ -69,7 +76,9 @@ export function ChatInput() {
 				}
 			}
 		}
-	}
+		inputRef.current.value = "";
+		setLoading(false);
+	};
 
 	const generateGenericPrompt = (searchText: string) => {
 		const prompt = stripIndents`${oneLine`
@@ -112,6 +121,8 @@ export function ChatInput() {
 		} else {
 			const data = await res.json();
 			console.log(data);
+			setAnswer(currentAnswers => [...currentAnswers, data.choices[0].message.content]);
+			console.log(data.choices[0].message.content);
 		}
 	}
 
@@ -201,22 +212,74 @@ export function ChatInput() {
 	// fetchDocuments().catch(console.error);
 
 	return (
-		<div className="relative mx-auto max-w-2xl">
-		<input
-			ref={inputRef}
-			type="text"
-			placeholder="Type your prompt here"
-			className="w-full rounded-full bg-[#222222] px-6 py-4 text-white placeholder-[#616161] outline-none"
-			onKeyDown={(e) => {
-			if (e.key === "Enter") {
-				handleSearch();
-			}
-			}}
-		/>
-		<button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-[#f52f2f] p-2 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
-			<ArrowRight className="h-5 w-5 text-white" />
-		</button>
+		// Mia AI
+		<div className="h-screen bg-[#131313] flex flex-col justify-between">
+			<div></div>
+			<main className="flex justify-center">
+				<div className="mx-auto text-center relative mx-auto max-w-3xl">
+					<div className="mb-8 flex justify-center">
+						<Image src="/motorminds-logo-black_background.svg" alt="Mia AI" width={75} height={75} />
+					</div>
+					<div className="flex flex-col gap-5">
+						<h1 className="mb-4 text-5xl font-medium text-white">
+							How Can I Assist You?
+						</h1>
+						<p className="mb-12 text-lg text-[#979797] w-[75%] mx-auto">
+							I&apos;m MIA, your Motorminds mechanic assistant! I can help with
+							repairs and diagnostics. I&apos;m still in beta, so more features
+							are on the way. Stay tuned for updates!
+						</p>
+					</div>
+				</div>
+			</main>
+			<div className="w-full px-2 py-2 text-center text-sm text-[#616161] space-y-[2rem]">
+				<div>
+					<div className="relative mx-auto max-w-2xl">
+					{question.map((q, index) => {
+						const currentAnswer = answer[index];
+						console.log(currentAnswer);
+						const isLoading = loading && !currentAnswer;
+
+						return (
+						<div className="space-y-3" key={index}>
+							<div className="flex items-center gap-2 text-500">
+								<PiSealQuestionThin className="text-primaryWhite text-500 text-2xl w-5 h-5"/>
+								<h1 className="text-500 text-primaryWhite text-1xl font-medium">{q}</h1>
+							</div>
+							{isLoading ? (
+								<div className="flex items-center gap-2 text-500">
+									<PiSealQuestionThin className="text-primaryWhite text-500 text-2xl w-5 h-5"/>
+									<h1 className="text-500 text-primaryWhite text-sm font-medium">Loading...</h1>
+								</div>
+							) : (
+								<h1 className="text-500 text-primaryWhite text-sm font-medium">{currentAnswer}</h1>
+							)}
+						</div>
+						);
+					})}
+						<div className="flex items-center gap-2 text-500">
+							<input
+								ref={inputRef}
+								type="text"
+								placeholder="Ask anything about your car"
+								className="w-full rounded-full bg-[#222222] px-6 py-4 text-white placeholder-[#616161] outline-none"
+								onKeyDown={(e) => {
+									if (e.key === "Enter") {
+										handleSearch();
+									}
+								}}
+							/>
+							{/* <button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-[#f52f2f] p-2 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
+								<ArrowRight className="h-5 w-5 text-white" />
+							</button> */}
+						</div>
+					</div>
+				</div>
+				<div className="min-h-4">
+					<p>MIA may not be perfect. Please verify important information.</p>
+				</div>
+			</div>
 		</div>
-	)
+	);
 }
 
