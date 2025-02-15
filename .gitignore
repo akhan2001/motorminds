@@ -147,3 +147,5 @@ package-lock.json
 eslint.config.js
 /database/obsolete/
 /data/links/
+
+backend/tests/embedding_test.py
