@@ -13,6 +13,7 @@ export function ChatInput() {
 	const [question, setQuestion] = useState<string[]>([]);
 	const [answer, setAnswer] = useState<string[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
+	const [isStarted, setIsStarted] = useState<boolean>(false);
 
 	const toastError = (message: string) => {
 	alert(message);
@@ -33,6 +34,7 @@ export function ChatInput() {
 
 	const handleSearch = async () => {
 		setLoading(true);
+		setIsStarted(true);
 		const searchText = inputRef.current.value;
 
 		if (searchText && searchText.trim()) {
@@ -215,6 +217,7 @@ export function ChatInput() {
 		// Mia AI
 		<div className="h-screen bg-[#131313] flex flex-col justify-between">
 			<div></div>
+			{!isStarted ? (
 			<main className="flex justify-center">
 				<div className="mx-auto text-center relative mx-auto max-w-3xl">
 					<div className="mb-8 flex justify-center">
@@ -232,6 +235,15 @@ export function ChatInput() {
 					</div>
 				</div>
 			</main>
+			) : (
+			<main className="flex justify-start">
+				<div className="mx-auto text-center relative mx-auto max-w-3xl">
+					<div className="mb-8 flex justify-start">
+						<Image src="/motorminds-logo-black_background.svg" alt="Mia AI" width={75} height={75} />
+					</div>
+				</div>
+			</main>
+			)}
 			<div className="w-full px-2 py-2 text-center text-sm text-[#616161] space-y-[2rem]">
 				<div>
 					<div className="relative mx-auto max-w-2xl">
@@ -242,27 +254,33 @@ export function ChatInput() {
 
 						return (
 						<div className="space-y-3" key={index}>
-							<div className="flex items-center gap-2 text-500">
-								<PiSealQuestionThin className="text-primaryWhite text-500 text-2xl w-5 h-5"/>
-								<h1 className="text-500 text-primaryWhite text-1xl font-medium">{q}</h1>
+							<div className="w-full flex justify-end">
+								<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
+									<div className="flex items-start gap-2 text-500">
+										{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
+										<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
+									</div>
+								</div>
 							</div>
 							{isLoading ? (
 								<div className="flex items-center gap-2 text-500">
-									<PiSealQuestionThin className="text-primaryWhite text-500 text-2xl w-5 h-5"/>
-									<h1 className="text-500 text-primaryWhite text-sm font-medium">Loading...</h1>
+									{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
+									<h1 className="text-500 text-[#E3E3E3] text-sm font-medium">Loading...</h1>
 								</div>
 							) : (
-								<h1 className="text-500 text-primaryWhite text-sm font-medium">{currentAnswer}</h1>
+								<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
+									<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
+								</div>
 							)}
 						</div>
 						);
 					})}
-						<div className="flex items-center gap-2 text-500">
+						<div className="flex items-center gap-1 text-500">
 							<input
 								ref={inputRef}
 								type="text"
 								placeholder="Ask anything about your car"
-								className="w-full rounded-full bg-[#222222] px-6 py-4 text-white placeholder-[#616161] outline-none"
+								className="w-full rounded-full bg-[#222222] px-6 py-4 text-white placeholder-[#616161] outline-none my-2"
 								onKeyDown={(e) => {
 									if (e.key === "Enter") {
 										handleSearch();

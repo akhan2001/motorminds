@@ -145,3 +145,5 @@ node_modules
 package-lock.json
 # package.json
 eslint.config.js
+/database/obsolete/
+/data/links/
