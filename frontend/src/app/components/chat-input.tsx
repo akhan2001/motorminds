@@ -215,15 +215,13 @@ export function ChatInput() {
 
 	return (
 		// Mia AI
-		<div className="h-screen bg-[#131313] flex flex-col justify-between">
-			<div></div>
-			{!isStarted ? (
-			<main className="flex justify-center">
-				<div className="mx-auto text-center relative mx-auto max-w-3xl">
+		<div className="h-screen bg-[#131313] w-full flex flex-col justify-between overflow-hidden">
+			<main className="flex flex-col flex-1 justify-center items-center">
+				<div className="m-auto px-3 w-full max-w-3xl">
 					<div className="mb-8 flex justify-center">
 						<Image src="/motorminds-logo-black_background.svg" alt="Mia AI" width={75} height={75} />
 					</div>
-					<div className="flex flex-col gap-5">
+					<div className="flex flex-col gap-5 text-center">
 						<h1 className="mb-4 text-5xl font-medium text-white">
 							How Can I Assist You?
 						</h1>
@@ -233,70 +231,42 @@ export function ChatInput() {
 							are on the way. Stay tuned for updates!
 						</p>
 					</div>
-				</div>
-			</main>
-			) : (
-			<main className="flex justify-start">
-				<div className="mx-auto text-center relative mx-auto max-w-3xl">
-					<div className="mb-8 flex justify-start">
-						<Image src="/motorminds-logo-black_background.svg" alt="Mia AI" width={75} height={75} />
-					</div>
-				</div>
-			</main>
-			)}
-			<div className="w-full px-2 py-2 text-center text-sm text-[#616161] space-y-[2rem]">
-				<div>
-					<div className="relative mx-auto max-w-2xl">
-					{question.map((q, index) => {
-						const currentAnswer = answer[index];
-						console.log(currentAnswer);
-						const isLoading = loading && !currentAnswer;
-
-						return (
-						<div className="space-y-3" key={index}>
-							<div className="w-full flex justify-end">
-								<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
-									<div className="flex items-start gap-2 text-500">
-										{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
-										<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
-									</div>
+					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-between overflow-hidden">
+						<div className="flex min-h-[44px] items-start pl-1 w-full">
+							<div className="min-w-0 max-w-full flex-1">
+								<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
+									<textarea
+										ref={inputRef}
+										className="bg-[#222222] w-full px-6 py-4 text-[#979797] placeholder-[#616161] outline-none my-2 resize-none"
+										placeholder="Ask anything about your car"
+										style={{ height: 'auto', maxHeight: '200px' }}
+										onInput={(e) => {
+											const target = e.target as HTMLTextAreaElement;
+											target.style.height = 'auto'; // Reset height
+											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
+										}}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												handleSearch();
+											}
+										}}
+									/>
 								</div>
 							</div>
-							{isLoading ? (
-								<div className="flex items-center gap-2 text-500">
-									{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
-									<h1 className="text-500 text-[#E3E3E3] text-sm font-medium">Loading...</h1>
-								</div>
-							) : (
-								<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
-									<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
-								</div>
-							)}
 						</div>
-						);
-					})}
-						<div className="flex items-center gap-1 text-500">
-							<input
-								ref={inputRef}
-								type="text"
-								placeholder="Ask anything about your car"
-								className="w-full rounded-full bg-[#222222] px-6 py-4 text-white placeholder-[#616161] outline-none my-2"
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										handleSearch();
-									}
-								}}
-							/>
-							{/* <button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-[#f52f2f] p-2 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
+						<div className="flex justify-center items-center">
+							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
 								<ArrowRight className="h-5 w-5 text-white" />
-							</button> */}
+							</button>
 						</div>
 					</div>
 				</div>
+			</main>
+			<footer className="w-full px-4 py-2 text-center text-xs text-[#616161]">
 				<div className="min-h-4">
 					<p>MIA may not be perfect. Please verify important information.</p>
 				</div>
-			</div>
+			</footer>
 		</div>
 	);
 }
