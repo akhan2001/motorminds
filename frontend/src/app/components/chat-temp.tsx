@@ -30,7 +30,7 @@ export function ChatInput() {
 		} else {
 			return 3; // Lower match count for specific queries
 		}
-	}
+	};
 
 	const handleSearch = async () => {
 		setLoading(true);
@@ -126,7 +126,7 @@ export function ChatInput() {
 			setAnswer(currentAnswers => [...currentAnswers, data.choices[0].message.content]);
 			console.log(data.choices[0].message.content);
 		}
-	}
+	};
 
 	const generatePrompt = (searchText: string, contextText: string) => {
 		const prompt = stripIndents`${oneLine`
@@ -198,7 +198,7 @@ export function ChatInput() {
 		}
 
 		return count;
-	}
+	};
 
 	// async function fetchDocuments() {
 	//   const { data, error } = await supabase.from('documents').select('*');
