@@ -9,7 +9,7 @@ import Image from "next/image";
 
 export function ChatInput() {
 	const supabase = createClientComponentClient();
-	const inputRef = useRef() as React.MutableRefObject<HTMLInputElement>;
+	const inputRef = useRef<HTMLInputElement>(null);
 	const [question, setQuestion] = useState<string[]>([]);
 	const [answer, setAnswer] = useState<string[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
@@ -35,7 +35,7 @@ export function ChatInput() {
 	const handleSearch = async () => {
 		setLoading(true);
 		setIsStarted(true);
-		const searchText = inputRef.current.value;
+		const searchText = inputRef.current?.value;
 
 		if (searchText && searchText.trim()) {
 			setQuestion(currentQuestions => [...currentQuestions, searchText]);
@@ -78,7 +78,10 @@ export function ChatInput() {
 				}
 			}
 		}
-		inputRef.current.value = "";
+		// inputRef.current?.value = "";
+		if (inputRef.current) {
+			inputRef.current.value = "";
+		}
 		setLoading(false);
 	};
 

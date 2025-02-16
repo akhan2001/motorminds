@@ -63,7 +63,7 @@ export default function Forms() {
             <Button className="w-full flex gap-2" onClick={handleSubmit}>
                 {loading && (
                     <>
-                        <AiOutlineLoading3Quarters className="w-3 h-3 animate-spin"/>
+                        <AiOutlineLoading3Quarters size={12} />
                         <span>Submitting...</span>
                     </>
                 )}

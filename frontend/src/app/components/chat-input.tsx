@@ -220,103 +220,103 @@ export function ChatInput() {
 		// Mia AI
 		<div className="h-screen w-full flex flex-col justify-between overflow-hidden">
 			{ !isStarted ? (
-				<main className="flex flex-col flex-1 justify-center items-center">
-					<div className="m-auto px-3 w-full max-w-3xl space-y-5">
-						<ChatStart />
-						<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-between overflow-hidden">
-							<div className="flex min-h-[44px] items-start w-full">
-								<div className="min-w-0 max-w-full flex-1">
-									<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
-										<textarea
-											ref={inputRef}
-											className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
-											placeholder="Ask anything related to your shop..."
-											style={{ height: 'auto', maxHeight: '200px' }}
-											onInput={(e) => {
-												const target = e.target as HTMLTextAreaElement;
-												target.style.height = 'auto'; // Reset height
-												target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
-											}}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													handleSearch();
-												}
-											}}
-										/>
-									</div>
+			<main className="flex flex-col flex-1 justify-center items-center">
+				<div className="m-auto px-3 w-full max-w-3xl space-y-5">
+					<ChatStart />
+					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-between overflow-hidden">
+						<div className="flex min-h-[44px] items-start w-full">
+							<div className="min-w-0 max-w-full flex-1">
+								<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
+									<textarea
+										ref={inputRef}
+										className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
+										placeholder="Ask anything related to your shop..."
+										style={{ height: 'auto', maxHeight: '200px' }}
+										onInput={(e) => {
+											const target = e.target as HTMLTextAreaElement;
+											target.style.height = 'auto'; // Reset height
+											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
+										}}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												handleSearch();
+											}
+										}}
+									/>
 								</div>
 							</div>
-							<div className="flex justify-center items-center">
-								<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
-									<ArrowRight className="h-5 w-5 text-white" />
-								</button>
-							</div>
+						</div>
+						<div className="flex justify-center items-center">
+							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
+								<ArrowRight className="h-5 w-5 text-white" />
+							</button>
 						</div>
 					</div>
-				</main>
+				</div>
+			</main>
 			) : (
-				<main className="flex flex-col flex-1 justify-between items-center">
-					<div className="mx-auto px-3 w-full max-w-3xl max-h-[50%] overflow-auto bg-[#000000]">
-						{question.map((q, index) => {
-							const currentAnswer = answer[index];
-							console.log(currentAnswer);
-							const isLoading = loading && !currentAnswer;
+			<main className="flex flex-col flex-1 justify-center items-center">
+				<div className="mx-auto px-3 w-full max-w-3xl max-h-[50%] overflow-auto bg-[#000000]">
+					{question.map((q, index) => {
+						const currentAnswer = answer[index];
+						console.log(currentAnswer);
+						const isLoading = loading && !currentAnswer;
 
-							return (
-								<div className="space-y-3" key={index}>
-									<div className="w-full flex justify-end">
-										<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
-											<div className="flex items-start gap-2 text-500">
-												{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
-												<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
-											</div>
+						return (
+							<div className="space-y-3" key={index}>
+								<div className="w-full flex justify-end">
+									<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
+										<div className="flex items-start gap-2 text-500">
+											{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
+											<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
 										</div>
 									</div>
-									{isLoading ? (
-										<div className="px-5 py-4 rounded-[20px] bg-[#222222] w-[15%] m-3 my-2">
-											<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">Loading...</h5>
-										</div>
-									) : (
-										<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
-											<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
-										</div>
-									)}
 								</div>
-							);
-						})}
-					</div>
-					<div className="mx-auto px-3 w-full max-w-3xl">
-						<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-end overflow-hidden">
-							<div className="flex min-h-[44px] items-start w-full">
-								<div className="min-w-0 max-w-full flex-1">
-									<div className="text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
-										<textarea
-											ref={inputRef}
-											className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
-											placeholder="Ask anything else..."
-											style={{ height: 'auto', maxHeight: '200px' }}
-											onInput={(e) => {
-												const target = e.target as HTMLTextAreaElement;
-												target.style.height = 'auto'; // Reset height
-												target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
-											}}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													handleSearch();
-												}
-											}}
-										/>
+								{isLoading ? (
+									<div className="px-5 py-4 rounded-[20px] bg-[#222222] w-[15%] m-3 my-2">
+										<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">Loading...</h5>
 									</div>
-								</div>
+								) : (
+									<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
+										<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
+									</div>
+								)}
 							</div>
-							<div className="flex justify-center items-center">
-								<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90 transition duration-300 ease-in-out" onClick={handleSearch}>
-									<ArrowRight className="h-5 w-5 text-white" />
-								</button>
+						);
+					})}
+				</div>
+				<div className="mx-auto px-3 w-full max-w-3xl">
+					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-end overflow-hidden">
+						<div className="flex min-h-[44px] items-start w-full">
+							<div className="min-w-0 max-w-full flex-1">
+								<div className="text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
+									<textarea
+										ref={inputRef}
+										className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
+										placeholder="Ask anything else..."
+										style={{ height: 'auto', maxHeight: '200px' }}
+										onInput={(e) => {
+											const target = e.target as HTMLTextAreaElement;
+											target.style.height = 'auto'; // Reset height
+											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
+										}}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												handleSearch();
+											}
+										}}
+									/>
+								</div>
 							</div>
 						</div>
+						<div className="flex justify-center items-center">
+							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90 transition duration-300 ease-in-out" onClick={handleSearch}>
+								<ArrowRight className="h-5 w-5 text-white" />
+							</button>
+						</div>
 					</div>
-				</main>
+				</div>
+			</main>
 			)}
 			<ChatFooter />
 		</div>
