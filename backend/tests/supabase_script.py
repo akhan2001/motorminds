@@ -94,9 +94,15 @@ def remove_duplicate_rows():
 
 def main():
     # Process all files in a directory
-    json_dir_path = '../scripts/data/Toyota/'
-    table_name = 'toyota-table'
-    process_directory(json_dir_path, table_name)
+    table_name = 'customers'
+
+    # Print all rows in the table
+    response = supabase.table(table_name).select('*').execute()
+    for row in response.data:
+        print(json.dumps(row, indent=4))
+
+    # json_dir_path = '../scripts/data/Toyota/'
+    # process_directory(json_dir_path, table_name)
 
     # Delete all rows in the table
     # delete_all_rows()

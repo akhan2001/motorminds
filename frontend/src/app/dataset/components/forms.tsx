@@ -3,8 +3,12 @@ import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function Forms() {
+
+    const supabase = createClientComponentClient();
+    
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -29,7 +33,22 @@ export default function Forms() {
             } else {
                 const result = await res.json();
                 console.log(result);
-                inputRef.current.value = "";
+
+                const embedding = result.embedding;
+                const token = result.tokens;
+
+                console.log("This is the token", token);
+
+                const {error} = await supabase.from("documents").insert({
+                    content, embedding, token,
+                });
+
+                if (error) {
+                    toastError("Error inserting dataset" + error);
+                } else {
+                    toastError("Dataset inserted successfully");
+                    inputRef.current.value = "";
+                }
             }
 
         } else {
@@ -44,14 +63,12 @@ export default function Forms() {
             <Button className="w-full flex gap-2" onClick={handleSubmit}>
                 {loading && (
                     <>
-                        <AiOutlineLoading3Quarters className="w-3 h-3 animate-spin"/>
+                        <AiOutlineLoading3Quarters size={12} />
                         <span>Submitting...</span>
                     </>
                 )}
                 {!loading && (
-                    <>
-                        Submit
-                    </>
+                    <>Submit</>
                 )}
             </Button>
         </>

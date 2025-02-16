@@ -5,10 +5,10 @@ import Link from "next/link"
 export function Nav() {
   const links = [
     { href: "/", label: "Dashboard" },
-    { href: "/mia", label: "Mia AI" },
-    { href: "/mechanic-hub", label: "Mechanic Hub" },
-    { href: "/invoicing", label: "Invoicing" },
-    { href: "/leads", label: "Lead Gen" },
+    { href: "/", label: "Mia AI" },
+    { href: "/", label: "Mechanic Hub" },
+    { href: "/", label: "Invoicing" },
+    { href: "/", label: "Lead Gen" },
   ]
 
   return (

@@ -24,7 +24,7 @@ client = OpenAI(
 def query_table():
     try:
         print("Querying the table...")
-        response = supabase.table('test-table').select('*').execute()
+        response = supabase.table('customers').select('*').execute()
         rows = response.data
         print(f"Fetched {len(rows)} rows from the table.")
         return rows
