@@ -16,7 +16,7 @@
     }
 
     return (
-      <div>
+      <div className="bg-[#131313]">
         <Nav />
         <ChatInput />
       </div>

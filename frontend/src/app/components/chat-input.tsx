@@ -4,12 +4,13 @@ import React, { useRef, useState } from "react";
 import { ArrowRight } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
-import { PiSealQuestionThin } from "react-icons/pi";
+import ChatStart from "../chat/components/ChatStart";
+import ChatFooter from "../chat/components/ChatFooter";
 import Image from "next/image";
 
 export function ChatInput() {
 	const supabase = createClientComponentClient();
-	const inputRef = useRef() as React.MutableRefObject<HTMLInputElement>;
+	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [question, setQuestion] = useState<string[]>([]);
 	const [answer, setAnswer] = useState<string[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
@@ -35,7 +36,7 @@ export function ChatInput() {
 	const handleSearch = async () => {
 		setLoading(true);
 		setIsStarted(true);
-		const searchText = inputRef.current.value;
+		const searchText = inputRef.current?.value;
 
 		if (searchText && searchText.trim()) {
 			setQuestion(currentQuestions => [...currentQuestions, searchText]);
@@ -78,7 +79,9 @@ export function ChatInput() {
 				}
 			}
 		}
-		inputRef.current.value = "";
+		if (inputRef.current) {
+			inputRef.current.value = "";
+		}
 		setLoading(false);
 	};
 
@@ -215,125 +218,107 @@ export function ChatInput() {
 
 	return (
 		// Mia AI
-		<div className="h-screen bg-[#131313] w-full flex flex-col justify-between overflow-hidden">
-		{ !isStarted ? (
-			<main className="flex flex-col flex-1 justify-center items-center">
-				<div className="m-auto px-3 w-full max-w-3xl">
-					<div className="mb-8 flex justify-center">
-						<Image src="/motorminds-logo-black_background.svg" alt="Mia AI" width={75} height={75} />
-					</div>
-					<div className="flex flex-col gap-5 text-center">
-						<h1 className="mb-4 text-5xl font-medium text-white">
-							How Can I Assist You?
-						</h1>
-						<p className="mb-12 text-lg text-[#979797] w-[75%] mx-auto">
-							I&apos;m MIA, your Motorminds mechanic assistant! I can help with
-							repairs and diagnostics. I&apos;m still in beta, so more features
-							are on the way. Stay tuned for updates!
-						</p>
-					</div>
-					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-between overflow-hidden">
-						<div className="flex min-h-[44px] items-start w-full">
-							<div className="min-w-0 max-w-full flex-1">
-								<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
-									<textarea
-										ref={inputRef}
-										className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
-										placeholder="Ask anything about your car"
-										style={{ height: 'auto', maxHeight: '200px' }}
-										onInput={(e) => {
-											const target = e.target as HTMLTextAreaElement;
-											target.style.height = 'auto'; // Reset height
-											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
-										}}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												handleSearch();
-											}
-										}}
-									/>
+		<div className="h-screen w-full flex flex-col justify-between overflow-hidden">
+			{ !isStarted ? (
+				<main className="flex flex-col flex-1 justify-center items-center">
+					<div className="m-auto px-3 w-full max-w-3xl space-y-5">
+						<ChatStart />
+						<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-between overflow-hidden">
+							<div className="flex min-h-[44px] items-start w-full">
+								<div className="min-w-0 max-w-full flex-1">
+									<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
+										<textarea
+											ref={inputRef}
+											className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
+											placeholder="Ask anything related to your shop..."
+											style={{ height: 'auto', maxHeight: '200px' }}
+											onInput={(e) => {
+												const target = e.target as HTMLTextAreaElement;
+												target.style.height = 'auto'; // Reset height
+												target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
+											}}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													handleSearch();
+												}
+											}}
+										/>
+									</div>
 								</div>
 							</div>
-						</div>
-						<div className="flex justify-center items-center">
-							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
-								<ArrowRight className="h-5 w-5 text-white" />
-							</button>
+							<div className="flex justify-center items-center">
+								<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
+									<ArrowRight className="h-5 w-5 text-white" />
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			</main>
-		) : (
-			<main className="flex flex-col flex-1 justify-end items-center gap-5">
-				<div className="mx-auto px-3 w-full max-w-3xl h-[70%] overflow-auto">
-					{question.map((q, index) => {
+				</main>
+			) : (
+				<main className="flex flex-col flex-1 justify-between items-center">
+					<div className="mx-auto px-3 w-full max-w-3xl max-h-[50%] overflow-auto bg-[#000000]">
+						{question.map((q, index) => {
 							const currentAnswer = answer[index];
 							console.log(currentAnswer);
 							const isLoading = loading && !currentAnswer;
 
 							return (
-							<div className="space-y-3" key={index}>
-								<div className="w-full flex justify-end">
-									<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
-										<div className="flex items-start gap-2 text-500">
-											{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
-											<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
+								<div className="space-y-3" key={index}>
+									<div className="w-full flex justify-end">
+										<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
+											<div className="flex items-start gap-2 text-500">
+												{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
+												<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
+											</div>
 										</div>
 									</div>
+									{isLoading ? (
+										<div className="px-5 py-4 rounded-[20px] bg-[#222222] w-[15%] m-3 my-2">
+											<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">Loading...</h5>
+										</div>
+									) : (
+										<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
+											<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
+										</div>
+									)}
 								</div>
-								{isLoading ? (
-									<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
-										<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">Loading...</h5>
-									</div>
-								) : (
-									<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
-										<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
-									</div>
-								)}
-							</div>
 							);
 						})}
-				</div>
-				<div className="mx-auto px-3 w-full max-w-3xl">
-					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-end overflow-hidden">
-						<div className="flex min-h-[44px] items-start w-full">
-							<div className="min-w-0 max-w-full flex-1">
-								<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
-									<textarea
-										ref={inputRef}
-										className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
-										placeholder="Ask anything about your car"
-										style={{ height: 'auto', maxHeight: '200px' }}
-										onInput={(e) => {
-											const target = e.target as HTMLTextAreaElement;
-											target.style.height = 'auto'; // Reset height
-											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
-										}}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												handleSearch();
-											}
-										}}
-									/>
+					</div>
+					<div className="mx-auto px-3 w-full max-w-3xl">
+						<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-end overflow-hidden">
+							<div className="flex min-h-[44px] items-start w-full">
+								<div className="min-w-0 max-w-full flex-1">
+									<div className="text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
+										<textarea
+											ref={inputRef}
+											className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
+											placeholder="Ask anything else..."
+											style={{ height: 'auto', maxHeight: '200px' }}
+											onInput={(e) => {
+												const target = e.target as HTMLTextAreaElement;
+												target.style.height = 'auto'; // Reset height
+												target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
+											}}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													handleSearch();
+												}
+											}}
+										/>
+									</div>
 								</div>
 							</div>
-						</div>
-						<div className="flex justify-center items-center">
-							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90 transition duration-300 ease-in-out" onClick={handleSearch}>
-								<ArrowRight className="h-5 w-5 text-white" />
-							</button>
+							<div className="flex justify-center items-center">
+								<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90 transition duration-300 ease-in-out" onClick={handleSearch}>
+									<ArrowRight className="h-5 w-5 text-white" />
+								</button>
+							</div>
 						</div>
 					</div>
-
-				</div>
-			</main>
-		)}		
-			<footer className="w-full px-4 py-2 text-center text-xs text-[#616161]">
-				<div className="min-h-4">
-					<p>MIA may not be perfect. Please verify important information.</p>
-				</div>
-			</footer>
+				</main>
+			)}
+			<ChatFooter />
 		</div>
 	);
 }
-
