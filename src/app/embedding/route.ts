@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { cookies } from "next/headers";
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_EMBEDDING_KEY,
 });
 
 

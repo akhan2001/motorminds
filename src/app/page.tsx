@@ -14,7 +14,7 @@
 		console.log(session);
 		
 		if (!session) {
-		redirect("/auth");
+			redirect("/auth");
 		}
 
 		return (
