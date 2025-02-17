@@ -12,13 +12,16 @@
     "dependencies": {
         "@radix-ui/react-slot": "^1.1.2",
         "@supabase/auth-helpers-nextjs": "^0.10.0",
+        "@types/common-tags": "^1.8.4",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "common-tags": "^1.8.2",
         "lucide-react": "^0.475.0",
         "next": "^15.1.7",
         "openai": "^4.84.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "react-icons": "^5.4.0",
         "tailwind-merge": "^3.0.1",
         "tailwindcss": "^3.0.0",
         "tailwindcss-animate": "^1.0.7"

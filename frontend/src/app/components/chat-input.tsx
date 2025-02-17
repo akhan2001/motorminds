@@ -6,7 +6,6 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
 import ChatStart from "../chat/components/ChatStart";
 import ChatFooter from "../chat/components/ChatFooter";
-import Image from "next/image";
 
 export function ChatInput() {
 	const supabase = createClientComponentClient();

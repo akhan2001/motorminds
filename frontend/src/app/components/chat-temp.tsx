@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { ArrowRight } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
-import { PiSealQuestionThin } from "react-icons/pi";
 import Image from "next/image";
 
 export function ChatInput() {
