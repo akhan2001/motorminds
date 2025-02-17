@@ -13,9 +13,9 @@
 
 		console.log(session);
 		
-		if (!session) {
-			redirect("/auth");
-		}
+		// if (!session) {
+		// 	redirect("/auth");
+		// }
 
 		return (
 		<div className="bg-custom-background">
