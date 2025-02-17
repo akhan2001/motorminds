@@ -254,7 +254,7 @@ export function ChatInput() {
 				</div>
 			</main>
 			) : (
-			<main className="flex flex-col flex-1 justify-center items-center">
+			<main className="flex flex-col flex-1 justify-end items-center">
 				<div className="mx-auto px-3 w-full max-w-3xl max-h-[50%] overflow-auto bg-[#000000]">
 					{question.map((q, index) => {
 						const currentAnswer = answer[index];

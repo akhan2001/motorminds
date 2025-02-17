@@ -1,7 +1,7 @@
 {
-    "name": "frontend",
+    "name": "motorminds",
     "version": "1.0.0",
-    "description": "A frontend project using Next.js and Tailwind CSS",
+    "description": "Motorminds - A Shop Management Platform for Automotive Businesses",
     "main": "index.js",
     "scripts": {
         "dev": "next dev",
