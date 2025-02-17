@@ -1,50 +1,69 @@
-import { Bell } from "lucide-react"
+import { Bell, Settings, HelpCircle } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 
 export function Nav() {
-  const links = [
-    { href: "/", label: "Dashboard" },
-    { href: "/", label: "Mia AI" },
-    { href: "/", label: "Mechanic Hub" },
-    { href: "/", label: "Invoicing" },
-    { href: "/", label: "Lead Gen" },
-  ]
-
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-2">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between rounded-full bg-[#222222] px-4 py-2">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              
-              <span className="text-lg font-semibold text-white">Motorminds</span>
-            </Link>
-            <div className="flex items-center gap-4">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`rounded-full px-4 py-1.5 text-sm text-white transition-colors ${
-                    link.label === "Mechanic Hub"
-                      ? "bg-[#f52f2f] hover:bg-[#f52f2f]/90"
-                      : "bg-[#131313] hover:bg-[#1e1e1e]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="rounded-full bg-[#131313] p-2 hover:bg-[#1e1e1e]">
-              <Bell className="h-5 w-5 text-white" />
-            </button>
-            <div className="h-10 w-10 rounded-full bg-[#333333]" />
-          </div>
-        </div>
-      </div>
-    </nav>
-  )
+return (
+	<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] fixed top-0 left-0 right-0 z-50 ">
+		<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
+			<div className="flex flex-col items-start">
+				{/* Left: Logo and Premium Badge */}
+				<div className="flex items-center gap-4 py-3">
+					<div className="flex items-center gap-2">
+						<Image
+						src="motorminds-logo-black_background.svg"
+						alt="AK Auto Shop Logo"
+						width={32}
+						height={32}
+						className="w-8 h-8"
+						/>
+						<span className="text-white font-medium">AK Auto Shop</span>
+					</div>
+					<span className="px-3 py-1 text-xs bg-[#1f1f1f] text-white rounded-full">Premium</span>
+				</div>
+				{/* Center: Navigation Links */}
+				<div className="hidden lg:flex items-center gap-8">
+				{[
+					{ name: "Dashboard", active: true },
+					{ name: "Mia AI", active: false },
+					{ name: "Mechanic Hub", active: false },
+					{ name: "Loyalty", active: false },
+					{ name: "Invoices", active: false },
+					{ name: "Lead Generation", active: false },
+				].map((item) => (
+					<a
+					key={item.name}
+					href="#"
+					className={`py-2 border-b-2 ${
+						item.active
+						? "text-[#b22222] border-[#b22222]"
+						: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+					}`}
+					>
+					{item.name}
+					</a>
+				))}
+				</div>
+			</div>
+			{/* Right: Actions */}
+			<div className="flex items-center gap-4">
+			<button className="text-[#979797] hover:text-white transition-colors">
+				{/* <span className="hidden md:inline mr-2">Help</span> */}
+				<HelpCircle className="inline-block w-5 h-5" />
+			</button>
+			<button className="text-[#979797] hover:text-white transition-colors">
+				{/* <span className="hidden md:inline mr-2">Settings</span> */}
+				<Settings className="inline-block w-5 h-5" />
+			</button>
+			<button className="text-[#979797] hover:text-white transition-colors relative">
+				<Bell className="w-5 h-5" />
+				<span className="absolute -top-1 -right-1 w-2 h-2 bg-[#b22222] rounded-full" />
+			</button>
+			<div className="w-8 h-8 rounded-full bg-[#1f1f1f] flex items-center justify-center">
+				<span className="text-white text-sm">AK</span>
+			</div>
+			</div>
+		</nav>
+	</header>
+	)
 }
 
