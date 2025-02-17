@@ -16,15 +16,15 @@ return (
 						height={32}
 						className="w-8 h-8"
 						/>
-						<span className="text-white font-medium">AK Auto Shop</span>
+						<span className="text-white font-medium">Motorminds</span>
 					</div>
 					<span className="px-3 py-1 text-xs bg-[#1f1f1f] text-white rounded-full">Premium</span>
 				</div>
 				{/* Center: Navigation Links */}
 				<div className="hidden lg:flex items-center gap-8">
 				{[
-					{ name: "Dashboard", active: true },
-					{ name: "Mia AI", active: false },
+					{ name: "Dashboard", active: false },
+					{ name: "Mia AI", active: true },
 					{ name: "Mechanic Hub", active: false },
 					{ name: "Loyalty", active: false },
 					{ name: "Invoices", active: false },
