@@ -11,7 +11,9 @@
     },
     "dependencies": {
         "@radix-ui/react-slot": "^1.1.2",
-        "@supabase/ssr": "^0.10.0",
+        "@supabase/auth-helpers-nextjs": "^0.10.0",
+        "@supabase/ssr": "^0.6.0-rc.3",
+        "@supabase/supabase-js": "^2.48.1",
         "@types/common-tags": "^1.8.4",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
