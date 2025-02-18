@@ -10,10 +10,10 @@ return (
 				<div className="flex items-center gap-4 py-3">
 					<div className="flex items-center gap-2">
 						<Image
-						src="motorminds-logo-black_background.svg"
-						alt="AK Auto Shop Logo"
-						width={32}
-						height={32}
+						src="/motorminds-logo-white (1).svg"
+						alt="Motorminds Logo"
+						width={35}
+						height={35}
 						className="w-8 h-8"
 						/>
 						<span className="text-white font-medium">Motorminds</span>
@@ -24,11 +24,12 @@ return (
 				<div className="hidden lg:flex items-center gap-8">
 				{[
 					{ name: "Dashboard", active: false },
-					{ name: "Mia AI", active: true },
 					{ name: "Mechanic Hub", active: false },
-					{ name: "Loyalty", active: false },
+					{ name: "Mia AI", active: true },
 					{ name: "Invoices", active: false },
 					{ name: "Lead Generation", active: false },
+					{ name: "Loyalty", active: false },
+					{ name: "Customers", active: false },
 				].map((item) => (
 					<a
 					key={item.name}
