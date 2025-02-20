@@ -18,8 +18,14 @@ export function ChatMessageBubble(props: {
       )}
     >
       {props.message.role !== "user" && (
-        <div className="mr-4 border bg-secondary -mt-2 rounded-full w-10 h-10 flex-shrink-0 flex items-center justify-center">
-          <Image src="/motorminds-logo-black.png" alt="Mia Logo" width={40} height={40} />
+        <div className="mr-4 bg-secondary -mt-2 rounded-full w-10 h-10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <Image
+            src="/motorminds-logo-black (1).png"
+            alt="Mia Logo"
+            width={40}
+            height={40}
+            className="object-cover w-full h-full"
+          />
         </div>
       )}
 
