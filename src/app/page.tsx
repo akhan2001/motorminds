@@ -18,9 +18,12 @@
 		// }
 
 		return (
-		<div className="bg-custom-background">
+		<div className="h-screen bg-black">
 			<Nav />
-			<ChatInput />
+			<ChatInput 
+				endpoint="/chat"
+				placeholder="Ask me anything..."
+			/>
 		</div>
 		);
 	}

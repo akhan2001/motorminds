@@ -1,118 +1,170 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { ArrowRight } from "lucide-react"
+import React, { FormEvent, useRef, useState } from "react";
+import { type Message } from "ai";
+import { useChat } from '@ai-sdk/react'
+import { ArrowDown, ArrowRight, LoaderCircle } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
 import ChatStart from "../chat/components/ChatStart";
 import ChatFooter from "../chat/components/ChatFooter";
+import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { streamText } from 'ai';
+import { ChatMessageBubble } from "../chat/components/ChatMessageBubble";
 
-export function ChatInput() {
+interface TextUIPart {
+	type: 'text';
+	text: string;
+}
+
+function ChatMessages(props: {
+	messages: Message[];
+	emptyStateComponent: React.ReactNode;
+	sourcesForMessages: Record<string, any>;
+	className?: string;
+}) {
+	return (
+		<div className="flex flex-col max-w-[750px] mx-auto pb-12 w-full">
+			{props.messages.map((m, i) => {
+				const sourceKey = (props.messages.length - 1 - i).toString();
+				return (
+					<ChatMessageBubble
+					key={m.id}
+					message={m}
+					sources={props.sourcesForMessages[sourceKey]}
+					/>
+				);
+			})}
+		</div>
+	);
+}
+
+function ScrollToBottom() {
+	const { isAtBottom, scrollToBottom } = useStickToBottomContext();
+
+	if (isAtBottom) return null;
+	return (
+		<Button
+			variant="outline"
+			onClick={() => scrollToBottom()}
+			className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#fff] text-black"
+		>
+			<ArrowDown className="w-4 h-4" />
+		</Button>
+	)
+}
+
+function StickyToBottomContent(props: {
+	content: React.ReactNode;
+	footer?: React.ReactNode;
+	className?: string;
+	contentClassName?: string;
+}) {
+	const context = useStickToBottomContext();
+
+	return (
+		<div
+			ref={context.scrollRef}
+			style={{ width: "100%", height: "100%" }}
+			className={cn("grid grid-rows-[1fr,auto]", props.className)}
+		>
+			<div ref={context.contentRef} className={props.contentClassName}>
+			{props.content}
+			</div>
+
+			{props.footer}
+		</div>
+	);
+}
+
+function InputForm(props: {
+	onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+	value: string;
+	onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+	loading?: boolean;
+	children?: React.ReactNode;
+	className?: string;
+}) {
+	return (
+		<form
+			onSubmit={(e) => {
+				e.stopPropagation();
+				e.preventDefault();
+				props.onSubmit(e);
+			}}
+			className={cn("flex w-full flex-col", props.className)}
+		>
+		<div className="border border-input border-[#555555] bg-[#222222] rounded-lg flex flex-col gap-2 max-w-[768px] w-full mx-auto">
+			<textarea
+				value={props.value}
+				placeholder="Ask anything related to your shop..."
+				onChange={props.onChange}
+				className="border-none outline-none bg-transparent p-4 resize-none text-white placeholder-white/70"
+				onKeyDown={(e) => {
+					if (e.key === 'Enter' && !e.shiftKey) {
+						e.preventDefault();
+						props.onSubmit(e as any);
+					}
+				}}
+			/>
+
+			<div className="flex justify-between ml-4 mr-2 mb-2">
+				<div className="flex gap-3">{props.children}</div>
+
+				<Button type="submit" className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" disabled={props.loading}>
+					{props.loading ? (
+						<span role="status" className="flex justify-center">
+						<LoaderCircle className="animate-spin" />
+						{/* <span className="sr-only">Loading...</span> */}
+						</span>
+					) : (
+						<ArrowRight className="h-5 w-5 text-white" />
+					)}
+				</Button>
+			</div>
+		</div>
+		</form>
+	);
+}
+
+export function ChatInput(props: {
+	endpoint: string;
+	placeholder: string;
+}) {
 	const supabase = createClientComponentClient();
-	const inputRef = useRef<HTMLTextAreaElement>(null);
-	const [question, setQuestion] = useState<string[]>([]);
 	const [answer, setAnswer] = useState<string[]>([]);
-	const [loading, setLoading] = useState<boolean>(false);
-	const [isStarted, setIsStarted] = useState<boolean>(false);
+	const [sourcesForMessages, setSourcesForMessages] = useState<Record<string, any>>({});
+	// const inputRef = useRef<HTMLTextAreaElement>(null);
+	// const [question, setQuestion] = useState<string[]>([]);
+	// const [loading, setLoading] = useState<boolean>(false);
+	// const [isStarted, setIsStarted] = useState<boolean>(false);
 
 	const toastError = (message: string) => {
-	alert(message);
+		alert(message);
 	};
 
-	// Determine the match count based on the query
-	async function determineMatchCount(query: string) {
-		const generalKeywords = ["all", "list", "total", "how many"];
-		const isGeneralQuery = generalKeywords.some(keyword => query.toLowerCase().includes(keyword));
-
-		if (isGeneralQuery) {
-			const totalCount = await getTotalCount();
-			return totalCount; // Use the total count for general queries
-		} else {
-			return 3; // Lower match count for specific queries
-		}
-	};
-
-	const handleSearch = async () => {
-		setLoading(true);
-		setIsStarted(true);
-		const searchText = inputRef.current?.value;
-
-		if (searchText && searchText.trim()) {
-			setQuestion(currentQuestions => [...currentQuestions, searchText]);
-			const res = await fetch(location.origin + "/embedding", {
-				method: "POST",
-				body: JSON.stringify({ text: searchText.replace(/\n/g, " ") }),
+	const chat = useChat({
+		api: props.endpoint,
+		onResponse(response) {
+		  const sourcesHeader = response.headers.get("x-sources");
+		  const sources = sourcesHeader
+			? JSON.parse(Buffer.from(sourcesHeader, "base64").toString("utf8"))
+			: [];
+	
+		  const messageIndexHeader = response.headers.get("x-message-index");
+		  if (sources.length && messageIndexHeader !== null) {
+			setSourcesForMessages({
+			  ...sourcesForMessages,
+			  [messageIndexHeader]: sources,
 			});
-
-			if (res.status !== 200) {
-				toastError("Error embedding");
-			} else {
-				const data = await res.json();
-				const match_count = await determineMatchCount(searchText);
-				const { data: documents } = await supabase.rpc("match_documents", {
-					match_count: match_count,
-					match_threshold: 0.3,
-					query_embedding: data.embedding,
-				});
-
-				let tokenCount = 0;
-				let contextText = "";
-				
-				for (let i = 0; i < documents.length; i++) {
-					const document = documents[i];
-					const content = document.content;
-					tokenCount += document.token;
-
-					if (tokenCount > 1000) {
-						break;
-					}
-					contextText += `${content}\n---\n`;
-				}
-
-				if (contextText) {
-					const prompt = generatePrompt(searchText, contextText);
-					await generateAnswer(prompt);
-				} else {
-					const genericPrompt = generateGenericPrompt(searchText);
-					await generateAnswer(genericPrompt);
-				}
-			}
+		  }
+		},
+		onError: (e) => {
+			toastError("Error embedding")
 		}
-		if (inputRef.current) {
-			inputRef.current.value = "";
-		}
-		setLoading(false);
-	};
-
-	const generateGenericPrompt = (searchText: string) => {
-		const prompt = stripIndents`${oneLine`
-			You are Mia, an AI assistant specializing in automotive-related topics. You assist with vehicle maintenance, repairs, customer service, and shop operations. Your goal is to provide clear, friendly, and actionable responses while keeping the conversation focused on automotive topics.`}
-
-			**User Question:**  
-			${searchText}
-
-			**Response Guidelines:**  
-			- Respond directly, naturally, and conversationally—avoid prefixing with "User:" or "Mia:".  
-			- When answering maintenance or repair questions, include standard recommendations, warning signs, and best practices.  
-			- If applicable, suggest the next steps, such as scheduling a service or checking the owner's manual.  
-			- If the request is unclear, ask for clarification while keeping the focus on automotive topics.  
-			- If the input is unrelated to automotive topics, politely redirect the user back to relevant subjects.  
-
-			**Example Responses:**  
-			- **Question:** "When should I replace my timing belt?"  
-			- **Response:** "Timing belts usually need replacement every 60,000 to 100,000 miles, but it varies by vehicle. Have you noticed any squeaking, rough idling, or difficulty starting? I can help you determine if it's time for a replacement!"  
-			- **Question:** "Hey, how's your day?"
-			- **Response:** "Hey there! I'm always running at full speed! Need help with a car issue?"  
-			- **Question:** "Tell me a joke."  
-			- **Response:** "Of course! Why did the mechanic bring a ladder to work? Because they were always aiming high! Need help with anything car-related?"  
-			- **Question:** "Can you book me a flight?"  
-			- **Response:** "I specialize in automotive assistance, but if you need a ride to the airport, I can suggest a good local transport service!"  
-
-			Ensure responses are **direct, conversational, and formatted as natural speech** without unnecessary labels.
-			`;
-		
-		return prompt;
-	};
+	});
 
 	const generateAnswer = async (prompt: string) => {
 		const res = await fetch(location.origin + "/chat", {
@@ -189,135 +241,99 @@ export function ChatInput() {
 		return prompt;
 	};
 
-	async function getTotalCount() {
-		const { count, error } = await supabase
-			.from('customers') // Replace with your table name
-			.select('*', { count: 'exact', head: true });
+	async function handleSearch(e: FormEvent<HTMLFormElement>) {
+		e.preventDefault();
 
-		if (error) {
-			console.error('Error fetching total count:', error);
-			return 0;
+		// Store the input before clearing it
+		const currentInput = chat.input;
+		chat.setInput("");
+
+		// Add user message first
+		const messagesWithUserReply = chat.messages.concat({
+			id: chat.messages.length.toString(),
+			content: currentInput,
+			role: "user",
+			parts: [{ type: "text", text: currentInput } as TextUIPart]
+		});
+		chat.setMessages(messagesWithUserReply);
+
+		try {
+			// Get embeddings
+			const response = await fetch("/embedding", {
+				method: "POST",
+				body: JSON.stringify({ text: messagesWithUserReply.map(message => message.content).join("\n") }),
+			});
+
+			if (!response.ok || response.status !== 200) {
+				throw new Error("Error processing request");
+			}
+
+			// Get context
+			const data = await response.json();
+			const { data: documents } = await supabase.rpc("match_documents", {
+				query_embedding: data.embedding,
+				match_threshold: 0.78,
+				match_count: 3
+			});
+			
+			// Build context
+			let contextText = documents
+				.slice(0, documents.reduce((acc: number, doc: any) => acc + doc.token > 1000 ? acc : acc + 1, 0))
+				.map((doc: any) => doc.content)
+				.join("\n---\n");
+
+			// Generate and get AI response
+			const prompt = generatePrompt(currentInput, contextText);
+			await generateAnswer(prompt);
+
+			// Add AI response to messages
+			if (answer.length > 0) {
+				chat.setMessages([
+					...messagesWithUserReply,
+					{
+						id: messagesWithUserReply.length.toString(),
+						content: answer[answer.length - 1],
+						role: "assistant",
+						parts: [{ type: "text", text: answer[answer.length - 1] } as TextUIPart]
+					}
+				]);
+			}
+		} catch (error) {
+			toastError(error instanceof Error ? error.message : "Error processing request");
 		}
-
-		return count;
-	};
-
-	// async function fetchDocuments() {
-	//   const { data, error } = await supabase.from('documents').select('*');
-
-	//   if (error) {
-	//     console.error('Error fetching documents:', error);
-	//   } else {
-	//     console.log('Documents:', data);
-	//   }
-	// }
-
-	// // Call the function to fetch and print documents
-	// fetchDocuments().catch(console.error);
+	}
 
 	return (
-		// Mia AI
-		<div className="h-screen w-full flex flex-col justify-between overflow-hidden">
-			{ !isStarted ? (
-			<main className="flex flex-col flex-1 justify-center items-center">
-				<div className="m-auto px-3 w-full max-w-3xl space-y-5">
-					<ChatStart />
-					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-between overflow-hidden">
-						<div className="flex min-h-[44px] items-start w-full">
-							<div className="min-w-0 max-w-full flex-1">
-								<div className="_prosemirror-parent_1r7mb_1 text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
-									<textarea
-										ref={inputRef}
-										className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
-										placeholder="Ask anything related to your shop..."
-										style={{ height: 'auto', maxHeight: '200px' }}
-										onInput={(e) => {
-											const target = e.target as HTMLTextAreaElement;
-											target.style.height = 'auto'; // Reset height
-											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
-										}}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												handleSearch();
-											}
-										}}
-									/>
-								</div>
-							</div>
-						</div>
-						<div className="flex justify-center items-center">
-							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" onClick={handleSearch}>
-								<ArrowRight className="h-5 w-5 text-white" />
-							</button>
-						</div>
+		<StickToBottom className="h-full">
+			<StickyToBottomContent
+				className="bg-black"
+				contentClassName="py-8 px-2"
+				content={
+				chat.messages.length === 0 ? (
+					<div>
+						<ChatStart />
 					</div>
+				) : (
+					<ChatMessages
+						messages={chat.messages}
+						sourcesForMessages={sourcesForMessages}
+						emptyStateComponent={<div><ChatStart /></div>}
+					/>
+				)
+			}
+			footer={
+				<div className="sticky bottom-8 px-2">
+					<ScrollToBottom />
+					<InputForm
+						value={chat.input}
+						onChange={chat.handleInputChange}
+						onSubmit={handleSearch}
+					>
+					</InputForm>
+					<ChatFooter />
 				</div>
-			</main>
-			) : (
-			<main className="flex flex-col flex-1 justify-end items-center">
-				<div className="mx-auto px-3 w-full max-w-3xl max-h-[50%] overflow-auto bg-[#000000]">
-					{question.map((q, index) => {
-						const currentAnswer = answer[index];
-						console.log(currentAnswer);
-						const isLoading = loading && !currentAnswer;
-
-						return (
-							<div className="space-y-3" key={index}>
-								<div className="w-full flex justify-end">
-									<div className="px-5 py-4 rounded-[20px] bg-[#333333] max-w-[55%] m-3">
-										<div className="flex items-start gap-2 text-500">
-											{/* <PiSealQuestionThin className="text-[#E3E3E3] text-500 text-2xl w-5 h-5"/> */}
-											<h5 className="text-500 text-[#E3E3E3] text-1xl font-regular text-left">{q}</h5>
-										</div>
-									</div>
-								</div>
-								{isLoading ? (
-									<div className="px-5 py-4 rounded-[20px] bg-[#222222] w-[15%] m-3 my-2">
-										<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">Loading...</h5>
-									</div>
-								) : (
-									<div className="px-5 py-4 rounded-[20px] bg-[#222222] max-w-[55%] m-3 my-2">
-										<h5 className="text-500 text-primaryWhite text-sm font-medium text-left">{currentAnswer}</h5>
-									</div>
-								)}
-							</div>
-						);
-					})}
-				</div>
-				<div className="mx-auto px-3 w-full max-w-3xl">
-					<div id="composer-background" className="flex w-full cursor-text flex-row rounded-3xl px-3 py-1 duration-150 ease-in-out contain-inline-size bg-[#222222] justify-end overflow-hidden">
-						<div className="flex min-h-[44px] items-start w-full">
-							<div className="min-w-0 max-w-full flex-1">
-								<div className="text-token-text-primary max-h-[25dvh] max-h-52 overflow-auto default-browser">
-									<textarea
-										ref={inputRef}
-										className="bg-[#222222] w-full px-6 py-4 text-[#e9ecef] placeholder-[#616161] outline-none my-2 resize-none"
-										placeholder="Ask anything else..."
-										style={{ height: 'auto', maxHeight: '200px' }}
-										onInput={(e) => {
-											const target = e.target as HTMLTextAreaElement;
-											target.style.height = 'auto'; // Reset height
-											target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // Set new height
-										}}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												handleSearch();
-											}
-										}}
-									/>
-								</div>
-							</div>
-						</div>
-						<div className="flex justify-center items-center">
-							<button className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90 transition duration-300 ease-in-out" onClick={handleSearch}>
-								<ArrowRight className="h-5 w-5 text-white" />
-							</button>
-						</div>
-					</div>
-				</div>
-			</main>
-			)}
-			<ChatFooter />
-		</div>
+			}
+			/>
+		</StickToBottom>
 	);
 }
