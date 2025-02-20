@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { Message } from "ai/react";
+import Image from "next/image";
 
 export function ChatMessageBubble(props: {
   message: Message;
@@ -9,16 +10,16 @@ export function ChatMessageBubble(props: {
   return (
     <div
       className={cn(
-        `rounded-[24px] max-w-[75%] mb-8 flex bg-[#333333] text-primaryWhite px-5 py-4`,
+        `rounded-[24px] max-w-[75%] mb-8 flex text-primaryWhite`,
         props.message.role === "user"
-          ? "bg-[#222222] text-secondary-foreground text-primaryWhite px-4 py-2"
+          ? "bg-[#222222] px-4 py-2"
           : null,
         props.message.role === "user" ? "ml-auto" : "mr-auto",
       )}
     >
       {props.message.role !== "user" && (
         <div className="mr-4 border bg-secondary -mt-2 rounded-full w-10 h-10 flex-shrink-0 flex items-center justify-center">
-          {props.aiEmoji}
+          <Image src="/motorminds-logo-black.png" alt="Mia Logo" width={40} height={40} />
         </div>
       )}
 
