@@ -4,8 +4,8 @@ import React, { useRef, useState } from "react";
 import { ArrowRight } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
-import ChatStart from "../chat/components/ChatStart";
-import ChatFooter from "../chat/components/ChatFooter";
+import ChatStart from "../src/app/chat/components/ChatStart";
+import ChatFooter from "../src/app/chat/components/ChatFooter";
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { cn } from "@/lib/utils";
 

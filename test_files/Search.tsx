@@ -6,12 +6,12 @@ import { useChat } from '@ai-sdk/react'
 import { ArrowDown, ArrowRight, LoaderCircle } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
-import ChatStart from "../chat/components/ChatStart";
-import ChatFooter from "../chat/components/ChatFooter";
+import ChatStart from "../src/app/chat/components/ChatStart";
+import ChatFooter from "../src/app/chat/components/ChatFooter";
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ChatMessageBubble } from "../chat/components/ChatMessageBubble";
+import { ChatMessageBubble } from "../src/app/chat/components/ChatMessageBubble";
 import { toast } from 'sonner';
 
 interface TextUIPart {

@@ -79,7 +79,7 @@ function ChatInput(props: {
 			<textarea
 				value={props.value}
 				placeholder="Ask anything related to your shop..."
-		onChange={props.onChange}
+		   		onChange={props.onChange}
 				className="border-none outline-none bg-transparent p-4 resize-none text-white placeholder-white/70"
 				onKeyDown={(e) => {
 					if (e.key === 'Enter' && !e.shiftKey) {
@@ -186,9 +186,9 @@ export function ChatWindow(props: {
 
     chat.setInput("");
     const messagesWithUserReply = chat.messages.concat({
-      id: chat.messages.length.toString(),
-      content: chat.input,
-      role: "user",
+		id: chat.messages.length.toString(),
+		content: chat.input,
+		role: "user",
     });
     chat.setMessages(messagesWithUserReply);
 

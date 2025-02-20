@@ -6,14 +6,14 @@ import { useChat } from '@ai-sdk/react'
 import { ArrowDown, ArrowRight, LoaderCircle } from "lucide-react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { oneLine, stripIndents } from "common-tags";
-import ChatStart from "../chat/components/ChatStart";
-import ChatFooter from "../chat/components/ChatFooter";
+import ChatStart from "../src/app/chat/components/ChatStart";
+import ChatFooter from "../src/app/chat/components/ChatFooter";
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ChatMessageBubble } from "../chat/components/ChatMessageBubble";
+import { ChatMessageBubble } from "../src/app/chat/components/ChatMessageBubble";
 import { toast } from 'sonner';
-import { IntermediateStep } from "../chat/components/IntermediateStep";
+import { IntermediateStep } from "../src/app/chat/components/IntermediateStep";
 import { Message as UIMessage } from '@ai-sdk/ui-utils';
 
 // Update Message type definition
@@ -177,113 +177,113 @@ const chat = useChat({
     }
 });
 
-async function sendMessage(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (chat.isLoading || intermediateStepsLoading) return;
+// async function sendMessage(e: FormEvent<HTMLFormElement>) {
+//     e.preventDefault();
+//     if (chat.isLoading || intermediateStepsLoading) return;
 
-    if (!showIntermediateSteps) {
-      chat.handleSubmit(e);
-      return;
-    }
+//     if (!showIntermediateSteps) {
+//       chat.handleSubmit(e);
+//       return;
+//     }
 
-    // Some extra work to show intermediate steps properly
-    setIntermediateStepsLoading(true);
+//     // Some extra work to show intermediate steps properly
+//     setIntermediateStepsLoading(true);
 
-    chat.setInput("");
+//     chat.setInput("");
 
-	// Construct User Message
-    const messagesWithUserReply = chat.messages.concat({
-		id: chat.messages.length.toString(),
-		content: chat.input,
-		role: "user",
-		parts: [{
-			type: "text",
-			text: chat.input,
-		}],
-	});
+// 	// Construct User Message
+//     const messagesWithUserReply = chat.messages.concat({
+// 		id: chat.messages.length.toString(),
+// 		content: chat.input,
+// 		role: "user",
+// 		parts: [{
+// 			type: "text",
+// 			text: chat.input,
+// 		}],
+// 	});
   
-	// console.log(messagesWithUserReply);
+// 	// console.log(messagesWithUserReply);
 
-    chat.setMessages(messagesWithUserReply);
-	// console.log(chat.messages);
+//     chat.setMessages(messagesWithUserReply);
+// 	// console.log(chat.messages);
 
-	// Send Message to Endpoint
-	const response = await fetch(props.endpoint, {
-		method: "POST",
-		body: JSON.stringify({
-			messages: messagesWithUserReply,
-			show_intermediate_steps: true,
-		}),
-	});
-    const json = await response.json();
+// 	// Send Message to Endpoint
+// 	const response = await fetch(props.endpoint, {
+// 		method: "POST",
+// 		body: JSON.stringify({
+// 			messages: messagesWithUserReply,
+// 			show_intermediate_steps: true,
+// 		}),
+// 	});
+//     const json = await response.json();
 
-	// console.log(json);
-    setIntermediateStepsLoading(false);
+// 	// console.log(json);
+//     setIntermediateStepsLoading(false);
 
-	// Handle Response Errors
-    if (!response.ok) {
-      toast.error(`Error while processing your request`, {
-        description: json.error,
-      });
-      return;
-    }
+// 	// Handle Response Errors
+//     if (!response.ok) {
+//       toast.error(`Error while processing your request`, {
+//         description: json.error,
+//       });
+//       return;
+//     }
 
-	// Process Response Messages
-    const responseMessages: Message[] = json.messages;
-	// console.log(responseMessages);
+// 	// Process Response Messages
+//     const responseMessages: Message[] = json.messages;
+// 	// console.log(responseMessages);
 
-    // Represent intermediate steps as system messages for display purposes
-    // TODO: Add proper support for tool messages
-    const toolCallMessages = responseMessages.filter(
-      (responseMessage: Message) => {
-        return ((responseMessage.role === "assistant" && !!responseMessage.tool_calls?.length) || responseMessage.role === "data");
-      },
-    );
+//     // Represent intermediate steps as system messages for display purposes
+//     // TODO: Add proper support for tool messages
+//     const toolCallMessages = responseMessages.filter(
+//       (responseMessage: Message) => {
+//         return ((responseMessage.role === "assistant" && !!responseMessage.tool_calls?.length) || responseMessage.role === "data");
+//       },
+//     );
 
-    const intermediateStepMessages = [];
-    for (let i = 0; i < toolCallMessages.length; i += 2) {
-		const aiMessage = toolCallMessages[i];
-		const toolMessage = toolCallMessages[i + 1];
-		intermediateStepMessages.push({
-			id: (messagesWithUserReply.length + i / 2).toString(),
-			role: "system" as const,
-			content: JSON.stringify({
-			action: aiMessage.tool_calls?.[0],
-			observation: toolMessage.content,
-			}),
-			parts: [{
-				type: "text",
-				text: JSON.stringify({
-					action: aiMessage.tool_calls?.[0],
-					observation: toolMessage.content,
-				})
-			}]
-		});
-    }
-    const newMessages = messagesWithUserReply;
-	// console.log(newMessages);
-    for (const message of intermediateStepMessages) {
-		newMessages.push(message);
-		// console.log(message);
-		chat.setMessages([...newMessages]);
-		await new Promise((resolve) =>
-			setTimeout(resolve, 1000 + Math.random() * 1000),
-		);
-    }
+//     const intermediateStepMessages = [];
+//     for (let i = 0; i < toolCallMessages.length; i += 2) {
+// 		const aiMessage = toolCallMessages[i];
+// 		const toolMessage = toolCallMessages[i + 1];
+// 		intermediateStepMessages.push({
+// 			id: (messagesWithUserReply.length + i / 2).toString(),
+// 			role: "system" as const,
+// 			content: JSON.stringify({
+// 			action: aiMessage.tool_calls?.[0],
+// 			observation: toolMessage.content,
+// 			}),
+// 			parts: [{
+// 				type: "text",
+// 				text: JSON.stringify({
+// 					action: aiMessage.tool_calls?.[0],
+// 					observation: toolMessage.content,
+// 				})
+// 			}]
+// 		});
+//     }
+//     const newMessages = messagesWithUserReply;
+// 	// console.log(newMessages);
+//     for (const message of intermediateStepMessages) {
+// 		newMessages.push(message);
+// 		// console.log(message);
+// 		chat.setMessages([...newMessages]);
+// 		await new Promise((resolve) =>
+// 			setTimeout(resolve, 1000 + Math.random() * 1000),
+// 		);
+//     }
 
-    chat.setMessages([
-      ...newMessages,
-      {
-        id: newMessages.length.toString(),
-        content: responseMessages[responseMessages.length - 1].content,
-        role: "assistant",
-        parts: [{
-			type: "text",
-			text: responseMessages[responseMessages.length - 1].content
-		}]
-      },
-    ]);
-  }
+//     chat.setMessages([
+//       ...newMessages,
+//       {
+//         id: newMessages.length.toString(),
+//         content: responseMessages[responseMessages.length - 1].content,
+//         role: "assistant",
+//         parts: [{
+// 			type: "text",
+// 			text: responseMessages[responseMessages.length - 1].content
+// 		}]
+//       },
+//     ]);
+//   }
 
 return (
     <StickToBottom>
@@ -308,7 +308,7 @@ return (
 				<ChatInput
 					value={chat.input}
 					onChange={chat.handleInputChange}
-					onSubmit={sendMessage}
+					onSubmit={chat.handleSubmit}
 					loading={chat.isLoading || intermediateStepsLoading}
 					placeholder={
 						props.placeholder ?? "What's it like to be a pirate?"
