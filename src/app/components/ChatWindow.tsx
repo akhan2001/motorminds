@@ -50,7 +50,7 @@ function ScrollToBottom() {
 		<Button
 			variant="outline"
 			onClick={() => scrollToBottom()}
-			className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-white text-black"
+			className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#f52f2f] text-white border-none hover:bg-[#d50000] hover:text-white transition-all duration-300 ease-in-out"
 		>
 			<ArrowDown className="w-4 h-4" />
 		</Button>
