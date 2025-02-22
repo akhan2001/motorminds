@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowRight, LoaderCircle, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { TextSearch } from "lucide-react";
 function ChatMessages(props: {
   messages: Message[];
   emptyStateComponent: ReactNode;
@@ -43,18 +44,18 @@ function ChatMessages(props: {
 }
 
 function ScrollToBottom() {
-	const { isAtBottom, scrollToBottom } = useStickToBottomContext();
+  const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
-	if (isAtBottom) return null;
-	return (
-		<Button
-			variant="outline"
-			onClick={() => scrollToBottom()}
-			className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#f52f2f] text-white border-none hover:bg-[#d50000] hover:text-white transition-all duration-300 ease-in-out"
-		>
-			<ArrowDown className="w-4 h-4" />
-		</Button>
-	)
+  if (isAtBottom) return null;
+  return (
+    <Button
+      variant="outline"
+      onClick={() => scrollToBottom()}
+      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-[#f52f2f] text-white border-none hover:bg-[#d50000] hover:text-white transition-all duration-300 ease-in-out"
+    >
+      <ArrowDown className="w-4 h-4" />
+    </Button>
+  );
 }
 
 function ChatInput(props: {
@@ -68,43 +69,47 @@ function ChatInput(props: {
 }) {
   return (
     <form
-		onSubmit={(e) => {
-			e.stopPropagation();
-			e.preventDefault();
-			props.onSubmit(e);
-		}}
-		className={cn("flex w-full flex-col", props.className)}
-	>
-		<div className="border border-[#444444] bg-[#222222] rounded-lg flex flex-col gap-2 max-w-[768px] w-full mx-auto">
-			<textarea
-				value={props.value}
-				placeholder="Ask anything related to your shop..."
-		   		onChange={props.onChange}
-				className="border-none outline-none bg-transparent p-4 resize-none text-white placeholder-white/70"
-				onKeyDown={(e) => {
-					if (e.key === 'Enter' && !e.shiftKey) {
-						e.preventDefault();
-						props.onSubmit(e as any);
-					}
-				}}
-			/>
+      onSubmit={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        props.onSubmit(e);
+      }}
+      className={cn("flex w-full flex-col", props.className)}
+    >
+      <div className="border border-[#444444] bg-[#222222] rounded-lg flex flex-col gap-2 max-w-[768px] w-full mx-auto">
+        <textarea
+          value={props.value}
+          placeholder="Ask anything related to your shop..."
+          onChange={props.onChange}
+          className="border-none outline-none bg-transparent p-4 resize-none text-white placeholder-white/70"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              props.onSubmit(e as any);
+            }
+          }}
+        />
 
-		<div className="flex justify-between ml-4 mr-2 mb-2">
-			<div className="flex gap-3">{props.children}</div>
-				<Button type="submit" className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90" disabled={props.loading}>
-					{props.loading ? (
-						<span role="status" className="flex justify-center">
-						<LoaderCircle className="animate-spin" />
-						{/* <span className="sr-only">Loading...</span> */}
-						</span>
-					) : (
-						<ArrowRight className="h-5 w-5 text-white" />
-					)}
-				</Button>
-			</div>
-		</div>
-	</form>
-);
+        <div className="flex justify-between ml-4 mr-2 mb-2">
+          <div className="flex gap-3">{props.children}</div>
+          <Button
+            type="submit"
+            className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90"
+            disabled={props.loading}
+          >
+            {props.loading ? (
+              <span role="status" className="flex justify-center">
+                <LoaderCircle className="animate-spin" />
+                {/* <span className="sr-only">Loading...</span> */}
+              </span>
+            ) : (
+              <ArrowRight className="h-5 w-5 text-white" />
+            )}
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
 }
 
 function StickyToBottomContent(props: {
@@ -140,7 +145,7 @@ export function ChatWindow(props: {
   showIntermediateStepsToggle?: boolean;
 }) {
   const [showIntermediateSteps, setShowIntermediateSteps] = useState(
-    !!props.showIntermediateStepsToggle,
+    !!props.showIntermediateStepsToggle
   );
   const [intermediateStepsLoading, setIntermediateStepsLoading] =
     useState(false);
@@ -186,9 +191,9 @@ export function ChatWindow(props: {
 
     chat.setInput("");
     const messagesWithUserReply = chat.messages.concat({
-		id: chat.messages.length.toString(),
-		content: chat.input,
-		role: "user",
+      id: chat.messages.length.toString(),
+      content: chat.input,
+      role: "user",
     });
     chat.setMessages(messagesWithUserReply);
 
@@ -220,7 +225,7 @@ export function ChatWindow(props: {
             !!responseMessage.tool_calls?.length) ||
           responseMessage.role === "tool"
         );
-      },
+      }
     );
 
     const intermediateStepMessages = [];
@@ -241,7 +246,7 @@ export function ChatWindow(props: {
       newMessages.push(message);
       chat.setMessages([...newMessages]);
       await new Promise((resolve) =>
-        setTimeout(resolve, 1000 + Math.random() * 1000),
+        setTimeout(resolve, 1000 + Math.random() * 1000)
       );
     }
 
@@ -272,20 +277,28 @@ export function ChatWindow(props: {
           )
         }
         footer={
-          <div className="sticky bottom-8 px-2">
-            <ScrollToBottom />
-            <ChatInput
-              value={chat.input}
-              onChange={chat.handleInputChange}
-              onSubmit={sendMessage}
-              loading={chat.isLoading || intermediateStepsLoading}
-              placeholder={
-                props.placeholder ?? "What's it like to be a pirate?"
-              }
-            >
-            </ChatInput>
-            <ChatFooter />
-          </div>
+			<div className="sticky bottom-8 px-2">
+				<ScrollToBottom />
+				<ChatInput
+				value={chat.input}
+				onChange={chat.handleInputChange}
+				onSubmit={sendMessage}
+				loading={chat.isLoading || intermediateStepsLoading}
+				placeholder={
+					props.placeholder ?? "What's it like to be a pirate?"
+				}
+				>
+				<Button
+				variant="ghost"
+				className="px-5 -ml-1 border border-[#444444] bg-[#222222] rounded-full hover:bg-[#333333] transition-all duration-300 ease-in-out"
+				disabled={chat.messages.length !== 0}
+				>
+					<TextSearch className="w-4 h-4 text-white" />
+					<span className="text-sm text-white">Connect to Database</span>
+				</Button>
+				</ChatInput>
+				<ChatFooter />
+			</div>
         }
       ></StickyToBottomContent>
     </StickToBottom>
