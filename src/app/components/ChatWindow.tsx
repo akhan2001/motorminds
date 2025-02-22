@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowRight, LoaderCircle, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { TextSearch } from "lucide-react";
+import { Switch } from "@/components/ui/switch"
+
 function ChatMessages(props: {
   messages: Message[];
   emptyStateComponent: ReactNode;
@@ -137,170 +137,186 @@ function StickyToBottomContent(props: {
 }
 
 export function ChatWindow(props: {
-  endpoint: string;
-  emptyStateComponent: ReactNode;
-  placeholder?: string;
-  emoji?: string;
-  showIngestForm?: boolean;
-  showIntermediateStepsToggle?: boolean;
+	endpoint: string;
+	emptyStateComponent: ReactNode;
+	placeholder?: string;
+	emoji?: string;
+	showIngestForm?: boolean;
+	showIntermediateStepsToggle?: boolean;
 }) {
-  const [showIntermediateSteps, setShowIntermediateSteps] = useState(
-    !!props.showIntermediateStepsToggle
-  );
-  const [intermediateStepsLoading, setIntermediateStepsLoading] =
-    useState(false);
+	const [lookAtDatabase, setLookAtDatabase] = useState(false);
+	const [endpoint, setEndpoint] = useState('api/chat');
 
-  const [sourcesForMessages, setSourcesForMessages] = useState<
-    Record<string, any>
-  >({});
+	const handleSwitchToggle = (checked: boolean) => {
+		setLookAtDatabase(checked);
 
-  const chat = useChat({
-    api: props.endpoint,
-    onResponse(response) {
-      const sourcesHeader = response.headers.get("x-sources");
-      const sources = sourcesHeader
-        ? JSON.parse(Buffer.from(sourcesHeader, "base64").toString("utf8"))
-        : [];
+		if (checked) {
+			setEndpoint('api/chat/retrieval');
+			console.log('Switched to: api/chat/retrieval');
+		} else {
+			setEndpoint('api/chat');
+			// console.log('Switched to: api/chat');
+		}
+	};
 
-      const messageIndexHeader = response.headers.get("x-message-index");
-      if (sources.length && messageIndexHeader !== null) {
-        setSourcesForMessages({
-          ...sourcesForMessages,
-          [messageIndexHeader]: sources,
-        });
-      }
-    },
-    streamMode: "text",
-    onError: (e) =>
-      toast.error(`Error while processing your request`, {
-        description: e.message,
-      }),
-  });
+	const [showIntermediateSteps, setShowIntermediateSteps] = useState(
+		!!props.showIntermediateStepsToggle
+	);
+	const [intermediateStepsLoading, setIntermediateStepsLoading] =
+		useState(false);
 
-  async function sendMessage(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (chat.isLoading || intermediateStepsLoading) return;
+	const [sourcesForMessages, setSourcesForMessages] = useState<
+		Record<string, any>
+	>({});
 
-    if (!showIntermediateSteps) {
-      chat.handleSubmit(e);
-      return;
-    }
+	const chat = useChat({
+		api: endpoint,
+		onResponse(response) {
+			const sourcesHeader = response.headers.get("x-sources");
+			const sources = sourcesHeader
+				? JSON.parse(Buffer.from(sourcesHeader, "base64").toString("utf8"))
+				: [];
 
-    // Some extra work to show intermediate steps properly
-    setIntermediateStepsLoading(true);
+			const messageIndexHeader = response.headers.get("x-message-index");
+			if (sources.length && messageIndexHeader !== null) {
+				setSourcesForMessages({
+				...sourcesForMessages,
+				[messageIndexHeader]: sources,
+				});
+			}
+		},
+		streamMode: "text",
+		onError: (e) =>
+		toast.error(`Error while processing your request`, {
+			description: e.message,
+		}),
+	});
 
-    chat.setInput("");
-    const messagesWithUserReply = chat.messages.concat({
-      id: chat.messages.length.toString(),
-      content: chat.input,
-      role: "user",
-    });
-    chat.setMessages(messagesWithUserReply);
+	async function sendMessage(e: FormEvent<HTMLFormElement>) {
+		e.preventDefault();
+		if (chat.isLoading || intermediateStepsLoading) return;
 
-    const response = await fetch(props.endpoint, {
-      method: "POST",
-      body: JSON.stringify({
-        messages: messagesWithUserReply,
-        show_intermediate_steps: true,
-      }),
-    });
-    const json = await response.json();
-    setIntermediateStepsLoading(false);
+		if (!showIntermediateSteps) {
+			chat.handleSubmit(e);
+			return;
+		}
 
-    if (!response.ok) {
-      toast.error(`Error while processing your request`, {
-        description: json.error,
-      });
-      return;
-    }
+		// Some extra work to show intermediate steps properly
+		setIntermediateStepsLoading(true);
 
-    const responseMessages: Message[] = json.messages;
+		chat.setInput("");
+		const messagesWithUserReply = chat.messages.concat({
+			id: chat.messages.length.toString(),
+			content: chat.input,
+			role: "user",
+		});
+		chat.setMessages(messagesWithUserReply);
 
-    // Represent intermediate steps as system messages for display purposes
-    // TODO: Add proper support for tool messages
-    const toolCallMessages = responseMessages.filter(
-      (responseMessage: Message) => {
-        return (
-          (responseMessage.role === "assistant" &&
-            !!responseMessage.tool_calls?.length) ||
-          responseMessage.role === "tool"
-        );
-      }
-    );
+		console.log("Sending message to: ", endpoint);
+		const response = await fetch(endpoint, {
+			method: "POST",
+			body: JSON.stringify({
+				messages: messagesWithUserReply,
+				show_intermediate_steps: true,
+			}),
+		});
+		console.log("Response: ", response);
+		const json = await response.json();
+		setIntermediateStepsLoading(false);
 
-    const intermediateStepMessages = [];
-    for (let i = 0; i < toolCallMessages.length; i += 2) {
-      const aiMessage = toolCallMessages[i];
-      const toolMessage = toolCallMessages[i + 1];
-      intermediateStepMessages.push({
-        id: (messagesWithUserReply.length + i / 2).toString(),
-        role: "system" as const,
-        content: JSON.stringify({
-          action: aiMessage.tool_calls?.[0],
-          observation: toolMessage.content,
-        }),
-      });
-    }
-    const newMessages = messagesWithUserReply;
-    for (const message of intermediateStepMessages) {
-      newMessages.push(message);
-      chat.setMessages([...newMessages]);
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000 + Math.random() * 1000)
-      );
-    }
+		if (!response.ok) {
+			toast.error(`Error while processing your request`, {
+			description: json.error,
+		});
+			return;
+		}
 
-    chat.setMessages([
-      ...newMessages,
-      {
-        id: newMessages.length.toString(),
-        content: responseMessages[responseMessages.length - 1].content,
-        role: "assistant",
-      },
-    ]);
-  }
+		const responseMessages: Message[] = json.messages;
 
-  return (
-    <StickToBottom className="h-full">
-      <StickyToBottomContent
-        className="bg-black"
-        contentClassName="py-8 px-2"
-        content={
-          chat.messages.length === 0 ? (
-            <div>{props.emptyStateComponent}</div>
-          ) : (
-            <ChatMessages
-              messages={chat.messages}
-              emptyStateComponent={props.emptyStateComponent}
-              sourcesForMessages={sourcesForMessages}
-            />
-          )
-        }
-        footer={
-			<div className="sticky bottom-8 px-2">
-				<ScrollToBottom />
-				<ChatInput
-				value={chat.input}
-				onChange={chat.handleInputChange}
-				onSubmit={sendMessage}
-				loading={chat.isLoading || intermediateStepsLoading}
-				placeholder={
-					props.placeholder ?? "What's it like to be a pirate?"
-				}
-				>
-				<Button
-				variant="ghost"
-				className="px-5 -ml-1 border border-[#444444] bg-[#222222] rounded-full hover:bg-[#333333] transition-all duration-300 ease-in-out"
-				disabled={chat.messages.length !== 0}
-				>
-					<TextSearch className="w-4 h-4 text-white" />
-					<span className="text-sm text-white">Connect to Database</span>
-				</Button>
-				</ChatInput>
-				<ChatFooter />
-			</div>
-        }
-      ></StickyToBottomContent>
-    </StickToBottom>
-  );
+		// Represent intermediate steps as system messages for display purposes
+		// TODO: Add proper support for tool messages
+		const toolCallMessages = responseMessages.filter(
+		(responseMessage: Message) => {
+			return (
+				(responseMessage.role === "assistant" && !!responseMessage.tool_calls?.length) || responseMessage.role === "tool"
+			);
+		}
+		);
+
+		const intermediateStepMessages = [];
+		for (let i = 0; i < toolCallMessages.length; i += 2) {
+		const aiMessage = toolCallMessages[i];
+		const toolMessage = toolCallMessages[i + 1];
+		intermediateStepMessages.push({
+			id: (messagesWithUserReply.length + i / 2).toString(),
+			role: "system" as const,
+			content: JSON.stringify({
+			action: aiMessage.tool_calls?.[0],
+			observation: toolMessage.content,
+			}),
+		});
+		}
+		const newMessages = messagesWithUserReply;
+		for (const message of intermediateStepMessages) {
+		newMessages.push(message);
+		chat.setMessages([...newMessages]);
+		await new Promise((resolve) =>
+			setTimeout(resolve, 1000 + Math.random() * 1000)
+		);
+		}
+
+		chat.setMessages([
+			...newMessages,
+			{
+				id: newMessages.length.toString(),
+				content: responseMessages[responseMessages.length - 1].content,
+				role: "assistant",
+			},
+		]);
+	}
+
+	return (
+		<StickToBottom className="h-full">
+		<StickyToBottomContent
+			className="bg-black"
+			contentClassName="py-8 px-2"
+			content={
+			chat.messages.length === 0 ? (
+				<div>{props.emptyStateComponent}</div>
+			) : (
+				<ChatMessages
+				messages={chat.messages}
+				emptyStateComponent={props.emptyStateComponent}
+				sourcesForMessages={sourcesForMessages}
+				/>
+			)
+			}
+			footer={
+				<div className="sticky bottom-8 px-2">
+					<ScrollToBottom />
+					<ChatInput
+					value={chat.input}
+					onChange={chat.handleInputChange}
+					onSubmit={sendMessage}
+					loading={chat.isLoading || intermediateStepsLoading}
+					>
+					<Switch
+					checked={lookAtDatabase}
+					onCheckedChange={handleSwitchToggle}
+					/>
+					{/* <Button
+					variant="ghost"
+					className="px-5 -ml-1 border border-[#444444] bg-[#222222] rounded-full hover:bg-[#333333] transition-all duration-300 ease-in-out"
+					disabled={chat.messages.length !== 0}
+					>
+						<TextSearch className="w-4 h-4 text-white" />
+						<span className="text-sm text-white">Connect to Database</span>
+					</Button> */}
+					</ChatInput>
+					<ChatFooter />
+				</div>
+			}
+		></StickyToBottomContent>
+		</StickToBottom>
+	);
 }

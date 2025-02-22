@@ -22,7 +22,7 @@ export default function Page() {
 	<div className="h-screen bg-black">
 		<Nav />
 		<ChatWindow 
-			endpoint="api/chat/"
+			endpoint="api/chat"
 			placeholder="Ask me anything..."
 			emptyStateComponent={<ChatStart />}
 		/>
