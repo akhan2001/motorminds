@@ -8,7 +8,7 @@ import { HttpResponseOutputParser } from "langchain/output_parsers";
 export const runtime = "edge";
 
 const formatMessage = (message: VercelChatMessage) => {
-  return `${message.role}: ${message.content}`;
+return `${message.role}: ${message.content}`;
 };
 
 const TEMPLATE = 
@@ -74,55 +74,65 @@ User: {input}
 Mia's Response:
 `;
 
-/**
- * This handler initializes and calls a simple chain with a prompt,
- * chat model, and output parser. See the docs for more information:
- *
- * https://js.langchain.com/docs/guides/expression_language/cookbook#prompttemplate--llm--outputparser
- */
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const messages = body.messages ?? [];
-    const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
-    const currentMessageContent = messages[messages.length - 1].content;
-    const prompt = PromptTemplate.fromTemplate(TEMPLATE);
+	try {
+		const body = await req.json();
+		const lookAtDatabase = body.look_at_database;
+		const messages = body.messages ?? [];
+		console.log("Body: ", body);
 
-    /**
-     * You can also try e.g.:
-     *
-     * import { ChatAnthropic } from "@langchain/anthropic";
-     * const model = new ChatAnthropic({});
-     *
-     * See a full list of supported models at:
-     * https://js.langchain.com/docs/modules/model_io/models/
-     */
-    const model = new ChatOpenAI({
-      temperature: 0.8,
-      model: "gpt-4o-mini",
-    });
+		if (lookAtDatabase) {
+			console.log("Delegating to retrieval endpoint");
+			const retrievalResponse = await fetch(new URL("/api/chat/retrieval", req.url), {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body)
+			});
 
-    /**
-     * Chat models stream message chunks rather than bytes, so this
-     * output parser handles serialization and byte-encoding.
-     */
-    const outputParser = new HttpResponseOutputParser();
+			return retrievalResponse;
+		}
 
-    /**
-     * Can also initialize as:
-     *
-     * import { RunnableSequence } from "@langchain/core/runnables";
-     * const chain = RunnableSequence.from([prompt, model, outputParser]);
-     */
-    const chain = prompt.pipe(model).pipe(outputParser);
+		const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
+		const currentMessageContent = messages[messages.length - 1].content;
+		const prompt = PromptTemplate.fromTemplate(TEMPLATE);
 
-    const stream = await chain.stream({
-      chat_history: formattedPreviousMessages.join("\n"),
-      input: currentMessageContent,
-    });
+		/**
+		 * You can also try e.g.:
+		 *
+		 * import { ChatAnthropic } from "@langchain/anthropic";
+		 * const model = new ChatAnthropic({});
+		 *
+		 * See a full list of supported models at:
+		 * https://js.langchain.com/docs/modules/model_io/models/
+		 */
+		const model = new ChatOpenAI({
+			temperature: 0.8,
+			model: "gpt-4o-mini",
+		});
 
-    return new StreamingTextResponse(stream);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
-  }
+		/**
+		 * Chat models stream message chunks rather than bytes, so this
+		 * output parser handles serialization and byte-encoding.
+		 */
+		const outputParser = new HttpResponseOutputParser();
+
+		/**
+		 * Can also initialize as:
+		 *
+		 * import { RunnableSequence } from "@langchain/core/runnables";
+		 * const chain = RunnableSequence.from([prompt, model, outputParser]);
+		 */
+		const chain = prompt.pipe(model).pipe(outputParser);
+
+		const stream = await chain.stream({
+			chat_history: formattedPreviousMessages.join("\n"),
+			input: currentMessageContent,
+		});
+
+		return new StreamingTextResponse(stream);
+	} catch (e: any) {
+		return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
+	}
 }

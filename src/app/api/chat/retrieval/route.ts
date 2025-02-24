@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       input: currentMessage.replace(/\n/g, ' '),
     });
 
-    console.log("Embedding response: ", embeddingResponse);
+    // console.log("Embedding response: ", embeddingResponse);
     const [{ embedding }] = embeddingResponse.data;
 
     // Query similar documents from Supabase
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       match_count: 3,
     });
 
-    console.log("Documents: ", documents);
+    // console.log("Documents: ", documents);
 
     // Create context from matched documents
     const context = documents ? documents.map((doc: any) => doc.content).join('\n') : '';

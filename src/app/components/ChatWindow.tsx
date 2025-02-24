@@ -145,18 +145,10 @@ export function ChatWindow(props: {
 	showIntermediateStepsToggle?: boolean;
 }) {
 	const [lookAtDatabase, setLookAtDatabase] = useState(false);
-	const [endpoint, setEndpoint] = useState('api/chat');
 
-	const handleSwitchToggle = (checked: boolean) => {
-		setLookAtDatabase(checked);
-
-		if (checked) {
-			setEndpoint('api/chat/retrieval');
-			console.log('Switched to: api/chat/retrieval');
-		} else {
-			setEndpoint('api/chat');
-			// console.log('Switched to: api/chat');
-		}
+	const handleSwitchToggle = (lookAtDatabase: boolean) => {
+		setLookAtDatabase(lookAtDatabase);
+		console.log("Look at database: ", lookAtDatabase);
 	};
 
 	const [showIntermediateSteps, setShowIntermediateSteps] = useState(
@@ -170,7 +162,7 @@ export function ChatWindow(props: {
 	>({});
 
 	const chat = useChat({
-		api: endpoint,
+		api: props.endpoint,
 		onResponse(response) {
 			const sourcesHeader = response.headers.get("x-sources");
 			const sources = sourcesHeader
@@ -190,6 +182,10 @@ export function ChatWindow(props: {
 		toast.error(`Error while processing your request`, {
 			description: e.message,
 		}),
+		body: {
+			show_intermediate_steps: showIntermediateSteps,
+			look_at_database: lookAtDatabase,
+		}
 	});
 
 	async function sendMessage(e: FormEvent<HTMLFormElement>) {
@@ -212,15 +208,15 @@ export function ChatWindow(props: {
 		});
 		chat.setMessages(messagesWithUserReply);
 
-		console.log("Sending message to: ", endpoint);
-		const response = await fetch(endpoint, {
+		const response = await fetch(props.endpoint, {
 			method: "POST",
 			body: JSON.stringify({
 				messages: messagesWithUserReply,
 				show_intermediate_steps: true,
+				look_at_database: lookAtDatabase,
 			}),
 		});
-		console.log("Response: ", response);
+
 		const json = await response.json();
 		setIntermediateStepsLoading(false);
 
