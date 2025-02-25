@@ -79,10 +79,10 @@ export async function POST(req: NextRequest) {
 		const body = await req.json();
 		const lookAtDatabase = body.look_at_database;
 		const messages = body.messages ?? [];
-		console.log("Body: ", body);
+		// console.log("Body: ", body);
 
 		if (lookAtDatabase) {
-			console.log("Delegating to retrieval endpoint");
+			// console.log("Delegating to retrieval endpoint");
 			const retrievalResponse = await fetch(new URL("/api/chat/retrieval", req.url), {
 				method: "POST",
 				headers: {
@@ -90,6 +90,10 @@ export async function POST(req: NextRequest) {
 				},
 				body: JSON.stringify(body)
 			});
+
+			if (!retrievalResponse.ok) {
+				throw new Error("Failed to fetch from retrieval endpoint");
+			}
 
 			return retrievalResponse;
 		}
