@@ -1,103 +1,174 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
-import { OpenAI } from "openai";
+
 import { createClient } from "@supabase/supabase-js";
 
-const corsHeaders = {
-	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
+import { Document } from "@langchain/core/documents";
+import { RunnableSequence } from "@langchain/core/runnables";
+import {
+  BytesOutputParser,
+  StringOutputParser,
+} from "@langchain/core/output_parsers";
+
+export const runtime = "edge";
+
+const combineDocumentsFn = (docs: Document[]) => {
+  const serializedDocs = docs.map((doc) => doc.pageContent);
+  return serializedDocs.join("\n\n");
 };
 
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
-});
+const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
+  const formattedDialogueTurns = chatHistory.map((message) => {
+    if (message.role === "user") {
+      return `Human: ${message.content}`;
+    } else if (message.role === "assistant") {
+      return `Assistant: ${message.content}`;
+    } else {
+      return `${message.role}: ${message.content}`;
+    }
+  });
+  return formattedDialogueTurns.join("\n");
+};
 
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL!,
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const CONDENSE_QUESTION_TEMPLATE = `Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+
+<chat_history>
+  {chat_history}
+</chat_history>
+
+Follow Up Input: {question}
+Standalone question:`;
+const condenseQuestionPrompt = PromptTemplate.fromTemplate(
+  CONDENSE_QUESTION_TEMPLATE,
 );
 
+const ANSWER_TEMPLATE = `You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
+Use lots of puns!
+
+Answer the question based only on the following context and chat history:
+<context>
+  {context}
+</context>
+
+<chat_history>
+  {chat_history}
+</chat_history>
+
+Question: {question}
+`;
+const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
+
+/**
+ * This handler initializes and calls a retrieval chain. It composes the chain using
+ * LangChain Expression Language. See the docs for more information:
+ *
+ * https://js.langchain.com/v0.2/docs/how_to/qa_chat_history_how_to/
+ */
 export async function POST(req: NextRequest) {
-	// Handle CORS
-	if (req.method === "OPTIONS") {
-		return new Response("ok", { headers: corsHeaders });
-	}
+  try {
+    const body = await req.json();
+    const messages = body.messages ?? [];
+    const previousMessages = messages.slice(0, -1);
+    const currentMessageContent = messages[messages.length - 1].content;
 
-	try {
-		const { messages } = await req.json();
-		// console.log("Messages: ", messages);
-		const currentMessage = messages[messages.length - 1].content;
-		// console.log("Current message: ", currentMessage);
+    const model = new ChatOpenAI({
+      model: "gpt-3.5-turbo",
+      temperature: 0.2,
+    });
 
-		// Generate embedding for the query
-		const embeddingResponse = await openai.embeddings.create({
-			model: "text-embedding-3-small",
-			input: currentMessage.replace(/\n/g, " "),
-		});
+    const embeddings = new OpenAIEmbeddings({
+      modelName: "text-embedding-3-small"
+    });
 
-		// console.log("Embedding response: ", embeddingResponse);
-		const [{ embedding }] = embeddingResponse.data;
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
 
-		// Query similar documents from Supabase
-		// const { data: documents } = await supabase.rpc("hybrid_search", {
-		// 	query_text: currentMessage.replace(/\n/g, " "),
-		// 	query_embedding: embedding,
-		// 	match_count: 3,
-		// });
+    const vectorstore = new SupabaseVectorStore(embeddings, {
+      client,
+      tableName: "documents",
+      queryName: "match_documents",
+    });
 
-		const { data: documents } = await supabase.rpc("match_documents", {
-			query_embedding: embedding,
-			match_threshold: 0.3,
-			match_count: 3,
-		});
+    const standaloneQuestionChain = RunnableSequence.from([
+      condenseQuestionPrompt,
+      model,
+      new StringOutputParser(),
+    ]);
 
-		console.log("Documents: ", documents[0].content);
+    let resolveWithDocuments: (value: Document[]) => void;
+    const documentPromise = new Promise<Document[]>((resolve) => {
+      resolveWithDocuments = resolve;
+    });
 
-		// Create context from matched documents
-		const context = documents ? documents.map((doc: any) => doc.content).join("\n")
-		: "";
-		// console.log("Context: ", context);
-		
-		// Get completion from OpenAI
-		const response = await openai.chat.completions.create({
-			model: "gpt-3.5-turbo",
-			messages: [
-				{
-				role: "system",
-				content: `You are a helpful assistant. Use this context to answer questions: ${context}`,
-				},
-				...messages,
-			],
-			stream: true,
-		});
-		console.log("Response: ", response);
+    const retriever = vectorstore.asRetriever({
+      callbacks: [
+        {
+          handleRetrieverEnd(documents) {
+            resolveWithDocuments(documents);
+          },
+        },
+      ],
+    });
 
-		// Stream the response
-		const stream = new ReadableStream({
-			async start(controller) {
-				for await (const chunk of response) {
-					const text = chunk.choices[0]?.delta?.content || "";
-					controller.enqueue(text);
-				}
-				controller.close();
-			},
-		});
+    const retrievalChain = retriever.pipe(combineDocumentsFn);
 
-		// Return response with CORS headers
-		return new StreamingTextResponse(stream, {
-			headers: {
-				...corsHeaders,
-				"x-sources": Buffer.from(JSON.stringify(documents)).toString("base64"),
-			},
-		});
-	} catch (error: any) {
-		console.error("Retrieval error:", error);
-		return NextResponse.json({ 
-			error: error.message },
-			{
-				status: 500,
-				headers: corsHeaders,
-			}
-		);
-	}
+    const answerChain = RunnableSequence.from([
+      {
+        context: RunnableSequence.from([
+          (input) => input.question,
+          retrievalChain,
+        ]),
+        chat_history: (input) => input.chat_history,
+        question: (input) => input.question,
+      },
+      answerPrompt,
+      model,
+    ]);
+
+    const conversationalRetrievalQAChain = RunnableSequence.from([
+      {
+        question: standaloneQuestionChain,
+        chat_history: (input) => input.chat_history,
+      },
+      answerChain,
+      new BytesOutputParser(),
+    ]);
+
+    const stream = await conversationalRetrievalQAChain.stream({
+      question: currentMessageContent,
+      chat_history: formatVercelMessages(previousMessages),
+    });
+
+    const documents = await documentPromise;
+    const serializedSources = Buffer.from(
+      JSON.stringify(
+        documents.map((doc) => {
+          return {
+            pageContent: doc.pageContent.slice(0, 50) + "...",
+            metadata: doc.metadata,
+          };
+        }),
+      ),
+    ).toString("base64");
+
+    return new StreamingTextResponse(stream, {
+      headers: {
+        "x-message-index": (previousMessages.length + 1).toString(),
+        "x-sources": serializedSources,
+      },
+    });
+  } catch (e: any) {
+    console.error("Retrieval chain error:", e);
+    return NextResponse.json({ 
+      error: e.message,
+      details: e.stack 
+    }, { 
+      status: e.status ?? 500 
+    });
+  }
 }

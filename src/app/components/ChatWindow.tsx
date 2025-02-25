@@ -296,7 +296,7 @@ export function ChatWindow(props: {
 					onSubmit={sendMessage}
 					loading={chat.isLoading || intermediateStepsLoading}
 					>
-					<Switch className="bg-red-500"
+					<Switch
 					checked={lookAtDatabase}
 					onCheckedChange={handleSwitchToggle}
 					/>
