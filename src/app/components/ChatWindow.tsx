@@ -155,6 +155,7 @@ export function ChatWindow(props: {
 			});
 		} else {
 			toast("Not looking at database...", {
+				icon: "🔍",
 				description: "Click on the switch to connect to the database.",
 			});
 		}

@@ -13,21 +13,21 @@ import { BytesOutputParser, StringOutputParser } from "@langchain/core/output_pa
 export const runtime = "edge";
 
 const combineDocumentsFn = (docs: Document[]) => {
-const serializedDocs = docs.map((doc) => doc.pageContent);
-return serializedDocs.join("\n\n");
+	const serializedDocs = docs.map((doc) => doc.pageContent);
+	return serializedDocs.join("\n\n");
 };
 
 const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
-const formattedDialogueTurns = chatHistory.map((message) => {
-	if (message.role === "user") {
-		return `Human: ${message.content}`;
-	} else if (message.role === "assistant") {
-		return `Assistant: ${message.content}`;
-	} else {
-		return `${message.role}: ${message.content}`;
-	}
-});
-return formattedDialogueTurns.join("\n");
+	const formattedDialogueTurns = chatHistory.map((message) => {
+		if (message.role === "user") {
+			return `Human: ${message.content}`;
+		} else if (message.role === "assistant") {
+			return `Assistant: ${message.content}`;
+		} else {
+			return `${message.role}: ${message.content}`;
+		}
+	});
+	return formattedDialogueTurns.join("\n");
 };
 
 const CONDENSE_QUESTION_TEMPLATE = `
@@ -43,19 +43,19 @@ const CONDENSE_QUESTION_TEMPLATE = `
 const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
 
 const ANSWER_TEMPLATE = `
-You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
-Use lots of puns!
+	You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
+	Use lots of puns!
 
-Answer the question based only on the following context and chat history:
-<context>
-  	{context}
-</context>
+	Answer the question based only on the following context and chat history:
+	<context>
+		{context}
+	</context>
 
-<chat_history>
-  	{chat_history}
-</chat_history>
+	<chat_history>
+		{chat_history}
+	</chat_history>
 
-Question: {question}
+	Question: {question}
 `;
 const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
 
 		const model = new ChatOpenAI({
-			model: "gpt-4o-mini",
+			model: "gpt-3.5-turbo",
 			temperature: 0.2,
 		});
 

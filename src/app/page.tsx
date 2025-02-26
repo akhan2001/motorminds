@@ -1,6 +1,7 @@
 import { Nav } from "./components/nav";
 import { ChatWindow } from "./components/ChatWindow";
 import ChatStart from "./chat/components/ChatStart";
+import { redirect } from "next/navigation";
 // import { cookies } from "next/headers";
 // import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 // import { redirect } from "next/navigation";
@@ -18,14 +19,11 @@ export default function Page() {
 	// 	redirect("/auth");
 	// }
 
+	// redirect("/chat");
+
 	return (
 	<div className="h-screen bg-black">
-		<Nav />
-		<ChatWindow 
-			endpoint="api/chat"
-			placeholder="Ask me anything..."
-			emptyStateComponent={<ChatStart />}
-		/>
+		<Nav activeLink="Dashboard" />
 	</div>
 	);
 }
