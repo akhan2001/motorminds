@@ -28,21 +28,21 @@ export default function AuthComponent() {
     };
 
     return (
-        <div className="dark:bg-primary flex flex-col items-center justify-center h-screen">
-            <div className="mx-auto w-full max-w-md">
+        <div className="flex flex-col items-center justify-center h-screen w-full px-10">
+            <div className="mx-auto w-full max-w-[75%]">
                 <h2 className="mb-8 text-2xl font-medium text-white text-center">Sign In</h2>
 
-          {/* Social Login Buttons */}
-          <div className="mb-8 grid gap-4">
-            <button className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-100">
-              <Image src="/placeholder.svg?height=24&width=24" alt="Google" width={24} height={24} />
-              Google
-            </button>
-            <button className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#1877F2] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#1877F2]/90">
-              <Image src="/placeholder.svg?height=24&width=24" alt="Facebook" width={24} height={24} />
-              Facebook
-            </button>
-          </div>
+                {/* Social Login Buttons */}
+                <div className="flex flex-row gap-4 mb-8">
+                    <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#222222] px-4 py-2 text-sm font-medium text-white hover:bg-[#222222] hover:border-[#444444]">
+                        <Image src="/icons8-google-48.png" alt="Google" width={24} height={24} />
+                        Google
+                    </button>
+                    <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#222222] px-4 py-2 text-sm font-medium text-white hover:bg-[#222222] hover:border-[#444444]">
+                        <Image src="/icons8-facebook-50.png" alt="Facebook" width={24} height={24} />
+                        Facebook
+                    </button>
+                </div>
 
           {/* Divider */}
           <div className="relative mb-8">
@@ -50,7 +50,7 @@ export default function AuthComponent() {
               <div className="w-full border-t border-gray-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-[#131313] px-4 text-gray-400">OR</span>
+              <span className="bg-[#000000] px-4 text-gray-400">OR</span>
             </div>
           </div>
 
@@ -64,7 +64,7 @@ export default function AuthComponent() {
                 id="email"
                 type="email"
                 placeholder="e.g. john.doe@gmail.com"
-                className="w-full rounded-lg bg-[#222222] px-4 py-3 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-2 focus:ring-white"
+                className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444]"
               />
             </div>
 
@@ -77,7 +77,7 @@ export default function AuthComponent() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className="w-full rounded-lg bg-[#222222] px-4 py-3 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-2 focus:ring-white"
+                  className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444]"
                 />
                 <button
                   type="button"
@@ -98,8 +98,8 @@ export default function AuthComponent() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/reset-password" className="text-sm text-gray-400 hover:text-white">
-              Forgot Your Password? <span className="underline">Reset It Here</span>
+            <Link href="/" className="text-sm text-gray-400">
+              Forgot Your Password? <span className="underline hover:text-white">Reset It Here</span>
             </Link>
           </div>
         </div>
