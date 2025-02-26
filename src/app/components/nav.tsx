@@ -27,7 +27,7 @@ export function Nav(
 		{ name: "Invoices", href: "/" },
 		{ name: "Lead Generation", href: "/" },
 		{ name: "Loyalty", href: "/" },
-		{ name: "Customers", href: "/" },
+		{ name: "Customers", href: "/customers" },
 	]
 
 	const handleNavClick = (name: string, href: string) => {

@@ -30,32 +30,34 @@ const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
 	return formattedDialogueTurns.join("\n");
 };
 
-const CONDENSE_QUESTION_TEMPLATE = `
-	Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+const CONDENSE_QUESTION_TEMPLATE = 
+`
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
 
-	<chat_history>
-		{chat_history}
-	</chat_history>
+<chat_history>
+	{chat_history}
+</chat_history>
 
-	Follow Up Input: {question}
-	Standalone question:
+Follow Up Input: {question}
+Standalone question:
 `;
 const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
 
-const ANSWER_TEMPLATE = `
-	You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
-	Use lots of puns!
+const ANSWER_TEMPLATE = 
+`
+You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
+Use lots of puns!
 
-	Answer the question based only on the following context and chat history:
-	<context>
-		{context}
-	</context>
+Answer the question based only on the following context and chat history:
+<context>
+	{context}
+</context>
 
-	<chat_history>
-		{chat_history}
-	</chat_history>
+<chat_history>
+	{chat_history}
+</chat_history>
 
-	Question: {question}
+Question: {question}
 `;
 const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
 
