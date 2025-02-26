@@ -32,7 +32,7 @@ export function ChatMessageBubble(props: {
       <div className="whitespace-pre-wrap flex flex-col">
         <span>{props.message.content}</span>
 
-        {/* {props.sources && props.sources.length ? (
+        {props.sources && props.sources.length ? (
           <>
             <code className="mt-4 mr-auto bg-primary px-2 py-1 rounded">
               <h2>🔍 Sources:</h2>
@@ -54,7 +54,7 @@ export function ChatMessageBubble(props: {
               ))}
             </code>
           </>
-        ) : null} */}
+        ) : null}
       </div>
     </div>
   );

@@ -43,19 +43,19 @@ const CONDENSE_QUESTION_TEMPLATE = `
 const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
 
 const ANSWER_TEMPLATE = `
-	You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
-	Use lots of puns!
+You are an energetic talking puppy named Dana, and must answer all questions like a happy, talking dog would.
+Use lots of puns!
 
-	Answer the question based only on the following context and chat history:
-	<context>
-		{context}
-	</context>
+Answer the question based only on the following context and chat history:
+<context>
+  	{context}
+</context>
 
-	<chat_history>
-		{chat_history}
-	</chat_history>
+<chat_history>
+  	{chat_history}
+</chat_history>
 
-	Question: {question}
+Question: {question}
 `;
 const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
 
@@ -66,15 +66,17 @@ export async function POST(req: NextRequest) {
 		const previousMessages = messages.slice(0, -1);
 		const currentMessageContent = messages[messages.length - 1].content;
 
+
 		const model = new ChatOpenAI({
 			model: "gpt-4o-mini",
 			temperature: 0.2,
 		});
 
 		const client = createClient(
-			process.env.SUPABASE_URL!,
-			process.env.SUPABASE_PRIVATE_KEY!
+			process.env.NEXT_PUBLIC_SUPABASE_URL!,
+			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 		);
+		
 		const vectorstore = new SupabaseVectorStore(new OpenAIEmbeddings(), {
 			client,
 			tableName: "docs",
@@ -82,15 +84,18 @@ export async function POST(req: NextRequest) {
 		});
 
 		const standaloneQuestionChain = RunnableSequence.from([
-		condenseQuestionPrompt,
-		model,
-		new StringOutputParser(),
+			condenseQuestionPrompt,
+			model,
+			new StringOutputParser(),
 		]);
 
 		let resolveWithDocuments: (value: Document[]) => void;
 		const documentPromise = new Promise<Document[]>((resolve) => {
 			resolveWithDocuments = resolve;
 		});
+
+		// console.log("Vectorstore: ", vectorstore);
+		// console.log("documentPromise: ", documentPromise);
 
 		const retriever = vectorstore.asRetriever({
 			callbacks: [
@@ -99,6 +104,8 @@ export async function POST(req: NextRequest) {
 				},
 			],
 		});
+
+		// console.log("Retriever: ", retriever);
 
 		const retrievalChain = retriever.pipe(combineDocumentsFn);
 
@@ -130,6 +137,8 @@ export async function POST(req: NextRequest) {
 		});
 
 		const documents = await documentPromise;
+		console.log("Documents: ", documents);
+
 		const serializedSources = Buffer.from(
 		JSON.stringify(
 			documents.map((doc) => {
@@ -141,10 +150,10 @@ export async function POST(req: NextRequest) {
 		)).toString("base64");
 
 		return new StreamingTextResponse(stream, {
-		headers: {
-			"x-message-index": (previousMessages.length + 1).toString(),
-			"x-sources": serializedSources,
-		},
+			headers: {
+				"x-message-index": (previousMessages.length + 1).toString(),
+				"x-sources": serializedSources,
+			},
 		});
 	} catch (e: any) {
 		return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });

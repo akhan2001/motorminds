@@ -148,7 +148,16 @@ export function ChatWindow(props: {
 
 	const handleSwitchToggle = (lookAtDatabase: boolean) => {
 		setLookAtDatabase(lookAtDatabase);
-		console.log("Look at database: ", lookAtDatabase);
+		if (lookAtDatabase) {
+			toast("Looking at database...", {
+				icon: "🔍",
+				description: "You can now ask questions about your database.",
+			});
+		} else {
+			toast("Not looking at database...", {
+				description: "Click on the switch to connect to the database.",
+			});
+		}
 	};
 
 	const [showIntermediateSteps, setShowIntermediateSteps] = useState(
