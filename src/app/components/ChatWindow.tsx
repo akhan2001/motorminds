@@ -296,17 +296,20 @@ export function ChatWindow(props: {
 					onSubmit={sendMessage}
 					loading={chat.isLoading || intermediateStepsLoading}
 					>
-					<Switch
-					checked={lookAtDatabase}
-					onCheckedChange={handleSwitchToggle}
-					/>
+					<div className="flex items-center gap-2">
+						<Switch
+						checked={lookAtDatabase}
+						onCheckedChange={handleSwitchToggle}
+						/>
+						<span className="text-sm text-white/70">Connect to Database</span>
+					</div>
 					{/* <Button
-					variant="ghost"
-					className="px-5 -ml-1 border border-[#444444] bg-[#222222] rounded-full hover:bg-[#333333] transition-all duration-300 ease-in-out"
-					disabled={chat.messages.length !== 0}
+						onClick={() => handleSwitchToggle(lookAtDatabase)}
+						className={`px-4 py-2 rounded transition-colors duration-300 ${
+						lookAtDatabase ? 'bg-red-500 text-white border-red-500' : 'bg-gray-300 text-gray-700 border-gray-300'
+						}`}
 					>
-						<TextSearch className="w-4 h-4 text-white" />
-						<span className="text-sm text-white">Connect to Database</span>
+						Connect to Database
 					</Button> */}
 					</ChatInput>
 					<ChatFooter />
