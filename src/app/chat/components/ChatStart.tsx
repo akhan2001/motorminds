@@ -17,7 +17,7 @@ export default function ChatStart() {
                     </p>
                 </div>
                 <div className="flex flex-row gap-5">
-                    <button className="w-[33%] bg-[#222222] rounded-[10px] hover:bg-[#222222]/70 transition duration-300 ease-in-out border-[#444444] border">
+                    <div className="w-[33%] bg-[#222222] rounded-[10px]">
                         <div className="flex flex-col justify-center text-center py-7 items-center gap-5">
                             <Image src="/Wrench Logo.png" alt="Repairs & diagnostics" width={30} height={30} />
                             <div className="flex flex-col justify-center text-center">
@@ -29,8 +29,8 @@ export default function ChatStart() {
                                 </p>
                             </div>
                         </div>
-                    </button>
-                    <button className="w-[33%] bg-[#222222] rounded-[10px] hover:bg-[#222222]/70 transition duration-300 ease-in-out border-[#444444] border">
+                    </div>
+                    <div className="w-[33%] bg-[#222222] rounded-[10px]">
                         <div className="flex flex-col justify-center text-center py-7 items-center gap-5">
                             <Image src="/Customer-Solutions.png" alt="Shop operations" width={30} height={30} />
                             <div className="flex flex-col justify-center text-center">
@@ -42,8 +42,8 @@ export default function ChatStart() {
                                 </p>
                             </div>
                         </div>
-                    </button>
-                    <button className="w-[33%] bg-[#222222] rounded-[10px] hover:bg-[#222222]/70 transition duration-300 ease-in-out border-[#444444] border">
+                    </div>
+                    <div className="w-[33%] bg-[#222222] rounded-[10px]">
                         <div className="flex flex-col justify-center text-center py-7 items-center gap-5">
                             <Image src="/community-integration logo.png" alt="Customer service" width={30} height={30} />
                             <div className="flex flex-col justify-center text-center">
@@ -55,7 +55,7 @@ export default function ChatStart() {
                                 </p>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

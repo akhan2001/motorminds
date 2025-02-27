@@ -26,7 +26,7 @@ export function Nav(
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/" },
 		{ name: "Lead Generation", href: "/" },
-		{ name: "Loyalty", href: "/" },
+		{ name: "Loyalty", href: "/loyalty" },
 		{ name: "Customers", href: "/customers" },
 	]
 

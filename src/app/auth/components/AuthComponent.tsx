@@ -6,26 +6,11 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
+import { login, signup } from "./actions";
+
 export default function AuthComponent() {
     
     const [showPassword, setShowPassword] = useState(false)
-
-    const supabase = createClientComponentClient();
-
-    const handleSignIn = async () => {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'github',
-            options: {
-                redirectTo: `${location.origin}/auth/callback`
-            }
-        });
-
-        if (error) {
-            console.error('Sign-in error:', error.message);
-        } else {
-            console.log('Redirecting to GitHub for authentication...');
-        }
-    };
 
     return (
         <div className="flex flex-col items-center justify-center h-screen w-full px-10">
@@ -65,6 +50,7 @@ export default function AuthComponent() {
                 type="email"
                 placeholder="e.g. john.doe@gmail.com"
                 className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444]"
+                required
               />
             </div>
 
@@ -78,6 +64,7 @@ export default function AuthComponent() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444]"
+				  required
                 />
                 <button
                   type="button"
@@ -92,6 +79,7 @@ export default function AuthComponent() {
             <button
               type="submit"
               className="w-full rounded-lg bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-100"
+              formAction={login}
             >
               Sign In
             </button>
