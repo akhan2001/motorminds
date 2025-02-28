@@ -80,7 +80,13 @@ export default function Marketplace() {
 							<p className="text-gray-800 mt-2">Website: <a href={`http://${shop.website}`} target="_blank" rel="noopener noreferrer">{shop.website}</a></p>
 						</CardContent>
 						<CardFooter className="mt-4 flex gap-2">
-							<Button variant="default" onClick={() => router.push(`/lead-generation/${encodeURIComponent(shop.shop_name)}`)}>Contact Shop</Button>
+							<Button 
+							variant="default"
+							onClick={() => {
+								router.push(`/lead-generation/${encodeURIComponent(shop.shop_name)}-${shop.id}`);
+							}}>
+								Contact Shop
+							</Button>
 							<Button variant="secondary" onClick={() => handleFavourite(shop.shop_name)}>Favourite</Button>
 						</CardFooter>
 					</Card>
