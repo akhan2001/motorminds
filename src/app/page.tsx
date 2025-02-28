@@ -2,6 +2,7 @@ import { Nav } from "./components/nav";
 import { ChatWindow } from "./components/ChatWindow";
 import ChatStart from "./chat/components/ChatStart";
 import { redirect } from "next/navigation";
+import DashboardPage from "./dashboard/page";
 // import { cookies } from "next/headers";
 // import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 // import { redirect } from "next/navigation";
@@ -24,6 +25,7 @@ export default function Page() {
 	return (
 	<div className="h-screen bg-black">
 		<Nav activeLink="Dashboard" />
+		<DashboardPage />
 	</div>
 	);
 }

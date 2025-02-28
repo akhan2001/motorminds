@@ -86,7 +86,7 @@ export function Nav(
 					{/* <span className="hidden md:inline mr-2">Help</span> */}
 					<HelpCircle className="inline-block w-5 h-5" />
 				</button>
-				<button className="text-[#979797] hover:text-white transition-colors">
+				<button className="text-[#979797] hover:text-white transition-colors" onClick={() => router.push("/settings")}>
 					{/* <span className="hidden md:inline mr-2">Settings</span> */}
 					<Settings className="inline-block w-5 h-5" />
 				</button>

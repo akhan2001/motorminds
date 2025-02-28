@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { Nav } from "../components/nav";
-import LoyaltyDashboard from "./components/LoyaltyDashboard";
 
 export default async function LoyaltyPage() {
     const supabase = await createClient();
