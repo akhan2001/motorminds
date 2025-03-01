@@ -15,6 +15,7 @@ export default function ContactShop() {
 	const [shopData, setShopData] = useState<any>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [shopName, setShopName] = useState<string | null>(null);
+	const [shopID, setShopID] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!params?.shopName) {
@@ -25,12 +26,12 @@ export default function ContactShop() {
 		const [encodedShopName, shopID] = params.shopName.split(/-(.+)/);
 		const shopName = decodeURIComponent(encodedShopName);
 		setShopName(shopName);
+		setShopID(shopID);
 
 		const fetchShopData = async () => {
 			try {
 				const data = await fetchShops(shopID);
 				setShopData(data);
-				console.log(data[0].operating_hours);
 			} catch (error) {
 				console.error("Error fetching shop data:", error);
 				setError("Failed to load shop data. Please try again later.");
@@ -45,6 +46,7 @@ export default function ContactShop() {
 		phone: "",
 		email: "",
 		message: "",
+		shop_id: shopID,
 	});
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -55,7 +57,8 @@ export default function ContactShop() {
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		toast.success(`Message sent to ${shopData?.shop_name || "the shop"}`);
-		setFormData({ name: "", phone: "", email: "", message: "" });
+		console.log("Shop ID: ", shopID);
+		setFormData({ name: "", phone: "", email: "", message: "", shop_id: shopID });
 
 		const sendMessage = async () => {
 			const response = await fetch(`/dashboard/api/receive-message`, {
@@ -78,7 +81,7 @@ export default function ContactShop() {
 		<div className="max-w-md mx-auto p-4">
 			
 			{/* Adding shop info (operating hours, address, etc.) */}
-			<Card className="mt-6 mb-6 shadow">
+			<Card className="mt-6 mb-6">
 				<CardHeader>
 					<CardTitle>{shopName} Information</CardTitle>
 				</CardHeader>

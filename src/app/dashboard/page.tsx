@@ -1,12 +1,27 @@
-import Image from "next/image"
-import { Bell, ChevronLeft, ChevronRight, Edit, Send } from "lucide-react"
+"use client";
+
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-
+import { useState, useEffect } from "react";
+import { getMessages } from "./api/receive-message/receive-message";
+import { Badge } from "@/components/ui/badge"
+import { Calendar } from "@/components/ui/calendar"
 
 export default function Dashboard() {
+	const [date, setDate] = useState<Date | undefined>(new Date())
+	const [messages, setMessages] = useState<any[]>([]);
+
+	useEffect(() => {
+		const fetchMessages = async () => {
+			const messages = await getMessages("850e8400-e29b-41d4-a716-446655440001");
+			if (messages) {
+				setMessages(messages);
+			}
+		};
+		fetchMessages();
+	}, []);
+
 	return (
 		<div className="min-h-screen bg-black text-white">
 		{/* Main Content */}
@@ -60,92 +75,77 @@ export default function Dashboard() {
 			{/* Calendar Section */}
 			<div className="lg:col-span-1">
 				<h2 className="text-2xl font-bold mb-4">Calendar</h2>
-				<Card className="bg-gray-900 border-gray-800 text-white">
-				<CardHeader className="pb-2">
-					<div className="flex justify-between items-center">
-					<Button variant="ghost" className="text-white hover:text-white hover:bg-gray-800">
-						Select date
-					</Button>
-					</div>
-					<div className="flex justify-between items-center">
-					<div className="text-2xl font-bold">Mon, Aug 17</div>
-					<Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-gray-800">
-						<Edit className="h-5 w-5" />
-					</Button>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<div className="flex justify-between items-center mb-4">
-					<div className="flex items-center gap-2">
-						<span>August 2025</span>
-						<ChevronDown />
-					</div>
-					<div className="flex gap-2">
-						<Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-gray-800">
-						<ChevronLeft className="h-4 w-4" />
-						</Button>
-						<Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-gray-800">
-						<ChevronRight className="h-4 w-4" />
-						</Button>
-					</div>
-					</div>
-
-					<div className="grid grid-cols-7 gap-1 text-center">
-					{["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-						<div key={i} className="py-2">
-						{day}
-						</div>
-					))}
-
-					{[...Array(31)].map((_, i) => {
-						const day = i + 1
-						const isSelected = day === 17
-						return (
-						<div key={day} className={`py-2 rounded-full ${isSelected ? "bg-red-600" : "hover:bg-gray-800"}`}>
-							{day}
-						</div>
-						)
-					})}
-					</div>
-				</CardContent>
-				</Card>
+				<Calendar 
+					mode="single"
+					selected={date}
+					onSelect={setDate}
+				/>
 			</div>
 
-			{/* Assistant Section */}
+			{/* Messages Section */}
 			<div className="lg:col-span-1">
 				<Card className="bg-gray-900 border-gray-800 text-white h-full">
-				<CardContent className="p-6 flex flex-col h-full">
-					<div className="flex-1 flex flex-col items-center justify-center text-center mb-6">
-					<div className="h-20 w-20 rounded-full bg-black p-4 mb-4">
-						<Image
-						src="/placeholder.svg?height=80&width=80"
-						alt="MIA Logo"
-						width={80}
-						height={80}
-						className="h-full w-full object-contain"
-						/>
-					</div>
-					<h2 className="text-4xl font-bold mb-4">How Can I Assist You?</h2>
-					<p className="text-gray-400">
-						I'm MIA, your Motorminds mechanic assistant! I can help with repairs and diagnostics. I'm still in
-						beta, so more features are on the way. Stay tuned for updates!
-					</p>
-					</div>
-					<div className="relative">
-					<input
-						type="text"
-						placeholder="Type your prompt here"
-						className="w-full bg-black border border-gray-800 rounded-full py-3 px-4 pr-12"
-					/>
-					<Button
-						variant="destructive"
-						size="icon"
-						className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full h-8 w-8"
-					>
-						<Send className="h-4 w-4" />
-					</Button>
-					</div>
-				</CardContent>
+					<CardHeader>
+						<h2 className="text-2xl font-bold">Customer Messages</h2>
+					</CardHeader>
+					<CardContent className="p-6 flex flex-col h-full overflow-y-auto max-h-[600px]">
+						<div className="flex flex-col space-y-4">
+							{messages
+								.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+								.map((msg) => (
+									<Card key={msg.id} className="bg-gray-800 border-gray-700">
+										<CardHeader className="pb-2">
+											<div className="flex justify-between items-center">
+												<h3 className="text-lg font-semibold">{msg.name}</h3>
+												<Badge variant={msg.status === 'unread' ? "destructive" : "secondary"}>
+													{msg.status}
+												</Badge>
+											</div>
+										</CardHeader>
+										<CardContent className="py-2">
+											<p className="text-gray-300 mb-2">{msg.message}</p>
+											<div className="flex flex-col text-xs text-gray-400 mt-2">
+												<span>Email: {msg.email}</span>
+												{msg.phone_number && <span>Phone: {msg.phone_number}</span>}
+												<span className="mt-1">
+													{new Date(msg.created_at).toLocaleString()}
+												</span>
+											</div>
+										</CardContent>
+										<CardFooter className="pt-2 pb-3 flex justify-end gap-2">
+											<Button 
+												variant="outline" 
+												size="sm"
+												onClick={() => {
+													// Mark as read logic
+													console.log(`Marking message ${msg.id} as read`);
+												}}
+											>
+												Mark as Read
+											</Button>
+											<Button 
+												variant="default" 
+												size="sm"
+												onClick={() => {
+													// Reply logic
+													console.log(`Replying to message ${msg.id}`);
+												}}
+											>
+												Reply
+											</Button>
+										</CardFooter>
+									</Card>
+								))}
+						</div>
+						{messages.length === 0 && (
+							<div className="text-center py-8 text-gray-400">
+								No messages found
+							</div>
+						)}
+						<Button onClick={() => getMessages("850e8400-e29b-41d4-a716-446655440001")} className="mt-4">
+							Refresh Messages
+						</Button>
+					</CardContent>
 				</Card>
 			</div>
 			</div>
