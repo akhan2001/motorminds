@@ -28,16 +28,22 @@ interface TaskBoardProps {
 
 /** Convert local "todo|inProgress|done" => DB "Pending|In Progress|Completed" */
 function localStatusToDb(local: "todo" | "inProgress" | "done"): string {
-  switch (local) {
-    case "todo":
-      return "Pending"
-    case "inProgress":
-      return "In Progress"
-    case "done":
-      return "Completed"
-    default:
-      return "Pending"
-  }
+    switch (local) {
+        case "todo": return "Pending"
+        case "inProgress": return "In Progress"
+        case "done": return "Completed"
+        default: return "Pending"
+    }
+}
+
+/** Convert DB "Pending|In Progress|Completed" => local "todo|inProgress|done" */
+function dbStatusToLocal(dbStatus: string): "todo" | "inProgress" | "done" {
+    switch (dbStatus) {
+        case "Pending": return "todo"
+        case "In Progress": return "inProgress"
+        case "Completed": return "done"
+        default: return "todo"
+    }
 }
 
 /** Optional helper: map local status to a color */
@@ -85,51 +91,54 @@ export function TaskBoard({
     setActiveId(event.active.id as string)
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    console.log("DRAG END: from:", active.id, " => over:", over?.id || "none") 
-    if (!over) return
+    async function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event
+        console.log("DRAG END: from:", active.id, " => over:", over?.id || "none") 
+        if (!over) return
 
-    const overId = over.id as string
-    const overColumn = overId.includes("column-")
-      ? (overId.replace("column-", "") as "todo" | "inProgress" | "done")
-      : null
+        const overId = over.id as string
+        // Check if the drop target is a column
+        const overColumn = overId.includes("column-")
+            ? (overId.replace("column-", "") as "todo" | "inProgress" | "done")
+            : null
 
-    const currentTask = findTaskAll(active.id)
-    if (overColumn && currentTask && currentTask.status !== overColumn) {
-      // 1) Update local columns
-      setColumns((prev) => ({
-        ...prev,
-        [currentTask.status]: prev[currentTask.status].filter(
-          (t) => t.id !== currentTask.id
-        ),
-        [overColumn]: [
-          ...prev[overColumn],
-          {
-            ...currentTask,
-            status: overColumn,
-            statusColor: getStatusColor(overColumn),
-          },
-        ],
-      }))
+        const currentTask = findTaskAll(active.id as string)
 
-      // 2) Update DB
-      const dbStatus = localStatusToDb(overColumn)
-      try {
-        const { error } = await supabase
-          .from("repair_orders")
-          .update({ status: dbStatus })
-          .eq("id", active.id)
-        if (error) {
-          console.error("Error updating task status:", error)
+        // Only update the status if the task is in a different column
+        if (overColumn && currentTask && currentTask.status !== overColumn) {
+        // 1) Update local columns
+        setColumns((prev) => ({
+            ...prev,
+            [currentTask.status]: prev[currentTask.status].filter(
+            (t: Task) => t.id !== currentTask.id
+            ),
+            [overColumn]: [
+            ...prev[overColumn],
+            {
+                ...currentTask,
+                status: overColumn,
+                statusColor: getStatusColor(overColumn),
+            },
+            ],
+        }))
+
+        // 2) Update DB
+        const dbStatus = localStatusToDb(overColumn)
+        try {
+            const { error } = await supabase
+            .from("repair_orders")
+            .update({ status: dbStatus })
+            .eq("id", active.id)
+            if (error) {
+            console.error("Error updating task status:", error)
+            }
+        } catch (err) {
+            console.error("Error updating task status:", err)
         }
-      } catch (err) {
-        console.error("Error updating task status:", err)
-      }
-    }
+        }
 
-    setActiveId(null)
-  }
+        setActiveId(null)
+    }
 
   function handleDragCancel() {
     setActiveId(null)

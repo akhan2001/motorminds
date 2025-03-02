@@ -552,7 +552,14 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDet
             onClick={() => {
               generateInvoice(initialTask.id).then((success) => {
                 if (success) {
-                  toast.success('Invoice generated successfully')
+                  toast.success('Invoice generated successfully', {
+                    action: {
+                      label: 'View Invoice',
+                      onClick: () => {
+                        router.push('/invoices')
+                      }
+                    }
+                  })
                 } else {
                   toast.error('Invoice already exists')
                 }

@@ -48,15 +48,16 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
     // console.log("Customer Data: " + customerData?.[0].customer_name + "\n" + customerData?.[0].customer_address + "\n" + customerData?.[0].customer_email)
 
     const invoiceData: InvoiceData = {
+        invoiceNumber: uuidv4(),
         status: "UNPAID",
-        shop_name: shopData?.[0].shop_name,
-        shop_address: shopData?.[0].shop_address,
-        shop_email: shopData?.[0].shop_email,
+        shopName: shopData?.[0].shop_name,
+        shopAddress: shopData?.[0].shop_address,
+        shopEmail: shopData?.[0].shop_email,
         amount: amount?.[0].cost,
         issueDate: new Date().toISOString(),
-        client_name: customerData?.[0].customer_name,
-        client_address: customerData?.[0].customer_address,
-        client_email: customerData?.[0].customer_email
+        clientName: customerData?.[0].customer_name,
+        clientAddress: customerData?.[0].customer_address,
+        clientEmail: customerData?.[0].customer_email
     }
 
     if (error) {
@@ -68,21 +69,22 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
 }
 
 const createNewInvoice = async (invoiceData: any, workOrderID: any) => {
-    
+    // console.log(invoiceData)
+
     const { data, error } = await supabase
         .from('invoices')
         .insert({
-            invoice_number: uuidv4(),
+            invoice_number: invoiceData.invoiceNumber,
             workorder_id: workOrderID,
             status: invoiceData.status,
-            shop_name: invoiceData.shop_name,
-            shop_address: invoiceData.shop_address,
-            shop_email: invoiceData.shop_email,
+            shop_name: invoiceData.shopName,
+            shop_address: invoiceData.shopAddress,
+            shop_email: invoiceData.shopEmail,
             amount: invoiceData.amount,
             issue_date: invoiceData.issueDate,
-            client_name: invoiceData.client_name,
-            client_address: invoiceData.client_address,
-            client_email: invoiceData.client_email
+            client_name: invoiceData.clientName,
+            client_address: invoiceData.clientAddress,
+            client_email: invoiceData.clientEmail
         })
         
     if (error) {
@@ -115,9 +117,9 @@ export async function generateInvoice(repairOrderID: any) {
         .eq('workorder_id', repairOrderDetailsID);
 
     // Debug logs
-    console.log("Existing Invoice Data:", existingInvoice); // Log the full data
-    console.log("Check Error:", checkError); // Log any errors
-    console.log("Is Array Empty:", Array.isArray(existingInvoice) && existingInvoice.length === 0); // Check if it's an empty array
+    // console.log("Existing Invoice Data:", existingInvoice);
+    // console.log("Check Error:", checkError);
+    // console.log("Is Array Empty:", Array.isArray(existingInvoice) && existingInvoice.length === 0);
 
     // Check if there's an existing invoice
     if (existingInvoice && existingInvoice.length > 0) {
@@ -126,10 +128,10 @@ export async function generateInvoice(repairOrderID: any) {
     }
 
     // If no existing invoice, proceed with insert
-    console.log("Generating invoice for work order ID: " + repairOrderID + " and repair order details ID: " + repairOrderDetailsID)
+    // console.log("Generating invoice for work order ID: " + repairOrderID + " and repair order details ID: " + repairOrderDetailsID)
     const invoiceData = await fetchData(repairOrderDetailsID, repairOrderID)
 
-    console.log(invoiceData)
+    // console.log(invoiceData)
     createNewInvoice(invoiceData, repairOrderDetailsID)
 
     return true;

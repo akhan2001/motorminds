@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { fetchShops } from "../fetchShops";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { createLead } from "@/app/lead-generation/utils/lead";
 
 export default function ContactShop() {
 	const router = useRouter();
@@ -19,7 +20,7 @@ export default function ContactShop() {
 
 	useEffect(() => {
 		if (!params?.shopName) {
-			router.push('/lead-generation');
+			router.push('/customer/lead-generation');
 			return;
 		}
 
@@ -66,6 +67,13 @@ export default function ContactShop() {
 				body: JSON.stringify(formData),
 			});
 		};
+
+		const submitLead = async () => {
+			const data = await createLead(formData)
+			console.log(data)
+		};
+
+		submitLead();
 		sendMessage();
 	};
 
