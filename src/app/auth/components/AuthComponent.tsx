@@ -9,7 +9,8 @@ import Link from "next/link";
 import { login, signup } from "./actions";
 
 export default function AuthComponent() {
-    
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");    
     const [showPassword, setShowPassword] = useState(false)
 
     return (
@@ -48,6 +49,8 @@ export default function AuthComponent() {
               <input
                 id="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. john.doe@gmail.com"
                 className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444]"
                 required
@@ -63,6 +66,8 @@ export default function AuthComponent() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444]"
 				  required
                 />

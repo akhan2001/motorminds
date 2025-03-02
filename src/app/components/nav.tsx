@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Settings, HelpCircle } from "lucide-react"
+import { Bell, Settings, HelpCircle, Link } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -10,7 +10,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip"
-  
+import { Badge } from "@/components/ui/badge"
 
 export function Nav(
 	props: {
@@ -22,9 +22,9 @@ export function Nav(
 
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
-		{ name: "Mechanic Hub", href: "/" },
+		{ name: "Mechanic Hub", href: "/mechanic-hub" },
 		{ name: "Mia AI", href: "/chat" },
-		{ name: "Invoices", href: "/" },
+		{ name: "Invoices", href: "/invoices" },
 		{ name: "Lead Generation", href: "/" },
 		{ name: "Loyalty", href: "/loyalty" },
 		{ name: "Customers", href: "/customers" },
@@ -54,7 +54,7 @@ export function Nav(
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<span className="px-3 py-1 text-xs bg-[#1f1f1f] text-white rounded-full cursor-default">Premium</span>
+									<Badge variant="secondary" className="cursor-default">Premium</Badge>
 								</TooltipTrigger>
 								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
 									<p className="text-xs text-[#FBBC05]">You are a premium user</p>

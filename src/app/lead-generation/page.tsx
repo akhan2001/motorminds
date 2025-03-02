@@ -7,40 +7,6 @@ import { fetchShops } from "./fetchShops";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-// const shops = [
-//   {
-//     name: "AutoFix Garage",
-//     location: "123 Main St, Anytown",
-//     services: ["Brake Repair", "Oil Change", "Tire Rotation"],
-//     rating: 4.5,
-//   },
-//   {
-//     name: "Speedy Motors",
-//     location: "456 Elm St, Anytown",
-//     services: ["Engine Tuning", "Transmission Repair"],
-//     rating: 4.7,
-//   },
-//   {
-//     name: "Speedy Motors",
-//     location: "456 Elm St, Anytown",
-//     services: ["Engine Tuning", "Transmission Repair"],
-//     rating: 4.7,
-//   },
-//   {
-//     name: "Speedy Motors",
-//     location: "456 Elm St, Anytown",
-//     services: ["Engine Tuning", "Transmission Repair"],
-//     rating: 4.7,
-//   },
-//   {
-//     name: "Speedy Motors",
-//     location: "456 Elm St, Anytown",
-//     services: ["Engine Tuning", "Transmission Repair"],
-//     rating: 4.7,
-//   },
-//   // Add more shops as needed
-// ];
-
 export default function Marketplace() {
 	const [shops, setShops] = useState<any[]>([]);
 	const router = useRouter();

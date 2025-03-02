@@ -1,11 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
     try {
         const data = await req.json();
-        console.log(data.shop_id);
+        console.log("Shop ID: ", data.shop_id);
+        console.log("The timing is: ", new Date().toISOString());
 
         const { error } = await supabase
         .from('messages')

@@ -1,22 +1,15 @@
+"use client"
+
 import React from "react";
+
 import AuthComponent from "./components/AuthComponent";
-import { redirect } from "next/navigation";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+
 import Image from "next/image";
-export default async function Page() {
 
-    // const supabase = createServerComponentClient({ cookies });
 
-    // const { data: { session } } = await supabase.auth.getSession();
-
-    // if (session) {
-    //     redirect('/');
-    // }
-    
+export default function LoginPage() {
     return (
         <div className="h-screen bg-black">
-            {/* <AuthComponent /> */}
             <div className="flex flex-row h-full">
                 <div className="relative flex flex-col items-center justify-center w-[70%] h-full" style={{ backgroundImage: "url('/motorminds-bg.jpg')", backgroundSize: "cover", backgroundPosition: "center" }}>
                     <div className="absolute inset-0 bg-black opacity-80 z-0"></div>

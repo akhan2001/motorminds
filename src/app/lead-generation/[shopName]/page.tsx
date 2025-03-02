@@ -57,7 +57,7 @@ export default function ContactShop() {
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		toast.success(`Message sent to ${shopData?.shop_name || "the shop"}`);
-		console.log("Shop ID: ", shopID);
+		// console.log("Shop ID: ", shopID);
 		setFormData({ name: "", phone: "", email: "", message: "", shop_id: shopID });
 
 		const sendMessage = async () => {
