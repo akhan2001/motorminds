@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { InvoiceFilter } from './components/invoice-filter';
 import { InvoiceCard } from './components/invoice-card';
-import { fetchAllInvoices, formatCurrency } from './utils/invoice-utils';
+import { fetchAllInvoices, formatCurrency, formatDate } from './utils/invoice-utils';
 import { Nav } from '../components/nav';
 
 export default function InvoicesPage() {
@@ -34,7 +34,7 @@ export default function InvoicesPage() {
     }).length;
 
     return (
-        <div className="h-screen bg-black">
+        <div className="bg-black">
             <Nav activeLink="Invoices" />
 
             {/* INVOICES */}
@@ -57,7 +57,7 @@ export default function InvoicesPage() {
                             clientAddress={invoice.client_address}
                             clientEmail={invoice.client_email}
                             amount={formatCurrency(invoice.amount)}
-                            issueDate={invoice.issue_date}
+                            issueDate={formatDate(invoice.issue_date)}
                             status={invoice.status}
                             shopName={invoice.shop_name}
                             shopAddress={invoice.shop_address}

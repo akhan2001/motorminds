@@ -35,7 +35,7 @@ export function Nav(
 	}
 
 	return (
-		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50">
+		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}

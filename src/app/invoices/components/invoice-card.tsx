@@ -37,7 +37,7 @@ export function InvoiceCard({
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="text-xl font-bold flex items-center gap-2 text-white">
-                    Invoice #{invoiceNumber} <span className={`${status === 'Paid' ? 'text-green-500' : 'text-red-500'}`}>({status})</span>
+                    Invoice # {invoiceNumber} <span className={`${status === 'Paid' ? 'text-green-500' : 'text-red-500'}`}>({status})</span>
                     </h3>
                     <p className="text-gray-400">{invoiceNumber}</p>
                 </div>
