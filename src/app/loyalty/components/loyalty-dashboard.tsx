@@ -8,8 +8,8 @@ import { CustomersTable } from "./customers-table"
 
 export default function LoyaltyDashboard() {
   return (
-    <main className="flex-1 p-8">
-        <div className="max-w-5xl">
+    <main className="flex items-center justify-center py-8">
+        <div className="max-w-[1500px]">
             <h1 className="text-3xl font-bold mb-2">Welcome to Loyalty Program</h1>
             <p className="text-gray-400 mb-10">
                 Create a loyalty program that rewards customers for repeat business and referrals. You can set up points,
