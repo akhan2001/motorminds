@@ -5,7 +5,7 @@ import { InvoiceFilter } from './components/invoice-filter';
 import { InvoiceCard } from './components/invoice-card';
 import { fetchAllInvoices, formatCurrency, formatDate } from './utils/invoice-utils';
 import { Nav } from '../components/nav';
-
+import { InfoHoverCard } from '../components/InfoHoverCard';
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
 
@@ -39,7 +39,9 @@ export default function InvoicesPage() {
 
             {/* INVOICES */}
             <div className="container mx-auto p-4">
-                <h1 className="text-3xl font-bold mb-6 text-white">Invoices</h1>
+                <h1 className="text-3xl font-bold mb-6 text-white flex items-center gap-2">Invoices
+                    <InfoHoverCard text="More Invoice features are coming soon." />
+                </h1>
 
                 {/* FITLERS */}
                 <div className="flex flex-row gap-4 justify-start mb-8">
