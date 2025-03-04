@@ -25,6 +25,7 @@ export function Nav(
 		{ name: "Mechanic Hub", href: "/mechanic-hub" },
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/invoices" },
+		{ name: "Customers", href: "/customers" },
 		{ name: "Lead Generation", href: "/lead-generation" },
 		{ name: "Loyalty", href: "/loyalty" },
 	]

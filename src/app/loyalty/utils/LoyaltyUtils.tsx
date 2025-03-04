@@ -22,3 +22,32 @@ export async function getRewardsCount(shop_id: string) {
     }
     return count;
 }
+
+export async function getActiveRewards(shop_id: string) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('shop_id', shop_id)
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('Error fetching active rewards:', error);
+        return [];
+    }
+    return data;
+}
+
+export async function getNumberOfRewardPoints(shop_id: string) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('shop_id', shop_id);
+
+    // Sum the points from the rewards
+    let totalPoints = 0;
+    data?.forEach((reward) => {
+        totalPoints += reward.points_required;
+    });
+
+    return totalPoints;
+}

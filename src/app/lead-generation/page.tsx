@@ -24,7 +24,7 @@ export default function LeadGenerationPage() {
 
     return (
         <div className="bg-black h-screen">
-            <Nav activeLink="lead-generation" />
+            <Nav activeLink="Lead Generation" />
 			<div className="mb-8 mx-10">
 				<p className="text-gray-400">Hussain's</p>
 				<h2 className="text-4xl font-bold flex items-center text-gray-200">

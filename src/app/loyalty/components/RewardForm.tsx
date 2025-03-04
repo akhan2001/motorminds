@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export default function RewardForm({ onClose }: { onClose: () => void }) {
     const [rewardName, setRewardName] = useState("");
@@ -28,8 +29,10 @@ export default function RewardForm({ onClose }: { onClose: () => void }) {
 
         if (response.ok) {
             console.log("Reward created successfully");
+            toast.success("Reward created successfully");
         } else {
             console.log("Failed to create reward");
+            toast.error("Failed to create reward. Try again later.");
         }
 
         onClose();

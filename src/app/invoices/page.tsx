@@ -38,34 +38,36 @@ export default function InvoicesPage() {
             <Nav activeLink="Invoices" />
 
             {/* INVOICES */}
-            <div className="container mx-auto p-4">
-                <h1 className="text-3xl font-bold mb-6 text-white flex items-center gap-2">Invoices
-                    <InfoHoverCard text="More Invoice features are coming soon." />
-                </h1>
+            <div className="flex items-center justify-center py-8">
+                <div className="container mx-auto max-w-[1300px]">
+                    <h1 className="text-3xl font-bold mb-6 text-white flex items-center gap-2">Invoices
+                        <InfoHoverCard text="More Invoice features are coming soon. If you have any questions, please contact support." />
+                    </h1>
 
-                {/* FITLERS */}
-                <div className="flex flex-row gap-4 justify-start mb-8">
-                    <InvoiceFilter title="All" todayCount={todayCount} monthCount={monthCount} active={true} />
-                    <InvoiceFilter title="Paid" todayCount={todayCount} monthCount={monthCount} />
-                    <InvoiceFilter title="Unpaid" todayCount={todayCount} monthCount={monthCount} />
-                </div>
+                    {/* FITLERS */}
+                    <div className="flex flex-row gap-4 justify-start mb-8">
+                        <InvoiceFilter title="All" todayCount={todayCount} monthCount={monthCount} active={true} />
+                        <InvoiceFilter title="Paid" todayCount={todayCount} monthCount={monthCount} />
+                        <InvoiceFilter title="Unpaid" todayCount={todayCount} monthCount={monthCount} />
+                    </div>
 
-                <div className="flex flex-col gap-4">
-                    {invoices.map((invoice, index) => (
-                        <InvoiceCard
-                            key={index}
-                            invoiceNumber={invoice.invoice_number}
-                            clientName={invoice.client_name}
-                            clientAddress={invoice.client_address}
-                            clientEmail={invoice.client_email}
-                            amount={formatCurrency(invoice.amount)}
-                            issueDate={formatDate(invoice.issue_date)}
-                            status={invoice.status}
-                            shopName={invoice.shop_name}
-                            shopAddress={invoice.shop_address}
-                            shopEmail={invoice.shop_email}
-                        />
-                    ))}
+                    <div className="flex flex-col gap-4">
+                        {invoices.map((invoice, index) => (
+                            <InvoiceCard
+                                key={index}
+                                invoiceNumber={invoice.invoice_number}
+                                clientName={invoice.client_name}
+                                clientAddress={invoice.client_address}
+                                clientEmail={invoice.client_email}
+                                amount={formatCurrency(invoice.amount)}
+                                issueDate={formatDate(invoice.issue_date)}
+                                status={invoice.status}
+                                shopName={invoice.shop_name}
+                                shopAddress={invoice.shop_address}
+                                shopEmail={invoice.shop_email}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

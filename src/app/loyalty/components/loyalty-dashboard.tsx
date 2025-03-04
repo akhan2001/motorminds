@@ -2,33 +2,39 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+
 import { ArrowRight } from "lucide-react"
+import { useState, useEffect } from "react"
+
+import { InfoHoverCard } from "@/app/components/InfoHoverCard"
 import { RewardsTable } from "./rewards-table"
 import { CustomersTable } from "./customers-table"
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { getRewardsCount, getActiveRewards, getNumberOfRewardPoints } from "../utils/LoyaltyUtils"
 import RewardForm from "./RewardForm"
-import { useState, useEffect } from "react"
-import { InfoHoverCard } from "@/app/components/InfoHoverCard"
-import { getRewardsCount } from "../utils/LoyaltyUtils"
 
 export default function LoyaltyDashboard() {
     const [isAdding, setIsAdding] = useState(false)
-    const [pointsEarned, setPointsEarned] = useState(0)
     const [rewardsCount, setRewardsCount] = useState(0)
+    const [activeRewards, setActiveRewards] = useState(0)
+    const [numberOfRewardPoints, setNumberOfRewardPoints] = useState(0)
     const shop_id = "850e8400-e29b-41d4-a716-446655440001"
 
     useEffect(() => {
         const fetchRewardsCount = async () => {
             const count = await getRewardsCount(shop_id)
+            const activeRewards = await getActiveRewards(shop_id)
+            const numberOfRewardPoints = await getNumberOfRewardPoints(shop_id)
             setRewardsCount(count || 0)
-            console.log(count)
+            setActiveRewards(activeRewards.length || 0)
+            setNumberOfRewardPoints(numberOfRewardPoints || 0)
         }
         fetchRewardsCount()
     }, [])
 
     return (
         <main className="flex items-center justify-center py-8">
-            <div className="max-w-[1500px]">
+            <div className="container mx-auto max-w-[1300px]">
                 <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Welcome to Loyalty Program
                     <InfoHoverCard text="The loyalty program is still being developed. If you have any questions, please contact support." />
                 </h1>
@@ -87,7 +93,7 @@ export default function LoyaltyDashboard() {
 
                 <section>
                     <h2 className="text-xl font-semibold mb-4">Points activity</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 w-[70%]">
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Total Rewards Created</p>
@@ -98,14 +104,14 @@ export default function LoyaltyDashboard() {
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Total Rewards Redeemed</p>
-                                <p className="text-2xl font-bold text-red-500">1,500,000</p>
+                                <p className="text-2xl font-bold text-red-500">{numberOfRewardPoints}</p>
                             </CardContent>
                         </Card>
 
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Active Rewards</p>
-                                <p className="text-2xl font-bold text-green-500">1,950,000</p>
+                                <p className="text-2xl font-bold text-green-500">{activeRewards}</p>
                             </CardContent>
                         </Card>
                     </div>

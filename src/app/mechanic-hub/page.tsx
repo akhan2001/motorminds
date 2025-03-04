@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase"
 import { transformData } from "@/utils/dataTransform"
 import { TaskDetailsModal, DetailedRepairOrder } from "@/components/task-details-modal"
 import { v4 as uuidv4 } from "uuid"
+import { Nav } from "@/app/components/nav"
 
 export default function MechanicsHub() {
   const [currentView, setCurrentView] = useState<"board" | "calendar" | "list">("board")
@@ -384,33 +385,7 @@ export default function MechanicsHub() {
   return (
     <div className="min-h-screen bg-[#151515] flex flex-col">
       {/* Top Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="p-4 bg-[#131313]"
-      >
-        <div className="flex items-center px-6 py-3 bg-[#1a1a1a] rounded-[32px]">
-          <div className="flex items-center gap-2 font-semibold text-white">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MOTORMINDS-xT1F9wcHLYqhjkFz1dJwcACLAPUey3.png"
-              alt="Motorminds Logo"
-              className="h-8 w-8"
-            />
-            <span>Motorminds</span>
-          </div>
-          <MainNav />
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-[#2d2d2d]">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Avatar>
-              <AvatarImage src="/placeholder.svg?height=32&width=32" />
-              <AvatarFallback>MM</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-      </motion.div>
+      <Nav activeLink="Mechanic Hub" />
 
       <main className="flex-1 flex flex-col p-6 min-h-0">
         <motion.div

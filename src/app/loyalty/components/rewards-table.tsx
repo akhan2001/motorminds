@@ -3,16 +3,20 @@ import { useEffect } from "react"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getRewards } from "../utils/LoyaltyUtils"
+import { RewardSheet } from "./RewardSheet"
 
 export function RewardsTable() {
     const [rewards, setRewards] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [selectedReward, setSelectedReward] = useState<any>(null)
+    const [isSheetOpen, setIsSheetOpen] = useState(false)
 
     const handleRewardClick = (reward: any) => {
-        console.log(reward)
+        setSelectedReward(reward)
+        setIsSheetOpen(true)
     }
     
-    // Get rewards from /loyalty/api/route.ts
+    // Get rewards from /loyalty/utils/LoyaltyUtils.ts
     useEffect(() => {
         const fetchRewards = async () => {
             try {
@@ -52,7 +56,7 @@ export function RewardsTable() {
                     {rewards.map((reward) => (
                         <TableRow key={reward.id} className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" onClick={() => {
                             handleRewardClick(reward)
-                    }}>
+                        }}>
                             <TableCell>{reward.name}</TableCell>
                             <TableCell className="text-left">{reward.description}</TableCell>
                             <TableCell className="text-right">{reward.points_required === 0 ? "Free" : reward.points_required}</TableCell>
@@ -61,6 +65,11 @@ export function RewardsTable() {
                     ))}
                 </TableBody>
             </Table>
+            <RewardSheet
+                reward={selectedReward}
+                isOpen={isSheetOpen}
+                onOpenChange={setIsSheetOpen}
+            />
         </div>
     )
 }
