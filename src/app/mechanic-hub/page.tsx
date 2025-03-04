@@ -5,19 +5,16 @@ import { useRouter } from "next/navigation"
 import { Bell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-import { TaskBoard } from "@/app/mechanic-hub/components/task-board"
-import { CalendarView } from "@/app/mechanic-hub/components/calendar-view"
-import { ViewToggle } from "@/app/mechanic-hub/components/view-toggle"
-import { WorkOrderForm } from "@/app/mechanic-hub/components/work-order-form"
-import { TaskListView } from "@/app/mechanic-hub/components/task-list-view"
-import { Nav } from "@/app/components/nav"
-
+import { TaskBoard } from "@/components/task-board"
+import { CalendarView } from "@/components/calendar-view"
+import { MainNav } from "@/components/main-nav"
+import { ViewToggle } from "@/components/view-toggle"
+import { WorkOrderForm } from "@/components/work-order-form"
+import { TaskListView } from "@/components/task-list-view"
+import { motion } from "framer-motion"
 import { supabase } from "@/lib/supabase"
 import { transformData } from "@/utils/dataTransform"
-import { TaskDetailsModal, DetailedRepairOrder } from "@/app/mechanic-hub/components/task-details-modal"
-
-import { motion } from "framer-motion"
+import { TaskDetailsModal, DetailedRepairOrder } from "@/components/task-details-modal"
 import { v4 as uuidv4 } from "uuid"
 
 export default function MechanicsHub() {
@@ -46,7 +43,7 @@ export default function MechanicsHub() {
       setUser(user)
       await fetchRepairOrders(user.id)
     } else {
-      router.push("/auth/login")
+      router.push("/login")
     }
   }
 
@@ -391,8 +388,28 @@ export default function MechanicsHub() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        className="p-4 bg-[#131313]"
       >
-        <Nav activeLink="Mechanic Hub" />
+        <div className="flex items-center px-6 py-3 bg-[#1a1a1a] rounded-[32px]">
+          <div className="flex items-center gap-2 font-semibold text-white">
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MOTORMINDS-xT1F9wcHLYqhjkFz1dJwcACLAPUey3.png"
+              alt="Motorminds Logo"
+              className="h-8 w-8"
+            />
+            <span>Motorminds</span>
+          </div>
+          <MainNav />
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-[#2d2d2d]">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Avatar>
+              <AvatarImage src="/placeholder.svg?height=32&width=32" />
+              <AvatarFallback>MM</AvatarFallback>
+            </Avatar>
+          </div>
+        </div>
       </motion.div>
 
       <main className="flex-1 flex flex-col p-6 min-h-0">

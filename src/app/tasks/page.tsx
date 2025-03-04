@@ -1,20 +1,25 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { TasksTable } from "@/app/mechanic-hub/components/tasks-table"
-import { TaskStats } from "@/app/mechanic-hub/components/task-stats"
+import { MainNav } from "@/components/main-nav"
+import { TasksTable } from "@/components/tasks-table"
+import { TaskStats } from "@/components/task-stats"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { WorkOrderForm } from "@/app/mechanic-hub/components/work-order-form"
+import { WorkOrderForm } from "@/components/work-order-form"
 
 // IMPORTANT: Import your "DetailedRepairOrder" and modal
-import { TaskDetailsModal, DetailedRepairOrder } from "@/app/mechanic-hub/components/task-details-modal"
+import { TaskDetailsModal, DetailedRepairOrder } from "@/components/task-details-modal"
 
 import { useTasks } from "@/contexts/tasks-context"
 import type { Task } from "@/types/task"
 import { supabase } from "@/lib/supabase"
+import { TasksProvider } from '@/contexts/tasks-context'
 
 export default function TasksPage() {
   const router = useRouter()
@@ -281,78 +286,81 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#151515] flex flex-col">
-      {/* Top bar */}
-      <div className="p-4 bg-[#131313]">
-        <div className="flex items-center px-6 py-3 bg-[#1a1a1a] rounded-[32px]">
-          <div className="flex items-center gap-2 font-semibold text-white">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MOTORMINDS-xT1F9wcHLYqhjkFz1dJwcACLAPUey3.png"
-              alt="Motorminds Logo"
-              className="h-8 w-8"
-            />
-            <span>Motorminds</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors duration-200"
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Avatar>
-              <AvatarImage src="/placeholder.svg?height=32&width=32" />
-              <AvatarFallback>MM</AvatarFallback>
-            </Avatar>
+    <TasksProvider>
+      <div className="min-h-screen bg-[#151515] flex flex-col">
+        {/* Top bar */}
+        <div className="p-4 bg-[#131313]">
+          <div className="flex items-center px-6 py-3 bg-[#1a1a1a] rounded-[32px]">
+            <div className="flex items-center gap-2 font-semibold text-white">
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MOTORMINDS-xT1F9wcHLYqhjkFz1dJwcACLAPUey3.png"
+                alt="Motorminds Logo"
+                className="h-8 w-8"
+              />
+              <span>Motorminds</span>
+            </div>
+            <MainNav />
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors duration-200"
+              >
+                <Bell className="h-5 w-5" />
+              </Button>
+              <Avatar>
+                <AvatarImage src="/placeholder.svg?height=32&width=32" />
+                <AvatarFallback>MM</AvatarFallback>
+              </Avatar>
+            </div>
           </div>
         </div>
+
+        {/* Main content */}
+        <main className="flex-1 flex flex-col p-6 min-h-0">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-white flex items-center gap-2">
+              <div className="w-1 h-8 bg-[#b22222]" />
+              Tasks
+            </h1>
+          </div>
+
+          {/* Stats (uses tasks from context) */}
+          <TaskStats />
+
+          <div className="mt-8 bg-[#1A1A1A] rounded-xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Task List</h2>
+              <Button
+                className="bg-[#b22222] hover:bg-[#e23232] text-white transition-colors duration-200"
+                onClick={() => setIsWorkOrderFormOpen(true)}
+              >
+                <Plus className="mr-2 h-5 w-5" /> ADD NEW TASK
+              </Button>
+            </div>
+            {/* Table that calls handleTaskClick on row click */}
+            <TasksTable tasks={tasks} onTaskClick={handleTaskClick} />
+          </div>
+        </main>
+
+        {/* Work Order Form (add new tasks) */}
+        {isWorkOrderFormOpen && (
+          <WorkOrderForm
+            onClose={() => setIsWorkOrderFormOpen(false)}
+            onSave={handleSaveWorkOrder}
+            onAddTask={handleAddTask}
+          />
+        )}
+
+        {/* Detailed modal for editing mechanic name, etc. */}
+        {selectedTask && (
+          <TaskDetailsModal
+            task={selectedTask}
+            onClose={handleCloseModal}
+            onSave={handleSaveTask}
+          />
+        )}
       </div>
-
-      {/* Main content */}
-      <main className="flex-1 flex flex-col p-6 min-h-0">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white flex items-center gap-2">
-            <div className="w-1 h-8 bg-[#b22222]" />
-            Tasks
-          </h1>
-        </div>
-
-        {/* Stats (uses tasks from context) */}
-        <TaskStats />
-
-        <div className="mt-8 bg-[#1A1A1A] rounded-xl p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Task List</h2>
-            <Button
-              className="bg-[#b22222] hover:bg-[#e23232] text-white transition-colors duration-200"
-              onClick={() => setIsWorkOrderFormOpen(true)}
-            >
-              <Plus className="mr-2 h-5 w-5" /> ADD NEW TASK
-            </Button>
-          </div>
-          {/* Table that calls handleTaskClick on row click */}
-          <TasksTable tasks={tasks} onTaskClick={handleTaskClick} />
-        </div>
-      </main>
-
-      {/* Work Order Form (add new tasks) */}
-      {isWorkOrderFormOpen && (
-        <WorkOrderForm
-          onClose={() => setIsWorkOrderFormOpen(false)}
-          onSave={handleSaveWorkOrder}
-          onAddTask={handleAddTask}
-        />
-      )}
-
-      {/* Detailed modal for editing mechanic name, etc. */}
-      {selectedTask && (
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={handleCloseModal}
-          onSave={handleSaveTask}
-        />
-      )}
-    </div>
+    </TasksProvider>
   )
 }

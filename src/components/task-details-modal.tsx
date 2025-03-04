@@ -7,9 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 
 /**
  * If your DB columns are:
@@ -60,7 +57,6 @@ interface TaskDetailsModalProps {
 }
 
 export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDetailsModalProps) {
-  const router = useRouter()
   console.log("TaskDetailsModal - initialTask:", initialTask)
 
   // If you store "Assigned_to" in repair_order_details, let's read from the first row:
@@ -549,22 +545,6 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDet
           <Button
             variant="outline"
             className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
-            onClick={() => {
-              generateInvoice(initialTask.id).then((success) => {
-                if (success) {
-                  toast.success('Invoice generated successfully', {
-                    action: {
-                      label: 'View Invoice',
-                      onClick: () => {
-                        router.push('/invoices')
-                      }
-                    }
-                  })
-                } else {
-                  toast.error('Invoice already exists')
-                }
-              })
-            }}
           >
             Generate Invoice
           </Button>

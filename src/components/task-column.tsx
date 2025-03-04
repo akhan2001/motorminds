@@ -1,8 +1,8 @@
 import { Check, Clock } from "lucide-react"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useDroppable } from "@dnd-kit/core"
-import { SortableTaskCard } from "@/app/mechanic-hub/components/sortable-task-card"
-import type { Task } from "@/app/mechanic-hub/components/task-board"
+import { SortableTaskCard } from "./sortable-task-card"
+import type { Task } from "./task-board"
 
 interface TaskColumnProps {
   id: string
@@ -11,15 +11,6 @@ interface TaskColumnProps {
   tasks: Task[]
   onTaskClick?: (task: Task) => void
 }
-
-export type Task = {
-  id: string;
-  title: string;
-  description: string;
-  status: "Pending" | "In Progress" | "Completed";
-  dueDate: string;
-}
-
 
 export function TaskColumn({ id, title, icon, tasks, onTaskClick }: TaskColumnProps) {
   // 1) Make this column droppable by calling useDroppable with our id

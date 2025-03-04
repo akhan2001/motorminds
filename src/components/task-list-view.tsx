@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { TasksTable } from "@/app/mechanic-hub/components/tasks-table"
-import { TaskStats } from "@/app/mechanic-hub/components/task-stats"
+import { TasksTable } from "@/components/tasks-table"
+import { TaskStats } from "@/components/task-stats"
 import { Plus } from "lucide-react"
-import { WorkOrderForm } from "@/app/mechanic-hub/components/work-order-form"
-import { TaskDetailsModal } from "@/app/mechanic-hub/components/task-details-modal"
+import { WorkOrderForm } from "@/components/work-order-form"
+import { TaskDetailsModal } from "@/components/task-details-modal"
 import { supabase } from "@/lib/supabase"
 
 interface Task {

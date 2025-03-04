@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useEffect } from "react"
 import { useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
+import { getRewards } from "../utils/LoyaltyUtils"
 
 export function RewardsTable() {
     const [rewards, setRewards] = useState<any[]>([])
@@ -16,11 +16,9 @@ export function RewardsTable() {
     useEffect(() => {
         const fetchRewards = async () => {
             try {
-                const response = await fetch("/loyalty/api")
-                const data = await response.json()
+                const data = await getRewards()
                 setRewards(data)
-
-                console.log(data)
+                // console.log(data)
             } catch (error) {
                 console.error("Error fetching rewards:", error)
             } finally {
