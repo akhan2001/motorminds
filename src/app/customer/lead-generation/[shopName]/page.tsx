@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { fetchShops } from "../fetchShops";
+import { fetchShop } from "../api/fetchShops";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { createLead } from "@/app/lead-generation/utils/lead";
 
@@ -31,7 +31,7 @@ export default function ContactShop() {
 
 		const fetchShopData = async () => {
 			try {
-				const data = await fetchShops(shopID);
+				const data = await fetchShop(shopID);
 				setShopData(data);
 			} catch (error) {
 				console.error("Error fetching shop data:", error);
@@ -95,14 +95,14 @@ export default function ContactShop() {
 				</CardHeader>
 				<CardContent>
 					<p className="text-sm text-gray-600">
-						{shopData[0].shop_name} is located at {shopData[0].shop_address}, {shopData[0].shop_city}, {shopData[0].shop_province}
+						{shopData?.shop_name} is located at {shopData?.shop_address}, {shopData?.shop_city}, {shopData?.shop_province}
 					</p>
 					<p className="text-sm text-gray-600">
 						Operating hours: 
 						<br />
-							Mon-Fri: {shopData[0].operating_hours["Monday-Friday"]}
+							Mon-Fri: {shopData?.operating_hours["Monday-Friday"]}
 						<br />
-							Sat: {shopData[0].operating_hours["Saturday"]}
+							Sat: {shopData?.operating_hours["Saturday"]}
 					</p>
 				</CardContent>
 			</Card>
