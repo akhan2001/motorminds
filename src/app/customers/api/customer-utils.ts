@@ -10,6 +10,5 @@ export async function getCustomers() {
         return [];
     }
 
-    // console.log(data);
     return data;
 }

@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 export function CustomerFilter() {
     return (
         <section className="mb-10 w-[70%]">
-            <h2 className="text-xl font-semibold mb-4">Customer Activity</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="bg-[#111] border-[#222]">
                     <CardContent className="p-6">

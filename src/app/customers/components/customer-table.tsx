@@ -29,14 +29,13 @@ export function CustomerTable() {
         <div className="space-y-4">
             <div className="rounded-md border border-[#222] overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-[#222]">
+                    <TableHeader className="bg-[#222] border-none">
                         <TableRow className="hover:bg-[#222] border-b-0">
                             <TableHead className="text-white font-medium">Name</TableHead>
                             <TableHead className="text-white font-medium">Email</TableHead>
                             <TableHead className="text-white font-medium">Phone</TableHead>
                             <TableHead className="text-white font-medium">Address</TableHead>
                         </TableRow>
-
                     </TableHeader>
                     <TableBody>
                         {customers.map((customer) => (

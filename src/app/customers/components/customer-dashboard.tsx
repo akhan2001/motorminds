@@ -27,8 +27,8 @@ export function CustomerDashboard() {
                         </Button>
                     </div>
                 </div>
-
                 <CustomerFilter />
+                <h2 className="text-xl font-semibold mb-4">Customers</h2>
                 <CustomerTable />
             </div>
         </main> 
