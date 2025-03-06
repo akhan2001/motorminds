@@ -11,6 +11,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export function Nav(
 	props: {
@@ -87,7 +88,25 @@ export function Nav(
 				<div className="flex items-center gap-4">
 				<button className="text-[#979797] hover:text-white transition-colors">
 					{/* <span className="hidden md:inline mr-2">Help</span> */}
-					<HelpCircle className="inline-block w-5 h-5" />
+					<AlertDialog>
+						<AlertDialogTrigger asChild>
+							<HelpCircle className="inline-block w-5 h-5" />
+						</AlertDialogTrigger>
+						<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+							<AlertDialogHeader>
+								<AlertDialogTitle>You Are About to Leave the App</AlertDialogTitle>
+								<AlertDialogDescription>
+									You are about to open an external contact page. Do you want to continue?
+								</AlertDialogDescription>
+							</AlertDialogHeader>
+							<AlertDialogFooter>
+								<AlertDialogCancel className="">Cancel</AlertDialogCancel>
+								<AlertDialogAction className="border-none bg-red-600 text-white hover:bg-red-700" onClick={() => window.open("https://www.motorminds.ca/contact-us", "_blank")}>
+									Yes, Continue
+								</AlertDialogAction>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
 				</button>
 				<button className="text-[#979797] hover:text-white transition-colors" onClick={() => router.push("/settings")}>
 					{/* <span className="hidden md:inline mr-2">Settings</span> */}

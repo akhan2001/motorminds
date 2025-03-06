@@ -35,8 +35,8 @@ export default function Marketplace() {
 				<Input placeholder="Search for a shop" className="mb-10 w-[50%] rounded-full" />
 
 				<div className="grid grid-cols-1 gap-6">
-					{shops.map((shop: any, index: number) => (
-						<ShopCard key={index} shop={shop} activeRewards={activeRewards} />
+					{shops.map((shop: any) => (
+						<ShopCard key={shop.id} shop={shop} activeRewards={activeRewards} />
 					))}
 				</div>
 			</div>

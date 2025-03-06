@@ -9,6 +9,20 @@ export async function getRewards() {
     return data;
 }
 
+export async function getRewardNames() {
+    // Only get names of rewards that are active are are not duplicate
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('name')
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('Error fetching reward names:', error);
+        return [];
+    }
+    return data;
+}
+
 export async function getRewardsCount(shop_id: string) {
     // Get the number of rows in the rewards table
     const { count, error: countError } = await supabase

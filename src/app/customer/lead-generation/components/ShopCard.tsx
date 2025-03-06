@@ -4,6 +4,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { getRewardNames } from "@/app/loyalty/utils/LoyaltyUtils";
+import { useState, useEffect } from "react";
 
 const handleFavourite = (shopName: string) => {
     toast.success(`Shop ${shopName} added to favourites`);
@@ -11,6 +13,15 @@ const handleFavourite = (shopName: string) => {
 
 export default function ShopCard({ shop, activeRewards }: { shop: any, activeRewards: number }) {
     const router = useRouter();
+    const [rewardNames, setRewardNames] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchRewardNames = async () => {
+            const rewardNames = await getRewardNames();
+            setRewardNames(rewardNames.map((reward: any) => reward.name));
+        };
+        fetchRewardNames();
+    }, []);
 
     return (
         <motion.div
@@ -49,6 +60,9 @@ export default function ShopCard({ shop, activeRewards }: { shop: any, activeRew
                 <Badge variant="outline">
                     {shop.shop_province}
                 </Badge>
+                {rewardNames.map((reward: string) => (
+                    <Badge variant="outline" key={reward}>{reward}</Badge>
+                ))}
             </CardFooter>
             </Card>
         </motion.div>
