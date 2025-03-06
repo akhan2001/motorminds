@@ -6,19 +6,20 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { getRewardNames } from "@/app/loyalty/utils/LoyaltyUtils";
 import { useState, useEffect } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const handleFavourite = (shopName: string) => {
-    toast.success(`Shop ${shopName} added to favourites`);
-};
+// const handleFavourite = (shopName: string) => {
+//     toast.success(`Shop ${shopName} added to favourites`);
+// };
 
 export default function ShopCard({ shop, activeRewards }: { shop: any, activeRewards: number }) {
     const router = useRouter();
-    const [rewardNames, setRewardNames] = useState<string[]>([]);
+    const [rewardData, setRewardData] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchRewardNames = async () => {
-            const rewardNames = await getRewardNames();
-            setRewardNames(rewardNames.map((reward: any) => reward.name));
+            const rewardData = await getRewardNames(shop.id);
+            setRewardData(rewardData);
         };
         fetchRewardNames();
     }, []);
@@ -57,11 +58,18 @@ export default function ShopCard({ shop, activeRewards }: { shop: any, activeRew
                 </CardContent>
             </div>
             <CardFooter className="mt-4 flex gap-2">
-                <Badge variant="outline">
-                    {shop.shop_province}
-                </Badge>
-                {rewardNames.map((reward: string) => (
-                    <Badge variant="outline" key={reward}>{reward}</Badge>
+                {/**Display reward based on shopID */}
+                {rewardData.map((reward: any, index: number) => (
+                    <TooltipProvider key={reward.id}>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Badge variant="outline" key={reward.id}>{reward.name}</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {reward.description}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 ))}
             </CardFooter>
             </Card>
