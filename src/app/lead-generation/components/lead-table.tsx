@@ -10,11 +10,11 @@ import { LeadSheet } from "./lead-sheet";
 
 const statusColors = {
     "NEW": "bg-[#36612A]",
-    "CONTACTED": "bg-[#322E4C]",
-    "INTERESTED": "bg-[#726e19]",
+    "CONTACTED": "bg-[#2F4858]",
+    "INTERESTED": "bg-[#9B870C]",
     "NOT INTERESTED": "bg-[#7A1F20]",
-    "FOLLOW UP": "bg-[#322E4C]",
-    "CUSTOMER": "bg-[#36612A]"
+    "FOLLOW UP": "bg-[#5D3A9B]",
+    "CUSTOMER": "bg-[#1E5631]"
 }
 
 export function LeadTable() {

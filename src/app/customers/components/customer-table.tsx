@@ -30,10 +30,10 @@ export function CustomerTable() {
                 <Table>
                     <TableHeader className="bg-[#222] border-none">
                         <TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
-                            <TableHead className="text-white font-medium">Name</TableHead>
-                            <TableHead className="text-white font-medium">Email</TableHead>
-                            <TableHead className="text-white font-medium">Phone</TableHead>
-                            <TableHead className="text-white font-medium">Address</TableHead>
+                            <TableHead className="text-[#888] font-medium">NAME</TableHead>
+                            <TableHead className="text-[#888] font-medium">EMAIL</TableHead>
+                            <TableHead className="text-[#888] font-medium">PHONE</TableHead>
+                            <TableHead className="text-[#888] font-medium">ADDRESS</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

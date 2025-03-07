@@ -62,3 +62,36 @@ export function formatDate(dateString: string): string {
     };
     return date.toLocaleDateString(undefined, options);
 }
+
+export async function getTotalLeads() {
+    const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+    if (error) {
+        throw error
+    }
+
+    return data
+}
+
+export async function getHotLeads() {
+    const data = await getTotalLeads()
+    const hotLeads = data.filter((lead: any) => lead.status === "INTERESTED")
+    return hotLeads.length
+}
+
+export async function getPendingFollowUps() {
+    const data = await getTotalLeads()
+    const pendingFollowUps = data.filter((lead: any) => lead.status === "FOLLOW UP")
+    return pendingFollowUps.length
+}
+
+export async function getConvertedLeads() {
+    const data = await getTotalLeads()
+    const convertedLeads = data.filter((lead: any) => lead.status === "CUSTOMER")
+    return convertedLeads.length
+}
+
+
