@@ -12,3 +12,17 @@ export async function getCustomers() {
 
     return data;
 }
+
+export async function createNewCustomer(customer: any) {
+    const { data, error } = await supabase
+        .from('customers')
+        .insert(customer)
+        .select();
+
+    if (error) {
+        console.error('Error creating customer:', error);
+        return null;
+    }
+
+    return data;
+}

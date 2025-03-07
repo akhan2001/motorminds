@@ -43,7 +43,7 @@ export function LeadTable() {
                         <TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
                             <TableHead className="text-[#888] font-medium">CUSTOMER</TableHead>
                             <TableHead className="text-[#888] font-medium">DATE</TableHead>
-                            <TableHead className="text-[#888] font-medium">SERVICE</TableHead>
+                            {/* <TableHead className="text-[#888] font-medium">SERVICE</TableHead> */}
                             <TableHead className="text-[#888] font-medium">MESSAGE</TableHead>
                             <TableHead className="text-[#888] font-medium">STATUS</TableHead>
                             <TableHead className="text-[#888] font-medium">ACTIONS</TableHead>
@@ -54,7 +54,7 @@ export function LeadTable() {
                             <TableRow className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" key={lead.id} onClick={() => handleLeadClick(lead)}>
                                 <TableCell className="text-white">{lead.customer_name}</TableCell>
                                 <TableCell className="text-white">{formatDate(lead.updated_at)}</TableCell>
-                                <TableCell className="text-white">{lead.service_name}</TableCell>
+                                {/* <TableCell className="text-white">{lead.service_name}</TableCell> */}
                                 <TableCell className="text-white">{lead.message}</TableCell>
                                 <TableCell className="text-white">
                                     <Badge variant="outline" className={`border-none text-white ${statusColors[lead.status as keyof typeof statusColors]}`}>
@@ -67,7 +67,9 @@ export function LeadTable() {
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
-                                                        <Mail className="w-4 h-4" />
+                                                        <Mail className="w-4 h-4" onClick={() => {
+                                                            window.open(`mailto:${lead.customer_email}`, '_blank')
+                                                        }}/>
                                                     </button>
                                                 </TooltipTrigger>
                                                 <TooltipContent className="bg-[#1f1f1f] text-white border-none">
@@ -80,7 +82,9 @@ export function LeadTable() {
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
-                                                        <Phone className="w-4 h-4" />
+                                                        <Phone className="w-4 h-4" onClick={() => {
+                                                            window.open(`tel:${lead.customer_phone}`, '_blank')
+                                                        }}/>
                                                     </button>
                                                 </TooltipTrigger>
                                                 <TooltipContent className="bg-[#1f1f1f] text-white border-none">
@@ -111,6 +115,15 @@ export function LeadTable() {
                     lead={selectedLead}
                     isOpen={isSheetOpen}
                     onOpenChange={setIsSheetOpen}
+                    sendEmail={() => {
+                        window.open(`mailto:${selectedLead.customer_email}`, '_blank')
+                    }}
+                    callPhone={() => {
+                        window.open(`tel:${selectedLead.customer_phone}`, '_blank')
+                    }}
+                    sendMessage={() => {
+                        window.open(`sms:${selectedLead.customer_phone}`, '_blank')
+                    }}
                 />
             </div>
         </div>

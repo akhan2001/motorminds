@@ -1,8 +1,11 @@
 import { CustomerTable } from "./customer-table";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
+import { useState } from "react";
+import CustomerForm from "./customer-form";
 
 export function CustomerDashboard() {
+    const [isAdding, setIsAdding] = useState(false);
 
     return (
         <main className="flex flex-col items-center justify-center py-8">
@@ -16,14 +19,15 @@ export function CustomerDashboard() {
                         </p>
                     </div>
                     <div className="flex flex-row gap-4">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7">
+                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7" onClick={() => setIsAdding(true)}>
                             <PlusIcon className="w-4 h-4 mr-1" />
                             ADD CUSTOMER
                         </Button>
                     </div>
                 </div>
                 <CustomerTable />
+                {isAdding && <CustomerForm onClose={() => setIsAdding(false)} />}
             </div>
-        </main> 
+        </main>
     )
 }
