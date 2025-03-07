@@ -1,82 +1,49 @@
 "use client"
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
-import type React from "react"
+import React from "react"
+import Image from "next/image"
+import AuthComponent from "./AuthComponent"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
-export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-
-      // Redirect to Mechanic Hub on successful login
-      router.push("/mechanic-hub")
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "An unknown error occurred")
-    }
-  }
-
+export default function LoginPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#151515]">
-      <div className="w-full max-w-md p-8 space-y-8 bg-[#1A1A1A] rounded-xl">
-        <h2 className="text-3xl font-bold text-center text-white">Login to Motorminds</h2>
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <Label htmlFor="email" className="text-white">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 text-white bg-[#222222] border border-[#333333] rounded-md focus:outline-none focus:ring-2 focus:ring-[#b22222]"
-              required
-            />
+    <div className="h-screen bg-black">
+      <div className="flex flex-row h-full">
+        {/* LEFT SECTION with background */}
+        <div
+          className="relative flex flex-col items-center justify-center w-[70%] h-full"
+          style={{
+            backgroundImage: "url('/motorminds-bg.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-black opacity-80 z-0"></div>
+          <div className="relative flex flex-col items-center justify-center gap-4 w-[50%]">
+            <div>
+              <Image
+                src="/motorminds-logo-white (1).svg"
+                alt="Motorminds Logo"
+                width={100}
+                height={100}
+              />
+            </div>
+            <div className="flex flex-col items-center justify-center gap-2">
+              <h1 className="text-white text-3xl font-bold">Welcome to Motorminds</h1>
+              <p className="text-[#AAAAAA] text-xl text-center">
+                Your Hub for Auto Shops &amp; Car Enthusiasts
+                <br />– Stay Connected, Stay Tuned.
+              </p>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="password" className="text-white">
-              Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 text-white bg-[#222222] border border-[#333333] rounded-md focus:outline-none focus:ring-2 focus:ring-[#b22222]"
-              required
-            />
-          </div>
-          {error && <p className="text-red-500">{error}</p>}
-          <Button
-            type="submit"
-            className="w-full bg-[#b22222] hover:bg-[#e23232] text-white font-bold py-2 px-4 rounded-md transition-colors duration-200"
-          >
-            Login
-          </Button>
-        </form>
+        </div>
+
+        {/* RIGHT SECTION: The AuthComponent form */}
+        <div className="flex flex-col items-center justify-center w-[30%] h-full">
+          <AuthComponent />
+        </div>
       </div>
     </div>
   )
 }
-

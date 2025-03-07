@@ -1,10 +1,16 @@
 import { supabase } from '@/lib/supabase';
 
+
+
 // Fetch all invoices from the database
-export async function fetchAllInvoices() {
-  const { data, error } = await supabase.from('invoices').select('*');
+export async function fetchAllInvoices(shopId: string) {
+  const { data, error } = await supabase
+    .from("invoices")
+    .select("*")
+    .eq("shop_id", shopId); // <-- Filter by shop_id
+
   if (error) {
-    console.error('Error fetching invoices:', error);
+    console.error("Error fetching invoices:", error);
     return [];
   }
   return data;
