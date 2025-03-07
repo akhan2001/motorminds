@@ -43,7 +43,7 @@ export default function InvoicesPage() {
     }).length;
 
     return (
-        <div className="bg-black">
+        <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Invoices" />
 
             <div className="flex items-center justify-center py-8">
