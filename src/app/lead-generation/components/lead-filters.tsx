@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card"; 
 import { UsersRound, Flame, Clock, Check } from 'lucide-react';
+
 export function LeadFilter() {
     return (
         <section className="mb-10 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-3 mb-3">
                 <Card className="bg-[#111] border-[#222]">
                     <CardContent className="p-6">
                         <div className="flex justify-between items-center">

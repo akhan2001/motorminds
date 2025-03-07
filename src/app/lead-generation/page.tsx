@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { getLeads } from "./utils/lead"
 import { LeadRow } from "@/app/lead-generation/components/lead-row"
 import { LeadFilter } from "./components/lead-filters"
+import { LeadTable } from "./components/lead-table"
 
 export default function LeadGenerationPage() {
 	const [leads, setLeads] = useState<any[]>([])
@@ -28,20 +29,19 @@ export default function LeadGenerationPage() {
 			
             <div className="flex items-center justify-center py-8">
 				<div className="container mx-auto max-w-[1300px]">
-					<div>
-						<div className="flex flex-col mb-8">
-							<h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-white">Lead Generation</h1>
-							<p className="text-gray-400">
-							Manage your leads and track their activity through the lead generation page.
-							</p>
-						</div>
-
-						<LeadFilter />
+					<div className="flex flex-col pb-4 mb-4">
+						<h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-white">Lead Generation</h1>
+						<p className="text-gray-400">
+						Manage your leads and track their activity through the lead generation page.
+						</p>
 					</div>
 
-					<div className="flex gap-4">
+					<LeadFilter />
+
+					<LeadTable />
+
+					{/* <div className="flex gap-4">
 						<div className="flex-1 min-w-[60%]">
-							{/* Leads Table */}
 							<div className="bg-[#0f0f0f] rounded-lg overflow-hidden">
 								<div className="h-[750px] overflow-y-auto">
 									{leads.map((lead) => (
@@ -60,7 +60,6 @@ export default function LeadGenerationPage() {
 							</div>
 						</div>
 
-						{/* Message Box */}
 						<div className="flex-1">
 							<div className="bg-[#0f0f0f] rounded-lg overflow-hidden h-[750px]">
 								<div className="p-4 border-b border-gray-800">
@@ -75,7 +74,7 @@ export default function LeadGenerationPage() {
 								</div>
 							</div>
 						</div>
-					</div>
+					</div> */}
 				</div>
 			</div>
 		</div>

@@ -10,7 +10,6 @@ export function CustomerTable() {
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-
     useEffect(() => {
         const fetchCustomers = async () => {
             const customers = await getCustomers();
@@ -30,7 +29,7 @@ export function CustomerTable() {
             <div className="rounded-md border border-[#222] overflow-hidden">
                 <Table>
                     <TableHeader className="bg-[#222] border-none">
-                        <TableRow className="hover:bg-[#222] border-b-0">
+                        <TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
                             <TableHead className="text-white font-medium">Name</TableHead>
                             <TableHead className="text-white font-medium">Email</TableHead>
                             <TableHead className="text-white font-medium">Phone</TableHead>
