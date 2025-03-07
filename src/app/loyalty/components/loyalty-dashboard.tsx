@@ -7,7 +7,6 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/comp
 import { ArrowRight } from "lucide-react"
 import { useState, useEffect } from "react"
 
-import { InfoHoverCard } from "@/app/components/InfoHoverCard"
 import { RewardsTable } from "./rewards-table"
 import { CustomersTable } from "./customers-table"
 import { getRewardsCount, getActiveRewards, getNumberOfRewardPoints } from "../utils/LoyaltyUtils"
@@ -35,9 +34,7 @@ export default function LoyaltyDashboard() {
     return (
         <main className="flex items-center justify-center py-8">
             <div className="container mx-auto max-w-[1300px]">
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Welcome to Loyalty Program
-                    <InfoHoverCard text="The loyalty program is still being developed. If you have any questions, please contact support." />
-                </h1>
+                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Loyalty Program</h1>
                 <p className="text-gray-400 mb-10">
                     Create a loyalty program that rewards customers for repeat business and referrals. You can set up points,
                     rewards, and track engagement in real time.

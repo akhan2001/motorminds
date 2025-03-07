@@ -12,67 +12,60 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 //     toast.success(`Shop ${shopName} added to favourites`);
 // };
 
-export default function ShopCard({ shop, activeRewards }: { shop: any, activeRewards: number }) {
+export default function ShopCard({ shop }: { shop: any }) {
     const router = useRouter();
-    const [rewardData, setRewardData] = useState<any[]>([]);
+    const [rewardNames, setRewardNames] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchRewardNames = async () => {
             const rewardData = await getRewardNames(shop.id);
-            setRewardData(rewardData);
+            // Extract just the name property from each reward object
+            setRewardNames(rewardData.map(reward => reward.name));
         };
         fetchRewardNames();
-    }, []);
+    }, [shop.id]);
+
+    console.log(rewardNames);
 
     return (
         <motion.div
-            className="shadow cursor-pointer transition-all duration-300 s"
+            className="shadow cursor-pointer transition-all duration-300"
             onClick={() => {
                 router.push(`/customer/lead-generation/${encodeURIComponent(shop.shop_name)}-${shop.id}`);
             }}
             whileHover={{ scale: 1.005 }}
         >
             <Card>
-            <div className="flex flex-row justify-between items-center">
-                <CardHeader>
-                    <h2 className="text-xl font-semibold">{shop.shop_name}</h2>
-                    <p className="text-gray-600">{shop.shop_address}, {shop.shop_city}, {shop.shop_province}</p>
-                    <p className="text-gray-800 mt-2">Contact: {shop.shop_phone}</p>
-                    <p className="text-gray-800 mt-2">Website: <a href={`http://${shop.website}`} target="_blank" rel="noopener noreferrer">{shop.website}</a></p>
-                    <p className="text-gray-800 mt-2">Rewards: {activeRewards}</p>
-                </CardHeader>
-                <CardContent className="flex flex-row gap-2">
-                    {/* <p className="text-gray-800 mt-2">Services Offered:</p>
-                    <ul className="list-disc list-inside">
-                        {(shop.services_offered || []).map((service: string, idx: number) => (
-                            <li key={idx}>{service}</li>
-                        ))}
-                    </ul> */}
-                    <Button 
-                    variant="default"
-                    onClick={() => {
-                        router.push(`/customer/lead-generation/${encodeURIComponent(shop.shop_name)}-${shop.id}`);
-                    }}>
-                        Contact Shop
-                    </Button>
-                </CardContent>
-            </div>
-            <CardFooter className="mt-4 flex gap-2">
-                {/**Display reward based on shopID */}
-                {rewardData.map((reward: any, index: number) => (
-                    <TooltipProvider key={reward.id}>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <Badge variant="outline" key={reward.id}>{reward.name}</Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                {reward.description}
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                ))}
-            </CardFooter>
+                <div className="flex flex-row justify-between items-center">
+                    <CardHeader>
+                        <h2 className="text-xl font-semibold">{shop.shop_name}</h2>
+                        <p className="text-gray-600">{shop.shop_address}, {shop.shop_city}, {shop.shop_province}</p>
+                        <p className="text-gray-800 mt-2">Contact: {shop.shop_phone}</p>
+                        <p className="text-gray-800 mt-2">Website: <a href={`http://${shop.website}`} target="_blank" rel="noopener noreferrer">{shop.website}</a></p>
+                    </CardHeader>
+                    <CardContent className="flex flex-row gap-2">
+                        <Button 
+                            variant="default"
+                            onClick={() => {
+                                router.push(`/customer/lead-generation/${encodeURIComponent(shop.shop_name)}-${shop.id}`);
+                            }}>
+                            Contact Shop
+                        </Button>
+                    </CardContent>
+                </div>
+                <CardFooter className="mt-4 flex gap-2">
+                    {rewardNames.map((reward: any) => (
+                        <TooltipProvider key={reward.id}>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="outline">{reward.name}</Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>{reward.description}</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))}
+                </CardFooter>
             </Card>
         </motion.div>
-    )
-} 
+    );
+}

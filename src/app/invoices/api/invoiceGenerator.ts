@@ -1,6 +1,7 @@
 import easyinvoice from 'easyinvoice';
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { NextResponse } from 'next/server';
 
 interface InvoiceData {
     invoiceNumber: string
@@ -138,6 +139,3 @@ export async function generateInvoice(repairOrderID: any) {
     // const invoice = await easyinvoice.createInvoice(data);
     // return invoice;
 }
-
-
-

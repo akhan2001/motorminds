@@ -18,7 +18,7 @@ export function CustomerDashboard() {
                         </h1>
                         <p className="text-gray-400">
                             Manage your customer base and track their activity. Add new customers, edit their information, and view their activity.
-                            </p>
+                        </p>
                     </div>
                     <div className="flex flex-row gap-4">
                         <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7">
