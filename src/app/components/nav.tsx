@@ -1,6 +1,7 @@
 "use client"
 
-import { Bell, Settings, HelpCircle, Link } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { Bell, Settings, HelpCircle } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -11,7 +12,15 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+  } from "@/components/ui/dropdown-menu"
+  
 
 export function Nav(
 	props: {
@@ -34,6 +43,15 @@ export function Nav(
 	const handleNavClick = (name: string, href: string) => {
 		setActiveLink(name)
 		router.push(href)
+	}
+
+	const handleLogout = async () => {
+		const { error } = await supabase.auth.signOut()
+		if (error) {
+			console.error("Logout error:", error)
+		}
+		router.push("/auth/login")
+		window.location.reload()
 	}
 
 	return (
@@ -116,9 +134,44 @@ export function Nav(
 					<Bell className="w-5 h-5" />
 					<span className="absolute -top-1 -right-1 w-2 h-2 bg-[#b22222] rounded-full" />
 				</button>
-				<div className="w-8 h-8 rounded-full bg-[#1f1f1f] flex items-center justify-center">
-					<span className="text-white text-sm">AK</span>
-				</div>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+							<Avatar className="w-7 h-7 cursor-pointer">
+								<AvatarImage src="https://github.com/shadcn.png" />
+								<AvatarFallback>AK</AvatarFallback>
+							</Avatar>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<DropdownMenuItem
+									onSelect={(e) => {
+										e.preventDefault(); // Prevent the dropdown from closing
+									}}
+								>
+									Logout
+								</DropdownMenuItem>
+							</AlertDialogTrigger>
+							<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+								<AlertDialogHeader>
+									<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+									<AlertDialogDescription>
+										You are about to logout. Do you want to continue?
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel className="">Cancel</AlertDialogCancel>
+									<AlertDialogAction
+										className="border-none bg-red-600 text-white hover:bg-red-700"
+										onClick={() => { handleLogout() }}
+									>
+										Yes, Continue
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					</DropdownMenuContent>
+				</DropdownMenu>
 				</div>
 			</nav>
 		</header>
