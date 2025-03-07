@@ -65,9 +65,9 @@ export default function InvoicesPage() {
 
                     {/* FILTERS */}
                     <div className="flex flex-row gap-4 justify-start mb-8">
-                        <InvoiceFilter title="All" todayCount={todayCount} monthCount={monthCount} active={true} />
-                        <InvoiceFilter title="Paid" todayCount={todayCount} monthCount={monthCount} />
-                        <InvoiceFilter title="Unpaid" todayCount={todayCount} monthCount={monthCount} />
+                        <InvoiceFilter title="ALL" todayCount={todayCount} monthCount={monthCount} active={true} />
+                        <InvoiceFilter title="PAID" todayCount={todayCount} monthCount={monthCount} />
+                        <InvoiceFilter title="UNPAID" todayCount={todayCount} monthCount={monthCount} />
                     </div>
 
                     {/* INVOICES */}

@@ -82,7 +82,7 @@ export default function RewardForm({ onClose }: { onClose: () => void }) {
                     {/* Reward Points */}
                     <div>
                         <label className="text-gray-300 text-sm">Reward Points</label>
-                        <Select onValueChange={setPoints}>
+                        <Select onValueChange={setPoints} disabled={true}>
                             <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
                                 <SelectValue placeholder="Select a reward point value" />
                             </SelectTrigger>

@@ -72,3 +72,25 @@ export async function getNumberOfRewardPoints(shop_id: string) {
 
     return totalPoints;
 }
+
+export async function deleteReward(reward_id: string) {
+    const { error } = await supabase
+        .from('rewards')
+        .delete()
+        .eq('id', reward_id);
+    
+        if (error) {
+        console.error('Error deleting reward:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function updateReward(reward_id: string, reward_data: any) {
+    const { error } = await supabase.from('rewards').update(reward_data).eq('id', reward_id);
+    if (error) {
+        console.error('Error updating reward:', error);
+        return false;
+    }
+    return true;
+}

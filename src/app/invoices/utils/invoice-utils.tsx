@@ -10,6 +10,17 @@ export async function fetchAllInvoices() {
   return data;
 }
 
+// Fetch invoice data by ID
+export async function getInvoiceData(id: string) {
+  const { data, error } = await supabase.from('invoices').select('*').eq('invoice_number', id);
+
+  if (error) {
+    console.error('Error fetching invoice:', error);
+    return null;
+  }
+  return data;
+}
+
 // Format currency
 export function formatCurrency(amount: number): string {
   return `$${amount.toFixed(2)}`;

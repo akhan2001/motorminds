@@ -89,7 +89,7 @@ export default function LoyaltyDashboard() {
                 </section>
 
                 <section>
-                    <h2 className="text-xl font-semibold mb-4">Points activity</h2>
+                    <h2 className="text-xl font-semibold mb-4">Activity</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 w-[70%]">
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
