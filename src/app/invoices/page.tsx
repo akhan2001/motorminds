@@ -10,7 +10,7 @@ import { fetchAllInvoices, formatCurrency, formatDate } from "./utils/invoice-ut
 import { Nav } from "../components/nav"
 import { Button } from "@/components/ui/button"
 import { PlusIcon } from "lucide-react"
-
+import InvoiceForm from "./components/invoice-form"
 export default function InvoicesPage() {
   const router = useRouter()
   const [invoices, setInvoices] = useState<any[]>([])
@@ -148,6 +148,7 @@ export default function InvoicesPage() {
           </div>
         </div>
       </div>
+      {isAdding && <InvoiceForm onClose={() => setIsAdding(false)} />}
     </div>
   )
 }
