@@ -11,25 +11,52 @@ import { RewardsTable } from "./rewards-table"
 import { CustomersTable } from "./customers-table"
 import { getRewardsCount, getActiveRewards, getNumberOfRewardPoints } from "../utils/LoyaltyUtils"
 import RewardForm from "./RewardForm"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
+import { getShopId } from "@/utils/supabase/supabase-shop"
 
 export default function LoyaltyDashboard() {
     const [isAdding, setIsAdding] = useState(false)
     const [rewardsCount, setRewardsCount] = useState(0)
     const [activeRewards, setActiveRewards] = useState(0)
     const [numberOfRewardPoints, setNumberOfRewardPoints] = useState(0)
-    const shop_id = "850e8400-e29b-41d4-a716-446655440001"
+    const [user, setUser] = useState<any>(null)
+    const router = useRouter()
+    // const shop_id = "850e8400-e29b-41d4-a716-446655440001"
 
     useEffect(() => {
-        const fetchRewardsCount = async () => {
-            const count = await getRewardsCount(shop_id)
-            const activeRewards = await getActiveRewards(shop_id)
-            const numberOfRewardPoints = await getNumberOfRewardPoints(shop_id)
-            setRewardsCount(count || 0)
-            setActiveRewards(activeRewards.length || 0)
-            setNumberOfRewardPoints(numberOfRewardPoints || 0)
-        }
-        fetchRewardsCount()
+        checkUser()
     }, [])
+    
+    // Ensure user is logged in, then fetch existing orders
+    async function checkUser() {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser()
+
+        if (user) {
+            setUser(user)
+            const shopId = await fetchShopId(user.id)
+            fetchRewardsCount(shopId)
+        } else {
+            router.push("/login")
+        }
+    }
+
+    async function fetchShopId(userId: string) {
+        const shopId = await getShopId(userId)
+        console.log(shopId)
+        return shopId
+    }
+
+    async function fetchRewardsCount(userId: string) {
+        const count = await getRewardsCount(userId)
+        const activeRewards = await getActiveRewards(userId)
+        const numberOfRewardPoints = await getNumberOfRewardPoints(userId)
+        setRewardsCount(count || 0)
+        setActiveRewards(activeRewards.length || 0)
+        setNumberOfRewardPoints(numberOfRewardPoints || 0)
+    }
 
     return (
         <main className="flex items-center justify-center py-8">
@@ -118,10 +145,10 @@ export default function LoyaltyDashboard() {
                     <h2 className="text-xl font-semibold mb-4">Your Rewards</h2>
                     <RewardsTable />
                 </section>
-                <section className="mb-10">
+                {/* <section className="mb-10">
                     <h2 className="text-xl font-semibold mb-4">Customers who have claimed rewards</h2>
                     <CustomersTable />
-                </section>
+                </section> */}
 
                 <section className="mb-10">
                 {/* Add/Edit Reward Modal */}

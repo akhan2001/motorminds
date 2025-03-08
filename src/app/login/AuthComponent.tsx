@@ -42,15 +42,11 @@ export default function AuthComponent() {
 
         {/* Social Login Buttons */}
         <div className="flex flex-row gap-4 mb-8">
-          <button className="flex w-full items-center justify-center gap-3 rounded-lg border 
-                             border-[#222222] px-4 py-2 text-sm font-medium text-white 
-                             hover:bg-[#222222] hover:border-[#444444]">
+          <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#222222] px-4 py-2 text-sm font-medium text-white hover:bg-[#222222] hover:border-[#444444]">
             <Image src="/icons8-google-48.png" alt="Google" width={24} height={24} />
             Google
           </button>
-          <button className="flex w-full items-center justify-center gap-3 rounded-lg border 
-                             border-[#222222] px-4 py-2 text-sm font-medium text-white 
-                             hover:bg-[#222222] hover:border-[#444444]">
+          <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#222222] px-4 py-2 text-sm font-medium text-white hover:bg-[#222222] hover:border-[#444444]">
             <Image src="/icons8-facebook-50.png" alt="Facebook" width={24} height={24} />
             Facebook
           </button>
@@ -81,9 +77,7 @@ export default function AuthComponent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white 
-                         placeholder-gray-500 outline-none ring-1 ring-gray-700 transition 
-                         focus:ring-1 focus:ring-[#444444]"
+              className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444] border-none"
             />
           </div>
 
@@ -99,9 +93,7 @@ export default function AuthComponent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white 
-                           placeholder-gray-500 outline-none ring-1 ring-gray-700 transition 
-                           focus:ring-1 focus:ring-[#444444]"
+                className="w-full rounded-lg bg-[#222222] px-4 py-2 text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444] border-none"
               />
               <button
                 type="button"
@@ -123,9 +115,8 @@ export default function AuthComponent() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-gray-400">
-            Forgot Your Password?{" "}
-            <span className="underline hover:text-white">Reset It Here</span>
+          <Link href="https://www.motorminds.ca/contact-us" target="_blank" className="text-sm text-gray-400">
+            Forgot Your Password? <span className="underline hover:text-white">Reset It Here</span>
           </Link>
         </div>
       </div>

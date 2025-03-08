@@ -4,8 +4,8 @@ import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import CustomerForm from "./customer-form";
 
-export function CustomerDashboard() {
-    const [isAdding, setIsAdding] = useState(false);
+export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
+    const [isAdding, setIsAdding] = useState(false);    
 
     return (
         <main className="flex flex-col items-center justify-center py-8">
@@ -25,7 +25,10 @@ export function CustomerDashboard() {
                         </Button>
                     </div>
                 </div>
-                <CustomerTable />
+                <CustomerTable
+                    shopId={shopId}
+                    user={user}
+                />
                 {isAdding && <CustomerForm onClose={() => setIsAdding(false)} />}
             </div>
         </main>

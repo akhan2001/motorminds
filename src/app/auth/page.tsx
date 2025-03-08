@@ -6,7 +6,6 @@ import AuthComponent from "./components/AuthComponent";
 
 import Image from "next/image";
 
-
 export default function LoginPage() {
     return (
         <div className="h-screen bg-black">
