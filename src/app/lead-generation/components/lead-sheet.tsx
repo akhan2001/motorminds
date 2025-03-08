@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 interface LeadSheetProps {
     lead: any;
     isOpen: boolean;
@@ -55,21 +55,30 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone, se
                             onValueChange={(value) => {
                                 console.log(value);
                             }}
-                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1"
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
                                 <SelectValue placeholder="Select a status" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="NEW" className="bg-black">New</SelectItem>
-                                <SelectItem value="CONTACTED" className="bg-black">Contacted</SelectItem>
-                                <SelectItem value="INTERESTED" className="bg-black">Interested</SelectItem>
-                                <SelectItem value="NOT INTERESTED" className="bg-black">Not Interested</SelectItem>
-                                <SelectItem value="FOLLOW UP" className="bg-black">Follow Up</SelectItem>
-                                <SelectItem value="CUSTOMER" className="bg-black">Customer</SelectItem>
+                            <SelectContent className="bg-[#292929] border-none text-white text-sm">
+                                <SelectItem className="bg-[#292929]" value="NEW">New</SelectItem>
+                                <SelectItem className="bg-[#292929]" value="CONTACTED">Contacted</SelectItem>
+                                <SelectItem className="bg-[#292929]" value="INTERESTED">Interested</SelectItem>
+                                <SelectItem className="bg-[#292929]" value="NOT INTERESTED">Not Interested</SelectItem>
+                                <SelectItem className="bg-[#292929]" value="FOLLOW UP">Follow Up</SelectItem>
+                                <SelectItem className="bg-[#292929]" value="CUSTOMER">Customer</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/** Latest Message */}
+                    <Card className="bg-[#292929] border-none text-white text-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white text-sm">{lead.created_at}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-gray-400 text-xs">{lead.message}</p>
+                        </CardContent>
+                    </Card>
 
                     {/* Actions */}
                     <div className="flex justify-between gap-2">
@@ -95,7 +104,7 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone, se
                 </div>
 
                 {/* Mia AI Chatbot */}
-                <div className="bg-[#1A1A1A] mt-5 p-4 rounded-md border border-[#292929]">
+                {/* <div className="bg-[#1A1A1A] mt-5 p-4 rounded-md border border-[#292929]">
                     <h3 className="text-white text-sm font-semibold">Mia AI Assistant</h3>
                     <p className="text-gray-400 text-xs mb-2">Ask Mia for lead details or insights.</p>
                     
@@ -106,7 +115,7 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone, se
                         />
                         <Button className="bg-blue-500 hover:bg-blue-400">Ask</Button>
                     </div>
-                </div>
+                </div> */}
             </SheetContent>
         </Sheet>
     )
