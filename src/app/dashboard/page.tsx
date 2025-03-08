@@ -51,9 +51,6 @@ export default function DashboardPage() {
             <span className="h-8 w-2 bg-red-600 rounded"></span>
             Welcome Hussain
           </h1>
-          <Button variant="destructive" className="rounded-md">
-            <span className="mr-1">+</span> ADD NEW JOB
-          </Button>
         </div>
 
         {/* Stats Cards */}

@@ -93,7 +93,7 @@ export function LeadTable() {
                                             </Tooltip>
                                         </TooltipProvider>
                                         
-                                        <TooltipProvider>
+                                        {/* <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
@@ -104,7 +104,7 @@ export function LeadTable() {
                                                     <p>Send Message</p>
                                                 </TooltipContent>
                                             </Tooltip>
-                                        </TooltipProvider>
+                                        </TooltipProvider> */}
                                     </div>
                                 </TableCell>
                             </TableRow>
