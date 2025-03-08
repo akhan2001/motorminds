@@ -28,6 +28,7 @@ export function InvoiceCard(props: InvoiceCardProps) {
     };
 
     return (
+<<<<<<< HEAD
         <>
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -49,6 +50,21 @@ export function InvoiceCard(props: InvoiceCardProps) {
                         <p className="text-sm text-gray-400">{props.shopAddress}</p>
                         <p className="text-sm text-gray-400">{props.shopEmail}</p>
                     </div>
+=======
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="bg-[#131313] rounded-lg p-6 w-full"
+            whileHover={{ scale: 1.005 }}
+        >
+            <div className="flex justify-between items-start">
+                <div>
+                    <h3 className="text-xl font-bold flex items-center gap-2 text-white">
+                    Invoice # {invoiceNumber} <span className={`${status === 'PAID' ? 'text-green-500' : 'text-red-500'}`}>({status})</span>
+                    </h3>
+                    <p className="text-gray-400">{invoiceNumber}</p>
+>>>>>>> ali
                 </div>
                 <Separator className="my-3 bg-gray-800" />
                 <div className="flex justify-between items-start text-gray-400">
