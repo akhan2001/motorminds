@@ -386,7 +386,7 @@ export default function MechanicsHub() {
   }
 
   return (
-    <div className="min-h-screen bg-[#000] flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col">
       {/* Top Navigation */}
       <Nav activeLink="Mechanic Hub" />
 
@@ -397,7 +397,7 @@ export default function MechanicsHub() {
           transition={{ duration: 0.3, delay: 0.1 }}
           className="mb-8 shrink-0"
         >
-          <p className="text-[#9d9d9d] mb-1">Hussain's</p>
+          <p className="text-[#9d9d9d] mb-1"></p>
           <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold text-white flex items-center gap-2">
               <div className="w-1 h-8 bg-[#b22222]" />

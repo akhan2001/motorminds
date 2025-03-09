@@ -7,6 +7,8 @@ import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MainNav } from "@/components/main-nav"
+import { Nav } from "../components/nav"
 import { TasksTable } from "@/components/tasks-table"
 import { TaskStats } from "@/components/task-stats"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -25,10 +27,10 @@ export default function TasksPage() {
   const router = useRouter()
   
   const [isWorkOrderFormOpen, setIsWorkOrderFormOpen] = useState(false)
-  // This holds the *full* DB record for the modal
+
   const [selectedTask, setSelectedTask] = useState<DetailedRepairOrder | null>(null)
 
-  // Minimal tasks for listing + stats come from your context
+
   const { tasks, setTasks } = useTasks()
 
   // Check user + fetch tasks on mount
@@ -287,9 +289,8 @@ export default function TasksPage() {
 
   return (
     <TasksProvider>
-      <div className="min-h-screen bg-[#000] flex flex-col">
-        {/* Top bar */}
-        <Nav activeLink="Tasks" />
+      <div className="min-h-screen bg-black flex flex-col">
+       <Nav/>
 
         {/* Main content */}
         <main className="flex-1 flex flex-col p-6 min-h-0">
