@@ -19,7 +19,7 @@ export default function Marketplace() {
 	}, []);
 
 	return (
-        <main className="flex items-center justify-center py-8">
+        <main className="flex items-center justify-center py-8 px-10">
             <div className="container mx-auto max-w-[1500px]">
 				<h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Marketplace</h1>
 				<p className="text-gray-400 mb-10">Explore auto services and schedule appointments with ease.</p>

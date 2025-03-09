@@ -5,15 +5,14 @@ import { useState } from "react";
 import CustomerForm from "./customer-form";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
-    const [isAdding, setIsAdding] = useState(false);    
+    const [isAdding, setIsAdding] = useState(false);
 
     return (
         <main className="flex flex-col items-center justify-center py-8">
             <div className="container mx-auto max-w-[1300px]">
                 <div className="flex flex-row justify-between items-center mb-10">
                     <div className="flex flex-col">
-                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Customers
-                        </h1>
+                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Customers</h1>
                         <p className="text-gray-400">
                             Manage your customer base and track their activity. Add new customers, edit their information, and view their activity.
                         </p>
@@ -29,7 +28,7 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                     shopId={shopId}
                     user={user}
                 />
-                {isAdding && <CustomerForm onClose={() => setIsAdding(false)} />}
+                {isAdding && <CustomerForm onClose={() => setIsAdding(false)} shopId={shopId} />}
             </div>
         </main>
     )

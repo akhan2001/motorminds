@@ -2,21 +2,32 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { createNewCustomer } from "../api/customer-utils";
+import { useRouter } from "next/navigation";
 
-export default function CustomerForm({ onClose }: { onClose: () => void }) {
+export default function CustomerForm({ onClose, shopId }: { onClose: () => void, shopId: string }) {
     const [customerName, setCustomerName] = useState("");
     const [customerEmail, setCustomerEmail] = useState("");
     const [customerPhone, setCustomerPhone] = useState("");
     const [customerAddress, setCustomerAddress] = useState("");
+    const router = useRouter();
 
     async function getShopID() {
-        return "850e8400-e29b-41d4-a716-446655440001";
+        return shopId;
     }
 
     const handleSubmit = async () => {
-        console.log({ customerName, customerEmail, customerPhone, customerAddress });
+        const shopId = await getShopID();
+        const customer = { customerName, customerEmail, customerPhone, customerAddress };
+        const newCustomer = await createNewCustomer(customer, shopId);
+        if (newCustomer) {
+            toast.success("Customer created successfully");
+            onClose();
+            router.refresh();
+        } else {
+            toast.error("Failed to create customer");
+        }
     }
 
     return (

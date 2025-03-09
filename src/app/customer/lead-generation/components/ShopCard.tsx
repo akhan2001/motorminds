@@ -2,9 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { getRewardNames } from "@/app/loyalty/utils/LoyaltyUtils";
+import { getActiveRewards, getRewardNames } from "@/app/loyalty/utils/LoyaltyUtils";
 import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -15,17 +14,17 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export default function ShopCard({ shop }: { shop: any }) {
     const router = useRouter();
     const [rewardNames, setRewardNames] = useState<string[]>([]);
+    const [rewardID, setRewardID] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchRewardNames = async () => {
-            const rewardData = await getRewardNames(shop.id);
+            const rewardData = await getActiveRewards(shop.id);
             // Extract just the name property from each reward object
             setRewardNames(rewardData.map(reward => reward.name));
+            setRewardID(rewardData.map(reward => reward.id));
         };
         fetchRewardNames();
     }, [shop.id]);
-
-    console.log(rewardNames);
 
     return (
         <motion.div
@@ -53,12 +52,12 @@ export default function ShopCard({ shop }: { shop: any }) {
                         </Button>
                     </CardContent>
                 </div>
-                <CardFooter className="mt-4 flex gap-2">
-                    {rewardNames.map((reward: any) => (
-                        <TooltipProvider key={reward.id}>
+                <CardFooter className="flex gap-2">
+                    {rewardNames.map((reward: any, index: number) => (
+                        <TooltipProvider key={rewardID[index]}>
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <Badge variant="outline">{reward.name}</Badge>
+                                    <Badge variant="outline">{reward}</Badge>
                                 </TooltipTrigger>
                                 <TooltipContent>{reward.description}</TooltipContent>
                             </Tooltip>

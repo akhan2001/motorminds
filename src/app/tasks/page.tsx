@@ -7,7 +7,6 @@ import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { MainNav } from "@/components/main-nav"
 import { TasksTable } from "@/components/tasks-table"
 import { TaskStats } from "@/components/task-stats"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -20,6 +19,7 @@ import { useTasks } from "@/contexts/tasks-context"
 import type { Task } from "@/types/task"
 import { supabase } from "@/lib/supabase"
 import { TasksProvider } from '@/contexts/tasks-context'
+import { Nav } from "../components/nav"
 
 export default function TasksPage() {
   const router = useRouter()
@@ -287,34 +287,9 @@ export default function TasksPage() {
 
   return (
     <TasksProvider>
-      <div className="min-h-screen bg-[#151515] flex flex-col">
+      <div className="min-h-screen bg-[#000] flex flex-col">
         {/* Top bar */}
-        <div className="p-4 bg-[#131313]">
-          <div className="flex items-center px-6 py-3 bg-[#1a1a1a] rounded-[32px]">
-            <div className="flex items-center gap-2 font-semibold text-white">
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MOTORMINDS-xT1F9wcHLYqhjkFz1dJwcACLAPUey3.png"
-                alt="Motorminds Logo"
-                className="h-8 w-8"
-              />
-              <span>Motorminds</span>
-            </div>
-            <MainNav />
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors duration-200"
-              >
-                <Bell className="h-5 w-5" />
-              </Button>
-              <Avatar>
-                <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                <AvatarFallback>MM</AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
-        </div>
+        <Nav activeLink="Tasks" />
 
         {/* Main content */}
         <main className="flex-1 flex flex-col p-6 min-h-0">

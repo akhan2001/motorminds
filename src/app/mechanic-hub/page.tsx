@@ -17,6 +17,7 @@ import { transformData } from "@/utils/dataTransform"
 import { TaskDetailsModal, DetailedRepairOrder } from "@/components/task-details-modal"
 import { v4 as uuidv4 } from "uuid"
 import { Nav } from "@/app/components/nav"
+import LoadingPage from "@/components/loading"
 
 export default function MechanicsHub() {
   const [currentView, setCurrentView] = useState<"board" | "calendar" | "list">("board")
@@ -379,11 +380,13 @@ export default function MechanicsHub() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <LoadingPage page="Mechanic Hub" />
+    )
   }
 
   return (
-    <div className="min-h-screen bg-[#151515] flex flex-col">
+    <div className="min-h-screen bg-[#000] flex flex-col">
       {/* Top Navigation */}
       <Nav activeLink="Mechanic Hub" />
 

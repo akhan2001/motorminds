@@ -47,7 +47,7 @@ export async function getRewardsCount(shop_id: string) {
 export async function getActiveRewards(shop_id: string) {
     const { data, error } = await supabase
         .from('rewards')
-        .select('*')
+        .select('id, name, description')
         .eq('shop_id', shop_id)
         .eq('is_active', true);
 

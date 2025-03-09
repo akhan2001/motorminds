@@ -1,7 +1,7 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
-import { Bell, Settings, HelpCircle } from "lucide-react"
+import { Bell, Settings, HelpCircle, MoreHorizontal, Link } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -20,6 +20,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
   
 
 export function Nav(
@@ -33,6 +34,7 @@ export function Nav(
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
 		{ name: "Mechanic Hub", href: "/mechanic-hub" },
+		{ name: "Tasks", href: "/tasks" },
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/invoices" },
 		{ name: "Lead Generation", href: "/lead-generation" },
