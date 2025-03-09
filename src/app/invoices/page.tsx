@@ -3,13 +3,10 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import InvoiceForm from "./components/invoice-forms"
-import { supabase } from "@/lib/supabase"
 import { InvoiceFilter } from "./components/invoice-filter"
 import { InvoiceCard } from "./components/invoice-card"
 import { fetchAllInvoices, formatCurrency, formatDate } from "./utils/invoice-utils"
 import { Nav } from "../components/nav"
-<<<<<<< HEAD
-import { InfoHoverCard } from "../components/InfoHoverCard"
 import { PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { checkUser } from "@/utils/supabase/supabase-auth"
@@ -23,16 +20,6 @@ export default function InvoicesPage() {
     const [user, setUser] = useState<any>(null);
     const [shopId, setShopId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-=======
-import { Button } from "@/components/ui/button"
-import { PlusIcon } from "lucide-react"
-import InvoiceForm from "./components/invoice-form"
-export default function InvoicesPage() {
-  const router = useRouter()
-  const [invoices, setInvoices] = useState<any[]>([])
-  const [isAdding, setIsAdding] = useState(false)
-
->>>>>>> 596466207b689854ec90cb6a3ce523fc9a841eb7
 
 
     const handleOpenForm = () => {
@@ -145,7 +132,6 @@ export default function InvoicesPage() {
                     />
                 </div>
 
-<<<<<<< HEAD
                 <div className="flex flex-col gap-4">
                     {filteredInvoices.map((invoice, index) => (
                     <InvoiceCard
@@ -169,42 +155,7 @@ export default function InvoicesPage() {
                 isOpen={isFormOpen}
                 onClose={handleCloseForm}
                 shopId={shopId || ""}
-=======
-      <div className="flex items-center justify-center py-8">
-        <div className="container mx-auto max-w-[1300px]">
-          <div className="flex flex-row justify-between items-center mb-10">
-            <div className="flex flex-col">
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-white">Invoices
-                </h1>
-                <p className="text-gray-400">
-                    Manage your invoices and track their status. Add new invoices, generate PDF invoices, and view their status.
-                </p>
-            </div>
-            <div className="flex flex-row gap-4">
-                <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7" onClick={() => setIsAdding(true)}>
-                    <PlusIcon className="w-4 h-4 mr-1" />
-                    ADD INVOICE
-                </Button>
-            </div>
-          </div>
-
-          {/* The 3 Filter Boxes */}
-          <div className="flex flex-row gap-4 justify-start mb-8">
-            <InvoiceFilter
-              title="All"
-              todayCount={todayCount}
-              monthCount={monthCount}
-              active={selectedFilter === "all"}
-              onClick={() => setSelectedFilter("all")}
->>>>>>> 596466207b689854ec90cb6a3ce523fc9a841eb7
             />
         </div>
-<<<<<<< HEAD
     )
-=======
-      </div>
-      {isAdding && <InvoiceForm onClose={() => setIsAdding(false)} />}
-    </div>
-  )
->>>>>>> 596466207b689854ec90cb6a3ce523fc9a841eb7
 }
