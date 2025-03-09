@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-
+import InvoiceForm from "./components/invoice-forms"
 import { supabase } from "@/lib/supabase"
 import { InvoiceFilter } from "./components/invoice-filter"
 import { InvoiceCard } from "./components/invoice-card"
@@ -11,50 +11,58 @@ import { Nav } from "../components/nav"
 import { InfoHoverCard } from "../components/InfoHoverCard"
 import { PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { checkUser } from "@/utils/supabase/supabase-auth"
+import { getShopId } from "@/utils/supabase/supabase-shop"
+import LoadingPage from "@/components/loading"
 
 export default function InvoicesPage() {
     const router = useRouter()
     const [invoices, setInvoices] = useState<any[]>([])
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [shopId, setShopId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+
+    const handleOpenForm = () => {
+        setIsFormOpen(true);
+    };
+
+    const handleCloseForm = () => {
+        setIsFormOpen(false);
+    };
 
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
 
     useEffect(() => {
-        checkUser()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        async function loadData() {
+            try {
+                setIsLoading(true);
+                const user = await checkUser()
+                if (user) {
+                    const shopId = await getShopId(user.id)
+                    if (shopId) {
+                        setShopId(shopId)
+                        const invoices = await fetchAllInvoices(shopId)
+                        setInvoices(invoices)
+                    } else {
+                        console.error("No shop ID found")
+                    }
+                } else {
+                    console.error("No user found")
+                }
+                setIsLoading(false);
+            } catch (error) {
+                console.error("Authentication error:", error);
+                router.push("/login");
+            }
+        }
+        loadData()
     }, [])
 
-    async function checkUser() {
-        const {
-        data: { user },
-        } = await supabase.auth.getUser()
-
-        if (user) {
-        await loadInvoices(user.id)
-        } else {
-        router.push("/login")
-        }
-    }
-
-    async function loadInvoices(userId: string) {
-        // get user's shop_id
-        const { data: userData, error: userErr } = await supabase
-        .from("users")
-        .select("shop_id")
-        .eq("id", userId)
-        .single()
-
-        if (userErr || !userData?.shop_id) {
-        console.error("No valid shop_id found or error:", userErr)
-        router.push("/login")
-        return
-        }
-
-        // fetch only that shop's invoices
-        const data = await fetchAllInvoices(userData.shop_id)
-        if (data) {
-        setInvoices(data)
-        }
+    if (isLoading) {
+        return <LoadingPage page="Invoices" />
     }
 
     // Filter the displayed invoices
@@ -94,7 +102,7 @@ export default function InvoicesPage() {
                             </p>
                         </div>
                         <div className="flex flex-row gap-4">
-                            <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7">
+                            <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-7" onClick={handleOpenForm}>
                                 <PlusIcon className="w-4 h-4 mr-1" />
                                 ADD INVOICE
                             </Button>
@@ -145,6 +153,11 @@ export default function InvoicesPage() {
                 </div>
                 </div>
             </div>
+            <InvoiceForm
+                isOpen={isFormOpen}
+                onClose={handleCloseForm}
+                shopId={shopId || ""}
+            />
         </div>
     )
 }
