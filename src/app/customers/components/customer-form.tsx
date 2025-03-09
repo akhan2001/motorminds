@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+<<<<<<< HEAD
 import { toast } from "sonner";
 import { createNewCustomer } from "../api/customer-utils";
 import { useRouter } from "next/navigation";
+=======
+>>>>>>> 596466207b689854ec90cb6a3ce523fc9a841eb7
 
 export default function CustomerForm({ onClose, shopId }: { onClose: () => void, shopId: string }) {
     const [customerName, setCustomerName] = useState("");

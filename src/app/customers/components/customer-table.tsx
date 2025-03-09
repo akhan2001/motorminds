@@ -12,7 +12,7 @@ export function CustomerTable({ shopId, user }: { shopId: string, user: any }) {
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
 	useEffect(() => {
-		console.log("Reached here")
+		// console.log("Reached here")
 		fetchCustomerData(shopId)
 	}, [shopId])
 
