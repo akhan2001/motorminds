@@ -82,21 +82,41 @@ export default function InvoicesPage() {
         return true
     })
 
-    // Basic "today" & "month" counts for the 3 boxes
-    const todayCount = invoices.filter((invoice) => {
-        const invoiceDate = new Date(invoice.issue_date)
+    // Calculate counts for each filter type
+    const isToday = (date: string) => {
+        const invoiceDate = new Date(date)
         const today = new Date()
         return invoiceDate.toDateString() === today.toDateString()
-    }).length
+    }
 
-    const monthCount = invoices.filter((invoice) => {
-        const invoiceDate = new Date(invoice.issue_date)
+    const isThisMonth = (date: string) => {
+        const invoiceDate = new Date(date)
         const today = new Date()
         return (
-        invoiceDate.getMonth() === today.getMonth() &&
-        invoiceDate.getFullYear() === today.getFullYear()
+            invoiceDate.getMonth() === today.getMonth() &&
+            invoiceDate.getFullYear() === today.getFullYear()
         )
-    }).length
+    }
+
+    // All invoices counts
+    const allTodayCount = invoices.filter(invoice => isToday(invoice.issue_date)).length
+    const allMonthCount = invoices.filter(invoice => isThisMonth(invoice.issue_date)).length
+
+    // Paid invoices counts
+    const paidTodayCount = invoices.filter(invoice => 
+        invoice.status === "PAID" && isToday(invoice.issue_date)
+    ).length
+    const paidMonthCount = invoices.filter(invoice => 
+        invoice.status === "PAID" && isThisMonth(invoice.issue_date)
+    ).length
+
+    // Unpaid invoices counts
+    const unpaidTodayCount = invoices.filter(invoice => 
+        invoice.status === "UNPAID" && isToday(invoice.issue_date)
+    ).length
+    const unpaidMonthCount = invoices.filter(invoice => 
+        invoice.status === "UNPAID" && isThisMonth(invoice.issue_date)
+    ).length
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -122,22 +142,22 @@ export default function InvoicesPage() {
                 <div className="flex flex-row gap-4 justify-start mb-8">
                     <InvoiceFilter
                     title="All"
-                    todayCount={todayCount}
-                    monthCount={monthCount}
+                    todayCount={allTodayCount}
+                    monthCount={allMonthCount}
                     active={selectedFilter === "all"}
                     onClick={() => setSelectedFilter("all")}
                     />
                     <InvoiceFilter
                     title="Paid"
-                    todayCount={todayCount}
-                    monthCount={monthCount}
+                    todayCount={paidTodayCount}
+                    monthCount={paidMonthCount}
                     active={selectedFilter === "paid"}
                     onClick={() => setSelectedFilter("paid")}
                     />
                     <InvoiceFilter
                     title="Unpaid"
-                    todayCount={todayCount}
-                    monthCount={monthCount}
+                    todayCount={unpaidTodayCount}
+                    monthCount={unpaidMonthCount}
                     active={selectedFilter === "unpaid"}
                     onClick={() => setSelectedFilter("unpaid")}
                     />

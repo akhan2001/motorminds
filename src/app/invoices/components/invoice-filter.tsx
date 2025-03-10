@@ -16,12 +16,24 @@ export function InvoiceFilter({
     return (
         <div
             onClick={onClick}
-            className={`p-4 rounded-lg min-w-[20%] ${ active ? "bg-[#131313]" : "border border-[#232323] border-2" } cursor-pointer`}
+            className={`p-4 rounded-lg min-w-[20%] transition-all duration-200 hover:shadow-md ${
+                active 
+                    ? "bg-[#131313] border border-[#232323] border-2" 
+                    : "border border-[#232323] border-2 hover:border-gray-500"
+            } cursor-pointer`}
         >
-            <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-            <div className="space-y-1 text-gray-400">
-                <p>Today: {todayCount}</p>
-                <p>This Month: {monthCount}</p>
+            <h3 className="text-xl font-bold mb-3 text-white flex items-center">
+                {title}
+            </h3>
+            <div className="space-y-2 text-gray-400">
+                <p className="flex justify-between">
+                    <span>Today:</span> 
+                    <span className={`font-medium ${todayCount > 0 ? "text-white" : ""}`}>{todayCount}</span>
+                </p>
+                <p className="flex justify-between">
+                    <span>This Month:</span> 
+                    <span className={`font-medium ${monthCount > 0 ? "text-white" : ""}`}>{monthCount}</span>
+                </p>
             </div>
         </div>
     )
