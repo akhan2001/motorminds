@@ -5,13 +5,10 @@ export const runtime = "nodejs"
 
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { MainNav } from "@/components/main-nav"
-import { Nav } from "../components/nav"
 import { TasksTable } from "@/components/tasks-table"
 import { TaskStats } from "@/components/task-stats"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { WorkOrderForm } from "@/components/work-order-form"
 
 // IMPORTANT: Import your "DetailedRepairOrder" and modal
@@ -290,7 +287,7 @@ export default function TasksPage() {
   return (
     <TasksProvider>
       <div className="min-h-screen bg-black flex flex-col">
-       <Nav/>
+       <Nav activeLink="Tasks"/>
 
         {/* Main content */}
         <main className="flex-1 flex flex-col p-6 min-h-0">
