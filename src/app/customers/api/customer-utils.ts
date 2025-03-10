@@ -47,3 +47,62 @@ export async function createNewCustomer(customer: any, shopId: string) {
 
     return data;
 }
+
+export async function updateCustomer(customerId: string, customerData: any) {
+    try {
+        // Validate inputs
+        if (!customerId) {
+            throw new Error('Customer ID is required');
+        }
+
+        if (!customerData.customerName?.trim()) {
+            throw new Error('Customer name is required');
+        }
+
+        // Prepare update data
+        const updateData = {
+            customer_name: customerData.customerName.trim(),
+            customer_email: customerData.customerEmail?.trim() || null,
+            customer_phone: customerData.customerPhone?.trim() || null,
+            customer_address: customerData.customerAddress?.trim() || null,
+            updated_at: new Date().toISOString()
+        };
+
+        // Perform update
+        const { data, error } = await supabase
+            .from('customers')
+            .update(updateData)
+            .eq('id', customerId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase error:', error.message);
+            throw new Error(error.message);
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error('Error updating customer:', error.message);
+        } else {
+            console.error('Error updating customer:', error);
+        }
+        return null;
+    }
+}
+
+export async function deleteCustomer(customerId: string) {
+    try {
+        const { error } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', customerId);
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Error deleting customer:', error);
+        return false;
+    }
+}

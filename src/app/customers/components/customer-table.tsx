@@ -2,26 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
-import { getCustomers } from "@/app/customers/api/customer-utils"; // updated to accept shopId
+import { getCustomers } from "@/app/customers/api/customer-utils";
 import { CustomerSheet } from "./customer-sheet";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
-export function CustomerTable({ shopId, user }: { shopId: string, user: any }) {
-
+export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, user: any, refreshIndex: number }) {
 	const [customers, setCustomers] = useState<any[]>([]);
 	const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
+
+	const fetchCustomers = async () => {
+		setIsLoading(true);
+		try {
+			const { data: customers, error } = await supabase
+				.from('customers')
+				.select('*')
+				.eq('shop_id', shopId)
+				.order('created_at', { ascending: false });
+
+			if (error) throw error;
+			setCustomers(customers || []);
+		} catch (error) {
+			console.error('Error fetching customers:', error);
+			toast.error('Failed to load customers');
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	useEffect(() => {
-		// console.log("Reached here")
-		fetchCustomerData(shopId)
-	}, [shopId])
+		fetchCustomers();
+	}, [shopId, refreshIndex]);
 
-	async function fetchCustomerData(shopId: string) {
-		const data = await getCustomers(shopId)
-		setCustomers(data)
-	}
-
-	const handleCustomerClick = (customer: any) => {
+	const handleRowClick = (customer: any) => {
 		setSelectedCustomer(customer);
 		setIsSheetOpen(true);
 	};
@@ -44,7 +59,7 @@ export function CustomerTable({ shopId, user }: { shopId: string, user: any }) {
 						<TableRow
 							className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer"
 							key={customer.id}
-							onClick={() => handleCustomerClick(customer)}
+							onClick={() => handleRowClick(customer)}
 						>
 							<TableCell className="text-[#E2E2E2]">
 								{customer.customer_name}
@@ -63,12 +78,14 @@ export function CustomerTable({ shopId, user }: { shopId: string, user: any }) {
 					</TableBody>
 				</Table>
 
-				{/* Customer detail sheet (unchanged UI) */}
-				<CustomerSheet
-					customer={selectedCustomer}
-					isOpen={isSheetOpen}
-					onOpenChange={setIsSheetOpen}
-				/>
+				{selectedCustomer && (
+					<CustomerSheet
+						customer={selectedCustomer}
+						isOpen={isSheetOpen}
+						onOpenChange={setIsSheetOpen}
+						onCustomerUpdated={fetchCustomers}
+					/>
+				)}
 			</div>
 		</div>
 	);

@@ -6,6 +6,12 @@ import CustomerForm from "./customer-form";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
     const [isAdding, setIsAdding] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleCustomerAdded = () => {
+        setIsAdding(false);
+        setRefreshKey(prev => prev + 1);
+    };
 
     return (
         <main className="flex flex-col items-center justify-center py-8">
@@ -27,8 +33,10 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                 <CustomerTable
                     shopId={shopId}
                     user={user}
+                    key={refreshKey}
+                    refreshIndex={refreshKey}
                 />
-                {isAdding && <CustomerForm onClose={() => setIsAdding(false)} shopId={shopId} />}
+                {isAdding && <CustomerForm onClose={handleCustomerAdded} shopId={shopId} />}
             </div>
         </main>
     )
