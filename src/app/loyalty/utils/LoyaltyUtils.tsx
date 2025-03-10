@@ -1,7 +1,23 @@
 import { supabase } from '@/lib/supabase';
 
-export async function getRewards() {
-    const { data, error } = await supabase.from('rewards').select('*');
+export async function createReward(reward_data: any) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .insert(reward_data)
+        .select();
+
+    if (error) {
+        console.error('Error creating reward:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function getRewards(shopId: string) {
+    const { data, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('shop_id', shopId);
     if (error) {
         console.error('Error fetching rewards:', error);
         return [];
@@ -86,10 +102,13 @@ export async function deleteReward(reward_id: string) {
     return true;
 }
 
-export async function updateReward(reward_id: string, reward_data: any) {
-    const { error } = await supabase.from('rewards').update(reward_data).eq('id', reward_id);
+export async function setStatus(reward_id: string, status: boolean) {
+    const { error } = await supabase
+        .from('rewards')
+        .update({ is_active: status })
+        .eq('id', reward_id);
     if (error) {
-        console.error('Error updating reward:', error);
+        console.error('Error setting status:', error);
         return false;
     }
     return true;

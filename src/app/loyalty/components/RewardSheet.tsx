@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
-import { useState } from "react"
-import { deleteReward } from "../utils/LoyaltyUtils"
+import { useState, useEffect } from "react"
+import { deleteReward, setStatus } from "../utils/LoyaltyUtils"
 import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface RewardSheetProps {
 	reward: any | null
@@ -15,9 +16,46 @@ interface RewardSheetProps {
 
 export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) {
 	const [isEditing, setIsEditing] = useState(false);
+	const [statusValue, setStatusValue] = useState<boolean | null>(null);
+	const [isSaving, setIsSaving] = useState(false);
+
+	// Set initial status when reward changes
+	useEffect(() => {
+		if (reward) {
+			setStatusValue(reward.is_active);
+		}
+	}, [reward]);
 
 	const handleEditToggle = () => {
+		if (isEditing) {
+			// If canceling edit, reset status to original value
+			setStatusValue(reward?.is_active || false);
+		}
 		setIsEditing(!isEditing);
+	};
+
+	const handleSave = async () => {
+		if (!reward) return;
+		
+		setIsSaving(true);
+		
+		try {
+			const success = await setStatus(reward.id, statusValue || false);
+			
+			if (success) {
+				toast.success("Reward updated successfully");
+				setIsEditing(false);
+				// Force refresh to get updated data
+				window.location.reload();
+			} else {
+				toast.error("Failed to update reward");
+			}
+		} catch (error) {
+			console.error("Error updating reward:", error);
+			toast.error("An error occurred while updating the reward");
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
 	const handleDelete = async (reward_id: string) => {
@@ -25,10 +63,11 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 		if (success) {
 			toast.success("Reward deleted successfully");
 			onOpenChange(false);
+			// Force refresh to get updated data
+			window.location.reload();
 		} else {
 			toast.error("Failed to delete reward. Try again later.");
 		}
-
 	};
 
 	if (!reward) return null
@@ -39,7 +78,7 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 				<SheetHeader>
 					<SheetTitle className="text-white">{reward.name}</SheetTitle>
 					<SheetDescription className="text-gray-400">
-						View and edit reward details
+						{isEditing ? "Edit reward details" : "View reward details"}
 					</SheetDescription>
 				</SheetHeader>
 				
@@ -85,41 +124,76 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 						<Label htmlFor="status" className="text-right text-gray-300">
 							Status
 						</Label>
-						<div className="col-span-3">
-							{reward.is_active ? 
-								<span className="text-green-500 font-medium">Active</span> : 
-								<span className="text-red-500 font-medium">Inactive</span>
-							}
-						</div>
+						{isEditing ? (
+							<div className="col-span-3">
+								<Select 
+									value={statusValue ? "active" : "inactive"} 
+									onValueChange={(value) => setStatusValue(value === "active")}
+								>
+									<SelectTrigger className="bg-[#292929] text-white border-[#626262]">
+										<SelectValue placeholder="Select status" />
+									</SelectTrigger>
+									<SelectContent className="bg-[#292929] text-white border-[#626262]">
+										<SelectItem value="active" className="hover:bg-[#3a3a3a]">Active</SelectItem>
+										<SelectItem value="inactive" className="hover:bg-[#3a3a3a]">Inactive</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+						) : (
+							<div className="col-span-3">
+								{reward.is_active ? 
+									<span className="text-green-500 font-medium">Active</span> : 
+									<span className="text-red-500 font-medium">Inactive</span>
+								}
+							</div>
+						)}
 					</div>
 				</div>
 				
 				<SheetFooter>
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button variant="destructive">
-								Delete
+					{!isEditing ? (
+						<>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant="destructive">
+										Delete
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+									<AlertDialogHeader>
+										<AlertDialogTitle>Are you sure you want to delete this reward?</AlertDialogTitle>
+										<AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>No, Cancel</AlertDialogCancel>
+										<AlertDialogAction 
+											className="border-none bg-red-600 text-white hover:bg-red-700 hover:text-white"
+											onClick={() => handleDelete(reward.id)}
+										>
+											Yes, Delete
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
+							<Button variant="secondary" onClick={handleEditToggle}>
+								Edit
 							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-							<AlertDialogHeader>
-								<AlertDialogTitle>Are you sure you want to delete this reward?</AlertDialogTitle>
-								<AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>No, Cancel</AlertDialogCancel>
-								<AlertDialogAction 
-									className="border-none bg-red-600 text-white hover:bg-red-700 hover:text-white"
-									onClick={() => handleDelete(reward.id)}
-								>
-									Yes, Delete
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
-					<Button variant="secondary" onClick={handleEditToggle}>
-						Edit
-					</Button>
+						</>
+					) : (
+						<>
+							<Button variant="outline" onClick={handleEditToggle} disabled={isSaving}>
+								Cancel
+							</Button>
+							<Button 
+								variant="default" 
+								onClick={handleSave} 
+								disabled={isSaving}
+								className="bg-green-600 hover:bg-green-700"
+							>
+								{isSaving ? "Saving..." : "Save Changes"}
+							</Button>
+						</>
+					)}
 				</SheetFooter>
 			</SheetContent>
 		</Sheet>

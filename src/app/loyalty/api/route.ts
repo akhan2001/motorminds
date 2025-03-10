@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        console.log("This is the body", body);
+        // console.log("This is the body", body);
         const { name, description, points_required, shop_id } = body;
 
         if (!name || !description || !points_required || !shop_id) {
@@ -19,11 +19,13 @@ export async function POST(request: Request) {
                 description,
                 points_required,
                 shop_id,
-                is_active: true
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             })
             .select();
 
-        console.log(data);
+        // console.log(data);
         return NextResponse.json(data);
     } catch (err) {
         console.log(err);

@@ -55,6 +55,7 @@ export default function InvoicesPage() {
                         setInvoices(invoices)
                     } else {
                         console.error("No shop ID found")
+                        router.push("/login");
                     }
                 } else {
                     console.error("No user found")

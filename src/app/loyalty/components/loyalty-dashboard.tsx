@@ -1,5 +1,3 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
@@ -8,55 +6,30 @@ import { ArrowRight } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { RewardsTable } from "./rewards-table"
-import { CustomersTable } from "./customers-table"
-import { getRewardsCount, getActiveRewards, getNumberOfRewardPoints } from "../utils/LoyaltyUtils"
+import { getRewards, getActiveRewards, getNumberOfRewardPoints } from "../utils/LoyaltyUtils"
 import RewardForm from "./RewardForm"
-import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { getShopId } from "@/utils/supabase/supabase-shop"
 
-export default function LoyaltyDashboard() {
+export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
     const [isAdding, setIsAdding] = useState(false)
-    const [rewardsCount, setRewardsCount] = useState(0)
-    const [activeRewards, setActiveRewards] = useState(0)
+    const [rewards, setRewards] = useState<any[]>([])
+    const [activeRewards, setActiveRewards] = useState<any[]>([])
     const [numberOfRewardPoints, setNumberOfRewardPoints] = useState(0)
     const [user, setUser] = useState<any>(null)
     const router = useRouter()
-    // const shop_id = "850e8400-e29b-41d4-a716-446655440001"
 
     useEffect(() => {
-        checkUser()
-    }, [])
-    
-    // Ensure user is logged in, then fetch existing orders
-    async function checkUser() {
-        const {
-            data: { user },
-        } = await supabase.auth.getUser()
-
-        if (user) {
-            setUser(user)
-            const shopId = await fetchShopId(user.id)
-            fetchRewardsCount(shopId)
-        } else {
-            router.push("/login")
+        const loadRewards = async () => {
+            const rewards = await getRewards(shopId)
+            setRewards(rewards)
+            const activeRewards = await getActiveRewards(shopId)
+            setActiveRewards(activeRewards)
         }
-    }
 
-    async function fetchShopId(userId: string) {
-        const shopId = await getShopId(userId)
-        console.log(shopId)
-        return shopId
-    }
-
-    async function fetchRewardsCount(userId: string) {
-        const count = await getRewardsCount(userId)
-        const activeRewards = await getActiveRewards(userId)
-        const numberOfRewardPoints = await getNumberOfRewardPoints(userId)
-        setRewardsCount(count || 0)
-        setActiveRewards(activeRewards.length || 0)
-        setNumberOfRewardPoints(numberOfRewardPoints || 0)
-    }
+        if (shopId) {
+            loadRewards()
+        }
+    }, [shopId])
 
     return (
         <main className="flex items-center justify-center py-8">
@@ -88,7 +61,7 @@ export default function LoyaltyDashboard() {
                                                 className="gap-2 text-gray-500 hover:text-gray-500 hover:bg-transparent" 
                                                 disabled
                                             >
-                                                Get started <ArrowRight className="h-4 w-4" />
+                                            Get started <ArrowRight className="h-4 w-4" />
                                             </Button>
                                         </CardContent>
                                     </TooltipTrigger>
@@ -121,21 +94,21 @@ export default function LoyaltyDashboard() {
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Total Rewards Created</p>
-                                <p className="text-2xl font-bold text-green-500">{rewardsCount}</p>
+                                <p className="text-2xl font-bold text-green-500">{rewards.length}</p>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-[#111] border-[#222]">
+                        {/* <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Total Rewards Redeemed</p>
                                 <p className="text-2xl font-bold text-red-500">{numberOfRewardPoints}</p>
                             </CardContent>
-                        </Card>
+                        </Card> */}
 
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Active Rewards</p>
-                                <p className="text-2xl font-bold text-green-500">{activeRewards}</p>
+                                <p className="text-2xl font-bold text-green-500">{activeRewards.length}</p>
                             </CardContent>
                         </Card>
                     </div>
@@ -143,7 +116,7 @@ export default function LoyaltyDashboard() {
 
                 <section className="mb-10">
                     <h2 className="text-xl font-semibold mb-4">Your Rewards</h2>
-                    <RewardsTable />
+                        <RewardsTable shopId={shopId}/>
                 </section>
                 {/* <section className="mb-10">
                     <h2 className="text-xl font-semibold mb-4">Customers who have claimed rewards</h2>
@@ -152,7 +125,7 @@ export default function LoyaltyDashboard() {
 
                 <section className="mb-10">
                 {/* Add/Edit Reward Modal */}
-                {isAdding && <RewardForm onClose={() => setIsAdding(false)} />}
+                {isAdding && <RewardForm onClose={() => setIsAdding(false)} shopId={shopId}/>}
                 </section>
             </div>
         </main>

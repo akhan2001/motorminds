@@ -4,34 +4,45 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { createReward } from "../utils/LoyaltyUtils";
 
-export default function RewardForm({ onClose }: { onClose: () => void }) {
+export default function RewardForm({ onClose, shopId }: { onClose: () => void, shopId: string }) {
     const [rewardName, setRewardName] = useState("");
     const [rewardDescription, setRewardDescription] = useState("");
-    const [points, setPoints] = useState("");
-
-    async function getShopID() {
-        return "850e8400-e29b-41d4-a716-446655440001";
-    }
+    const [points, setPoints] = useState(0);
 
     const handleSubmit = async () => {
-        console.log({ rewardName, rewardDescription, points });
-        const shopID = await getShopID();
+        // console.log({ rewardName, rewardDescription, points });
+        // const shopID = await getShopID();
 
-        // Create a new reward with app/loyalty/api/route.ts
-        const response = await fetch("/loyalty/api", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name: rewardName, description: rewardDescription, points_required: points, shop_id: shopID }),
-        });
+        // // Create a new reward with app/loyalty/api/route.ts
+        // const response = await fetch("/loyalty/api", {
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify({ name: rewardName, description: rewardDescription, points_required: points, shop_id: shopID }),
+        // });
 
-        if (response.ok) {
-            console.log("Reward created successfully");
+        // if (response.ok) {
+        //     console.log("Reward created successfully");
+        //     toast.success("Reward created successfully");
+        // } else {
+        //     console.log("Failed to create reward");
+        //     toast.error("Failed to create reward. Try again later.");
+        // }
+        
+        const rewardData = {
+            name: rewardName,
+            description: rewardDescription,
+            points_required: points,
+            shop_id: shopId
+        }
+
+        try {
+            const response = await createReward(rewardData);
             toast.success("Reward created successfully");
-        } else {
-            console.log("Failed to create reward");
+        } catch (error) {
             toast.error("Failed to create reward. Try again later.");
         }
 
@@ -82,7 +93,7 @@ export default function RewardForm({ onClose }: { onClose: () => void }) {
                     {/* Reward Points */}
                     <div>
                         <label className="text-gray-300 text-sm">Reward Points</label>
-                        <Select onValueChange={setPoints} disabled={true}>
+                        <Select onValueChange={(value) => setPoints(parseInt(value))} disabled={true}>
                             <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
                                 <SelectValue placeholder="Select a reward point value" />
                             </SelectTrigger>
@@ -98,7 +109,7 @@ export default function RewardForm({ onClose }: { onClose: () => void }) {
                                 className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1" 
                                 placeholder="Enter a custom point value"
                                 value={points}
-                                onChange={(e) => setPoints(e.target.value)}
+                                onChange={(e) => setPoints(parseInt(e.target.value))}
                                 />
                             </SelectContent>
                         </Select>
