@@ -139,7 +139,7 @@ export default function InvoicesPage() {
                     </div>
 
                 {/* The 3 Filter Boxes */}
-                <div className="flex flex-row gap-4 justify-start mb-8">
+                <div className="flex flex-row gap-4 justify-start mb-8 ">
                     <InvoiceFilter
                     title="All"
                     todayCount={allTodayCount}
@@ -183,6 +183,7 @@ export default function InvoicesPage() {
                             mileage={invoice.mileage}
                             description={invoice.description}
                             assignedTo={invoice.assigned_to}
+                            workOrder={invoice.workorder_id}
                         />
                     ))}
                 </div>

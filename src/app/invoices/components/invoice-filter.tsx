@@ -18,8 +18,8 @@ export function InvoiceFilter({
             onClick={onClick}
             className={`p-4 rounded-lg min-w-[20%] transition-all duration-200 hover:shadow-md ${
                 active 
-                    ? "bg-[#131313] border border-[#232323] border-2" 
-                    : "border border-[#232323] border-2 hover:border-gray-500"
+                    ? "bg-[#131313] border border-[#222]" 
+                    : "border border-[#222] hover:border-gray-500"
             } cursor-pointer`}
         >
             <h3 className="text-xl font-bold mb-3 text-white flex items-center">
