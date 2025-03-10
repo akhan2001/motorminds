@@ -128,14 +128,14 @@ export function Nav(
 						</AlertDialogContent>
 					</AlertDialog>
 				</button>
-				<button className="text-[#979797] hover:text-white transition-colors" onClick={() => router.push("/settings")}>
-					{/* <span className="hidden md:inline mr-2">Settings</span> */}
+				{/* <button className="text-[#979797] hover:text-white transition-colors" onClick={() => router.push("/settings")}>
+					<span className="hidden md:inline mr-2">Settings</span>
 					<Settings className="inline-block w-5 h-5" />
-				</button>
-				<button className="text-[#979797] hover:text-white transition-colors relative">
+				</button> */}
+				{/* <button className="text-[#979797] hover:text-white transition-colors relative">
 					<Bell className="w-5 h-5" />
 					<span className="absolute -top-1 -right-1 w-2 h-2 bg-[#b22222] rounded-full" />
-				</button>
+				</button> */}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 							<Avatar className="w-7 h-7 cursor-pointer">

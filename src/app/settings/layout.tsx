@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import Image from "next/image"
-
+import { Nav } from "../components/nav"
 import { Separator } from "@/components/ui/separator"
 import { Sidebar, SidebarMenu, SidebarMenuButton, SidebarProvider } from "@/components/ui/sidebar"
 
@@ -39,6 +39,7 @@ interface SettingsLayoutProps {
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   return (
     <>
+    <Nav activeLink="Settings"/>
       <div className="md:hidden">
         <Image
           src="/examples/forms-light.png"
