@@ -14,7 +14,7 @@ import { ChatMessageBubble } from "@/app/chat/components/ChatMessageBubble"
 import { IntermediateStep } from "@/app/chat/components/IntermediateStep"
 import CustomChatStart from "@/app/chat/components/CustomChatStart"
 import ChatFooter from "@/app/chat/components/ChatFooter"
-// import { Nav } from "../components/nav"
+import { Nav } from "../components/nav"
 
 import { format } from "date-fns"
 
@@ -168,6 +168,7 @@ export default function DashboardPage() {
         }
       `}</style>
       <div className="min-h-screen flex flex-col bg-black text-white">
+        <Nav activeLink="Dashboard"/>
         <main className="container mx-auto px-4 py-6 flex-1 flex flex-col">
           {/* Header */}
           <div className="mb-6">
