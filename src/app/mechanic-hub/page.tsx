@@ -31,7 +31,7 @@ export default function MechanicsHub() {
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
-
+  const [shopId, setShopId] = useState<string | null>(null)
   useEffect(() => {
     checkUser()
   }, [])
@@ -61,7 +61,9 @@ export default function MechanicsHub() {
         .single()
       if (userErr) throw userErr
       if (!userData?.shop_id) throw new Error("No shop_id found")
-
+      
+      setShopId(userData.shop_id)
+      // console.log("shopId: " + shopId)
       // fetch repair_orders with details, customers, vehicles
       const { data, error } = await supabase
         .from("repair_orders")
@@ -456,6 +458,7 @@ export default function MechanicsHub() {
           task={selectedTask}
           onClose={handleCloseModal}
           onSave={handleSaveTask}
+          shopId={shopId || ""}
         />
       )}
     </div>

@@ -54,3 +54,68 @@
 	export function calculateTotalWithTax(amount: number, taxRate: number): number {
 	return amount + amount * taxRate;
 	}
+
+	export async function setStatus(invoiceId: string) {
+		const { data, error } = await supabase
+		.from('invoices')
+		.select('*')
+		.eq('id', invoiceId);
+
+		if (error) {
+			console.error('Error fetching invoice:', error);
+			return null;
+		}
+		return data;
+	}
+
+	export async function createNewInvoice(invoiceData: any, shopId: string) {
+
+		// for (const key in invoiceData) {
+		// 	console.log(`${key}: ${invoiceData[key]}`);
+		// }
+
+		try {
+			console.log("Creating invoice with data:", invoiceData);
+			
+			// Ensure all required fields are present
+			const dataToInsert = {
+				invoice_number: invoiceData.invoice_number,
+				shop_id: shopId,
+				status: invoiceData.status || "UNPAID",
+				shop_name: invoiceData.shop_name,
+				shop_address: invoiceData.shop_address,
+				shop_email: invoiceData.shop_email,
+				client_name: invoiceData.client_name,
+				client_address: invoiceData.client_address,
+				client_email: invoiceData.client_email,
+				amount: invoiceData.amount,
+				issue_date: invoiceData.issue_date,
+				labour: invoiceData.labour,
+				parts: invoiceData.parts,
+				notes: invoiceData.notes,
+				mileage: invoiceData.mileage,
+				description: invoiceData.description,
+				assigned_to: invoiceData.assigned_to,
+				customer_id: invoiceData.customer_id
+			};
+			
+			// Log the final data being sent to the database
+			console.log("Final data to insert:", dataToInsert);
+			
+			const { data, error } = await supabase
+				.from('invoices')
+				.insert(dataToInsert)
+				.select();
+				
+			if (error) {
+				console.error("Supabase error:", error);
+				throw error;
+			}
+			
+			return data;
+		} catch (error) {
+			console.error("Error in createNewInvoice:", error);
+			throw error;
+		}
+	}
+

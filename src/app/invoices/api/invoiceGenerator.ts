@@ -2,6 +2,7 @@ import easyinvoice from 'easyinvoice';
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { NextResponse } from 'next/server';
+import { getShopId } from '@/utils/supabase/supabase-shop';
 
 interface InvoiceData {
     invoiceNumber: string
@@ -10,6 +11,12 @@ interface InvoiceData {
     shopAddress: string
     shopEmail: string
     amount: number
+    labour: string
+    parts: string
+    notes: string
+    mileage: string
+    description: string
+    assignedTo: string
     issueDate: string
     clientName: string
     clientAddress: string
@@ -17,9 +24,10 @@ interface InvoiceData {
 }
 
 const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
-    const { data: amount, error } = await supabase
+    // Get the work order details data
+    const { data: detailsData, error } = await supabase
         .from('repair_order_details')
-        .select('cost')
+        .select('cost, labour, parts, notes, mileage, description, Assigned_to')
         .eq('id', workOrderDetailsID)
 
     // console.log("Amount: " + amount?.[0].cost)
@@ -54,7 +62,13 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         shopName: shopData?.[0].shop_name,
         shopAddress: shopData?.[0].shop_address,
         shopEmail: shopData?.[0].shop_email,
-        amount: amount?.[0].cost,
+        amount: detailsData?.[0].cost,
+        labour: detailsData?.[0].labour,
+        parts: detailsData?.[0].parts,
+        notes: detailsData?.[0].notes,
+        mileage: detailsData?.[0].mileage,
+        description: detailsData?.[0].description,
+        assignedTo: detailsData?.[0].Assigned_to,
         issueDate: new Date().toISOString(),
         clientName: customerData?.[0].customer_name,
         clientAddress: customerData?.[0].customer_address,
@@ -69,7 +83,7 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
     return invoiceData;
 }
 
-const createNewInvoice = async (invoiceData: any, workOrderID: any) => {
+const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: string) => {
     // console.log(invoiceData)
 
     const { data, error } = await supabase
@@ -82,10 +96,17 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any) => {
             shop_address: invoiceData.shopAddress,
             shop_email: invoiceData.shopEmail,
             amount: invoiceData.amount,
+            labour: invoiceData.labour,
+            parts: invoiceData.parts,
+            notes: invoiceData.notes,
+            mileage: invoiceData.mileage,
+            description: invoiceData.description,
+            assigned_to: invoiceData.assignedTo,
             issue_date: invoiceData.issueDate,
             client_name: invoiceData.clientName,
             client_address: invoiceData.clientAddress,
-            client_email: invoiceData.clientEmail
+            client_email: invoiceData.clientEmail,
+            shop_id: shopId
         })
         
     if (error) {
@@ -96,8 +117,8 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any) => {
     return data;
 }
 
-export async function generateInvoice(repairOrderID: any) {
-
+export async function generateInvoice(repairOrderID: any, shopId: string) {
+    // console.log("shopId: " + shopId)
     // Getting id from repair_orders table
     const { data: repair_order_details_id, error: error } = await supabase
         .from('repair_order_details')
@@ -115,7 +136,8 @@ export async function generateInvoice(repairOrderID: any) {
     const { data: existingInvoice, error: checkError } = await supabase
         .from('invoices')
         .select('invoice_number')
-        .eq('workorder_id', repairOrderDetailsID);
+        .eq('workorder_id', repairOrderDetailsID)
+        .eq('shop_id', shopId)
 
     // Debug logs
     // console.log("Existing Invoice Data:", existingInvoice);
@@ -133,7 +155,7 @@ export async function generateInvoice(repairOrderID: any) {
     const invoiceData = await fetchData(repairOrderDetailsID, repairOrderID)
 
     // console.log(invoiceData)
-    createNewInvoice(invoiceData, repairOrderDetailsID)
+    createNewInvoice(invoiceData, repairOrderDetailsID, shopId)
 
     return true;
     // const invoice = await easyinvoice.createInvoice(data);

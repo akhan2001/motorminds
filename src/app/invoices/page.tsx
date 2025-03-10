@@ -21,6 +21,12 @@ export default function InvoicesPage() {
     const [shopId, setShopId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const refreshInvoices = async () => {
+        if (shopId) {
+            const invoices = await fetchAllInvoices(shopId)
+            setInvoices(invoices)
+        }
+    }
 
     const handleOpenForm = () => {
         setIsFormOpen(true);
@@ -29,6 +35,7 @@ export default function InvoicesPage() {
     const handleCloseForm = () => {
         setIsFormOpen(false);
     };
+    
 
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
@@ -39,6 +46,8 @@ export default function InvoicesPage() {
                 setIsLoading(true);
                 const user = await checkUser()
                 if (user) {
+                    setUser(user)
+                    console.log(user.id)
                     const shopId = await getShopId(user.id)
                     if (shopId) {
                         setShopId(shopId)
@@ -49,6 +58,7 @@ export default function InvoicesPage() {
                     }
                 } else {
                     console.error("No user found")
+                    router.push("/login");
                 }
                 setIsLoading(false);
             } catch (error) {
@@ -134,19 +144,25 @@ export default function InvoicesPage() {
 
                 <div className="flex flex-col gap-4">
                     {filteredInvoices.map((invoice, index) => (
-                    <InvoiceCard
-                        key={index}
-                        invoiceNumber={invoice.invoice_number}
-                        clientName={invoice.client_name}
-                        clientAddress={invoice.client_address}
-                        clientEmail={invoice.client_email}
-                        amount={formatCurrency(invoice.amount)}
-                        issueDate={formatDate(invoice.issue_date)}
-                        status={invoice.status}
-                        shopName={invoice.shop_name}
-                        shopAddress={invoice.shop_address}
-                        shopEmail={invoice.shop_email}
-                    />
+                        <InvoiceCard
+                            key={index}
+                            invoiceNumber={invoice.invoice_number}
+                            clientName={invoice.client_name}
+                            clientAddress={invoice.client_address}
+                            clientEmail={invoice.client_email}
+                            amount={formatCurrency(invoice.amount)}
+                            issueDate={formatDate(invoice.issue_date)}
+                            status={invoice.status}
+                            shopName={invoice.shop_name}
+                            shopAddress={invoice.shop_address}
+                            shopEmail={invoice.shop_email}
+                            labour={invoice.labour}
+                            parts={invoice.parts}
+                            notes={invoice.notes}
+                            mileage={invoice.mileage}
+                            description={invoice.description}
+                            assignedTo={invoice.assigned_to}
+                        />
                     ))}
                 </div>
                 </div>
@@ -155,6 +171,7 @@ export default function InvoicesPage() {
                 isOpen={isFormOpen}
                 onClose={handleCloseForm}
                 shopId={shopId || ""}
+                onInvoiceCreated={refreshInvoices}
             />
         </div>
     )

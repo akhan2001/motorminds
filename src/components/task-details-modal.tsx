@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+
+
 /**
  * If your DB columns are:
  *  - "Assigned_to" => "John Gay"
@@ -56,15 +58,17 @@ interface TaskDetailsModalProps {
   task: DetailedRepairOrder
   onClose: () => void
   onSave: (updated: DetailedRepairOrder) => void
+  shopId: string
 }
 
-export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDetailsModalProps) {
+export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }: TaskDetailsModalProps) {
+  // console.log("shopId: " + shopId)
   const router = useRouter()
-  console.log("TaskDetailsModal - initialTask:", initialTask)
+  // console.log("TaskDetailsModal - initialTask:", initialTask)
 
   // If you store "Assigned_to" in repair_order_details, let's read from the first row:
   const firstDetail = initialTask.repair_order_details?.[0]
-  console.log("First Detail row =>", firstDetail)
+  // console.log("First Detail row =>", firstDetail)
 
   /**
    * "Pending" => "not-started"
@@ -496,7 +500,7 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDet
             </div>
 
             {/* RIGHT COLUMN: "How Can I Assist You?" etc. */}
-            <div className="w-72 bg-[#131313] rounded-xl p-4 h-fit">
+            {/* <div className="w-72 bg-[#131313] rounded-xl p-4 h-fit">
               <div className="flex flex-col items-center text-center mb-8">
                 <img
                   src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Mdr8ip4BNugvvaw6rCGOacqY7Fhu0h.png"
@@ -539,7 +543,7 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDet
                   <ArrowRight className="h-5 w-5 text-[#b22222]" />
                 </Button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -549,7 +553,7 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave }: TaskDet
             variant="outline"
             className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
             onClick={() => {
-              generateInvoice(initialTask.id).then((success) => {
+              generateInvoice(initialTask.id, shopId).then((success) => {
                 if (success) {
                   toast.success('Invoice generated successfully', {
                     action: {

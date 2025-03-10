@@ -10,6 +10,12 @@ interface InvoiceCardProps {
     shopAddress: string
     shopEmail: string
     amount: string
+    labour: string
+    parts: string
+    notes: string
+    mileage: string
+    description: string
+    assignedTo: string
     issueDate: string
     clientName: string
     clientAddress: string
@@ -50,6 +56,7 @@ export function InvoiceCard(props: InvoiceCardProps) {
                         <p className="text-sm text-gray-400">{props.shopEmail}</p>
                     </div>
                 </div>
+                
                 <Separator className="my-3 bg-gray-800" />
                 <div className="flex justify-between items-start text-gray-400">
                     <div>
