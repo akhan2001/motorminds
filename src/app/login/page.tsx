@@ -14,7 +14,7 @@ export default function LoginPage() {
         <div
           className="relative flex flex-col items-center justify-center w-[70%] h-full"
           style={{
-            backgroundImage: "url('/motorminds-bg.jpg')",
+            backgroundImage: "url('/shop-auto-repair.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
