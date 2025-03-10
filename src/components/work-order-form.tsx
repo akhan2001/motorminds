@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ChevronDown, ArrowRight } from "lucide-react"
+import { X, ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -215,13 +215,15 @@ export function WorkOrderForm({
                         <SelectTrigger className="w-full bg-transparent border-0 text-white">
                           <SelectValue placeholder="Customer Name" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d]">
+                        <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
                           {customerOptions.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.name}
                             </SelectItem>
                           ))}
-                          <SelectItem value="new">Add New Customer</SelectItem>
+                          <SelectItem value="new">
+                            Add New Customer
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       {workOrderData.customerId === "new" && (
@@ -256,7 +258,7 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.year}
                       onChange={(e) => setWorkOrderData({ ...workOrderData, year: e.target.value })}
-                      placeholder="e.g. 2016"
+                      placeholder="Enter year"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     />
                   </div>
@@ -265,7 +267,7 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.make}
                       onChange={(e) => setWorkOrderData({ ...workOrderData, make: e.target.value })}
-                      placeholder="e.g. Audi"
+                      placeholder="Enter make"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     />
                   </div>
@@ -274,7 +276,7 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.model}
                       onChange={(e) => setWorkOrderData({ ...workOrderData, model: e.target.value })}
-                      placeholder="e.g. S4"
+                      placeholder="Enter model"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     />
                   </div>
@@ -283,7 +285,7 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.engineType}
                       onChange={(e) => setWorkOrderData({ ...workOrderData, engineType: e.target.value })}
-                      placeholder="e.g. 3.0 V6 TFSI"
+                      placeholder="Enter engine type"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     />
                   </div>
@@ -365,7 +367,7 @@ export function WorkOrderForm({
                       <SelectTrigger className="w-full bg-[#1A1A1A] border-0 text-white">
                         <SelectValue placeholder="Select Staff" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d]">
+                      <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
                         {staffOptions.map((staff) => (
                           <SelectItem key={staff.id} value={staff.id}>
                             {staff.staff_name}
@@ -426,9 +428,9 @@ export function WorkOrderForm({
 
                 {/* Total Amount */}
                 <div className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-md">
-                  <span className="text-white">Total Amount</span>
+                  <span className="text-white">Total Amount ($)</span>
                   <Input
-                    type="text"
+                    type="number"
                     value={workOrderData.totalAmount}
                     onChange={(e) => setWorkOrderData({ ...workOrderData, totalAmount: e.target.value })}
                     placeholder="Enter amount"
@@ -438,7 +440,7 @@ export function WorkOrderForm({
               </div>
 
               {/* Right Column */}
-              <div className="w-72 bg-[#131313] rounded-xl p-4 h-fit">
+              {/* <div className="w-72 bg-[#131313] rounded-xl p-4 h-fit">
                 <div className="flex flex-col items-center text-center mb-8">
                   <img
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Mdr8ip4BNugvvaw6rCGOacqY7Fhu0h.png"
@@ -481,18 +483,18 @@ export function WorkOrderForm({
                     <ArrowRight className="h-5 w-5 text-[#b22222]" />
                   </Button>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0 bg-[#131313]">
-            <Button
+          <div className="flex items-center justify-end p-6 border-t border-[#222222] shrink-0 bg-[#131313]">
+            {/* <Button
               variant="outline"
               className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
             >
               Generate Invoice
-            </Button>
+            </Button> */}
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"

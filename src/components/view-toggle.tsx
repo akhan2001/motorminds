@@ -55,8 +55,8 @@ export function ViewToggle({ onViewChange }: ViewToggleProps) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <List className="h-5 w-5" />
-          VIEW TASKS
+          {/* <List className="h-5 w-5" /> */}
+          LIST VIEW
         </motion.button>
       </Link>
     </div>

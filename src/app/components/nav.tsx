@@ -34,7 +34,7 @@ export function Nav(
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
 		{ name: "Mechanic Hub", href: "/mechanic-hub" },
-		{ name: "Tasks", href: "/tasks" },
+		// { name: "Tasks", href: "/tasks" },
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/invoices" },
 		{ name: "Lead Generation", href: "/lead-generation" },

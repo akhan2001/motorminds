@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { DownloadIcon } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface InvoiceDialogProps {
     isOpen: boolean;
@@ -31,6 +33,7 @@ interface InvoiceDialogProps {
 
 export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) {
     const [status, setStatus] = useState(invoice.status);
+    const invoiceRef = useRef<HTMLDivElement>(null);
     
     // Update local status when invoice prop changes
     useEffect(() => {
@@ -58,84 +61,131 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         }
     };
 
+    const handleDownload = async () => {
+        if (!isOpen || !invoiceRef.current) {
+            toast.error("Cannot generate PDF: Invoice content not available");
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(invoiceRef.current);
+            const pdf = new jsPDF();
+            const imgData = canvas.toDataURL("image/png");
+            
+            // Reduce size by using smaller width and adding margins
+            const pageWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const margin = 15; // Margin in mm
+            
+            // Use 75% of page width with margins
+            const imgWidth = pageWidth - (margin * 2);
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            // Add image with margins
+            pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+            
+            // If content is too tall, adjust the PDF
+            if (imgHeight > pageHeight - (margin * 2)) {
+                // Scale down further to fit on one page
+                const scaleFactor = (pageHeight - (margin * 2)) / imgHeight;
+                const adjustedWidth = imgWidth * scaleFactor;
+                const adjustedHeight = imgHeight * scaleFactor;
+                
+                // Create a new PDF and add the scaled image
+                const newPdf = new jsPDF();
+                newPdf.addImage(imgData, "PNG", margin, margin, adjustedWidth, adjustedHeight);
+                newPdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
+            } else {
+                pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
+            }
+            
+            toast.success("Invoice downloaded successfully");
+        } catch (error) {
+            console.error("Error downloading invoice:", error);
+            toast.error("Failed to download invoice");
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-6">
-                <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold flex items-center justify-between">
-                        Invoice<br/># {invoice.invoiceNumber}
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-400">
-                        Issued on: {invoice.issueDate}
-                    </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4">
-                    <Separator className="my-2 bg-gray-700" />
-                    <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-white">Shop Information</h3>
-                        <p className="text-gray-400">
-                            Shop Name: {invoice.shopName}
-                        </p>
-                        <p className="text-gray-400">
-                            Shop Address: {invoice.shopAddress}
-                        </p>
-                        <p className="text-gray-400">
-                            Shop Email: {invoice.shopEmail}
-                        </p>
-                    </div>
-        
-                    <Separator className="my-2 bg-gray-700" />
-                    <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-white">Work Order Details</h3>
-                        <p className="text-gray-400">
-                            Labour: {invoice.labour}
-                        </p>
-                        <p className="text-gray-400">
-                            Parts: {invoice.parts}
-                        </p>
-                        <p className="text-gray-400">
-                            Notes: {invoice.notes}
-                        </p>
-                        <p className="text-gray-400">
-                            Mileage: {invoice.mileage}
-                        </p>
-                        <p className="text-gray-400">
-                            Description: {invoice.description}
-                        </p>
-                    </div>       
+                <div ref={invoiceRef} id="invoice-container" className="bg-white text-black p-6 rounded-lg">
+                    <DialogHeader className="text-black">
+                        <DialogTitle className="text-xl font-semibold flex items-center justify-between text-black">
+                            Invoice<br/># {invoice.invoiceNumber}
+                        </DialogTitle>
+                        <DialogDescription className="text-gray-600">
+                            Issued on: {invoice.issueDate}
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                        <Separator className="my-2 bg-gray-300" />
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-semibold text-black">Shop Information</h3>
+                            <p className="text-gray-600">
+                                Shop Name: {invoice.shopName}
+                            </p>
+                            <p className="text-gray-600">
+                                Shop Address: {invoice.shopAddress}
+                            </p>
+                            <p className="text-gray-600">
+                                Shop Email: {invoice.shopEmail}
+                            </p>
+                        </div>
+            
+                        <Separator className="my-2 bg-gray-300" />
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-semibold text-black">Work Order Details</h3>
+                            <p className="text-gray-600">
+                                Labour: {invoice.labour}
+                            </p>
+                            <p className="text-gray-600">
+                                Parts: {invoice.parts}
+                            </p>
+                            <p className="text-gray-600">
+                                Notes: {invoice.notes}
+                            </p>
+                            <p className="text-gray-600">
+                                Mileage: {invoice.mileage}
+                            </p>
+                            <p className="text-gray-600">
+                                Description: {invoice.description}
+                            </p>
+                        </div>       
 
-                    <Separator className="my-2 bg-gray-700" />
-                    <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-white">Client Information</h3>
-                        <p className="text-gray-400">
-                            {invoice.clientName}
-                        </p>
-                        <p className="text-gray-400">
-                            {invoice.clientAddress}
-                        </p>
-                        <p className="text-gray-400">
-                            {invoice.clientEmail}
-                        </p>
-                    </div>
+                        <Separator className="my-2 bg-gray-300" />
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-semibold text-black">Client Information</h3>
+                            <p className="text-gray-600">
+                                {invoice.clientName}
+                            </p>
+                            <p className="text-gray-600">
+                                {invoice.clientAddress}
+                            </p>
+                            <p className="text-gray-600">
+                                {invoice.clientEmail}
+                            </p>
+                        </div>
 
-                    <Separator className="my-2 bg-gray-700" />        
-                    <div className="space-y-2">
-                        <p className="text-gray-400">
-                            Amount Due: {invoice.amount}
-                        </p>
-                        <div className="flex items-center gap-3">   
-                            <span className={`px-3 py-1 text-xs rounded-md text-white ${status === "PAID" ? "bg-green-600" : "bg-red-600"}`}>
-                                {status}
-                            </span>
+                        <Separator className="my-2 bg-gray-300" />        
+                        <div className="space-y-2">
+                            <p className="text-gray-600">
+                                Amount Due: {invoice.amount}
+                            </p>
+                            <div className="flex items-center gap-3">   
+                                <span className={`px-3 py-1 text-xs rounded-md text-white ${status === "PAID" ? "bg-green-600" : "bg-red-600"}`}>
+                                    {status}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
         
                 <DialogFooter className="mt-4 flex justify-end">
-                    <Button className="bg-gray-600 text-white px-4 py-2 hover:bg-gray-700 border-none" disabled>
-                        <DownloadIcon className="w-4 h-4" />
-                        Download
+                    <Button className="bg-gray-600 text-white px-4 py-2 hover:bg-gray-700 border-none" onClick={handleDownload}>
+                        <DownloadIcon className="w-4 h-4 mr-2" />
+                        Download PDF
                     </Button>
                 </DialogFooter>
             </DialogContent>

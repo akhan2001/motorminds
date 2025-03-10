@@ -59,6 +59,8 @@
         "date-fns": "^3.6.0",
         "easyinvoice": "^3.0.47",
         "express": "^4.21.2",
+        "html2canvas": "^1.4.1",
+        "jspdf": "^3.0.0",
         "langchain": "^0.3.19",
         "lucide-react": "^0.475.0",
         "motion": "^12.4.7",
