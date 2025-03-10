@@ -106,3 +106,17 @@ export async function deleteCustomer(customerId: string) {
         return false;
     }
 }
+
+export async function getCustomerVehicles(customerId: string) {
+    const { data, error } = await supabase
+        .from('customer_vehicles')
+        .select('*')
+        .eq('customer_id', customerId);
+    
+    if (error) {
+        console.error('Error fetching customer vehicles:', error);
+        return [];
+    }
+
+    return data || [];
+}
