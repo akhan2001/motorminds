@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
-import { updateCustomer, deleteCustomer } from "../api/customer-utils"
+import { updateCustomer, deleteCustomer, deleteCustomerVehicle } from "../api/customer-utils"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { getCustomerVehicles, createCustomerVehicle } from "../api/customer-utils"
-import { Car, Plus } from "lucide-react"
+import { Car, Plus, Minus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface CustomerSheetProps {
@@ -37,6 +37,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         customerVin: ""
     });
     const [isAddingVehicle, setIsAddingVehicle] = useState(false);
+    const [isDeletingVehicle, setIsDeletingVehicle] = useState<string | null>(null);
     const [newVehicle, setNewVehicle] = useState({
         year: "",
         make: "",
@@ -159,12 +160,30 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         setIsDeleting(false);
     };
 
+    const handleDeleteVehicle = async (vehicleId: string) => {
+        try {
+            const deleted = await deleteCustomerVehicle(vehicleId);
+            if (deleted) {
+                toast.success("Vehicle deleted successfully");
+                // Refresh vehicles list
+                const vehicles = await getCustomerVehicles(customer.id);
+                setCustomerVehicles(vehicles);
+            } else {
+                toast.error("Failed to delete vehicle");
+            }
+        } catch (error) {
+            toast.error("Error deleting vehicle");
+            console.error("Error deleting vehicle:", error);
+        }
+        setIsDeletingVehicle(null);
+    };
+
     if (!customer) return null;
 
     return (
         <>
             <Sheet open={isOpen} onOpenChange={onOpenChange}>
-                <SheetContent className="bg-[#131313] text-white border-l-1 border-l-[#222]">
+                <SheetContent className="bg-[#131313] text-white border-l-1 border-l-[#222] overflow-y-auto">
                     <SheetHeader>
                         <SheetTitle className="text-white">{customer.customer_name}</SheetTitle>
                         <SheetDescription className="text-gray-400">
@@ -236,10 +255,21 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                         {customerVehicles.map((vehicle) => (
                             <Card 
                                 key={vehicle.id} 
-                                className="bg-[#292929] border-[#626262] text-white mb-3"
+                                className="bg-[#292929] border-[#626262] text-white mb-1"
                             >
-                                <CardHeader>
-                                    <CardTitle className="text-md font-semibold flex items-center gap-2"><Car className="w-4 h-4" />{vehicle.year} {vehicle.make} {vehicle.model}</CardTitle>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+                                    <CardTitle className="text-md font-semibold flex items-center gap-2">
+                                        <Car className="w-4 h-4" />
+                                        {vehicle.year} {vehicle.make} {vehicle.model}
+                                    </CardTitle>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-500/10"
+                                        onClick={() => setIsDeletingVehicle(vehicle.id)}
+                                    >
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
                                 </CardHeader>
                             </Card>
                         ))}
@@ -393,6 +423,28 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                         <AlertDialogAction
                             className="bg-red-600 text-white hover:bg-red-700"
                             onClick={handleDelete}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={Boolean(isDeletingVehicle)} onOpenChange={() => setIsDeletingVehicle(null)}>
+                <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Vehicle</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-400">
+                            Are you sure you want to delete this vehicle? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 text-white hover:bg-red-700"
+                            onClick={() => isDeletingVehicle && handleDeleteVehicle(isDeletingVehicle)}
                         >
                             Delete
                         </AlertDialogAction>

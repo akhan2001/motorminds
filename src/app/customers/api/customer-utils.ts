@@ -156,3 +156,13 @@ export async function createCustomerVehicle(customerId: string, vehicleData: any
         return null;
     }
 }
+
+export async function deleteCustomerVehicle(vehicleId: string) {
+    const { error } = await supabase
+        .from('customer_vehicles')
+        .delete()
+        .eq('id', vehicleId);
+
+    if (error) throw error;
+    return true;
+}
