@@ -75,7 +75,6 @@ export default function ShopProfile() {
 
 	const handleFavourite = async () => {
 		toast.success(`${shopName} added to favorites!`);
-		router.push('/customer/lead-generation');
 	};
 
 	if (error) {
@@ -148,14 +147,6 @@ export default function ShopProfile() {
 			<header className="bg-black text-white sticky top-0 z-50">
 				<div className="container mx-auto max-w-[1500px] py-3 px-6 flex items-center justify-between">
 					<div className="flex items-center">
-						<Button 
-							variant="ghost" 
-							size="icon" 
-							className="mr-3 text-white hover:bg-gray-800"
-							onClick={() => router.push('/customer/lead-generation')}
-						>
-							<ArrowLeft className="h-5 w-5" />
-						</Button>
 						<div className="flex items-center">
 							<span className="font-bold text-xl">MotorMinds</span>
 						</div>
@@ -174,7 +165,17 @@ export default function ShopProfile() {
 				<div className="absolute inset-0 bg-black opacity-50"></div>
 				<div className="container mx-auto px-4 h-full flex flex-col justify-center relative z-10">
 					<div className="max-w-4xl">
-						<h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{shopName}</h1>
+						<div className="flex flex-row items-center">
+							<Button 
+								variant="outline"
+								size="icon" 
+								className="mr-5 mb-4 text-white hover:bg-white/10"
+								onClick={() => router.push('/customer/lead-generation')}
+							>
+								<ArrowLeft className="h-5 w-5" />
+							</Button>
+							<h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{shopName}</h1>
+						</div>
 						<p className="text-white text-lg md:text-xl mb-6 max-w-2xl">
 							Professional automotive services with a commitment to quality and customer satisfaction
 						</p>
