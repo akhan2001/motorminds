@@ -229,8 +229,8 @@ export default function ShopProfile() {
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-			{/* Top Navbar */}
-			<MotormindsNavBar showBackButton={true} onBackClick={handleBackClick} />
+			{/* Top Navbar
+			<MotormindsNavBar showBackButton={true} onBackClick={handleBackClick} /> */}
 
 			{/* Shop Banner */}
 			<div className="relative bg-gradient-to-r from-blue-600 to-blue-800 h-64 md:h-80">
@@ -536,7 +536,7 @@ export default function ShopProfile() {
 										/>
 									</div>
 									<Button type="submit" className="w-full">
-										{claimedReward ? "Claim Reward & Send Message" : "Send Message"}
+										Send
 									</Button>
 								</form>
 							</CardContent>
