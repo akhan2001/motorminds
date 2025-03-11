@@ -283,49 +283,49 @@ export function ChatWindow(props: {
 
 	return (
 		<StickToBottom className="h-full">
-		<StickyToBottomContent
-			className="bg-black"
-			contentClassName="py-8 px-2"
-			content={
-			chat.messages.length === 0 ? (
-				<div>{props.emptyStateComponent}</div>
-			) : (
-				<ChatMessages
-				messages={chat.messages}
-				emptyStateComponent={props.emptyStateComponent}
-				sourcesForMessages={sourcesForMessages}
-				/>
-			)
-			}
-			footer={
-				<div className="sticky bottom-8 px-2">
-					<ScrollToBottom />
-					<ChatInput
-					value={chat.input}
-					onChange={chat.handleInputChange}
-					onSubmit={sendMessage}
-					loading={chat.isLoading || intermediateStepsLoading}
-					>
-					<div className="flex items-center gap-2">
-						<Switch
-						checked={lookAtDatabase}
-						onCheckedChange={handleSwitchToggle}
+			<StickyToBottomContent
+				className="bg-black"
+				contentClassName="py-8 px-2"
+				content={
+					chat.messages.length === 0 ? (
+						<div>{props.emptyStateComponent}</div>
+					) : (
+						<ChatMessages
+						messages={chat.messages}
+						emptyStateComponent={props.emptyStateComponent}
+						sourcesForMessages={sourcesForMessages}
 						/>
-						<span className="text-sm text-white/70">Connect to Database</span>
+					)
+				}
+				footer={
+					<div className="sticky bottom-8 px-2">
+						<ScrollToBottom />
+						<ChatInput
+						value={chat.input}
+						onChange={chat.handleInputChange}
+						onSubmit={sendMessage}
+						loading={chat.isLoading || intermediateStepsLoading}
+						>
+						<div className="flex items-center gap-2">
+							<Switch
+							checked={lookAtDatabase}
+							onCheckedChange={handleSwitchToggle}
+							/>
+							<span className="text-sm text-white/70">Connect to Database</span>
+						</div>
+						{/* <Button
+							onClick={() => handleSwitchToggle(lookAtDatabase)}
+							className={`px-4 py-2 rounded transition-colors duration-300 ${
+							lookAtDatabase ? 'bg-red-500 text-white border-red-500' : 'bg-gray-300 text-gray-700 border-gray-300'
+							}`}
+						>
+							Connect to Database
+						</Button> */}
+						</ChatInput>
+						<ChatFooter />
 					</div>
-					{/* <Button
-						onClick={() => handleSwitchToggle(lookAtDatabase)}
-						className={`px-4 py-2 rounded transition-colors duration-300 ${
-						lookAtDatabase ? 'bg-red-500 text-white border-red-500' : 'bg-gray-300 text-gray-700 border-gray-300'
-						}`}
-					>
-						Connect to Database
-					</Button> */}
-					</ChatInput>
-					<ChatFooter />
-				</div>
-			}
-		></StickyToBottomContent>
+				}
+			></StickyToBottomContent>
 		</StickToBottom>
 	);
 }

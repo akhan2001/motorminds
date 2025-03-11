@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getShopInfo } from "@/utils/supabase/supabase-shop";
-import { getCustomers } from "@/app/customers/api/customer-utils";
+import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
-import { createNewInvoice } from "../utils/invoice-utils";
+import { createNewInvoice } from "@/app/invoices/utils/invoice-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,8 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const [customers, setCustomers] = useState<any[]>([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState("");
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+    const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
+    const [selectedVehicleId, setSelectedVehicleId] = useState("");
     const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
     const [labour, setLabour] = useState("");
     const [parts, setParts] = useState("");
@@ -100,8 +102,32 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         }
     }, [selectedCustomerId, customers]);
 
+    // Load vehicles for selected customer
+    useEffect(() => {
+        const loadVehicles = async () => {
+            if (selectedCustomerId) {
+                try {
+                    console.log("Fetching vehicles for customer:", selectedCustomerId);
+                    const vehicles = await getCustomerVehicles(selectedCustomerId);
+                    setCustomerVehicles(vehicles);
+                } catch (error) {
+                    console.error("Error fetching vehicles:", error);
+                    toast.error("Failed to load vehicles");
+                }
+            }
+        };
+
+        if (selectedCustomerId) {
+            loadVehicles();
+        }
+    }, [selectedCustomerId]);
+
     const handleCustomerChange = (value: string) => {
         setSelectedCustomerId(value);
+    };
+
+    const handleVehicleChange = (value: string) => {
+        setSelectedVehicleId(value);
     };
 
     const validateForm = () => {
@@ -236,6 +262,23 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             {customers.map((customer) => (
                                 <SelectItem key={customer.id} value={customer.id}>
                                     {customer.customer_name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/** Vehicle Information */}
+                <div className="flex flex-col gap-4">
+                    <label className="text-gray-300 text-sm">Vehicle Information</label>
+                    <Select value={selectedVehicleId} onValueChange={handleVehicleChange}>
+                        <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
+                            <SelectValue placeholder="Select a vehicle" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                            {customerVehicles.map((vehicle) => (
+                                <SelectItem key={vehicle.id} value={vehicle.id}>
+                                    {vehicle.year} {vehicle.make} {vehicle.model}
                                 </SelectItem>
                             ))}
                         </SelectContent>
