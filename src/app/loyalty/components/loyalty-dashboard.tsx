@@ -94,7 +94,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Total Rewards Created</p>
-                                <p className="text-2xl font-bold text-green-500">{rewards.length}</p>
+                                <p className="text-2xl font-bold text-white">{rewards.length}</p>
                             </CardContent>
                         </Card>
 
@@ -108,7 +108,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
                         <Card className="bg-[#111] border-[#222]">
                             <CardContent className="p-6">
                                 <p className="text-sm text-gray-400 mb-1">Active Rewards</p>
-                                <p className="text-2xl font-bold text-green-500">{activeRewards.length}</p>
+                                <p className="text-2xl font-bold text-white">{activeRewards.length}</p>
                             </CardContent>
                         </Card>
                     </div>

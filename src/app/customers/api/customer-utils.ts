@@ -92,17 +92,30 @@ export async function updateCustomer(customerId: string, customerData: any) {
     }
 }
 
-export async function deleteCustomer(customerId: string) {
+export async function deleteCustomer(customerId: string, shopId: string) {
     try {
-        const { error } = await supabase
+        // Update the customer to remove shop association instead of deleting
+        const { data, error } = await supabase
             .from('customers')
-            .delete()
-            .eq('id', customerId);
+            .update({ 
+                shop_id: null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', customerId)
+            .eq('shop_id', shopId)  // Make sure we're updating the correct shop's customer
+            .select();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Error removing customer from shop:', error.message);
+            throw error;
+        }
+
         return true;
     } catch (error) {
-        console.error('Error deleting customer:', error);
+        console.error('Error updating customer:', error);
+        if (error instanceof Error) {
+            console.error('Error message:', error.message);
+        }
         return false;
     }
 }

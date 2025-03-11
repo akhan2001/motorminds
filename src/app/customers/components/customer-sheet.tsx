@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { getCustomerVehicles, createCustomerVehicle } from "../api/customer-utils"
 import { Car, Plus, Minus } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 
 interface CustomerSheetProps {
     customer: any;
@@ -173,15 +173,30 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     };
 
     const handleDelete = async () => {
-        const deleted = await deleteCustomer(customer.id);
-        if (deleted) {
-            toast.success("Customer deleted successfully");
+        try {
+            if (!customer?.id || !customer?.shop_id) {
+                toast.error("Invalid customer or shop ID");
+                setIsDeleting(false);
+                return;
+            }
+
+            console.log("Removing customer from shop:", customer.id);
+            await deleteCustomer(customer.id, customer.shop_id);
+            
+            toast.success("Removed customer from shop");
             onOpenChange(false);
             onCustomerUpdated();
-        } else {
-            toast.error("Failed to delete customer");
+            
+        } catch (error) {
+            console.error("Error in handleDelete:", error);
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("An unexpected error occurred while removing the customer");
+            }
+        } finally {
+            setIsDeleting(false);
         }
-        setIsDeleting(false);
     };
 
     const handleDeleteVehicle = async (vehicleId: string) => {
@@ -351,6 +366,9 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 <DialogContent className="bg-[#131313] text-white border border-[#222]">
                     <DialogHeader>
                         <DialogTitle>Add New Vehicle</DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                            Add a new vehicle to the customer's profile
+                        </DialogDescription>
                     </DialogHeader>
                     
                     <div className="grid gap-4 py-4">
@@ -434,10 +452,9 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
             <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
                 <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Remove Customer?</AlertDialogTitle>
                         <AlertDialogDescription className="text-gray-400">
-                            This action cannot be undone. This will permanently delete the customer
-                            and all associated data.
+                            This will remove the customer from your shop.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -448,7 +465,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                             className="bg-red-600 text-white hover:bg-red-700"
                             onClick={handleDelete}
                         >
-                            Delete
+                            Remove
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
