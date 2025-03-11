@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getAllShops } from "./api/fetchShops";
 import ShopCard from "./components/ShopCard";
 import { Search } from "lucide-react";
+import MotormindsNavBar from "@/app/components/Motorminds-NavBar";
 
 export default function Marketplace() {
 	const [shops, setShops] = useState<any[]>([]);
@@ -45,21 +46,8 @@ export default function Marketplace() {
 
 	return (
 		<main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
-			<header className="bg-black text-white sticky top-0 z-50">
-				<div className="container mx-auto max-w-[1500px] py-3 px-6 flex items-center justify-between">
-					<div className="flex items-center">
-						<div className="flex items-center">
-							<span className="font-bold text-xl">MotorMinds</span>
-						</div>
-					</div>
-					<nav className="hidden md:flex items-center space-x-8">
-						<a href="#" className="hover:text-gray-300 transition-colors">About</a>
-						<a href="#" className="hover:text-gray-300 transition-colors">Product</a>
-						<a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
-					</nav>
-					<Button className="bg-red-600 hover:bg-red-700 text-white">LOGIN</Button>
-				</div>
-			</header>
+			{/* Header */}
+			<MotormindsNavBar />
 
 			{/* Main content */}
 			<div className="container mx-auto max-w-[1500px] py-8 px-6">

@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import Image from "next/image";
+import MotormindsNavBar from "@/app/components/Motorminds-NavBar";
 
 export default function ShopProfile() {
 	const router = useRouter();
@@ -75,6 +75,10 @@ export default function ShopProfile() {
 
 	const handleFavourite = async () => {
 		toast.success(`${shopName} added to favorites!`);
+	};
+
+	const handleBackClick = () => {
+		router.push('/customer/lead-generation');
 	};
 
 	if (error) {
@@ -143,22 +147,8 @@ export default function ShopProfile() {
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-			{/* Header */}
-			<header className="bg-black text-white sticky top-0 z-50">
-				<div className="container mx-auto max-w-[1500px] py-3 px-6 flex items-center justify-between">
-					<div className="flex items-center">
-						<div className="flex items-center">
-							<span className="font-bold text-xl">MotorMinds</span>
-						</div>
-					</div>
-					<nav className="hidden md:flex items-center space-x-8">
-						<a href="#" className="hover:text-gray-300 transition-colors">About</a>
-						<a href="#" className="hover:text-gray-300 transition-colors">Product</a>
-						<a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
-					</nav>
-					<Button className="bg-red-600 hover:bg-red-700 text-white">LOGIN</Button>
-				</div>
-			</header>
+			{/* Top Navbar */}
+			<MotormindsNavBar showBackButton={true} onBackClick={handleBackClick} />
 
 			{/* Shop Banner */}
 			<div className="relative bg-gradient-to-r from-blue-600 to-blue-800 h-64 md:h-80">
@@ -449,7 +439,7 @@ export default function ShopProfile() {
 					<Separator className="my-8 bg-gray-700" />
 					
 					<div className="text-center text-gray-400 text-sm">
-						<p>&copy; {new Date().getFullYear()} {shopName}. All rights reserved.</p>
+						<p>&copy; {new Date().getFullYear()} {shopName}. All rights reserved by MotorMinds.</p>
 					</div>
 				</div>
 			</footer>
