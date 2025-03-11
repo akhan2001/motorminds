@@ -24,10 +24,10 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     const [isDeleting, setIsDeleting] = useState(false);
     const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
     const [editedCustomer, setEditedCustomer] = useState({
-        customerName: customer?.customer_name || "",
-        customerEmail: customer?.customer_email || "",
-        customerPhone: customer?.customer_phone || "",
-        customerAddress: customer?.customer_address || ""
+        customerName: "",
+        customerEmail: "",
+        customerPhone: "",
+        customerAddress: ""
     });
     const [editedVehicle, setEditedVehicle] = useState({
         customerYear: "",
@@ -46,15 +46,39 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         vin: ""
     });
 
+    // Reset form and states when sheet opens/closes
     useEffect(() => {
-        const fetchVehicles = async () => {
-            const vehicles = await getCustomerVehicles(customer.id);
-            setCustomerVehicles(vehicles);
-        };
+        if (isOpen) {
+            setEditedCustomer({
+                customerName: customer?.customer_name || "",
+                customerEmail: customer?.customer_email || "",
+                customerPhone: customer?.customer_phone || "",
+                customerAddress: customer?.customer_address || ""
+            });
+            setIsEditing(false);
+        }
+    }, [isOpen, customer]);
 
-        fetchVehicles();
-    }, [customer.id]);
-    
+    // Fetch vehicles when customer changes or sheet opens
+    useEffect(() => {
+        if (isOpen && customer?.id) {
+            const fetchVehicles = async () => {
+                const vehicles = await getCustomerVehicles(customer.id);
+                setCustomerVehicles(vehicles);
+            };
+            fetchVehicles();
+        }
+    }, [customer?.id, isOpen]);
+
+    const handleSheetOpenChange = (open: boolean) => {
+        if (!open) {
+            setIsEditing(false);
+            setIsDeleting(false);
+            setIsDeletingVehicle(null);
+        }
+        onOpenChange(open);
+    };
+
     const handleAddVehicle = async () => {
         // Validate year
         const year = parseInt(newVehicle.year);
@@ -182,7 +206,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
     return (
         <>
-            <Sheet open={isOpen} onOpenChange={onOpenChange}>
+            <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetContent className="bg-[#131313] text-white border-l-1 border-l-[#222] overflow-y-auto">
                     <SheetHeader>
                         <SheetTitle className="text-white">{customer.customer_name}</SheetTitle>
@@ -201,7 +225,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                             <div className="col-span-3">
                                 <Input
                                     id="name"
-                                    value={editedCustomer.customerName}
+                                    value={customer.customer_name}
                                     onChange={(e) => setEditedCustomer({ ...editedCustomer, customerName: e.target.value })}
                                     className="col-span-3 bg-[#292929] text-white border-[#626262]"
                                     readOnly={!isEditing}
