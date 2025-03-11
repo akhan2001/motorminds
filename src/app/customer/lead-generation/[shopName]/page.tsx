@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import MotormindsNavBar from "@/app/components/Motorminds-NavBar";
+import { getActiveRewards } from "@/app/loyalty/utils/LoyaltyUtils";
 
 export default function ShopProfile() {
 	const router = useRouter();
@@ -23,6 +24,17 @@ export default function ShopProfile() {
 	const [error, setError] = useState<string | null>(null);
 	const [shopName, setShopName] = useState<string | null>(null);
 	const [shopID, setShopID] = useState<string | null>(null);
+	const [activeRewards, setActiveRewards] = useState<any[]>([]);
+	const [isLoadingRewards, setIsLoadingRewards] = useState<boolean>(true);
+
+	// Initialize form data without shopID
+	const [formData, setFormData] = useState({
+		name: "",
+		phone: "",
+		email: "",
+		message: "",
+		shop_id: "",  // Initialize empty, will be updated in useEffect
+	});
 
 	useEffect(() => {
 		if (!params?.shopName) {
@@ -34,6 +46,9 @@ export default function ShopProfile() {
 		const shopName = decodeURIComponent(encodedShopName);
 		setShopName(shopName);
 		setShopID(shopID);
+		
+		// Update form data with shopID when it's available
+		setFormData(prev => ({ ...prev, shop_id: shopID }));
 
 		const fetchShopData = async () => {
 			try {
@@ -45,16 +60,23 @@ export default function ShopProfile() {
 			}
 		};
 
-		fetchShopData();
-	}, [params, router]);
+		const fetchRewards = async () => {
+			setIsLoadingRewards(true);
+			try {
+				if (shopID) {
+					const rewards = await getActiveRewards(shopID);
+					setActiveRewards(rewards || []);
+				}
+			} catch (error) {
+				console.error("Error fetching rewards:", error);
+			} finally {
+				setIsLoadingRewards(false);
+			}
+		};
 
-	const [formData, setFormData] = useState({
-		name: "",
-		phone: "",
-		email: "",
-		message: "",
-		shop_id: shopID,
-	});
+		fetchShopData();
+		fetchRewards();
+	}, [params, router]);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target;
@@ -63,12 +85,37 @@ export default function ShopProfile() {
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setFormData({ name: "", phone: "", email: "", message: "", shop_id: shopID });
-
+		
+		// Get shopID directly from URL if state is not set yet
+		let currentShopID = shopID;
+		if (!currentShopID && params?.shopName) {
+			const urlParts = params.shopName.split(/-(.+)/);
+			if (urlParts.length > 1) {
+				currentShopID = urlParts[1];
+			}
+		}
+		
+		if (!currentShopID) {
+			toast.error("Shop information is missing. Please try again.");
+			console.error("Shop ID is missing during form submission");
+			return;
+		}
+		
+		// Ensure shopID is included in the submission
+		const submissionData = {
+			...formData,
+			shop_id: currentShopID
+		};
+		
+		console.log("Submitting form with data:", submissionData); // Debug log
+		
 		try {
-			const data = await createLead(formData);
+			const data = await createLead(submissionData);
 			toast.success("Your message has been sent! We'll get back to you soon.");
+			// Reset form fields but keep the shop_id
+			setFormData({ name: "", phone: "", email: "", message: "", shop_id: currentShopID });
 		} catch (error) {
+			console.error("Error creating lead:", error);
 			toast.error("Failed to send your message. Please try again.");
 		}
 	};
@@ -235,11 +282,46 @@ export default function ShopProfile() {
 											car care and customer service. With years of experience and a team of certified technicians, 
 											we deliver reliable and professional automotive solutions.
 										</p>
-										<p className="text-gray-600">
+										<p className="text-gray-600 mb-6">
 											Our state-of-the-art facility is equipped with the latest diagnostic tools and equipment to 
 											handle all your vehicle maintenance and repair needs. We pride ourselves on transparency, 
 											quality workmanship, and building long-lasting relationships with our customers.
 										</p>
+										
+										{/* Active Rewards Section */}
+										<div className="mt-8">
+											<h3 className="text-lg font-semibold mb-3">Active Rewards</h3>
+											{isLoadingRewards ? (
+												<div className="flex justify-center py-4">
+													<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+												</div>
+											) : activeRewards.length > 0 ? (
+												<div className="space-y-3">
+													{activeRewards.map((reward, index) => (
+														<div key={reward.id} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4">
+															<div className="flex items-start">
+																<div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full mr-3">
+																	<StarIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+																</div>
+																<div className="flex-1">
+																	<div className="flex justify-between items-start">
+																		<h4 className="font-medium text-blue-800 dark:text-blue-300">{reward.name}</h4>
+																		<Badge variant="outline" className="ml-2 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+																			{reward.points_required} points
+																		</Badge>
+																	</div>
+																	<p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{reward.description}</p>
+																</div>
+															</div>
+														</div>
+													))}
+												</div>
+											) : (
+												<div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
+													<p className="text-gray-500 dark:text-gray-400">This shop does not have any active rewards.</p>
+												</div>
+											)}
+										</div>
 									</CardContent>
 								</Card>
 							</TabsContent>

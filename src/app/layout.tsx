@@ -23,7 +23,7 @@ const bricolageGrotesque = Bricolage_Grotesque({
 // });
 
 export const metadata: Metadata = {
-  title: "Motorminds",
+  title: "Motorminds App",
   description: "A Shop Management Platform for Automotive Businesses",
 };
 
