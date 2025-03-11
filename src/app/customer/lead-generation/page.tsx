@@ -45,12 +45,21 @@ export default function Marketplace() {
 
 	return (
 		<main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
-			{/* Header */}
-			<div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-				<div className="container mx-auto max-w-[1500px] py-4 px-6">
-					<h1 className="text-2xl font-bold">Motorminds Marketplace</h1>
+			<header className="bg-black text-white sticky top-0 z-50">
+				<div className="container mx-auto max-w-[1500px] py-3 px-6 flex items-center justify-between">
+					<div className="flex items-center">
+						<div className="flex items-center">
+							<span className="font-bold text-xl">MotorMinds</span>
+						</div>
+					</div>
+					<nav className="hidden md:flex items-center space-x-8">
+						<a href="#" className="hover:text-gray-300 transition-colors">About</a>
+						<a href="#" className="hover:text-gray-300 transition-colors">Product</a>
+						<a href="#" className="hover:text-gray-300 transition-colors">Contact</a>
+					</nav>
+					<Button className="bg-red-600 hover:bg-red-700 text-white">LOGIN</Button>
 				</div>
-			</div>
+			</header>
 
 			{/* Main content */}
 			<div className="container mx-auto max-w-[1500px] py-8 px-6">

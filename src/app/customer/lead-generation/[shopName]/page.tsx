@@ -144,30 +144,19 @@ export default function ShopProfile() {
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-			{/* Top Navbar */}
+			{/* Header */}
 			<header className="bg-black text-white sticky top-0 z-50">
-				<div className="container mx-auto px-4 py-3 flex items-center justify-between">
+				<div className="container mx-auto max-w-[1500px] py-3 px-6 flex items-center justify-between">
 					<div className="flex items-center">
 						<Button 
 							variant="ghost" 
 							size="icon" 
-							className="mr-2 text-white hover:bg-gray-800"
+							className="mr-3 text-white hover:bg-gray-800"
 							onClick={() => router.push('/customer/lead-generation')}
 						>
 							<ArrowLeft className="h-5 w-5" />
 						</Button>
 						<div className="flex items-center">
-							<Image 
-								src="/motorminds-logo.png" 
-								alt="MotorMinds" 
-								width={32} 
-								height={32} 
-								className="mr-2"
-								onError={(e) => {
-									// Fallback if image doesn't load
-									e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m18 16 4-4-4-4'/%3E%3Cpath d='m6 8-4 4 4 4'/%3E%3Cpath d='m14.5 4-5 16'/%3E%3C/svg%3E";
-								}}
-							/>
 							<span className="font-bold text-xl">MotorMinds</span>
 						</div>
 					</div>
