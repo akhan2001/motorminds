@@ -5,19 +5,12 @@ import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
 import { updateCustomer, deleteCustomer } from "../api/customer-utils"
 import { toast } from "sonner"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { getCustomerVehicles } from "../api/customer-utils"
+import { getCustomerVehicles, createCustomerVehicle } from "../api/customer-utils"
+import { Car, Plus } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 interface CustomerSheetProps {
     customer: any;
@@ -43,6 +36,14 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         customerColor: "",
         customerVin: ""
     });
+    const [isAddingVehicle, setIsAddingVehicle] = useState(false);
+    const [newVehicle, setNewVehicle] = useState({
+        year: "",
+        make: "",
+        model: "",
+        color: "",
+        vin: ""
+    });
 
     useEffect(() => {
         const fetchVehicles = async () => {
@@ -52,6 +53,62 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
         fetchVehicles();
     }, [customer.id]);
+    
+    const handleAddVehicle = async () => {
+        // Validate year
+        const year = parseInt(newVehicle.year);
+        const currentYear = new Date().getFullYear();
+        
+        if (!year || year < 1960 || year > currentYear) {
+            toast.error(`Year must be between 1960 and ${currentYear}`);
+            return;
+        }
+
+        if (!newVehicle.make.trim()) {
+            toast.error("Make is required");
+            return;
+        }
+
+        if (!newVehicle.model.trim()) {
+            toast.error("Model is required");
+            return;
+        }
+
+        try {
+            const addedVehicle = await createCustomerVehicle(customer.id, {
+                year: newVehicle.year,
+                make: newVehicle.make,
+                model: newVehicle.model,
+                color: newVehicle.color || null,
+                vin: newVehicle.vin || null
+            });
+
+            if (addedVehicle) {
+                toast.success("Vehicle added successfully");
+                setIsAddingVehicle(false);
+                // Refresh vehicles list
+                const vehicles = await getCustomerVehicles(customer.id);
+                setCustomerVehicles(vehicles);
+                // Reset form
+                setNewVehicle({
+                    year: "",
+                    make: "",
+                    model: "",
+                    color: "",
+                    vin: ""
+                });
+            } else {
+                toast.error("Failed to add vehicle");
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                toast.error(error.message);
+            } else {
+                toast.error("Error adding vehicle");
+            }
+            console.error("Error adding vehicle:", error);
+        }
+    };
 
     const handleEdit = () => {
         setIsEditing(true);
@@ -174,79 +231,26 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
                         <Separator className="bg-[#666]"/>
 
-                        <h2 className="text-lg font-semibold text-gray-300">Customer Vehicles</h2>
+                        <h2 className="text-lg font-semibold text-gray-300">Customer Vehicles</h2>                        
 
-                        <Card className="bg-[#292929] border-[#626262] text-white">
-                            <CardHeader>
-                                <CardTitle>Vehicle 1</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                            </CardContent>
-                        </Card>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="year" className="text-left text-gray-300">Year</Label>
-                            <Input
-                                id="year"
-                                value={editedVehicle.customerYear}
-                                onChange={(e) => setEditedVehicle({ ...editedVehicle, customerYear: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="YYYY"
-                                type="number"
-                                readOnly={!isEditing}
-                            />
-                        </div>
+                        {customerVehicles.map((vehicle) => (
+                            <Card 
+                                key={vehicle.id} 
+                                className="bg-[#292929] border-[#626262] text-white mb-3"
+                            >
+                                <CardHeader>
+                                    <CardTitle className="text-md font-semibold flex items-center gap-2"><Car className="w-4 h-4" />{vehicle.year} {vehicle.make} {vehicle.model}</CardTitle>
+                                </CardHeader>
+                            </Card>
+                        ))}
 
-                        
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="make" className="text-left text-gray-300">Make</Label>
-                            <Input
-                                id="make"
-                                value={editedVehicle.customerMake}
-                                onChange={(e) => setEditedVehicle({ ...editedVehicle, customerMake: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="Make"
-                                readOnly={!isEditing}
-                            />
-                        </div>
-
-                        
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="model" className="text-left text-gray-300">Model</Label>
-                            <Input
-                                id="model"
-                                value={editedVehicle.customerModel}
-                                onChange={(e) => setEditedVehicle({ ...editedVehicle, customerModel: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="Model"
-                                readOnly={!isEditing}
-                            />
-                        </div>
-                        
-                        
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="color" className="text-left text-gray-300">Color</Label>
-                            <Input
-                                id="color"
-                                value={editedVehicle.customerColor}
-                                onChange={(e) => setEditedVehicle({ ...editedVehicle, customerColor: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="Color"
-                                readOnly={!isEditing}
-                            />
-                        </div>
-
-                        
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="vin" className="text-left text-gray-300">VIN</Label>
-                            <Input
-                                id="vin"
-                                value={editedVehicle.customerVin}
-                                onChange={(e) => setEditedVehicle({ ...editedVehicle, customerVin: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="VIN"
-                                readOnly={!isEditing}
-                            />
-                        </div>
+                        <Button
+                            variant="outline"
+                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                            onClick={() => setIsAddingVehicle(true)}
+                        >
+                            Add Vehicle <Plus className="w-4 h-4 ml-2" />
+                        </Button>
                     </div>
 
                     <SheetFooter className="flex flex-row gap-2 justify-end">
@@ -288,6 +292,90 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
+
+            <Dialog open={isAddingVehicle} onOpenChange={setIsAddingVehicle}>
+                <DialogContent className="bg-[#131313] text-white border border-[#222]">
+                    <DialogHeader>
+                        <DialogTitle>Add New Vehicle</DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="year" className="text-left text-gray-300">Year</Label>
+                            <Input
+                                id="year"
+                                value={newVehicle.year}
+                                onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
+                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                placeholder="YYYY"
+                                type="number"
+                                min="1960"
+                                max={new Date().getFullYear()}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="make" className="text-left text-gray-300">Make</Label>
+                            <Input
+                                id="make"
+                                value={newVehicle.make}
+                                onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
+                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                placeholder="Make"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="model" className="text-left text-gray-300">Model</Label>
+                            <Input
+                                id="model"
+                                value={newVehicle.model}
+                                onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
+                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                placeholder="Model"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="color" className="text-left text-gray-300">Color</Label>
+                            <Input
+                                id="color"
+                                value={newVehicle.color}
+                                onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
+                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                placeholder="Color"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="vin" className="text-left text-gray-300">VIN</Label>
+                            <Input
+                                id="vin"
+                                value={newVehicle.vin}
+                                onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value })}
+                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                placeholder="VIN"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                            onClick={() => setIsAddingVehicle(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
+                            onClick={handleAddVehicle}
+                        >
+                            Add Vehicle
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
                 <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">

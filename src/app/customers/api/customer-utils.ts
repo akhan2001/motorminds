@@ -120,3 +120,39 @@ export async function getCustomerVehicles(customerId: string) {
 
     return data || [];
 }
+
+export async function createCustomerVehicle(customerId: string, vehicleData: any) {
+    try {
+        // Validate required fields
+        if (!customerId) {
+            throw new Error('Customer ID is required');
+        }
+        if (!vehicleData.year || !vehicleData.make || !vehicleData.model) {
+            throw new Error('Year, make, and model are required');
+        }
+
+        const { data, error } = await supabase
+            .from('customer_vehicles')
+            .insert({
+                customer_id: customerId,
+                year: vehicleData.year,
+                make: vehicleData.make,
+                model: vehicleData.model,
+                color: vehicleData.color || null,
+                vin: vehicleData.vin || null,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating customer vehicle:', error);
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error creating customer vehicle:', error);
+        return null;
+    }
+}
