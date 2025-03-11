@@ -26,20 +26,19 @@ export const getShopName = async (shop_id: any) => {
 	return data
 }
 
-export const createLead = async (lead: any) => {
+export const createLead = async (leadFormData: any) => {
     // console.log(lead)
 
-    const shopName = await getShopName(lead.shop_id)
+    const shopName = await getShopName(leadFormData.shop_id)
     // console.log(shopName)
-
 	const { data, error } = await supabase
         .from("leads")
         .insert({
             shop_name: shopName.shop_name,
-            customer_name: lead.name,
-            email: lead.email,
-            phone: lead.phone,
-            message: lead.message,
+            customer_name: leadFormData.name,
+            email: leadFormData.email,
+            phone: leadFormData.phone,
+            message: leadFormData.message,
             status: "NEW",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),            

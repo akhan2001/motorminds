@@ -15,12 +15,14 @@ export default function ShopCard({ shop }: { shop: any }) {
     const router = useRouter();
     const [rewardNames, setRewardNames] = useState<string[]>([]);
     const [rewardID, setRewardID] = useState<string[]>([]);
+    const [rewardDescription, setRewardDescription] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchRewardNames = async () => {
             const rewardData = await getActiveRewards(shop.id);
             // Extract just the name property from each reward object
             setRewardNames(rewardData.map(reward => reward.name));
+            setRewardDescription(rewardData.map(reward => reward.description));
             setRewardID(rewardData.map(reward => reward.id));
         };
         fetchRewardNames();
@@ -59,7 +61,7 @@ export default function ShopCard({ shop }: { shop: any }) {
                                 <TooltipTrigger>
                                     <Badge variant="outline">{reward}</Badge>
                                 </TooltipTrigger>
-                                <TooltipContent>{reward.description}</TooltipContent>
+                                <TooltipContent>{rewardDescription[index]}</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     ))}

@@ -1,7 +1,7 @@
 // src/utils/fetchShops.ts
 import { supabase } from '@/lib/supabase';
 
-export async function fetchShops() {
+export async function getAllShops() {
     const { data, error } = await supabase
     .from('shops')
     .select('*');
