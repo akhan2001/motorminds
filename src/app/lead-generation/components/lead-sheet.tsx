@@ -4,11 +4,12 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatDate, saveNotes } from "../utils/lead";
+import { formatDate, saveNotes, updateLeadStatus } from "../utils/lead";
 import { useState, useEffect } from "react";
 import { PenIcon, CheckIcon, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { createNewCustomer, checkCustomerExists} from "@/app/customers/api/customer-utils";
 
 interface LeadSheetProps {
     lead: any;
@@ -56,6 +57,22 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
 
     const handleViewCustomer = () => {
         router.push(`/customers`);
+    };
+
+    const createCustomer = async (leadId: string) => {
+        const potentialCustomer = {
+            customerName: lead.customer_name,
+            customerEmail: lead.email,
+            customerPhone: lead.phone
+        }
+        const customerExists = await checkCustomerExists(potentialCustomer.customerPhone, lead.shop_id);
+        if (customerExists) {
+            toast.error("Customer already exists");
+            return;
+        }
+        await createNewCustomer(potentialCustomer, lead.shop_id);
+        await updateLeadStatus(leadId, "CUSTOMER");
+        toast.success("Customer created successfully");
     };
 
     return (
@@ -121,7 +138,16 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
                                 <CardTitle className="text-sm font-medium text-gray-400">Message</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {lead.message.includes("claim") ? (
+                                {lead.rewards_claim ? (
+                                    <div className="space-y-3">
+                                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
+                                            <p className="text-blue-400 text-sm font-medium">
+                                                {lead.customer_name} has claimed the "{lead.rewards_claim.reward_name}" reward!
+                                            </p>
+                                        </div>
+                                        <p className="text-white text-sm italic">"{lead.message}"</p>
+                                    </div>
+                                ) : lead.message.includes("claim") ? (
                                     <div className="space-y-3">
                                         <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
                                             <p className="text-blue-400 text-sm font-medium">
@@ -149,15 +175,18 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
 
                     {/* Actions */}
                     <div className="flex justify-between gap-2">
-                        <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => sendEmail(lead.email)}>
+                        {/* <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => sendEmail(lead.email)}>
                             Email
                         </Button>
                         <Button className="bg-green-600 hover:bg-green-500 w-full" onClick={() => callPhone(lead.phone)}>
                             Call
-                        </Button>
+                        </Button> */}
                         {/* <Button className="bg-yellow-600 hover:bg-yellow-500 w-full" onClick={() => sendMessage(lead.phone)}>
                             Message
                         </Button> */}
+                        <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => createCustomer(lead.id)}>
+                            Create Customer
+                        </Button>
                     </div>
 
                     {/* Notes Section */}

@@ -2,14 +2,13 @@ import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@
 import { getLeads, formatDate, updateLeadStatus } from "../utils/lead"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MessageCircle, UserPlus, Check } from 'lucide-react';
+import { Mail, Phone, MessageCircle, UserPlus, Check, Gift } from 'lucide-react';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@/components/ui/tooltip";
 import { LeadSheet } from "./lead-sheet";
 import { toast } from "sonner";
 import { createNewCustomer, checkCustomerExists } from "@/app/customers/api/customer-utils";
-import { getShopId } from "@/utils/supabase/supabase-shop";
 
 const statusColors = {
     "NEW": "bg-[#36612A]",
@@ -98,7 +97,16 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                 </TableCell>
                                 <TableCell className="text-white">{formatDate(lead.updated_at)}</TableCell>
                                 {/* <TableCell className="text-white">{lead.service_name}</TableCell> */}
-                                <TableCell className="text-white">{lead.message}</TableCell>
+                                <TableCell className="text-white">
+                                    {lead.rewards_claim ? (
+                                        <div className="flex items-center">
+                                            <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
+                                            {lead.message}
+                                        </div>
+                                    ) : (
+                                        lead.message
+                                    )}
+                                </TableCell>
                                 <TableCell className="text-white">
                                     <Badge variant="outline" className={`border-none text-white ${statusColors[lead.status as keyof typeof statusColors]}`}>
                                         {lead.status}

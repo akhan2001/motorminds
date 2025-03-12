@@ -105,18 +105,33 @@ export default function ShopProfile() {
 		}
 		
 		// Ensure shopID is included in the submission
-		const submissionData = {
+		const submissionData: any = {
 			...formData,
 			shop_id: currentShopID
 		};
+		
+		// Add reward information if a reward is claimed
+		if (claimedReward) {
+			submissionData.reward_id = claimedReward.id;
+			submissionData.reward_name = claimedReward.name;
+		}
 		
 		console.log("Submitting form with data:", submissionData); // Debug log
 		
 		try {
 			const data = await createLead(submissionData);
-			toast.success("Your message has been sent! We'll get back to you soon.");
+			
+			// Show appropriate success message based on whether a reward was claimed
+			if (claimedReward) {
+				toast.success(`Your message has been sent and "${claimedReward.name}" reward has been claimed!`);
+			} else {
+				toast.success("Your message has been sent! We'll get back to you soon.");
+			}
+			
 			// Reset form fields but keep the shop_id
 			setFormData({ name: "", phone: "", email: "", message: "", shop_id: currentShopID });
+			// Reset claimed reward
+			setClaimedReward(null);
 		} catch (error) {
 			console.error("Error creating lead:", error);
 			toast.error("Failed to send your message. Please try again.");

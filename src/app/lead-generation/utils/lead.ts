@@ -32,7 +32,18 @@ export const createLead = async (leadFormData: any) => {
 
     const shopName = await getShopName(leadFormData.shop_id)
     // console.log(shopName)
-	const { data, error } = await supabase
+    
+    // Prepare rewards_claim data if a reward was selected
+    let rewards_claim = null;
+    if (leadFormData.reward_id && leadFormData.reward_name) {
+        rewards_claim = {
+            reward_id: leadFormData.reward_id,
+            reward_name: leadFormData.reward_name,
+            claimed_at: new Date().toISOString()
+        };
+    }
+    
+    const { data, error } = await supabase
         .from("leads")
         .insert({
             shop_id: leadFormData.shop_id,
@@ -43,7 +54,8 @@ export const createLead = async (leadFormData: any) => {
             message: leadFormData.message,
             status: "NEW",
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),            
+            updated_at: new Date().toISOString(),
+            rewards_claim: rewards_claim
         })
         .select()
 
