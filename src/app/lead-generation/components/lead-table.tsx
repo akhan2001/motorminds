@@ -1,5 +1,5 @@
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table"
-import { getLeads, formatDate } from "../utils/lead"
+import { getLeads, formatDate, updateLeadStatus } from "../utils/lead"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Mail, Phone, MessageCircle, UserPlus, Check } from 'lucide-react';
@@ -50,6 +50,10 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
             }
 
             const customer = await createNewCustomer(potentialCustomer, shopId);
+
+            // Update the lead status to "CUSTOMER"
+            await updateLeadStatus(leadId, "CUSTOMER");
+
             toast.success("Customer created successfully");
             const updatedLeads = await getLeads(shopId);
             setLeads(updatedLeads);
@@ -126,7 +130,7 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                             </Tooltip>
                                         </TooltipProvider>
                                         {/* Create Customer Button */}
-                                        {!lead.created_customer ? (
+                                        {lead.status != "CUSTOMER" ? (
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>

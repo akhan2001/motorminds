@@ -35,6 +35,7 @@ export const createLead = async (leadFormData: any) => {
 	const { data, error } = await supabase
         .from("leads")
         .insert({
+            shop_id: leadFormData.shop_id,
             shop_name: shopName.shop_name,
             customer_name: leadFormData.name,
             email: leadFormData.email,
@@ -85,7 +86,7 @@ export async function getHotLeads(shopId: string) {
 
 export async function getPendingFollowUps(shopId: string) {
     const data = await getTotalLeads(shopId)
-    const pendingFollowUps = data.filter((lead: any) => lead.status === "FOLLOW UP")
+    const pendingFollowUps = data.filter((lead: any) => lead.status != "CUSTOMER")
     return pendingFollowUps.length
 }
 
@@ -95,4 +96,15 @@ export async function getConvertedLeads(shopId: string) {
     return convertedLeads.length
 }
 
+export async function updateLeadStatus(leadId: string, status: string) {
+    const { data, error } = await supabase
+        .from("leads")
+        .update({ status })
+        .eq("id", leadId)
 
+    if (error) {
+        throw error
+    }
+
+    return data 
+}

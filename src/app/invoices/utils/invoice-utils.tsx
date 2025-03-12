@@ -69,11 +69,6 @@ export async function setStatus(invoiceId: string) {
 }
 
 export async function createNewInvoice(invoiceData: any, shopId: string) {
-
-	// for (const key in invoiceData) {
-	// 	console.log(`${key}: ${invoiceData[key]}`);
-	// }
-
 	try {
 		console.log("Creating invoice with data:", invoiceData);
 		

@@ -82,7 +82,7 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             
             // Add image with margins
-            pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+            pdf.addImage(imgData, "SVG", margin, margin, imgWidth, imgHeight);
             
             // If content is too tall, adjust the PDF
             if (imgHeight > pageHeight - (margin * 2)) {
@@ -93,7 +93,7 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
                 
                 // Create a new PDF and add the scaled image
                 const newPdf = new jsPDF();
-                newPdf.addImage(imgData, "PNG", margin, margin, adjustedWidth, adjustedHeight);
+                newPdf.addImage(imgData, "SVG", margin, margin, adjustedWidth, adjustedHeight);
                 newPdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
             } else {
                 pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);

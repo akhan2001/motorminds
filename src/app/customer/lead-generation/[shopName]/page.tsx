@@ -112,7 +112,7 @@ export default function ShopProfile() {
 		console.log("Submitting form with data:", submissionData); // Debug log
 		
 		try {
-			const data = await createLead(submissionData);
+			const data = await createLead(submissionData, currentShopID);
 			toast.success("Your message has been sent! We'll get back to you soon.");
 			// Reset form fields but keep the shop_id
 			setFormData({ name: "", phone: "", email: "", message: "", shop_id: currentShopID });
