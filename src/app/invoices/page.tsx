@@ -7,7 +7,7 @@ import { InvoiceFilter } from "./components/invoice-filter"
 import { InvoiceCard } from "./components/invoice-card"
 import { fetchAllInvoices, formatCurrency, formatDate } from "./utils/invoice-utils"
 import { Nav } from "../components/nav"
-import { PlusIcon } from "lucide-react"
+import { PlusIcon, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { getShopId } from "@/utils/supabase/supabase-shop"
@@ -20,6 +20,7 @@ export default function InvoicesPage() {
     const [user, setUser] = useState<any>(null);
     const [shopId, setShopId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     const refreshInvoices = async () => {
         if (shopId) {
@@ -118,6 +119,13 @@ export default function InvoicesPage() {
         invoice.status === "UNPAID" && isThisMonth(invoice.issue_date)
     ).length
 
+    // Add this function to handle sort
+    const sortedInvoices = [...filteredInvoices].sort((a, b) => {
+        const dateA = new Date(a.issue_date).getTime();
+        const dateB = new Date(b.issue_date).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+
     return (
         <div className="min-h-screen bg-black text-white">
             <Nav activeLink="Invoices" />
@@ -161,10 +169,17 @@ export default function InvoicesPage() {
                     active={selectedFilter === "unpaid"}
                     onClick={() => setSelectedFilter("unpaid")}
                     />
+                    <Button
+                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="ml-auto bg-[#131313] border border-[#222] hover:border-gray-500"
+                    >
+                        Date {sortOrder === 'asc' ? '↑' : '↓'}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
                 </div>
 
                 <div className="flex flex-col gap-4">
-                    {filteredInvoices.map((invoice, index) => (
+                    {sortedInvoices.map((invoice, index) => (
                         <InvoiceCard
                             key={index}
                             invoiceNumber={invoice.invoice_number}
