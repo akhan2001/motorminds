@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatDate, saveNotes } from "../utils/lead";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PenIcon, CheckIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,10 +18,17 @@ interface LeadSheetProps {
 }
 
 export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: LeadSheetProps) {
-    if (!lead) return null;
-
-    const [notes, setNotes] = useState(lead?.notes || "");
+    const [notes, setNotes] = useState("");
     const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        if (lead) {
+            setNotes(lead.notes || "");
+            setIsEditing(false);
+        }
+    }, [lead?.id]);
+
+    if (!lead) return null;
 
     const handleSaveNotes = async () => {
         try {
@@ -31,6 +38,18 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
         } catch (error) {
             toast.error("Failed to save notes");
         }
+    };
+
+    const getStatusColor = (status: string) => {
+        const colors = {
+            "NEW": "bg-green-500",
+            "CONTACTED": "bg-blue-500",
+            "INTERESTED": "bg-yellow-500",
+            "NOT INTERESTED": "bg-red-500",
+            "FOLLOW UP": "bg-purple-500",
+            "CUSTOMER": "bg-emerald-500"
+        };
+        return colors[status as keyof typeof colors] || "bg-gray-500";
     };
 
     return (
@@ -50,8 +69,8 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
                         <Card className="bg-[#292929] border-none">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-lg font-medium text-white flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                    New Lead
+                                    <div className={`h-2 w-2 rounded-full ${getStatusColor(lead.status)}`}></div>
+                                    {lead.status}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">

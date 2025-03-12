@@ -80,7 +80,14 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                     <TableBody>
                         {leads.map((lead) => (
                             <TableRow className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" key={lead.id} onClick={() => handleLeadClick(lead)}>
-                                <TableCell className="text-white">{lead.customer_name}</TableCell>
+                                <TableCell className="text-white">
+                                    <div className="flex items-center gap-2">
+                                        {lead.status === "NEW" && (
+                                            <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                        )}
+                                        {lead.customer_name}
+                                    </div>
+                                </TableCell>
                                 <TableCell className="text-white">{formatDate(lead.updated_at)}</TableCell>
                                 {/* <TableCell className="text-white">{lead.service_name}</TableCell> */}
                                 <TableCell className="text-white">{lead.message}</TableCell>
