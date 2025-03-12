@@ -9,10 +9,10 @@ import AuthComponent from "./AuthComponent"
 export default function LoginPage() {
   return (
     <div className="h-screen bg-black">
-      <div className="flex flex-row h-full">
+      <div className="flex flex-col md:flex-row h-full">
         {/* LEFT SECTION with background */}
         <div
-          className="relative flex flex-col items-center justify-center w-[70%] h-full"
+          className="relative flex flex-col items-center justify-center w-full md:w-[60%] lg:w-[70%] h-[40%] md:h-full"
           style={{
             backgroundImage: "url('/shop-auto-repair.jpg')",
             backgroundSize: "cover",
@@ -20,7 +20,7 @@ export default function LoginPage() {
           }}
         >
           <div className="absolute inset-0 bg-black opacity-80 z-0"></div>
-          <div className="relative flex flex-col items-center justify-center gap-4 w-[50%]">
+          <div className="relative flex flex-col items-center justify-center gap-4 w-full px-4 md:w-[70%] lg:w-[50%]">
             <div>
               <Image
                 src="/motorminds-logo-white (1).svg"
@@ -30,8 +30,8 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex flex-col items-center justify-center gap-2">
-              <h1 className="text-white text-3xl font-bold">Welcome to Motorminds</h1>
-              <p className="text-[#AAAAAA] text-xl text-center">
+              <h1 className="text-white text-2xl md:text-3xl font-bold text-center">Welcome to Motorminds</h1>
+              <p className="text-[#AAAAAA] text-lg md:text-xl text-center">
                 Your Hub for Auto Shops &amp; Car Enthusiasts
                 <br />– Stay Connected, Stay Tuned.
               </p>
@@ -40,7 +40,7 @@ export default function LoginPage() {
         </div>
 
         {/* RIGHT SECTION: The AuthComponent form */}
-        <div className="flex flex-col items-center justify-center w-[30%] h-full">
+        <div className="flex flex-col items-center justify-center w-full md:w-[40%] lg:w-[30%] h-[60%] md:h-full">
           <AuthComponent />
         </div>
       </div>
