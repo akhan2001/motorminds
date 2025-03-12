@@ -114,7 +114,6 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                 </TableCell>
                                 <TableCell className="text-white">
                                     <div className="flex gap-4">
-                                        {/* Email Button */}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -133,7 +132,6 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                        {/* Call Button */}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>

@@ -263,7 +263,7 @@ export default function ShopProfile() {
 							<h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{shopName}</h1>
 						</div>
 						<p className="text-white text-lg md:text-xl mb-6 max-w-2xl">
-							Professional automotive services with a commitment to quality and customer satisfaction
+							{shopData?.shop_tagline}
 						</p>
 						<div className="flex flex-wrap gap-3">
 							{/* <Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100">
@@ -327,14 +327,7 @@ export default function ShopProfile() {
 									</CardHeader>
 									<CardContent>
 										<p className="text-gray-600 mb-4">
-											{shopData?.shop_name} is a premier automotive service center dedicated to providing exceptional 
-											car care and customer service. With years of experience and a team of certified technicians, 
-											we deliver reliable and professional automotive solutions.
-										</p>
-										<p className="text-gray-600 mb-6">
-											Our state-of-the-art facility is equipped with the latest diagnostic tools and equipment to 
-											handle all your vehicle maintenance and repair needs. We pride ourselves on transparency, 
-											quality workmanship, and building long-lasting relationships with our customers.
+											{shopData?.shop_about}
 										</p>
 										
 										{/* Active Rewards Section */}
@@ -522,7 +515,7 @@ export default function ShopProfile() {
 					<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 						<div>
 							<h3 className="text-lg font-semibold mb-4">{shopName}</h3>
-							<p className="text-gray-300 mb-4">Professional automotive services with a commitment to quality and customer satisfaction.</p>
+							<p className="text-gray-300 mb-4">{shopData?.shop_tagline}</p>
 							<div className="flex space-x-4">
 								<a href="#" className="text-gray-300 hover:text-white">
 									<Facebook className="h-5 w-5" />
