@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { createNewCustomer, checkCustomerExists } from "@/app/customers/api/customer-utils";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, X, Sparkles } from "lucide-react";
+import { X, Sparkles } from "lucide-react";
 
 interface CustomerFormMessageProps {
   initialName?: string;
@@ -58,17 +58,17 @@ export function CustomerFormMessage({ initialName, shopId, onSuccess, onCancel }
   };
 
   return (
-    <Card className="bg-[#1A1A1A] border-[#333333] text-white w-full max-w-md mx-auto">
+    <Card className="bg-[#1A1A1A] border-[#333333] text-white w-full max-w-md">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-blue-400" />
+            <Sparkles className="h-5 w-5 text-red-400" />
             <CardTitle className="text-lg text-white">Create New Customer</CardTitle>
           </div>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-transparent"
             onClick={onCancel}
           >
             <X className="h-4 w-4" />

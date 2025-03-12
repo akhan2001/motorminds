@@ -70,7 +70,7 @@ export function ChatMessageBubble(props: {
         
         {/* Customer form */}
         {isFormMessage && showForm && props.message.formType === 'customer-form' && props.shopId && (
-          <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="mt-4 pt-4 border-t border-gray-700 flex justify-start w-full">
             <CustomerFormMessage 
               initialName={props.message.formData?.name} 
               shopId={props.shopId}

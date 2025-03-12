@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
 import { Switch } from "@/components/ui/switch"
 
+
 function ChatMessages(props: {
   messages: Message[];
   emptyStateComponent: ReactNode;
@@ -169,12 +170,10 @@ export function ChatWindow(props: {
 	const [showIntermediateSteps, setShowIntermediateSteps] = useState(
 		!!props.showIntermediateStepsToggle
 	);
-	const [intermediateStepsLoading, setIntermediateStepsLoading] =
-		useState(false);
 
-	const [sourcesForMessages, setSourcesForMessages] = useState<
-		Record<string, any>
-	>({});
+	const [intermediateStepsLoading, setIntermediateStepsLoading] = useState(false);
+
+	const [sourcesForMessages, setSourcesForMessages] = useState<Record<string, any>>({});
 
 	const chat = useChat({
 		api: props.endpoint,
