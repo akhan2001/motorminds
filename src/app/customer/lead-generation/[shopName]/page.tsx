@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import MotormindsNavBar from "@/app/components/Motorminds-NavBar";
 import { getActiveRewards } from "@/app/loyalty/utils/LoyaltyUtils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RewardsCard } from "@/app/customer/lead-generation/components/rewards-card";
 
 export default function ShopProfile() {
 	const router = useRouter();
@@ -112,7 +113,7 @@ export default function ShopProfile() {
 		console.log("Submitting form with data:", submissionData); // Debug log
 		
 		try {
-			const data = await createLead(submissionData, currentShopID);
+			const data = await createLead(submissionData);
 			toast.success("Your message has been sent! We'll get back to you soon.");
 			// Reset form fields but keep the shop_id
 			setFormData({ name: "", phone: "", email: "", message: "", shop_id: currentShopID });
@@ -131,36 +132,34 @@ export default function ShopProfile() {
 	};
 
 	const handleClaimReward = (reward: any) => {
-		// If a reward is already claimed, show a message and don't allow another claim
-		if (claimedReward) {
-			toast.error("You've already claimed a reward. Please submit your form or clear your selection first.");
+		// If clicking the same reward, deselect it
+		if (claimedReward?.id === reward.id) {
+			setClaimedReward(null);
+			setFormData(prev => ({
+				...prev,
+				message: ""
+			}));
 			return;
 		}
 		
-		setClaimedReward(reward);
-		toast.success(`You've claimed the "${reward.name}" reward!`);
+		// If a different reward is already claimed, show error
+		// if (claimedReward) {
+		// 	toast.error("You've already claimed a reward. Please deselect it first.");
+		// 	return;
+		// }
 		
-		// Set the message directly instead of appending to prevent accumulation
+		setClaimedReward(reward);
+		// toast.success(`You've claimed the "${reward.name}" reward!`);
+		
 		setFormData(prev => ({
 			...prev,
 			message: `I'd like to claim the "${reward.name}" reward.`
 		}));
 		
-		// Scroll to the form
 		document.querySelector('.contact-form')?.scrollIntoView({ 
 			behavior: 'smooth',
 			block: 'center'
 		});
-	};
-
-	// Add a function to clear the claimed reward
-	const clearClaimedReward = () => {
-		setClaimedReward(null);
-		setFormData(prev => ({
-			...prev,
-			message: ""
-		}));
-		toast.info("Reward selection cleared");
 	};
 
 	if (error) {
@@ -252,10 +251,10 @@ export default function ShopProfile() {
 							Professional automotive services with a commitment to quality and customer satisfaction
 						</p>
 						<div className="flex flex-wrap gap-3">
-							<Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100">
+							{/* <Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100">
 								Book Appointment
-							</Button>
-							<Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10" onClick={handleFavourite}>
+							</Button> */}
+							<Button size="lg" variant="outline" className="bg-white text-blue-700 hover:bg-gray-100" onClick={handleFavourite}>
 								<StarIcon className="mr-2 h-4 w-4" /> Favorite
 							</Button>
 						</div>
@@ -332,57 +331,14 @@ export default function ShopProfile() {
 												</div>
 											) : activeRewards.length > 0 ? (
 												<div className="space-y-3">
-													{activeRewards.map((reward, index) => (
-														<div 
-															key={reward.id} 
-															className={`bg-blue-50 dark:bg-blue-900/20 border ${
-																claimedReward && claimedReward.id === reward.id 
-																	? 'border-green-500 dark:border-green-600 ring-2 ring-green-500/50' 
-																	: claimedReward 
-																		? 'border-gray-200 dark:border-gray-700 opacity-50' 
-																		: 'border-blue-100 dark:border-blue-800 hover:shadow-md'
-															} rounded-lg p-4 cursor-pointer transition-all`}
-															onClick={() => handleClaimReward(reward)}
-														>
-															<div className="flex items-start">
-																<div className={`${
-																	claimedReward && claimedReward.id === reward.id 
-																		? 'bg-green-100 dark:bg-green-800' 
-																		: 'bg-blue-100 dark:bg-blue-800'
-																} p-2 rounded-full mr-3`}>
-																	<StarIcon className={`h-5 w-5 ${
-																		claimedReward && claimedReward.id === reward.id 
-																			? 'text-green-600 dark:text-green-300' 
-																			: 'text-blue-600 dark:text-blue-300'
-																	}`} />
-																</div>
-																<div className="flex-1">
-																	<div className="flex justify-between items-start">
-																		<h4 className={`font-medium ${
-																			claimedReward && claimedReward.id === reward.id 
-																				? 'text-green-800 dark:text-green-300' 
-																				: 'text-blue-800 dark:text-blue-300'
-																		}`}>{reward.name}</h4>
-																		<Badge variant="outline" className={`ml-2 ${
-																			claimedReward && claimedReward.id === reward.id 
-																				? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200' 
-																				: 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200'
-																		}`}>
-																			{reward.points_required || 0} points
-																		</Badge>
-																	</div>
-																	<p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{reward.description}</p>
-																	<p className="text-xs mt-2 font-medium">
-																		{claimedReward && claimedReward.id === reward.id 
-																			? <span className="text-green-600 dark:text-green-300">✓ Selected</span>
-																			: claimedReward 
-																				? <span className="text-gray-500">Select a different reward</span>
-																				: <span className="text-blue-600 dark:text-blue-300">Click to claim this reward</span>
-																		}
-																	</p>
-																</div>
-															</div>
-														</div>
+													{activeRewards.map((reward) => (
+														<RewardsCard
+															key={reward.id}
+															reward={reward}
+															isSelected={claimedReward?.id === reward.id}
+															isOtherSelected={claimedReward !== null && claimedReward.id !== reward.id}
+															onSelect={handleClaimReward}
+														/>
 													))}
 												</div>
 											) : (
@@ -478,7 +434,7 @@ export default function ShopProfile() {
 												variant="ghost" 
 												size="sm" 
 												className="h-6 text-gray-500 hover:text-gray-700 -mt-1 -mr-2"
-												onClick={clearClaimedReward}
+												onClick={() => setClaimedReward(null)}
 											>
 												×
 											</Button>

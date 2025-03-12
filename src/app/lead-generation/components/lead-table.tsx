@@ -179,9 +179,9 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                     callPhone={() => {
                         window.open(`tel:${selectedLead.phone}`, '_blank')
                     }}
-                    sendMessage={() => {
-                        window.open(`sms:${selectedLead.phone}`, '_blank')
-                    }}
+                    // sendMessage={() => {
+                    //     window.open(`sms:${selectedLead.phone}`, '_blank')
+                    // }}
                 />
             </div>
         </div>

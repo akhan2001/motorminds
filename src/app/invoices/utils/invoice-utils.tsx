@@ -55,17 +55,17 @@ export function calculateTotalWithTax(amount: number, taxRate: number): number {
 return amount + amount * taxRate;
 }
 
-export async function setStatus(invoiceId: string) {
+export async function setInvoiceStatus(invoiceId: string, status: string) {
 	const { data, error } = await supabase
 	.from('invoices')
-	.select('*')
+	.update({ status: status })
 	.eq('id', invoiceId);
 
 	if (error) {
-		console.error('Error fetching invoice:', error);
-		return null;
+		throw error
 	}
-	return data;
+
+	return data
 }
 
 export async function createNewInvoice(invoiceData: any, shopId: string) {

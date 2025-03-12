@@ -27,7 +27,10 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
     const [selectedVehicleId, setSelectedVehicleId] = useState("");
-    const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day
+    const formattedDate = today.toISOString().split('T')[0];
+    const [invoiceDate, setInvoiceDate] = useState(formattedDate);
     const [labour, setLabour] = useState("");
     const [parts, setParts] = useState("");
     const [notes, setNotes] = useState("");
@@ -148,11 +151,6 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         
         if (!invoiceDate) {
             toast.error("Please select an invoice date");
-            return false;
-        }
-
-        if (!labour || !description) {
-            toast.error("Please enter a valid labour or description");
             return false;
         }
         
@@ -293,6 +291,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                         type="date"
                         value={invoiceDate}
                         onChange={(e) => setInvoiceDate(e.target.value)}
+                        max={formattedDate}
                     />
                 </div>
 
@@ -307,6 +306,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             placeholder="Enter the description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                            required
                         />
                     </div>
                     <div className="flex flex-row justify-between gap-4 items-center">

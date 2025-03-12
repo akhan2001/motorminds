@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { Switch } from "@/components/ui/switch";
+import { setInvoiceStatus } from '../utils/invoice-utils';
 
 interface InvoiceDialogProps {
     isOpen: boolean;
@@ -106,6 +108,24 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         }
     };
 
+    const toggleStatus = async () => {
+        try {
+            const newStatus = status === "PAID" ? "UNPAID" : "PAID";
+            const { error } = await supabase
+                .from('invoices')
+                .update({ status: newStatus })
+                .eq('invoice_number', invoice.invoiceNumber);
+            
+            if (error) throw error;
+            
+            setStatus(newStatus);
+            toast.success(`Invoice #${invoice.invoiceNumber} updated to ${newStatus}`);
+        } catch (error) {
+            console.error("Error updating invoice status:", error);
+            toast.error("Failed to update invoice status");
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-6">
@@ -174,8 +194,18 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
                                 Amount Due: {invoice.amount}
                             </p>
                             <div className="flex items-center gap-3">   
-                                <span className={`px-3 py-1 text-xs rounded-md text-white ${status === "PAID" ? "bg-green-600" : "bg-red-600"}`}>
-                                    {status}
+                                <Button
+                                    onClick={toggleStatus}
+                                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                        status === "PAID" 
+                                            ? "bg-green-600 hover:bg-green-700 text-white" 
+                                            : "bg-red-600 hover:bg-red-700 text-white"
+                                    }`}
+                                >
+                                    {status === "PAID" ? "PAID" : "UNPAID"}
+                                </Button>
+                                <span className="text-sm text-gray-600">
+                                    Click to mark as {status === "PAID" ? "unpaid" : "paid"}
                                 </span>
                             </div>
                         </div>

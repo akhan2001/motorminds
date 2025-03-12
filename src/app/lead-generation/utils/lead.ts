@@ -108,3 +108,16 @@ export async function updateLeadStatus(leadId: string, status: string) {
 
     return data 
 }
+
+export async function saveNotes(leadId: string, notes: string) {
+    const { data, error } = await supabase
+        .from("leads")
+        .update({ notes })
+        .eq("id", leadId)
+
+    if (error) {
+        throw error
+    }
+
+    return data
+}
