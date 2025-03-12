@@ -18,7 +18,7 @@ export function TaskColumn({ id, title, icon, tasks, onTaskClick }: TaskColumnPr
 
   return (
     // 2) Attach the droppable ref to the OUTER container so the whole column can accept drops
-    <div ref={setNodeRef} className="h-full flex flex-col">
+    <div ref={setNodeRef} className="h-full flex flex-col p-4 bg-[#222222]/40 rounded-lg">
       <div className="flex items-center gap-2 mb-4 shrink-0">
         {icon === "grid" ? (
           <div className="grid place-items-center">
