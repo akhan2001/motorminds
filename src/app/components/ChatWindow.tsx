@@ -21,6 +21,8 @@ function ChatMessages(props: {
   sourcesForMessages: Record<string, any>;
   aiEmoji?: string;
   className?: string;
+  shopId?: string;
+  onFormSubmit?: (formType: string, data: any) => void;
 }) {
   return (
     <div className="flex flex-col max-w-[768px] mx-auto pb-12 w-full">
@@ -36,6 +38,8 @@ function ChatMessages(props: {
             message={m}
             aiEmoji={props.aiEmoji}
             sources={props.sourcesForMessages[sourceKey]}
+            shopId={props.shopId}
+            onFormSubmit={props.onFormSubmit}
           />
         );
       })}
@@ -188,6 +192,25 @@ export function ChatWindow(props: {
 				});
 			}
 		},
+		onFinish(message) {
+			// Check if the message contains the [CUSTOMER_FORM] tag
+			if (message.content.includes('[CUSTOMER_FORM]') && props.shopId) {
+				// Extract any name from the message (if present)
+				const nameMatch = message.content.match(/for\s+([A-Za-z\s]+)/i);
+				const customerName = nameMatch ? nameMatch[1].trim() : '';
+				
+				// Create an updated message that keeps the original content but adds form properties
+				const updatedMessage = {
+					...message,
+					formType: 'customer-form',
+					formData: { name: customerName }
+				};
+				
+				// Update the messages array with the modified message
+				const messages = chat.messages.slice(0, -1).concat(updatedMessage);
+				chat.setMessages(messages);
+			}
+		},
 		streamMode: "text",
 		onError: (e) =>
 		toast.error(`Error while processing your request`, {
@@ -199,10 +222,85 @@ export function ChatWindow(props: {
 		}
 	});
 
+	// Handle form submissions from chat messages
+	const handleFormSubmit = (formType: string, data: any) => {
+		// Add a user message acknowledging the form submission
+		let userMessage, assistantMessage;
+		
+		if (formType === 'customer-form') {
+			userMessage = {
+				id: (chat.messages.length + 1).toString(),
+				content: `I've completed the ${formType.replace('-', ' ')} for ${data.customer_name || 'the customer'}.`,
+				role: "user" as const,
+			};
+			
+			assistantMessage = {
+				id: (chat.messages.length + 2).toString(),
+				content: `Great! I've created a new customer record for ${data.customer_name}. The customer has been added to your database. Is there anything else you'd like to do with this customer?`,
+				role: "assistant" as const,
+			};
+		} else if (formType === 'invoice-form') {
+			userMessage = {
+				id: (chat.messages.length + 1).toString(),
+				content: `I've completed the invoice form for ${data.customer_name || 'the customer'}.`,
+				role: "user" as const,
+			};
+			
+			assistantMessage = {
+				id: (chat.messages.length + 2).toString(),
+				content: `Great! I've created a new invoice for ${data.customer_name} with an amount of $${parseFloat(data.amount).toFixed(2)}. The invoice has been added to your database with status "UNPAID". Would you like to do anything else with this invoice?`,
+				role: "assistant" as const,
+			};
+		} else {
+			// Default fallback for unknown form types
+			userMessage = {
+				id: (chat.messages.length + 1).toString(),
+				content: `I've completed the form.`,
+				role: "user" as const,
+			};
+			
+			assistantMessage = {
+				id: (chat.messages.length + 2).toString(),
+				content: `Thank you for submitting the form. The data has been processed. Is there anything else I can help you with?`,
+				role: "assistant" as const,
+			};
+		}
+
+		// Update the chat messages
+		chat.setMessages([...chat.messages, userMessage, assistantMessage]);
+	};
+
 	async function sendMessage(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		if (chat.isLoading || intermediateStepsLoading) return;
 
+		// Check for invoice creation intent
+		const invoiceCreationRegex = /create\s+(a|me|new|an|)\s*(invoice)/i;
+		const invoiceMatch = chat.input.match(invoiceCreationRegex);
+		
+		if (invoiceMatch && props.shopId) {
+			// Create a form message for invoice
+			const userMessage = {
+				id: chat.messages.length.toString(),
+				content: chat.input,
+				role: "user" as const,
+			};
+			
+			const formMessage = {
+				id: (chat.messages.length + 1).toString(),
+				content: `I'll help you create a new invoice. Please fill out the form below:`,
+				role: "assistant" as const,
+				formType: "invoice-form",
+				formData: {}
+			};
+			
+			// Update messages and clear input
+			chat.setMessages([...chat.messages, userMessage, formMessage]);
+			chat.setInput("");
+			return;
+		}
+
+		// Continue with normal message handling
 		if (!showIntermediateSteps) {
 			chat.handleSubmit(e);
 			return;
@@ -292,9 +390,11 @@ export function ChatWindow(props: {
 						<div>{props.emptyStateComponent}</div>
 					) : (
 						<ChatMessages
-						messages={chat.messages}
-						emptyStateComponent={props.emptyStateComponent}
-						sourcesForMessages={sourcesForMessages}
+							messages={chat.messages}
+							emptyStateComponent={props.emptyStateComponent}
+							sourcesForMessages={sourcesForMessages}
+							shopId={props.shopId}
+							onFormSubmit={handleFormSubmit}
 						/>
 					)
 				}

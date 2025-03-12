@@ -1,12 +1,45 @@
 import { cn } from "@/lib/utils";
 import type { Message } from "ai/react";
 import Image from "next/image";
+import { useState } from "react";
+import { CustomerFormMessage } from "./CustomerFormMessage";
+
+// Extended Message type to include form data
+interface ExtendedMessage extends Message {
+  formType?: string;
+  formData?: any;
+}
 
 export function ChatMessageBubble(props: {
-  message: Message;
+  message: ExtendedMessage;
   aiEmoji?: string;
   sources: any[];
+  shopId?: string;
+  onFormSubmit?: (formType: string, data: any) => void;
 }) {
+  const [showForm, setShowForm] = useState(true);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [createdCustomer, setCreatedCustomer] = useState<any>(null);
+
+  // Check if this is a form message
+  const isFormMessage = props.message.formType && props.message.formType === 'customer-form';
+  
+  // Handle customer form submission
+  const handleCustomerFormSuccess = (customer: any) => {
+    setCreatedCustomer(customer);
+    setFormSubmitted(true);
+    setShowForm(false);
+    
+    if (props.onFormSubmit) {
+      props.onFormSubmit('customer-form', customer);
+    }
+  };
+  
+  // Handle form cancellation
+  const handleFormCancel = () => {
+    setShowForm(false);
+  };
+
   return (
     <div
       className={cn(
@@ -15,6 +48,8 @@ export function ChatMessageBubble(props: {
           ? "bg-[#222222] px-4 py-2"
           : null,
         props.message.role === "user" ? "ml-auto" : "mr-auto",
+        // Make form messages wider
+        isFormMessage ? "max-w-[90%]" : null
       )}
     >
       {props.message.role !== "user" && (
@@ -29,9 +64,30 @@ export function ChatMessageBubble(props: {
         </div>
       )}
 
-      <div className="whitespace-pre-wrap flex flex-col">
+      <div className="whitespace-pre-wrap flex flex-col w-full">
+        {/* Always show the message content */}
         <span>{props.message.content}</span>
+        
+        {/* Customer form */}
+        {isFormMessage && showForm && props.message.formType === 'customer-form' && props.shopId && (
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <CustomerFormMessage 
+              initialName={props.message.formData?.name} 
+              shopId={props.shopId}
+              onSuccess={handleCustomerFormSuccess}
+              onCancel={handleFormCancel}
+            />
+          </div>
+        )}
+        
+        {/* Show success message after form submission */}
+        {isFormMessage && formSubmitted && createdCustomer && (
+          <div className="mt-2 p-3 bg-green-900/30 border border-green-700/50 rounded-md text-green-200">
+            ✅ Customer created successfully: {createdCustomer.customer_name}
+          </div>
+        )}
 
+        {/* Sources section (commented out) */}
         {/* {props.sources && props.sources.length ? (
           <>
             <code className="mt-4 mr-auto bg-primary px-2 py-1 rounded">
