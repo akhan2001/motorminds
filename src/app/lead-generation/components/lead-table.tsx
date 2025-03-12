@@ -41,7 +41,15 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
     const handleCreateCustomer = async (e: React.MouseEvent, leadId: string) => {
         e.stopPropagation();
         try {
-            const customer = await createNewCustomer(leadId, shopId);
+            console.log("Lead: ", leadId);
+            // Getting leads data and putting into customer object
+            const potentialCustomer = {
+                customerName: leads.find((lead) => lead.id === leadId)?.customer_name,
+                customerEmail: leads.find((lead) => lead.id === leadId)?.email,
+                customerPhone: leads.find((lead) => lead.id === leadId)?.phone
+            }
+
+            const customer = await createNewCustomer(potentialCustomer, shopId);
             toast.success("Customer created successfully");
             const updatedLeads = await getLeads(shopId);
             setLeads(updatedLeads);
@@ -124,7 +132,7 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                                     <TooltipTrigger asChild>
                                                         <button>
                                                             <UserPlus 
-                                                                className="w-4 h-4 text-green-500 hover:text-green-400" 
+                                                                className="w-4 h-4 text-green-500 hover:text-green-400"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleCreateCustomer(e, lead.id);

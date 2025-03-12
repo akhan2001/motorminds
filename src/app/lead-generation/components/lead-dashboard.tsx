@@ -34,7 +34,7 @@ export function LeadDashboard({ shopId, user }: { shopId: string, user: any }) {
                         <Button
                             onClick={handleViewShopPage}
                             variant="outline"
-                            className="gap-2 text-blue-400 border-blue-400 hover:bg-blue-400/10 hover:text-blue-400"
+                            className="gap-2 text-white border-white hover:bg-white/10 hover:text-white"
                         >
                             <ExternalLink className="h-4 w-4" />
                             View Shop Page
