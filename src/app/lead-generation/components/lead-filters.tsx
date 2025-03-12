@@ -3,7 +3,7 @@ import { UsersRound, Flame, Clock, Check } from 'lucide-react';
 import { getTotalLeads, getHotLeads, getPendingFollowUps, getConvertedLeads } from "../utils/lead";
 import { useState, useEffect } from "react";
 
-export function LeadFilter() {
+export function LeadFilter({ shopId, user }: { shopId: string, user: any }) {
     const [totalLeads, setTotalLeads] = useState(0);
     const [hotLeads, setHotLeads] = useState(0);
     const [pendingFollowUps, setPendingFollowUps] = useState(0);
@@ -11,29 +11,29 @@ export function LeadFilter() {
 
     useEffect(() => {
         const fetchTotalLeads = async () => {
-            const data = await getTotalLeads();
+            const data = await getTotalLeads(shopId);
             setTotalLeads(data.length);
         }
         fetchTotalLeads();
 
         const fetchHotLeads = async () => {
-            const data = await getHotLeads();
+            const data = await getHotLeads(shopId);
             setHotLeads(data);
         }
         fetchHotLeads();
 
         const fetchPendingFollowUps = async () => {
-            const data = await getPendingFollowUps();
+            const data = await getPendingFollowUps(shopId);
             setPendingFollowUps(data);
         }
         fetchPendingFollowUps();
 
         const fetchConvertedLeads = async () => {
-            const data = await getConvertedLeads();
+            const data = await getConvertedLeads(shopId);
             setConvertedLeads(data);
         }
         fetchConvertedLeads();
-    }, []);
+    }, [shopId]);
 
     return (
         <section className="mb-10 w-full">

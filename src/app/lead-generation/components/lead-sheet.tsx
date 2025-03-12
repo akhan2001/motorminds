@@ -81,17 +81,17 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone, se
                     </Card>
 
                     {/* Actions */}
-                    <div className="flex justify-between gap-2">
-                        <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => sendEmail(lead.customer_email)}>
+                    {/* <div className="flex justify-between gap-2">
+                        <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => sendEmail(lead.email)}>
                             Email
                         </Button>
-                        <Button className="bg-green-600 hover:bg-green-500 w-full" onClick={() => callPhone(lead.customer_phone)}>
+                        <Button className="bg-green-600 hover:bg-green-500 w-full" onClick={() => callPhone(lead.phone)}>
                             Call
                         </Button>
-                        <Button className="bg-yellow-600 hover:bg-yellow-500 w-full" onClick={() => sendMessage(lead.customer_phone)}>
+                        <Button className="bg-yellow-600 hover:bg-yellow-500 w-full" onClick={() => sendMessage(lead.phone)}>
                             Message
                         </Button>
-                    </div>
+                    </div> */}
 
                     {/* Notes Section */}
                     <div>

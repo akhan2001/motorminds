@@ -13,3 +13,18 @@ export async function getShopStaffNames(shopId: string) {
 
     return data || [];
 }
+
+export async function getShopName(shopId: string) {
+    const { data, error } = await supabase
+        .from('shops')
+        .select('shop_name')
+        .eq('id', shopId);
+
+    if (error) {
+        console.error("Error fetching shop name:", error);
+        return null;
+    }
+
+    return data;
+}
+

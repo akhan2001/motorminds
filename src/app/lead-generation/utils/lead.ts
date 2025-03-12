@@ -1,9 +1,10 @@
 import { supabase } from "@/lib/supabase"
 
-export const getLeads = async () => {
+export const getLeads = async (shopId: string) => {
 	const { data, error } = await supabase
         .from("leads")
         .select("*")
+        .eq("shop_id", shopId)
         .order("created_at", { ascending: false })
 
 	if (error) {
@@ -62,10 +63,11 @@ export function formatDate(dateString: string): string {
     return date.toLocaleDateString(undefined, options);
 }
 
-export async function getTotalLeads() {
+export async function getTotalLeads(shopId: string) {
     const { data, error } = await supabase
         .from("leads")
         .select("*")
+        .eq("shop_id", shopId)
         .order("created_at", { ascending: false })
 
     if (error) {
@@ -75,20 +77,20 @@ export async function getTotalLeads() {
     return data
 }
 
-export async function getHotLeads() {
-    const data = await getTotalLeads()
+export async function getHotLeads(shopId: string) {
+    const data = await getTotalLeads(shopId)
     const hotLeads = data.filter((lead: any) => lead.status === "INTERESTED")
     return hotLeads.length
 }
 
-export async function getPendingFollowUps() {
-    const data = await getTotalLeads()
+export async function getPendingFollowUps(shopId: string) {
+    const data = await getTotalLeads(shopId)
     const pendingFollowUps = data.filter((lead: any) => lead.status === "FOLLOW UP")
     return pendingFollowUps.length
 }
 
-export async function getConvertedLeads() {
-    const data = await getTotalLeads()
+export async function getConvertedLeads(shopId: string) {
+    const data = await getTotalLeads(shopId)
     const convertedLeads = data.filter((lead: any) => lead.status === "CUSTOMER")
     return convertedLeads.length
 }

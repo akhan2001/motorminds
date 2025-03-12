@@ -2,11 +2,14 @@ import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@
 import { getLeads, formatDate } from "../utils/lead"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MessageCircle } from 'lucide-react';
+import { Mail, Phone, MessageCircle, UserPlus, Check } from 'lucide-react';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@/components/ui/tooltip";
 import { LeadSheet } from "./lead-sheet";
+import { toast } from "sonner";
+import { createNewCustomer } from "@/app/customers/api/customer-utils";
+import { getShopId } from "@/utils/supabase/supabase-shop";
 
 const statusColors = {
     "NEW": "bg-[#36612A]",
@@ -17,23 +20,36 @@ const statusColors = {
     "CUSTOMER": "bg-[#1E5631]"
 }
 
-export function LeadTable() {
+export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
     const [leads, setLeads] = useState<any[]>([])
     const [selectedLead, setSelectedLead] = useState<any>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
 
     useEffect(() => {
         const fetchLeads = async () => {
-            const leads = await getLeads()
+            const leads = await getLeads(shopId)
             setLeads(leads)
         }
         fetchLeads()
-    }, [])
+    }, [shopId])
 
     const handleLeadClick = (lead: any) => {
         setSelectedLead(lead)
         setIsSheetOpen(true)
     }
+
+    const handleCreateCustomer = async (e: React.MouseEvent, leadId: string) => {
+        e.stopPropagation();
+        try {
+            const customer = await createNewCustomer(leadId, shopId);
+            toast.success("Customer created successfully");
+            const updatedLeads = await getLeads(shopId);
+            setLeads(updatedLeads);
+        } catch (error) {
+            toast.error("Failed to create customer");
+            console.error("Error creating customer:", error);
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -63,13 +79,18 @@ export function LeadTable() {
                                 </TableCell>
                                 <TableCell className="text-white">
                                     <div className="flex gap-4">
+                                        {/* Email Button */}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
-                                                        <Mail className="w-4 h-4" onClick={() => {
-                                                            window.open(`mailto:${lead.customer_email}`, '_blank')
-                                                        }}/>
+                                                        <Mail 
+                                                            className="w-4 h-4" 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                window.open(`mailto:${lead.customer_email}`, '_blank');
+                                                            }}
+                                                        />
                                                     </button>
                                                 </TooltipTrigger>
                                                 <TooltipContent className="bg-[#1f1f1f] text-white border-none">
@@ -77,14 +98,18 @@ export function LeadTable() {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-
+                                        {/* Call Button */}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
-                                                        <Phone className="w-4 h-4" onClick={() => {
-                                                            window.open(`tel:${lead.customer_phone}`, '_blank')
-                                                        }}/>
+                                                        <Phone 
+                                                            className="w-4 h-4" 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                window.open(`tel:${lead.customer_phone}`, '_blank');
+                                                            }}
+                                                        />
                                                     </button>
                                                 </TooltipTrigger>
                                                 <TooltipContent className="bg-[#1f1f1f] text-white border-none">
@@ -92,19 +117,40 @@ export function LeadTable() {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                        
-                                        {/* <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <button>
-                                                        <MessageCircle className="w-4 h-4" />
-                                                    </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                    <p>Send Message</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider> */}
+                                        {/* Create Customer Button */}
+                                        {!lead.created_customer ? (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <button>
+                                                            <UserPlus 
+                                                                className="w-4 h-4 text-green-500 hover:text-green-400" 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleCreateCustomer(e, lead.id);
+                                                                }}
+                                                            />
+                                                        </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                        <p>Create Customer</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        ) : (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div>
+                                                            <Check className="w-4 h-4 text-green-500" />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                        <p>Customer Created</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -116,13 +162,13 @@ export function LeadTable() {
                     isOpen={isSheetOpen}
                     onOpenChange={setIsSheetOpen}
                     sendEmail={() => {
-                        window.open(`mailto:${selectedLead.customer_email}`, '_blank')
+                        window.open(`mailto:${selectedLead.email}`, '_blank')
                     }}
                     callPhone={() => {
-                        window.open(`tel:${selectedLead.customer_phone}`, '_blank')
+                        window.open(`tel:${selectedLead.phone}`, '_blank')
                     }}
                     sendMessage={() => {
-                        window.open(`sms:${selectedLead.customer_phone}`, '_blank')
+                        window.open(`sms:${selectedLead.phone}`, '_blank')
                     }}
                 />
             </div>

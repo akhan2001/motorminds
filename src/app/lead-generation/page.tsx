@@ -3,47 +3,63 @@
 import { Nav } from "../components/nav"
 import { useEffect, useState } from "react"
 import { getLeads } from "./utils/lead"
-import { LeadFilter } from "./components/lead-filters"
-import { LeadTable } from "./components/lead-table"
+import { checkUser } from "@/utils/supabase/supabase-auth"
+import { useRouter } from "next/navigation"
+import { getShopId } from "@/utils/supabase/supabase-shop"
+import { LeadDashboard } from "./components/lead-dashboard"
+import LoadingPage from "@/components/loading"
 
 export default function LeadGenerationPage() {
-	const [leads, setLeads] = useState<any[]>([])
-	const [selectedMessage, setSelectedMessage] = useState<string | null>(null)
+	const router = useRouter()
+	const [shopId, setShopId] = useState<string | null>(null)
+    const [user, setUser] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
-	// const handleLeadSelect = (id: string, message: string) => {
-    //     setSelectedMessage(message)
-    // }
-	
 	useEffect(() => {
-		const fetchLeads = async () => {
-			const data = await getLeads()
-			setLeads(data)
-		}
-		fetchLeads()
-	}, [])
+        async function fetchUserData() {
+            setIsLoading(true)
+            try {
+                const userData = await checkUser()
+                if (userData) {
+                    setUser(userData)
+                    const shop = await getShopId(userData.id)
+                    setShopId(shop)
+                } else {
+                    router.push('/login')
+                }
+            } catch (error) {
+                console.error('Error:', error)
+                router.push('/login')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        
+        fetchUserData()
+    }, [router])
+
+	if (isLoading) {
+        return (
+            <LoadingPage page="Lead Generation" />
+        )
+    }
+
+    if (!shopId) {
+        return (
+            <div className="flex flex-col min-h-screen bg-black text-white">
+                <Nav activeLink="Customers" />
+                <div className="flex justify-center items-center h-[80vh]">
+                    <p>No shop found for this user.</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Lead Generation" />
-			
-            <div className="flex items-center justify-center py-8">
-				<div className="container mx-auto max-w-[1300px]">
-					<div className="flex flex-col pb-4 mb-4">
-						<h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-white">Lead Generation</h1>
-						<p className="text-gray-400">
-						Manage your leads and track their activity through the lead generation page.
-						</p>
-					</div>
 
-					<section>
-						<LeadFilter />
-					</section>
-
-					<section>
-						<LeadTable />
-					</section>
-				</div>
-			</div>
+            <LeadDashboard shopId={shopId} user={user} />
 		</div>
 	)
 }
