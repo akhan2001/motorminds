@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatDate, saveNotes } from "../utils/lead";
 import { useState, useEffect } from "react";
-import { PenIcon, CheckIcon } from "lucide-react";
+import { PenIcon, CheckIcon, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface LeadSheetProps {
     lead: any;
@@ -18,6 +19,7 @@ interface LeadSheetProps {
 }
 
 export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: LeadSheetProps) {
+    const router = useRouter();
     const [notes, setNotes] = useState("");
     const [isEditing, setIsEditing] = useState(false);
 
@@ -52,11 +54,17 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
         return colors[status as keyof typeof colors] || "bg-gray-500";
     };
 
+    const handleViewCustomer = () => {
+        router.push(`/customers`);
+    };
+
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent className="bg-[#131313] text-white border-l border-[#222] w-[400px]">
                 <SheetHeader>
-                    <SheetTitle className="text-white text-lg">{lead.customer_name}</SheetTitle>
+                    <div className="flex items-center justify-between">
+                        <SheetTitle className="text-white text-lg">{lead.customer_name}</SheetTitle>
+                    </div>
                     <SheetDescription className="text-gray-400 text-sm">
                         Manage lead details and take action.
                     </SheetDescription>
@@ -68,9 +76,21 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
                         {/* Contact Info Card */}
                         <Card className="bg-[#292929] border-none">
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-lg font-medium text-white flex items-center gap-2">
-                                    <div className={`h-2 w-2 rounded-full ${getStatusColor(lead.status)}`}></div>
-                                    {lead.status}
+                                <CardTitle className="text-lg font-medium text-white flex justify-between items-center gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`h-2 w-2 rounded-full ${getStatusColor(lead.status)}`}></div>
+                                        {lead.status}
+                                    </div>
+                                    {lead.status === "CUSTOMER" && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-transparent text-gray-400 border-none hover:bg-transparent hover:text-white"
+                                            onClick={handleViewCustomer}
+                                        >
+                                            <ArrowUpRight className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">

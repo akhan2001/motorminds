@@ -8,7 +8,7 @@ import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@/components/ui/tooltip";
 import { LeadSheet } from "./lead-sheet";
 import { toast } from "sonner";
-import { createNewCustomer } from "@/app/customers/api/customer-utils";
+import { createNewCustomer, checkCustomerExists } from "@/app/customers/api/customer-utils";
 import { getShopId } from "@/utils/supabase/supabase-shop";
 
 const statusColors = {
@@ -49,14 +49,22 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                 customerPhone: leads.find((lead) => lead.id === leadId)?.phone
             }
 
+            const customerExists = await checkCustomerExists(potentialCustomer.customerPhone, shopId);
+            if (customerExists) {
+                toast.error("Customer already exists");
+                return;
+            }
+
             const customer = await createNewCustomer(potentialCustomer, shopId);
-
-            // Update the lead status to "CUSTOMER"
-            await updateLeadStatus(leadId, "CUSTOMER");
-
-            toast.success("Customer created successfully");
-            const updatedLeads = await getLeads(shopId);
-            setLeads(updatedLeads);
+            if (customer) {
+                toast.success("Customer created successfully");
+                // Update the lead status to "CUSTOMER"
+                await updateLeadStatus(leadId, "CUSTOMER");
+                const updatedLeads = await getLeads(shopId);
+                setLeads(updatedLeads);
+            } else {
+                toast.error("Failed to create customer");
+            }
         } catch (error) {
             toast.error("Failed to create customer");
             console.error("Error creating customer:", error);

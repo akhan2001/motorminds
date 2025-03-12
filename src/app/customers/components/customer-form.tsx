@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { createNewCustomer } from "../api/customer-utils";
+import { createNewCustomer, checkCustomerExists } from "../api/customer-utils";
 import { useRouter } from "next/navigation";
 
 export default function CustomerForm({ onClose, shopId }: { onClose: () => void, shopId: string }) {
@@ -20,6 +20,11 @@ export default function CustomerForm({ onClose, shopId }: { onClose: () => void,
     const handleSubmit = async () => {
         const shopId = await getShopID();
         const customer = { customerName, customerEmail, customerPhone, customerAddress };
+        const customerExists = await checkCustomerExists(customerPhone, shopId);
+        if (customerExists) {
+            toast.error("Customer already exists");
+            return;
+        }
         const newCustomer = await createNewCustomer(customer, shopId);
         if (newCustomer) {
             toast.success("Customer created successfully");

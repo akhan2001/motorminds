@@ -28,24 +28,63 @@ export async function getCustomers(shopId: string) {
 }
 
 export async function createNewCustomer(customer: any, shopId: string) {
+    try {
+        // First check if a customer with this phone number already exists for this shop
+        const { data: existingCustomers, error: searchError } = await supabase
+            .from('customers')
+            .select('id, customer_name, customer_phone')
+            .eq('customer_phone', customer.customerPhone)
+            .eq('shop_id', shopId);
+        
+        if (searchError) {
+            console.error('Error searching for existing customer:', searchError);
+            throw new Error('Failed to check for existing customers');
+        }
+        
+        // If customer with this phone already exists, return the existing customer
+        if (existingCustomers && existingCustomers.length > 0) {
+            console.log('Customer with this phone number already exists:', existingCustomers[0]);
+            return existingCustomers[0];
+        }
+        
+        // If no existing customer, create a new one
+        const { data, error } = await supabase
+            .from('customers')
+            .insert({
+                customer_name: customer.customerName,
+                customer_email: customer.customerEmail,
+                customer_phone: customer.customerPhone,
+                customer_address: customer.customerAddress || "",
+                created_at: new Date().toISOString(),
+                shop_id: shopId
+            })
+            .select();
+
+        if (error) {
+            console.error('Error creating customer:', error);
+            throw new Error('Failed to create customer');
+        }
+
+        return data[0];
+    } catch (error) {
+        console.error('Error in createNewCustomer:', error);
+        throw error;
+    }
+}
+
+export async function checkCustomerExists(customerPhone: string, shopId: string) {
     const { data, error } = await supabase
         .from('customers')
-        .insert({
-            customer_name: customer.customerName,
-            customer_email: customer.customerEmail,
-            customer_phone: customer.customerPhone,
-            customer_address: customer.customerAddress,
-            created_at: new Date().toISOString(),
-            shop_id: shopId
-        })
-        .select();
+        .select('id, customer_name, customer_phone')
+        .eq('customer_phone', customerPhone)
+        .eq('shop_id', shopId);
 
     if (error) {
-        console.error('Error creating customer:', error);
-        return null;
+        console.error('Error checking customer existence:', error);
+        throw new Error('Failed to check customer existence');
     }
 
-    return data;
+    return data && data.length > 0;
 }
 
 export async function updateCustomer(customerId: string, customerData: any) {
