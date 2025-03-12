@@ -10,7 +10,7 @@ import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { ChatMessageBubble } from "@/app/chat/components/ChatMessageBubble";
 import { IntermediateStep } from "@/app/chat/components/IntermediateStep";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowRight, LoaderCircle, Paperclip } from "lucide-react";
+import { ArrowDown, ArrowRight, LoaderCircle, Paperclip, Database, CloudLightning } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
 import { Switch } from "@/components/ui/switch"
@@ -143,6 +143,7 @@ export function ChatWindow(props: {
 	emoji?: string;
 	showIngestForm?: boolean;
 	showIntermediateStepsToggle?: boolean;
+	shopId?: string;
 }) {
 	const [lookAtDatabase, setLookAtDatabase] = useState(false);
 
@@ -307,20 +308,30 @@ export function ChatWindow(props: {
 						loading={chat.isLoading || intermediateStepsLoading}
 						>
 						<div className="flex items-center gap-2">
-							<Switch
-							checked={lookAtDatabase}
-							onCheckedChange={handleSwitchToggle}
-							/>
-							<span className="text-sm text-white/70">Connect to Database</span>
+							<Button
+								onClick={() => handleSwitchToggle(!lookAtDatabase)}
+								className={`rounded-full transition-colors duration-300 ${
+									lookAtDatabase 
+										? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
+										: 'bg-transparent hover:bg-gray-800 text-gray-300 border border-gray-600 hover:border-gray-400 hover:text-white'
+								}`}
+								size="sm"
+							>
+								<Database className={`w-4 h-4 mr-2 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
+								Database
+							</Button>
+							<Button
+								className={`rounded-full transition-colors duration-300 ${
+									lookAtDatabase 
+										? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
+										: 'bg-transparent hover:bg-gray-800 text-gray-300 border border-gray-600 hover:border-gray-400 hover:text-white'
+								}`}
+								size="sm"
+							>
+								<CloudLightning className={`w-4 h-4 mr-1 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
+								Action
+							</Button>
 						</div>
-						{/* <Button
-							onClick={() => handleSwitchToggle(lookAtDatabase)}
-							className={`px-4 py-2 rounded transition-colors duration-300 ${
-							lookAtDatabase ? 'bg-red-500 text-white border-red-500' : 'bg-gray-300 text-gray-700 border-gray-300'
-							}`}
-						>
-							Connect to Database
-						</Button> */}
 						</ChatInput>
 						<ChatFooter />
 					</div>

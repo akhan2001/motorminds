@@ -1,31 +1,61 @@
+'use client'
+
 import { Nav } from "../components/nav";
 import { ChatWindow } from "../components/ChatWindow";
 import ChatStart from "./components/ChatStart";
-// import { cookies } from "next/headers";
-// import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-// import { redirect } from "next/navigation";
+import { checkUser } from "@/utils/supabase/supabase-auth"
+import { getShopId } from "@/utils/supabase/supabase-shop"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import LoadingPage from "@/components/loading"
 
 export default function Page() {
-	// const supabase = createServerComponentClient({ cookies });
+	const [user, setUser] = useState<any>(null);
+	const [shopId, setShopId] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const router = useRouter();
 
-	// const {
-	// data: { session },
-	// } = await supabase.auth.getSession();
+	useEffect(() => {
+        async function loadData() {
+            try {
+                setIsLoading(true);
+                const user = await checkUser()
+                if (user) {
+                    setUser(user)
+                    console.log(user.id)
+                    const shopId = await getShopId(user.id)
+                    if (shopId) {
+                        setShopId(shopId)
+                    } else {
+                        console.error("No shop ID found")
+                        router.push("/login");
+                    }
+                } else {
+                    console.error("No user found")
+                    router.push("/login");
+                }
+                setIsLoading(false);
+            } catch (error) {
+                console.error("Authentication error:", error);
+                router.push("/login");
+            }
+        }
+        loadData()
+    }, [])
 
-	// console.log(session);
-	
-	// if (!session) {
-	// 	redirect("/auth");
-	// }
+    if (isLoading) {
+        return <LoadingPage page="Invoices" />
+    }
 
 	return (
-	<div className="h-screen bg-black">
-		<Nav activeLink="Mia AI" />
-		<ChatWindow 
-			endpoint="api/chat"
-			placeholder="Ask me anything..."
-			emptyStateComponent={<ChatStart />}
-		/>
-	</div>
+		<div className="h-screen bg-black">
+			<Nav activeLink="Mia AI" />
+			<ChatWindow 
+				endpoint="api/chat"
+				placeholder="Ask me anything..."
+				emptyStateComponent={<ChatStart />}
+				shopId={shopId}
+			/>
+		</div>
 	);
 }

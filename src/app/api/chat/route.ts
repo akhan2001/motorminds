@@ -71,7 +71,6 @@ Current Conversation Context:
 chat_history: {chat_history}
 
 User: {input}
-Mia's Response:
 `;
 
 export async function POST(req: NextRequest) {
