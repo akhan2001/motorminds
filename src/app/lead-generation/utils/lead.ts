@@ -78,10 +78,10 @@ export async function getTotalLeads(shopId: string) {
     return data
 }
 
-export async function getHotLeads(shopId: string) {
+export async function getNewLeads(shopId: string) {
     const data = await getTotalLeads(shopId)
-    const hotLeads = data.filter((lead: any) => lead.status === "INTERESTED")
-    return hotLeads.length
+    const newLeads = data.filter((lead: any) => lead.status === "NEW")
+    return newLeads.length
 }
 
 export async function getPendingFollowUps(shopId: string) {

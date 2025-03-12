@@ -1,11 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card"; 
 import { UsersRound, Flame, Clock, Check } from 'lucide-react';
-import { getTotalLeads, getHotLeads, getPendingFollowUps, getConvertedLeads } from "../utils/lead";
+import { getTotalLeads, getNewLeads, getPendingFollowUps, getConvertedLeads } from "../utils/lead";
 import { useState, useEffect } from "react";
 
 export function LeadFilter({ shopId, user }: { shopId: string, user: any }) {
     const [totalLeads, setTotalLeads] = useState(0);
-    const [hotLeads, setHotLeads] = useState(0);
+    const [newLeads, setNewLeads] = useState(0);
     const [pendingFollowUps, setPendingFollowUps] = useState(0);
     const [convertedLeads, setConvertedLeads] = useState(0);
 
@@ -16,11 +16,11 @@ export function LeadFilter({ shopId, user }: { shopId: string, user: any }) {
         }
         fetchTotalLeads();
 
-        const fetchHotLeads = async () => {
-            const data = await getHotLeads(shopId);
-            setHotLeads(data);
+        const fetchNewLeads = async () => {
+            const data = await getNewLeads(shopId);
+            setNewLeads(data);
         }
-        fetchHotLeads();
+        fetchNewLeads();
 
         const fetchPendingFollowUps = async () => {
             const data = await getPendingFollowUps(shopId);
@@ -52,10 +52,10 @@ export function LeadFilter({ shopId, user }: { shopId: string, user: any }) {
                 <Card className="bg-[#111] border-[#222]">
                     <CardContent className="p-6">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-lg text-white mb-1">Hot Leads</h3>
+                            <h3 className="text-lg text-white mb-1">New Leads</h3>
                             <Flame className="text-gray-400 w-5 h-5" />
                         </div>
-                        <p className="text-2xl mb-2 font-bold text-white">{hotLeads}</p>
+                        <p className="text-2xl mb-2 font-bold text-white">{newLeads}</p>
                         {/* <p className="text-sm text-gray-400">+5% from last month</p> */}
                     </CardContent>
                 </Card>
