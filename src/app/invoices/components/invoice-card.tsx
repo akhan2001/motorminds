@@ -21,6 +21,12 @@ interface InvoiceCardProps {
     clientAddress: string
     clientEmail: string
     workOrder: string
+    vehicleInfo: {
+        year: string
+        make: string
+        model: string
+        license_plate: string
+    }
 }
 
 export function InvoiceCard(props: InvoiceCardProps) {

@@ -38,6 +38,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const [description, setDescription] = useState("");
     const [assignedTo, setAssignedTo] = useState("");
     const [total, setTotal] = useState("");
+    const [vehicleInfo, setVehicleInfo] = useState<any>(null); //jsonb field
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [staffNames, setStaffNames] = useState<any[]>([]);
 
@@ -131,6 +132,17 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
 
     const handleVehicleChange = (value: string) => {
         setSelectedVehicleId(value);
+        // Find the selected vehicle from customerVehicles array
+        const selectedVehicle = customerVehicles.find(vehicle => vehicle.id === value);
+        if (selectedVehicle) {
+            const vehicleDetails = {
+                year: selectedVehicle.year,
+                make: selectedVehicle.make,
+                model: selectedVehicle.model,
+                license_plate: selectedVehicle.license_plate
+            };
+            setVehicleInfo(vehicleDetails);
+        }
     };
 
     const validateForm = () => {
@@ -187,7 +199,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 client_name: selectedCustomer?.customer_name || "Unknown Client",
                 client_address: selectedCustomer?.customer_address || "",
                 client_email: selectedCustomer?.customer_email || "",
-                issue_date: invoiceDate || new Date().toISOString().split('T')[0],
+                issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
                 parts: parts || "",
                 notes: notes || "",
@@ -195,7 +207,8 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 description: description || "",
                 assigned_to: assignedTo || "",
                 amount: parseFloat(total) || 0,
-                status: "UNPAID"
+                status: "UNPAID",
+                vehicle_info: vehicleInfo
             };
             
             console.log("Sending invoice data:", invoiceData);
@@ -266,7 +279,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                     </Select>
                 </div>
 
-                {/** Vehicle Information */}
+                {/* Vehicle Information */}
                 <div className="flex flex-col gap-4">
                     <label className="text-gray-300 text-sm">Vehicle Information</label>
                     <Select value={selectedVehicleId} onValueChange={handleVehicleChange}>

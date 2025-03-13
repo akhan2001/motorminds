@@ -40,7 +40,6 @@ export default function InvoicesPage() {
     const handleCloseForm = () => {
         setIsFormOpen(false);
     };
-    
 
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
@@ -231,6 +230,17 @@ export default function InvoicesPage() {
                             description={invoice.description}
                             assignedTo={invoice.assigned_to}
                             workOrder={invoice.workorder_id}
+                            vehicleInfo={invoice.vehicle_information ? {
+                                year: invoice.vehicle_information.year,
+                                make: invoice.vehicle_information.make,
+                                model: invoice.vehicle_information.model,
+                                license_plate: invoice.vehicle_information.license_plate
+                            } : {
+                                year: "",
+                                make: "",
+                                model: "",
+                                license_plate: ""
+                            }}
                         />
                     ))}
                 </div>
