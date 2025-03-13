@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
-import { updateCustomer, deleteCustomer, deleteCustomerVehicle } from "../api/customer-utils"
+import { updateCustomer, deleteCustomer, deleteCustomerVehicle, sendEmail } from "../api/customer-utils"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { getCustomerVehicles, createCustomerVehicle } from "../api/customer-utils"
-import { Car, Plus, Minus } from "lucide-react"
+import { Car, Plus, Minus, Mail } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { EmailDialog } from "./email-dialog"
 
 interface CustomerSheetProps {
     customer: any;
@@ -45,6 +46,8 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         color: "",
         vin: ""
     });
+    const [emailToSend, setEmailToSend] = useState("");
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
 
     // Reset form and states when sheet opens/closes
     useEffect(() => {
@@ -217,6 +220,16 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         setIsDeletingVehicle(null);
     };
 
+    const openSendEmailDialog = (email: string) => {
+        if (!email) {
+            toast.error("No email address provided");
+            return;
+        }
+
+        setEmailToSend(email);
+        setIsSendingEmail(true);
+    };
+
     if (!customer) return null;
 
     return (
@@ -252,13 +265,23 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                             <Label htmlFor="email" className="text-left text-gray-300">
                                 Email
                             </Label>
-                            <Input 
-                                id="email" 
-                                value={editedCustomer.customerEmail}
-                                onChange={(e) => setEditedCustomer({ ...editedCustomer, customerEmail: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                readOnly={!isEditing}
-                            />
+                            <div className="col-span-3 flex items-center gap-2">
+                                <Input 
+                                    id="email" 
+                                    value={editedCustomer.customerEmail}
+                                    onChange={(e) => setEditedCustomer({ ...editedCustomer, customerEmail: e.target.value })}
+                                    className="flex-1 bg-[#292929] text-white border-[#626262]"
+                                    readOnly={!isEditing}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 border border-[#626262] hover:border-red-500 text-gray-400 hover:text-red-500 hover:bg-red-500/10 flex-shrink-0"
+                                    onClick={() => openSendEmailDialog(editedCustomer.customerEmail)}
+                                >
+                                    <Mail className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -290,7 +313,6 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                         <Separator className="bg-[#666]"/>
 
                         <h2 className="text-lg font-semibold text-gray-300">Customer Vehicles</h2>                        
-
                         {customerVehicles.map((vehicle) => (
                             <Card 
                                 key={vehicle.id} 
@@ -492,6 +514,12 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <EmailDialog 
+                isOpen={isSendingEmail} 
+                onOpenChange={setIsSendingEmail} 
+                emailToSend={emailToSend} 
+            />
         </>
     );
 }
