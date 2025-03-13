@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
 import { Switch } from "@/components/ui/switch"
 
-
 function ChatMessages(props: {
   messages: Message[];
   emptyStateComponent: ReactNode;
@@ -186,8 +185,8 @@ export function ChatWindow(props: {
 			const messageIndexHeader = response.headers.get("x-message-index");
 			if (sources.length && messageIndexHeader !== null) {
 				setSourcesForMessages({
-				...sourcesForMessages,
-				[messageIndexHeader]: sources,
+					...sourcesForMessages,
+					[messageIndexHeader]: sources,
 				});
 			}
 		},

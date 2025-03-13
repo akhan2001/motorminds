@@ -84,8 +84,10 @@ export function CustomerFormMessage({ initialName, shopId, onSuccess, onCancel }
           <Input
             className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
             placeholder="Enter customer's full name"
+            type="text"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -93,8 +95,10 @@ export function CustomerFormMessage({ initialName, shopId, onSuccess, onCancel }
           <Input
             className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
             placeholder="Enter customer's phone number"
+            type="number"
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -103,8 +107,9 @@ export function CustomerFormMessage({ initialName, shopId, onSuccess, onCancel }
             className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
             placeholder="Enter customer's email address"
             value={customerEmail}
-            onChange={(e) => setCustomerEmail(e.target.value)}
             type="email"
+            onChange={(e) => setCustomerEmail(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -113,7 +118,9 @@ export function CustomerFormMessage({ initialName, shopId, onSuccess, onCancel }
             className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
             placeholder="Enter customer's address"
             value={customerAddress}
+            type="text"
             onChange={(e) => setCustomerAddress(e.target.value)}
+            required
           />
         </div>
       </CardContent>

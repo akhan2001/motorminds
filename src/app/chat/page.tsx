@@ -3,6 +3,7 @@
 import { Nav } from "../components/nav";
 import { ChatWindow } from "../components/ChatWindow";
 import ChatStart from "./components/ChatStart";
+import ChatNotification from "./components/ChatNotification";
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ export default function Page() {
 	const [user, setUser] = useState<any>(null);
 	const [shopId, setShopId] = useState<any>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [showNotification, setShowNotification] = useState(true);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -44,12 +46,17 @@ export default function Page() {
     }, [])
 
     if (isLoading) {
-        return <LoadingPage page="Invoices" />
+        return <LoadingPage page="Chat" />
     }
 
 	return (
 		<div className="h-screen bg-black">
 			<Nav activeLink="Mia AI" />
+			{showNotification && (
+				<ChatNotification 
+					message="Try saying 'Create a customer for John Doe' to see our new AI-powered form creation!"
+				/>
+			)}
 			<ChatWindow 
 				endpoint="api/chat"
 				placeholder="Ask me anything..."
