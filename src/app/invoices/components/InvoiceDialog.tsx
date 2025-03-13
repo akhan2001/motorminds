@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { DownloadIcon } from 'lucide-react';
+import { DownloadIcon, TrashIcon } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Switch } from "@/components/ui/switch";
 import { setInvoiceStatus } from '../utils/invoice-utils';
+import { deleteInvoice } from '../utils/invoice-utils';
 
 interface InvoiceDialogProps {
     isOpen: boolean;
@@ -126,6 +127,17 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
         }
     };
 
+    const handleDeleteInvoice = async () => {
+        try {
+            await deleteInvoice(invoice.invoiceNumber);
+            toast.success(`Invoice #${invoice.invoiceNumber} deleted successfully`);
+            onClose();
+        } catch (error) {
+            console.error("Error deleting invoice:", error);
+            toast.error("Failed to delete invoice");
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-6">
@@ -213,6 +225,10 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
                 </div>
         
                 <DialogFooter className="mt-4 flex justify-end">
+                    <Button className="bg-red-600 text-white px-4 py-2 hover:bg-red-700 border-none" onClick={handleDeleteInvoice}>
+                        <TrashIcon className="w-4 h-4 mr-2" />
+                        Delete Invoice
+                    </Button>
                     <Button className="bg-gray-600 text-white px-4 py-2 hover:bg-gray-700 border-none" onClick={handleDownload}>
                         <DownloadIcon className="w-4 h-4 mr-2" />
                         Download PDF

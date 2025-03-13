@@ -52,11 +52,12 @@ export default function Page() {
 	return (
 		<div className="h-screen bg-black">
 			<Nav activeLink="Mia AI" />
-			{showNotification && (
-				<ChatNotification 
-					message="Try saying 'Create a customer for John Doe' to see our new AI-powered form creation!"
-				/>
-			)}
+            <ChatNotification 
+                message="Try saying 'Create a customer for John Doe' to see our new AI-powered form creation!"
+            />
+            <ChatNotification
+                message="Try saying 'Send a message to @customer_name' to see our new AI-powered message sending!"
+            />
 			<ChatWindow 
 				endpoint="api/chat"
 				placeholder="Ask me anything..."

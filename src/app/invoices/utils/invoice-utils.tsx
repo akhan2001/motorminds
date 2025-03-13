@@ -113,3 +113,17 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 		throw error;
 	}
 }
+
+export async function deleteInvoice(invoiceId: string) {
+	const { data, error } = await supabase
+		.from('invoices')
+		.delete()
+		.eq('invoice_number', invoiceId);
+
+	if (error) {
+		throw error;
+	}
+
+	return data;
+}
+
