@@ -2,7 +2,7 @@
 
 import { type Message } from "ai";
 import { useChat } from "ai/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { toast } from "sonner";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
@@ -14,6 +14,9 @@ import { ArrowDown, ArrowRight, LoaderCircle, Paperclip, Database, CloudLightnin
 import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
 import { Switch } from "@/components/ui/switch"
+
+import { CustomerMentionList, useCustomerMention } from "@/app/chat/components/CustomerMention";
+import { getCustomers } from "@/app/customers/api/customer-utils";
 
 function ChatMessages(props: {
   messages: Message[];
@@ -63,13 +66,15 @@ function ScrollToBottom() {
 }
 
 function ChatInput(props: {
-  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  loading?: boolean;
-  placeholder?: string;
-  children?: ReactNode;
-  className?: string;
+	onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+	value: string;
+	onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+	onValueChange?: (value: string) => void;
+	inputRef: React.RefObject<HTMLTextAreaElement>;
+	loading?: boolean;
+	placeholder?: string;
+	children?: ReactNode;
+	className?: string;
 }) {
   return (
     <form
@@ -82,9 +87,13 @@ function ChatInput(props: {
     >
       <div className="border border-[#444444] bg-[#222222] rounded-lg flex flex-col gap-2 max-w-[768px] w-full mx-auto">
         <textarea
+          ref={props.inputRef}
           value={props.value}
-          placeholder="Ask anything related to your shop..."
-          onChange={props.onChange}
+          placeholder={props.placeholder || "Ask anything related to your shop..."}
+          onChange={(e) => {
+            props.onChange(e);
+            if (props.onValueChange) props.onValueChange(e.target.value);
+          }}
           className="border-none outline-none bg-transparent p-4 resize-none text-white placeholder-white/70"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -104,7 +113,6 @@ function ChatInput(props: {
             {props.loading ? (
               <span role="status" className="flex justify-center">
                 <LoaderCircle className="animate-spin" />
-                {/* <span className="sr-only">Loading...</span> */}
               </span>
             ) : (
               <ArrowRight className="h-5 w-5 text-white" />
@@ -150,28 +158,11 @@ export function ChatWindow(props: {
 	shopId?: string;
 }) {
 	const [lookAtDatabase, setLookAtDatabase] = useState(false);
-
-	const handleSwitchToggle = (lookAtDatabase: boolean) => {
-		setLookAtDatabase(lookAtDatabase);
-		if (lookAtDatabase) {
-			toast("Looking at database...", {
-				icon: "🔍",
-				description: "You can now ask questions about your database.",
-			});
-		} else {
-			toast("Not looking at database...", {
-				icon: "🔍",
-				description: "Click on the switch to connect to the database.",
-			});
-		}
-	};
-
+	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [showIntermediateSteps, setShowIntermediateSteps] = useState(
 		!!props.showIntermediateStepsToggle
 	);
-
 	const [intermediateStepsLoading, setIntermediateStepsLoading] = useState(false);
-
 	const [sourcesForMessages, setSourcesForMessages] = useState<Record<string, any>>({});
 
 	const chat = useChat({
@@ -211,14 +202,44 @@ export function ChatWindow(props: {
 		},
 		streamMode: "text",
 		onError: (e) =>
-		toast.error(`Error while processing your request`, {
-			description: e.message,
-		}),
+			toast.error(`Error while processing your request`, {
+				description: e.message,
+			}),
 		body: {
 			show_intermediate_steps: showIntermediateSteps,
 			look_at_database: lookAtDatabase,
 		}
 	});
+
+	// Initialize the customer mention hook AFTER chat is initialized
+	const {
+		isMentioning,
+		mentionSearch,
+		mentionPosition,
+		customers,
+		handleInputChange,
+		handleSelectCustomer,
+	} = useCustomerMention({
+		shopId: props.shopId,
+		inputRef: inputRef as React.RefObject<HTMLTextAreaElement>,
+		value: chat.input,
+		onChange: chat.handleInputChange,
+	});
+
+	const handleSwitchToggle = (lookAtDatabase: boolean) => {
+		setLookAtDatabase(lookAtDatabase);
+		if (lookAtDatabase) {
+			toast("Looking at database...", {
+				icon: "🔍",
+				description: "You can now ask questions about your database.",
+			});
+		} else {
+			toast("Not looking at database...", {
+				icon: "🔍",
+				description: "Click on the switch to connect to the database.",
+			});
+		}
+	};
 
 	// Handle form submissions from chat messages
 	const handleFormSubmit = (formType: string, data: any) => {
@@ -399,38 +420,52 @@ export function ChatWindow(props: {
 				footer={
 					<div className="sticky bottom-8 px-2">
 						<ScrollToBottom />
-						<ChatInput
-						value={chat.input}
-						onChange={chat.handleInputChange}
-						onSubmit={sendMessage}
-						loading={chat.isLoading || intermediateStepsLoading}
-						>
-						<div className="flex items-center gap-2">
-							<Button
-								onClick={() => handleSwitchToggle(!lookAtDatabase)}
-								className={`rounded-full transition-colors duration-300 ${
-									lookAtDatabase 
-										? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
-										: 'bg-transparent hover:bg-gray-800 text-gray-300 border border-gray-600 hover:border-gray-400 hover:text-white'
-								}`}
-								size="sm"
+						
+						<div className="relative">
+							<CustomerMentionList
+								isOpen={isMentioning}
+								searchTerm={mentionSearch}
+								customers={customers}
+								onSelect={handleSelectCustomer}
+								position={mentionPosition}
+							/>
+							
+							<ChatInput
+								value={chat.input}
+								onChange={handleInputChange}
+								inputRef={inputRef as React.RefObject<HTMLTextAreaElement>}
+								onSubmit={sendMessage}
+								loading={chat.isLoading || intermediateStepsLoading}
+								placeholder={props.placeholder}
 							>
-								<Database className={`w-4 h-4 mr-2 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
-								Database
-							</Button>
-							<Button
-								className={`rounded-full transition-colors duration-300 ${
-									lookAtDatabase 
-										? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
-										: 'bg-transparent hover:bg-gray-800 text-gray-300 border border-gray-600 hover:border-gray-400 hover:text-white'
-								}`}
-								size="sm"
-							>
-								<CloudLightning className={`w-4 h-4 mr-1 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
-								Action
-							</Button>
+								<div className="flex items-center gap-2">
+									<Button
+										onClick={() => handleSwitchToggle(!lookAtDatabase)}
+										className={`rounded-full transition-colors duration-300 ${
+											lookAtDatabase 
+												? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
+												: 'bg-transparent hover:bg-gray-800 text-gray-300 border border-gray-600 hover:border-gray-400 hover:text-white'
+										}`}
+										size="sm"
+									>
+										<Database className={`w-4 h-4 mr-2 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
+										Database
+									</Button>
+									<Button
+										className={`rounded-full transition-colors duration-300 ${
+											lookAtDatabase 
+												? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
+												: 'bg-transparent hover:bg-gray-800 text-gray-300 border border-gray-600 hover:border-gray-400 hover:text-white'
+										}`}
+										size="sm"
+									>
+										<CloudLightning className={`w-4 h-4 mr-1 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
+										Action
+									</Button>
+								</div>
+							</ChatInput>
 						</div>
-						</ChatInput>
+						
 						<ChatFooter />
 					</div>
 				}
