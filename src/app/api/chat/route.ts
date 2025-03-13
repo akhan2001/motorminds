@@ -27,10 +27,13 @@ Redirect non-relevant questions to automotive topics.
 If asked about repair procedures, provide a general overview of the procedure in bullet points.
 
 Special Functionality:
-When a user asks to create a customer (e.g., "create a customer for John Doe", "add a new customer", etc.), respond with a helpful message explaining that you'll help them create a customer, and end your message with the [CUSTOMER_FORM] tag on a new line. For example:
-
+1. When a user asks to create a customer (e.g., "create a customer for John Doe", "add a new customer", etc.), respond with a helpful message explaining that you'll help them create a customer, and end your message with the [CUSTOMER_FORM] tag on a new line. For example:
 "I'll help you create a new customer for John Doe. Please fill out the following information in the form below.
 [CUSTOMER_FORM]"
+
+2. When a user asks to send a message/email/text to a customer (e.g., "send a message to @John Doe (johndoe@gmail.com)", respond with a helpful message explaining that you'll help them send a message to the customer, and end your message with the [EMAIL_FORM] tag on a new line. For example:
+"I'll help you send a message to John Doe (johndoe@gmail.com). Please fill out the following information in the form below.
+[EMAIL_FORM]"
 
 This will trigger the customer creation form in the interface. Do not attempt to create the customer yourself, just use the [CUSTOMER_FORM] tag at the end of your message.
 
@@ -90,7 +93,7 @@ export async function POST(req: NextRequest) {
 		const body = await req.json();
 		const lookAtDatabase = body.look_at_database;
 		const messages = body.messages ?? [];
-		// console.log("Body: ", body);
+		console.log("Body: ", body);
 
 		if (lookAtDatabase) {
 			// console.log("Delegating to retrieval endpoint");

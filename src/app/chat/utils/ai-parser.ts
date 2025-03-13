@@ -1,11 +1,4 @@
-import { generateObject } from "ai";
 import { z } from "zod";
-import OpenAI from "openai";
-import { openai } from "@ai-sdk/openai";
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || "",
-});
 
 const customerFormSchema = z.object({
     customer_name: z.string().min(1, "Customer name is required")
@@ -20,40 +13,62 @@ const customerFormSchema = z.object({
 
 export type CustomerFormData = z.infer<typeof customerFormSchema>;
 
+// Email message schema
+const emailMessageSchema = z.object({
+    recipient_name: z.string().min(1, "Recipient name is required")
+        .describe("The name of the email recipient"),
+    recipient_email: z.string().email("Valid email is required")
+        .describe("The email address of the recipient"),
+    subject: z.string().min(1, "Subject is required")
+        .describe("The subject line of the email"),
+    message: z.string().min(1, "Message body is required")
+        .describe("The body content of the email, professionally formatted")
+});
+
+export type EmailMessageData = z.infer<typeof emailMessageSchema>;
+
+// Create a server-side API endpoint to handle parsing
 export async function parseCustomerInfo(input: string): Promise<CustomerFormData> {
     try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [
-                {
-                    role: "system",
-                    content: `Extract customer information according to the schema provided:
-                    {
-                        "customer_name": "string",
-                        "customer_phone": "number",
-                        "customer_email": "string",
-                        "customer_address": "string"
-                    }
-                    Return ONLY valid JSON without any explanation or markdown. Leave fields empty if not found.`
-                },
-                {
-                    role: "user",
-                    content: input
-                }
-            ],
-            temperature: 0.1, // Low temperature for more deterministic results
-            response_format: { type: "json_object" }, // Ensure response is JSON
+        const response = await fetch('/api/parse-customer-info', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ input }),
         });
         
-        const content = response.choices[0].message.content;
-        if (!content) {
-            throw new Error("Failed to parse content");
+        if (!response.ok) {
+            throw new Error(`Failed to parse customer info: ${response.statusText}`);
         }
-
-        const parsedData = JSON.parse(content);
-        return customerFormSchema.parse(parsedData);
+        
+        const data = await response.json();
+        return customerFormSchema.parse(data);
     } catch (error) {
         console.error("Error parsing customer info:", error);
+        throw error;
+    }
+}
+
+// Parse email message content using API endpoint
+export async function parseEmailMessage(input: string): Promise<EmailMessageData> {
+    try {
+        const response = await fetch('/api/parse-email-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ input }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to parse email message: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return emailMessageSchema.parse(data);
+    } catch (error) {
+        console.error("Error parsing email message:", error);
         throw error;
     }
 }

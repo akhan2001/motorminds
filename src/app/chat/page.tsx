@@ -1,7 +1,7 @@
 'use client'
 
 import { Nav } from "../components/nav";
-import { ChatWindow } from "../components/ChatWindow";
+import { ChatWindow } from "./components/ChatWindow";
 import ChatStart from "./components/ChatStart";
 import ChatNotification from "./components/ChatNotification";
 import { checkUser } from "@/utils/supabase/supabase-auth"

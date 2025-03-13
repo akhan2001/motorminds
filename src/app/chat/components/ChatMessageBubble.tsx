@@ -3,6 +3,7 @@ import type { Message } from "ai/react";
 import Image from "next/image";
 import { useState } from "react";
 import { CustomerFormMessage } from "./CustomerFormMessage";
+import { ChatEmailFormMessage } from "./ChatEmailFormMessage";
 
 // Extended Message type to include form data
 interface ExtendedMessage extends Message {
@@ -20,9 +21,12 @@ export function ChatMessageBubble(props: {
   const [showForm, setShowForm] = useState(true);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [createdCustomer, setCreatedCustomer] = useState<any>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailData, setEmailData] = useState<any>(null);
 
   // Check if this is a form message
-  const isFormMessage = props.message.formType && props.message.formType === 'customer-form';
+  const isFormMessage = props.message.formType && 
+    (props.message.formType === 'customer-form' || props.message.formType === 'email-form');
   
   // Handle customer form submission
   const handleCustomerFormSuccess = (customer: any) => {
@@ -32,6 +36,17 @@ export function ChatMessageBubble(props: {
     
     if (props.onFormSubmit) {
       props.onFormSubmit('customer-form', customer);
+    }
+  };
+  
+  // Handle email form submission
+  const handleEmailFormSuccess = (data: any) => {
+    setEmailData(data);
+    setEmailSent(true);
+    setShowForm(false);
+    
+    if (props.onFormSubmit) {
+      props.onFormSubmit('email-form', data);
     }
   };
   
@@ -80,10 +95,31 @@ export function ChatMessageBubble(props: {
           </div>
         )}
         
-        {/* Show success message after form submission */}
-        {isFormMessage && formSubmitted && createdCustomer && (
+        {/* Email form */}
+        {isFormMessage && showForm && props.message.formType === 'email-form' && (
+          <div className="mt-4 pt-4 border-t border-gray-700 flex justify-start w-full">
+            <ChatEmailFormMessage 
+              recipient_name={props.message.formData?.recipient_name || ""}
+              recipient_email={props.message.formData?.recipient_email || ""}
+              subject={props.message.formData?.subject || ""}
+              message={props.message.formData?.message || ""}
+              onSuccess={handleEmailFormSuccess}
+              onCancel={handleFormCancel}
+            />
+          </div>
+        )}
+        
+        {/* Show success message after customer form submission */}
+        {isFormMessage && formSubmitted && createdCustomer && props.message.formType === 'customer-form' && (
           <div className="mt-2 p-3 bg-green-900/30 border border-green-700/50 rounded-md text-green-200">
             ✅ Customer created successfully: {createdCustomer.customer_name}
+          </div>
+        )}
+        
+        {/* Show success message after email form submission */}
+        {isFormMessage && emailSent && emailData && props.message.formType === 'email-form' && (
+          <div className="mt-2 p-3 bg-green-900/30 border border-green-700/50 rounded-md text-green-200">
+            ✅ Email sent successfully to {emailData.recipient_name} ({emailData.recipient_email})
           </div>
         )}
       </div>

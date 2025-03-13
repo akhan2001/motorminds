@@ -13,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowRight, LoaderCircle, Paperclip, Database, CloudLightning } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
-import { Switch } from "@/components/ui/switch"
 
 import { CustomerMentionList, useCustomerMention } from "@/app/chat/components/CustomerMention";
-import { getCustomers } from "@/app/customers/api/customer-utils";
+import { parseEmailMessage } from "@/app/chat/utils/ai-parser";
+
 
 function ChatMessages(props: {
   messages: Message[];
@@ -181,7 +181,7 @@ export function ChatWindow(props: {
 				});
 			}
 		},
-		onFinish(message) {
+		async onFinish(message) {
 			// Check if the message contains the [CUSTOMER_FORM] tag
 			if (message.content.includes('[CUSTOMER_FORM]') && props.shopId) {
 				// Extract any name from the message (if present)
@@ -198,6 +198,31 @@ export function ChatWindow(props: {
 				// Update the messages array with the modified message
 				const messages = chat.messages.slice(0, -1).concat(updatedMessage);
 				chat.setMessages(messages);
+			}
+
+			// Check if the message contains the [EMAIL_FORM] tag or if it contains a customer mention
+			if ((message.content.includes('[EMAIL_FORM]') || message.content.includes('@')) && props.shopId) {
+				try {
+					// Import the parseEmailMessage function
+					const { parseEmailMessage } = await import('../utils/ai-parser');
+					
+					// Parse the email message content
+					const emailMessage = await parseEmailMessage(message.content);
+					
+					// Create an updated message that keeps the original content but adds form properties
+					const updatedMessage = {
+						...message,
+						formType: 'email-form',
+						formData: emailMessage
+					};
+					
+					// Update the messages array with the modified message
+					const messages = chat.messages.slice(0, -1).concat(updatedMessage);
+					chat.setMessages(messages);
+				} catch (error) {
+					console.error("Error parsing email message:", error);
+					// If parsing fails, don't modify the message
+				}
 			}
 		},
 		streamMode: "text",
@@ -258,29 +283,29 @@ export function ChatWindow(props: {
 				content: `Great! I've created a new customer record for ${data.customer_name}. The customer has been added to your database. Is there anything else you'd like to do with this customer?`,
 				role: "assistant" as const,
 			};
-		} else if (formType === 'invoice-form') {
+		} else if (formType === 'email-form') {
+			// Default fallback for unknown form types
 			userMessage = {
 				id: (chat.messages.length + 1).toString(),
-				content: `I've completed the invoice form for ${data.customer_name || 'the customer'}.`,
+				content: `I've completed the email form.`,
 				role: "user" as const,
 			};
 			
 			assistantMessage = {
 				id: (chat.messages.length + 2).toString(),
-				content: `Great! I've created a new invoice for ${data.customer_name} with an amount of $${parseFloat(data.amount).toFixed(2)}. The invoice has been added to your database with status "UNPAID". Would you like to do anything else with this invoice?`,
+				content: `Thank you for submitting the email form. Is there anything else I can help you with?`,
 				role: "assistant" as const,
 			};
 		} else {
 			// Default fallback for unknown form types
 			userMessage = {
 				id: (chat.messages.length + 1).toString(),
-				content: `I've completed the form.`,
+				content: `I've completed the ${formType.replace('-', ' ')} form.`,
 				role: "user" as const,
 			};
-			
 			assistantMessage = {
 				id: (chat.messages.length + 2).toString(),
-				content: `Thank you for submitting the form. The data has been processed. Is there anything else I can help you with?`,
+				content: `Thank you for submitting the ${formType.replace('-', ' ')} form. Is there anything else I can help you with?`,
 				role: "assistant" as const,
 			};
 		}
@@ -292,32 +317,6 @@ export function ChatWindow(props: {
 	async function sendMessage(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		if (chat.isLoading || intermediateStepsLoading) return;
-
-		// Check for invoice creation intent
-		const invoiceCreationRegex = /create\s+(a|me|new|an|)\s*(invoice)/i;
-		const invoiceMatch = chat.input.match(invoiceCreationRegex);
-		
-		if (invoiceMatch && props.shopId) {
-			// Create a form message for invoice
-			const userMessage = {
-				id: chat.messages.length.toString(),
-				content: chat.input,
-				role: "user" as const,
-			};
-			
-			const formMessage = {
-				id: (chat.messages.length + 1).toString(),
-				content: `I'll help you create a new invoice. Please fill out the form below:`,
-				role: "assistant" as const,
-				formType: "invoice-form",
-				formData: {}
-			};
-			
-			// Update messages and clear input
-			chat.setMessages([...chat.messages, userMessage, formMessage]);
-			chat.setInput("");
-			return;
-		}
 
 		// Continue with normal message handling
 		if (!showIntermediateSteps) {

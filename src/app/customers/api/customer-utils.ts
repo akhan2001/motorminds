@@ -219,14 +219,14 @@ export async function deleteCustomerVehicle(vehicleId: string) {
     return true;
 }
 
-export async function sendEmail(email: string, subject: string, body: string) {
+export async function sendEmail(email: string, subject: string, body: string, recipient_name: string) {
     try {
         const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, subject, body }),
+            body: JSON.stringify({ email, subject, body, recipient_name }),
         });
         
         const data = await response.json();

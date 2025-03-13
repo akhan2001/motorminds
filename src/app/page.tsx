@@ -1,5 +1,5 @@
 import { Nav } from "./components/nav";
-import { ChatWindow } from "./components/ChatWindow";
+import { ChatWindow } from "./chat/components/ChatWindow";
 import ChatStart from "./chat/components/ChatStart";
 import { redirect } from "next/navigation";
 import DashboardPage from "./dashboard/page";

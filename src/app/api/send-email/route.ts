@@ -90,7 +90,7 @@ const generateEmailHtml = (props: {
 
 export async function POST(request: Request) {
     try {
-        const { email, subject, body, customerName } = await request.json();
+        const { email, subject, body, recipient_name } = await request.json();
         
         // Validate inputs
         if (!email || !subject || !body) {
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         
         // Generate HTML email using the template
         const htmlEmail = generateEmailHtml({
-            customerName: customerName || 'Valued Customer',
+            customerName: recipient_name || 'Valued Customer',
             shopName: 'MotorMinds Auto Shop',
             message: body,
             subject: subject,
