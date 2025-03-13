@@ -3,9 +3,10 @@ import { X, Sparkles } from 'lucide-react';
 
 interface ChatNotificationProps {
   message: string;
+  id: string;
 }
 
-export default function ChatNotification({ message }: ChatNotificationProps) {
+export default function ChatNotification({ message, id }: ChatNotificationProps) {
   const [visible, setVisible] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -19,7 +20,7 @@ export default function ChatNotification({ message }: ChatNotificationProps) {
   if (!visible) return null;
 
   return (
-    <div className={`fixed top-20 right-4 z-50 max-w-xs transition-all duration-300 ${isClosing ? 'opacity-0 translate-x-5' : 'opacity-100 translate-x-0'}`}>
+    <div className={`max-w-xs transition-all duration-300 ${isClosing ? 'opacity-0 translate-x-5' : 'opacity-100 translate-x-0'}`}>
       <div className="bg-[#1A1A1A] border border-[#333333] rounded-lg shadow-lg p-4 flex items-start gap-3">
         <div className="flex-shrink-0 text-[#f52f2f]">
           <Sparkles size={20} />

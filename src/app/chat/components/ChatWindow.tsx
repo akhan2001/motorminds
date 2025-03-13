@@ -450,7 +450,7 @@ export function ChatWindow(props: {
 										<Database className={`w-4 h-4 mr-2 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
 										Database
 									</Button>
-									<Button
+									{/* <Button
 										className={`rounded-full transition-colors duration-300 ${
 											lookAtDatabase 
 												? 'bg-blue-600/40 hover:bg-blue-600/60 text-white border border-blue-400/70' 
@@ -460,7 +460,7 @@ export function ChatWindow(props: {
 									>
 										<CloudLightning className={`w-4 h-4 mr-1 ${lookAtDatabase ? 'text-blue-200' : 'text-gray-400'}`} />
 										Action
-									</Button>
+									</Button> */}
 								</div>
 							</ChatInput>
 						</div>

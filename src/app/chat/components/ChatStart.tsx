@@ -18,39 +18,39 @@ export default function ChatStart() {
                 </div>
                 <div className="flex flex-col md:flex-row gap-4 md:gap-5">
                     <div className="w-full md:w-[33%] bg-[#222222] rounded-[10px]">
-                        <div className="flex flex-col justify-center text-center py-5 md:py-7 items-center gap-3 md:gap-5">
+                        <div className="flex flex-col justify-center text-center py-5 px-3 md:py-7 items-center gap-3 md:gap-5">
                             <Image src="/Wrench Logo.png" alt="Repairs & diagnostics" width={30} height={30} />
-                            <div className="flex flex-col justify-center text-center">
-                                <h1 className="text-base md:text-lg font-semibold text-[#E3E3E3] mx-3">
-                                    Repairs & diagnostics
+                            <div className="flex flex-col justify-center items-center text-center gap-2">
+                                <h1 className="text-base md:text-lg font-semibold text-[#E3E3E3]">
+                                    Customer Creation
                                 </h1>
-                                <p className="text-xs md:text-sm text-[#979797] w-[90%] md:w-[75%] mx-auto">
-                                    I can help you with repairs and diagnostics.
+                                <p className="text-xs md:text-sm text-[#979797] w-full">
+                                    I can help you create a customer.
                                 </p>
                             </div>
                         </div>
                     </div>
                     <div className="w-full md:w-[33%] bg-[#222222] rounded-[10px]">
-                        <div className="flex flex-col justify-center text-center py-5 md:py-7 items-center gap-3 md:gap-5">
+                        <div className="flex flex-col justify-center text-center py-5 px-3 md:py-7 items-center gap-3 md:gap-5">
                             <Image src="/Customer-Solutions.png" alt="Shop operations" width={30} height={30} />
-                            <div className="flex flex-col justify-center text-center">
-                                <h1 className="text-base md:text-lg font-semibold text-[#E3E3E3] mx-3">
-                                    Shop operations
+                            <div className="flex flex-col justify-center items-center text-center gap-2">
+                                <h1 className="text-base md:text-lg font-semibold text-[#E3E3E3]">
+                                    Email Sending
                                 </h1>
-                                <p className="text-xs md:text-sm text-[#979797] w-[90%] md:w-[75%] mx-auto">
-                                    I can help you with shop operations.
+                                <p className="text-xs md:text-sm text-[#979797] w-full">
+                                    I can help you send an email to a customer.
                                 </p>
                             </div>
                         </div>
                     </div>
                     <div className="w-full md:w-[33%] bg-[#222222] rounded-[10px]">
-                        <div className="flex flex-col justify-center text-center py-5 md:py-7 items-center gap-3 md:gap-5">
+                        <div className="flex flex-col justify-center text-center py-5 px-3 md:py-7 items-center gap-3 md:gap-5">
                             <Image src="/community-integration logo.png" alt="Customer service" width={30} height={30} />
-                            <div className="flex flex-col justify-center text-center">
-                                <h1 className="text-base md:text-lg font-semibold text-[#E3E3E3] mx-3">
-                                    Customer service
+                            <div className="flex flex-col justify-center items-center text-center gap-2">
+                                <h1 className="text-base md:text-lg font-semibold text-[#E3E3E3]">
+                                    Customer Service
                                 </h1>
-                                <p className="text-xs md:text-sm text-[#979797] w-[90%] md:w-[75%] mx-auto">
+                                <p className="text-xs md:text-sm text-[#979797] w-full">
                                     I can help you with customer service.
                                 </p>
                             </div>

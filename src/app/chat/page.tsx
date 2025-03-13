@@ -9,6 +9,7 @@ import { getShopId } from "@/utils/supabase/supabase-shop"
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoadingPage from "@/components/loading"
+import ChatNotifications from './components/ChatNotifications';
 
 export default function Page() {
 	const [user, setUser] = useState<any>(null);
@@ -16,6 +17,11 @@ export default function Page() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [showNotification, setShowNotification] = useState(true);
 	const router = useRouter();
+
+	const notifications = [
+		{ id: '1', message: "Try saying 'Create a customer for John Doe' to see our new AI-powered form creation!" },
+		{ id: '2', message: "Try saying 'Send a message to @customer_name' to see our new AI-powered message sending!" }
+	];
 
 	useEffect(() => {
         async function loadData() {
@@ -52,12 +58,7 @@ export default function Page() {
 	return (
 		<div className="h-screen bg-black">
 			<Nav activeLink="Mia AI" />
-            <ChatNotification 
-                message="Try saying 'Create a customer for John Doe' to see our new AI-powered form creation!"
-            />
-            <ChatNotification
-                message="Try saying 'Send a message to @customer_name' to see our new AI-powered message sending!"
-            />
+			<ChatNotifications notifications={notifications} />
 			<ChatWindow 
 				endpoint="api/chat"
 				placeholder="Ask me anything..."
