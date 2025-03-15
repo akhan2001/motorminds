@@ -200,6 +200,12 @@ export default function InvoicesPage() {
                             </PopoverContent>
                         </Popover>
                         <Button
+                            className="bg-[#131313] border border-[#222] hover:border-gray-500"
+                            onClick={() => setSelectedDate(new Date())}
+                        >
+                            Today
+                        </Button>
+                        <Button
                             onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                             className="bg-[#131313] border border-[#222] hover:border-gray-500"
                         >
