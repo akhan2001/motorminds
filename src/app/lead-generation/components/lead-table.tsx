@@ -152,7 +152,7 @@ export function LeadTable({ shopId, user, activeFilter = 'ALL' }: {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                        <TooltipProvider>
+                                        {/* <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
@@ -169,7 +169,7 @@ export function LeadTable({ shopId, user, activeFilter = 'ALL' }: {
                                                     <p>Call</p>
                                                 </TooltipContent>
                                             </Tooltip>
-                                        </TooltipProvider>
+                                        </TooltipProvider> */}
                                         {/* Create Customer Button */}
                                         {lead.status != "CUSTOMER" ? (
                                             <TooltipProvider>
