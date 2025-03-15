@@ -203,9 +203,6 @@ export function ChatWindow(props: {
 			// Check if the message contains the [EMAIL_FORM] tag or if it contains a customer mention
 			if ((message.content.includes('[EMAIL_FORM]') || message.content.includes('@')) && props.shopId) {
 				try {
-					// Import the parseEmailMessage function
-					const { parseEmailMessage } = await import('../utils/ai-parser');
-					
 					// Parse the email message content
 					const emailMessage = await parseEmailMessage(message.content);
 					
@@ -229,7 +226,7 @@ export function ChatWindow(props: {
 		onError: (e) =>
 			toast.error(`Error while processing your request`, {
 				description: e.message,
-			}),
+		}),
 		body: {
 			show_intermediate_steps: showIntermediateSteps,
 			look_at_database: lookAtDatabase,
