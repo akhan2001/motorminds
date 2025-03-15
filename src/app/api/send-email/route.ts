@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getShopId } from '@/utils/supabase/supabase-shop';
+import { getShopName } from '@/utils/shopinfo/getShopInfo';
 
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -42,6 +44,7 @@ const generateEmailHtml = (props: {
           <!-- Header -->
           <div style="background-color: ${colors.black}; color: ${colors.white}; padding: 20px; text-align: center; border-top-left-radius: 4px; border-top-right-radius: 4px;">
             <h1 style="margin: 0; font-size: 24px;">${shopName}</h1>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: ${colors.gray};">DO NOT REPLY</p>
           </div>
 
           <!-- Subject Bar -->
@@ -91,7 +94,6 @@ const generateEmailHtml = (props: {
 export async function POST(request: Request) {
     try {
         const { email, subject, body, recipient_name } = await request.json();
-        
         // Validate inputs
         if (!email || !subject || !body) {
             return NextResponse.json(

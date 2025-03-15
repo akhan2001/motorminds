@@ -55,13 +55,19 @@ export const EmailTemplate: React.FC<EmailTemplateProps> = ({
             }}
         >
             {shopLogo ? (
-            <img 
-                src={shopLogo} 
-                alt={`${shopName} Logo`} 
-                style={{ maxHeight: '60px', marginBottom: '10px' }} 
-            />
+                <>
+                    <img 
+                        src={shopLogo} 
+                        alt={`${shopName} Logo`} 
+                        style={{ maxHeight: '60px', marginBottom: '10px' }} 
+                    />
+                    <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: colors.gray }}>DO NOT REPLY</p>
+                </>
             ) : (
-            <h1 style={{ margin: '0', fontSize: '24px' }}>{shopName}</h1>
+                <>
+                    <h1 style={{ margin: '0', fontSize: '24px' }}>{shopName}</h1>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: colors.gray }}>DO NOT REPLY</p>
+                </>
             )}
         </div>
 
