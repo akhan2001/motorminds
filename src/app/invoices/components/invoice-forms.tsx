@@ -216,9 +216,9 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 shop_name: shopName || "Unknown Shop",
                 shop_address: shopAddress || "",
                 shop_email: shopEmail || "",
-                client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
-                client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
-                client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
+                client_name: selectedCustomer?.customer_name || "Unknown Client",
+                client_address: selectedCustomer?.customer_address || "",
+                client_email: selectedCustomer?.customer_email || "",
                 issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
                 parts: parts || "",
@@ -507,15 +507,18 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex flex-row justify-between gap-4 items-center">
-                        <label className="text-gray-300 text-sm">Total ($)</label>
-                        <Input
-                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1 w-[75%]"
-                            placeholder="Enter the total amount"
-                            type="number"
-                            value={total}
-                            onChange={(e) => setTotal(e.target.value)}
-                        />
+                    <div className="flex flex-row justify-between items-center">
+                        <label className="text-gray-300 text-sm">Total Amount</label>
+                        <div className="flex flex-row gap-2 items-center w-[50%]">
+                            <span className="text-gray-300 text-md">$</span>
+                            <Input
+                                className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1 w-[100%]"
+                                placeholder="Enter the amount"
+                                type="number"
+                                value={total}
+                                onChange={(e) => setTotal(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
                 
