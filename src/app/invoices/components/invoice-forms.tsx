@@ -10,6 +10,7 @@ import { createNewInvoice } from "@/app/invoices/utils/invoice-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { PlusIcon } from "lucide-react";
 
 export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated }: { 
     onClose: () => void, 
@@ -38,8 +39,22 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const [description, setDescription] = useState("");
     const [assignedTo, setAssignedTo] = useState("");
     const [total, setTotal] = useState("");
+    const [vehicleInfo, setVehicleInfo] = useState<any>(null); //jsonb field
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [staffNames, setStaffNames] = useState<any[]>([]);
+    const [showNewClientForm, setShowNewClientForm] = useState(false);
+    const [clientInfo, setClientInfo] = useState({
+        client_name: '',
+        client_address: '',
+        client_email: ''
+    });
+    const [showNewVehicleForm, setShowNewVehicleForm] = useState(false);
+    const [manualVehicleInfo, setManualVehicleInfo] = useState({
+        year: '',
+        make: '',
+        model: '',
+        license_plate: ''
+    });
 
     // Load customers
     useEffect(() => {
@@ -131,6 +146,17 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
 
     const handleVehicleChange = (value: string) => {
         setSelectedVehicleId(value);
+        // Find the selected vehicle from customerVehicles array
+        const selectedVehicle = customerVehicles.find(vehicle => vehicle.id === value);
+        if (selectedVehicle) {
+            const vehicleDetails = {
+                year: selectedVehicle.year,
+                make: selectedVehicle.make,
+                model: selectedVehicle.model,
+                license_plate: selectedVehicle.license_plate
+            };
+            setVehicleInfo(vehicleDetails);
+        }
     };
 
     const validateForm = () => {
@@ -144,8 +170,14 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
             return false;
         }
         
-        if (!selectedCustomerId) {
+        // Check either selected customer or new client info
+        if (!showNewClientForm && !selectedCustomerId) {
             toast.error("Please select a customer");
+            return false;
+        }
+        
+        if (showNewClientForm && !clientInfo.client_name) {
+            toast.error("Please enter client name");
             return false;
         }
         
@@ -187,7 +219,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 client_name: selectedCustomer?.customer_name || "Unknown Client",
                 client_address: selectedCustomer?.customer_address || "",
                 client_email: selectedCustomer?.customer_email || "",
-                issue_date: invoiceDate || new Date().toISOString().split('T')[0],
+                issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
                 parts: parts || "",
                 notes: notes || "",
@@ -195,7 +227,8 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 description: description || "",
                 assigned_to: assignedTo || "",
                 amount: parseFloat(total) || 0,
-                status: "UNPAID"
+                status: "UNPAID",
+                vehicle_info: vehicleInfo
             };
             
             console.log("Sending invoice data:", invoiceData);
@@ -252,35 +285,141 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 {/* Customer selection */}
                 <div className="flex flex-col gap-4">
                     <label className="text-gray-300 text-sm">Customer Information</label>
-                    <Select value={selectedCustomerId} onValueChange={handleCustomerChange}>
-                        <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
-                            <SelectValue placeholder="Select a customer" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                            {customers.map((customer) => (
-                                <SelectItem key={customer.id} value={customer.id}>
-                                    {customer.customer_name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                        <Select 
+                            value={selectedCustomerId} 
+                            onValueChange={handleCustomerChange} 
+                            disabled={showNewClientForm}
+                        >
+                            <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1 ${showNewClientForm ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <SelectValue placeholder="Select a customer" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                {customers.map((customer) => (
+                                    <SelectItem key={customer.id} value={customer.id}>
+                                        {customer.customer_name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button 
+                            className={`mt-1 ${showNewClientForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262]`}
+                            size="icon"
+                            onClick={() => {
+                                setShowNewClientForm(!showNewClientForm);
+                                if (!showNewClientForm) {
+                                    setSelectedCustomerId(''); // Clear selected customer when enabling manual input
+                                }
+                            }}
+                        >
+                            <PlusIcon className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    {/* New Client Form */}
+                    {showNewClientForm && (
+                        <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="Client Name"
+                                value={clientInfo.client_name}
+                                onChange={(e) => setClientInfo({...clientInfo, client_name: e.target.value})}
+                            />
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="Client Email"
+                                type="email"
+                                value={clientInfo.client_email}
+                                onChange={(e) => setClientInfo({...clientInfo, client_email: e.target.value})}
+                            />
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="Client Address"
+                                value={clientInfo.client_address}
+                                onChange={(e) => setClientInfo({...clientInfo, client_address: e.target.value})}
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {/** Vehicle Information */}
+                {/* Vehicle Information */}
                 <div className="flex flex-col gap-4">
                     <label className="text-gray-300 text-sm">Vehicle Information</label>
-                    <Select value={selectedVehicleId} onValueChange={handleVehicleChange}>
-                        <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
-                            <SelectValue placeholder="Select a vehicle" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                            {customerVehicles.map((vehicle) => (
-                                <SelectItem key={vehicle.id} value={vehicle.id}>
-                                    {vehicle.year} {vehicle.make} {vehicle.model}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                        <Select 
+                            value={selectedVehicleId} 
+                            onValueChange={handleVehicleChange}
+                            disabled={showNewVehicleForm || showNewClientForm}
+                        >
+                            <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1 ${
+                                (showNewVehicleForm || showNewClientForm) ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}>
+                                <SelectValue placeholder="Select a vehicle" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                {customerVehicles.map((vehicle) => (
+                                    <SelectItem key={vehicle.id} value={vehicle.id}>
+                                        {vehicle.year} {vehicle.make} {vehicle.model}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button 
+                            className={`mt-1 ${showNewVehicleForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262]`}
+                            size="icon"
+                            onClick={() => {
+                                setShowNewVehicleForm(!showNewVehicleForm);
+                                if (!showNewVehicleForm) {
+                                    setSelectedVehicleId('');
+                                    setVehicleInfo(null);
+                                }
+                            }}
+                        >
+                            <PlusIcon className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    {/* Manual Vehicle Form */}
+                    {showNewVehicleForm && (
+                        <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="Year"
+                                value={manualVehicleInfo.year}
+                                onChange={(e) => {
+                                    setManualVehicleInfo({...manualVehicleInfo, year: e.target.value});
+                                    setVehicleInfo({...manualVehicleInfo, year: e.target.value});
+                                }}
+                            />
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="Make"
+                                value={manualVehicleInfo.make}
+                                onChange={(e) => {
+                                    setManualVehicleInfo({...manualVehicleInfo, make: e.target.value});
+                                    setVehicleInfo({...manualVehicleInfo, make: e.target.value});
+                                }}
+                            />
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="Model"
+                                value={manualVehicleInfo.model}
+                                onChange={(e) => {
+                                    setManualVehicleInfo({...manualVehicleInfo, model: e.target.value});
+                                    setVehicleInfo({...manualVehicleInfo, model: e.target.value});
+                                }}
+                            />
+                            <Input
+                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                placeholder="License Plate"
+                                value={manualVehicleInfo.license_plate}
+                                onChange={(e) => {
+                                    setManualVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
+                                    setVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
+                                }}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Invoice date */}
@@ -368,15 +507,18 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex flex-row justify-between gap-4 items-center">
-                        <label className="text-gray-300 text-sm">Total ($)</label>
-                        <Input
-                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1 w-[75%]"
-                            placeholder="Enter the total amount"
-                            type="number"
-                            value={total}
-                            onChange={(e) => setTotal(e.target.value)}
-                        />
+                    <div className="flex flex-row justify-between items-center">
+                        <label className="text-gray-300 text-sm">Total Amount</label>
+                        <div className="flex flex-row gap-2 items-center w-[50%]">
+                            <span className="text-gray-300 text-md">$</span>
+                            <Input
+                                className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1 w-[100%]"
+                                placeholder="Enter the amount"
+                                type="number"
+                                value={total}
+                                onChange={(e) => setTotal(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
                 

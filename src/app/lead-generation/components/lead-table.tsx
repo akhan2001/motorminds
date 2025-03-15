@@ -19,7 +19,11 @@ const statusColors = {
     "CUSTOMER": "bg-[#1E5631]"
 }
 
-export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
+export function LeadTable({ shopId, user, activeFilter = 'ALL' }: { 
+    shopId: string, 
+    user: any,
+    activeFilter?: 'ALL' | 'NEW' | 'REWARD' | 'CUSTOMER'
+}) {
     const [leads, setLeads] = useState<any[]>([])
     const [selectedLead, setSelectedLead] = useState<any>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -70,6 +74,22 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
         }
     };
 
+    const filteredLeads = leads.filter(lead => {
+        switch (activeFilter) {
+            case 'ALL':
+                return true;
+            case 'NEW':
+                return lead.status === 'NEW';
+            case 'REWARD':
+                console.log("Checking lead for rewards:", lead);
+                return Boolean(lead.rewards_claim);
+            case 'CUSTOMER':
+                return lead.status === 'CUSTOMER';
+            default:
+                return true;
+        }
+    });
+
     return (
         <div className="space-y-4">
             <div className="rounded-md border border-[#222] overflow-hidden">
@@ -85,7 +105,7 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {leads.map((lead) => (
+                        {filteredLeads.map((lead) => (
                             <TableRow className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" key={lead.id} onClick={() => handleLeadClick(lead)}>
                                 <TableCell className="text-white">
                                     <div className="flex items-center gap-2">
@@ -132,7 +152,7 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                        <TooltipProvider>
+                                        {/* <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button>
@@ -149,7 +169,7 @@ export function LeadTable({ shopId, user }: { shopId: string, user: any }) {
                                                     <p>Call</p>
                                                 </TooltipContent>
                                             </Tooltip>
-                                        </TooltipProvider>
+                                        </TooltipProvider> */}
                                         {/* Create Customer Button */}
                                         {lead.status != "CUSTOMER" ? (
                                             <TooltipProvider>

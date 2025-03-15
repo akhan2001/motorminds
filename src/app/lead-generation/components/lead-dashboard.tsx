@@ -9,6 +9,7 @@ import { getShopName } from "@/utils/shopinfo/getShopInfo";
 export function LeadDashboard({ shopId, user }: { shopId: string, user: any }) {
     const router = useRouter();
     const [shopName, setShopName] = useState<string | null>(null);
+    const [activeFilter, setActiveFilter] = useState<'ALL' | 'NEW' | 'REWARD' | 'CUSTOMER'>('ALL');
 
     useEffect(() => {
         const fetchShopName = async () => {
@@ -45,10 +46,10 @@ export function LeadDashboard({ shopId, user }: { shopId: string, user: any }) {
                     </p>
                 </div>
                 <section>
-                    <LeadFilter shopId={shopId} user={user} />
+                    <LeadFilter shopId={shopId} user={user} onFilterChange={(filter) => setActiveFilter(filter as 'ALL' | 'NEW' | 'REWARD' | 'CUSTOMER')} />
                 </section>
                 <section>
-                    <LeadTable shopId={shopId} user={user} />
+                    <LeadTable shopId={shopId} user={user} activeFilter={activeFilter as 'ALL' | 'NEW' | 'REWARD' | 'CUSTOMER'} />
                 </section>
             </div>
         </div>
