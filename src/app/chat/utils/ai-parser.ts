@@ -53,6 +53,7 @@ export async function parseCustomerInfo(input: string): Promise<CustomerFormData
 // Parse email message content using API endpoint
 export async function parseEmailMessage(input: string): Promise<EmailMessageData> {
     try {
+        // console.log("Parsing email message:", input);
         const response = await fetch('/api/parse-email-message', {
             method: 'POST',
             headers: {

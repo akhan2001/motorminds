@@ -19,6 +19,18 @@ interface LeadSheetProps {
     callPhone: (phone: string) => void;
 }
 
+const formatPhoneNumber = (phoneNumber: string) => {
+    // Remove all non-digits
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    // Check if the number has 10 digits
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+        return `(${match[1]}) ${match[2]}-${match[3]}`;
+    }
+    // Return original if not 10 digits
+    return phoneNumber;
+};
+
 export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: LeadSheetProps) {
     const router = useRouter();
     const [notes, setNotes] = useState("");
@@ -117,17 +129,17 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
                                         <p className="text-white text-sm mt-1">{lead.customer_name}</p>
                                     </div>
                                     <div>
-                                        <Label className="text-gray-400 text-xs">Created</Label>
-                                        <p className="text-white text-sm mt-1">{formatDate(lead.created_at)}</p>
-                                    </div>
-                                    <div>
-                                        <Label className="text-gray-400 text-xs">Email</Label>
-                                        <p className="text-white text-sm mt-1 break-all">{lead.email}</p>
-                                    </div>
-                                    <div>
                                         <Label className="text-gray-400 text-xs">Phone</Label>
-                                        <p className="text-white text-sm mt-1">{lead.phone}</p>
+                                        <p className="text-white text-sm mt-1">{formatPhoneNumber(lead.phone)}</p>
                                     </div>
+                                </div>
+                                <div>
+                                    <Label className="text-gray-400 text-xs">Email</Label>
+                                    <p className="text-white text-sm mt-1 break-all">{lead.email}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-gray-400 text-xs">Created</Label>
+                                    <p className="text-white text-sm mt-1">{formatDate(lead.created_at)}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -184,9 +196,11 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
                         {/* <Button className="bg-yellow-600 hover:bg-yellow-500 w-full" onClick={() => sendMessage(lead.phone)}>
                             Message
                         </Button> */}
-                        <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => createCustomer(lead.id)}>
-                            Create Customer
-                        </Button>
+                        {lead.status !== "CUSTOMER" && (
+                            <Button className="bg-blue-600 hover:bg-blue-500 w-full" onClick={() => createCustomer(lead.id)}>
+                                Create Customer
+                            </Button>
+                        )}
                     </div>
 
                     {/* Notes Section */}

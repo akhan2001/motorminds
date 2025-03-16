@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { getShopId } from '@/utils/supabase/supabase-shop';
+import { getShopName } from '@/utils/shopinfo/getShopInfo';
 
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -42,6 +44,7 @@ const generateEmailHtml = (props: {
           <!-- Header -->
           <div style="background-color: ${colors.black}; color: ${colors.white}; padding: 20px; text-align: center; border-top-left-radius: 4px; border-top-right-radius: 4px;">
             <h1 style="margin: 0; font-size: 24px;">${shopName}</h1>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: ${colors.gray};">DO NOT REPLY</p>
           </div>
 
           <!-- Subject Bar -->
@@ -51,15 +54,11 @@ const generateEmailHtml = (props: {
 
           <!-- Content -->
           <div style="padding: 30px 20px; background-color: ${colors.lighterGray}; color: ${colors.darkBlue}; line-height: 1.6;">
-            <p style="margin: 0 0 16px 0;">Hello ${customerName},</p>
             
             <div style="margin: 20px 0;">
               ${message.replace(/\n/g, '<br>')}
             </div>
             
-            <p style="margin: 20px 0 0 0;">
-              Thank you for choosing ${shopName}. We appreciate your business!
-            </p>
           </div>
 
           <!-- Call to Action -->
@@ -91,7 +90,6 @@ const generateEmailHtml = (props: {
 export async function POST(request: Request) {
     try {
         const { email, subject, body, recipient_name } = await request.json();
-        
         // Validate inputs
         if (!email || !subject || !body) {
             return NextResponse.json(
@@ -107,12 +105,12 @@ export async function POST(request: Request) {
             message: body,
             subject: subject,
             contactPhone: '(555) 123-4567',
-            contactEmail: '1four0nine@motorminds.ca'
+            contactEmail: 'info@motorminds.ca'
         });
         
         // Send email using Resend
         const { data, error } = await resend.emails.send({
-            from: 'Motorminds <1four0nine@motorminds.ca>',
+            from: 'Motorminds <info@motorminds.ca>',
             to: email,
             subject: subject,
             text: body, // Plain text fallback

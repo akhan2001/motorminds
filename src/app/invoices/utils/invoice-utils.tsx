@@ -91,8 +91,11 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 			mileage: invoiceData.mileage,
 			description: invoiceData.description,
 			assigned_to: invoiceData.assigned_to,
-			customer_id: invoiceData.customer_id
+			customer_id: invoiceData.customer_id,
+			vehicle_information: invoiceData.vehicle_info
 		};
+
+		console.log(invoiceData.vehicle_info)
 		
 		// Log the final data being sent to the database
 		console.log("Final data to insert:", dataToInsert);

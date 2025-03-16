@@ -31,6 +31,12 @@ interface InvoiceDialogProps {
         mileage: string;
         description: string;
         assignedTo: string;
+        vehicleInfo: {
+            year: string;
+            make: string;
+            model: string;
+            license_plate: string;
+        };
     };
 }
 
@@ -199,6 +205,18 @@ export function InvoiceDialog({ isOpen, onClose, invoice }: InvoiceDialogProps) 
                                 {invoice.clientEmail}
                             </p>
                         </div>
+
+                        {invoice.vehicleInfo && (
+                            <>
+                                <Separator className="my-2 bg-gray-300" />
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-semibold text-black">Vehicle Information</h3>
+                                <p className="text-gray-800">
+                                    {invoice.vehicleInfo.year} {invoice.vehicleInfo.make} {invoice.vehicleInfo.model} - {invoice.vehicleInfo.license_plate}
+                                </p>
+                                </div>
+                            </>
+                        )}
 
                         <Separator className="my-2 bg-gray-300" />        
                         <div className="space-y-2">
