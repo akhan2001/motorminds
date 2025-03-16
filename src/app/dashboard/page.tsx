@@ -184,11 +184,10 @@ export default function DashboardPage() {
     const filtered = filterCalTasksByDate(calendarTasks, selectedDate)
     setSelectedCalTasks(filtered)
 
-    if (filtered.length > 0) {
+
       setTimeout(() => {
         tasksRef.current?.scrollIntoView({ behavior: "smooth" })
       }, 100)
-    }
   }
 
   /**
