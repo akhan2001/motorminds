@@ -1,28 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ChevronDown, ArrowRight, Edit2 } from "lucide-react"
+import { X, ChevronDown, Edit2, Trash2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { supabase } from "@/lib/supabase"
 import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 
-
-/**
- * If your DB columns are:
- *  - "Assigned_to" => "John Gay"
- *  - Possibly "mechanic_id", etc.
- *  - Then we read "Assigned_to" for the UI.
- */
 export interface DetailedRepairOrder {
   id: string
   created_at: string
   status: string // "Pending" | "In Progress" | "Completed"
-  customer_id: string
   repair_order_details?: Array<{
     id: string
     mechanic_id?: string
@@ -33,10 +26,6 @@ export interface DetailedRepairOrder {
     mileage?: string
     task_priority?: string
     description?: string
-
-    // IMPORTANT: EXACT same case as your console logs:
-    // If your logs say "Assigned_to": "John Gay", use Assigned_to here:
-    Assigned_to?: string
   }>
   customers?: {
     id: string
@@ -61,66 +50,61 @@ interface TaskDetailsModalProps {
   shopId: string
 }
 
-export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }: TaskDetailsModalProps) {
-  // console.log("shopId: " + shopId)
+export function TaskDetailsModal({
+  task: initialTask,
+  onClose,
+  onSave,
+  shopId,
+}: TaskDetailsModalProps) {
   const router = useRouter()
-  // console.log("TaskDetailsModal - initialTask:", initialTask)
+  const [isEditing, setIsEditing] = useState(false)
 
-  // If you store "Assigned_to" in repair_order_details, let's read from the first row:
-  const firstDetail = initialTask.repair_order_details?.[0]
-  // console.log("First Detail row =>", firstDetail)
-
-  /**
-   * "Pending" => "not-started"
-   * "In Progress" => "in-progress"
-   * "Completed" => "completed"
-   */
+  // ------------------
+  // STATUS mapping
+  // ------------------
   function mapDbStatusToLocal(dbStatus: string): "not-started" | "in-progress" | "completed" {
     switch (dbStatus) {
-      case "Pending":
-        return "not-started"
       case "In Progress":
         return "in-progress"
       case "Completed":
         return "completed"
+      case "Pending":
       default:
         return "not-started"
     }
   }
-
-  function mapLocalStatusToDb(local: "not-started" | "in-progress" | "completed"): string {
+  function mapLocalStatusToDb(local: "not-started" | "in-progress" | "completed") {
     switch (local) {
-      case "not-started":
-        return "Pending"
       case "in-progress":
         return "In Progress"
       case "completed":
         return "Completed"
+      case "not-started":
       default:
         return "Pending"
     }
   }
 
-  // Convert DB status => local
-  const [isEditing, setIsEditing] = useState(false)
   const [status, setStatus] = useState<"not-started" | "in-progress" | "completed">(
     mapDbStatusToLocal(initialTask.status)
   )
 
-  // The first vehicle from customers.customer_vehicles
+  // Extract the first row in details + vehicles
+  const firstDetail = initialTask.repair_order_details?.[0]
   const firstVehicle = initialTask.customers?.customer_vehicles?.[0]
 
-  // Combine email + phone
-  const combinedContact = `${initialTask.customers?.customer_email ?? ""} | ${
-    initialTask.customers?.customer_phone ?? ""
-  }`.trim()
+  const combinedContact = [
+    initialTask.customers?.customer_email,
+    initialTask.customers?.customer_phone,
+  ]
+    .filter(Boolean)
+    .join(" | ")
 
-  /**
-   * We'll store the needed fields in formData:
-   *   - "Assigned To" => read from "Assigned_to" in your first detail row
-   */
+  // ------------------
+  // LOCAL FORM
+  // ------------------
   const [formData, setFormData] = useState({
-    customerName: initialTask.customers?.customer_name || "Unknown Customer",
+    customerName: initialTask.customers?.customer_name || "",
     description: combinedContact,
     date: initialTask.created_at || "",
     year: firstVehicle?.year || "",
@@ -133,23 +117,58 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
     parts: firstDetail?.parts || "",
     notes: firstDetail?.notes || "",
     totalAmount: firstDetail?.cost || "",
-    // KEY FIX: referencing your DB column "Assigned_to"
-    assignedToName: firstDetail?.Assigned_to || "",
-    taskPriority: firstDetail?.task_priority || "Normal",
-    detailDescription: firstDetail?.description || ""
+    taskPriority: firstDetail?.task_priority || "Medium",
+    detailDescription: firstDetail?.description || "",
+    assignedToName: "",
   })
 
-  // If parent updates the "initialTask", let's re-sync
+  // ------------------
+  // Fetch staff_name if there's mechanic_id
+  // ------------------
+  useEffect(() => {
+    async function fetchStaffName() {
+      if (firstDetail?.mechanic_id) {
+        const { data: staffRow, error: staffErr } = await supabase
+          .from("shop_staff")
+          .select("staff_name")
+          .eq("id", firstDetail.mechanic_id)
+          .single()
+
+        if (!staffErr && staffRow) {
+          setFormData((prev) => ({
+            ...prev,
+            assignedToName: staffRow.staff_name,
+          }))
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            assignedToName: "Unknown Mechanic",
+          }))
+        }
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          assignedToName: "",
+        }))
+      }
+    }
+    fetchStaffName()
+  }, [firstDetail?.mechanic_id])
+
+  // If the parent re-renders with a new task
   useEffect(() => {
     setStatus(mapDbStatusToLocal(initialTask.status))
     const d = initialTask.repair_order_details?.[0]
     const v = initialTask.customers?.customer_vehicles?.[0]
-    const combo = `${initialTask.customers?.customer_email ?? ""} | ${
-      initialTask.customers?.customer_phone ?? ""
-    }`.trim()
+    const combo = [
+      initialTask.customers?.customer_email,
+      initialTask.customers?.customer_phone,
+    ]
+      .filter(Boolean)
+      .join(" | ")
 
     setFormData({
-      customerName: initialTask.customers?.customer_name || "Unknown Customer",
+      customerName: initialTask.customers?.customer_name || "",
       description: combo,
       date: initialTask.created_at || "",
       year: v?.year || "",
@@ -162,23 +181,20 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
       parts: d?.parts || "",
       notes: d?.notes || "",
       totalAmount: d?.cost || "",
-      // again: EXACT property name => "Assigned_to"
-      assignedToName: d?.Assigned_to || "",
-      taskPriority: d?.task_priority || "Normal",
-      detailDescription: d?.description || ""
+      taskPriority: d?.task_priority || "Medium",
+      detailDescription: d?.description || "",
+      assignedToName: "",
     })
   }, [initialTask])
 
-  /**
-   * handleSave => build updated record for onSave
-   */
+  // ------------------
+  // SAVE CHANGES
+  // ------------------
   function handleSave() {
     const dbStatus = mapLocalStatusToDb(status)
-
     const updated: DetailedRepairOrder = {
       ...initialTask,
       status: dbStatus,
-      // If there's a detail row:
       repair_order_details: initialTask.repair_order_details?.length
         ? [
             {
@@ -190,20 +206,46 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
               cost: formData.totalAmount,
               task_priority: formData.taskPriority,
               description: formData.detailDescription,
-              // If you want to write "assignedToName" back to DB,
-              // do so here:
-              // Assigned_to: formData.assignedToName
-            }
+            },
           ]
         : [],
       customers: {
         ...initialTask.customers,
-        customer_name: formData.customerName
-      }
+        customer_name: formData.customerName,
+      },
     }
 
     onSave(updated)
     setIsEditing(false)
+  }
+
+  // ------------------
+  // DELETE with confirmation + full page reload
+  // ------------------
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Are you sure you want to remove this task from the shop? This action will hide it from the shop’s list but keep any existing invoice."
+    )
+    if (!confirmed) return
+  
+    try {
+      // 1) Instead of truly deleting the order, we simply remove the shop reference:
+      const { error: updateErr } = await supabase
+        .from("repair_orders")
+        .update({ shop_id: null })  // <— Key line
+        .eq("id", initialTask.id)
+      if (updateErr) throw updateErr
+  
+      // NOTE: If your detail rows also have a `shop_id`, you might want to null them out too.
+      // If they only reference the repair_order_id, no change is needed.
+  
+      toast.success("Task removed from shop successfully.")
+      onClose()
+      window.location.reload()
+    } catch (err: any) {
+      console.error("handleDelete error:", err)
+      toast.error("Failed to remove task: " + err.message)
+    }
   }
 
   return (
@@ -274,22 +316,35 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
         {/* PROGRESS BAR */}
         <div className="relative h-1 bg-[#222222] shrink-0">
           <div className="absolute inset-0 flex">
-            <div className={`w-1/3 ${status === "not-started" ? "bg-[#e23232]" : "bg-[#222222]"}`} />
-            <div className={`w-1/3 ${status === "in-progress" ? "bg-[#d6cd24]" : "bg-[#222222]"}`} />
-            <div className={`w-1/3 ${status === "completed" ? "bg-[#1eb386]" : "bg-[#222222]"}`} />
+            <div
+              className={`w-1/3 ${
+                status === "not-started" ? "bg-[#e23232]" : "bg-[#222222]"
+              }`}
+            />
+            <div
+              className={`w-1/3 ${
+                status === "in-progress" ? "bg-[#d6cd24]" : "bg-[#222222]"
+              }`}
+            />
+            <div
+              className={`w-1/3 ${
+                status === "completed" ? "bg-[#1eb386]" : "bg-[#222222]"
+              }`}
+            />
           </div>
         </div>
 
-        {/* MAIN CONTENT - Scrollable */}
+        {/* MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
           <div className="flex gap-4 h-full">
+            {/* LEFT SIDE */}
             <div className="flex-1 space-y-4">
               {/* Customer Info */}
               <div className="bg-[#1A1A1A] rounded-xl p-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     <AvatarImage src="/placeholder.svg?height=64&width=64" />
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarFallback>Mech</AvatarFallback>
                   </Avatar>
                   <div>
                     <Input
@@ -297,13 +352,15 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                       onChange={(e) =>
                         isEditing && setFormData({ ...formData, customerName: e.target.value })
                       }
-                      placeholder="John Doe"
+                      placeholder="Customer Name"
                       className="bg-transparent border-0 text-white text-xl font-semibold p-0 h-auto placeholder-white/70 mb-1"
                       readOnly={!isEditing}
                     />
                     <Input
                       value={formData.description}
-                      onChange={(e) => isEditing && setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, description: e.target.value })
+                      }
                       placeholder="Email / Phone"
                       className="bg-transparent border-0 text-[#9d9d9d] p-0 h-auto placeholder-[#9d9d9d]/70"
                       readOnly={!isEditing}
@@ -312,14 +369,16 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                 </div>
               </div>
 
-              {/* Vehicle Details */}
+              {/* Vehicle Info */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-gray-400">Year</Label>
                   <Input
                     value={formData.year}
-                    onChange={(e) => isEditing && setFormData({ ...formData, year: e.target.value })}
-                    placeholder="2016"
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, year: e.target.value })
+                    }
+                    placeholder="2015"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
                   />
@@ -328,8 +387,10 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                   <Label className="text-gray-400">Make</Label>
                   <Input
                     value={formData.make}
-                    onChange={(e) => isEditing && setFormData({ ...formData, make: e.target.value })}
-                    placeholder="Audi"
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, make: e.target.value })
+                    }
+                    placeholder="Honda"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
                   />
@@ -338,31 +399,36 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                   <Label className="text-gray-400">Model</Label>
                   <Input
                     value={formData.model}
-                    onChange={(e) => isEditing && setFormData({ ...formData, model: e.target.value })}
-                    placeholder="S4"
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, model: e.target.value })
+                    }
+                    placeholder="Civic"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-gray-400">Engine Type</Label>
+                  <Label className="text-gray-400">Engine</Label>
                   <Input
                     value={formData.engine_type}
-                    onChange={(e) => isEditing && setFormData({ ...formData, engine_type: e.target.value })}
-                    placeholder="3.0 V6 TFSI"
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, engine_type: e.target.value })
+                    }
+                    placeholder="1.8L i-VTEC"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
                   />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-gray-400">VIN</Label>
                   <Input
                     value={formData.vin}
-                    onChange={(e) => isEditing && setFormData({ ...formData, vin: e.target.value })}
-                    placeholder="Enter VIN"
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, vin: e.target.value })
+                    }
+                    placeholder="VIN"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
                   />
@@ -371,7 +437,9 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                   <Label className="text-gray-400">Mileage</Label>
                   <Input
                     value={formData.mileage}
-                    onChange={(e) => isEditing && setFormData({ ...formData, mileage: e.target.value })}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, mileage: e.target.value })
+                    }
                     placeholder="Enter mileage"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
@@ -380,34 +448,18 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* Priority with color in read-only */}
                 <div className="space-y-1.5">
-                  <Label className="text-gray-400">Task Priority</Label>
-                  {isEditing ? (
-                    <Input
-                      value={formData.taskPriority}
-                      onChange={(e) => setFormData({ ...formData, taskPriority: e.target.value })}
-                      placeholder="High, Medium, etc."
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                    />
-                  ) : (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1A1A] rounded-md h-9">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          backgroundColor:
-                            formData.taskPriority.toLowerCase() === "high"
-                              ? "#e23232"
-                              : formData.taskPriority.toLowerCase() === "medium"
-                              ? "#d6cd24"
-                              : "#1eb386"
-                        }}
-                      />
-                      <span className="text-white">{formData.taskPriority}</span>
-                    </div>
-                  )}
+                  <Label className="text-gray-400">Priority</Label>
+                  <Input
+                    value={formData.taskPriority}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, taskPriority: e.target.value })
+                    }
+                    placeholder="High / Medium / Low"
+                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    readOnly={!isEditing}
+                  />
                 </div>
-                {/* ***HERE*** we display "Assigned_to" in the "Assigned To" input */}
                 <div className="space-y-1.5">
                   <Label className="text-gray-400">Assigned To</Label>
                   <Input
@@ -415,7 +467,7 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, assignedToName: e.target.value })
                     }
-                    placeholder="Mechanic name"
+                    placeholder="Mechanic Name"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
                     readOnly={!isEditing}
                   />
@@ -423,7 +475,7 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
               </div>
 
               {/* Collapsibles for labour, parts, notes */}
-              <div className="space-y-3">
+              <div className="space-y-3 mt-4">
                 <Collapsible>
                   <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
                     Labour
@@ -432,7 +484,9 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                   <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
                     <textarea
                       value={formData.labour}
-                      onChange={(e) => isEditing && setFormData({ ...formData, labour: e.target.value })}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, labour: e.target.value })
+                      }
                       className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
                       placeholder="Enter labour details..."
                       readOnly={!isEditing}
@@ -448,7 +502,9 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                   <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
                     <textarea
                       value={formData.parts}
-                      onChange={(e) => isEditing && setFormData({ ...formData, parts: e.target.value })}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, parts: e.target.value })
+                      }
                       className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
                       placeholder="Enter parts details..."
                       readOnly={!isEditing}
@@ -473,111 +529,84 @@ export function TaskDetailsModal({ task: initialTask, onClose, onSave, shopId }:
                 </Collapsible>
               </div>
 
-              {/* detailDescription if you store it */}
+              {/* Additional "description" if needed */}
               <div className="space-y-1.5 mt-4">
                 <Label className="text-gray-400">Detail Description</Label>
                 <Input
                   value={formData.detailDescription}
-                  onChange={(e) => isEditing && setFormData({ ...formData, detailDescription: e.target.value })}
+                  onChange={(e) =>
+                    isEditing && setFormData({ ...formData, detailDescription: e.target.value })
+                  }
                   placeholder="extra info..."
                   className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d]"
                   readOnly={!isEditing}
                 />
               </div>
 
-              {/* Total Amount */}
+              {/* TOTAL COST */}
               <div className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-md mt-4">
                 <span className="text-white">Total Amount</span>
                 <Input
                   type="text"
                   value={formData.totalAmount}
-                  onChange={(e) => isEditing && setFormData({ ...formData, totalAmount: e.target.value })}
+                  onChange={(e) =>
+                    isEditing && setFormData({ ...formData, totalAmount: e.target.value })
+                  }
                   placeholder="Enter amount"
                   className="w-32 bg-[#222222] border-0 text-white placeholder-[#9d9d9d] text-right"
                   readOnly={!isEditing}
                 />
               </div>
             </div>
-
-            {/* RIGHT COLUMN: "How Can I Assist You?" etc. */}
-            {/* <div className="w-72 bg-[#131313] rounded-xl p-4 h-fit">
-              <div className="flex flex-col items-center text-center mb-8">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Mdr8ip4BNugvvaw6rCGOacqY7Fhu0h.png"
-                  alt="Motorminds Logo"
-                  className="h-16 w-16 mb-4"
-                />
-                <h3 className="text-3xl text-white font-medium">How Can I Assist You?</h3>
-              </div>
-
-              <div className="space-y-3">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between text-white hover:text-white hover:bg-[#222222] h-auto py-3 px-4 rounded-xl text-left"
-                >
-                  📊 Customer History &amp; Past Work Orders
-                  <ArrowRight className="h-5 w-5 text-[#b22222]" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between text-white hover:text-white hover:bg-[#222222] h-auto py-3 px-4 rounded-xl text-left"
-                >
-                  🛠️ Suggested Services for this vehicle
-                  <ArrowRight className="h-5 w-5 text-[#b22222]" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between text-white hover:text-white hover:bg-[#222222] h-auto py-3 px-4 rounded-xl text-left"
-                >
-                  ⚒️ Repair Time Estimates
-                  <ArrowRight className="h-5 w-5 text-[#b22222]" />
-                </Button>
-              </div>
-
-              <div className="mt-8">
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-white bg-white hover:bg-white/90 text-[#131313] h-auto py-3 px-4 rounded-xl border-0"
-                >
-                  Retrieve previous work orders for this car
-                  <ArrowRight className="h-5 w-5 text-[#b22222]" />
-                </Button>
-              </div>
-            </div> */}
           </div>
         </div>
 
         {/* FOOTER */}
         <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0 bg-[#131313]">
-        <Button
-            variant="outline"
-            className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
-            onClick={() => {
-              generateInvoice(initialTask.id, shopId).then((success) => {
-                if (success) {
-                  toast.success('Invoice generated successfully', {
-                    action: {
-                      label: 'View Invoice',
-                      onClick: () => {
-                        router.push('/invoices')
-                      }
-                    }
-                  })
-                } else {
-                  toast.error('Invoice already exists', {
-                    action: {
-                      label: 'View Invoice',
-                      onClick: () => {
-                        router.push('/invoices')
-                      }
-                    }
-                  })
-                }
-              })
-            }}
-          >
-            Generate Invoice
-          </Button>
+          {/* Left side: "Generate Invoice" + DELETE */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
+              onClick={() => {
+                generateInvoice(initialTask.id, shopId).then((success) => {
+                  if (success) {
+                    toast.success("Invoice generated successfully", {
+                      action: {
+                        label: "View Invoice",
+                        onClick: () => {
+                          router.push("/invoices")
+                        },
+                      },
+                    })
+                  } else {
+                    toast.error("Invoice already exists", {
+                      action: {
+                        label: "View Invoice",
+                        onClick: () => {
+                          router.push("/invoices")
+                        },
+                      },
+                    })
+                  }
+                })
+              }}
+            >
+              Generate Invoice
+            </Button>
+
+            {/* DELETE BUTTON */}
+            <Button
+              variant="destructive"
+              className="px-4 py-3 h-auto bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+
+          {/* Right side: Cancel/Save OR Close */}
           <div className="flex items-center gap-4">
             {isEditing ? (
               <>

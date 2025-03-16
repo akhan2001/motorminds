@@ -1,33 +1,52 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useTasks } from "@/contexts/tasks-context"
 
-export function TaskStats() {
-  const { tasks } = useTasks()
+interface Task {
+  id: string
+  title: string
+  assignedTo?: string
+  status: "Pending" | "In Progress" | "Completed"
+  difficulty?: string
+  vehicle?: string
+  comments?: string
+}
 
-  // Calculate current stats by looking at the DB status
+interface TaskStatsProps {
+  tasks: Task[]
+  currentFilter: "all" | "Pending" | "In Progress" | "Completed"
+  onFilterChange?: (filter: "all" | "Pending" | "In Progress" | "Completed") => void
+}
+
+export function TaskStats({
+  tasks,
+  currentFilter,
+  onFilterChange
+}: TaskStatsProps) {
   const totalTasks = tasks.length
-  const completedTasks = tasks.filter((task) => task.status === "Completed").length
-  const pendingTasks = tasks.filter((task) => task.status === "Pending").length
-  const inProgressTasks = tasks.filter((task) => task.status === "In Progress").length
+  const completedTasks = tasks.filter((t) => t.status === "Completed").length
+  const pendingTasks = tasks.filter((t) => t.status === "Pending").length
+  const inProgressTasks = tasks.filter((t) => t.status === "In Progress").length
 
-  // Debug logging
-  console.log("Tasks status breakdown:", {
-    total: totalTasks,
-    completed: completedTasks,
-    pending: pendingTasks,
-    inProgress: inProgressTasks,
-    tasks: tasks.map((t) => ({
-      id: t.id,
-      status: t.status,
-      // any other fields for debugging...
-    })),
-  })
+  // Reuse your original text sizes: 
+  // Title => text-sm font-medium
+  // Number => text-2xl font-bold
+  // Sub-label => text-xs
+  // We just change the bg color conditionally.
+  
+  function getCardClasses(isSelected: boolean) {
+    return isSelected
+      ? "bg-[#1A1A1A] border-[#2D2D2D] cursor-pointer" // selected
+      : "bg-black border-black cursor-pointer"          // unselected
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="bg-[#1A1A1A] border-[#2D2D2D]">
+      {/* ALL TASKS */}
+      <Card
+        className={getCardClasses(currentFilter === "all")}
+        onClick={() => onFilterChange?.("all")}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-white">Total Tasks</CardTitle>
         </CardHeader>
@@ -37,7 +56,11 @@ export function TaskStats() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1A1A1A] border-[#2D2D2D]">
+      {/* COMPLETED */}
+      <Card
+        className={getCardClasses(currentFilter === "Completed")}
+        onClick={() => onFilterChange?.("Completed")}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-white">Completed Tasks</CardTitle>
         </CardHeader>
@@ -47,7 +70,11 @@ export function TaskStats() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1A1A1A] border-[#2D2D2D]">
+      {/* PENDING */}
+      <Card
+        className={getCardClasses(currentFilter === "Pending")}
+        onClick={() => onFilterChange?.("Pending")}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-white">Pending Tasks</CardTitle>
         </CardHeader>
@@ -57,7 +84,11 @@ export function TaskStats() {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1A1A1A] border-[#2D2D2D]">
+      {/* IN PROGRESS */}
+      <Card
+        className={getCardClasses(currentFilter === "In Progress")}
+        onClick={() => onFilterChange?.("In Progress")}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-white">In Progress</CardTitle>
         </CardHeader>

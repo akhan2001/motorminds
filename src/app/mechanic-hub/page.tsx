@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation" // <-- Added useSearchParams
 import { Bell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -20,7 +20,13 @@ import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
 
 export default function MechanicsHub() {
+  // New: read ?view=board or ?view=calendar or ?view=list
+  const searchParams = useSearchParams()
+  const queryView = searchParams.get("view") as "board" | "calendar" | "list" | null
+
+  // Default to "board" unless query param says otherwise
   const [currentView, setCurrentView] = useState<"board" | "calendar" | "list">("board")
+
   const [selectedTask, setSelectedTask] = useState<DetailedRepairOrder | null>(null)
   const [isWorkOrderFormOpen, setIsWorkOrderFormOpen] = useState(false)
   const [repairOrders, setRepairOrders] = useState({
@@ -32,9 +38,20 @@ export default function MechanicsHub() {
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
   const [shopId, setShopId] = useState<string | null>(null)
+
   useEffect(() => {
     checkUser()
   }, [])
+
+  // If user navigates with ?view=..., update the local state
+  useEffect(() => {
+    if (
+      queryView &&
+      (queryView === "board" || queryView === "calendar" || queryView === "list")
+    ) {
+      setCurrentView(queryView)
+    }
+  }, [queryView])
 
   // Ensure user is logged in, then fetch existing orders
   async function checkUser() {
@@ -61,9 +78,9 @@ export default function MechanicsHub() {
         .single()
       if (userErr) throw userErr
       if (!userData?.shop_id) throw new Error("No shop_id found")
-      
+
       setShopId(userData.shop_id)
-      // console.log("shopId: " + shopId)
+
       // fetch repair_orders with details, customers, vehicles
       const { data, error } = await supabase
         .from("repair_orders")
@@ -236,7 +253,7 @@ export default function MechanicsHub() {
             id: newCustomerId,
             customer_name: formData.customerName,
             // Insert a valid or null email to avoid unique constraint issues
-            customer_email: null, 
+            customer_email: null,
           })
           .single()
         if (custErr) throw custErr
@@ -277,14 +294,14 @@ export default function MechanicsHub() {
 
           vehicleId = newVehId
         } else {
-          // If we have a not-null vehicle_id constraint but no data => error
-          throw new Error("No vehicle info provided for new customer, can't create a valid vehicle_id.")
+          throw new Error(
+            "No vehicle info provided for new customer, can't create a valid vehicle_id."
+          )
         }
 
         customerId = newCustomerId
       } else {
         // 2) Existing customer => find or create vehicle row
-        // fetch the first existing vehicle
         const { data: existingVeh, error: existVehErr } = await supabase
           .from("customer_vehicles")
           .select("id")
@@ -317,10 +334,8 @@ export default function MechanicsHub() {
             if (vehErr) throw vehErr
             vehicleId = newVehId
           } else {
-            // No existing vehicle, no typed data => error
             throw new Error(
-              "Existing customer has no vehicle on file and no new vehicle info given. " +
-              "Can't proceed because vehicle_id must be not null."
+              "Existing customer has no vehicle on file and no new vehicle info given."
             )
           }
         } else {
@@ -333,7 +348,7 @@ export default function MechanicsHub() {
         throw new Error("No valid vehicle_id found or created.")
       }
 
-      // 3) Insert row in "repair_orders" referencing that vehicle_id
+      // 3) Insert row in "repair_orders"
       const newRepairOrderId = uuidv4()
       const { error: orderErr } = await supabase
         .from("repair_orders")
@@ -341,7 +356,7 @@ export default function MechanicsHub() {
           id: newRepairOrderId,
           shop_id: userData.shop_id,
           customer_id: customerId,
-          vehicle_id: vehicleId, // non-null
+          vehicle_id: vehicleId,
           status: "Pending",
           created_at: new Date().toISOString(),
         })
@@ -355,7 +370,7 @@ export default function MechanicsHub() {
         .insert({
           id: newDetailId,
           repair_order_id: newRepairOrderId,
-          description: formData.taskName, // store "Task Name"
+          description: formData.taskName,
           labour: formData.labor,
           parts: formData.parts,
           notes: formData.notes,
@@ -382,9 +397,7 @@ export default function MechanicsHub() {
   }
 
   if (isLoading) {
-    return (
-      <LoadingPage page="Mechanic Hub" />
-    )
+    return <LoadingPage page="Mechanic Hub" />
   }
 
   return (
@@ -420,6 +433,7 @@ export default function MechanicsHub() {
           transition={{ duration: 0.3, delay: 0.2 }}
           className="mb-8"
         >
+          {/* Existing Toggle: "board" | "calendar" plus link to /tasks */}
           {currentView !== "list" && <ViewToggle onViewChange={handleViewChange} />}
         </motion.div>
 

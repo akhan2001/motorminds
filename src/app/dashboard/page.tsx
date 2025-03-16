@@ -1,14 +1,15 @@
 "use client"
 
-import { useEffect, useState, FormEvent } from "react"
+import { useEffect, useState, useRef, FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 import { fetchAllInvoices } from "@/app/invoices/utils/invoice-utils"
-
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+
+import { TaskDetailsModal, DetailedRepairOrder } from "@/components/task-details-modal"
 
 import { ChatMessageBubble } from "@/app/chat/components/ChatMessageBubble"
 import { IntermediateStep } from "@/app/chat/components/IntermediateStep"
@@ -16,9 +17,9 @@ import CustomChatStart from "@/app/chat/components/CustomChatStart"
 import ChatFooter from "@/app/chat/components/ChatFooter"
 import { Nav } from "../components/nav"
 
-import { format } from "date-fns"
+import { format, isSameDay } from "date-fns"
 
-
+/* ------------------ Additional Types ------------------ */
 interface ChatMessage {
   role: "user" | "assistant" | "system"
   content: string
@@ -39,9 +40,35 @@ interface Shop {
   shop_email?: string
 }
 
+/** A minimal "calendar task" shape for date highlighting & listing */
+interface CalendarTask {
+  id: string
+  created_at: string
+  status: string
+  title: string // from the first detail's description
+}
+
+/**
+ * Utility: return a text color class for each status
+ * or a small colored dot, whichever you prefer.
+ */
+function getStatusColorClass(status: string): string {
+  switch (status) {
+    case "Pending":
+      return "text-red-500"
+    case "In Progress":
+      return "text-yellow-400"
+    case "Completed":
+      return "text-green-500"
+    default:
+      return "text-gray-400"
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter()
 
+  // -------------- Dashboard State --------------
   const [date, setDate] = useState<Date>(new Date())
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [shop, setShop] = useState<Shop | null>(null)
@@ -49,28 +76,39 @@ export default function DashboardPage() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
+  // -------------- For tasks in the calendar --------------
+  const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>([])
+  const [selectedCalTasks, setSelectedCalTasks] = useState<CalendarTask[]>([])
+
+  // -------------- For the detailed modal --------------
+  const [selectedTask, setSelectedTask] = useState<DetailedRepairOrder | null>(null)
+
+  const tasksRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     checkSessionAndLoadData()
   }, [])
 
+  /**
+   * Step 1: Check user session, fetch shop, invoices,
+   * plus a minimal array of tasks for the calendar
+   */
   async function checkSessionAndLoadData() {
-    // Check user session
+    // Check user
     const {
       data: { user },
     } = await supabase.auth.getUser()
-
     if (!user) {
       router.push("/login")
       return
     }
 
-    // get shop_id from "users"
+    // get shop_id
     const { data: userData, error: userErr } = await supabase
       .from("users")
       .select("shop_id")
       .eq("id", user.id)
       .single()
-
     if (userErr || !userData?.shop_id) {
       console.error("No valid shop_id or error:", userErr)
       router.push("/login")
@@ -79,7 +117,7 @@ export default function DashboardPage() {
 
     const shopId = userData.shop_id
 
-    // fetch the shop record
+    // fetch shop
     const { data: shopData, error: shopErr } = await supabase
       .from("shops")
       .select("*")
@@ -96,6 +134,189 @@ export default function DashboardPage() {
     if (invoiceData) {
       setInvoices(invoiceData)
     }
+
+    // fetch tasks: minimal columns for the calendar
+    // so we can highlight days & show short info
+    const { data: rawRows, error: tasksErr } = await supabase
+      .from("repair_orders")
+      .select(`
+        id,
+        created_at,
+        status,
+        repair_order_details(
+          description
+        )
+      `)
+      .eq("shop_id", shopId)
+    if (tasksErr) {
+      console.error("Error fetching tasks for calendar:", tasksErr)
+      return
+    }
+    if (rawRows) {
+      const mapped = rawRows.map((row: any) => {
+        const detail = row.repair_order_details?.[0]
+        return {
+          id: row.id,
+          created_at: row.created_at,
+          status: row.status || "Pending",
+          title: detail?.description || "Untitled",
+        }
+      }) as CalendarTask[]
+      setCalendarTasks(mapped)
+
+      // Filter today's tasks
+      const filtered = filterCalTasksByDate(mapped, new Date())
+      setSelectedCalTasks(filtered)
+    }
+  }
+
+  function filterCalTasksByDate(all: CalendarTask[], selectedDate: Date) {
+    return all.filter((t) => {
+      const d = new Date(t.created_at)
+      return isSameDay(d, selectedDate)
+    })
+  }
+
+  function handleDateSelect(selectedDate: Date | undefined) {
+    if (!selectedDate) return
+    setDate(selectedDate)
+
+    const filtered = filterCalTasksByDate(calendarTasks, selectedDate)
+    setSelectedCalTasks(filtered)
+
+    if (filtered.length > 0) {
+      setTimeout(() => {
+        tasksRef.current?.scrollIntoView({ behavior: "smooth" })
+      }, 100)
+    }
+  }
+
+  /**
+   * Step 2: handleCalendarTaskClick => fetch the FULL record
+   * and store it in selectedTask for the modal
+   */
+  async function handleCalendarTaskClick(minimal: CalendarTask) {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from("repair_orders")
+        .select(`
+          *,
+          repair_order_details(*),
+          customers(
+            *,
+            customer_vehicles(*)
+          )
+        `)
+        .eq("id", minimal.id)
+        .single()
+
+      if (error) {
+        console.error("Error fetching single record:", error)
+        return
+      }
+      if (data) {
+        setSelectedTask(data)
+      }
+    } catch (err) {
+      console.error("Unexpected error in handleCalendarTaskClick:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  /**
+   * Step 3: handleSaveTask => same multi-table update logic
+   * Once done, we can re-fetch or update local data to keep the UI in sync
+   */
+  async function handleSaveTask(updated: DetailedRepairOrder) {
+    try {
+      // 1) update status in "repair_orders"
+      const { error: mainErr } = await supabase
+        .from("repair_orders")
+        .update({ status: updated.status })
+        .eq("id", updated.id)
+      if (mainErr) throw mainErr
+
+      // 2) update first detail
+      const detail = updated.repair_order_details?.[0]
+      if (detail?.id) {
+        const { error: detailErr } = await supabase
+          .from("repair_order_details")
+          .update({
+            labour: detail.labour,
+            parts: detail.parts,
+            notes: detail.notes,
+            cost: detail.cost,
+            mileage: detail.mileage,
+            description: detail.description,
+          })
+          .eq("id", detail.id)
+        if (detailErr) throw detailErr
+      }
+
+      // 3) update "customers" if changed
+      if (updated.customers?.id) {
+        const { error: custErr } = await supabase
+          .from("customers")
+          .update({ customer_name: updated.customers.customer_name })
+          .eq("id", updated.customers.id)
+        if (custErr) throw custErr
+      }
+
+      // 4) update first vehicle if changed
+      const firstVehicle = updated.customers?.customer_vehicles?.[0]
+      if (firstVehicle?.id) {
+        const { error: vehicleErr } = await supabase
+          .from("customer_vehicles")
+          .update({
+            year: firstVehicle.year,
+            make: firstVehicle.make,
+            model: firstVehicle.model,
+            engine_type: firstVehicle.engine_type,
+            vin: firstVehicle.vin,
+          })
+          .eq("id", firstVehicle.id)
+        if (vehicleErr) throw vehicleErr
+      }
+
+      // Re-fetch minimal tasks array if you want to see updated statuses in the calendar
+      setSelectedTask(null)
+
+      const { data: rawRows, error: refreshErr } = await supabase
+        .from("repair_orders")
+        .select(`
+          id,
+          created_at,
+          status,
+          repair_order_details(
+            description
+          )
+        `)
+        .eq("shop_id", shop?.id)
+      if (!refreshErr && rawRows) {
+        const mapped = rawRows.map((row: any) => {
+          const detail = row.repair_order_details?.[0]
+          return {
+            id: row.id,
+            created_at: row.created_at,
+            status: row.status || "Pending",
+            title: detail?.description || "Untitled",
+          }
+        }) as CalendarTask[]
+        setCalendarTasks(mapped)
+        // Filter for currently selected date
+        const filtered = filterCalTasksByDate(mapped, date)
+        setSelectedCalTasks(filtered)
+      }
+
+    } catch (err) {
+      console.error("handleSaveTask error:", err)
+    }
+  }
+
+  function handleCloseModal() {
+    setSelectedTask(null)
   }
 
   /* ------------------ Chat Submission ------------------ */
@@ -103,33 +324,28 @@ export default function DashboardPage() {
     e.preventDefault()
     const userText = input.trim()
     if (!userText) return
-  
-    // Make the updated array
+
     const newUserMsg: ChatMessage = { role: "user", content: userText }
     const updatedMessages = [...messages, newUserMsg]
-  
-    // Now set state
+
     setMessages(updatedMessages)
     setInput("")
     setIsLoading(true)
-  
+
     try {
-      // Pass updatedMessages to the server
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: updatedMessages }),
       })
-  
       if (!res.ok) {
         const errorBody = await res.text()
         throw new Error(`Chat request failed. Status: ${res.status}, Body: ${errorBody}`)
       }
-  
+
       const reader = res.body?.getReader()
-      if (!reader) {
-        throw new Error("No readable stream on response.")
-      }
+      if (!reader) throw new Error("No readable stream on response.")
+
       let finalText = ""
       const decoder = new TextDecoder("utf-8")
       while (true) {
@@ -137,7 +353,7 @@ export default function DashboardPage() {
         if (done) break
         finalText += decoder.decode(value)
       }
-  
+
       const assistantMsg: ChatMessage = { role: "assistant", content: finalText }
       setMessages((prev) => [...prev, assistantMsg])
     } catch (err) {
@@ -146,13 +362,12 @@ export default function DashboardPage() {
       setIsLoading(false)
     }
   }
-  
 
   const hasMessages = messages.length > 0
 
   return (
     <>
-      {/* Remove default focus outlines */}
+      {/* Hide default focus outlines */}
       <style jsx global>{`
         :focus {
           outline: none !important;
@@ -167,8 +382,9 @@ export default function DashboardPage() {
           box-shadow: none !important;
         }
       `}</style>
+
       <div className="min-h-screen flex flex-col bg-black text-white">
-        <Nav activeLink="Dashboard"/>
+        <Nav activeLink="Dashboard" />
         <main className="container mx-auto px-4 py-6 flex-1 flex flex-col">
           {/* Header */}
           <div className="mb-6">
@@ -199,7 +415,6 @@ export default function DashboardPage() {
               <div className="flex-1 min-h-0">
                 <ScrollArea className="w-full h-full">
                   <div className="space-y-4 pr-2">
-                    {/* Show first 5 invoices => "Invoice #1, #2" */}
                     {invoices.slice(0, 5).map((inv, idx) => (
                       <InvoiceBlock
                         key={inv.id || idx}
@@ -208,7 +423,6 @@ export default function DashboardPage() {
                         shop={shop}
                       />
                     ))}
-
                     {invoices.length === 0 && (
                       <p className="text-gray-400">No invoices found.</p>
                     )}
@@ -217,31 +431,77 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Column 2 => Calendar */}
+            {/* Column 2 => Calendar + tasks */}
             <div className="flex flex-col h-[550px] min-h-0">
               <h2 className="text-2xl font-bold mb-2">Calendar</h2>
-              <div className="flex-1 min-h-0 flex justify-center items-start">
+              <div className="bg-[#131313] rounded-md p-3 flex-1 w-full min-h-0 overflow-auto">
                 <Calendar
                   mode="single"
                   selected={date}
-                  className="max-w-[450px]"
+                  onSelect={handleDateSelect}
+                  // Indicate days with tasks
+                  modifiers={{
+                    hasTasks: (day) =>
+                      calendarTasks.some((t) =>
+                        isSameDay(new Date(t.created_at), day)
+                      ),
+                  }}
+                  modifiersClassNames={{
+                    hasTasks: "ring-2 ring-red-600 ring-offset-2",
+                  }}
+                  className="max-w-[400px] mx-auto mb-4"
                 />
+
+                <h3 className="text-lg font-semibold mt-2" ref={tasksRef}>
+                  Tasks on {date.toDateString()}
+                </h3>
+                {selectedCalTasks.length === 0 ? (
+                  <p className="text-gray-400 mt-1">No tasks for this date.</p>
+                ) : (
+                  <div className="space-y-2 mt-2">
+                    {selectedCalTasks.map((t) => {
+                      // pick color based on status
+                      const colorClass = getStatusColorClass(t.status)
+                      return (
+                        <div
+                          key={t.id}
+                          className="p-3 bg-[#1A1A1A] border border-[#1f1f1f] rounded-md cursor-pointer hover:bg-[#262626]"
+                          onClick={() => handleCalendarTaskClick(t)}
+                        >
+                          <p className="text-white font-medium">
+                            {t.title}
+                          </p>
+
+                          {/* 
+                            A line with a colored dot or text 
+                            e.g. a small colored circle, then the status string
+                          */}
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`${colorClass} text-xl leading-none`}>
+                              •
+                            </span>
+                            <p className="text-gray-400 text-sm">
+                              {t.status}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Column 3 => Chat */}
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold mb-2">MIA AI</h2>
-              {/*
-                Removed h-[550px] here, so the chat is "pushed up".
-                We'll handle no-messages vs. messages differently
-                to ensure a vertical gap above the "Ask me anything" input.
-              */}
               {!hasMessages ? (
-                // If no messages => show "How Can I Assist You?" + the input form with a margin
                 <div className="flex flex-col items-center">
                   <CustomChatStart />
-                  <form onSubmit={handleSubmit} className="mt-6 w-full max-w-[600px] px-2">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="mt-6 w-full max-w-[600px] px-2"
+                  >
                     <div className="flex gap-2">
                       <input
                         className="flex-1 p-2 rounded-md bg-[#222222] text-white"
@@ -262,7 +522,6 @@ export default function DashboardPage() {
                   <ChatFooter />
                 </div>
               ) : (
-                // If there are messages => pinned input at bottom
                 <div className="flex-1 min-h-0 flex flex-col bg-transparent">
                   <ScrollArea className="flex-1 overflow-y-auto mb-4 pr-2">
                     <div className="space-y-4">
@@ -311,6 +570,16 @@ export default function DashboardPage() {
             </div>
           </div>
         </main>
+
+        {/* If we have a selectedTask => open TaskDetailsModal */}
+        {selectedTask && (
+          <TaskDetailsModal
+            task={selectedTask}
+            onClose={handleCloseModal}
+            onSave={handleSaveTask}
+            shopId={shop?.id || ""}
+          />
+        )}
       </div>
     </>
   )
