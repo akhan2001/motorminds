@@ -32,7 +32,7 @@ export function LeadFilter({ shopId, user, onFilterChange }: {
         const fetchRewardLeads = async () => {
             const data = await getLeads(shopId);
             console.log("All leads:", data);
-            const rewardLeads = data.filter((lead: any) => lead.rewards_claim === true);
+            const rewardLeads = data.filter((lead: any) => lead.rewards_claim);
             console.log("Reward leads:", rewardLeads);
             setRewardLeads(rewardLeads.length);
         }

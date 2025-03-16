@@ -109,12 +109,12 @@ export async function POST(request: Request) {
             message: body,
             subject: subject,
             contactPhone: '(555) 123-4567',
-            contactEmail: '1four0nine@motorminds.ca'
+            contactEmail: 'info@motorminds.ca'
         });
         
         // Send email using Resend
         const { data, error } = await resend.emails.send({
-            from: 'Motorminds <1four0nine@motorminds.ca>',
+            from: 'Motorminds <info@motorminds.ca>',
             to: email,
             subject: subject,
             text: body, // Plain text fallback
