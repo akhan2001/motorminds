@@ -54,15 +54,11 @@ const generateEmailHtml = (props: {
 
           <!-- Content -->
           <div style="padding: 30px 20px; background-color: ${colors.lighterGray}; color: ${colors.darkBlue}; line-height: 1.6;">
-            <p style="margin: 0 0 16px 0;">Hello ${customerName},</p>
             
             <div style="margin: 20px 0;">
               ${message.replace(/\n/g, '<br>')}
             </div>
             
-            <p style="margin: 20px 0 0 0;">
-              Thank you for choosing ${shopName}. We appreciate your business!
-            </p>
           </div>
 
           <!-- Call to Action -->

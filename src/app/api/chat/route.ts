@@ -31,7 +31,7 @@ Special Functionality:
 [CUSTOMER_FORM]"
 
 2. When a user asks to send a message/email/text to a customer (e.g., "send a message to @John Doe (johndoe@gmail.com)"), respond with a helpful message and end with [EMAIL_FORM] tag on a new line. Example:
-"I'll help you send a message to John Doe. Please fill out the following information in the form below.
+"I'll help you send a message to John Doe (johndoe@gmail.com). Please fill out the following information in the form below.
 [EMAIL_FORM]"
 
 Example Responses:
@@ -82,32 +82,13 @@ export async function POST(req: NextRequest) {
 		const currentMessageContent = messages[messages.length - 1].content;
 		const prompt = PromptTemplate.fromTemplate(TEMPLATE);
 
-		/**
-		 * You can also try e.g.:
-		 *
-		 * import { ChatAnthropic } from "@langchain/anthropic";
-		 * const model = new ChatAnthropic({});
-		 *
-		 * See a full list of supported models at:
-		 * https://js.langchain.com/docs/modules/model_io/models/
-		 */
 		const model = new ChatOpenAI({
 			temperature: 0.8,
 			model: "gpt-3.5-turbo",
 		});
 
-		/**
-		 * Chat models stream message chunks rather than bytes, so this
-		 * output parser handles serialization and byte-encoding.
-		 */
 		const outputParser = new HttpResponseOutputParser();
 
-		/**
-		 * Can also initialize as:
-		 *
-		 * import { RunnableSequence } from "@langchain/core/runnables";
-		 * const chain = RunnableSequence.from([prompt, model, outputParser]);
-		 */
 		const chain = prompt.pipe(model).pipe(outputParser);
 
 		const stream = await chain.stream({

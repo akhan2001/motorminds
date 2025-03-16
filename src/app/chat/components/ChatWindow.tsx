@@ -315,84 +315,8 @@ export function ChatWindow(props: {
 		e.preventDefault();
 		if (chat.isLoading || intermediateStepsLoading) return;
 
-		// Continue with normal message handling
-		if (!showIntermediateSteps) {
-			chat.handleSubmit(e);
-			return;
-		} else {
-			// Some extra work to show intermediate steps properly
-			setIntermediateStepsLoading(true);
-
-			chat.setInput("");
-			const messagesWithUserReply = chat.messages.concat({
-				id: chat.messages.length.toString(),
-				content: chat.input,
-				role: "user",
-			});
-			chat.setMessages(messagesWithUserReply);
-
-			const response = await fetch(props.endpoint, {
-				method: "POST",
-				body: JSON.stringify({
-					messages: messagesWithUserReply,
-					show_intermediate_steps: true,
-					look_at_database: lookAtDatabase,
-				}),
-			});
-
-			const json = await response.json();
-			setIntermediateStepsLoading(false);
-
-			if (!response.ok) {
-				toast.error(`Error while processing your request`, {
-				description: json.error,
-			});
-				return;
-			}
-
-			const responseMessages: Message[] = json.messages;
-
-			// Represent intermediate steps as system messages for display purposes
-			// TODO: Add proper support for tool messages
-			const toolCallMessages = responseMessages.filter(
-			(responseMessage: Message) => {
-				return (
-					(responseMessage.role === "assistant" && !!responseMessage.tool_calls?.length) || responseMessage.role === "tool"
-				);
-			}
-			);
-
-			const intermediateStepMessages = [];
-			for (let i = 0; i < toolCallMessages.length; i += 2) {
-			const aiMessage = toolCallMessages[i];
-			const toolMessage = toolCallMessages[i + 1];
-			intermediateStepMessages.push({
-				id: (messagesWithUserReply.length + i / 2).toString(),
-				role: "system" as const,
-				content: JSON.stringify({
-				action: aiMessage.tool_calls?.[0],
-				observation: toolMessage.content,
-				}),
-			});
-			}
-			const newMessages = messagesWithUserReply;
-			for (const message of intermediateStepMessages) {
-			newMessages.push(message);
-			chat.setMessages([...newMessages]);
-			await new Promise((resolve) =>
-				setTimeout(resolve, 1000 + Math.random() * 1000)
-			);
-			}
-
-			chat.setMessages([
-				...newMessages,
-				{
-					id: newMessages.length.toString(),
-					content: responseMessages[responseMessages.length - 1].content,
-					role: "assistant",
-				},
-			]);
-		}
+		chat.handleSubmit(e);
+		return;
 	}
 
 	return (
