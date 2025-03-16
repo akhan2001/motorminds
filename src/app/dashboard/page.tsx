@@ -68,6 +68,9 @@ function getStatusColorClass(status: string): string {
 export default function DashboardPage() {
   const router = useRouter()
 
+  // -------------- [NEW] Keep track if we're still loading initial data --------------
+  const [initialLoading, setInitialLoading] = useState(true)
+
   // -------------- Dashboard State --------------
   const [date, setDate] = useState<Date>(new Date())
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -87,6 +90,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     checkSessionAndLoadData()
+      .finally(() => {
+        // Once checkSessionAndLoadData finishes (success or error),
+        // we hide the black loading screen.
+        setInitialLoading(false)
+      })
   }, [])
 
   /**
@@ -136,7 +144,6 @@ export default function DashboardPage() {
     }
 
     // fetch tasks: minimal columns for the calendar
-    // so we can highlight days & show short info
     const { data: rawRows, error: tasksErr } = await supabase
       .from("repair_orders")
       .select(`
@@ -184,15 +191,14 @@ export default function DashboardPage() {
     const filtered = filterCalTasksByDate(calendarTasks, selectedDate)
     setSelectedCalTasks(filtered)
 
-
-      setTimeout(() => {
-        tasksRef.current?.scrollIntoView({ behavior: "smooth" })
-      }, 100)
+    // Always scroll to tasksRef
+    setTimeout(() => {
+      tasksRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, 100)
   }
 
   /**
    * Step 2: handleCalendarTaskClick => fetch the FULL record
-   * and store it in selectedTask for the modal
    */
   async function handleCalendarTaskClick(minimal: CalendarTask) {
     setIsLoading(true)
@@ -225,8 +231,7 @@ export default function DashboardPage() {
   }
 
   /**
-   * Step 3: handleSaveTask => same multi-table update logic
-   * Once done, we can re-fetch or update local data to keep the UI in sync
+   * Step 3: handleSaveTask => update logic
    */
   async function handleSaveTask(updated: DetailedRepairOrder) {
     try {
@@ -308,7 +313,6 @@ export default function DashboardPage() {
         const filtered = filterCalTasksByDate(mapped, date)
         setSelectedCalTasks(filtered)
       }
-
     } catch (err) {
       console.error("handleSaveTask error:", err)
     }
@@ -363,6 +367,15 @@ export default function DashboardPage() {
   }
 
   const hasMessages = messages.length > 0
+
+  // ============================
+  //    [NEW] FULL BLACK SCREEN
+  //    IF initialLoading === true
+  // ============================
+  if (initialLoading) {
+    // Return a 100vw/100vh black screen (no text).
+    return <div className="w-screen h-screen bg-black" />
+  }
 
   return (
     <>
@@ -467,21 +480,12 @@ export default function DashboardPage() {
                           className="p-3 bg-[#1A1A1A] border border-[#1f1f1f] rounded-md cursor-pointer hover:bg-[#262626]"
                           onClick={() => handleCalendarTaskClick(t)}
                         >
-                          <p className="text-white font-medium">
-                            {t.title}
-                          </p>
+                          <p className="text-white font-medium">{t.title}</p>
 
-                          {/* 
-                            A line with a colored dot or text 
-                            e.g. a small colored circle, then the status string
-                          */}
+                          {/* colored dot + status */}
                           <div className="flex items-center gap-2 mt-1">
-                            <span className={`${colorClass} text-xl leading-none`}>
-                              •
-                            </span>
-                            <p className="text-gray-400 text-sm">
-                              {t.status}
-                            </p>
+                            <span className={`${colorClass} text-xl leading-none`}>•</span>
+                            <p className="text-gray-400 text-sm">{t.status}</p>
                           </div>
                         </div>
                       )

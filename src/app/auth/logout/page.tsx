@@ -12,7 +12,7 @@ export default function Logout() {
         <div className="flex items-center justify-center min-h-screen">
             <Button onClick={() => {
                 supabase.auth.signOut()
-                router.push("/auth/login")
+                router.push("/login")
             }}>Logout</Button>
         </div>
     )

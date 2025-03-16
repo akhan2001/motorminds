@@ -28,7 +28,7 @@ export default function AuthComponent() {
       })
       if (error) throw error
 
-      // On success, go to mechanics-hub
+      // On success
       router.push("/dashboard")
     } catch (err: any) {
       setError(err?.message || "An unknown error occurred")
