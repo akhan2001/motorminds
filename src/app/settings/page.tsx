@@ -1,9 +1,51 @@
+"use client"
+
 import { ProfileForm } from "@/app/settings/profile-form"
 import { Nav } from "../components/nav"
+import { checkUser } from '@/utils/supabase/supabase-auth'
+import { getShopId } from '@/utils/supabase/supabase-shop'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import LoadingPage from "@/components/loading"
 
 export default function SettingsProfilePage() {
-    return (
+    const [user, setUser] = useState<any>(null)
+    const [shopId, setShopId] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const router = useRouter()
+
+    useEffect(() => {
+        async function fetchUserData() {
+            setIsLoading(true)
+            try {
+                const userData = await checkUser()
+                if (userData) {
+                    setUser(userData)
+                    const shop = await getShopId(userData.id)
+                    setShopId(shop)
+                } else {
+                    router.push('/login')
+                }
+            } catch (error) {
+                console.error('Error:', error)
+                router.push('/login')
+            } finally {
+                setIsLoading(false)
+            }
+        }
         
+        fetchUserData()
+    }, [router])
+
+    if (isLoading) {
+        return <LoadingPage page="Settings" />
+    }
+
+    if (!shopId) {
+        return <div>No shop found</div>
+    }
+
+    return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Settings"/>
             <ProfileForm />

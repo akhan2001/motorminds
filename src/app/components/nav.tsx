@@ -52,7 +52,7 @@ export function Nav(
 		if (error) {
 			console.error("Logout error:", error)
 		}
-		router.push("/auth/login")
+		router.push("/login")
 		window.location.reload()
 	}
 
@@ -129,7 +129,7 @@ export function Nav(
 					</AlertDialog>
 				</button>
 				<button className="text-[#979797] hover:text-white transition-colors">
-					<Settings className="inline-block w-5 h-5" />
+					<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
 				</button>
 				{/* <button className="text-[#979797] hover:text-white transition-colors relative">
 					<Bell className="w-5 h-5" />

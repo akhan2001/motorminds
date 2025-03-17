@@ -100,11 +100,36 @@ export function ProfileForm() {
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 					<Tabs defaultValue="basic" className="w-full ">
 						<TabsList className="grid grid-cols-5 mb-8 bg-[#222] border-none text-white">
-							<TabsTrigger value="basic">Basic Info</TabsTrigger>
-							<TabsTrigger value="location">Location</TabsTrigger>
-							<TabsTrigger value="details">Shop Details</TabsTrigger>
-							<TabsTrigger value="images">Images</TabsTrigger>
-							<TabsTrigger value="social">Social Media</TabsTrigger>
+							<TabsTrigger 
+								value="basic" 
+								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+							>
+								Basic Info
+							</TabsTrigger>
+							<TabsTrigger 
+								value="location" 
+								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+							>
+								Location
+							</TabsTrigger>
+							<TabsTrigger 
+								value="details" 
+								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+							>
+								Shop Details
+							</TabsTrigger>
+							<TabsTrigger 
+								value="images" 
+								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+							>
+								Images
+							</TabsTrigger>
+							<TabsTrigger 
+								value="social" 
+								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+							>
+								Social Media
+							</TabsTrigger>
 						</TabsList>
 						
 						{/* Basic Information Tab */}
