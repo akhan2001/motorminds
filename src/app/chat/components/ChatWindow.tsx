@@ -158,6 +158,7 @@ export function ChatWindow(props: {
 	shopId?: string;
 }) {
 	const [lookAtDatabase, setLookAtDatabase] = useState(false);
+	const [currentEndpoint, setCurrentEndpoint] = useState(props.endpoint);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [showIntermediateSteps, setShowIntermediateSteps] = useState(
 		!!props.showIntermediateStepsToggle
@@ -166,7 +167,7 @@ export function ChatWindow(props: {
 	const [sourcesForMessages, setSourcesForMessages] = useState<Record<string, any>>({});
 
 	const chat = useChat({
-		api: props.endpoint,
+		api: currentEndpoint,
 		onResponse(response) {
 			const sourcesHeader = response.headers.get("x-sources");
 			const sources = sourcesHeader
@@ -201,7 +202,7 @@ export function ChatWindow(props: {
 			}
 
 			// Check if the message contains the [EMAIL_FORM] tag or if it contains a customer mention
-			if ((message.content.includes('[EMAIL_FORM]') || message.content.includes('@')) && props.shopId) {
+			if (message.content.includes('[EMAIL_FORM]') && props.shopId) {
 				try {
 					// Parse the email message content
 					const emailMessage = await parseEmailMessage(message.content);
@@ -230,6 +231,7 @@ export function ChatWindow(props: {
 		body: {
 			show_intermediate_steps: showIntermediateSteps,
 			look_at_database: lookAtDatabase,
+			shop_id: props.shopId,
 		}
 	});
 
@@ -250,12 +252,16 @@ export function ChatWindow(props: {
 
 	const handleSwitchToggle = (lookAtDatabase: boolean) => {
 		setLookAtDatabase(lookAtDatabase);
+		
+		// Change the endpoint based on the database toggle
 		if (lookAtDatabase) {
+			setCurrentEndpoint('/api/chat/retrieval');
 			toast("Looking at database...", {
 				icon: "🔍",
 				description: "You can now ask questions about your database.",
 			});
 		} else {
+			setCurrentEndpoint(props.endpoint);
 			toast("Not looking at database...", {
 				icon: "🔍",
 				description: "Click on the switch to connect to the database.",
