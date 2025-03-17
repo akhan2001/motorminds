@@ -1,163 +1,168 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
-
-import { createClient } from "@supabase/supabase-js";
-
-import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
-import { PromptTemplate } from "@langchain/core/prompts";
-import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
-import { Document } from "@langchain/core/documents";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { BytesOutputParser, StringOutputParser } from "@langchain/core/output_parsers";
+import OpenAI from "openai";
+import { generateSQLQuery, executeSQLQuery, explainSQLQuery } from "../../../mia/lib/sql-generator";
+import { StreamingTextResponse } from "ai";
 
 export const runtime = "edge";
 
-const combineDocumentsFn = (docs: Document[]) => {
-	const serializedDocs = docs.map((doc) => doc.pageContent);
-	return serializedDocs.join("\n\n");
-};
-
-const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
-	const formattedDialogueTurns = chatHistory.map((message) => {
-		if (message.role === "user") {
-			return `Human: ${message.content}`;
-		} else if (message.role === "assistant") {
-			return `Assistant: ${message.content}`;
-		} else {
-			return `${message.role}: ${message.content}`;
-		}
-	});
-	return formattedDialogueTurns.join("\n");
-};
-
-const CONDENSE_QUESTION_TEMPLATE = 
-`
-Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
-
-<chat_history>
-	{chat_history}
-</chat_history>
-
-Follow Up Input: {question}
-Standalone question:
-`;
-const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
-
-const ANSWER_TEMPLATE = 
-`
-You are a professional AI assistant for MotorMinds, an automotive business management platform.
-Provide helpful, accurate, and concise responses based on the given context.
-
-Answer the question based only on the following context and chat history:
-<context>
-	{context}
-</context>
-
-<chat_history>
-	{chat_history}
-</chat_history>
-
-Question: {question}
-`;
-const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
+// Initialize OpenAI client
+const openai = new OpenAI({
+  	apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
+		// console.log("Request body:", body);
 		const messages = body.messages ?? [];
-		const previousMessages = messages.slice(0, -1);
 		const currentMessageContent = messages[messages.length - 1].content;
+		const shopId = body.shop_id;
 
+		// Ensure shop_id is provided
+		if (!shopId) {
+			return NextResponse.json(
+				{ error: "shop_id is required for database queries" },
+				{ status: 400 }
+			);
+		}
 
-		const model = new ChatOpenAI({
-			model: "gpt-3.5-turbo",
-			temperature: 0.2,
-		});
+		// 1. Generate SQL query from natural language
+		// console.log("Generating SQL query for:", currentMessageContent);
+		let sqlQuery;
+		try {
+			sqlQuery = await generateSQLQuery(currentMessageContent, shopId);
+			console.log("Generated SQL query:", sqlQuery);
+		} catch (error: any) {
+			// console.error("Error generating SQL query:", error);
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(encoder.encode("I had trouble retrieving that information. Please try again."));
+					controller.close();
+				}
+			});
+			return new StreamingTextResponse(stream);
+		}
 
-		const client = createClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-		);
+		// 2. Execute the SQL query
+		let results;
+		try {
+			results = await executeSQLQuery(sqlQuery, shopId);
+			// console.log("Query results:", results);
+		} catch (error: any) {
+			console.error("Error executing SQL query:", error);
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(encoder.encode("I had trouble retrieving that information. Please try again."));
+					controller.close();
+				}
+			});
+			return new StreamingTextResponse(stream);
+		}
+
+		// 3. Generate explanation of the query (optional)
+		// let explanation;
+		// try {
+		// 	explanation = await explainSQLQuery(currentMessageContent, sqlQuery);
+		// 	console.log("Query explanation:", explanation);
+		// } catch (error) {
+		// 	console.error("Error generating explanation:", error);
+		// 	explanation = null;
+		// }
 		
-		const vectorstore = new SupabaseVectorStore(new OpenAIEmbeddings(), {
-			client,
-			tableName: "docs",
-			queryName: "match_docs",
-		});
+		// ${explanation ? `Explanation of data: ${explanation}` : ''}
 
-		const standaloneQuestionChain = RunnableSequence.from([
-			condenseQuestionPrompt,
-			model,
-			new StringOutputParser(),
-		]);
+		// 4. Generate natural language response
+		try {
+			// Format the results for the AI
+			const formattedResults = Array.isArray(results) 
+				? `Found ${results.length} results: ${JSON.stringify(results, null, 2)}` 
+				: JSON.stringify(results);
 
-		let resolveWithDocuments: (value: Document[]) => void;
-		const documentPromise = new Promise<Document[]>((resolve) => {
-			resolveWithDocuments = resolve;
-		});
+			// console.log("Formatted results:", formattedResults);
+			
+			// Create a system message that encourages friendly, professional responses
+			const systemMessage = `You are Mia, a professional and helpful shop assistant. Answer the user's question based on the data provided.
+			
+			FORMATTING GUIDELINES:
+			- Use Markdown formatting to make your responses visually appealing and easy to read
+			- Use bullet points where appropriate
+			- Format dates in a human-readable way (e.g., "March 15, 2025" instead of "2025-03-15")
+			- Format phone numbers consistently with dashes
+			
+			TONE GUIDELINES:
+			- Be professional yet conversational and helpful
+			- Use natural language instead of structured data presentation
+			- Use the customer's name when available
+			- Be concise but thorough
+			- Don't mention SQL or database queries in your response
+			- Avoid technical formatting like tables - present information in a conversational way
+			- Do not use emojis in your responses
+			- Maintain a friendly but professional tone
+			
+			If the data shows no results, politely inform the user that no matching information was found.`;
+			
+			// Create a user message that includes the original question and the data
+			const userMessage = `
+			User asked: "${currentMessageContent}"
+			
+			Data from database: ${formattedResults}
+			
+			Provide a helpful response based on this data. Use natural, conversational language with some Markdown formatting to make your response visually appealing. Avoid tables and overly structured formats - respond as if you're having a friendly conversation:`;
+			
+			// Generate the response without streaming first
+			const response = await openai.chat.completions.create({
+				model: "gpt-3.5-turbo",
+				messages: [
+					{ role: "system", content: systemMessage },
+					{ role: "user", content: userMessage }
+				],
+				temperature: 0.7,
+				stream: false
+			});
 
-		// console.log("Vectorstore: ", vectorstore);
-		// console.log("documentPromise: ", documentPromise);
+			// Get the complete response
+			const responseContent = response.choices[0].message.content || "I found some information but couldn't generate a proper response.";
+			
+			// Create a custom stream that simulates token-by-token streaming
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				async start(controller) {
+					// Split the response into words to simulate token-by-token streaming
+					const words = responseContent.split(' ');
+					
+					for (const word of words) {
+						// Add a small delay between words to simulate streaming
+						await new Promise(resolve => setTimeout(resolve, 20));
+						controller.enqueue(encoder.encode(word + ' '));
+					}
+					
+					controller.close();
+				}
+			});
 
-		const retriever = vectorstore.asRetriever({
-			callbacks: [
-				{
-					handleRetrieverEnd(documents) { resolveWithDocuments(documents)},
-				},
-			],
-		});
-
-		// console.log("Retriever: ", retriever);
-
-		const retrievalChain = retriever.pipe(combineDocumentsFn);
-
-		const answerChain = RunnableSequence.from([
-			{
-				context: RunnableSequence.from([
-					(input) => input.question,
-					retrievalChain,
-				]),
-				chat_history: (input) => input.chat_history,
-				question: (input) => input.question,
-			},
-			answerPrompt,
-			model,
-		]);
-
-		const conversationalRetrievalQAChain = RunnableSequence.from([
-			{
-				question: standaloneQuestionChain,
-				chat_history: (input) => input.chat_history,
-			},
-			answerChain,
-			new BytesOutputParser(),
-		]);
-
-		const stream = await conversationalRetrievalQAChain.stream({
-			question: currentMessageContent,
-			chat_history: formatVercelMessages(previousMessages),
-		});
-
-		const documents = await documentPromise;
-		console.log("Documents: ", documents);
-
-		const serializedSources = Buffer.from(
-		JSON.stringify(
-			documents.map((doc) => {
-				return {
-					pageContent: doc.pageContent.slice(0, 50) + "...",
-					metadata: doc.metadata,
-				};
-			})
-		)).toString("base64");
-
-		return new StreamingTextResponse(stream, {
-			headers: {
-				"x-message-index": (previousMessages.length + 1).toString(),
-				"x-sources": serializedSources,
-			},
-		});
+			return new StreamingTextResponse(stream);
+		} catch (responseError) {
+			console.error("Error generating AI response:", responseError);
+			
+			// Fallback to simple response
+			return NextResponse.json({
+				message: `I found ${Array.isArray(results) ? results.length : 0} results for your query.`,
+				sqlQuery: sqlQuery,
+				results: results
+			});
+		}
 	} catch (e: any) {
-		return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
+		console.error("Error details:", {
+			message: e.message,
+			name: e.name,
+			code: e.code,
+			details: e.details || "No additional details"
+		});
+		return NextResponse.json({ 
+			error: e.message,
+			details: e.details || e.code || e.name 
+		}, { status: e.status ?? 500 });
 	}
 }

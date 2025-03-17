@@ -1,103 +1,163 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
-import { OpenAI } from "openai";
+
 import { createClient } from "@supabase/supabase-js";
 
-const corsHeaders = {
-	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
+import { Document } from "@langchain/core/documents";
+import { RunnableSequence } from "@langchain/core/runnables";
+import { BytesOutputParser, StringOutputParser } from "@langchain/core/output_parsers";
+
+export const runtime = "edge";
+
+const combineDocumentsFn = (docs: Document[]) => {
+	const serializedDocs = docs.map((doc) => doc.pageContent);
+	return serializedDocs.join("\n\n");
 };
 
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
-});
+const formatVercelMessages = (chatHistory: VercelChatMessage[]) => {
+	const formattedDialogueTurns = chatHistory.map((message) => {
+		if (message.role === "user") {
+			return `Human: ${message.content}`;
+		} else if (message.role === "assistant") {
+			return `Assistant: ${message.content}`;
+		} else {
+			return `${message.role}: ${message.content}`;
+		}
+	});
+	return formattedDialogueTurns.join("\n");
+};
 
-const supabase = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL!,
-	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const CONDENSE_QUESTION_TEMPLATE = 
+`
+Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
+
+<chat_history>
+	{chat_history}
+</chat_history>
+
+Follow Up Input: {question}
+Standalone question:
+`;
+const condenseQuestionPrompt = PromptTemplate.fromTemplate(CONDENSE_QUESTION_TEMPLATE);
+
+const ANSWER_TEMPLATE = 
+`
+You are a professional AI assistant for MotorMinds, an automotive business management platform.
+Provide helpful, accurate, and concise responses based on the given context.
+
+Answer the question based only on the following context and chat history:
+<context>
+	{context}
+</context>
+
+<chat_history>
+	{chat_history}
+</chat_history>
+
+Question: {question}
+`;
+const answerPrompt = PromptTemplate.fromTemplate(ANSWER_TEMPLATE);
 
 export async function POST(req: NextRequest) {
-	// Handle CORS
-	if (req.method === "OPTIONS") {
-		return new Response("ok", { headers: corsHeaders });
-	}
-
 	try {
-		const { messages } = await req.json();
-		// console.log("Messages: ", messages);
-		const currentMessage = messages[messages.length - 1].content;
-		// console.log("Current message: ", currentMessage);
+		const body = await req.json();
+		const messages = body.messages ?? [];
+		const previousMessages = messages.slice(0, -1);
+		const currentMessageContent = messages[messages.length - 1].content;
 
-		// Generate embedding for the query
-		const embeddingResponse = await openai.embeddings.create({
-			model: "text-embedding-3-small",
-			input: currentMessage.replace(/\n/g, " "),
-		});
 
-		// console.log("Embedding response: ", embeddingResponse);
-		const [{ embedding }] = embeddingResponse.data;
-
-		// Query similar documents from Supabase
-		// const { data: documents } = await supabase.rpc("hybrid_search", {
-		// 	query_text: currentMessage.replace(/\n/g, " "),
-		// 	query_embedding: embedding,
-		// 	match_count: 3,
-		// });
-
-		const { data: documents } = await supabase.rpc("match_documents", {
-			query_embedding: embedding,
-			match_threshold: 0.3,
-			match_count: 3,
-		});
-
-		console.log("Documents: ", documents[0].content);
-
-		// Create context from matched documents
-		const context = documents ? documents.map((doc: any) => doc.content).join("\n")
-		: "";
-		// console.log("Context: ", context);
-		
-		// Get completion from OpenAI
-		const response = await openai.chat.completions.create({
+		const model = new ChatOpenAI({
 			model: "gpt-3.5-turbo",
-			messages: [
+			temperature: 0.2,
+		});
+
+		const client = createClient(
+			process.env.NEXT_PUBLIC_SUPABASE_URL!,
+			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+		);
+		
+		const vectorstore = new SupabaseVectorStore(new OpenAIEmbeddings(), {
+			client,
+			tableName: "docs",
+			queryName: "match_docs",
+		});
+
+		const standaloneQuestionChain = RunnableSequence.from([
+			condenseQuestionPrompt,
+			model,
+			new StringOutputParser(),
+		]);
+
+		let resolveWithDocuments: (value: Document[]) => void;
+		const documentPromise = new Promise<Document[]>((resolve) => {
+			resolveWithDocuments = resolve;
+		});
+
+		// console.log("Vectorstore: ", vectorstore);
+		// console.log("documentPromise: ", documentPromise);
+
+		const retriever = vectorstore.asRetriever({
+			callbacks: [
 				{
-				role: "system",
-				content: `You are a helpful assistant. Use this context to answer questions: ${context}`,
+					handleRetrieverEnd(documents) { resolveWithDocuments(documents)},
 				},
-				...messages,
 			],
-			stream: true,
 		});
-		console.log("Response: ", response);
 
-		// Stream the response
-		const stream = new ReadableStream({
-			async start(controller) {
-				for await (const chunk of response) {
-					const text = chunk.choices[0]?.delta?.content || "";
-					controller.enqueue(text);
-				}
-				controller.close();
+		// console.log("Retriever: ", retriever);
+
+		const retrievalChain = retriever.pipe(combineDocumentsFn);
+
+		const answerChain = RunnableSequence.from([
+			{
+				context: RunnableSequence.from([
+					(input) => input.question,
+					retrievalChain,
+				]),
+				chat_history: (input) => input.chat_history,
+				question: (input) => input.question,
 			},
+			answerPrompt,
+			model,
+		]);
+
+		const conversationalRetrievalQAChain = RunnableSequence.from([
+			{
+				question: standaloneQuestionChain,
+				chat_history: (input) => input.chat_history,
+			},
+			answerChain,
+			new BytesOutputParser(),
+		]);
+
+		const stream = await conversationalRetrievalQAChain.stream({
+			question: currentMessageContent,
+			chat_history: formatVercelMessages(previousMessages),
 		});
 
-		// Return response with CORS headers
+		const documents = await documentPromise;
+		console.log("Documents: ", documents);
+
+		const serializedSources = Buffer.from(
+		JSON.stringify(
+			documents.map((doc) => {
+				return {
+					pageContent: doc.pageContent.slice(0, 50) + "...",
+					metadata: doc.metadata,
+				};
+			})
+		)).toString("base64");
+
 		return new StreamingTextResponse(stream, {
 			headers: {
-				...corsHeaders,
-				"x-sources": Buffer.from(JSON.stringify(documents)).toString("base64"),
+				"x-message-index": (previousMessages.length + 1).toString(),
+				"x-sources": serializedSources,
 			},
 		});
-	} catch (error: any) {
-		console.error("Retrieval error:", error);
-		return NextResponse.json({ 
-			error: error.message },
-			{
-				status: 500,
-				headers: corsHeaders,
-			}
-		);
+	} catch (e: any) {
+		return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
 	}
 }

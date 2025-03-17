@@ -8,7 +8,7 @@ import { HttpResponseOutputParser } from "langchain/output_parsers";
 export const runtime = "edge";
 
 const formatMessage = (message: VercelChatMessage) => {
-return `${message.role}: ${message.content}`;
+	return `${message.role}: ${message.content}`;
 };
 
 const TEMPLATE = `
@@ -59,10 +59,11 @@ export async function POST(req: NextRequest) {
 		const body = await req.json();
 		const lookAtDatabase = body.look_at_database;
 		const messages = body.messages ?? [];
-		// console.log("Body: ", body);
+		console.log("Body in main chat route: ", body);
 
 		if (lookAtDatabase) {
-			// console.log("Delegating to retrieval endpoint");
+			console.log("Database mode is enabled, delegating to retrieval endpoint");
+			
 			const retrievalResponse = await fetch(new URL("/api/chat/retrieval", req.url), {
 				method: "POST",
 				headers: {
@@ -72,9 +73,11 @@ export async function POST(req: NextRequest) {
 			});
 
 			if (!retrievalResponse.ok) {
+				console.error("Failed to fetch from retrieval endpoint:", await retrievalResponse.text());
 				throw new Error("Failed to fetch from retrieval endpoint");
 			}
 
+			// The retrieval endpoint will handle both database and non-database queries
 			return retrievalResponse;
 		}
 
@@ -98,6 +101,7 @@ export async function POST(req: NextRequest) {
 
 		return new StreamingTextResponse(stream);
 	} catch (e: any) {
+		console.error("Error in main chat route:", e);
 		return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
 	}
 }
