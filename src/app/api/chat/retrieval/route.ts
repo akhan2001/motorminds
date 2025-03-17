@@ -31,12 +31,17 @@ export async function POST(req: NextRequest) {
 		let sqlQuery;
 		try {
 			sqlQuery = await generateSQLQuery(currentMessageContent, shopId);
-			// console.log("Generated SQL query:", sqlQuery);
+			console.log("Generated SQL query:", sqlQuery);
 		} catch (error: any) {
 			// console.error("Error generating SQL query:", error);
-			return NextResponse.json({
-				message: `I couldn't understand that question. Could you try rephrasing it?`,
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(encoder.encode("I had trouble retrieving that information. Please try again."));
+					controller.close();
+				}
 			});
+			return new StreamingTextResponse(stream);
 		}
 
 		// 2. Execute the SQL query
@@ -46,9 +51,14 @@ export async function POST(req: NextRequest) {
 			// console.log("Query results:", results);
 		} catch (error: any) {
 			console.error("Error executing SQL query:", error);
-			return NextResponse.json({
-				message: `I had trouble retrieving that information. Please try again.`,
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(encoder.encode("I had trouble retrieving that information. Please try again."));
+					controller.close();
+				}
 			});
+			return new StreamingTextResponse(stream);
 		}
 
 		// 3. Generate explanation of the query (optional)
@@ -101,37 +111,38 @@ export async function POST(req: NextRequest) {
 			
 			Provide a helpful response based on this data. Use natural, conversational language with some Markdown formatting to make your response visually appealing. Avoid tables and overly structured formats - respond as if you're having a friendly conversation:`;
 			
-			// Generate the response (non-streaming)
+			// Generate the response without streaming first
 			const response = await openai.chat.completions.create({
 				model: "gpt-3.5-turbo",
 				messages: [
-				{ role: "system", content: systemMessage },
-				{ role: "user", content: userMessage }
+					{ role: "system", content: systemMessage },
+					{ role: "user", content: userMessage }
 				],
 				temperature: 0.7,
+				stream: false
 			});
 
-			// console.log("Response:", response);
-			
-			// Return regular response instead of streaming
+			// Get the complete response
 			const responseContent = response.choices[0].message.content || "I found some information but couldn't generate a proper response.";
 			
-			// console.log("AI response:", responseContent);
-
+			// Create a custom stream that simulates token-by-token streaming
 			const encoder = new TextEncoder();
 			const stream = new ReadableStream({
-				start(controller) {
-					controller.enqueue(encoder.encode(responseContent));
+				async start(controller) {
+					// Split the response into words to simulate token-by-token streaming
+					const words = responseContent.split(' ');
+					
+					for (const word of words) {
+						// Add a small delay between words to simulate streaming
+						await new Promise(resolve => setTimeout(resolve, 20));
+						controller.enqueue(encoder.encode(word + ' '));
+					}
+					
 					controller.close();
 				}
 			});
 
 			return new StreamingTextResponse(stream);
-			
-
-			return NextResponse.json({
-				message: responseContent
-			});
 		} catch (responseError) {
 			console.error("Error generating AI response:", responseError);
 			
