@@ -13,7 +13,7 @@ export default function ChatStart() {
                         How Can I Assist You?
                     </h1>
                     <p className="text-base md:text-lg text-[#979797] w-full sm:w-[85%] md:w-[75%] mx-auto">
-                        I&apos;m MIA, your Motorminds mechanic assistant! I can help with repairs and diagnostics. I&apos;m still in beta, so more features are on the way. Stay tuned for updates!
+                        I&apos;m MIA, your Mechanic in Action! I can help with anything related to your shop. I&apos;m still in beta, so more features are on the way. Stay tuned for updates!
                     </p>
                 </div>
                 <div className="flex flex-col md:flex-row gap-4 md:gap-5">
