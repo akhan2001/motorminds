@@ -17,7 +17,14 @@ import CustomChatStart from "@/app/chat/components/CustomChatStart"
 import ChatFooter from "@/app/chat/components/ChatFooter"
 import { Nav } from "../components/nav"
 
-import { format, isSameDay } from "date-fns"
+import {
+  format,
+  isSameDay,
+  startOfDay,
+  endOfDay,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns"
 
 /* ------------------ Additional Types ------------------ */
 interface ChatMessage {
@@ -68,13 +75,13 @@ function getStatusColorClass(status: string): string {
 export default function DashboardPage() {
   const router = useRouter()
 
-  // -------------- [NEW] Keep track if we're still loading initial data --------------
+  // -------------- Track if we're still loading initial data --------------
   const [initialLoading, setInitialLoading] = useState(true)
 
   // -------------- Dashboard State --------------
+  const [shop, setShop] = useState<Shop | null>(null)
   const [date, setDate] = useState<Date>(new Date())
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [shop, setShop] = useState<Shop | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -88,93 +95,187 @@ export default function DashboardPage() {
 
   const tasksRef = useRef<HTMLDivElement>(null)
 
+  // -------------------- Store shopId so we can re-fetch stats anytime --------------------
+  const [myShopId, setMyShopId] = useState<string | null>(null)
+
+  // -------------------- StatCard States --------------------
+  // Leads -> created today, created this month
+  const [leadsToday, setLeadsToday] = useState(0)
+  const [leadsMonth, setLeadsMonth] = useState(0)
+
+  // Customers -> created today, created this month
+  const [customersToday, setCustomersToday] = useState(0)
+  const [customersMonth, setCustomersMonth] = useState(0)
+
+  // Tasks -> "To-Do" is "Pending"; "Completed" is "Completed"
+  const [tasksToDo, setTasksToDo] = useState(0)
+  const [tasksCompleted, setTasksCompleted] = useState(0)
+
   useEffect(() => {
-    checkSessionAndLoadData()
-      .finally(() => {
-        // Once checkSessionAndLoadData finishes (success or error),
-        // we hide the black loading screen.
-        setInitialLoading(false)
-      })
+    checkSessionAndLoadData().finally(() => {
+      // Once checkSessionAndLoadData finishes,
+      // we hide the black loading screen.
+      setInitialLoading(false)
+    })
   }, [])
 
   /**
    * Step 1: Check user session, fetch shop, invoices,
-   * plus a minimal array of tasks for the calendar
+   * plus a minimal array of tasks for the calendar,
+   * then fetch stats (leads/customers/tasks).
    */
   async function checkSessionAndLoadData() {
-    // Check user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      router.push("/login")
-      return
+    try {
+      // Check user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      // get shop_id
+      const { data: userData, error: userErr } = await supabase
+        .from("users")
+        .select("shop_id")
+        .eq("id", user.id)
+        .single()
+      if (userErr || !userData?.shop_id) {
+        console.error("No valid shop_id or error:", userErr)
+        router.push("/login")
+        return
+      }
+
+      const shopId = userData.shop_id
+      setMyShopId(shopId)
+
+      // fetch shop
+      const { data: shopData, error: shopErr } = await supabase
+        .from("shops")
+        .select("*")
+        .eq("id", shopId)
+        .single()
+      if (shopErr) {
+        console.error("Error fetching shop:", shopErr)
+      } else {
+        setShop(shopData)
+      }
+
+      // fetch invoices
+      const invoiceData = await fetchAllInvoices(shopId)
+      if (invoiceData) {
+        setInvoices(invoiceData)
+      }
+
+      // fetch tasks: minimal columns for the calendar
+      const { data: rawRows, error: tasksErr } = await supabase
+        .from("repair_orders")
+        .select(`
+          id,
+          created_at,
+          status,
+          repair_order_details(
+            description
+          )
+        `)
+        .eq("shop_id", shopId)
+
+      if (tasksErr) {
+        console.error("Error fetching tasks for calendar:", tasksErr)
+        return
+      }
+      if (rawRows) {
+        const mapped = rawRows.map((row: any) => {
+          const detail = row.repair_order_details?.[0]
+          return {
+            id: row.id,
+            created_at: row.created_at,
+            status: row.status || "Pending",
+            title: detail?.description || "Untitled",
+          }
+        }) as CalendarTask[]
+        setCalendarTasks(mapped)
+
+        // Filter today's tasks for the default date
+        const filtered = filterCalTasksByDate(mapped, new Date())
+        setSelectedCalTasks(filtered)
+      }
+
+      // -------------------- Fetch stat counts for leads, customers, tasks --------------------
+      await fetchStats(shopId)
+    } catch (err) {
+      console.error("Error in checkSessionAndLoadData:", err)
+      // In a real app, handle or show an error message
     }
+  }
 
-    // get shop_id
-    const { data: userData, error: userErr } = await supabase
-      .from("users")
-      .select("shop_id")
-      .eq("id", user.id)
-      .single()
-    if (userErr || !userData?.shop_id) {
-      console.error("No valid shop_id or error:", userErr)
-      router.push("/login")
-      return
-    }
+  /**
+   * fetchStats(shopId):
+   *   1) Leads: today, this month
+   *   2) Customers: today, this month
+   *   3) Tasks: "Pending" vs "Completed"
+   */
+  async function fetchStats(shopId: string) {
+    // We'll use date-fns to define ranges for "today" and "this month"
+    const todayStart = startOfDay(new Date())
+    const todayEnd = endOfDay(new Date())
+    const monthStart = startOfMonth(new Date())
+    const monthEnd = endOfMonth(new Date())
 
-    const shopId = userData.shop_id
-
-    // fetch shop
-    const { data: shopData, error: shopErr } = await supabase
-      .from("shops")
-      .select("*")
-      .eq("id", shopId)
-      .single()
-    if (shopErr) {
-      console.error("Error fetching shop:", shopErr)
-    } else {
-      setShop(shopData)
-    }
-
-    // fetch invoices
-    const invoiceData = await fetchAllInvoices(shopId)
-    if (invoiceData) {
-      setInvoices(invoiceData)
-    }
-
-    // fetch tasks: minimal columns for the calendar
-    const { data: rawRows, error: tasksErr } = await supabase
-      .from("repair_orders")
-      .select(`
-        id,
-        created_at,
-        status,
-        repair_order_details(
-          description
-        )
-      `)
+    // 1) LEADS -> today
+    const { count: leadsTodayCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact" })
       .eq("shop_id", shopId)
-    if (tasksErr) {
-      console.error("Error fetching tasks for calendar:", tasksErr)
-      return
-    }
-    if (rawRows) {
-      const mapped = rawRows.map((row: any) => {
-        const detail = row.repair_order_details?.[0]
-        return {
-          id: row.id,
-          created_at: row.created_at,
-          status: row.status || "Pending",
-          title: detail?.description || "Untitled",
-        }
-      }) as CalendarTask[]
-      setCalendarTasks(mapped)
+      .gte("created_at", todayStart.toISOString())
+      .lte("created_at", todayEnd.toISOString())
 
-      // Filter today's tasks
-      const filtered = filterCalTasksByDate(mapped, new Date())
-      setSelectedCalTasks(filtered)
+    // 1a) LEADS -> this month
+    const { count: leadsMonthCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact" })
+      .eq("shop_id", shopId)
+      .gte("created_at", monthStart.toISOString())
+      .lte("created_at", monthEnd.toISOString())
+
+    // 2) CUSTOMERS -> today
+    const { count: custTodayCount } = await supabase
+      .from("customers")
+      .select("*", { count: "exact" })
+      .eq("shop_id", shopId)
+      .gte("created_at", todayStart.toISOString())
+      .lte("created_at", todayEnd.toISOString())
+
+    // 2a) CUSTOMERS -> this month
+    const { count: custMonthCount } = await supabase
+      .from("customers")
+      .select("*", { count: "exact" })
+      .eq("shop_id", shopId)
+      .gte("created_at", monthStart.toISOString())
+      .lte("created_at", monthEnd.toISOString())
+
+    // 3) TASKS -> "Pending" vs "Completed"
+    const { data: tasksAll } = await supabase
+      .from("repair_orders")
+      .select("status")
+      .eq("shop_id", shopId)
+
+    if (tasksAll) {
+      // "To-Do" is tasks with status === "Pending"
+      const toDoCount = tasksAll.filter((t) => t.status === "Pending").length
+      // "Completed" is tasks with status === "Completed"
+      const completedCount = tasksAll.filter((t) => t.status === "Completed").length
+
+      setTasksToDo(toDoCount)
+      setTasksCompleted(completedCount)
     }
+
+    // Finally, store leads & customers counts (use 0 if undefined)
+    setLeadsToday(leadsTodayCount ?? 0)
+    setLeadsMonth(leadsMonthCount ?? 0)
+    setCustomersToday(custTodayCount ?? 0)
+    setCustomersMonth(custMonthCount ?? 0)
   }
 
   function filterCalTasksByDate(all: CalendarTask[], selectedDate: Date) {
@@ -231,7 +332,8 @@ export default function DashboardPage() {
   }
 
   /**
-   * Step 3: handleSaveTask => update logic
+   * Step 3: handleSaveTask => update logic in Supabase,
+   * then re-fetch stats to refresh "customers" or "tasks" counts if changed.
    */
   async function handleSaveTask(updated: DetailedRepairOrder) {
     try {
@@ -297,7 +399,7 @@ export default function DashboardPage() {
             description
           )
         `)
-        .eq("shop_id", shop?.id)
+        .eq("shop_id", myShopId)
       if (!refreshErr && rawRows) {
         const mapped = rawRows.map((row: any) => {
           const detail = row.repair_order_details?.[0]
@@ -312,6 +414,11 @@ export default function DashboardPage() {
         // Filter for currently selected date
         const filtered = filterCalTasksByDate(mapped, date)
         setSelectedCalTasks(filtered)
+      }
+
+      // -------------------- Re-fetch Stats for leads/customers/tasks --------------------
+      if (myShopId) {
+        await fetchStats(myShopId)
       }
     } catch (err) {
       console.error("handleSaveTask error:", err)
@@ -369,8 +476,8 @@ export default function DashboardPage() {
   const hasMessages = messages.length > 0
 
   // ============================
-  //    [NEW] FULL BLACK SCREEN
-  //    IF initialLoading === true
+  //  FULL BLACK SCREEN
+  //  IF initialLoading === true
   // ============================
   if (initialLoading) {
     // Return a 100vw/100vh black screen (no text).
@@ -408,14 +515,18 @@ export default function DashboardPage() {
 
           {/* Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <StatCard title="Leads" todayCount={20} monthCount={250} />
-            <StatCard title="Customers" todayCount={20} monthCount={250} />
+            <StatCard title="Leads" todayCount={leadsToday} monthCount={leadsMonth} />
+            <StatCard
+              title="Customers"
+              todayCount={customersToday}
+              monthCount={customersMonth}
+            />
             <StatCard
               title="Tasks"
               todayLabel="To-Do"
-              todayCount={15}
+              todayCount={tasksToDo}
               monthLabel="Completed"
-              monthCount={4}
+              monthCount={tasksCompleted}
             />
           </div>
 
@@ -498,7 +609,7 @@ export default function DashboardPage() {
             {/* Column 3 => Chat */}
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold mb-2">MIA AI</h2>
-              {!hasMessages ? (
+              {messages.length === 0 ? (
                 <div className="flex flex-col items-center">
                   <CustomChatStart />
                   <form
