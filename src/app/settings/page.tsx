@@ -42,13 +42,13 @@ export default function SettingsProfilePage() {
     }
 
     if (!shopId) {
-        return <div>No shop found</div>
+        router.push('/login')
     }
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Settings"/>
-            <ProfileForm />
+            {shopId && <ProfileForm shopId={shopId} />}
         </div>
     )
 }

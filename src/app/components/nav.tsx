@@ -147,7 +147,7 @@ export function Nav(
 							<AlertDialogTrigger asChild>
 								<DropdownMenuItem
 									onSelect={(e) => {
-										e.preventDefault(); // Prevent the dropdown from closing
+										e.preventDefault();
 									}}
 								>
 									Logout
