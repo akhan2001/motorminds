@@ -311,12 +311,13 @@ export function WorkOrderForm({
                           <SelectValue placeholder="Select Customer" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
+                        <SelectItem value="new">Add New Customer</SelectItem>
                           {customerOptions.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.name}
                             </SelectItem>
                           ))}
-                          <SelectItem value="new">Add New Customer</SelectItem>
+                          
                         </SelectContent>
                       </Select>
 
