@@ -44,6 +44,8 @@ export async function generateSQLQuery(input: string, shopId: string) {
           3. Keep queries simple and efficient
           4. For text searches, use ILIKE with wildcards for partial matches
           5. Return ONLY the SQL query, nothing else
+          6. If the user asks for a list of customers, limit the results to 10
+          7. If the user provides a customer name, remove the 's' from the end of the name for single customer queries
           `
         },
         {
