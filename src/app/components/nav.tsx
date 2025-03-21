@@ -86,7 +86,7 @@ export function Nav(
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="secondary" className="cursor-default">Premium</Badge>
+									<Badge variant="outline" className="cursor-default">Premium</Badge>
 								</TooltipTrigger>
 								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
 									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
