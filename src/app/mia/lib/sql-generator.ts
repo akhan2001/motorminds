@@ -37,6 +37,22 @@ export async function generateSQLQuery(input: string, shopId: string) {
             shop_id UUID NOT NULL,
             updated_at TIMESTAMP WITH TIME ZONE
           );
+
+          shops (
+            id UUID PRIMARY KEY,
+            shop_name TEXT NOT NULL,
+            shop_email TEXT,
+            shop_phone TEXT,
+            shop_address TEXT,
+            shop_owner TEXT,
+            operating_hours JSONB,
+            services_offered JSONB,
+            shop_about TEXT,
+            shop_tagline TEXT,
+            website TEXT,
+            created_at TIMESTAMP WITH TIME ZONE,
+            updated_at TIMESTAMP WITH TIME ZONE
+          )
           
           IMPORTANT RULES:
           1. ALWAYS include "WHERE shop_id = '${shopId}'" in EVERY query for security
@@ -114,8 +130,8 @@ export async function executeSQLQuery(query: string, shopId: string) {
                 return data;
             }
             
-            if (query.toLowerCase().includes('from orders')) {
-                const { data, error } = await supabase.from('orders')
+            if (query.toLowerCase().includes('from shops')) {
+                const { data, error } = await supabase.from('shops')
                 .select('*')
                 .eq('shop_id', shopId);
                 
