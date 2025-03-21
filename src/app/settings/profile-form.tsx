@@ -282,6 +282,8 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 
 	async function updateShopProfile(data: ShopFormValues) {
 		if (!shopId) return;
+
+		console.log(data)
 		
 		setIsSaving(true);
 		try {
