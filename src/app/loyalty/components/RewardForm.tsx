@@ -91,7 +91,7 @@ export default function RewardForm({ onClose, shopId }: { onClose: () => void, s
                     </div>
 
                     {/* Reward Points */}
-                    <div>
+                    {/* <div>
                         <label className="text-gray-300 text-sm">Reward Points</label>
                         <Select onValueChange={(value) => setPoints(parseInt(value))} disabled={true}>
                             <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
@@ -113,7 +113,7 @@ export default function RewardForm({ onClose, shopId }: { onClose: () => void, s
                                 />
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
                 </div>
 
                 <DialogFooter>

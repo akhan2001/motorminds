@@ -44,7 +44,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
                     <h2 className="text-xl font-semibold mb-4">Quick actions</h2>
                     <div className="space-y-4">
                         {/* Locked Card - Set up points */}
-                        <Card className="bg-[#111] border-[#222] relative overflow-hidden">
+                        {/* <Card className="bg-[#111] border-[#222] relative overflow-hidden">
                             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-none"></div>
                             <TooltipProvider>
                                 <Tooltip>
@@ -70,7 +70,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        </Card>
+                        </Card> */}
 
                         {/* Create a reward card */}
                         <Card className="bg-[#111] border-[#222]">
