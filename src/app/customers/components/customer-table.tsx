@@ -57,20 +57,20 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 					<TableBody>
 						{customers.map((customer) => (
 						<TableRow
-							className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer"
+							className="hover:bg-secondary-foreground border-b border-[#222] cursor-pointer"
 							key={customer.id}
 							onClick={() => handleRowClick(customer)}
 						>
-							<TableCell className="text-[#E2E2E2]">
+							<TableCell className="text-foreground">
 								{customer.customer_name}
 							</TableCell>
-							<TableCell className="text-[#E2E2E2]">
+							<TableCell className="text-foreground">
 								{customer.customer_email}
 							</TableCell>
-							<TableCell className="text-[#E2E2E2]">
+							<TableCell className="text-foreground">
 								{customer.customer_phone}
 							</TableCell>
-							<TableCell className="text-[#E2E2E2]">
+							<TableCell className="text-foreground">
 								{customer.customer_address}
 							</TableCell>
 						</TableRow>
