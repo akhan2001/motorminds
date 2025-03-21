@@ -3,25 +3,16 @@
 import { supabase } from "@/lib/supabase"
 import { Bell, Settings, HelpCircle, MoreHorizontal, Link } from "lucide-react"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-  
+import { LogOut, Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
 
 export function Nav(
 	props: {
@@ -30,6 +21,22 @@ export function Nav(
 ) {
 	const router = useRouter()
 	const [activeLink, setActiveLink] = useState(props.activeLink) // Default active link
+	const { theme, setTheme } = useTheme()
+	const [mounted, setMounted] = useState(false)
+
+	// useEffect only runs on the client, so now we can safely show the UI
+	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	// Render the icon based on mounted state to avoid hydration mismatch
+	const themeIcon = mounted && theme === "light" ? (
+		<Moon className="w-4 h-4 mr-2" />
+	) : (
+		<Sun className="w-4 h-4 mr-2" />
+	)
+
+	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
@@ -52,9 +59,13 @@ export function Nav(
 		if (error) {
 			console.error("Logout error:", error)
 		}
-		router.push("/auth/login")
+		router.push("/login")
 		window.location.reload()
 	}
+
+	useEffect(() => {
+		console.log("Current theme:", theme);
+	}, [theme]);
 
 	return (
 		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
@@ -75,7 +86,7 @@ export function Nav(
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="secondary" className="cursor-default">Premium</Badge>
+									<Badge variant="outline" className="cursor-default">Premium</Badge>
 								</TooltipTrigger>
 								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
 									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
@@ -129,7 +140,7 @@ export function Nav(
 					</AlertDialog>
 				</button>
 				<button className="text-[#979797] hover:text-white transition-colors">
-					<Settings className="inline-block w-5 h-5" />
+					<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
 				</button>
 				{/* <button className="text-[#979797] hover:text-white transition-colors relative">
 					<Bell className="w-5 h-5" />
@@ -144,12 +155,9 @@ export function Nav(
 					</DropdownMenuTrigger>
 					<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<DropdownMenuItem
-									onSelect={(e) => {
-										e.preventDefault(); // Prevent the dropdown from closing
-									}}
-								>
+						<AlertDialogTrigger asChild>
+								<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+									<LogOut className="w-4 h-4 mr-2" />
 									Logout
 								</DropdownMenuItem>
 							</AlertDialogTrigger>
@@ -171,6 +179,15 @@ export function Nav(
 								</AlertDialogFooter>
 							</AlertDialogContent>
 						</AlertDialog>
+						<DropdownMenuItem
+							onSelect={(e) => {
+								e.preventDefault();
+								setTheme(theme === "light" ? "dark" : "light");
+							}}
+						>
+							{themeIcon}
+							{themeText}
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 				</div>

@@ -2,11 +2,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 import { useState, useEffect } from "react"
 import { deleteReward, setStatus } from "../utils/LoyaltyUtils"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useConfirmation } from "@/app/components/confirmation-service"
 
 interface RewardSheetProps {
 	reward: any | null
@@ -18,6 +18,8 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 	const [isEditing, setIsEditing] = useState(false);
 	const [statusValue, setStatusValue] = useState<boolean | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const { confirm } = useConfirmation();
 
 	// Set initial status when reward changes
 	useEffect(() => {
@@ -58,15 +60,38 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 		}
 	};
 
-	const handleDelete = async (reward_id: string) => {
-		const success = await deleteReward(reward_id);
-		if (success) {
-			toast.success("Reward deleted successfully");
-			onOpenChange(false);
-			// Force refresh to get updated data
-			window.location.reload();
-		} else {
-			toast.error("Failed to delete reward. Try again later.");
+	const handleDelete = async () => {
+		if (!reward) return;
+		
+		try {
+			// Show confirmation dialog using the promise-based approach
+			const confirmed = await confirm({
+				title: "Delete Reward",
+				description: "Are you sure you want to delete this reward? This action cannot be undone.",
+				confirmText: "Yes, Delete",
+				cancelText: "No, Cancel",
+				variant: "destructive"
+			});
+			
+			// Only proceed if user confirmed
+			if (confirmed) {
+				setIsDeleting(true);
+				const success = await deleteReward(reward.id);
+				
+				if (success) {
+					toast.success("Reward deleted successfully");
+					onOpenChange(false);
+					// Use router.refresh() here if available, or window.location.reload()
+					window.location.reload();
+				} else {
+					toast.error("Failed to delete reward. Try again later.");
+				}
+			}
+		} catch (error) {
+			console.error("Error deleting reward:", error);
+			toast.error("An error occurred while deleting the reward");
+		} finally {
+			setIsDeleting(false);
 		}
 	};
 
@@ -153,29 +178,14 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 				<SheetFooter>
 					{!isEditing ? (
 						<>
-							<AlertDialog>
-								<AlertDialogTrigger asChild>
-									<Button variant="destructive">
-										Delete
-									</Button>
-								</AlertDialogTrigger>
-								<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-									<AlertDialogHeader>
-										<AlertDialogTitle>Are you sure you want to delete this reward?</AlertDialogTitle>
-										<AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-									</AlertDialogHeader>
-									<AlertDialogFooter>
-										<AlertDialogCancel>No, Cancel</AlertDialogCancel>
-										<AlertDialogAction 
-											className="border-none bg-red-600 text-white hover:bg-red-700 hover:text-white"
-											onClick={() => handleDelete(reward.id)}
-										>
-											Yes, Delete
-										</AlertDialogAction>
-									</AlertDialogFooter>
-								</AlertDialogContent>
-							</AlertDialog>
-							<Button variant="secondary" onClick={handleEditToggle}>
+							<Button 
+								variant="destructive" 
+								onClick={handleDelete}
+								disabled={isDeleting}
+							>
+								{isDeleting ? "Deleting..." : "Delete"}
+							</Button>
+							<Button variant="outline" onClick={handleEditToggle}>
 								Edit
 							</Button>
 						</>

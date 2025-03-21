@@ -4,12 +4,14 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { formatDate, saveNotes, updateLeadStatus } from "../utils/lead";
+import { formatDate, saveNotes, updateLeadStatus, deleteLead } from "../utils/lead";
 import { useState, useEffect } from "react";
 import { PenIcon, CheckIcon, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createNewCustomer, checkCustomerExists} from "@/app/customers/api/customer-utils";
+import { AlertConfirmation } from "@/app/components/AlertConfirmation";
+import { useConfirmation } from "@/app/components/confirmation-service";
 
 interface LeadSheetProps {
     lead: any;
@@ -35,6 +37,7 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
     const router = useRouter();
     const [notes, setNotes] = useState("");
     const [isEditing, setIsEditing] = useState(false);
+    const { confirm } = useConfirmation();
 
     useEffect(() => {
         if (lead) {
@@ -86,6 +89,35 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
         await updateLeadStatus(leadId, "CUSTOMER");
         toast.success("Customer created successfully");
     };
+
+    const handleDeleteLead = async (leadId: string, shopId: string) => {
+        try {
+            const confirmed = await confirm({
+                title: "Delete Lead",
+                description: "Are you sure you want to delete this lead?",
+                confirmText: "Delete",
+                cancelText: "Cancel",
+                variant: "destructive"
+            })
+            if (confirmed) {
+                await deleteLead(leadId, shopId);
+                toast.success("Lead deleted successfully");
+                onOpenChange(false);
+                router.refresh();
+            }
+        } catch (error) {
+            toast.error("Failed to delete lead");
+        }
+    }
+
+    // const callConfirmation = () => {
+    //     AlertConfirmation({
+    //         title: "Delete Lead",
+    //         description: "Are you sure you want to delete this lead?",
+    //         action: "Delete",
+    //         onAction: () => handleDeleteLead(lead.id, lead.shop_id)
+    //     })
+    // }
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -235,6 +267,11 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
                         />
                     </div>
                 </div>
+                <SheetFooter>
+                    <Button variant="destructive" onClick={() => handleDeleteLead(lead.id, lead.shop_id)}>
+                        Delete Lead
+                    </Button>
+                </SheetFooter>
             </SheetContent>
         </Sheet>
     )
