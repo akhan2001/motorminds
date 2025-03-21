@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { TasksProvider } from "@/contexts/tasks-context";
 import { Analytics } from "@vercel/analytics/react"
 import { ThemeProvider } from "next-themes";
+import { ConfirmationProvider } from "@/app/components/confirmation-service";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",
@@ -38,7 +39,9 @@ export default function RootLayout({
       <body className={`${bricolageGrotesque.variable} antialiased`}>
         <ThemeProvider>
           <TasksProvider>
-            {children}
+            <ConfirmationProvider>
+              {children}
+            </ConfirmationProvider>
           </TasksProvider>
         </ThemeProvider>
         <Toaster />

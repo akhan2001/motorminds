@@ -133,3 +133,18 @@ export async function saveNotes(leadId: string, notes: string) {
 
     return data
 }
+
+export async function deleteLead(leadId: string, shopId: string) {
+    const { data, error } = await supabase
+        .from("leads")
+        .delete()
+        .eq("id", leadId)
+        .eq("shop_id", shopId)
+    
+    if (error) {
+        throw error
+    }
+
+    return data
+}
+

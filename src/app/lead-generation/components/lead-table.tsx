@@ -1,8 +1,10 @@
+"use client"
+
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table"
-import { getLeads, formatDate, updateLeadStatus } from "../utils/lead"
+import { getLeads, formatDate, updateLeadStatus, deleteLead } from "../utils/lead"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MessageCircle, UserPlus, Check, Gift } from 'lucide-react';
+import { Mail, Phone, MessageCircle, UserPlus, Check, Trash } from 'lucide-react';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@/components/ui/tooltip";
