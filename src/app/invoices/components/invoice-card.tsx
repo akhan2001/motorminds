@@ -54,7 +54,7 @@ export function InvoiceCard(props: InvoiceCardProps) {
                 <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold flex items-center gap-2 text-white">
-                            Invoice # {props.displayNumber} <span className={`${props.status === 'PAID' ? 'text-green-500' : 'text-red-500'}`}>({props.status})</span>
+                            Invoice # {props.displayNumber || props.invoiceNumber} <span className={`${props.status === 'PAID' ? 'text-green-500' : 'text-red-500'}`}>({props.status})</span>
                         </h3>
                         <p className="text-gray-400">{props.workOrder ? props.workOrder : 'N/A'}</p>
                     </div>
