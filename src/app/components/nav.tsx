@@ -149,7 +149,7 @@ export function Nav(
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 							<Avatar className="w-7 h-7 cursor-pointer">
-								<AvatarImage src="https://github.com/shadcn.png" />
+								<AvatarImage src="https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg" />
 								<AvatarFallback>AK</AvatarFallback>
 							</Avatar>
 					</DropdownMenuTrigger>
