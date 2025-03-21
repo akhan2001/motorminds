@@ -26,9 +26,11 @@ export function ChatEmailFormMessage({
   const [emailSubject, setEmailSubject] = useState(subject);
   const [emailBody, setEmailBody] = useState(message);
   const [isSending, setIsSending] = useState(false);
+  const [recipientName, setRecipientName] = useState(recipient_name);
+  const [recipientEmail, setRecipientEmail] = useState(recipient_email);
 
   const handleSubmit = async () => {
-    if (!recipient_email.trim()) {
+    if (!recipientEmail.trim()) {
       toast.error("Recipient email is required");
       return;
     }
@@ -45,13 +47,13 @@ export function ChatEmailFormMessage({
 
     setIsSending(true);
     try {
-      const result = await sendEmail(recipient_email, emailSubject, emailBody, recipient_name);
+      const result = await sendEmail(recipientEmail, emailSubject, emailBody, recipientName);
       
       if (result) {
         toast.success("Email sent successfully");
         onSuccess({
-          recipient_name,
-          recipient_email,
+          recipient_name: recipientName,
+          recipient_email: recipientEmail,
           subject: emailSubject,
           message: emailBody
         });
@@ -88,13 +90,23 @@ export function ChatEmailFormMessage({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 pt-2">
-        <div>
-          <label className="text-gray-300 text-sm block mb-1">To</label>
-          <Input
-            className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
-            value={`${recipient_name} <${recipient_email}>`}
-            readOnly
-          />
+        <div className="flex gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-300 text-sm block mb-1">Name</label>
+            <Input
+              className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-300 text-sm block mb-1">Email</label>
+            <Input
+              className="bg-[#292929] text-white text-sm border-[#444444] focus:border-blue-500 focus:ring-blue-500"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+            />
+          </div>
         </div>
         <div>
           <label className="text-gray-300 text-sm block mb-1">Subject</label>
@@ -105,6 +117,7 @@ export function ChatEmailFormMessage({
             onChange={(e) => setEmailSubject(e.target.value)}
             required
           />
+          
         </div>
         <div>
           <label className="text-gray-300 text-sm block mb-1">Message</label>
