@@ -39,7 +39,7 @@ export default function CustomersPage() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col min-h-screen bg-background text-foreground">
+            <div className="flex flex-col min-h-screen bg-black text-white">
                 <Nav activeLink="Customers" />
                 <CustomersTableLoading />
             </div>
@@ -58,7 +58,7 @@ export default function CustomersPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Customers" />
             <CustomerDashboard shopId={shopId} user={user} />
         </div>
