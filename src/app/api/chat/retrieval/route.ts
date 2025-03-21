@@ -31,10 +31,18 @@ async function detectActionCommand(query: string): Promise<{ isAction: boolean; 
 		Determine if the user's query requires a special action form.
 		
 		Special actions include:
-		1. Creating a new customer - If the user wants to add or create a customer
-		2. Sending an email/message to a customer - If the user wants to contact or message a customer
+		1. Creating a new customer - If the user explicitly wants to add, create, or register a new customer
+		2. Sending an email/message to a customer - If the user explicitly wants to contact, message, or email a customer
 		
-		For any other queries, respond with "none".
+		Information requests are NOT action commands:
+		- "What is [name]'s information"
+		- "Show me details about [name]"
+		- "Tell me about [name]"
+		- "What do we know about [name]"
+		- "Give me [name]'s info"
+		- Any query asking for information rather than creating or sending something
+		
+		For any information requests or other queries, respond with "none".
 		
 		Output EXACTLY ONE of these three options: "customer_form", "email_form", or "none".
 		
@@ -47,6 +55,17 @@ async function detectActionCommand(query: string): Promise<{ isAction: boolean; 
 		const actionResult = (await actionChain.invoke({
 			input: query
 		})).trim().toLowerCase();
+		
+		// For information queries, never trigger action forms
+		if (query.toLowerCase().includes("info") || 
+		    query.toLowerCase().includes("information") ||
+		    query.toLowerCase().includes("details") ||
+		    query.toLowerCase().includes("tell me about") ||
+		    query.toLowerCase().includes("what is") ||
+		    query.toLowerCase().includes("what are") ||
+		    query.toLowerCase().includes("show me")) {
+			return { isAction: false, actionType: null, response: null };
+		}
 		
 		// Generate appropriate response for action type
 		if (actionResult === "customer_form") {
@@ -102,6 +121,8 @@ export async function POST(req: NextRequest) {
 
 		// First check if this is a special action command
 		const actionDetection = await detectActionCommand(currentMessageContent);
+
+		console.log("~ Action detection: ", actionDetection);
 		
 		if (actionDetection.isAction && actionDetection.response) {
 			// Return special action response
@@ -131,7 +152,7 @@ export async function POST(req: NextRequest) {
 			temperature: 0.3,
 			model: "gpt-3.5-turbo",
 		});
-		
+
 		// Classification prompt
 		const classificationPrompt = PromptTemplate.fromTemplate(`
 			Classify if this query is database-related or not:

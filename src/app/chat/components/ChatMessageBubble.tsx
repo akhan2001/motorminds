@@ -28,6 +28,17 @@ export function ChatMessageBubble(props: {
   const isFormMessage = props.message.formType && 
     (props.message.formType === 'customer-form' || props.message.formType === 'email-form');
   
+  // Clean message content by removing form tags
+  const cleanMessageContent = () => {
+    if (!props.message.content) return "";
+    
+    // Remove the form tags
+    return props.message.content
+      .replace(/\[CUSTOMER_FORM\]/g, '')
+      .replace(/\[EMAIL_FORM\]/g, '')
+      .trim();
+  };
+  
   // Handle customer form submission
   const handleCustomerFormSuccess = (customer: any) => {
     setCreatedCustomer(customer);
@@ -80,8 +91,8 @@ export function ChatMessageBubble(props: {
       )}
 
       <div className="whitespace-pre-wrap flex flex-col w-full">
-        {/* Always show the message content */}
-        <span>{props.message.content}</span>
+        {/* Show the cleaned message content without form tags */}
+        <span>{cleanMessageContent()}</span>
         
         {/* Customer form */}
         {isFormMessage && showForm && props.message.formType === 'customer-form' && props.shopId && (
