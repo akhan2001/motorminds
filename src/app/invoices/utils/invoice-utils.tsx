@@ -70,7 +70,7 @@ export async function setInvoiceStatus(invoiceId: string, status: string) {
 
 export async function createNewInvoice(invoiceData: any, shopId: string) {
 	try {
-		console.log("Creating invoice with data:", invoiceData);
+		// console.log("Creating invoice with data:", invoiceData);
 		
 		// Ensure all required fields are present
 		const dataToInsert = {
@@ -95,10 +95,10 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 			vehicle_information: invoiceData.vehicle_info
 		};
 
-		console.log(invoiceData.vehicle_info)
+		// console.log(invoiceData.vehicle_info)
 		
 		// Log the final data being sent to the database
-		console.log("Final data to insert:", dataToInsert);
+		// console.log("Final data to insert:", dataToInsert);
 		
 		const { data, error } = await supabase
 			.from('invoices')

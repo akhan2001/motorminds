@@ -24,7 +24,7 @@ export default function InvoicesPage() {
     const [shopId, setShopId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-    const [selectedDate, setSelectedDate] = useState<Date>();
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
     const refreshInvoices = async () => {
         if (shopId) {
@@ -186,14 +186,14 @@ export default function InvoicesPage() {
                                     className="bg-[#131313] border border-[#222] hover:border-gray-500"
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Today</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="text-white w-[350px] p-0 bg-[#131313] border border-[#222]">
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
-                                    onSelect={setSelectedDate}
+                                    onSelect={(day) => setSelectedDate(day || new Date())}
                                     initialFocus
                                     className="bg-[#131313]"
                                 />
@@ -216,39 +216,48 @@ export default function InvoicesPage() {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                    {sortedInvoices.map((invoice, index) => (
-                        <InvoiceCard
-                            key={index}
-                            invoiceNumber={invoice.invoice_number}
-                            clientName={invoice.client_name}
-                            clientAddress={invoice.client_address}
-                            clientEmail={invoice.client_email}
-                            amount={formatCurrency(invoice.amount)}
-                            issueDate={formatDate(invoice.issue_date)}
-                            status={invoice.status}
-                            shopName={invoice.shop_name}
-                            shopAddress={invoice.shop_address}
-                            shopEmail={invoice.shop_email}
-                            labour={invoice.labour}
-                            parts={invoice.parts}
-                            notes={invoice.notes}
-                            mileage={invoice.mileage}
-                            description={invoice.description}
-                            assignedTo={invoice.assigned_to}
-                            workOrder={invoice.workorder_id}
-                            vehicleInfo={invoice.vehicle_information ? {
-                                year: invoice.vehicle_information.year,
-                                make: invoice.vehicle_information.make,
-                                model: invoice.vehicle_information.model,
-                                license_plate: invoice.vehicle_information.license_plate
-                            } : {
-                                year: "",
-                                make: "",
-                                model: "",
-                                license_plate: ""
-                            }}
-                        />
-                    ))}
+                    {sortedInvoices.length > 0 ? (
+                        sortedInvoices.map((invoice, index) => (
+                            <InvoiceCard
+                                key={index}
+                                invoiceNumber={invoice.invoice_number}
+                                displayNumber={invoice.display_id}
+                                clientName={invoice.client_name}
+                                clientAddress={invoice.client_address}
+                                clientEmail={invoice.client_email}
+                                amount={formatCurrency(invoice.amount)}
+                                issueDate={formatDate(invoice.issue_date)}
+                                status={invoice.status}
+                                shopName={invoice.shop_name}
+                                shopAddress={invoice.shop_address}
+                                shopEmail={invoice.shop_email}
+                                labour={invoice.labour}
+                                parts={invoice.parts}
+                                notes={invoice.notes}
+                                mileage={invoice.mileage}
+                                description={invoice.description}
+                                assignedTo={invoice.assigned_to}
+                                workOrder={invoice.workorder_id}
+                                vehicleInfo={invoice.vehicle_information ? {
+                                    year: invoice.vehicle_information.year,
+                                    make: invoice.vehicle_information.make,
+                                    model: invoice.vehicle_information.model,
+                                    license_plate: invoice.vehicle_information.license_plate
+                                } : {
+                                    year: "",
+                                    make: "",
+                                    model: "",
+                                    license_plate: ""
+                                }}
+                            />
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center p-10 bg-[#131313] border border-[#222] rounded-lg">
+                            <div className="text-center space-y-3">
+                                <p className="text-gray-400 text-xl">No {selectedFilter === "all" ? "" : selectedFilter === "paid" ? "paid" : "unpaid"} invoices for {format(selectedDate, "MMMM d, yyyy")}</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 </div>
             </div>
