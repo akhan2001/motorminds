@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import InvoiceForm from "./components/invoice-forms"
 import { InvoiceFilter } from "./components/invoice-filter"
@@ -25,6 +25,7 @@ export default function InvoicesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [isDateFilterActive, setIsDateFilterActive] = useState(true);
 
     const refreshInvoices = async () => {
         if (shopId) {
@@ -74,10 +75,6 @@ export default function InvoicesPage() {
         loadData()
     }, [])
 
-    if (isLoading) {
-        return <LoadingPage page="Invoices" />
-    }
-
     // Filter the displayed invoices
     const filteredInvoices = invoices.filter((inv) => {
         if (selectedFilter === "all")   return true
@@ -122,18 +119,25 @@ export default function InvoicesPage() {
         invoice.status === "UNPAID" && isThisMonth(invoice.issue_date)
     ).length
 
-    // Add this function to handle sort
-    const sortedInvoices = [...filteredInvoices]
-        .filter(invoice => {
-            if (!selectedDate) return true;
-            return format(new Date(invoice.issue_date), "yyyy-MM-dd") === 
-                   format(selectedDate, "yyyy-MM-dd");
-        })
-        .sort((a, b) => {
-            const dateA = new Date(a.issue_date).getTime();
-            const dateB = new Date(b.issue_date).getTime();
-            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-        });
+    // Filter and sort the invoices more efficiently using useMemo
+    const sortedInvoices = useMemo(() => {
+        return [...filteredInvoices]
+            .filter(invoice => {
+                if (!isDateFilterActive) return true; // Show all if date filter is inactive
+                if (!selectedDate) return true;
+                return format(new Date(invoice.issue_date), "yyyy-MM-dd") === 
+                       format(selectedDate, "yyyy-MM-dd");
+            })
+            .sort((a, b) => {
+                const dateA = new Date(a.issue_date).getTime();
+                const dateB = new Date(b.issue_date).getTime();
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+    }, [filteredInvoices, isDateFilterActive, selectedDate, sortOrder]);
+
+    if (isLoading) {
+        return <LoadingPage page="Invoices" />
+    }
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -183,25 +187,38 @@ export default function InvoicesPage() {
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
-                                    className="bg-[#131313] border border-[#222] hover:border-gray-500"
+                                    className={`bg-[#131313] border ${isDateFilterActive ? "border-red-500" : "border-[#222]"} hover:border-gray-500`}
+                                    disabled={!isDateFilterActive}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {selectedDate ? format(selectedDate, "PPP") : <span>Today</span>}
+                                    {isDateFilterActive && selectedDate ? format(selectedDate, "PPP") : <span>Select Date</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="text-white w-[350px] p-0 bg-[#131313] border border-[#222]">
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
-                                    onSelect={(day) => setSelectedDate(day || new Date())}
+                                    onSelect={(day) => {
+                                        setSelectedDate(day || new Date());
+                                        setIsDateFilterActive(true);
+                                    }}
                                     initialFocus
                                     className="bg-[#131313]"
                                 />
                             </PopoverContent>
                         </Popover>
                         <Button
+                            className={`bg-[#131313] border ${isDateFilterActive ? "border-[#222]" : "border-red-500"} hover:border-gray-500`}
+                            onClick={() => setIsDateFilterActive(false)}
+                        >
+                            View All
+                        </Button>
+                        <Button
                             className="bg-[#131313] border border-[#222] hover:border-gray-500"
-                            onClick={() => setSelectedDate(new Date())}
+                            onClick={() => {
+                                setSelectedDate(new Date());
+                                setIsDateFilterActive(true);
+                            }}
                         >
                             Today
                         </Button>
@@ -254,7 +271,10 @@ export default function InvoicesPage() {
                     ) : (
                         <div className="flex flex-col items-center justify-center p-10 bg-[#131313] border border-[#222] rounded-lg">
                             <div className="text-center space-y-3">
-                                <p className="text-gray-400 text-xl">No {selectedFilter === "all" ? "" : selectedFilter === "paid" ? "paid" : "unpaid"} invoices for {format(selectedDate, "MMMM d, yyyy")}</p>
+                                <p className="text-gray-400 text-xl">
+                                    No {selectedFilter === "all" ? "" : selectedFilter === "paid" ? "paid" : "unpaid"} invoices 
+                                    {isDateFilterActive ? ` for ${format(selectedDate, "MMMM d, yyyy")}` : ""}
+                                </p>
                             </div>
                         </div>
                     )}

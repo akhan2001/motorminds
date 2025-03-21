@@ -37,13 +37,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${bricolageGrotesque.variable} antialiased`}>
-        <ThemeProvider>
+        {/* <ThemeProvider> */}
           <TasksProvider>
             <ConfirmationProvider>
               {children}
             </ConfirmationProvider>
           </TasksProvider>
-        </ThemeProvider>
+        {/* </ThemeProvider> */}
         <Toaster />
         <Analytics />
       </body>

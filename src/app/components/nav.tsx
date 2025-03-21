@@ -63,9 +63,9 @@ export function Nav(
 		window.location.reload()
 	}
 
-	useEffect(() => {
-		console.log("Current theme:", theme);
-	}, [theme]);
+	// useEffect(() => {
+	// 	// console.log("Current theme:", theme);
+	// }, [theme]);
 
 	return (
 		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
@@ -86,7 +86,7 @@ export function Nav(
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default">Premium</Badge>
+									<Badge variant="outline" className="cursor-default text-white border-[#979797]">Premium</Badge>
 								</TooltipTrigger>
 								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
 									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
@@ -179,7 +179,7 @@ export function Nav(
 								</AlertDialogFooter>
 							</AlertDialogContent>
 						</AlertDialog>
-						<DropdownMenuItem
+						{/* <DropdownMenuItem
 							onSelect={(e) => {
 								e.preventDefault();
 								setTheme(theme === "light" ? "dark" : "light");
@@ -187,7 +187,7 @@ export function Nav(
 						>
 							{themeIcon}
 							{themeText}
-						</DropdownMenuItem>
+						</DropdownMenuItem> */}
 					</DropdownMenuContent>
 				</DropdownMenu>
 				</div>
