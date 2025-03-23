@@ -227,13 +227,8 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
         setIsSending(true);
         
         try {
-            // Generate the PDF
+            // Generate the PDF on the client side
             const result = await generateInvoicePDF();
-            
-            // Make sure we have PDF content
-            if (!result.pdf) {
-                throw new Error("Failed to generate PDF");
-            }
             
             const emailData = {
                 to: invoice.clientEmail,
@@ -243,20 +238,17 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                 attachments: [
                     {
                         filename: `invoice-${invoice.invoiceNumber}.pdf`,
-                        content: result.pdf // This is a base64 string of the PDF content
+                        content: result.pdf // This is already base64 encoded from easyinvoice
                     }
                 ]
             };
 
-            console.log("Sending email with attachment");
-            
             await sendInvoiceEmail(
                 invoice.clientEmail, 
                 emailData, 
                 invoice.clientName || "Customer", 
                 invoice.invoiceNumber
             );
-            
             toast.success(`Invoice #${invoice.displayNumber} sent to ${invoice.clientEmail}`);
         } catch (error) {
             console.error("Error sending invoice email:", error);
