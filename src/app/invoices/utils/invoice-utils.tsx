@@ -50,16 +50,22 @@ const date = new Date(dateString);
 return date.toLocaleDateString();
 }
 
+// Format phone number
+export function formatPhoneNumber(phoneNumber: string): string {
+return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+}
+
 // Calculate total with tax
 export function calculateTotalWithTax(amount: number, taxRate: number): number {
 return amount + amount * taxRate;
 }
 
-export async function setInvoiceStatus(invoiceId: string, status: string) {
+export async function setInvoiceStatus(invoiceId: string, status: string, shopId: string) {
 	const { data, error } = await supabase
 	.from('invoices')
 	.update({ status: status })
-	.eq('id', invoiceId);
+	.eq('invoice_number', invoiceId)
+	.eq('shop_id', shopId);
 
 	if (error) {
 		throw error
@@ -80,9 +86,11 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 			shop_name: invoiceData.shop_name,
 			shop_address: invoiceData.shop_address,
 			shop_email: invoiceData.shop_email,
+			shop_phone: invoiceData.shop_phone,
 			client_name: invoiceData.client_name,
 			client_address: invoiceData.client_address,
 			client_email: invoiceData.client_email,
+			client_phone: invoiceData.client_phone,
 			amount: invoiceData.amount,
 			issue_date: invoiceData.issue_date,
 			labour: invoiceData.labour,
@@ -117,11 +125,12 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 	}
 }
 
-export async function deleteInvoice(invoiceId: string) {
+export async function deleteInvoice(invoiceId: string, shopId: string) {
 	const { data, error } = await supabase
 		.from('invoices')
 		.delete()
-		.eq('invoice_number', invoiceId);
+		.eq('invoice_number', invoiceId)
+		.eq('shop_id', shopId);
 
 	if (error) {
 		throw error;
