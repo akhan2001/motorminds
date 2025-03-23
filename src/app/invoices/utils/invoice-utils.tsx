@@ -51,8 +51,23 @@ return date.toLocaleDateString();
 }
 
 // Format phone number
-export function formatPhoneNumber(phoneNumber: string): string {
-return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+export function formatPhoneNumber(phoneNumber: string | null | undefined): string {
+	if (!phoneNumber) return '';
+	
+	// Remove all non-numeric characters
+	const cleaned = phoneNumber.replace(/\D/g, '');
+	
+	// Check if we have enough digits
+	if (cleaned.length < 10) return phoneNumber;
+	
+	// Format as (XXX) XXX-XXXX
+	const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+	if (match) {
+		return `(${match[1]}) ${match[2]}-${match[3]}`;
+	}
+	
+	// Return original if we couldn't format it
+	return phoneNumber;
 }
 
 // Calculate total with tax

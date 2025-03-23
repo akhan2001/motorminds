@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { CheckIcon, DownloadIcon, TrashIcon } from 'lucide-react';
+import { DownloadIcon, TrashIcon, MailIcon } from 'lucide-react';
 import { toast } from "sonner";
-import { setInvoiceStatus } from '../utils/invoice-utils';
+import { formatDate, setInvoiceStatus } from '../utils/invoice-utils';
 import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
 import { formatPhoneNumber } from '../utils/invoice-utils';
+import { sendInvoiceEmail } from '@/app/customers/api/customer-utils';
+
 interface InvoiceDialogProps {
     isOpen: boolean;
     onClose: () => void;
@@ -45,8 +47,9 @@ interface InvoiceDialogProps {
 export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialogProps) {
     const [status, setStatus] = useState(invoice.status);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
     const { confirm } = useConfirmation();
-    
+
     // Update local status when invoice prop changes
     useEffect(() => {
         setStatus(invoice.status);
@@ -71,14 +74,8 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
         }
     };
 
-    const handleDownload = async () => {
-        if (!isOpen) {
-            toast.error("Cannot generate PDF: Invoice not available");
-            return;
-        }
-
-        setIsDownloading(true);
-
+    // This function creates PDF data for both download and email
+    const generateInvoicePDF = async () => {
         try {
             // Import easyinvoice dynamically
             const easyinvoice = await import('easyinvoice');
@@ -116,6 +113,11 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                 });
             }
             
+            // Safety checks for all client/shop information
+            const vehicleDescription = invoice.vehicleInfo ? 
+                `${invoice.vehicleInfo.year || ''} ${invoice.vehicleInfo.make || ''} ${invoice.vehicleInfo.model || ''}`.trim() : 
+                '';
+            
             const data = {
                 apiKey: "free",
                 mode: "development" as "development" | "production",
@@ -123,28 +125,24 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                     logo: "https://cdn.prod.website-files.com/66fcb2f56c967857d2ff9609/67e0818bed90c1081e521e01_motorminds-logo.png",
                 },
                 sender: {
-                    company: invoice.shopName,
-                    address: invoice.shopAddress,
-                    zip: invoice.shopEmail,
-                    city: invoice.shopPhone,
-                    // country: invoice.shopPhone
+                    company: invoice.shopName || "",
+                    address: invoice.shopAddress || "",
+                    zip: invoice.shopEmail || "",
+                    city: invoice.shopPhone || "",
                 },
                 client: {
-                    company: invoice.clientName,
-                    address: invoice.clientAddress,
-                    // email: invoice.clientEmail,
-                    // country: invoice.clientPhone,
+                    company: invoice.clientName || "",
+                    address: invoice.clientAddress || "",
                     zip: formatPhoneNumber(invoice.clientPhone),
-                    city: invoice.clientEmail,
-                    country: invoice.vehicleInfo?.year + " " + invoice.vehicleInfo?.make + " " + invoice.vehicleInfo?.model
+                    city: invoice.clientEmail || "",
+                    country: vehicleDescription || ""
                 },
                 information: {
-                    number: invoice.displayNumber,
-                    date: formatDate(invoice.issueDate),
-                    //"due-date": formatDate(invoice.issueDate), // Using same date as issue date
+                    number: invoice.displayNumber || "",
+                    date: formatDate(invoice.issueDate) || "",
                 },
                 products: products,
-                bottom_notice: "Thank you for choosing " + invoice.shopName + "!\n Powered by Motorminds Inc.",
+                bottom_notice: "Thank you for choosing " + (invoice.shopName || "us") + "!\n Powered by Motorminds Inc.",
                 settings: {
                     currency: "CAD",
                 }
@@ -152,6 +150,23 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
 
             // Generate PDF using EasyInvoice
             const result = await easyinvoice.default.createInvoice(data as any);
+            return result;
+        } catch (error) {
+            console.error("Error generating invoice PDF:", error);
+            throw error;
+        }
+    };
+
+    const handleDownload = async () => {
+        if (!isOpen) {
+            toast.error("Cannot generate PDF: Invoice not available");
+            return;
+        }
+
+        setIsDownloading(true);
+
+        try {
+            const result = await generateInvoicePDF();
             
             // Create a download link for the PDF
             const link = document.createElement('a');
@@ -198,8 +213,57 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
         }
     };
 
-    const handleShowInvoice = () => {
-        window.open(`/invoices/${invoice.invoiceNumber}`, '_blank');
+    // const handleShowInvoice = () => {
+    //     window.open(`/invoices/${invoice.invoiceNumber}`, '_blank');
+    // };
+
+    // Update the sendInvoice function to include proper validation
+    const sendInvoice = async () => {
+        if (!invoice.clientEmail) {
+            toast.error("Client email is required to send the invoice");
+            return;
+        }
+
+        setIsSending(true);
+        
+        try {
+            // Generate the PDF
+            const result = await generateInvoicePDF();
+            
+            // Make sure we have PDF content
+            if (!result.pdf) {
+                throw new Error("Failed to generate PDF");
+            }
+            
+            const emailData = {
+                to: invoice.clientEmail,
+                subject: `Invoice #${invoice.displayNumber} from ${invoice.shopName || ""}`,
+                body: `Dear ${invoice.clientName || "Customer"},\n\nPlease find attached the invoice #${invoice.displayNumber} for your recent service.\n\nThank you for choosing ${invoice.shopName || "us"}!`,
+                shopName: invoice.shopName || "",
+                attachments: [
+                    {
+                        filename: `invoice-${invoice.invoiceNumber}.pdf`,
+                        content: result.pdf // This is a base64 string of the PDF content
+                    }
+                ]
+            };
+
+            console.log("Sending email with attachment");
+            
+            await sendInvoiceEmail(
+                invoice.clientEmail, 
+                emailData, 
+                invoice.clientName || "Customer", 
+                invoice.invoiceNumber
+            );
+            
+            toast.success(`Invoice #${invoice.displayNumber} sent to ${invoice.clientEmail}`);
+        } catch (error) {
+            console.error("Error sending invoice email:", error);
+            toast.error("Failed to send invoice email: " + (error as Error).message);
+        } finally {
+            setIsSending(false);
+        }
     };
 
     // Format amount to display as currency
@@ -337,13 +401,14 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                     </div>
                 </div>
         
-                <DialogFooter className="mt-4 flex flex-col sm:flex-row justify-end gap-2">
+                <DialogFooter className="mt-4 flex flex-col sm:flex-row justify-end gap-1">
                     <Button 
-                        className="bg-green-600 text-white w-full sm:w-auto hover:bg-green-700 border-none" 
-                        onClick={handleShowInvoice}
+                        className="bg-[#007bff] text-white w-full sm:w-auto hover:bg-[#0056b3] border-none" 
+                        onClick={sendInvoice}
+                        disabled={isSending}
                     >
-                        <CheckIcon className="w-4 h-4 mr-2" />
-                        Show Invoice
+                        <MailIcon className="w-4 h-4" />
+                        {/* {isSending ? "Sending..." : "Send Invoice"} */}
                     </Button>
                     <Button 
                         className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 

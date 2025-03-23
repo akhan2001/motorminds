@@ -241,3 +241,32 @@ export async function sendEmail(email: string, subject: string, body: string, re
         throw error;
     }
 }
+
+export async function sendInvoiceEmail(email: string, emailData: any, recipient_name: string, invoiceNumber: string) {
+    try {
+        const subject = emailData.subject;
+        const body = emailData.body;
+        const attachments = emailData.attachments;
+        const shopName = emailData.shopName;
+
+        const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, subject, body, recipient_name, invoiceNumber, attachments, shopName }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to send email');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error sending invoice email:', error);
+        throw error;
+    }
+}
+
