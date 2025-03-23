@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { getShopId } from '@/utils/supabase/supabase-shop';
-import { getShopName } from '@/utils/shopinfo/getShopInfo';
+import { getShopInfo } from '@/utils/supabase/supabase-shop';
 
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -89,7 +88,8 @@ const generateEmailHtml = (props: {
 
 export async function POST(request: Request) {
     try {
-        const { email, subject, body, recipient_name } = await request.json();
+        const { email, subject, body, recipient_name, attachments, shopName, shopId } = await request.json();
+        
         // Validate inputs
         if (!email || !subject || !body) {
             return NextResponse.json(
@@ -98,32 +98,72 @@ export async function POST(request: Request) {
             );
         }
         
+        // Get shop information if shopId is provided
+        let shopContactPhone = '';
+        let shopContactEmail = '';
+        let businessName = shopName || 'MotorMinds Auto Shop';
+        
+        if (shopId) {
+            try {
+                const shopInfo = await getShopInfo(shopId);
+                if (shopInfo) {
+                    businessName = shopInfo.shop_name || businessName;
+                    shopContactPhone = shopInfo.shop_phone || '';
+                    shopContactEmail = shopInfo.shop_email || '';
+                }
+            } catch (error) {
+                console.error('Error fetching shop info:', error);
+            }
+        }
+
+        console.log(shopName);
+        
         // Generate HTML email using the template
         const htmlEmail = generateEmailHtml({
             customerName: recipient_name || 'Valued Customer',
-            shopName: 'MotorMinds Auto Shop',
+            shopName: businessName,
             message: body,
             subject: subject,
-            contactPhone: '(555) 123-4567',
-            contactEmail: 'info@motorminds.ca'
+            contactPhone: shopContactPhone,
+            contactEmail: shopContactEmail
         });
         
-        // Send email using Resend
-        const { data, error } = await resend.emails.send({
-            from: 'Motorminds <info@motorminds.ca>',
+        // Define the email data with proper typing
+        const emailData: {
+            from: string;
+            to: string;
+            subject: string;
+            text: string;
+            html: string;
+            attachments?: Array<{filename: string, content: string}>;
+        } = {
+            from: `${shopName} <info@motorminds.ca>`,
             to: email,
             subject: subject,
             text: body, // Plain text fallback
             html: htmlEmail,
-        });
+        };
+        
+        // Add attachments if present
+        if (attachments && attachments.length > 0) {
+            emailData.attachments = attachments.map((attachment: any) => ({
+                filename: attachment.filename,
+                content: attachment.content
+            }));
+        }
+        
+        // Send email using Resend
+        const { data, error } = await resend.emails.send(emailData);
         
         if (error) {
+            console.error('Error sending email:', error);
             return Response.json({ error }, { status: 500 });
         }
 
         console.log('Email sent with ID:', data?.id);
         return Response.json(data);
     } catch (error) {
+        console.error('Exception in email sending:', error);
         return Response.json({ error }, { status: 500 });
     }
 }
