@@ -56,14 +56,14 @@ export default function SignUpComponent() {
   }
 
   const handleTurnstileSuccess = (token: string) => {
-    console.log("Turnstile token:", token)
+    // console.log("Turnstile token:", token)
     // execute({ token })
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] w-full px-4 sm:px-6 md:px-8 py-8 md:py-12">
       <div className="mx-auto w-full max-w-[400px]">
-        <h2 className="mb-4 md:mb-6 text-xl sm:text-2xl font-medium text-white text-center">Create Account</h2>
+        <h2 className="mb-4 md:mb-6 text-xl sm:text-2xl font-medium text-white text-center">Create an Account</h2>
 
         {/* Social Login Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
@@ -182,7 +182,7 @@ export default function SignUpComponent() {
           <div className="flex justify-center my-2 sm:my-3">
             {/* Uncomment to add Turnstile */}
             <Turnstile
-              sitekey={"0x4AAAAAABCOx3oaQvRNVYsT"}
+              sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
               onSuccess={handleTurnstileSuccess}
               theme="dark"
               responseField={false}
