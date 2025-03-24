@@ -63,7 +63,7 @@ export default function SignUpComponent() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] w-full px-4 sm:px-6 md:px-8 py-8 md:py-12">
       <div className="mx-auto w-full max-w-[400px]">
-        <h2 className="mb-4 md:mb-6 text-xl sm:text-2xl font-medium text-white text-center">Create Account</h2>
+        <h2 className="mb-4 md:mb-6 text-xl sm:text-2xl font-medium text-white text-center">Create an Account</h2>
 
         {/* Social Login Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
