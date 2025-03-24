@@ -55,10 +55,10 @@ export default function SignUpComponent() {
     }
   }
 
-  // const handleTurnstileSuccess = (token: string) => {
-  //   console.log("Turnstile token:", token)
-  //   execute({ token })
-  // }
+  const handleTurnstileSuccess = (token: string) => {
+    console.log("Turnstile token:", token)
+    // execute({ token })
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] w-full px-4 sm:px-6 md:px-8 py-8 md:py-12">
@@ -181,13 +181,13 @@ export default function SignUpComponent() {
           {/* This is where you would add Turnstile */}
           <div className="flex justify-center my-2 sm:my-3">
             {/* Uncomment to add Turnstile */}
-            {/* <Turnstile
+            <Turnstile
               sitekey={"0x4AAAAAABCOx3oaQvRNVYsT"}
               onSuccess={handleTurnstileSuccess}
               theme="dark"
               responseField={false}
               className="mx-auto scale-90 sm:scale-100"
-            /> */}
+            />
           </div>
 
           <Button

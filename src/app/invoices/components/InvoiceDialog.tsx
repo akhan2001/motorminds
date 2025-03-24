@@ -187,7 +187,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
         try {
             const newStatus = status === "PAID" ? "UNPAID" : "PAID";
             setStatus(newStatus);
-            toast.success(`Invoice #${invoice.displayNumber} updated to ${newStatus}`);
+            // toast.success(`Invoice #${invoice.displayNumber} updated to ${newStatus}`);
         } catch (error) {
             console.error("Error updating invoice status:", error);
             toast.error("Failed to update invoice status");
