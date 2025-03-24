@@ -56,7 +56,7 @@ export default function SignUpComponent() {
   }
 
   const handleTurnstileSuccess = (token: string) => {
-    console.log("Turnstile token:", token)
+    // console.log("Turnstile token:", token)
     // execute({ token })
   }
 
@@ -182,7 +182,7 @@ export default function SignUpComponent() {
           <div className="flex justify-center my-2 sm:my-3">
             {/* Uncomment to add Turnstile */}
             <Turnstile
-              sitekey={"0x4AAAAAABCOx3oaQvRNVYsT"}
+              sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
               onSuccess={handleTurnstileSuccess}
               theme="dark"
               responseField={false}
