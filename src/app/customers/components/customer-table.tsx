@@ -314,10 +314,9 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 								</div>
 							</PaginationContent>
 						</Pagination>
-						
-						<div className="text-center text-sm text-gray-400 mt-2">
+						{/* <div className="text-center text-sm text-gray-400 mt-2">
 							Showing {customers.length > 0 ? indexOfFirstItem + 1 : 0}-{Math.min(indexOfLastItem, customers.length)} of {customers.length} customers
-						</div>
+						</div> */}
 					</div>
 				)}
 
