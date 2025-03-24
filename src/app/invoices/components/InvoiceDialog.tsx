@@ -74,114 +74,114 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
         }
     };
 
-    // This function creates PDF data for both download and email
-    const generateInvoicePDF = async () => {
-        try {
-            // Import easyinvoice dynamically
-            const easyinvoice = await import('easyinvoice');
+    // // This function creates PDF data for both download and email
+    // const generateInvoicePDF = async () => {
+    //     try {
+    //         // Import easyinvoice dynamically
+    //         const easyinvoice = await import('easyinvoice');
             
-            // Prepare products array - we'll use labor and parts as separate line items
-            const products = [];
+    //         // Prepare products array - we'll use labor and parts as separate line items
+    //         const products = [];
             
-            // Labor as a product if it exists
-            if (invoice.labour) {
-                products.push({
-                    quantity: "1",
-                    description: `Labor: ${invoice.labour}`,
-                    price: invoice.amount, // As we don't have separate amounts, use full amount
-                    taxRate: "0"
-                });
-            }
+    //         // Labor as a product if it exists
+    //         if (invoice.labour) {
+    //             products.push({
+    //                 quantity: "1",
+    //                 description: `Labor: ${invoice.labour}`,
+    //                 price: invoice.amount, // As we don't have separate amounts, use full amount
+    //                 taxRate: "0"
+    //             });
+    //         }
             
-            // Parts as a product if it exists
-            if (invoice.parts) {
-                products.push({
-                    quantity: "1",
-                    description: `Parts: ${invoice.parts}`,
-                    price: "0", // We already put the full amount in labor
-                    taxRate: "0"
-                });
-            }
+    //         // Parts as a product if it exists
+    //         if (invoice.parts) {
+    //             products.push({
+    //                 quantity: "1",
+    //                 description: `Parts: ${invoice.parts}`,
+    //                 price: "0", // We already put the full amount in labor
+    //                 taxRate: "0"
+    //             });
+    //         }
             
-            // Add a default product if nothing was added
-            if (products.length === 0) {
-                products.push({
-                    quantity: "1",
-                    description: invoice.description || "Service",
-                    price: invoice.amount,
-                    taxRate: "0"
-                });
-            }
+    //         // Add a default product if nothing was added
+    //         if (products.length === 0) {
+    //             products.push({
+    //                 quantity: "1",
+    //                 description: invoice.description || "Service",
+    //                 price: invoice.amount,
+    //                 taxRate: "0"
+    //             });
+    //         }
             
-            // Safety checks for all client/shop information
-            const vehicleDescription = invoice.vehicleInfo ? 
-                `${invoice.vehicleInfo.year || ''} ${invoice.vehicleInfo.make || ''} ${invoice.vehicleInfo.model || ''}`.trim() : 
-                '';
+    //         // Safety checks for all client/shop information
+    //         const vehicleDescription = invoice.vehicleInfo ? 
+    //             `${invoice.vehicleInfo.year || ''} ${invoice.vehicleInfo.make || ''} ${invoice.vehicleInfo.model || ''}`.trim() : 
+    //             '';
             
-            const data = {
-                apiKey: "free",
-                mode: "development" as "development" | "production",
-                images: {
-                    logo: "https://cdn.prod.website-files.com/66fcb2f56c967857d2ff9609/67e0818bed90c1081e521e01_motorminds-logo.png",
-                },
-                sender: {
-                    company: invoice.shopName || "",
-                    address: invoice.shopAddress || "",
-                    zip: invoice.shopEmail || "",
-                    city: invoice.shopPhone || "",
-                },
-                client: {
-                    company: invoice.clientName || "",
-                    address: invoice.clientAddress || "",
-                    zip: formatPhoneNumber(invoice.clientPhone),
-                    city: invoice.clientEmail || "",
-                    country: vehicleDescription || ""
-                },
-                information: {
-                    number: invoice.displayNumber || "",
-                    date: formatDate(invoice.issueDate) || "",
-                },
-                products: products,
-                bottom_notice: "Thank you for choosing " + (invoice.shopName || "us") + "!\n Powered by Motorminds Inc.",
-                settings: {
-                    currency: "CAD",
-                }
-            };
+    //         const data = {
+    //             apiKey: "free",
+    //             mode: "development" as "development" | "production",
+    //             images: {
+    //                 logo: "https://cdn.prod.website-files.com/66fcb2f56c967857d2ff9609/67e0818bed90c1081e521e01_motorminds-logo.png",
+    //             },
+    //             sender: {
+    //                 company: invoice.shopName || "",
+    //                 address: invoice.shopAddress || "",
+    //                 zip: invoice.shopEmail || "",
+    //                 city: invoice.shopPhone || "",
+    //             },
+    //             client: {
+    //                 company: invoice.clientName || "",
+    //                 address: invoice.clientAddress || "",
+    //                 zip: formatPhoneNumber(invoice.clientPhone),
+    //                 city: invoice.clientEmail || "",
+    //                 country: vehicleDescription || ""
+    //             },
+    //             information: {
+    //                 number: invoice.displayNumber || "",
+    //                 date: formatDate(invoice.issueDate) || "",
+    //             },
+    //             products: products,
+    //             bottom_notice: "Thank you for choosing " + (invoice.shopName || "us") + "!\n Powered by Motorminds Inc.",
+    //             settings: {
+    //                 currency: "CAD",
+    //             }
+    //         };
 
-            // Generate PDF using EasyInvoice
-            const result = await easyinvoice.default.createInvoice(data as any);
-            return result;
-        } catch (error) {
-            console.error("Error generating invoice PDF:", error);
-            throw error;
-        }
-    };
+    //         // Generate PDF using EasyInvoice
+    //         const result = await easyinvoice.default.createInvoice(data as any);
+    //         return result;
+    //     } catch (error) {
+    //         console.error("Error generating invoice PDF:", error);
+    //         throw error;
+    //     }
+    // };
 
-    const handleDownload = async () => {
-        if (!isOpen) {
-            toast.error("Cannot generate PDF: Invoice not available");
-            return;
-        }
+    // const handleDownload = async () => {
+    //     if (!isOpen) {
+    //         toast.error("Cannot generate PDF: Invoice not available");
+    //         return;
+    //     }
 
-        setIsDownloading(true);
+    //     setIsDownloading(true);
 
-        try {
-            const result = await generateInvoicePDF();
+    //     try {
+    //         const result = await generateInvoicePDF();
             
-            // Create a download link for the PDF
-            const link = document.createElement('a');
-            link.href = `data:application/pdf;base64,${result.pdf}`;
-            link.download = `invoice-${invoice.invoiceNumber}.pdf`;
-            link.click();
+    //         // Create a download link for the PDF
+    //         const link = document.createElement('a');
+    //         link.href = `data:application/pdf;base64,${result.pdf}`;
+    //         link.download = `invoice-${invoice.invoiceNumber}.pdf`;
+    //         link.click();
             
-            toast.success("Invoice downloaded successfully");
-        } catch (error) {
-            console.error("Error downloading invoice:", error);
-            toast.error("Failed to download invoice");
-        } finally {
-            setIsDownloading(false);
-        }
-    };
+    //         toast.success("Invoice downloaded successfully");
+    //     } catch (error) {
+    //         console.error("Error downloading invoice:", error);
+    //         toast.error("Failed to download invoice");
+    //     } finally {
+    //         setIsDownloading(false);
+    //     }
+    // };
 
     const toggleStatus = async () => {
         try {
@@ -218,45 +218,45 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
     // };
 
     // Update the sendInvoice function to include proper validation
-    const sendInvoice = async () => {
-        if (!invoice.clientEmail) {
-            toast.error("Client email is required to send the invoice");
-            return;
-        }
+    // const sendInvoice = async () => {
+    //     if (!invoice.clientEmail) {
+    //         toast.error("Client email is required to send the invoice");
+    //         return;
+    //     }
 
-        setIsSending(true);
+    //     setIsSending(true);
         
-        try {
-            // Generate the PDF on the client side
-            const result = await generateInvoicePDF();
+    //     try {
+    //         // Generate the PDF on the client side
+    //         const result = await generateInvoicePDF();
             
-            const emailData = {
-                to: invoice.clientEmail,
-                subject: `Invoice #${invoice.displayNumber} from ${invoice.shopName || ""}`,
-                body: `Dear ${invoice.clientName || "Customer"},\n\nPlease find attached the invoice #${invoice.displayNumber} for your recent service.\n\nThank you for choosing ${invoice.shopName || "us"}!`,
-                shopName: invoice.shopName || "",
-                attachments: [
-                    {
-                        filename: `invoice-${invoice.invoiceNumber}.pdf`,
-                        content: result.pdf // This is already base64 encoded from easyinvoice
-                    }
-                ]
-            };
+    //         const emailData = {
+    //             to: invoice.clientEmail,
+    //             subject: `Invoice #${invoice.displayNumber} from ${invoice.shopName || ""}`,
+    //             body: `Dear ${invoice.clientName || "Customer"},\n\nPlease find attached the invoice #${invoice.displayNumber} for your recent service.\n\nThank you for choosing ${invoice.shopName || "us"}!`,
+    //             shopName: invoice.shopName || "",
+    //             attachments: [
+    //                 {
+    //                     filename: `invoice-${invoice.invoiceNumber}.pdf`,
+    //                     content: result.pdf // This is already base64 encoded from easyinvoice
+    //                 }
+    //             ]
+    //         };
 
-            await sendInvoiceEmail(
-                invoice.clientEmail, 
-                emailData, 
-                invoice.clientName || "Customer", 
-                invoice.invoiceNumber
-            );
-            toast.success(`Invoice #${invoice.displayNumber} sent to ${invoice.clientEmail}`);
-        } catch (error) {
-            console.error("Error sending invoice email:", error);
-            toast.error("Failed to send invoice email: " + (error as Error).message);
-        } finally {
-            setIsSending(false);
-        }
-    };
+    //         await sendInvoiceEmail(
+    //             invoice.clientEmail, 
+    //             emailData, 
+    //             invoice.clientName || "Customer", 
+    //             invoice.invoiceNumber
+    //         );
+    //         toast.success(`Invoice #${invoice.displayNumber} sent to ${invoice.clientEmail}`);
+    //     } catch (error) {
+    //         console.error("Error sending invoice email:", error);
+    //         toast.error("Failed to send invoice email: " + (error as Error).message);
+    //     } finally {
+    //         setIsSending(false);
+    //     }
+    // };
 
     // Format amount to display as currency
     const formatAmount = (amount: string) => {
@@ -394,14 +394,14 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                 </div>
         
                 <DialogFooter className="mt-4 flex flex-col sm:flex-row justify-end gap-1">
-                    <Button 
+                    {/* <Button 
                         className="bg-[#007bff] text-white w-full sm:w-auto hover:bg-[#0056b3] border-none" 
                         onClick={sendInvoice}
                         disabled={isSending}
                     >
                         <MailIcon className="w-4 h-4" />
-                        {/* {isSending ? "Sending..." : "Send Invoice"} */}
-                    </Button>
+                        {isSending ? "Sending..." : "Send Invoice"}
+                    </Button> */}
                     <Button 
                         className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 
                         onClick={handleDeleteInvoice}
@@ -409,14 +409,14 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                         <TrashIcon className="w-4 h-4 mr-2" />
                         Delete Invoice
                     </Button>
-                    <Button 
+                    {/* <Button 
                         className="bg-gray-600 text-white w-full sm:w-auto hover:bg-gray-700 border-none" 
                         onClick={handleDownload}
                         disabled={isDownloading}
                     >
                         <DownloadIcon className="w-4 h-4 mr-2" />
                         {isDownloading ? "Generating..." : "Download PDF"}
-                    </Button>
+                    </Button> */}
                 </DialogFooter>
             </DialogContent>
         </Dialog>    
