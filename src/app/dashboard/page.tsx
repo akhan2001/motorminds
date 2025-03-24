@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import Image from "next/image"
 
 import { fetchAllInvoices } from "@/app/invoices/utils/invoice-utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -72,11 +73,57 @@ function getStatusColorClass(status: string): string {
   }
 }
 
+// Modify the LoadingScreen component to make it more engaging for a 5-second display
+function LoadingScreen() {
+  const [loadingText, setLoadingText] = useState("Loading your workshop dashboard");
+  
+  // Add a loading animation effect for the text
+  useEffect(() => {
+    const texts = [
+      "Loading your workshop dashboard",
+      "Connecting to your data",
+      "Preparing your invoices",
+      "Setting up your calendar",
+      "Almost there..."
+    ];
+    
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % texts.length;
+      setLoadingText(texts[currentIndex]);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50">
+      <div className="flex flex-col items-center">
+        {/* Animated loader */}
+        <div className="relative mb-3">
+          <span className="flex items-center animate-pulse">
+            <Image src="/motorminds-logo-black_background.svg" alt="MotorMinds" width={120} height={120} />
+          </span>
+        </div>
+        
+        {/* Text */}
+        <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white animate-pulse">
+        </h2>
+        <p className="text-gray-400 text-sm md:text-base min-h-[1.5rem] text-center">
+          {loadingText}...
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter()
 
   // -------------- Track if we're still loading initial data --------------
   const [initialLoading, setInitialLoading] = useState(true)
+  // To ensure we show the loading screen for at least 5 seconds
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   // -------------- Dashboard State --------------
   const [shop, setShop] = useState<Shop | null>(null)
@@ -112,103 +159,114 @@ export default function DashboardPage() {
   const [tasksCompleted, setTasksCompleted] = useState(0)
 
   useEffect(() => {
-    checkSessionAndLoadData().finally(() => {
-      // Once checkSessionAndLoadData finishes,
-      // we hide the black loading screen.
-      setInitialLoading(false)
-    })
-  }, [])
-
-  /**
-   * Step 1: Check user session, fetch shop, invoices,
-   * plus a minimal array of tasks for the calendar,
-   * then fetch stats (leads/customers/tasks).
-   */
-  async function checkSessionAndLoadData() {
-    try {
-      // Check user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        router.push("/login")
-        return
+    // Start a timer for the minimum 5-second display
+    const minLoadingTimer = setTimeout(() => {
+      if (dataLoaded) {
+        setInitialLoading(false)
       }
+    }, 5000)
+    
+    async function loadData() {
+      try {
+        // Check user
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push("/login")
+          return
+        }
 
-      // get shop_id
-      const { data: userData, error: userErr } = await supabase
-        .from("users")
-        .select("shop_id")
-        .eq("id", user.id)
-        .single()
-      if (userErr || !userData?.shop_id) {
-        console.error("No valid shop_id or error:", userErr)
-        router.push("/login")
-        return
+        // get shop_id
+        const { data: userData, error: userErr } = await supabase
+          .from("users")
+          .select("shop_id")
+          .eq("id", user.id)
+          .single()
+        
+        if (userErr || !userData?.shop_id) {
+          console.error("No valid shop_id or error:", userErr)
+          router.push("/login")
+          return
+        }
+
+        const shopId = userData.shop_id
+        setMyShopId(shopId)
+
+        // fetch shop
+        const { data: shopData, error: shopErr } = await supabase
+          .from("shops")
+          .select("*")
+          .eq("id", shopId)
+          .single()
+        
+        if (shopErr) {
+          console.error("Error fetching shop:", shopErr)
+        } else {
+          setShop(shopData)
+        }
+
+        // fetch invoices
+        const invoiceData = await fetchAllInvoices(shopId)
+        if (invoiceData) {
+          setInvoices(invoiceData)
+        }
+
+        // fetch tasks
+        const { data: rawRows, error: tasksErr } = await supabase
+          .from("repair_orders")
+          .select(`
+            id,
+            created_at,
+            status,
+            repair_order_details(
+              description
+            )
+          `)
+          .eq("shop_id", shopId)
+
+        if (tasksErr) {
+          console.error("Error fetching tasks for calendar:", tasksErr)
+        } else if (rawRows) {
+          const mapped = rawRows.map((row: any) => {
+            const detail = row.repair_order_details?.[0]
+            return {
+              id: row.id,
+              created_at: row.created_at,
+              status: row.status || "Pending",
+              title: detail?.description || "Untitled",
+            }
+          }) as CalendarTask[]
+          setCalendarTasks(mapped)
+
+          // Filter today's tasks for the default date
+          const filtered = filterCalTasksByDate(mapped, new Date())
+          setSelectedCalTasks(filtered)
+        }
+
+        // Fetch stats
+        await fetchStats(shopId)
+        
+        // All data is loaded, but don't hide loading screen yet
+        setDataLoaded(true)
+        
+        // Only hide the loading screen if the 5 seconds have passed
+        setTimeout(() => {
+          setInitialLoading(false)
+        }, 5000)
+        
+      } catch (err) {
+        console.error("Error loading dashboard data:", err)
+        // Even on error, respect the minimum loading time
+        setTimeout(() => {
+          setInitialLoading(false)
+        }, 5000)
       }
-
-      const shopId = userData.shop_id
-      setMyShopId(shopId)
-
-      // fetch shop
-      const { data: shopData, error: shopErr } = await supabase
-        .from("shops")
-        .select("*")
-        .eq("id", shopId)
-        .single()
-      if (shopErr) {
-        console.error("Error fetching shop:", shopErr)
-      } else {
-        setShop(shopData)
-      }
-
-      // fetch invoices
-      const invoiceData = await fetchAllInvoices(shopId)
-      if (invoiceData) {
-        setInvoices(invoiceData)
-      }
-
-      // fetch tasks: minimal columns for the calendar
-      const { data: rawRows, error: tasksErr } = await supabase
-        .from("repair_orders")
-        .select(`
-          id,
-          created_at,
-          status,
-          repair_order_details(
-            description
-          )
-        `)
-        .eq("shop_id", shopId)
-
-      if (tasksErr) {
-        console.error("Error fetching tasks for calendar:", tasksErr)
-        return
-      }
-      if (rawRows) {
-        const mapped = rawRows.map((row: any) => {
-          const detail = row.repair_order_details?.[0]
-          return {
-            id: row.id,
-            created_at: row.created_at,
-            status: row.status || "Pending",
-            title: detail?.description || "Untitled",
-          }
-        }) as CalendarTask[]
-        setCalendarTasks(mapped)
-
-        // Filter today's tasks for the default date
-        const filtered = filterCalTasksByDate(mapped, new Date())
-        setSelectedCalTasks(filtered)
-      }
-
-      // -------------------- Fetch stat counts for leads, customers, tasks --------------------
-      await fetchStats(shopId)
-    } catch (err) {
-      console.error("Error in checkSessionAndLoadData:", err)
-      // In a real app, handle or show an error message
     }
-  }
+    
+    loadData()
+    
+    // Clean up the timer if component unmounts
+    return () => clearTimeout(minLoadingTimer)
+  }, [router])
 
   /**
    * fetchStats(shopId):
@@ -475,13 +533,9 @@ export default function DashboardPage() {
 
   const hasMessages = messages.length > 0
 
-  // ============================
-  //  FULL BLACK SCREEN
-  //  IF initialLoading === true
-  // ============================
+  // Show loading screen when initialLoading is true
   if (initialLoading) {
-    // Return a 100vw/100vh black screen (no text).
-    return <div className="w-screen h-screen bg-black" />
+    return <LoadingScreen />
   }
 
   return (
