@@ -84,7 +84,7 @@ function LoadingScreen() {
       "Connecting to your data",
       "Preparing your invoices",
       "Setting up your calendar",
-      "Almost there..."
+      "Almost there"
     ];
     
     let currentIndex = 0;
@@ -159,20 +159,32 @@ export default function DashboardPage() {
   const [tasksCompleted, setTasksCompleted] = useState(0)
 
   useEffect(() => {
+    // Check if this is the first load or a navigation
+    const hasVisitedBefore = sessionStorage.getItem('dashboard_visited');
+    
+    // If user has visited the dashboard before in this session, skip loading screen
+    if (hasVisitedBefore) {
+      setInitialLoading(false);
+      loadData();
+      return;
+    }
+    
     // Start a timer for the minimum 5-second display
     const minLoadingTimer = setTimeout(() => {
       if (dataLoaded) {
-        setInitialLoading(false)
+        setInitialLoading(false);
+        // Mark that user has visited dashboard in this session
+        sessionStorage.setItem('dashboard_visited', 'true');
       }
-    }, 5000)
+    }, 5000);
     
     async function loadData() {
       try {
         // Check user
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          router.push("/login")
-          return
+          router.push("/login");
+          return;
         }
 
         // get shop_id
@@ -245,28 +257,38 @@ export default function DashboardPage() {
         // Fetch stats
         await fetchStats(shopId)
         
-        // All data is loaded, but don't hide loading screen yet
-        setDataLoaded(true)
+        // All data is loaded, but don't hide loading screen yet on first visit
+        setDataLoaded(true);
         
         // Only hide the loading screen if the 5 seconds have passed
-        setTimeout(() => {
-          setInitialLoading(false)
-        }, 5000)
+        if (!hasVisitedBefore) {
+          setTimeout(() => {
+            setInitialLoading(false);
+            // Mark that user has visited dashboard
+            sessionStorage.setItem('dashboard_visited', 'true');
+          }, 5000);
+        }
         
       } catch (err) {
-        console.error("Error loading dashboard data:", err)
-        // Even on error, respect the minimum loading time
-        setTimeout(() => {
-          setInitialLoading(false)
-        }, 5000)
+        console.error("Error loading dashboard data:", err);
+        // Even on error, respect the minimum loading time on first visit
+        if (!hasVisitedBefore) {
+          setTimeout(() => {
+            setInitialLoading(false);
+            // Still mark as visited even on error
+            sessionStorage.setItem('dashboard_visited', 'true');
+          }, 5000);
+        } else {
+          setInitialLoading(false);
+        }
       }
     }
     
-    loadData()
+    loadData();
     
     // Clean up the timer if component unmounts
-    return () => clearTimeout(minLoadingTimer)
-  }, [router])
+    return () => clearTimeout(minLoadingTimer);
+  }, [router]);
 
   /**
    * fetchStats(shopId):
