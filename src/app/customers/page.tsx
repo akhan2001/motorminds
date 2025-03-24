@@ -41,7 +41,7 @@ export default function CustomersPage() {
         return (
             <div className="flex flex-col min-h-screen bg-black text-white">
                 <Nav activeLink="Customers" />
-                <CustomersTableLoading />
+                {/* <CustomersTableLoading /> */}
             </div>
         )
     }

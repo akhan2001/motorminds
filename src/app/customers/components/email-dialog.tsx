@@ -62,7 +62,7 @@ export function EmailDialog({ isOpen, onOpenChange, emailToSend, recipient_name 
                 <DialogHeader>
                     <DialogTitle>Send Email to Customer</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        Send an email to {emailToSend}
+                        Send an email to {recipient_name}
                     </DialogDescription>
                 </DialogHeader>
                 
