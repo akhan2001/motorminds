@@ -12,10 +12,10 @@ interface EmailDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     emailToSend: string;
-    shopId: string;
+    recipient_name: string;
 }
 
-export function EmailDialog({ isOpen, onOpenChange, emailToSend, shopId }: EmailDialogProps) {
+export function EmailDialog({ isOpen, onOpenChange, emailToSend, recipient_name }: EmailDialogProps) {
     const [emailSubject, setEmailSubject] = useState("");
     const [emailBody, setEmailBody] = useState("");
     const [isSending, setIsSending] = useState(false);
@@ -39,7 +39,7 @@ export function EmailDialog({ isOpen, onOpenChange, emailToSend, shopId }: Email
         
         setIsSending(true);
         try {
-            await sendEmail(emailToSend, emailSubject, emailBody, shopId);
+            await sendEmail(emailToSend, emailSubject, emailBody, recipient_name);
             toast.success("Email sent successfully");
             // Reset form and close dialog
             setEmailSubject("");
