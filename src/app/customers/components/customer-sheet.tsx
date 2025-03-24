@@ -519,6 +519,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 isOpen={isSendingEmail} 
                 onOpenChange={setIsSendingEmail} 
                 emailToSend={emailToSend} 
+                shopId={customer.shop_id}
             />
         </>
     );

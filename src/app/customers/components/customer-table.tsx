@@ -8,6 +8,16 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import debounce from "lodash.debounce";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/ui/pagination";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, user: any, refreshIndex: number }) {
 	const [customers, setCustomers] = useState<any[]>([]);
@@ -16,6 +26,8 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const ITEMS_PER_PAGE = 10;
 
 	const fetchCustomers = async () => {
 		setIsLoading(true);
@@ -29,6 +41,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 			if (error) throw error;
 			setAllCustomers(customers || []); // Store all customers
 			setCustomers(customers || []); // Initialize filtered list with all customers
+			setCurrentPage(1); // Reset to first page when fetching new data
 		} catch (error) {
 			console.error('Error fetching customers:', error);
 			toast.error('Failed to load customers');
@@ -38,7 +51,9 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 	};
 
 	useEffect(() => {
-		fetchCustomers();
+		if (shopId) {
+			fetchCustomers();
+		}
 	}, [shopId, refreshIndex]);
 
 	// Debounced search function to limit expensive filtering operations
@@ -58,6 +73,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 					(customer.customer_address && customer.customer_address.toLowerCase().includes(lowerCaseQuery))
 				);
 				setCustomers(filtered);
+				setCurrentPage(1); // Reset to first page when searching
 			}, 300),
 		[allCustomers]
 	);
@@ -81,6 +97,104 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		setIsSheetOpen(true);
 	};
 
+	// Calculate pagination values
+	const totalPages = Math.ceil(customers.length / ITEMS_PER_PAGE);
+	const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+	const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+	const currentCustomers = customers.slice(indexOfFirstItem, indexOfLastItem);
+
+	// Handle page changes
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page);
+	};
+
+	// Generate page numbers for pagination
+	const generatePaginationItems = () => {
+		// If we have 5 or fewer pages, show all of them
+		if (totalPages <= 5) {
+			return Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+				<PaginationItem key={page}>
+					<PaginationLink 
+						onClick={() => handlePageChange(page)}
+						isActive={currentPage === page}
+						className={`${currentPage === page ? "bg-[#333] text-white" : "text-gray-400 hover:text-white hover:bg-[#222]"} border-[#444]`}
+					>
+						{page}
+					</PaginationLink>
+				</PaginationItem>
+			));
+		}
+
+		// Otherwise, show a smart pagination with ellipsis
+		const items = [];
+
+		// Always show first page
+		items.push(
+			<PaginationItem key={1}>
+				<PaginationLink 
+					onClick={() => handlePageChange(1)}
+					isActive={currentPage === 1}
+					className={`${currentPage === 1 ? "bg-[#333] text-white" : "text-gray-400 hover:text-white hover:bg-[#222]"} border-[#444]`}
+				>
+					1
+				</PaginationLink>
+			</PaginationItem>
+		);
+
+		// Add ellipsis if needed
+		if (currentPage > 3) {
+			items.push(
+				<PaginationItem key="ellipsis-1">
+					<PaginationEllipsis className="text-gray-500" />
+				</PaginationItem>
+			);
+		}
+
+		// Add pages around current page
+		const startPage = Math.max(2, currentPage - 1);
+		const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+		for (let i = startPage; i <= endPage; i++) {
+			items.push(
+				<PaginationItem key={i}>
+					<PaginationLink 
+						onClick={() => handlePageChange(i)}
+						isActive={currentPage === i}
+						className={`${currentPage === i ? "bg-[#333] text-white" : "text-gray-400 hover:text-white hover:bg-[#222]"} border-[#444]`}
+					>
+						{i}
+					</PaginationLink>
+				</PaginationItem>
+			);
+		}
+
+		// Add ellipsis if needed
+		if (currentPage < totalPages - 2) {
+			items.push(
+				<PaginationItem key="ellipsis-2">
+					<PaginationEllipsis className="text-gray-500" />
+				</PaginationItem>
+			);
+		}
+
+		// Always show last page
+		if (totalPages > 1) {
+			items.push(
+				<PaginationItem key={totalPages}>
+					<PaginationLink 
+						onClick={() => handlePageChange(totalPages)}
+						isActive={currentPage === totalPages}
+						className={`${currentPage === totalPages ? "bg-[#333] text-white" : "text-gray-400 hover:text-white hover:bg-[#222]"} border-[#444]`}
+					>
+						{totalPages}
+					</PaginationLink>
+				</PaginationItem>
+			);
+		}
+
+		return items;
+	};
+
 	return (
 		<div className="space-y-4">
 			<div className="relative mb-4">
@@ -101,47 +215,110 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 			</div>
 
 			<div className="rounded-md border border-[#222] overflow-hidden">
-				<Table>
-					<TableHeader className="bg-[#222] border-none">
-						<TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
-							<TableHead className="text-white font-medium">Name</TableHead>
-							<TableHead className="text-white font-medium">Email</TableHead>
-							<TableHead className="text-white font-medium">Phone</TableHead>
-							<TableHead className="text-white font-medium">Address</TableHead>
-						</TableRow>
-					</TableHeader>
+				<div className="overflow-x-auto">
+					<Table>
+						<TableHeader className="bg-[#222] border-none">
+							<TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
+								<TableHead className="text-white font-medium">Name</TableHead>
+								<TableHead className="text-white font-medium hidden sm:table-cell">Email</TableHead>
+								<TableHead className="text-white font-medium hidden md:table-cell">Phone</TableHead>
+								<TableHead className="text-white font-medium hidden lg:table-cell">Address</TableHead>
+							</TableRow>
+						</TableHeader>
 
-					<TableBody>
-						{customers.length > 0 ? (
-							customers.map((customer) => (
-								<TableRow
-									className="hover:bg-secondary-foreground border-b border-[#222] cursor-pointer"
-									key={customer.id}
-									onClick={() => handleRowClick(customer)}
-								>
-									<TableCell className="text-foreground">
-										{customer.customer_name}
-									</TableCell>
-									<TableCell className="text-foreground">
-										{customer.customer_email}
-									</TableCell>
-									<TableCell className="text-foreground">
-										{customer.customer_phone}
-									</TableCell>
-									<TableCell className="text-foreground">
-										{customer.customer_address}
+						<TableBody>
+							{currentCustomers.length > 0 ? (
+								currentCustomers.map((customer) => (
+									<TableRow
+										className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer"
+										key={customer.id}
+										onClick={() => handleRowClick(customer)}
+									>
+										<TableCell className="text-foreground font-medium">
+											{customer.customer_name}
+										</TableCell>
+										<TableCell className="text-foreground hidden sm:table-cell">
+											{customer.customer_email}
+										</TableCell>
+										<TableCell className="text-foreground hidden md:table-cell">
+											{customer.customer_phone}
+										</TableCell>
+										<TableCell className="text-foreground hidden lg:table-cell">
+											{customer.customer_address}
+										</TableCell>
+									</TableRow>
+								))
+							) : (
+								<TableRow>
+									<TableCell colSpan={4} className="text-center py-8 text-gray-400">
+										{isLoading ? "Loading customers..." : searchQuery ? "No matching customers found" : "No customers found"}
 									</TableCell>
 								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell colSpan={4} className="text-center py-8 text-gray-400">
-									{isLoading ? "Loading customers..." : "No customers found"}
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
+							)}
+						</TableBody>
+					</Table>
+				</div>
+
+				{customers.length > 0 && (
+					<div className="py-4 bg-[#181818] border-t border-[#222]">
+						<Pagination>
+							<PaginationContent>
+								{/* Show shorter content on mobile */}
+								<div className="hidden sm:flex items-center gap-1">
+									<PaginationItem>
+										<PaginationPrevious 
+											onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+											className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "text-gray-400 hover:text-white hover:bg-[#222] cursor-pointer"} border-[#444]`}
+										/>
+									</PaginationItem>
+									
+									{generatePaginationItems()}
+									
+									<PaginationItem>
+										<PaginationNext 
+											onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+											className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "text-gray-400 hover:text-white hover:bg-[#222] cursor-pointer"} border-[#444]`}
+										/>
+									</PaginationItem>
+								</div>
+
+								{/* Simplified mobile version */}
+								<div className="flex sm:hidden items-center justify-between w-full gap-2">
+									<button
+										onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+										disabled={currentPage === 1}
+										className={`px-3 py-2 rounded border border-[#444] ${
+											currentPage === 1 
+												? "opacity-50 cursor-not-allowed" 
+												: "text-gray-300 hover:bg-[#222]"
+										}`}
+									>
+										<ChevronLeft className="h-4 w-4" />
+									</button>
+
+									<span className="text-sm text-gray-400">
+										Page {currentPage} of {totalPages}
+									</span>
+
+									<button
+										onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+										disabled={currentPage === totalPages}
+										className={`px-3 py-2 rounded border border-[#444] ${
+											currentPage === totalPages 
+												? "opacity-50 cursor-not-allowed" 
+												: "text-gray-300 hover:bg-[#222]"
+										}`}
+									>
+										<ChevronRight className="h-4 w-4" />
+									</button>
+								</div>
+							</PaginationContent>
+						</Pagination>
+						{/* <div className="text-center text-sm text-gray-400 mt-2">
+							Showing {customers.length > 0 ? indexOfFirstItem + 1 : 0}-{Math.min(indexOfLastItem, customers.length)} of {customers.length} customers
+						</div> */}
+					</div>
+				)}
 
 				{selectedCustomer && (
 					<CustomerSheet

@@ -13,6 +13,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button"
 import { LogOut, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { getShopInfo } from "@/utils/shopinfo/getShopInfo"
+import { getShopId } from "@/utils/supabase/supabase-shop"
+import { checkUser } from "@/utils/supabase/supabase-auth"
 
 export function Nav(
 	props: {
@@ -23,10 +26,25 @@ export function Nav(
 	const [activeLink, setActiveLink] = useState(props.activeLink) // Default active link
 	const { theme, setTheme } = useTheme()
 	const [mounted, setMounted] = useState(false)
+	const [avatar, setAvatar] = useState("")
 
 	// useEffect only runs on the client, so now we can safely show the UI
 	useEffect(() => {
 		setMounted(true)
+	}, [])
+
+	useEffect(() => {
+		const fetchShopInfo = async () => {
+			const user = await checkUser()
+			if (user) {
+				const shopId = await getShopId(user.id)
+				if (shopId) {
+					const shopInfo = await getShopInfo(shopId)
+					setAvatar(shopInfo[0].logo_image_url)
+				}
+			}
+		}
+		fetchShopInfo()
 	}, [])
 
 	// Render the icon based on mounted state to avoid hydration mismatch
@@ -149,7 +167,7 @@ export function Nav(
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 							<Avatar className="w-7 h-7 cursor-pointer">
-								<AvatarImage src="https://static.vecteezy.com/system/resources/previews/020/765/399/non_2x/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg" />
+								<AvatarImage src={avatar} />
 								<AvatarFallback>AK</AvatarFallback>
 							</Avatar>
 					</DropdownMenuTrigger>
