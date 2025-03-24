@@ -509,7 +509,7 @@ export default function DashboardPage() {
           <div className="mb-6">
             <h1 className="flex items-center gap-3 text-3xl md:text-4xl font-extrabold">
               <span className="w-2 h-8 bg-red-600 rounded" />
-              Welcome {shop?.shop_owner}
+              Welcome, {shop?.shop_owner}
             </h1>
           </div>
 
