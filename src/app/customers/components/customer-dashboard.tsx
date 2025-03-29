@@ -2,7 +2,7 @@ import { CustomerTable } from "./customer-table";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
-import CustomerForm from "./customer-form";
+import { CustomerForm } from "./customer-form";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
     const [isAdding, setIsAdding] = useState(false);
@@ -36,7 +36,7 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                     key={refreshKey}
                     refreshIndex={refreshKey}
                 />
-                {isAdding && <CustomerForm onClose={handleCustomerAdded} shopId={shopId} />}
+                {isAdding && <CustomerForm onClose={handleCustomerAdded} shopId={shopId} isOpen={isAdding} />}
             </div>
         </main>
     )

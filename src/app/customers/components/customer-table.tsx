@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import debounce from "lodash.debounce";
-import {
+import { 
 	Pagination,
 	PaginationContent,
 	PaginationEllipsis,
@@ -18,6 +18,7 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
 
 export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, user: any, refreshIndex: number }) {
 	const [customers, setCustomers] = useState<any[]>([]);
@@ -241,7 +242,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 											{customer.customer_email}
 										</TableCell>
 										<TableCell className="text-foreground hidden md:table-cell">
-											{customer.customer_phone}
+											{formatPhoneNumber(customer.customer_phone)}
 										</TableCell>
 										<TableCell className="text-foreground hidden lg:table-cell">
 											{customer.customer_address}
