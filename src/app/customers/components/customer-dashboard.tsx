@@ -36,7 +36,7 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                     key={refreshKey}
                     refreshIndex={refreshKey}
                 />
-                {isAdding && <CustomerForm isOpen={isAdding} onClose={handleCustomerAdded} shopId={shopId} onCustomerCreated={handleCustomerAdded} />}
+                {isAdding && <CustomerForm onClose={handleCustomerAdded} shopId={shopId} isOpen={isAdding} />}
             </div>
         </main>
     )

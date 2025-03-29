@@ -270,3 +270,13 @@ export async function sendInvoiceEmail(email: string, emailData: any, recipient_
     }
 }
 
+// Validate phone number format with "1234567890"
+export function validatePhoneNumber(phoneNumber: string) {
+    const digitsOnly = phoneNumber.replace(/\D/g, '');
+    return digitsOnly.length === 10;
+}
+
+export function validateEmail(email: string) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
