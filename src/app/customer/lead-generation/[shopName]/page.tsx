@@ -18,6 +18,7 @@ import MotormindsNavBar from "@/app/components/Motorminds-NavBar";
 import { getActiveRewards } from "@/app/loyalty/utils/LoyaltyUtils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RewardsCard } from "@/app/customer/lead-generation/components/rewards-card";
+import { formatOperatingHours } from "@/app/customer/lead-generation/components/formatOperatingHours";
 
 export default function ShopProfile() {
 	const router = useRouter();
@@ -29,6 +30,7 @@ export default function ShopProfile() {
 	const [activeRewards, setActiveRewards] = useState<any[]>([]);
 	const [isLoadingRewards, setIsLoadingRewards] = useState<boolean>(true);
 	const [claimedReward, setClaimedReward] = useState<any | null>(null);
+	const formattedHours = formatOperatingHours(shopData?.operating_hours || "");
 
 	// Initialize form data without shopID
 	const [formData, setFormData] = useState({
@@ -304,8 +306,15 @@ export default function ShopProfile() {
 										<Clock className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
 										<div>
 											<h3 className="font-medium">Hours</h3>
-											<p className="text-gray-600">Mon-Fri: {shopData?.operating_hours["Monday-Friday"]}</p>
-											<p className="text-gray-600">Sat: {shopData?.operating_hours["Saturday"]}</p>
+											{shopData?.operating_hours ? (
+												Object.entries(formatOperatingHours(shopData.operating_hours)).map(([days, hours]) => (
+													<p key={days} className="text-gray-600">
+														{days}: {hours}
+													</p>
+												))
+											) : (
+												<p className="text-gray-600">Hours not available</p>
+											)}
 										</div>
 									</div>
 								</div>
