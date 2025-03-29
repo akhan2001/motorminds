@@ -1,109 +1,167 @@
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { createNewCustomer, checkCustomerExists } from "../api/customer-utils";
-import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-export default function CustomerForm({ onClose, shopId }: { onClose: () => void, shopId: string }) {
-    const [customerName, setCustomerName] = useState("");
-    const [customerEmail, setCustomerEmail] = useState("");
-    const [customerPhone, setCustomerPhone] = useState("");
-    const [customerAddress, setCustomerAddress] = useState("");
-    const router = useRouter();
+export function CustomerForm({ isOpen, onClose, shopId, onCustomerCreated }: { isOpen: boolean; onClose: () => void; shopId: string; onCustomerCreated?: () => void; }) {
+    const [customerData, setCustomerData] = useState({
+        customer_name: "",
+        customer_email: "",
+        customer_phone: "",
+        customer_address: ""
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    async function getShopID() {
-        return shopId;
-    }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setCustomerData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
-    const handleSubmit = async () => {
-        const shopId = await getShopID();
-        const customer = { customerName, customerEmail, customerPhone, customerAddress };
-        const customerExists = await checkCustomerExists(customerPhone, shopId);
-        if (customerExists) {
-            toast.error("Customer already exists");
-            return;
+    const validateForm = () => {
+        if (!customerData.customer_phone.trim()) {
+            toast.error("Customer phone number is required");
+            return false;
         }
-        const newCustomer = await createNewCustomer(customer, shopId);
-        if (newCustomer) {
-            toast.success("Customer created successfully");
-            onClose();
-            router.refresh();
-        } else {
-            toast.error("Failed to create customer");
+        return true;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!validateForm()) return;
+        
+        setIsSubmitting(true);
+        
+        try {
+        // Create new customer in database
+        const { data, error } = await supabase
+            .from('customers')
+            .insert([
+            {
+                shop_id: shopId,
+                customer_name: customerData.customer_name,
+                customer_email: customerData.customer_email,
+                customer_phone: customerData.customer_phone,
+                customer_address: customerData.customer_address
+            }
+            ])
+            .select();
+        
+        if (error) throw error;
+        
+        toast.success("Customer created successfully");
+        
+        // Reset form
+        setCustomerData({
+            customer_name: "",
+            customer_email: "",
+            customer_phone: "",
+            customer_address: ""
+        });
+        
+        // Call the callback if provided
+        if (onCustomerCreated) {
+            onCustomerCreated();
         }
-    }
+        
+        // Close the dialog
+        onClose();
+        
+        } catch (error: any) {
+        console.error("Error creating customer:", error);
+        toast.error(error.message || "Failed to create customer");
+        } finally {
+        setIsSubmitting(false);
+        }
+    };
 
     return (
-        <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="bg-[#131313] text-white border border-[#626262]">
-                <DialogHeader className="gap-2">
-                    <DialogTitle className="text-white">Create New Customer</DialogTitle>
-                    <DialogDescription className="text-gray-400 text-sm">
-                        Add a new customer to your database. Fill in the details below.
-                    </DialogDescription>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="bg-[#131313] text-white border-[#333] sm:max-w-md">
+                <DialogHeader>
+                <DialogTitle className="text-xl font-semibold">Create New Customer</DialogTitle>
+                <DialogDescription>
+                    Please fill in the details below to create a new customer.
+                </DialogDescription>
                 </DialogHeader>
-
-                <div className="space-y-4">
-                    {/* Customer Name */}
-                    <div>
-                        <label className="text-gray-300 text-sm">Customer Name</label>
-                        <Input
-                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1"
-                            placeholder="Enter customer's full name"
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Customer Email */}
-                    <div>
-                        <label className="text-gray-300 text-sm">Customer Email</label>
-                        <Input
-                            type="email"
-                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1"
-                            placeholder="Enter customer's email address"
-                            value={customerEmail}
-                            onChange={(e) => setCustomerEmail(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Customer Phone */}
-                    <div>
-                        <label className="text-gray-300 text-sm">Customer Phone</label>
-                        <Input
-                            type="tel"
-                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1"
-                            placeholder="Enter customer's phone number"
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Customer Address */}
-                    <div>
-                        <label className="text-gray-300 text-sm">Customer Address</label>
-                        <Input
-                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1"
-                            placeholder="Enter customer's address"
-                            value={customerAddress}
-                            onChange={(e) => setCustomerAddress(e.target.value)}
-                        />
-                    </div>
+                
+                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                    <Label htmlFor="customer_name">Customer Name</Label>
+                    <Input
+                        id="customer_name"
+                        name="customer_name"
+                        value={customerData.customer_name}
+                        onChange={handleChange}
+                        className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                        placeholder="Enter customer name"
+                        required
+                    />
                 </div>
-
-                <DialogFooter>
-                    <Button variant="ghost" onClick={onClose} className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white">
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSubmit}
-                        className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
+                
+                <div className="space-y-2">
+                    <Label htmlFor="customer_email">Email</Label>
+                    <Input
+                        id="customer_email"
+                        name="customer_email"
+                        type="email"
+                        value={customerData.customer_email}
+                        onChange={handleChange}
+                        className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                        placeholder="Enter customer email"
+                    />
+                </div>
+                
+                <div className="space-y-2">
+                    <Label htmlFor="customer_phone">Phone</Label>
+                    <Input
+                        id="customer_phone"
+                        name="customer_phone"
+                        value={customerData.customer_phone}
+                        onChange={handleChange}
+                        className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                        placeholder="Enter customer phone"
+                        required
+                    />
+                </div>
+                
+                <div className="space-y-2">
+                    <Label htmlFor="customer_address">Address</Label>
+                    <Input
+                        id="customer_address"
+                        name="customer_address"
+                        value={customerData.customer_address}
+                        onChange={handleChange}
+                        className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                        placeholder="Enter customer address"
+                    />
+                </div>
+                
+                <DialogFooter className="mt-6">
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={onClose}
+                        className="border-[#444] text-gray-300 hover:bg-[#333] hover:text-white"
+                        disabled={isSubmitting}
                     >
-                        Save Customer
+                    Cancel
+                    </Button>
+                    <Button 
+                        type="submit"
+                        className="bg-[#ef4444] hover:bg-[#ef4444]/80 text-white"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? "Creating..." : "Save Customer"}
                     </Button>
                 </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );
