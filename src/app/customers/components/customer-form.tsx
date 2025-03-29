@@ -90,10 +90,10 @@ export function CustomerForm({
             // Close the dialog
             onClose();
         } catch (error: any) {
-        console.error("Error creating customer:", error);
-        toast.error(error.message || "Failed to create customer");
+            console.error("Error creating customer:", error);
+            toast.error(error.message || "Failed to create customer");
         } finally {
-        setIsSubmitting(false);
+            setIsSubmitting(false);
         }
     };
 

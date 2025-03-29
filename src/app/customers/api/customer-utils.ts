@@ -28,6 +28,7 @@ export async function getCustomers(shopId: string) {
 }
 
 export async function createNewCustomer(customer: any, shopId: string) {
+    console.log("Creating new customer:", customer);
     try {
         // First check if a customer with this phone number already exists for this shop
         const { data: existingCustomers, error: searchError } = await supabase
@@ -51,10 +52,10 @@ export async function createNewCustomer(customer: any, shopId: string) {
         const { data, error } = await supabase
             .from('customers')
             .insert({
-                customer_name: customer.customerName,
-                customer_email: customer.customerEmail,
-                customer_phone: customer.customerPhone,
-                customer_address: customer.customerAddress || "",
+                customer_name: customer.customer_name,
+                customer_email: customer.customer_email,
+                customer_phone: customer.customer_phone,
+                customer_address: customer.customer_address || "",
                 created_at: new Date().toISOString(),
                 shop_id: shopId
             })
