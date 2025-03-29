@@ -8,11 +8,6 @@ export function formatOperatingHours(hoursString: string): {
     [key: string]: string 
 } {
     try {
-        // Check if hoursString is valid before parsing
-        if (!hoursString || typeof hoursString !== 'string') {
-            throw new Error('Invalid operating hours data');
-        }
-        
         // Parse the JSON string
         const hours = JSON.parse(hoursString);
         
@@ -33,47 +28,45 @@ export function formatOperatingHours(hoursString: string): {
             
             // If this is the first day or the schedule is different from the current group
             if (
-                !currentSchedule || 
-                currentSchedule.closed !== schedule.closed || 
-                currentSchedule.openTime !== schedule.openTime || 
-                currentSchedule.closeTime !== schedule.closeTime
+            !currentSchedule || 
+            currentSchedule.closed !== schedule.closed || 
+            currentSchedule.openTime !== schedule.openTime || 
+            currentSchedule.closeTime !== schedule.closeTime
             ) {
-                // If we have a current group, add it to the result
-                if (currentGroup.length > 0) {
-                    const key = currentGroup.length === 1 
-                        ? currentGroup[0] 
-                        : `${currentGroup[0]}-${currentGroup[currentGroup.length - 1]}`;
-                    
-                    formattedHours[key] = currentSchedule!.closed 
-                        ? 'Closed' 
-                        : `${currentSchedule!.openTime} - ${currentSchedule!.closeTime}`;
-                }
+            // If we have a current group, add it to the result
+            if (currentGroup.length > 0) {
+                const key = currentGroup.length === 1 
+                ? currentGroup[0] 
+                : `${currentGroup[0]}-${currentGroup[currentGroup.length - 1]}`;
                 
-                // Start a new group
-                currentGroup = [day];
-                currentSchedule = schedule;
+                formattedHours[key] = currentSchedule!.closed 
+                ? 'Closed' 
+                : `${currentSchedule!.openTime} - ${currentSchedule!.closeTime}`;
+            }
+            
+            // Start a new group
+            currentGroup = [day];
+            currentSchedule = schedule;
             } else {
-                // Add to the current group
-                currentGroup.push(day);
+            // Add to the current group
+            currentGroup.push(day);
             }
         }
         
         // Add the last group
         if (currentGroup.length > 0) {
             const key = currentGroup.length === 1 
-                ? currentGroup[0] 
-                : `${currentGroup[0]}-${currentGroup[currentGroup.length - 1]}`;
+            ? currentGroup[0] 
+            : `${currentGroup[0]}-${currentGroup[currentGroup.length - 1]}`;
             
             formattedHours[key] = currentSchedule!.closed 
-                ? 'Closed' 
-                : `${currentSchedule!.openTime} - ${currentSchedule!.closeTime}`;
+            ? 'Closed' 
+            : `${currentSchedule!.openTime} - ${currentSchedule!.closeTime}`;
         }
         
         return formattedHours;
     } catch (e) {
         console.error("Error parsing operating hours:", e);
-        
-        // Return a default schedule when parsing fails
         return {
             "Monday-Friday": "9:00 - 17:00",
             "Saturday-Sunday": "Closed"

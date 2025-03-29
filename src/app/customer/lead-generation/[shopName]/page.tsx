@@ -223,23 +223,20 @@ export default function ShopProfile() {
 		{ 
 			name: "John D.", 
 			rating: 5, 
-			date: "October 15, 2023", 
+			date: "March 5, 2025",
 			comment: "Excellent service! They fixed my car quickly and at a reasonable price.",
-			avatar: "https://randomuser.me/api/portraits/men/1.jpg"
 		},
 		{ 
 			name: "Sarah M.", 
-			rating: 4, 
-			date: "September 22, 2023", 
+			rating: 5,
+			date: "September 22, 2024", 
 			comment: "Very professional team. Would recommend to anyone looking for quality auto repair.",
-			avatar: "https://randomuser.me/api/portraits/women/2.jpg"
 		},
 		{ 
 			name: "Robert K.", 
 			rating: 5, 
-			date: "August 5, 2023", 
+			date: "October 15, 2024",
 			comment: "Best mechanics in town! They explained everything clearly and did a great job.",
-			avatar: "https://randomuser.me/api/portraits/men/3.jpg"
 		}
 	];
 
@@ -398,7 +395,7 @@ export default function ShopProfile() {
 												<div key={index} className="border-b pb-6 last:border-0">
 													<div className="flex items-center mb-3">
 														<Avatar className="h-10 w-10 mr-3">
-															<AvatarImage src={review.avatar} alt={review.name} />
+															{/* <AvatarImage src={review.avatar} alt={review.name} /> */}
 															<AvatarFallback>{review.name.charAt(0)}</AvatarFallback>
 														</Avatar>
 														<div>
@@ -577,11 +574,7 @@ export default function ShopProfile() {
 								</li>
 								<li className="flex items-center">
 									<Mail className="h-5 w-5 mr-2 text-gray-400" />
-									<span>info@{shopData?.shop_name.toLowerCase().replace(/\s/g, '')}.com</span>
-								</li>
-								<li className="flex items-center">
-									<Clock className="h-5 w-5 mr-2 text-gray-400" />
-									<span>Mon-Fri: {shopData?.operating_hours["Monday-Friday"]}</span>
+									<span>{shopData?.shop_email}</span>
 								</li>
 							</ul>
 						</div>

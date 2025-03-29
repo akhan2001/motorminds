@@ -45,6 +45,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const [showNewClientForm, setShowNewClientForm] = useState(false);
     const [clientInfo, setClientInfo] = useState({
         client_name: '',
+        client_phone: '',
         client_address: '',
         client_email: ''
     });
@@ -196,16 +197,23 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         
         try {
             // Create the invoice data with proper validation
+
+            if (showNewClientForm) {
+                console.log("Creating new client invoice");
+                console.log("Client info:", clientInfo);
+            }
+
             const invoiceData = {
                 shop_id: shopId,
                 shop_name: shopName || "Unknown Shop",
                 shop_address: shopAddress || "",
                 shop_email: shopEmail || "",
                 shop_phone: shopPhone || "",
-                client_name: selectedCustomer?.customer_name || "Unknown Client",
-                client_address: selectedCustomer?.customer_address || "",
-                client_email: selectedCustomer?.customer_email || "",
-                client_phone: selectedCustomer?.customer_phone || "",
+                // Use client info from the form if showNewClientForm is true, otherwise use selected customer
+                client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
+                client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
+                client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
+                client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
                 issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
                 parts: parts || "",
@@ -333,6 +341,14 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     value={clientInfo.client_name}
                                     onChange={(e) => setClientInfo({...clientInfo, client_name: e.target.value})}
                                 />
+                                <Input
+                                    className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                    placeholder="Client Phone"
+                                    value={clientInfo.client_phone}
+                                    onChange={(e) => setClientInfo({...clientInfo, client_phone: e.target.value})}
+                                    required
+                                    pattern="\d{10}"                                    
+                                />  
                                 <Input
                                     className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
                                     placeholder="Client Email"
