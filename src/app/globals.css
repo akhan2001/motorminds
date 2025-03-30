@@ -17,6 +17,8 @@ body {
   :root {
     --background: #ffffff;
     --foreground: #000000;
+    --nav-background: #f3f3f3;
+    --nav-foreground: #646363;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
@@ -40,7 +42,7 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: #f3f3f3;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -48,10 +50,13 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --button-primary: #b22222;
   }
   .dark {
     --background: #000000;
     --foreground: #ffffff;
+    --nav-background: #0d0d0d;
+    --nav-foreground: #979797;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
@@ -74,7 +79,7 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
+    --sidebar-background: #0d0d0d;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -82,10 +87,19 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --button-primary: #b22222;
   }
 
   .bg-custom-background {
     background-color: var(--background);
+  }
+
+  .bg-nav-background {
+    background-color: var(--nav-background);
+  }
+
+  .text-nav-foreground {
+    color: var(--nav-foreground);
   }
 }
 

@@ -35,15 +35,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${bricolageGrotesque.variable} antialiased`}>
-        {/* <ThemeProvider> */}
+        <ThemeProvider attribute="class" enableSystem defaultTheme="system">
           <TasksProvider>
             <ConfirmationProvider>
               {children}
             </ConfirmationProvider>
           </TasksProvider>
-        {/* </ThemeProvider> */}
+        </ThemeProvider>
         <Toaster />
         <Analytics />
       </body>

@@ -81,12 +81,12 @@ export function Nav(
 		window.location.reload()
 	}
 
-	// useEffect(() => {
-	// 	// console.log("Current theme:", theme);
-	// }, [theme]);
+	useEffect(() => {
+		console.log("Current theme:", theme);
+	}, [theme]);
 
 	return (
-		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+		<header className="bg-nav-background px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}
@@ -122,7 +122,7 @@ export function Nav(
 						className={`py-2 border-b-2 ${
 							activeLink === item.name
 							? "text-[#b22222] border-[#b22222]"
-							: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+							: "text-nav-foreground border-transparent hover:text-nav-background hover:border-background transition-colors"
 						}`}
 						>
 						{item.name}
@@ -197,7 +197,7 @@ export function Nav(
 								</AlertDialogFooter>
 							</AlertDialogContent>
 						</AlertDialog>
-						{/* <DropdownMenuItem
+						<DropdownMenuItem
 							onSelect={(e) => {
 								e.preventDefault();
 								setTheme(theme === "light" ? "dark" : "light");
@@ -205,7 +205,7 @@ export function Nav(
 						>
 							{themeIcon}
 							{themeText}
-						</DropdownMenuItem> */}
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 				</div>
