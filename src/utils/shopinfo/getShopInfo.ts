@@ -60,3 +60,41 @@ export async function updateShopInfo(shopId: string, shopInfo: any) {
         return { success: false, error };
     }
 }
+
+export async function getShopStaff(shopId: string) {
+    const { data, error } = await supabase
+        .from('shop_staff')
+        .select('*')
+        .eq('shop_id', shopId);
+        
+    if (error) {
+        console.error('Error fetching shop staff:', error);
+        throw error;
+    }
+
+    return data;
+}
+
+export async function addShopStaff(staff: any, shopId: string) {
+    try {
+        const { data, error } = await supabase
+            .from('shop_staff')
+            .insert({
+                shop_id: shopId,
+                role: staff.role,
+                staff_name: staff.staff_name
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error adding shop staff:', error);
+            throw error;
+        }
+
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error adding shop staff:', error);
+        return { success: false, error };
+    }
+}

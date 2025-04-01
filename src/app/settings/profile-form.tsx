@@ -10,13 +10,14 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getShopInfo, updateShopInfo } from "@/utils/shopinfo/getShopInfo"
+import { getShopInfo, updateShopInfo, getShopStaff, addShopStaff } from "@/utils/shopinfo/getShopInfo"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2, Clock, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const shopFormSchema = z.object({
 	shop_name: z
@@ -158,6 +159,14 @@ const timeOptions = () => {
 	return options;
 };
 
+// Add this type definition
+type ShopStaff = {
+	id: string;
+	shop_id: string;
+	role: string;
+	staff_name: string;
+}
+
 export function ProfileForm({ shopId }: { shopId: string }) {
 	const [shopInfo, setShopInfo] = useState<ShopFormValues | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -182,6 +191,12 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 
 	// Add timeOptions state
 	const [times] = useState<string[]>(timeOptions());
+
+	// In your ProfileForm component, add this state
+	const [shopStaff, setShopStaff] = useState<ShopStaff[]>([]);
+	const [isAddingStaff, setIsAddingStaff] = useState(false);
+	const [newStaffName, setNewStaffName] = useState('');
+	const [newStaffRole, setNewStaffRole] = useState('Mechanic');
 
 	// Create form with empty initial values
 	const form = useForm<ShopFormValues>({
@@ -276,6 +291,31 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 		form.setValue('services_offered', stringifyServices(services));
 	}, [services, form]);
 
+	// Add this after your existing useEffect that fetches shop info
+	useEffect(() => {
+		async function fetchShopStaff() {
+			try {
+				const staffData = await getShopStaff(shopId)
+				if (staffData && staffData.length > 0) {
+					setShopStaff(staffData)
+				}
+
+				if (staffData && staffData.length === 0) {
+					setShopStaff([])
+				}
+
+
+			} catch (error) {
+				console.error('Error fetching shop staff:', error);
+				toast.error('Failed to load shop staff');
+			}
+		}
+
+		if (shopId) {
+			fetchShopStaff();
+		}
+	}, [shopId, supabase]);
+
 	async function onSubmit(data: ShopFormValues) {
 		await updateShopProfile(data);
 	}
@@ -341,6 +381,60 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 				[field]: value
 			}
 		}));
+	};
+
+	// Add these functions to handle staff management
+	const handleAddStaff = async () => {
+		try {
+			if (!newStaffName || !newStaffRole) {
+				toast.error('Please fill in all staff details');
+				return;
+			}
+
+			const newStaff = {
+				role: newStaffRole,
+				staff_name: newStaffName
+			};
+
+			const result = await addShopStaff(newStaff, shopId);
+
+			if (!result.success) {
+				throw new Error("Failed to add shop staff");
+			}
+
+			setShopStaff(prev => [...prev, result.data]);
+			setNewStaffName('');
+			setNewStaffRole('Mechanic');
+			setIsAddingStaff(false);
+			toast.success('Staff member added successfully');
+		} catch (error) {
+			console.error('Error adding staff:', error);
+			toast.error('Failed to add staff member');
+		}
+	};
+
+	const handleRemoveStaff = async (staffId: string) => {
+		try {
+			// Don't allow removing the owner
+			const staff = shopStaff.find(s => s.id === staffId);
+			if (staff?.role === 'Owner') {
+				toast.error('Cannot remove the shop owner');
+				return;
+			}
+
+			const { error } = await supabase
+				.from('shop_staff')
+				.delete()
+				.eq('id', staffId);
+
+			if (error) throw error;
+
+			setShopStaff(prev => prev.filter(staff => staff.id !== staffId));
+			toast.success('Staff member removed successfully');
+		} catch (error) {
+			console.error('Error removing staff:', error);
+			toast.error('Failed to remove staff member');
+		}
 	};
 
 	return (
@@ -701,6 +795,90 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 								</FormItem>
 								)}
 								/>
+
+<div className="flex items-center justify-between">
+									<h4 className="text-lg font-medium">Shop Staff</h4>
+									<Button
+										type="button"
+										onClick={() => setIsAddingStaff(true)}
+										className="bg-[#292929] hover:bg-[#333]"
+										disabled={isAddingStaff}
+									>
+										<Plus className="h-4 w-4 mr-2" />
+										Add Staff Member
+									</Button>
+								</div>
+
+								{isAddingStaff && (
+									<div className="grid grid-cols-3 gap-4 p-4 bg-[#1a1a1a] rounded-md">
+										<Input
+											placeholder="Staff Name"
+											value={newStaffName}
+											onChange={(e) => setNewStaffName(e.target.value)}
+											className="bg-[#292929] border-[#626262] text-white"
+										/>
+										<Select
+											value={newStaffRole}
+											onValueChange={setNewStaffRole}
+										>
+											<SelectTrigger className="bg-[#292929] border-[#626262] text-white">
+												<SelectValue placeholder="Select role" />
+											</SelectTrigger>
+											<SelectContent className="bg-[#292929] border-[#626262] text-white">
+												<SelectItem value="Mechanic">Mechanic</SelectItem>
+												<SelectItem value="Service Advisor">Service Advisor</SelectItem>
+												<SelectItem value="Manager">Manager</SelectItem>
+											</SelectContent>
+										</Select>
+										<div className="flex gap-2">
+											<Button
+												type="button"
+												onClick={handleAddStaff}
+												className="bg-[#b91c1c] hover:bg-[#991616]"
+											>
+												Add
+											</Button>
+											<Button
+												type="button"
+												onClick={() => setIsAddingStaff(false)}
+												variant="outline"
+												className="bg-transparent border-[#626262] hover:bg-[#292929]"
+											>
+												Cancel
+											</Button>
+										</div>
+									</div>
+								)}
+
+								<Table className="rounded-md border border-[#222] overflow-hidden">
+									<TableHeader className="bg-[#222] border-none">
+										<TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
+											<TableHead className="text-white">Name</TableHead>
+											<TableHead className="text-white">Role</TableHead>
+											<TableHead className="text-white w-[100px]">Actions</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{shopStaff.map((staff) => (
+											<TableRow key={staff.id} className="hover:bg-[#1a1a1a] border-b border-[#222]">
+												<TableCell className="text-white">{staff.staff_name}</TableCell>
+												<TableCell className="text-white">{staff.role}</TableCell>
+												<TableCell className="text-white">
+													{staff.role !== 'Owner' && (
+														<Button
+															type="button"
+															variant="ghost"
+															onClick={() => handleRemoveStaff(staff.id)}
+															className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-transparent"
+														>
+															<Trash2 className="h-4 w-4" />
+														</Button>
+													)}
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
 							</div>
 							</div>
 						</TabsContent>

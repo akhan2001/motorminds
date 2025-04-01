@@ -15,7 +15,8 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabase"
-
+import { toast } from "sonner"
+import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 // Minimal Task interface for local usage
 interface Task {
   id: string
@@ -47,6 +48,7 @@ interface VehicleData {
 interface CustomerOption {
   id: string
   name: string
+  phone: string
   vehicles: VehicleData[] // we store all vehicles for that customer
 }
 
@@ -54,6 +56,7 @@ interface CustomerOption {
 interface StaffOption {
   id: string
   staff_name: string
+  role: string
 }
 
 export function WorkOrderForm({
@@ -87,7 +90,7 @@ export function WorkOrderForm({
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([])
   // The staff options for "Assigned To"
   const [staffOptions, setStaffOptions] = useState<StaffOption[]>([])
-  // Once user chooses a customer, we store that customer’s vehicles here for the second dropdown
+  // Once user chooses a customer, we store that customer's vehicles here for the second dropdown
   const [currentVehicles, setCurrentVehicles] = useState<VehicleData[]>([])
   // The shop ID from the logged-in user
   const [shopId, setShopId] = useState<string>("")
@@ -103,7 +106,7 @@ export function WorkOrderForm({
       } = await supabase.auth.getUser()
       if (!user) return
 
-      // b) find the user’s shop_id from "users"
+      // b) find the user's shop_id from "users"
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("shop_id")
@@ -128,6 +131,7 @@ export function WorkOrderForm({
         const options: CustomerOption[] = customersData.map((cust: any) => ({
           id: cust.id,
           name: cust.customer_name,
+          phone: cust.customer_phone,
           vehicles: (cust.customer_vehicles || []).map((v: any) => ({
             id: v.id,
             year: v.year,
@@ -143,12 +147,16 @@ export function WorkOrderForm({
       // d) fetch staff from "shop_staff"
       const { data: staffData, error: staffErr } = await supabase
         .from("shop_staff")
-        .select("id, staff_name")
+        .select("id, staff_name, role")
         .eq("shop_id", userData.shop_id)
+
+      console.log(staffData)
+
       if (!staffErr && staffData) {
         const staffList: StaffOption[] = staffData.map((s: any) => ({
           id: s.id,
           staff_name: s.staff_name,
+          role: s.role,
         }))
         setStaffOptions(staffList)
       }
@@ -241,12 +249,12 @@ export function WorkOrderForm({
   // ------------------------------------------------------------------
   function handleSave() {
     // --------------------
-    // 6a) Validate the user’s input **before** we create a local “task” or call `onSave`.
+    // 6a) Validate the user's input **before** we create a local "task" or call `onSave`.
     //     You can decide which fields are required. 
     //     Here, we assume they must pick a customer, staff, and have at least 1 piece of vehicle info.
     // --------------------
     if (!workOrderData.customerId && !workOrderData.customerName.trim()) {
-      alert("Please pick a customer or create a new one before saving.")
+      toast.error("Please pick a customer or create a new one before saving.")
       return
     }
 
@@ -257,16 +265,16 @@ export function WorkOrderForm({
     // }
 
     // If you want to ensure assigned staff is mandatory:
-    if (!workOrderData.assignedTo) {
-      alert("Please select a staff member.")
-      return
-    }
+    // if (!workOrderData.assignedTo) {
+    //   toast.error("Please select a staff member.")
+    //   return
+    // }
 
     // All good => proceed
-    // 6b) Pass data to parent’s "onSaveWorkOrder"
+    // 6b) Pass data to parent's "onSaveWorkOrder"
     onSave(workOrderData)
 
-    // 6c) Optionally create a local “task” for your UI
+    // 6c) Optionally create a local "task" for your UI
     const newTask: Task = {
       id: Date.now().toString(),
       title:
@@ -328,10 +336,10 @@ export function WorkOrderForm({
                           <SelectValue placeholder="Select Customer" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
-                          <SelectItem value="new">Add New Customer</SelectItem>
+                          <SelectItem value="new">+ Add New Customer</SelectItem>
                           {customerOptions.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
-                              {option.name}
+                              {option.name} <span className="text-gray-400 text-xs">{formatPhoneNumber(option.phone)}</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -519,7 +527,7 @@ export function WorkOrderForm({
                       <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
                         {staffOptions.map((staff) => (
                           <SelectItem key={staff.id} value={staff.id}>
-                            {staff.staff_name}
+                            {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
                           </SelectItem>
                         ))}
                       </SelectContent>
