@@ -270,6 +270,12 @@ export function WorkOrderForm({
     //   return
     // }
 
+    // Amount is required
+    if (!workOrderData.totalAmount) {
+      toast.error("Please enter an amount.")
+      return
+    }
+
     // All good => proceed
     // 6b) Pass data to parent's "onSaveWorkOrder"
     onSave(workOrderData)
