@@ -115,34 +115,28 @@ export function WorkOrderForm({
       }
       setShopId(userData.shop_id)
 
-      // c) fetch the customers for this shop from "shop_customers"
-      const { data: shopCustomersData, error: customersError } = await supabase
-        .from("shop_customers")
-        .select(`
-          *,
-          customers(*, customer_vehicles(*))
-        `)
+      // c) fetch the customers for this shop directly from "customers"
+      //    (including their vehicles from "customer_vehicles")
+      const { data: customersData, error: customersError } = await supabase
+        .from("customers")
+        .select("*, customer_vehicles(*)")
         .eq("shop_id", userData.shop_id)
       if (customersError) {
-        console.error("Error fetching shop_customers", customersError)
-      } else if (shopCustomersData) {
+        console.error("Error fetching customers", customersError)
+      } else if (customersData) {
         // build an array of { id, name, vehicles[] }
-        const options: CustomerOption[] = shopCustomersData.map((row: any) => {
-          const cust = row.customers
-          const vehicleArray = cust?.customer_vehicles || []
-          return {
-            id: cust.id,
-            name: cust.customer_name,
-            vehicles: vehicleArray.map((v: any) => ({
-              id: v.id,
-              year: v.year,
-              make: v.make,
-              model: v.model,
-              engine_type: v.engine_type,
-              vin: v.vin,
-            })),
-          }
-        })
+        const options: CustomerOption[] = customersData.map((cust: any) => ({
+          id: cust.id,
+          name: cust.customer_name,
+          vehicles: (cust.customer_vehicles || []).map((v: any) => ({
+            id: v.id,
+            year: v.year,
+            make: v.make,
+            model: v.model,
+            engine_type: v.engine_type,
+            vin: v.vin,
+          })),
+        }))
         setCustomerOptions(options)
       }
 
@@ -243,13 +237,36 @@ export function WorkOrderForm({
   }
 
   // ------------------------------------------------------------------
-  // 6) Save the form
+  // 6) Validate & Save the form
   // ------------------------------------------------------------------
   function handleSave() {
-    // notify parent
+    // --------------------
+    // 6a) Validate the user’s input **before** we create a local “task” or call `onSave`.
+    //     You can decide which fields are required. 
+    //     Here, we assume they must pick a customer, staff, and have at least 1 piece of vehicle info.
+    // --------------------
+    if (!workOrderData.customerId && !workOrderData.customerName.trim()) {
+      alert("Please pick a customer or create a new one before saving.")
+      return
+    }
+
+    // If you want to ensure they pick or type something for the vehicle:
+    // if (!workOrderData.selectedVehicleId && !workOrderData.year && !workOrderData.make) {
+    //   alert("Please specify or select a vehicle.")
+    //   return
+    // }
+
+    // If you want to ensure assigned staff is mandatory:
+    if (!workOrderData.assignedTo) {
+      alert("Please select a staff member.")
+      return
+    }
+
+    // All good => proceed
+    // 6b) Pass data to parent’s "onSaveWorkOrder"
     onSave(workOrderData)
 
-    // optionally add a local "task"
+    // 6c) Optionally create a local “task” for your UI
     const newTask: Task = {
       id: Date.now().toString(),
       title:
@@ -263,7 +280,7 @@ export function WorkOrderForm({
     }
     onAddTask(newTask)
 
-    // close
+    // 6d) Close the modal
     onClose()
   }
 
@@ -311,13 +328,12 @@ export function WorkOrderForm({
                           <SelectValue placeholder="Select Customer" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
-                        <SelectItem value="new">Add New Customer</SelectItem>
+                          <SelectItem value="new">Add New Customer</SelectItem>
                           {customerOptions.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
                               {option.name}
                             </SelectItem>
                           ))}
-                          
                         </SelectContent>
                       </Select>
 
