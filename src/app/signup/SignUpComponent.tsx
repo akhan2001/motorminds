@@ -47,7 +47,7 @@ export default function SignUpComponent() {
       if (error) throw error
 
       // On success
-      router.push("/signup-success")
+      router.push("/login")
     } catch (err: any) {
       setError(err?.message || "An unknown error occurred")
     }
