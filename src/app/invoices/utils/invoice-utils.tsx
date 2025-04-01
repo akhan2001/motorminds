@@ -40,14 +40,20 @@ return data;
 // }
 
 // Format currency
-export function formatCurrency(amount: number): string {
-return `$${amount.toFixed(2)}`;
+export function formatCurrency(amount: number | null | undefined): string {
+	if (amount === null || amount === undefined) {
+		return '$0.00';
+	}
+	return `$${Number(amount).toFixed(2)}`;
 }
 
 // Format date
 export function formatDate(dateString: string): string {
-const date = new Date(dateString);
-return date.toLocaleDateString();
+	if (dateString === null || dateString === undefined) {
+		return '';
+	}
+	const date = new Date(dateString);
+	return date.toLocaleDateString();
 }
 
 // Format phone number
