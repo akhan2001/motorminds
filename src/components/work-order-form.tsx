@@ -71,6 +71,9 @@ export function WorkOrderForm({
     taskName: "",
     customerId: "",
     customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    customerAddress: "",
     selectedVehicleId: "",
     year: "",
     make: "",
@@ -170,35 +173,39 @@ export function WorkOrderForm({
   // ------------------------------------------------------------------
   const handleCustomerChange = (value: string) => {
     if (value === "new") {
-      // "Add New Customer"
-      setWorkOrderData({
-        ...workOrderData,
+      // "Add New Customer" - only reset customer-related fields
+      setWorkOrderData(prev => ({
+        ...prev,
         customerId: "new",
         customerName: "",
+        customerPhone: "",
+        customerEmail: "",
+        customerAddress: "",
         selectedVehicleId: "new", // default to new vehicle as well
         year: "",
         make: "",
         model: "",
         engineType: "",
         vin: "",
-      })
+      }))
       setCurrentVehicles([])
     } else {
-      // existing customer
+      // existing customer - only update customer-related fields
       const selectedCust = customerOptions.find((opt) => opt.id === value)
       if (selectedCust) {
-        setWorkOrderData({
-          ...workOrderData,
+        setWorkOrderData(prev => ({
+          ...prev,
           customerId: selectedCust.id,
           customerName: selectedCust.name,
+          customerPhone: selectedCust.phone,
           selectedVehicleId: "", // user hasn't chosen which vehicle yet
-          // Clear out fields until they pick a vehicle
+          // Clear out vehicle fields until they pick a vehicle
           year: "",
           make: "",
           model: "",
           engineType: "",
           vin: "",
-        })
+        }))
         // store their vehicles for the second dropdown
         setCurrentVehicles(selectedCust.vehicles)
       }
@@ -211,29 +218,29 @@ export function WorkOrderForm({
   const handleVehicleChange = (value: string) => {
     if (value === "new") {
       // user wants to add new vehicle
-      setWorkOrderData({
-        ...workOrderData,
+      setWorkOrderData(prev => ({
+        ...prev,
         selectedVehicleId: "new",
         year: "",
         make: "",
         model: "",
         engineType: "",
         vin: "",
-      })
+      }))
     } else {
       // user picked an existing vehicle
       const chosen = currentVehicles.find((v) => v.id === value)
       if (!chosen) return
 
-      setWorkOrderData({
-        ...workOrderData,
+      setWorkOrderData(prev => ({
+        ...prev,
         selectedVehicleId: chosen.id,
         year: chosen.year || "",
         make: chosen.make || "",
         model: chosen.model || "",
         engineType: chosen.engine_type || "",
         vin: chosen.vin || "",
-      })
+      }))
     }
   }
 
@@ -241,46 +248,62 @@ export function WorkOrderForm({
   // 5) Handling staff
   // ------------------------------------------------------------------
   const handleAssignedToChange = (value: string) => {
-    setWorkOrderData({ ...workOrderData, assignedTo: value })
+    setWorkOrderData(prev => ({ ...prev, assignedTo: value }))
   }
 
   // ------------------------------------------------------------------
   // 6) Validate & Save the form
   // ------------------------------------------------------------------
   function handleSave() {
-    // --------------------
-    // 6a) Validate the user's input **before** we create a local "task" or call `onSave`.
-    //     You can decide which fields are required. 
-    //     Here, we assume they must pick a customer, staff, and have at least 1 piece of vehicle info.
-    // --------------------
-    if (!workOrderData.customerId && !workOrderData.customerName.trim()) {
+    // 1. Customer validation
+    if (!workOrderData.customerId) {
       toast.error("Please pick a customer or create a new one before saving.")
       return
     }
 
-    // If you want to ensure they pick or type something for the vehicle:
-    // if (!workOrderData.selectedVehicleId && !workOrderData.year && !workOrderData.make) {
-    //   alert("Please specify or select a vehicle.")
-    //   return
-    // }
+    // 2. New customer validation
+    if (workOrderData.customerId === "new") {
+      if (!workOrderData.customerName.trim()) {
+        toast.error("Please enter customer name.")
+        return
+      }
+      if (!workOrderData.customerPhone.trim()) {
+        toast.error("Please enter customer phone number.")
+        return
+      }
+      if (workOrderData.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workOrderData.customerEmail)) {
+        toast.error("Please enter a valid email address.")
+        return
+      }
+    }
 
-    // If you want to ensure assigned staff is mandatory:
-    // if (!workOrderData.assignedTo) {
-    //   toast.error("Please select a staff member.")
-    //   return
-    // }
+    // 3. Task name validation
+    if (!workOrderData.taskName) {
+      toast.error("Please enter a task name.")
+      return
+    }
 
-    // Amount is required
+    // 4. Vehicle validation
+    // If they selected an existing vehicle, we just need to verify they actually picked one
+    if (workOrderData.customerId !== "new" && !workOrderData.selectedVehicleId) {
+      toast.error("Please select a vehicle or add a new one.")
+      return
+    }
+
+    // For both new vehicles and selected vehicles, we need at least year, make, and model
+    if (!workOrderData.year || !workOrderData.make || !workOrderData.model) {
+      toast.error("Please provide vehicle year, make, and model.")
+      return
+    }
+
+    // 5. Amount validation
     if (!workOrderData.totalAmount) {
       toast.error("Please enter an amount.")
       return
     }
 
-    // All good => proceed
-    // 6b) Pass data to parent's "onSaveWorkOrder"
     onSave(workOrderData)
 
-    // 6c) Optionally create a local "task" for your UI
     const newTask: Task = {
       id: Date.now().toString(),
       title:
@@ -294,7 +317,6 @@ export function WorkOrderForm({
     }
     onAddTask(newTask)
 
-    // 6d) Close the modal
     onClose()
   }
 
@@ -353,17 +375,45 @@ export function WorkOrderForm({
 
                       {/* If new customer, show an input */}
                       {workOrderData.customerId === "new" && (
-                        <Input
-                          value={workOrderData.customerName}
-                          onChange={(e) =>
-                            setWorkOrderData({
-                              ...workOrderData,
-                              customerName: e.target.value,
-                            })
-                          }
-                          placeholder="Enter Customer Name"
-                          className="mt-2 bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                        />
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-2 p-3 rounded-md">
+                          <Input
+                            className="bg-[#292929] text-white text-sm border-0"
+                            placeholder="Customer Name"
+                            value={workOrderData.customerName}
+                            onChange={(e) =>
+                              setWorkOrderData(prev => ({ ...prev, customerName: e.target.value }))
+                            }
+                            required
+                          />
+                          <Input
+                            className="bg-[#292929] text-white text-sm border-0"
+                            placeholder="Customer Phone"
+                            value={workOrderData.customerPhone}
+                            onChange={(e) =>
+                              setWorkOrderData(prev => ({ ...prev, customerPhone: e.target.value }))
+                            }
+                            required
+                            pattern="\d{10}"
+                            type="tel"
+                          />
+                          <Input
+                            className="bg-[#292929] text-white text-sm border-0"
+                            placeholder="Customer Email"
+                            type="email"
+                            value={workOrderData.customerEmail}
+                            onChange={(e) =>
+                              setWorkOrderData(prev => ({ ...prev, customerEmail: e.target.value }))
+                            }
+                          />
+                          <Input
+                            className="bg-[#292929] text-white text-sm border-0"
+                            placeholder="Customer Address"
+                            value={workOrderData.customerAddress}
+                            onChange={(e) =>
+                              setWorkOrderData(prev => ({ ...prev, customerAddress: e.target.value }))
+                            }
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -375,10 +425,12 @@ export function WorkOrderForm({
                   <Input
                     value={workOrderData.taskName}
                     onChange={(e) =>
-                      setWorkOrderData({ ...workOrderData, taskName: e.target.value })
+                      setWorkOrderData(prev => ({ ...prev, taskName: e.target.value }))
                     }
-                    placeholder="(Optional) e.g. Brakes Replacement"
+                    placeholder="Put a name to this task"
                     className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    required
+                    disabled={!workOrderData.customerId}
                   />
                 </div>
 
@@ -416,10 +468,11 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.year}
                       onChange={(e) =>
-                        setWorkOrderData({ ...workOrderData, year: e.target.value })
+                        setWorkOrderData(prev => ({ ...prev, year: e.target.value }))
                       }
                       placeholder="e.g. 2015"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      disabled={!workOrderData.customerId}
                     />
                   </div>
 
@@ -428,10 +481,11 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.make}
                       onChange={(e) =>
-                        setWorkOrderData({ ...workOrderData, make: e.target.value })
+                        setWorkOrderData(prev => ({ ...prev, make: e.target.value }))
                       }
                       placeholder="e.g. Honda"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      disabled={!workOrderData.customerId}
                     />
                   </div>
 
@@ -440,10 +494,11 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.model}
                       onChange={(e) =>
-                        setWorkOrderData({ ...workOrderData, model: e.target.value })
+                        setWorkOrderData(prev => ({ ...prev, model: e.target.value }))
                       }
                       placeholder="e.g. Civic"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      disabled={!workOrderData.customerId}
                     />
                   </div>
 
@@ -452,10 +507,11 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.engineType}
                       onChange={(e) =>
-                        setWorkOrderData({ ...workOrderData, engineType: e.target.value })
+                        setWorkOrderData(prev => ({ ...prev, engineType: e.target.value }))
                       }
                       placeholder="e.g. 1.8L i-VTEC"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      disabled={!workOrderData.customerId}
                     />
                   </div>
                 </div>
@@ -466,10 +522,11 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.vin}
                       onChange={(e) =>
-                        setWorkOrderData({ ...workOrderData, vin: e.target.value })
+                        setWorkOrderData(prev => ({ ...prev, vin: e.target.value }))
                       }
                       placeholder="Vehicle VIN"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      disabled={!workOrderData.customerId}
                     />
                   </div>
 
@@ -478,10 +535,11 @@ export function WorkOrderForm({
                     <Input
                       value={workOrderData.mileage}
                       onChange={(e) =>
-                        setWorkOrderData({ ...workOrderData, mileage: e.target.value })
+                        setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
                       }
                       placeholder="Current mileage"
                       className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      disabled={!workOrderData.customerId}
                     />
                   </div>
                 </div>
@@ -492,8 +550,9 @@ export function WorkOrderForm({
                     <Select
                       value={workOrderData.priority}
                       onValueChange={(value: "high" | "medium" | "low") =>
-                        setWorkOrderData({ ...workOrderData, priority: value })
+                        setWorkOrderData(prev => ({ ...prev, priority: value }))
                       }
+                      disabled={!workOrderData.customerId}
                     >
                       <SelectTrigger className="w-full bg-[#1A1A1A] border-0 text-white">
                         <SelectValue />
@@ -526,6 +585,7 @@ export function WorkOrderForm({
                     <Select
                       value={workOrderData.assignedTo}
                       onValueChange={handleAssignedToChange}
+                      disabled={!workOrderData.customerId}
                     >
                       <SelectTrigger className="w-full bg-[#1A1A1A] border-0 text-white">
                         <SelectValue placeholder="Select Staff" />
@@ -543,7 +603,7 @@ export function WorkOrderForm({
 
                 {/* Collapsible sections (labor, parts, notes) */}
                 <div className="space-y-3">
-                  <Collapsible>
+                  <Collapsible disabled={!workOrderData.customerId}>
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
                       Labor
                       <ChevronDown className="h-4 w-4" />
@@ -552,15 +612,16 @@ export function WorkOrderForm({
                       <textarea
                         value={workOrderData.labor}
                         onChange={(e) =>
-                          setWorkOrderData({ ...workOrderData, labor: e.target.value })
+                          setWorkOrderData(prev => ({ ...prev, labor: e.target.value }))
                         }
                         className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
                         placeholder="Enter labor details..."
+                        disabled={!workOrderData.customerId}
                       />
                     </CollapsibleContent>
                   </Collapsible>
 
-                  <Collapsible>
+                  <Collapsible disabled={!workOrderData.customerId}>
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
                       Parts
                       <ChevronDown className="h-4 w-4" />
@@ -569,15 +630,16 @@ export function WorkOrderForm({
                       <textarea
                         value={workOrderData.parts}
                         onChange={(e) =>
-                          setWorkOrderData({ ...workOrderData, parts: e.target.value })
+                          setWorkOrderData(prev => ({ ...prev, parts: e.target.value }))
                         }
                         className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
                         placeholder="Enter parts details..."
+                        disabled={!workOrderData.customerId}
                       />
                     </CollapsibleContent>
                   </Collapsible>
 
-                  <Collapsible>
+                  <Collapsible disabled={!workOrderData.customerId}>
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
                       Notes
                       <ChevronDown className="h-4 w-4" />
@@ -586,10 +648,11 @@ export function WorkOrderForm({
                       <textarea
                         value={workOrderData.notes}
                         onChange={(e) =>
-                          setWorkOrderData({ ...workOrderData, notes: e.target.value })
+                          setWorkOrderData(prev => ({ ...prev, notes: e.target.value }))
                         }
                         className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
                         placeholder="Enter additional notes..."
+                        disabled={!workOrderData.customerId}
                       />
                     </CollapsibleContent>
                   </Collapsible>
@@ -602,10 +665,11 @@ export function WorkOrderForm({
                     type="number"
                     value={workOrderData.totalAmount}
                     onChange={(e) =>
-                      setWorkOrderData({ ...workOrderData, totalAmount: e.target.value })
+                      setWorkOrderData(prev => ({ ...prev, totalAmount: e.target.value }))
                     }
                     placeholder="Enter amount"
                     className="w-32 bg-[#222222] border-0 text-white placeholder-[#9d9d9d] text-right"
+                    disabled={!workOrderData.customerId}
                   />
                 </div>
               </div>
@@ -627,6 +691,7 @@ export function WorkOrderForm({
               <Button
                 className="px-8 py-3 h-auto bg-[#b22222] hover:bg-[#e23232] text-white rounded-lg"
                 onClick={handleSave}
+                disabled={!workOrderData.customerId}
               >
                 Save
               </Button>

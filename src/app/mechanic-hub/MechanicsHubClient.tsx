@@ -19,6 +19,7 @@ import { TaskDetailsModal, DetailedRepairOrder } from "@/components/task-details
 import { v4 as uuidv4 } from "uuid"
 import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
+import { toast } from "sonner"
 
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
@@ -229,103 +230,57 @@ export default function MechanicsHub() {
    * is always a valid reference to 'customer_vehicles.id'
    */
 
-async function handleSaveWorkOrder(formData: any) {
-  if (!user?.id) return
-  console.log("Create new order with data:", formData)
+  async function handleSaveWorkOrder(formData: any) {
+    if (!user?.id) return
+    console.log("Create new order with data:", formData)
 
-  try {
-    // 1) get shop_id
-    const { data: userData, error: userErr } = await supabase
-      .from("users")
-      .select("shop_id")
-      .eq("id", user.id)
-      .single()
-    if (userErr) throw userErr
-    if (!userData?.shop_id) throw new Error("No shop_id found")
-
-    const shopId = userData.shop_id
-
-    let customerId = formData.customerId
-    let vehicleId: string | null = null
-
-    // Helper to convert empty string -> null, otherwise parse float
-    // (You could default to 0 if you prefer.)
-    function parseDouble(str: string) {
-      if (!str || str.trim() === "") return null // store NULL in DB
-      return parseFloat(str) // attempts to parse; can be NaN if user typed nonsense
-    }
-
-    // 2) If "new" customer => insert into `customers` (with `shop_id`) then vehicle
-    if (customerId === "new" || !customerId) {
-      const newCustomerId = uuidv4()
-      console.log("Inserting new customer with ID =", newCustomerId)
-
-      const { data: insertedCustomer, error: custErr } = await supabase
-        .from("customers")
-        .insert({
-          id: newCustomerId,
-          shop_id: shopId,
-          customer_name: formData.customerName || "Unnamed",
-          customer_email: null,
-          created_at: new Date().toISOString(),
-        })
+    try {
+      // 1) get shop_id
+      const { data: userData, error: userErr } = await supabase
+        .from("users")
+        .select("shop_id")
+        .eq("id", user.id)
         .single()
-      if (custErr) throw custErr
+      if (userErr) throw userErr
+      if (!userData?.shop_id) throw new Error("No shop_id found")
 
-      // If user typed year/make/model => create a new vehicle
-      if (
-        formData.year ||
-        formData.make ||
-        formData.model ||
-        formData.engineType ||
-        formData.vin
-      ) {
-        const newVehId = uuidv4()
-        console.log("Inserting new vehicle with ID =", newVehId)
+      const shopId = userData.shop_id
 
-        const { error: vehErr } = await supabase
-          .from("customer_vehicles")
+      let customerId = formData.customerId
+      let vehicleId: string | null = null
+
+      // Helper to convert empty string -> null, otherwise parse float
+      function parseDouble(str: string) {
+        if (!str || str.trim() === "") return null // store NULL in DB
+        return parseFloat(str) // attempts to parse; can be NaN if user typed nonsense
+      }
+
+      // Helper to convert empty string -> null for text fields
+      function parseString(str: string) {
+        if (!str || str.trim() === "") return null // store NULL in DB
+        return str.trim() // return trimmed string
+      }
+
+      // 2) If "new" customer => insert into `customers` (with `shop_id`) then vehicle
+      if (customerId === "new" || !customerId) {
+        const newCustomerId = uuidv4()
+        console.log("Inserting new customer with ID =", newCustomerId)
+
+        const { data: insertedCustomer, error: custErr } = await supabase
+          .from("customers")
           .insert({
-            id: newVehId,
-            customer_id: newCustomerId,
-            year: formData.year,
-            make: formData.make,
-            model: formData.model,
-            engine_type: formData.engineType,
-            vin: formData.vin,
+            id: newCustomerId,
+            shop_id: shopId,
+            customer_name: formData.customerName || "Unnamed",
+            customer_phone: formData.customerPhone,
+            customer_email: parseString(formData.customerEmail),
+            customer_address: parseString(formData.customerAddress),
+            created_at: new Date().toISOString(),
           })
           .single()
-        if (vehErr) throw vehErr
+        if (custErr) throw custErr
 
-        vehicleId = newVehId
-      } else {
-        throw new Error(
-          "No vehicle info provided for new customer, can't create a valid vehicle_id."
-        )
-      }
-      customerId = newCustomerId
-    } else {
-      // 3) Existing customer => find or create vehicle
-      const { data: existingCust, error: existCustErr } = await supabase
-        .from("customers")
-        .select("id, shop_id")
-        .eq("id", customerId)
-        .single()
-      if (existCustErr) throw existCustErr
-      if (!existingCust) throw new Error("Customer record not found.")
-      if (existingCust.shop_id !== shopId) {
-        throw new Error("This customer does not belong to your shop.")
-      }
-
-      // Check existing vehicles
-      const { data: existingVeh, error: existVehErr } = await supabase
-        .from("customer_vehicles")
-        .select("id")
-        .eq("customer_id", customerId)
-
-      if (existVehErr) throw existVehErr
-
-      if (!existingVeh || existingVeh.length === 0) {
+        // If user typed year/make/model => create a new vehicle
         if (
           formData.year ||
           formData.make ||
@@ -334,80 +289,131 @@ async function handleSaveWorkOrder(formData: any) {
           formData.vin
         ) {
           const newVehId = uuidv4()
+          console.log("Inserting new vehicle with ID =", newVehId)
+
           const { error: vehErr } = await supabase
             .from("customer_vehicles")
             .insert({
               id: newVehId,
-              customer_id: customerId,
-              year: formData.year,
-              make: formData.make,
-              model: formData.model,
-              engine_type: formData.engineType,
-              vin: formData.vin,
+              customer_id: newCustomerId,
+              year: parseString(formData.year),
+              make: parseString(formData.make),
+              model: parseString(formData.model),
+              engine_type: parseString(formData.engineType),
+              vin: parseString(formData.vin),
             })
             .single()
           if (vehErr) throw vehErr
+
           vehicleId = newVehId
         } else {
           throw new Error(
-            "Existing customer has no vehicle on file and no new vehicle info given."
+            "No vehicle info provided for new customer, can't create a valid vehicle_id."
           )
         }
+        customerId = newCustomerId
       } else {
-        // For now, just use the first existing vehicle if multiple
-        vehicleId = existingVeh[0].id
+        // 3) Existing customer => find or create vehicle
+        const { data: existingCust, error: existCustErr } = await supabase
+          .from("customers")
+          .select("id, shop_id")
+          .eq("id", customerId)
+          .single()
+        if (existCustErr) throw existCustErr
+        if (!existingCust) throw new Error("Customer record not found.")
+        if (existingCust.shop_id !== shopId) {
+          throw new Error("This customer does not belong to your shop.")
+        }
+
+        // Check existing vehicles
+        const { data: existingVeh, error: existVehErr } = await supabase
+          .from("customer_vehicles")
+          .select("id")
+          .eq("customer_id", customerId)
+
+        if (existVehErr) throw existVehErr
+
+        if (!existingVeh || existingVeh.length === 0) {
+          if (
+            formData.year ||
+            formData.make ||
+            formData.model ||
+            formData.engineType ||
+            formData.vin
+          ) {
+            const newVehId = uuidv4()
+            const { error: vehErr } = await supabase
+              .from("customer_vehicles")
+              .insert({
+                id: newVehId,
+                customer_id: customerId,
+                year: parseString(formData.year),
+                make: parseString(formData.make),
+                model: parseString(formData.model),
+                engine_type: parseString(formData.engineType),
+                vin: parseString(formData.vin),
+              })
+              .single()
+            if (vehErr) throw vehErr
+            vehicleId = newVehId
+          } else {
+            throw new Error(
+              "Existing customer has no vehicle on file and no new vehicle info given."
+            )
+          }
+        } else {
+          // For now, just use the first existing vehicle if multiple
+          vehicleId = existingVeh[0].id
+        }
       }
+
+      if (!vehicleId) {
+        throw new Error("No valid vehicle_id found or created.")
+      }
+
+      // 4) Insert into "repair_orders"
+      const newRepairOrderId = uuidv4()
+      const { error: orderErr } = await supabase
+        .from("repair_orders")
+        .insert({
+          id: newRepairOrderId,
+          shop_id: shopId,
+          customer_id: customerId,
+          vehicle_id: vehicleId,
+          status: "Pending",
+          created_at: new Date().toISOString(),
+        })
+        .single()
+      if (orderErr) throw orderErr
+
+      // 5) Insert into "repair_order_details"
+      const newDetailId = uuidv4()
+      const { error: detailErr } = await supabase
+        .from("repair_order_details")
+        .insert({
+          id: newDetailId,
+          repair_order_id: newRepairOrderId,
+          description: formData.taskName,
+          labour: parseString(formData.labor),    // use parseString to handle empty strings
+          parts: parseString(formData.parts),     // use parseString to handle empty strings
+          notes: parseString(formData.notes),     // use parseString to handle empty strings
+          cost: parseDouble(formData.totalAmount),
+          mileage: parseDouble(formData.mileage),
+          task_priority: formData.priority,
+          mechanic_id: formData.assignedTo === "" ? null : formData.assignedTo,
+        })
+        .single()
+      if (detailErr) throw detailErr
+
+      toast.success("Work Order successfully created!")
+      await fetchRepairOrders(user.id) // re-fetch your data
+    } catch (err: any) {
+      console.error("Error creating work order:", err)
+      toast.error("Error creating work order: " + err.message)
+    } finally {
+      setIsWorkOrderFormOpen(false)
     }
-
-    if (!vehicleId) {
-      throw new Error("No valid vehicle_id found or created.")
-    }
-
-    // 4) Insert into "repair_orders"
-    const newRepairOrderId = uuidv4()
-    const { error: orderErr } = await supabase
-      .from("repair_orders")
-      .insert({
-        id: newRepairOrderId,
-        shop_id: shopId,
-        customer_id: customerId,
-        vehicle_id: vehicleId,
-        status: "Pending",
-        created_at: new Date().toISOString(),
-      })
-      .single()
-    if (orderErr) throw orderErr
-
-    // 5) Insert into "repair_order_details"
-    //    Fix: convert "" => null or parse as float
-    const newDetailId = uuidv4()
-    const { error: detailErr } = await supabase
-      .from("repair_order_details")
-      .insert({
-        id: newDetailId,
-        repair_order_id: newRepairOrderId,
-        description: formData.taskName,
-        labour: formData.labor,    // if these are text fields, keep as-is
-        parts: formData.parts,     // same, if text
-        notes: formData.notes,
-        cost: parseDouble(formData.totalAmount), // <--- FIX
-        mileage: parseDouble(formData.mileage),  // <--- FIX
-        task_priority: formData.priority,
-        mechanic_id: formData.assignedTo === "" ? null : formData.assignedTo,
-      })
-      .single()
-    if (detailErr) throw detailErr
-
-    alert("Work Order successfully created!")
-    await fetchRepairOrders(user.id) // re-fetch your data
-  } catch (err: any) {
-    console.error("Error creating work order:", err)
-    alert("Error creating work order: " + err.message)
-  } finally {
-    setIsWorkOrderFormOpen(false)
   }
-}
-
 
   function handleCloseModal() {
     setSelectedTask(null)
