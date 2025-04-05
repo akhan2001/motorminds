@@ -27,6 +27,21 @@ export async function getCustomers(shopId: string) {
     }
 }
 
+export async function getCustomerName(customerId: string) {
+    const { data, error } = await supabase
+        .from('customers')
+        .select('customer_name')
+        .eq('id', customerId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching customer name:', error);
+        throw new Error('Failed to fetch customer name');
+    }
+
+    return data?.customer_name || null;
+}
+
 export async function createNewCustomer(customer: any, shopId: string) {
     console.log("Creating new customer:", customer);
     try {

@@ -9,10 +9,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from "@/components/ui/separator"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { getCustomerVehicles, createCustomerVehicle } from "../api/customer-utils"
-import { Car, Plus, Minus, Mail } from "lucide-react"
+import { Car, Plus, Minus, Mail, ArrowUpRight } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { EmailDialog } from "./email-dialog"
-
+import { useRouter } from "next/navigation"
 interface CustomerSheetProps {
     customer: any;
     isOpen: boolean;
@@ -48,6 +48,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     });
     const [emailToSend, setEmailToSend] = useState("");
     const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const router = useRouter();
 
     // Reset form and states when sheet opens/closes
     useEffect(() => {
@@ -237,7 +238,9 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
             <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetContent className="bg-[#131313] text-white border-l-1 border-l-[#222] overflow-y-auto">
                     <SheetHeader>
-                        <SheetTitle className="text-white">{customer.customer_name}</SheetTitle>
+                        <SheetTitle className="text-white">
+                            {customer.customer_name}
+                        </SheetTitle>
                         <SheetDescription className="text-gray-400">
                             View and edit customer details
                         </SheetDescription>
@@ -346,6 +349,13 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
                     <SheetFooter className="flex flex-row gap-2 justify-end">
                         <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                                onClick={() => router.push(`/customers/${customer.id}`)}
+                            >
+                            <ArrowUpRight className="w-3 h-3" />
+                            </Button>
                             {!isEditing ? (
                                 <>
                                     <Button
