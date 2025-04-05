@@ -179,13 +179,13 @@ export default function CustomerPage() {
                             <History className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">History</span>
                         </TabsTrigger>
-                        <TabsTrigger 
+                        {/* <TabsTrigger 
                             value="messages" 
                             className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222]"
                         >
                             <MessageCircle className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">Messages</span>
-                        </TabsTrigger>
+                        </TabsTrigger> */}
                         <TabsTrigger 
                             value="appointments" 
                             className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222]"
@@ -380,7 +380,7 @@ export default function CustomerPage() {
                     </TabsContent>
                     
                     {/* Messages Tab */}
-                    <TabsContent value="messages" className="mt-6">
+                    {/* <TabsContent value="messages" className="mt-6">
                         <Card className="bg-[#1A1A1A] border-[#333] text-white min-h-[400px] flex flex-col">
                             <CardHeader className="border-b border-[#333]">
                                 <CardTitle className="flex items-center">
@@ -434,7 +434,7 @@ export default function CustomerPage() {
                                 </div>
                             </CardFooter>
                         </Card>
-                    </TabsContent>
+                    </TabsContent> */}
                     
                     {/* Appointments Tab */}
                     <TabsContent value="appointments" className="mt-6">
