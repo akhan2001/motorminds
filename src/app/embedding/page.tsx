@@ -18,7 +18,7 @@ export default function EmbeddingPage() {
             const { data, error } = await supabase
                 .from('toyota-table')
                 .select('id, content, make, model, year')
-                .limit(10);
+                .limit(1);
             
             if (error) {
                 console.error('Supabase error:', error);
@@ -49,7 +49,8 @@ export default function EmbeddingPage() {
                             const subSectionKeys = Object.keys(record.content[firstSection]);
                             if (subSectionKeys.length > 0) {
                                 for (const subSection of subSectionKeys) {
-                                    console.log(record.content[firstSection][subSection].text);
+                                    console.log("Subsection: ", subSection);
+                                    console.log("-" +record.content[firstSection][subSection].text);
                                 }
                             }
                         }
