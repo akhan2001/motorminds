@@ -4,11 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Separator } from '@/components/ui/separator';
 import { DownloadIcon, TrashIcon, MailIcon } from 'lucide-react';
 import { toast } from "sonner";
-import { formatDate, generateInvoicePDF, setInvoiceStatus } from '../utils/invoice-utils';
+import { formatDate, setInvoiceStatus } from '../utils/invoice-utils';
 import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
 import { formatPhoneNumber } from '../utils/invoice-utils';
 import { sendInvoiceEmail } from '@/app/customers/api/customer-utils';
+import { generateInvoicePDF } from '../utils/pdf-generator';
 
 interface InvoiceDialogProps {
     isOpen: boolean;
@@ -273,9 +274,16 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
 
     const handleDownload = async () => {
         try {
-            const result = await generateInvoicePDF(invoice.invoiceNumber);
+            const result = await generateInvoicePDF(invoice);
+            if (result) {
+                console.log("Invoice downloaded successfully");
+                toast.success("Invoice downloaded successfully");
+            } else {
+                toast.error("Failed to download invoice");
+            }
         } catch (error) {
             console.error("Error downloading invoice:", error);
+            toast.error("Failed to download invoice");
         }
     };
 
