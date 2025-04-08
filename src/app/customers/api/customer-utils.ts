@@ -28,13 +28,14 @@ export async function getCustomers(shopId: string) {
 }
 
 export async function createNewCustomer(customer: any, shopId: string) {
-    console.log("Creating new customer:", customer);
+    console.log("Creating new customer:", customer.customer_phone, customer.customer_name, customer.customer_email);
+
     try {
         // First check if a customer with this phone number already exists for this shop
         const { data: existingCustomers, error: searchError } = await supabase
             .from('customers')
             .select('id, customer_name, customer_phone')
-            .eq('customer_phone', customer.customerPhone)
+            .eq('customer_phone', customer.customer_phone)
             .eq('shop_id', shopId);
         
         if (searchError) {
