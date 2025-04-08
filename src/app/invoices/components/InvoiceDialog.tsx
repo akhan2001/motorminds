@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Separator } from '@/components/ui/separator';
 import { DownloadIcon, TrashIcon, MailIcon } from 'lucide-react';
 import { toast } from "sonner";
-import { formatDate, setInvoiceStatus } from '../utils/invoice-utils';
+import { formatDate, generateInvoicePDF, setInvoiceStatus } from '../utils/invoice-utils';
 import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
 import { formatPhoneNumber } from '../utils/invoice-utils';
@@ -259,6 +259,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
     // };
 
     // Format amount to display as currency
+    
     const formatAmount = (amount: string) => {
         const numAmount = parseFloat(amount);
         return !isNaN(numAmount) 
@@ -268,6 +269,14 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    };
+
+    const handleDownload = async () => {
+        try {
+            const result = await generateInvoicePDF(invoice.invoiceNumber);
+        } catch (error) {
+            console.error("Error downloading invoice:", error);
+        }
     };
 
     return (
@@ -403,20 +412,19 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                         {isSending ? "Sending..." : "Send Invoice"}
                     </Button> */}
                     <Button 
-                        className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 
-                        onClick={handleDeleteInvoice}
-                    >
-                        <TrashIcon className="w-4 h-4 mr-2" />
-                        Delete Invoice
-                    </Button>
-                    {/* <Button 
                         className="bg-gray-600 text-white w-full sm:w-auto hover:bg-gray-700 border-none" 
                         onClick={handleDownload}
                         disabled={isDownloading}
                     >
                         <DownloadIcon className="w-4 h-4 mr-2" />
                         {isDownloading ? "Generating..." : "Download PDF"}
-                    </Button> */}
+                    </Button>
+                    <Button 
+                        className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 
+                        onClick={handleDeleteInvoice}
+                    >
+                        <TrashIcon className="w-4 h-4" />
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>    
