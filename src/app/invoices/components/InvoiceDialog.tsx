@@ -380,9 +380,9 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                                     <p className="text-gray-400">{invoice.notes}</p>
                                 </div>
                             )}
-                        </div>       
+                        </div>
 
-                        <Separator className="my-2 bg-gray-700" />        
+                        <Separator className="my-2 bg-gray-700" />
                         
                         {/* Amount and Status */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#222222] p-4 rounded-lg border border-[#333333]">
