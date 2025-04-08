@@ -76,11 +76,13 @@ export function LeadSheet({ lead, isOpen, onOpenChange, sendEmail, callPhone }: 
 
     const createCustomer = async (leadId: string) => {
         const potentialCustomer = {
-            customerName: lead.customer_name,
-            customerEmail: lead.email,
-            customerPhone: lead.phone
+            customer_name: lead.customer_name,
+            customer_email: lead.email,
+            customer_phone: lead.phone
         }
-        const customerExists = await checkCustomerExists(potentialCustomer.customerPhone, lead.shop_id);
+
+        // console.log("Potential customer: ", potentialCustomer);
+        const customerExists = await checkCustomerExists(potentialCustomer.customer_phone, lead.shop_id);
         if (customerExists) {
             toast.error("Customer already exists");
             return;
