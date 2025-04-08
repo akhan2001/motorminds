@@ -159,9 +159,3 @@ export async function deleteInvoice(invoiceId: string, shopId: string) {
 
 	return data;
 }
-
-export async function generateInvoicePDF(invoiceId: string) {
-	console.log("Generating invoice PDF for invoice:", invoiceId);
-
-	
-}
