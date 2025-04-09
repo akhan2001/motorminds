@@ -21,6 +21,13 @@ interface InvoiceData {
     clientName: string
     clientAddress: string
     clientEmail: string
+    vehicle_information: {
+        year: string
+        make: string
+        model: string
+        vin: string
+        license_plate: string
+    }
 }
 
 const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
@@ -35,7 +42,7 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
     // Get the work order data
     const { data: workOrderData, error: workOrderError } = await supabase
         .from('repair_orders')
-        .select('shop_id, customer_id')
+        .select('shop_id, customer_id, vehicle_id')
         .eq('id', workOrderID)
 
     // console.log("Shop ID: " + workOrderData?.[0].shop_id + "\nCustomer ID: " + workOrderData?.[0].customer_id)
@@ -53,6 +60,13 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         .from('customers')
         .select('customer_name, customer_address, customer_email')
         .eq('id', workOrderData?.[0].customer_id)
+
+    //Grab vehicle information from vehicle_information table
+    const { data: vehicleData, error: vehicleError } = await supabase
+        .from('customer_vehicles')
+        .select('year, make, model, vin, license_plate')
+        .eq('id', workOrderData?.[0].vehicle_id)
+
     
     // console.log("Customer Data: " + customerData?.[0].customer_name + "\n" + customerData?.[0].customer_address + "\n" + customerData?.[0].customer_email)
 
@@ -72,7 +86,14 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         issueDate: new Date().toISOString(),
         clientName: customerData?.[0].customer_name,
         clientAddress: customerData?.[0].customer_address,
-        clientEmail: customerData?.[0].customer_email
+        clientEmail: customerData?.[0].customer_email,
+        vehicle_information: {
+            year: vehicleData?.[0].year,
+            make: vehicleData?.[0].make,
+            model: vehicleData?.[0].model,
+            vin: vehicleData?.[0].vin || "",
+            license_plate: vehicleData?.[0].license_plate || ""
+        }
     }
 
     if (error) {
@@ -106,7 +127,8 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: stri
             client_name: invoiceData.clientName,
             client_address: invoiceData.clientAddress,
             client_email: invoiceData.clientEmail,
-            shop_id: shopId
+            shop_id: shopId,
+            vehicle_information: invoiceData.vehicle_information
         })
         
     if (error) {
