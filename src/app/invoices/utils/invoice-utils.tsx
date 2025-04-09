@@ -159,4 +159,3 @@ export async function deleteInvoice(invoiceId: string, shopId: string) {
 
 	return data;
 }
-

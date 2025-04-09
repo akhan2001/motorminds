@@ -9,6 +9,7 @@ import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
 import { formatPhoneNumber } from '../utils/invoice-utils';
 import { sendInvoiceEmail } from '@/app/customers/api/customer-utils';
+import { generateInvoicePDF } from '../utils/pdf-generator';
 
 interface InvoiceDialogProps {
     isOpen: boolean;
@@ -259,6 +260,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
     // };
 
     // Format amount to display as currency
+    
     const formatAmount = (amount: string) => {
         const numAmount = parseFloat(amount);
         return !isNaN(numAmount) 
@@ -268,6 +270,21 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    };
+
+    const handleDownload = async () => {
+        try {
+            const result = await generateInvoicePDF(invoice);
+            if (result) {
+                console.log("Invoice downloaded successfully");
+                toast.success("Invoice downloaded successfully");
+            } else {
+                toast.error("Failed to download invoice");
+            }
+        } catch (error) {
+            console.error("Error downloading invoice:", error);
+            toast.error("Failed to download invoice");
+        }
     };
 
     return (
@@ -363,9 +380,9 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                                     <p className="text-gray-400">{invoice.notes}</p>
                                 </div>
                             )}
-                        </div>       
+                        </div>
 
-                        <Separator className="my-2 bg-gray-700" />        
+                        <Separator className="my-2 bg-gray-700" />
                         
                         {/* Amount and Status */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#222222] p-4 rounded-lg border border-[#333333]">
@@ -403,20 +420,19 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                         {isSending ? "Sending..." : "Send Invoice"}
                     </Button> */}
                     <Button 
-                        className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 
-                        onClick={handleDeleteInvoice}
-                    >
-                        <TrashIcon className="w-4 h-4 mr-2" />
-                        Delete Invoice
-                    </Button>
-                    {/* <Button 
                         className="bg-gray-600 text-white w-full sm:w-auto hover:bg-gray-700 border-none" 
                         onClick={handleDownload}
                         disabled={isDownloading}
                     >
                         <DownloadIcon className="w-4 h-4 mr-2" />
                         {isDownloading ? "Generating..." : "Download PDF"}
-                    </Button> */}
+                    </Button>
+                    <Button 
+                        className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 
+                        onClick={handleDeleteInvoice}
+                    >
+                        <TrashIcon className="w-4 h-4" />
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>    

@@ -5,3 +5,10 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+module.exports = {
+  webpack: (config: any) => {
+    config.resolve.alias.canvas = false;
+    return config;
+  },
+}

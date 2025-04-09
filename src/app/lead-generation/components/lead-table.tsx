@@ -49,12 +49,14 @@ export function LeadTable({ shopId, user, activeFilter = 'ALL' }: {
             console.log("Lead: ", leadId);
             // Getting leads data and putting into customer object
             const potentialCustomer = {
-                customerName: leads.find((lead) => lead.id === leadId)?.customer_name,
-                customerEmail: leads.find((lead) => lead.id === leadId)?.email,
-                customerPhone: leads.find((lead) => lead.id === leadId)?.phone
+                customer_name: leads.find((lead) => lead.id === leadId)?.customer_name,
+                customer_email: leads.find((lead) => lead.id === leadId)?.email,
+                customer_phone: leads.find((lead) => lead.id === leadId)?.phone
             }
 
-            const customerExists = await checkCustomerExists(potentialCustomer.customerPhone, shopId);
+            console.log("Potential customer: ", potentialCustomer);
+
+            const customerExists = await checkCustomerExists(potentialCustomer.customer_phone, shopId);
             if (customerExists) {
                 toast.error("Customer already exists");
                 return;
@@ -83,7 +85,6 @@ export function LeadTable({ shopId, user, activeFilter = 'ALL' }: {
             case 'NEW':
                 return lead.status === 'NEW';
             case 'REWARD':
-                console.log("Checking lead for rewards:", lead);
                 return Boolean(lead.rewards_claim);
             case 'CUSTOMER':
                 return lead.status === 'CUSTOMER';
