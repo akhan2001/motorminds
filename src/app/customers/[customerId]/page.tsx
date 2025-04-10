@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getCustomerVehicles } from '../api/customer-utils'
+import { getCustomerVehicles, getCustomerDetails, verifyCustomerBelongsToShop } from '../api/customer-utils'
 import { User, Car, History, Calendar, Plus, Wrench, Slash, File } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
@@ -16,6 +16,8 @@ import { CustomerProfileCard } from './components/customer-profile-card'
 import { CustomerVehicleCard } from './components/customer-vehicle-card'
 import { CustomerHistoryCard } from './components/customer-history-card'
 import { CustomerInvoiceCard } from './components/customer-invoice-card'
+import { getShopId } from '@/utils/supabase/supabase-shop'
+import { checkUser } from '@/utils/supabase/supabase-auth'
 
 export default function CustomerPage() {
     const [customer, setCustomer] = useState<any>(null)
@@ -26,21 +28,53 @@ export default function CustomerPage() {
     const [invoices, setInvoices] = useState<any[]>([])
     const [activeTab, setActiveTab] = useState("profile")
     const [isLoading, setIsLoading] = useState(true)
-    
+    const [shopId, setShopId] = useState<string | null>(null)
+
     const params = useParams<{ customerId: string }>()
     const router = useRouter()
     
+    // Confirm customer belongs to shop
+    // useEffect(() => {
+    //     async function fetchUserData() {
+    //         setIsLoading(true)
+    //         try {
+    //             const userData = await checkUser()
+    //             if (userData) {
+    //                 const shop = await getShopId(userData.id)
+    //                 if (shop) {
+    //                     setShopId(shop)
+    //                 } else {
+    //                     router.push('/customers')
+    //                 }
+    //             } else {
+    //                 router.push('/customers')
+    //             }
+    //         } catch (error) {
+    //             console.error('Error:', error)
+    //             router.push('/customers')
+    //         } finally {
+    //             setIsLoading(false)
+    //         }
+    //     }
+        
+    //     fetchUserData()
+    // }, [router])
+
     useEffect(() => {
         const fetchCustomerData = async () => {
             setIsLoading(true)
             try {
-                // Get customer details
-                const { data: customerData } = await supabase
-                    .from('customers')
-                    .select('*')
-                    .eq('id', params?.customerId || '')
-                    .single()
                 
+
+                // Get customer details
+                // const customerBelongsToShop = await verifyCustomerBelongsToShop(params?.customerId || '', shopId)
+
+                const customerData = await getCustomerDetails(params?.customerId || '')
+                if (!customerData) {
+                    console.error('Customer data not found')
+                    setCustomer(null)
+                    return
+                }
                 setCustomer(customerData)
                 
                 // Get vehicles
@@ -59,19 +93,6 @@ export default function CustomerPage() {
                     .order('created_at', { ascending: false })
                 
                 setWorkOrders(workOrderData || [])
-                
-                // Simulate message history (replace with actual data source)
-                setMessages([
-                    { id: 1, sender: 'shop', text: 'Your vehicle is ready for pickup', timestamp: '2023-07-15T14:30:00' },
-                    { id: 2, sender: 'customer', text: "Great! I'll be there at 5pm", timestamp: '2023-07-15T15:45:00' },
-                    { id: 3, sender: 'mia', text: 'Reminder: Your next service is due in 2 weeks', timestamp: '2023-07-20T09:00:00' }
-                ])
-                
-                // Simulate appointments (replace with actual data source)
-                setAppointments([
-                    { id: 1, date: '2023-08-10T10:00:00', service: 'Oil Change', status: 'Confirmed' },
-                    { id: 2, date: '2023-06-15T14:30:00', service: 'Brake Inspection', status: 'Completed' }
-                ])
                 
             } catch (error) {
                 console.error('Error fetching customer data:', error)

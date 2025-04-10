@@ -15,11 +15,11 @@ export function CustomerHistoryCard({ workOrders }: CustomerHistoryCardProps) {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Pending':
+            case 'In Progress':
                 return 'bg-yellow-500';
             case 'Completed':
                 return 'bg-green-500';
-            case 'Cancelled':
+            case 'Pending':
                 return 'bg-red-500';
             default:
                 return 'bg-gray-500';
