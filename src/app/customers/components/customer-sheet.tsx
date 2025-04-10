@@ -9,9 +9,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from "@/components/ui/separator"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { getCustomerVehicles, createCustomerVehicle } from "../api/customer-utils"
-import { Car, Plus, Minus, Mail } from "lucide-react"
+import { Car, Plus, Minus, Mail, ArrowUpRight } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { EmailDialog } from "./email-dialog"
+import { useRouter } from "next/navigation"
+import { CustomerVehicleDialog } from "./customer-vehicle-dialog"
+import { ConfirmationProvider, useConfirmation } from "@/app/components/confirmation-service"
 
 interface CustomerSheetProps {
     customer: any;
@@ -48,6 +51,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     });
     const [emailToSend, setEmailToSend] = useState("");
     const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const router = useRouter();
 
     // Reset form and states when sheet opens/closes
     useEffect(() => {
@@ -165,7 +169,17 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
             return;
         }
 
-        const updated = await updateCustomer(customer.id, editedCustomer);
+        // Phone validation - ensure it's not null or empty
+        if (!editedCustomer.customerPhone?.trim()) {
+            toast.error("Phone number is required");
+            return;
+        }
+
+        const updated = await updateCustomer(customer.id, {
+            ...editedCustomer,
+            customerPhone: editedCustomer.customerPhone.trim() || '' // Ensure we never send null
+        });
+        
         if (updated) {
             toast.success("Customer updated successfully");
             setIsEditing(false);
@@ -229,7 +243,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         setEmailToSend(email);
         setIsSendingEmail(true);
     };
-
+    
     if (!customer) return null;
 
     return (
@@ -237,13 +251,23 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
             <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
                 <SheetContent className="bg-[#131313] text-white border-l-1 border-l-[#222] overflow-y-auto">
                     <SheetHeader>
-                        <SheetTitle className="text-white">{customer.customer_name}</SheetTitle>
+                        <SheetTitle className="text-white">
+                            {customer.customer_name}
+                        </SheetTitle>
                         <SheetDescription className="text-gray-400">
                             View and edit customer details
                         </SheetDescription>
                     </SheetHeader>
 
                     <div className="grid gap-4 py-4">
+                        <Button
+                            variant="outline" 
+                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full"
+                            onClick={() => router.push(`/customers/${customer.id}`)}
+                        >
+                            View Full Customer Profile
+                            <ArrowUpRight className="w-3 h-3" />
+                        </Button>
                         <Separator className="bg-[#666]"/>
                         <h2 className="text-lg font-semibold text-gray-300">Customer Information</h2>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -253,7 +277,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                             <div className="col-span-3">
                                 <Input
                                     id="name"
-                                    value={customer.customer_name}
+                                    value={editedCustomer.customerName}
                                     onChange={(e) => setEditedCustomer({ ...editedCustomer, customerName: e.target.value })}
                                     className="col-span-3 bg-[#292929] text-white border-[#626262]"
                                     readOnly={!isEditing}
@@ -286,7 +310,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="phone" className="text-left text-gray-300">
-                                Phone
+                                Phone *
                             </Label>
                             <Input
                                 id="phone"
@@ -294,6 +318,8 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                 onChange={(e) => setEditedCustomer({ ...editedCustomer, customerPhone: e.target.value })}
                                 className="col-span-3 bg-[#292929] text-white border-[#626262]"
                                 readOnly={!isEditing}
+                                required
+                                placeholder="Enter phone number"
                             />
                         </div>
 
@@ -384,97 +410,16 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 </SheetContent>
             </Sheet>
 
-            <Dialog open={isAddingVehicle} onOpenChange={setIsAddingVehicle}>
-                <DialogContent className="bg-[#131313] text-white border border-[#222]">
-                    <DialogHeader>
-                        <DialogTitle>Add New Vehicle</DialogTitle>
-                        <DialogDescription className="text-gray-400">
-                            Add a new vehicle to the customer's profile
-                        </DialogDescription>
-                    </DialogHeader>
-                    
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="year" className="text-left text-gray-300">Year</Label>
-                            <Input
-                                id="year"
-                                value={newVehicle.year}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="YYYY"
-                                type="number"
-                                min="1960"
-                                max={new Date().getFullYear()}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="make" className="text-left text-gray-300">Make</Label>
-                            <Input
-                                id="make"
-                                value={newVehicle.make}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="Make"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="model" className="text-left text-gray-300">Model</Label>
-                            <Input
-                                id="model"
-                                value={newVehicle.model}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="Model"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="color" className="text-left text-gray-300">Color</Label>
-                            <Input
-                                id="color"
-                                value={newVehicle.color}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="Color"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="vin" className="text-left text-gray-300">VIN</Label>
-                            <Input
-                                id="vin"
-                                value={newVehicle.vin}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="VIN"
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
-                            onClick={() => setIsAddingVehicle(false)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
-                            onClick={handleAddVehicle}
-                        >
-                            Add Vehicle
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <CustomerVehicleDialog
+                isOpen={isAddingVehicle}
+                onOpenChange={setIsAddingVehicle}
+                onAddVehicle={handleAddVehicle}
+            />
 
             <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
                 <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Remove Customer?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete Customer?</AlertDialogTitle>
                         <AlertDialogDescription className="text-gray-400">
                             This will remove the customer from your shop.
                         </AlertDialogDescription>
@@ -492,6 +437,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
 
             <AlertDialog open={Boolean(isDeletingVehicle)} onOpenChange={() => setIsDeletingVehicle(null)}>
                 <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">

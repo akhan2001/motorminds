@@ -27,6 +27,52 @@ export async function getCustomers(shopId: string) {
     }
 }
 
+export async function getCustomerName(customerId: string) {
+    const { data, error } = await supabase
+        .from('customers')
+        .select('customer_name')
+        .eq('id', customerId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching customer name:', error);
+        throw new Error('Failed to fetch customer name');
+    }
+
+    return data?.customer_name || null;
+}
+
+export async function getCustomerDetails(customerId: string) {
+    const { data: customerData, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', customerId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching customer details:', error);
+        throw new Error('Failed to fetch customer details');
+    }
+
+    return customerData;
+}
+
+export async function verifyCustomerBelongsToShop(customerId: string, shopId: string) {
+    const { data: customerData, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', customerId)
+        .eq('shop_id', shopId)
+        .single();
+
+    if (error) {
+        console.error('Error verifying customer belongs to shop:', error);
+        throw new Error('Failed to verify customer belongs to shop');
+    }
+    
+    return customerData;
+}
+
 export async function createNewCustomer(customer: any, shopId: string) {
     console.log("Creating new customer:", customer.customer_phone, customer.customer_name, customer.customer_email);
 
