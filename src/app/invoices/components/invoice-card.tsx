@@ -104,11 +104,16 @@ export function InvoiceCard({
                     <div>
                         <p className="text-xs uppercase mb-1">VEHICLE</p>
                         <p className="font-medium">{vehicleDisplay}</p>
-                        {vehicleInfo.license_plate && <p className="text-sm">{vehicleInfo.license_plate}</p>}
+                        {vehicleInfo.license_plate && vehicleInfo.license_plate !== "NULL" && <p className="text-sm">{vehicleInfo.license_plate}</p>}
                     </div>
                     <div className="text-left sm:text-right mt-2 sm:mt-0 w-full sm:w-auto">
-                        <p className="text-xs text-gray-400 uppercase mb-1">AMOUNT DUE</p>
-                        <p className="text-xl font-bold text-red-500">{amount}</p>
+                        <p className="text-xs text-gray-400 uppercase mb-1">
+                            {status === "PAID" ? "AMOUNT PAID" : "AMOUNT DUE"}
+                        </p>
+                        {status === "PAID" ? 
+                            <p className="text-xl font-bold text-green-500">{amount}</p> : 
+                            <p className="text-xl font-bold text-red-500">{amount}</p>
+                        }
                         <p className="text-sm text-gray-400">Issued on: {issueDate}</p>
                     </div>
                 </div>

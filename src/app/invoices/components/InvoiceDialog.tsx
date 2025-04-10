@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Separator } from '@/components/ui/separator';
 import { DownloadIcon, TrashIcon, MailIcon } from 'lucide-react';
 import { toast } from "sonner";
-import { formatDate, setInvoiceStatus } from '../utils/invoice-utils';
+import { formatCurrency, formatDate, setInvoiceStatus } from '../utils/invoice-utils';
 import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
 import { formatPhoneNumber } from '../utils/invoice-utils';
@@ -31,7 +31,9 @@ interface InvoiceDialogProps {
         clientEmail: string;
         clientPhone: string;
         labour: string;
+        labour_cost: number;
         parts: string;
+        parts_cost: number;
         notes: string;
         mileage: string;
         description: string;
@@ -319,7 +321,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                                 <p className="text-white font-medium">{invoice.shopName}</p>
                                 <p className="text-gray-400 text-sm">{invoice.shopAddress}</p>
                                 <p className="text-gray-400 text-sm">{invoice.shopEmail}</p>
-                                <p className="text-gray-400 text-sm">{invoice.shopPhone}</p>
+                                <p className="text-gray-400 text-sm">{formatPhoneNumber(invoice.shopPhone)}</p>
                             </div>
                     
                             <div className="space-y-2">
@@ -327,7 +329,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                                 <p className="text-white font-medium">{invoice.clientName}</p>
                                 <p className="text-gray-400 text-sm">{invoice.clientAddress}</p>
                                 <p className="text-gray-400 text-sm">{invoice.clientEmail}</p>
-                                <p className="text-gray-400 text-sm">{invoice.clientPhone}</p>
+                                <p className="text-gray-400 text-sm">{formatPhoneNumber(invoice.clientPhone)}</p>
                             </div>
                         </div>
                         
@@ -351,26 +353,23 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                         
                         {/* Work Order Details */}
                         <div className="space-y-2">
-                            <h3 className="text-lg font-semibold text-white">Work Order Details</h3>
-                            
                             {invoice.description && (
                                 <div className="mb-2">
-                                    <p className="text-white font-medium">Description:</p>
-                                    <p className="text-gray-400">{invoice.description}</p>
+                                    <p className="text-lg font-semibold text-white">{invoice.description}</p>
                                 </div>
                             )}
                             
                             {invoice.labour && (
                                 <div className="mb-2">
                                     <p className="text-white font-medium">Labour:</p>
-                                    <p className="text-gray-400 whitespace-pre-line">{invoice.labour}</p>
+                                    <p className="text-gray-400 whitespace-pre-line">{invoice.labour} - {formatCurrency(invoice.labour_cost)}</p>
                                 </div>
                             )}
                             
                             {invoice.parts && (
                                 <div className="mb-2">
                                     <p className="text-white font-medium">Parts:</p>
-                                    <p className="text-gray-400">{invoice.parts}</p>
+                                    <p className="text-gray-400 whitespace-pre-line">{invoice.parts} - {formatCurrency(invoice.parts_cost)}</p>
                                 </div>
                             )}
                             
