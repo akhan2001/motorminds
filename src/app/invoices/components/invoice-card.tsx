@@ -104,7 +104,7 @@ export function InvoiceCard({
                     <div>
                         <p className="text-xs uppercase mb-1">VEHICLE</p>
                         <p className="font-medium">{vehicleDisplay}</p>
-                        {vehicleInfo.license_plate && <p className="text-sm">{vehicleInfo.license_plate}</p>}
+                        {vehicleInfo.license_plate && vehicleInfo.license_plate !== "NULL" && <p className="text-sm">{vehicleInfo.license_plate}</p>}
                     </div>
                     <div className="text-left sm:text-right mt-2 sm:mt-0 w-full sm:w-auto">
                         <p className="text-xs text-gray-400 uppercase mb-1">AMOUNT DUE</p>

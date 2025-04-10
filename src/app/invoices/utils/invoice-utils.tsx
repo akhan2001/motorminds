@@ -17,13 +17,13 @@ export async function fetchAllInvoices(shopId: string) {
 
 // Fetch invoice data by ID
 export async function getInvoiceData(id: string) {
-const { data, error } = await supabase.from('invoices').select('*').eq('invoice_number', id);
+	const { data, error } = await supabase.from('invoices').select('*').eq('invoice_number', id);
 
-if (error) {
-	console.error('Error fetching invoice:', error);
-	return null;
-}
-return data;
+	if (error) {
+		console.error('Error fetching invoice:', error);
+		return null;
+	}
+	return data;
 }
 
 // Generate new invoice
@@ -115,7 +115,9 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 			amount: invoiceData.amount,
 			issue_date: invoiceData.issue_date,
 			labour: invoiceData.labour,
+			labour_cost: invoiceData.labour_cost,
 			parts: invoiceData.parts,
+			parts_cost: invoiceData.parts_cost,
 			notes: invoiceData.notes,
 			mileage: invoiceData.mileage,
 			description: invoiceData.description,

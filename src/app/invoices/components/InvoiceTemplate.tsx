@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-
+import { formatPhoneNumber } from "../utils/invoice-utils";
 // Create styles
 const styles = StyleSheet.create({
     page: {
@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eeeeee'
     },
-    descCol: { width: '60%', fontSize: 10 },
-    qtyCol: { width: '15%', fontSize: 10, textAlign: 'center' },
-    rateCol: { width: '20%', fontSize: 10, textAlign: 'right' },
-    amountCol: { width: '25%', fontSize: 10, textAlign: 'right' },
+    descCol: { width: '70%', fontSize: 10 },
+    // qtyCol: { width: '15%', fontSize: 10, textAlign: 'center' },
+    // rateCol: { width: '20%', fontSize: 10, textAlign: 'right' },
+    amountCol: { width: '30%', fontSize: 10, textAlign: 'right' },
     summarySection: {
         marginTop: 20,
         borderTopWidth: 1,
@@ -164,7 +164,7 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
     const invoiceDate = formatDate(invoice.issueDate);
 
     // Calculate totals
-    const subtotal = invoice.amount;
+    const subtotal = invoice.amount; // invoice.labour_cost + invoice.parts_cost;
 
     const taxRate = 13;
     const taxAmount = subtotal * (taxRate / 100);
@@ -183,7 +183,7 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     <View style={styles.companyInfo}>
                         <Text style={styles.companyName}>{invoice.shopName}</Text>
                         <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopPhone}</Text>
+                        <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
                         <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
                     </View>
                 </View>
@@ -193,7 +193,7 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     <Text style={styles.sectionTitle}>BILL TO</Text>
                     <Text style={styles.detailFonts}>{invoice.clientName || ''}</Text>
                     <Text style={styles.detailFonts}>{invoice.clientAddress || ''}</Text>
-                    <Text style={styles.detailFonts}>{invoice.clientPhone || ''}</Text>
+                    <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
                     <Text style={styles.detailFonts}>{invoice.clientEmail || ''}</Text>
                 </View>
                 
@@ -203,16 +203,17 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     <Text style={styles.detailFonts}>
                         {invoice.vehicleInfo?.year || ''} {invoice.vehicleInfo?.make || ''} {invoice.vehicleInfo?.model || ''}
                     </Text>
-                    <Text style={styles.detailFonts}>{invoice.vehicleInfo?.license_plate || ''}</Text>
+                    <Text style={styles.detailFonts}>{invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" ? '' : invoice.vehicleInfo?.license_plate}</Text>
                     <Text style={styles.detailFonts}>{invoice.mileage || ''}</Text>
                 </View>
                 
                 {/* Items Table */}
                 <View style={styles.table}>
+                    <Text style={styles.companyName}>{invoice.description}</Text>
                     <View style={styles.tableHeader}>
                         <Text style={styles.descCol}>Description</Text>
-                        <Text style={styles.qtyCol}>Quantity</Text>
-                        <Text style={styles.rateCol}>Rate</Text>
+                        {/* <Text style={styles.qtyCol}>Quantity</Text>
+                        <Text style={styles.rateCol}>Rate</Text> */}
                         <Text style={styles.amountCol}>Amount</Text>
                     </View>
                     
@@ -221,17 +222,17 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                         <View style={styles.detailsSection}>                            
                             {invoice.labour && (
                                 <View style={styles.tableRow}>
-                                    <Text style={styles.descCol}>Labour: {invoice.description}</Text>
-                                    <Text style={styles.qtyCol}>1</Text>
-                                    <Text style={styles.amountCol}>{invoice.labour}</Text>
+                                    <Text style={styles.descCol}>Labour: {invoice.labour}</Text>
+                                    {/* <Text style={styles.qtyCol}>1</Text> */}
+                                    <Text style={styles.amountCol}>{formatCurrency(invoice.labour_cost)}</Text>
                                 </View>
                             )}
                             
                             {invoice.parts && (
                                 <View style={styles.tableRow}>
                                     <Text style={styles.descCol}>Parts: {invoice.parts}</Text>
-                                    <Text style={styles.qtyCol}>1</Text>
-                                    <Text style={styles.amountCol}>{formatCurrency(0)}</Text>
+                                    {/* <Text style={styles.qtyCol}>1</Text> */}
+                                    <Text style={styles.amountCol}>{formatCurrency(invoice.parts_cost)}</Text>
                                 </View>
                             )}
                             
@@ -244,7 +245,7 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     ) : (
                         <View style={styles.tableRow}>
                             <Text style={styles.descCol}>Service</Text>
-                            <Text style={styles.qtyCol}>1</Text>
+                            {/* <Text style={styles.qtyCol}>1</Text> */}
                             {/* <Text style={styles.rateCol}>{formatCurrency(0)}</Text> */}
                             <Text style={styles.amountCol}>{formatCurrency(0)}</Text>
                         </View>
