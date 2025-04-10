@@ -573,8 +573,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Total Amount</label>
                             <div className="flex flex-row gap-2 items-center sm:col-span-3">
-                                <span className="text-gray-300 text-md">$</span>
-                                <span className="text-gray-300 text-md">{total}</span>
+                                <span className="text-white text-xl">$ {total}</span>
                                 {/* <Input
                                     className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
                                     // placeholder="Enter the amount"
