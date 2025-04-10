@@ -6,13 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getShopInfo } from "@/utils/supabase/supabase-shop";
 import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
-import { createNewInvoice } from "@/app/invoices/utils/invoice-utils";
+import { createNewInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusIcon } from "lucide-react";
+import { MinusIcon, PlusIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
-
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated }: { 
     onClose: () => void, 
     shopId: string, 
@@ -33,7 +33,9 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const formattedDate = today.toISOString().split('T')[0];
     const [invoiceDate, setInvoiceDate] = useState(formattedDate);
     const [labour, setLabour] = useState("");
+    const [labourCost, setLabourCost] = useState("0");
     const [parts, setParts] = useState("");
+    const [partsCost, setPartsCost] = useState("0");
     const [notes, setNotes] = useState("");
     const [mileage, setMileage] = useState("");
     const [description, setDescription] = useState("");
@@ -137,6 +139,15 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         }
     }, [selectedCustomerId]);
 
+    useEffect(() => {
+        calculateTotal();
+    }, [labourCost, partsCost]);
+
+    const calculateTotal = () => {
+        const total = parseFloat(labourCost) + parseFloat(partsCost);
+        setTotal(total.toFixed(2));
+    };
+
     const handleCustomerChange = (value: string) => {
         setSelectedCustomerId(value);
     };
@@ -177,9 +188,24 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
             toast.error("Please select an invoice date");
             return false;
         }
+
+        if (!description) {
+            toast.error("Please enter a title");
+            return false;
+        }
         
-        if (!total || isNaN(parseFloat(total)) || parseFloat(total) <= 0) {
-            toast.error("Please enter a valid total amount");
+        // if (!total || isNaN(parseFloat(total)) || parseFloat(total) <= 0) {
+        //     toast.error("Please enter a valid total amount");
+        //     return false;
+        // }
+
+        if (!labourCost || isNaN(parseFloat(labourCost)) || parseFloat(labourCost) <= 0) {
+            toast.error("Labour cost cannot be negative");
+            return false;
+        }
+
+        if (!partsCost || isNaN(parseFloat(partsCost)) || parseFloat(partsCost) <= 0) {
+            toast.error("Parts cost cannot be negative");
             return false;
         }
         
@@ -216,7 +242,9 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
                 issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
+                labour_cost: parseFloat(labourCost) || 0,
                 parts: parts || "",
+                parts_cost: parseFloat(partsCost) || 0,
                 notes: notes || "",
                 mileage: mileage || "",
                 description: description || "",
@@ -290,163 +318,165 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             <Label htmlFor="shopPhone">Phone</Label>
                             <Input
                                 id="shopPhone"
-                                value={shopPhone}
+                                value={formatPhoneNumber(shopPhone)}
                                 disabled
                             />
                         </div>
                     </div>
-                </div>
-
-                    {/* Customer selection */}
-                    <div className="space-y-2">
-                        <label className="text-gray-300 text-sm font-medium mb-1 block">Customer Information</label>
-                        <div className="flex flex-wrap gap-2">
-                            <div className="w-full sm:w-auto sm:flex-1">
-                                <Select 
-                                    value={selectedCustomerId} 
-                                    onValueChange={handleCustomerChange} 
-                                    disabled={showNewClientForm}
-                                >
-                                    <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${showNewClientForm ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                        <SelectValue placeholder="Select a customer" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                                        {customers.map((customer) => (
-                                            <SelectItem key={customer.id} value={customer.id}>
-                                                {customer.customer_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button 
-                                className={`${showNewClientForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262] h-10 w-10 p-0 sm:h-10 sm:w-10`}
-                                onClick={() => {
-                                    setShowNewClientForm(!showNewClientForm);
-                                    if (!showNewClientForm) {
-                                        setSelectedCustomerId(''); // Clear selected customer when enabling manual input
-                                    }
-                                }}
-                            >
-                                <PlusIcon className="h-4 w-4" />
-                            </Button>
-                        </div>
-
-                        {/* New Client Form */}
-                        {showNewClientForm && (
-                            <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
-                                <Input
-                                    className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                    placeholder="Client Name"
-                                    value={clientInfo.client_name}
-                                    onChange={(e) => setClientInfo({...clientInfo, client_name: e.target.value})}
-                                />
-                                <Input
-                                    className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                    placeholder="Client Phone"
-                                    value={clientInfo.client_phone}
-                                    onChange={(e) => setClientInfo({...clientInfo, client_phone: e.target.value})}
-                                    required
-                                    pattern="\d{10}"                                    
-                                />  
-                                <Input
-                                    className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                    placeholder="Client Email"
-                                    type="email"
-                                    value={clientInfo.client_email}
-                                    onChange={(e) => setClientInfo({...clientInfo, client_email: e.target.value})}
-                                />
-                                <Input
-                                    className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                    placeholder="Client Address"
-                                    value={clientInfo.client_address}
-                                    onChange={(e) => setClientInfo({...clientInfo, client_address: e.target.value})}
-                                />
-                            </div>
-                        )}
                     </div>
 
-                    {/* Vehicle Information */}
-                    <div className="space-y-2">
-                        <label className="text-gray-300 text-sm font-medium mb-1 block">Vehicle Information</label>
-                        <div className="flex flex-wrap gap-2">
-                            <div className="w-full sm:w-auto sm:flex-1">
-                                <Select 
-                                    value={selectedVehicleId} 
-                                    onValueChange={handleVehicleChange}
-                                    disabled={showNewVehicleForm || showNewClientForm}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Customer selection */}
+                        <div className="space-y-2">
+                            <label className="text-gray-300 text-sm font-medium mb-1 block">Customer Information</label>
+                            <div className="flex flex-wrap gap-2">
+                                <div className="w-full sm:w-auto sm:flex-1">
+                                    <Select 
+                                        value={selectedCustomerId} 
+                                        onValueChange={handleCustomerChange} 
+                                        disabled={showNewClientForm}
+                                    >
+                                        <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${showNewClientForm ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                            <SelectValue placeholder="Select a customer" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                            {customers.map((customer) => (
+                                                <SelectItem key={customer.id} value={customer.id}>
+                                                    {customer.customer_name} <span className="text-gray-400 text-xs">{formatPhoneNumber(customer.customer_phone)}</span>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button 
+                                    className={`${showNewClientForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262] h-10 w-10 p-0 sm:h-10 sm:w-10`}
+                                    onClick={() => {
+                                        setShowNewClientForm(!showNewClientForm);
+                                        if (!showNewClientForm) {
+                                            setSelectedCustomerId(''); // Clear selected customer when enabling manual input
+                                        }
+                                    }}
                                 >
-                                    <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${
-                                        (showNewVehicleForm || showNewClientForm) ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}>
-                                        <SelectValue placeholder="Select a vehicle" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                                        {customerVehicles.map((vehicle) => (
-                                            <SelectItem key={vehicle.id} value={vehicle.id}>
-                                                {vehicle.year} {vehicle.make} {vehicle.model}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    {showNewClientForm ? <MinusIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+                                </Button>
                             </div>
-                            <Button 
-                                className={`${showNewVehicleForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262] h-10 w-10 p-0 sm:h-10 sm:w-10`}
-                                onClick={() => {
-                                    setShowNewVehicleForm(!showNewVehicleForm);
-                                    if (!showNewVehicleForm) {
-                                        setSelectedVehicleId('');
-                                        setVehicleInfo(null);
-                                    }
-                                }}
-                            >
-                                <PlusIcon className="h-4 w-4" />
-                            </Button>
-                        </div>
 
-                        {/* Manual Vehicle Form */}
-                        {showNewVehicleForm && (
-                            <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {/* New Client Form */}
+                            {showNewClientForm && (
+                                <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
                                     <Input
                                         className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Year"
-                                        value={manualVehicleInfo.year}
-                                        onChange={(e) => {
-                                            setManualVehicleInfo({...manualVehicleInfo, year: e.target.value});
-                                            setVehicleInfo({...manualVehicleInfo, year: e.target.value});
-                                        }}
+                                        placeholder="Client Name"
+                                        value={clientInfo.client_name}
+                                        onChange={(e) => setClientInfo({...clientInfo, client_name: e.target.value})}
                                     />
                                     <Input
                                         className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Make"
-                                        value={manualVehicleInfo.make}
-                                        onChange={(e) => {
-                                            setManualVehicleInfo({...manualVehicleInfo, make: e.target.value});
-                                            setVehicleInfo({...manualVehicleInfo, make: e.target.value});
-                                        }}
+                                        placeholder="Client Phone"
+                                        value={clientInfo.client_phone}
+                                        onChange={(e) => setClientInfo({...clientInfo, client_phone: e.target.value})}
+                                        required
+                                        pattern="\d{10}"                                    
+                                    />  
+                                    <Input
+                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                        placeholder="Client Email"
+                                        type="email"
+                                        value={clientInfo.client_email}
+                                        onChange={(e) => setClientInfo({...clientInfo, client_email: e.target.value})}
                                     />
                                     <Input
                                         className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Model"
-                                        value={manualVehicleInfo.model}
-                                        onChange={(e) => {
-                                            setManualVehicleInfo({...manualVehicleInfo, model: e.target.value});
-                                            setVehicleInfo({...manualVehicleInfo, model: e.target.value});
-                                        }}
-                                    />
-                                    <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="License Plate"
-                                        value={manualVehicleInfo.license_plate}
-                                        onChange={(e) => {
-                                            setManualVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
-                                            setVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
-                                        }}
+                                        placeholder="Client Address"
+                                        value={clientInfo.client_address}
+                                        onChange={(e) => setClientInfo({...clientInfo, client_address: e.target.value})}
                                     />
                                 </div>
+                            )}
+                        </div>
+
+                        {/* Vehicle Information */}
+                        <div className="space-y-2">
+                            <label className="text-gray-300 text-sm font-medium mb-1 block">Vehicle Information</label>
+                            <div className="flex flex-wrap gap-2">
+                                <div className="w-full sm:w-auto sm:flex-1">
+                                    <Select 
+                                        value={selectedVehicleId} 
+                                        onValueChange={handleVehicleChange}
+                                        disabled={showNewVehicleForm || showNewClientForm}
+                                    >
+                                        <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${
+                                            (showNewVehicleForm || showNewClientForm) ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}>
+                                            <SelectValue placeholder="Select a vehicle" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                            {customerVehicles.map((vehicle) => (
+                                                <SelectItem key={vehicle.id} value={vehicle.id}>
+                                                    {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.license_plate===null || vehicle.license_plate==="NULL" ? <span className="text-gray-400 text-xs">(No License Plate)</span> : <span className="text-gray-400 text-xs">({vehicle.license_plate})</span>}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button 
+                                    className={`${showNewVehicleForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262] h-10 w-10 p-0 sm:h-10 sm:w-10`}
+                                    onClick={() => {
+                                        setShowNewVehicleForm(!showNewVehicleForm);
+                                        if (!showNewVehicleForm) {
+                                            setSelectedVehicleId('');
+                                            setVehicleInfo(null);
+                                        }
+                                    }}
+                                >
+                                    {showNewVehicleForm ? <MinusIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+                                </Button>
                             </div>
-                        )}
+
+                            {/* Manual Vehicle Form */}
+                            {showNewVehicleForm && (
+                                <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <Input
+                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                            placeholder="Year"
+                                            value={manualVehicleInfo.year}
+                                            onChange={(e) => {
+                                                setManualVehicleInfo({...manualVehicleInfo, year: e.target.value});
+                                                setVehicleInfo({...manualVehicleInfo, year: e.target.value});
+                                            }}
+                                        />
+                                        <Input
+                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                            placeholder="Make"
+                                            value={manualVehicleInfo.make}
+                                            onChange={(e) => {
+                                                setManualVehicleInfo({...manualVehicleInfo, make: e.target.value});
+                                                setVehicleInfo({...manualVehicleInfo, make: e.target.value});
+                                            }}
+                                        />
+                                        <Input
+                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                            placeholder="Model"
+                                            value={manualVehicleInfo.model}
+                                            onChange={(e) => {
+                                                setManualVehicleInfo({...manualVehicleInfo, model: e.target.value});
+                                                setVehicleInfo({...manualVehicleInfo, model: e.target.value});
+                                            }}
+                                        />
+                                        <Input
+                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                                            placeholder="License Plate"
+                                            value={manualVehicleInfo.license_plate}
+                                            onChange={(e) => {
+                                                setManualVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
+                                                setVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Invoice date */}
@@ -466,11 +496,11 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                         <label className="text-gray-300 text-sm font-medium block">Invoice Details</label>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Description</label>
+                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Title</label>
                             <div className="sm:col-span-3">
                                 <Input
                                     className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter the description"
+                                    placeholder="Enter a title for the invoice"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     required
@@ -478,45 +508,24 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             </div>
                             
                             <label className="text-gray-300 text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Labour</label>
-                            <div className="sm:col-span-3">
-                                <Textarea
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full min-h-[80px]"
-                                    placeholder="Enter the labour cost"
+                            <div className="flex flex-row gap-2 sm:col-span-3">
+                                <Input
+                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    placeholder="Enter labour"
                                     value={labour}
                                     onChange={(e) => setLabour(e.target.value)}
                                 />
-                            </div>
-
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Parts</label>
-                            <div className="sm:col-span-3">
+                                <span className="text-gray-300 text-md self-center">$</span>
                                 <Input
                                     className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter the parts"
-                                    value={parts}
-                                    onChange={(e) => setParts(e.target.value)}
+                                    placeholder="Enter labour cost"
+                                    type="number"
+                                    value={labourCost}
+                                    // set labour cost to 0 if labour is or negative
+                                    onChange={(e) => setLabourCost(e.target.value)}
                                 />
                             </div>
 
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Notes</label>
-                            <div className="sm:col-span-3">
-                                <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter the notes"
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                />
-                            </div>
-                            
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Mileage</label>
-                            <div className="sm:col-span-3">
-                                <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter the mileage"
-                                    value={mileage}
-                                    onChange={(e) => setMileage(e.target.value)}
-                                />
-                            </div>
-                            
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Assigned To</label>
                             <div className="sm:col-span-3">
                                 <Select value={assignedTo} onValueChange={handleAssignedToChange}>
@@ -526,23 +535,53 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     <SelectContent className="bg-[#292929] text-white border-[#626262]">
                                         {staffNames.map((staff) => (
                                             <SelectItem key={staff.id} value={staff.id}>
-                                                {staff.staff_name}
+                                                {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Parts</label>
+                            <div className="flex flex-row gap-2 sm:col-span-3">
+                                <Input
+                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    placeholder="Enter parts"
+                                    value={parts}
+                                    onChange={(e) => setParts(e.target.value)}
+                                />
+                                <span className="text-gray-300 text-md self-center">$</span>
+                                <Input
+                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    placeholder="Enter parts cost"
+                                    type="number"
+                                    value={partsCost}
+                                    // set parts cost to 0 if parts is or negative
+                                    onChange={(e) => setPartsCost(e.target.value)}
+                                />
+                            </div>
+
+                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Notes</label>
+                            <div className="sm:col-span-3">
+                                <Textarea
+                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    placeholder="Enter any notes"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                />
+                            </div>
                             
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Total Amount</label>
                             <div className="flex flex-row gap-2 items-center sm:col-span-3">
-                                <span className="text-gray-300 text-md">$</span>
-                                <Input
+                                <span className="text-white text-xl">$ {total}</span>
+                                {/* <Input
                                     className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter the amount"
+                                    // placeholder="Enter the amount"
                                     type="number"
                                     value={total}
                                     onChange={(e) => setTotal(e.target.value)}
-                                />
+                                    disabled
+                                /> */}
                             </div>
                         </div>
                     </div>
