@@ -109,8 +109,11 @@ export function InvoiceCard({
                     <div className="text-left sm:text-right mt-2 sm:mt-0 w-full sm:w-auto">
                         <p className="text-xs text-gray-400 uppercase mb-1">
                             {status === "PAID" ? "AMOUNT PAID" : "AMOUNT DUE"}
-                            {status === "PAID" ? <p className="text-xl font-bold text-green-500">{amount}</p> : <p className="text-xl font-bold text-red-500">{amount}</p>}
                         </p>
+                        {status === "PAID" ? 
+                            <p className="text-xl font-bold text-green-500">{amount}</p> : 
+                            <p className="text-xl font-bold text-red-500">{amount}</p>
+                        }
                         <p className="text-sm text-gray-400">Issued on: {issueDate}</p>
                     </div>
                 </div>

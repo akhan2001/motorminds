@@ -144,7 +144,9 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     }, [labourCost, partsCost]);
 
     const calculateTotal = () => {
-        const total = parseFloat(labourCost) + parseFloat(partsCost);
+        const labour = parseFloat(labourCost) || 0;
+        const parts = parseFloat(partsCost) || 0;
+        const total = labour + parts;
         setTotal(total.toFixed(2));
     };
 
@@ -199,12 +201,12 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         //     return false;
         // }
 
-        if (!labourCost || isNaN(parseFloat(labourCost)) || parseFloat(labourCost) <= 0) {
+        if (!labourCost || isNaN(parseFloat(labourCost)) || parseFloat(labourCost) < 0) {
             toast.error("Labour cost cannot be negative");
             return false;
         }
 
-        if (!partsCost || isNaN(parseFloat(partsCost)) || parseFloat(partsCost) <= 0) {
+        if (!partsCost || isNaN(parseFloat(partsCost)) || parseFloat(partsCost) < 0) {
             toast.error("Parts cost cannot be negative");
             return false;
         }
@@ -522,7 +524,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     type="number"
                                     value={labourCost}
                                     // set labour cost to 0 if labour is or negative
-                                    onChange={(e) => setLabourCost(e.target.value)}
+                                    onChange={(e) => setLabourCost(e.target.value || "0")}
                                 />
                             </div>
 
@@ -533,6 +535,9 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                         <SelectValue placeholder="Select a staff member" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                        <SelectItem value="none">
+                                            None
+                                        </SelectItem>
                                         {staffNames.map((staff) => (
                                             <SelectItem key={staff.id} value={staff.id}>
                                                 {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
@@ -557,7 +562,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     type="number"
                                     value={partsCost}
                                     // set parts cost to 0 if parts is or negative
-                                    onChange={(e) => setPartsCost(e.target.value)}
+                                    onChange={(e) => setPartsCost(e.target.value || "0")}
                                 />
                             </div>
 
