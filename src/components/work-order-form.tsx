@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ChevronDown } from "lucide-react"
+import { X, ChevronDown, SearchIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
+import { decodeVin } from '@/app/utils/vin-decode'
+
 // Minimal Task interface for local usage
 interface Task {
   id: string
@@ -325,45 +327,48 @@ export function WorkOrderForm({
   // ------------------------------------------------------------------
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden p-4">
-      <div className="bg-[#131313] w-full max-w-[90%] xl:max-w-7xl rounded-xl overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]">
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[#222222] shrink-0">
-            <div className="flex items-center gap-4">
-              <h2 className="text-white text-xl">New Work Order</h2>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-white"
-              onClick={onClose}
-            >
-              <X className="h-6 w-6" />
-            </Button>
+      <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw]">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-[#222222]">
+          <div className="space-y-1">
+            <h2 className="text-white text-xl sm:text-2xl">Create New Work Order</h2>
+            <p className="text-gray-400 text-xs sm:text-sm">
+              Fill in the details below to create a new work order.
+            </p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-white"
+            onClick={onClose}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
 
-          {/* Main */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
-            <div className="flex gap-4 h-full">
-              {/* Left column */}
-              <div className="flex-1 space-y-4">
-                {/* Customer section */}
-                <div className="bg-[#1A1A1A] rounded-xl p-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src="/placeholder.svg?height=64&width=64" />
-                      <AvatarFallback>C</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      {/* 1) Pick customer */}
+        <div className="space-y-4 sm:space-y-6 py-4">
+          {/* Customer Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">Customer Information</h3>
+            <div className="bg-[#1A1A1A] rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src="/placeholder.svg?height=64&width=64" />
+                  <AvatarFallback className="bg-[#b22222] text-white text-xl">
+                    {workOrderData.customerName?.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <div className="w-full sm:w-auto sm:flex-1">
                       <Select
                         value={workOrderData.customerId}
                         onValueChange={handleCustomerChange}
                       >
-                        <SelectTrigger className="w-full bg-transparent border-0 text-white">
+                        <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500">
                           <SelectValue placeholder="Select Customer" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
+                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
                           <SelectItem value="new">+ Add New Customer</SelectItem>
                           {customerOptions.map((option) => (
                             <SelectItem key={option.id} value={option.id}>
@@ -372,331 +377,282 @@ export function WorkOrderForm({
                           ))}
                         </SelectContent>
                       </Select>
-
-                      {/* If new customer, show an input */}
-                      {workOrderData.customerId === "new" && (
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-2 p-3 rounded-md">
-                          <Input
-                            className="bg-[#292929] text-white text-sm border-0"
-                            placeholder="Customer Name"
-                            value={workOrderData.customerName}
-                            onChange={(e) =>
-                              setWorkOrderData(prev => ({ ...prev, customerName: e.target.value }))
-                            }
-                            required
-                          />
-                          <Input
-                            className="bg-[#292929] text-white text-sm border-0"
-                            placeholder="Customer Phone"
-                            value={workOrderData.customerPhone}
-                            onChange={(e) =>
-                              setWorkOrderData(prev => ({ ...prev, customerPhone: e.target.value }))
-                            }
-                            required
-                            pattern="\d{10}"
-                            type="tel"
-                          />
-                          <Input
-                            className="bg-[#292929] text-white text-sm border-0"
-                            placeholder="Customer Email"
-                            type="email"
-                            value={workOrderData.customerEmail}
-                            onChange={(e) =>
-                              setWorkOrderData(prev => ({ ...prev, customerEmail: e.target.value }))
-                            }
-                          />
-                          <Input
-                            className="bg-[#292929] text-white text-sm border-0"
-                            placeholder="Customer Address"
-                            value={workOrderData.customerAddress}
-                            onChange={(e) =>
-                              setWorkOrderData(prev => ({ ...prev, customerAddress: e.target.value }))
-                            }
-                          />
-                        </div>
-                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Task Name */}
+                  {workOrderData.customerId === "new" && (
+                    <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+                      <Input
+                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                        placeholder="Customer Name"
+                        value={workOrderData.customerName}
+                        onChange={(e) =>
+                          setWorkOrderData(prev => ({ ...prev, customerName: e.target.value }))
+                        }
+                        required
+                      />
+                      <Input
+                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                        placeholder="Phone Number"
+                        value={workOrderData.customerPhone}
+                        onChange={(e) =>
+                          setWorkOrderData(prev => ({ ...prev, customerPhone: e.target.value }))
+                        }
+                        required
+                      />
+                      <Input
+                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                        placeholder="Email Address"
+                        type="email"
+                        value={workOrderData.customerEmail}
+                        onChange={(e) =>
+                          setWorkOrderData(prev => ({ ...prev, customerEmail: e.target.value }))
+                        }
+                      />
+                      <Input
+                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
+                        placeholder="Address"
+                        value={workOrderData.customerAddress}
+                        onChange={(e) =>
+                          setWorkOrderData(prev => ({ ...prev, customerAddress: e.target.value }))
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Vehicle Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
+            <div className="bg-[#1A1A1A] rounded-xl p-6">
+              {workOrderData.customerId && workOrderData.customerId !== "new" && (
+                <div className="mb-4">
+                  <Select
+                    value={workOrderData.selectedVehicleId}
+                    onValueChange={handleVehicleChange}
+                  >
+                    <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500">
+                      <SelectValue placeholder="Select a vehicle" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                      {currentVehicles.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {`${v.year ?? ""} ${v.make ?? ""} ${v.model ?? ""}`.trim() || "Unnamed Vehicle"}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="new">+ Add New Vehicle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-gray-400">Task Name</Label>
+                  <Label className="text-gray-400">Year</Label>
                   <Input
-                    value={workOrderData.taskName}
+                    value={workOrderData.year}
                     onChange={(e) =>
-                      setWorkOrderData(prev => ({ ...prev, taskName: e.target.value }))
+                      setWorkOrderData(prev => ({ ...prev, year: e.target.value }))
                     }
-                    placeholder="Put a name to this task"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                    required
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                    placeholder="e.g. 2015"
                     disabled={!workOrderData.customerId}
                   />
                 </div>
 
-                {/* If user picked an existing customer (NOT "new"), let them pick from that customer's vehicles */}
-                {workOrderData.customerId &&
-                  workOrderData.customerId !== "new" && (
-                    <div className="space-y-1.5">
-                      <Label className="text-gray-400">Select Vehicle</Label>
-                      <Select
-                        value={workOrderData.selectedVehicleId}
-                        onValueChange={handleVehicleChange}
-                      >
-                        <SelectTrigger className="w-full bg-[#1A1A1A] border-0 text-white">
-                          <SelectValue placeholder="Pick a vehicle" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
-                          {currentVehicles.map((v) => {
-                            const label = `${v.year ?? ""} ${v.make ?? ""} ${v.model ?? ""}`
-                            return (
-                              <SelectItem key={v.id} value={v.id}>
-                                {label.trim() || "Unnamed Vehicle"}
-                              </SelectItem>
-                            )
-                          })}
-                          <SelectItem value="new">Add New Vehicle</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                {/* Vehicle info (could be from existing or brand-new) */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Year</Label>
-                    <Input
-                      value={workOrderData.year}
-                      onChange={(e) =>
-                        setWorkOrderData(prev => ({ ...prev, year: e.target.value }))
-                      }
-                      placeholder="e.g. 2015"
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                      disabled={!workOrderData.customerId}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Make</Label>
-                    <Input
-                      value={workOrderData.make}
-                      onChange={(e) =>
-                        setWorkOrderData(prev => ({ ...prev, make: e.target.value }))
-                      }
-                      placeholder="e.g. Honda"
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                      disabled={!workOrderData.customerId}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Model</Label>
-                    <Input
-                      value={workOrderData.model}
-                      onChange={(e) =>
-                        setWorkOrderData(prev => ({ ...prev, model: e.target.value }))
-                      }
-                      placeholder="e.g. Civic"
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                      disabled={!workOrderData.customerId}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Engine</Label>
-                    <Input
-                      value={workOrderData.engineType}
-                      onChange={(e) =>
-                        setWorkOrderData(prev => ({ ...prev, engineType: e.target.value }))
-                      }
-                      placeholder="e.g. 1.8L i-VTEC"
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                      disabled={!workOrderData.customerId}
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label className="text-gray-400">Make</Label>
+                  <Input
+                    value={workOrderData.make}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, make: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                    placeholder="e.g. Honda"
+                    disabled={!workOrderData.customerId}
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">VIN</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-gray-400">Model</Label>
+                  <Input
+                    value={workOrderData.model}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, model: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                    placeholder="e.g. Civic"
+                    disabled={!workOrderData.customerId}
+                  />
+                </div>
+
+                <div className="space-y-1.5 lg:col-span-2">
+                  <Label className="text-gray-400">VIN</Label>
+                  <div className="flex gap-2">
                     <Input
                       value={workOrderData.vin}
                       onChange={(e) =>
-                        setWorkOrderData(prev => ({ ...prev, vin: e.target.value }))
+                        setWorkOrderData(prev => ({ 
+                          ...prev, 
+                          vin: e.target.value.toUpperCase() 
+                        }))
                       }
-                      placeholder="Vehicle VIN"
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 flex-1"
+                      placeholder="Enter VIN number"
                       disabled={!workOrderData.customerId}
                     />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Mileage</Label>
-                    <Input
-                      value={workOrderData.mileage}
-                      onChange={(e) =>
-                        setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
-                      }
-                      placeholder="Current mileage"
-                      className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                      disabled={!workOrderData.customerId}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Task Priority</Label>
-                    <Select
-                      value={workOrderData.priority}
-                      onValueChange={(value: "high" | "medium" | "low") =>
-                        setWorkOrderData(prev => ({ ...prev, priority: value }))
-                      }
-                      disabled={!workOrderData.customerId}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="bg-[#292929] text-white border-[#626262] hover:bg-[#626262] hover:text-white"
+                      onClick={async () => {
+                        try {
+                          const vehicleData = await decodeVin(workOrderData.vin);
+                          if (vehicleData) {
+                            setWorkOrderData(prev => ({
+                              ...prev,
+                              year: vehicleData.year,
+                              make: vehicleData.make,
+                              model: vehicleData.model,
+                              engineType: vehicleData.engine,
+                            }));
+                            toast.success("Vehicle information decoded successfully");
+                          }
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : 'Failed to decode VIN');
+                        }
+                      }}
+                      disabled={!workOrderData.customerId || !workOrderData.vin}
                     >
-                      <SelectTrigger className="w-full bg-[#1A1A1A] border-0 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
-                        <SelectItem value="high">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-[#e23232]" />
-                            High
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="medium">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-[#d6cd24]" />
-                            Medium
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="low">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-[#1eb386]" />
-                            Low
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Assigned To</Label>
-                    <Select
-                      value={workOrderData.assignedTo}
-                      onValueChange={handleAssignedToChange}
-                      disabled={!workOrderData.customerId}
-                    >
-                      <SelectTrigger className="w-full bg-[#1A1A1A] border-0 text-white">
-                        <SelectValue placeholder="Select Staff" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1A1A1A] border-[#2d2d2d] text-white">
-                        {staffOptions.map((staff) => (
-                          <SelectItem key={staff.id} value={staff.id}>
-                            {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <SearchIcon className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
-                {/* Collapsible sections (labor, parts, notes) */}
-                <div className="space-y-3">
-                  <Collapsible disabled={!workOrderData.customerId}>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
-                      Labor
-                      <ChevronDown className="h-4 w-4" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
-                      <textarea
-                        value={workOrderData.labor}
-                        onChange={(e) =>
-                          setWorkOrderData(prev => ({ ...prev, labor: e.target.value }))
-                        }
-                        className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
-                        placeholder="Enter labor details..."
-                        disabled={!workOrderData.customerId}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
+                <div className="space-y-1.5">
+                  <Label className="text-gray-400">Engine</Label>
+                  <Input
+                    value={workOrderData.engineType}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, engineType: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                    placeholder="e.g. 1.8L i-VTEC"
+                    disabled={!workOrderData.customerId}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  <Collapsible disabled={!workOrderData.customerId}>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
-                      Parts
-                      <ChevronDown className="h-4 w-4" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
-                      <textarea
-                        value={workOrderData.parts}
-                        onChange={(e) =>
-                          setWorkOrderData(prev => ({ ...prev, parts: e.target.value }))
-                        }
-                        className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
-                        placeholder="Enter parts details..."
-                        disabled={!workOrderData.customerId}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  <Collapsible disabled={!workOrderData.customerId}>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
-                      Notes
-                      <ChevronDown className="h-4 w-4" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
-                      <textarea
-                        value={workOrderData.notes}
-                        onChange={(e) =>
-                          setWorkOrderData(prev => ({ ...prev, notes: e.target.value }))
-                        }
-                        className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
-                        placeholder="Enter additional notes..."
-                        disabled={!workOrderData.customerId}
-                      />
-                    </CollapsibleContent>
-                  </Collapsible>
+          {/* Work Order Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">Work Order Details</h3>
+            <div className="bg-[#1A1A1A] rounded-xl p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
+                <Label className="text-gray-400 self-center sm:col-span-1">Title</Label>
+                <div className="sm:col-span-3">
+                  <Input
+                    value={workOrderData.taskName}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ 
+                        ...prev, 
+                        taskName: e.target.value
+                          .split(' ')
+                          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')
+                      }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    placeholder="Enter work order title"
+                    disabled={!workOrderData.customerId}
+                  />
                 </div>
 
-                {/* Total Amount */}
-                <div className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-md">
-                  <span className="text-white">Total Amount ($)</span>
+                <Label className="text-gray-400 self-center sm:col-span-1">Labor</Label>
+                <div className="flex flex-row gap-2 sm:col-span-3">
+                  <Input
+                    value={workOrderData.labor}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, labor: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    placeholder="Enter labor details"
+                    disabled={!workOrderData.customerId}
+                  />
+                  <span className="text-gray-300 text-md self-center">$</span>
                   <Input
                     type="number"
                     value={workOrderData.totalAmount}
                     onChange={(e) =>
                       setWorkOrderData(prev => ({ ...prev, totalAmount: e.target.value }))
                     }
-                    placeholder="Enter amount"
-                    className="w-32 bg-[#222222] border-0 text-white placeholder-[#9d9d9d] text-right"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                    placeholder="0.00"
+                    disabled={!workOrderData.customerId}
+                  />
+                </div>
+
+                <Label className="text-gray-400 self-center sm:col-span-1">Parts</Label>
+                <div className="flex flex-row gap-2 sm:col-span-3">
+                  <Input
+                    value={workOrderData.parts}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, parts: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    placeholder="Enter parts details"
+                    disabled={!workOrderData.customerId}
+                  />
+                  <span className="text-gray-300 text-md self-center">$</span>
+                  <Input
+                    type="number"
+                    value={workOrderData.totalAmount}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, totalAmount: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                    placeholder="0.00"
+                    disabled={!workOrderData.customerId}
+                  />
+                </div>
+
+                <Label className="text-gray-400 self-center sm:col-span-1">Notes</Label>
+                <div className="sm:col-span-3">
+                  <Input
+                    value={workOrderData.notes}
+                    onChange={(e) =>
+                      setWorkOrderData(prev => ({ ...prev, notes: e.target.value }))
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    placeholder="Enter additional notes"
                     disabled={!workOrderData.customerId}
                   />
                 </div>
               </div>
-
-              {/* (Optional) Right Column... */}
             </div>
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-end p-6 border-t border-[#222222] shrink-0 bg-[#131313]">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
-                onClick={onClose}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="px-8 py-3 h-auto bg-[#b22222] hover:bg-[#e23232] text-white rounded-lg"
-                onClick={handleSave}
-                disabled={!workOrderData.customerId}
-              >
-                Save
-              </Button>
-            </div>
-          </div>
+        {/* Footer */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-4 border-t border-[#222222] pt-6">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2"
+            disabled={!workOrderData.customerId}
+          >
+            Create Work Order
+          </Button>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ChevronDown, Edit2, Trash2 } from "lucide-react"
+import { X, ChevronDown, Edit2, Trash2, Mail, Phone, Pencil } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabase"
 import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
+import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 
 export interface DetailedRepairOrder {
   id: string
@@ -26,6 +27,8 @@ export interface DetailedRepairOrder {
     mileage?: string
     task_priority?: string
     description?: string
+    labour_cost?: string
+    parts_cost?: string
   }>
   customers?: {
     id: string
@@ -103,6 +106,9 @@ export function TaskDetailsModal({
   // ------------------
   // LOCAL FORM
   // ------------------
+  const [labourCost, setLabourCost] = useState(firstDetail?.labour_cost || "0")
+  const [partsCost, setPartsCost] = useState(firstDetail?.parts_cost || "0")
+
   const [formData, setFormData] = useState({
     customerName: initialTask.customers?.customer_name || "",
     description: combinedContact,
@@ -114,12 +120,16 @@ export function TaskDetailsModal({
     vin: firstVehicle?.vin || "",
     mileage: firstDetail?.mileage || "",
     labour: firstDetail?.labour || "",
+    labourCost: firstDetail?.labour_cost || "0",
     parts: firstDetail?.parts || "",
+    partsCost: firstDetail?.parts_cost || "0",
     notes: firstDetail?.notes || "",
-    totalAmount: firstDetail?.cost || "",
+    totalAmount: firstDetail?.cost || "0",
     taskPriority: firstDetail?.task_priority || "Medium",
     detailDescription: firstDetail?.description || "",
     assignedToName: "",
+    email: initialTask.customers?.customer_email || "",
+    phone: initialTask.customers?.customer_phone || "",
   })
 
   // ------------------
@@ -178,14 +188,29 @@ export function TaskDetailsModal({
       vin: v?.vin || "",
       mileage: d?.mileage || "",
       labour: d?.labour || "",
+      labourCost: d?.labour_cost || "0",
       parts: d?.parts || "",
+      partsCost: d?.parts_cost || "0",
       notes: d?.notes || "",
-      totalAmount: d?.cost || "",
+      totalAmount: d?.cost || "0",
       taskPriority: d?.task_priority || "Medium",
       detailDescription: d?.description || "",
       assignedToName: "",
+      email: initialTask.customers?.customer_email || "",
+      phone: initialTask.customers?.customer_phone || "",
     })
   }, [initialTask])
+
+  // Add useEffect for total calculation
+  useEffect(() => {
+    const labour = parseFloat(formData.labourCost) || 0
+    const parts = parseFloat(formData.partsCost) || 0
+    const total = labour + parts
+    setFormData(prev => ({
+      ...prev,
+      totalAmount: total.toFixed(2)
+    }))
+  }, [formData.labourCost, formData.partsCost])
 
   // ------------------
   // SAVE CHANGES
@@ -201,7 +226,9 @@ export function TaskDetailsModal({
               ...initialTask.repair_order_details[0],
               mileage: formData.mileage,
               labour: formData.labour,
+              labour_cost: formData.labourCost,
               parts: formData.parts,
+              parts_cost: formData.partsCost,
               notes: formData.notes,
               cost: formData.totalAmount,
               task_priority: formData.taskPriority,
@@ -224,7 +251,7 @@ export function TaskDetailsModal({
   // ------------------
   async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to remove this task from the shop? This action will hide it from the shop’s list but keep any existing invoice."
+      "Are you sure you want to remove this task from the shop? This action will hide it from the shop's list but keep any existing invoice."
     )
     if (!confirmed) return
   
@@ -250,12 +277,14 @@ export function TaskDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden p-4">
-      <div className="bg-[#131313] w-full max-w-[90%] xl:max-w-7xl rounded-xl overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]">
+      <div className="bg-[#131313] w-full max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* HEADER */}
-        <div className="flex items-center justify-between p-4 border-b border-[#222222] shrink-0">
-          <div className="flex items-center gap-4">
-            <h2 className="text-white text-xl">Work Order #</h2>
-            <span className="text-white text-xl">{initialTask.id}</span>
+        <div className="flex items-center justify-between p-6 border-b border-[#222222] shrink-0">
+          <div className="space-y-1">
+            <h2 className="text-white text-xl sm:text-2xl">Work Order <span className="text-gray-400 text-sm">#{initialTask.id}</span></h2>
+            <p className="text-gray-400 text-xs sm:text-sm">
+              Manage work order details and customer information.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {!isEditing && (
@@ -313,63 +342,65 @@ export function TaskDetailsModal({
           </Button>
         </div>
 
-        {/* PROGRESS BAR */}
-        <div className="relative h-1 bg-[#222222] shrink-0">
-          <div className="absolute inset-0 flex">
-            <div
-              className={`w-1/3 ${
-                status === "not-started" ? "bg-[#e23232]" : "bg-[#222222]"
-              }`}
-            />
-            <div
-              className={`w-1/3 ${
-                status === "in-progress" ? "bg-[#d6cd24]" : "bg-[#222222]"
-              }`}
-            />
-            <div
-              className={`w-1/3 ${
-                status === "completed" ? "bg-[#1eb386]" : "bg-[#222222]"
-              }`}
-            />
-          </div>
-        </div>
-
         {/* MAIN CONTENT */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
-          <div className="flex gap-4 h-full">
-            {/* LEFT SIDE */}
-            <div className="flex-1 space-y-4">
-              {/* Customer Info */}
-              <div className="bg-[#1A1A1A] rounded-xl p-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src="/placeholder.svg?height=64&width=64" />
-                    <AvatarFallback>Mech</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Input
-                      value={formData.customerName}
-                      onChange={(e) =>
-                        isEditing && setFormData({ ...formData, customerName: e.target.value })
-                      }
-                      placeholder="Customer Name"
-                      className="bg-transparent border-0 text-white text-xl font-semibold p-0 h-auto placeholder-white/70 mb-1"
-                      readOnly={!isEditing}
-                    />
-                    <Input
-                      value={formData.description}
-                      onChange={(e) =>
-                        isEditing && setFormData({ ...formData, description: e.target.value })
-                      }
-                      placeholder="Email / Phone"
-                      className="bg-transparent border-0 text-[#9d9d9d] p-0 h-auto placeholder-[#9d9d9d]/70"
-                      readOnly={!isEditing}
-                    />
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Customer Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">Customer Information</h3>
+            <div className="bg-[#1A1A1A] rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src="/placeholder.svg?height=64&width=64" />
+                  <AvatarFallback className="bg-[#b22222] text-white text-xl">
+                    {formData.customerName?.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-400">Customer Name</Label>
+                      <Input
+                        value={formData.customerName}
+                        onChange={(e) =>
+                          isEditing && setFormData({ ...formData, customerName: e.target.value })
+                        }
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                        readOnly={!isEditing}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-400">Email</Label>
+                      <Input
+                        value={formData.email}
+                        onChange={(e) =>
+                          isEditing && setFormData({ ...formData, email: e.target.value })
+                        }
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                        readOnly={!isEditing}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-400">Phone</Label>
+                      <Input
+                        value={formData.phone ? formatPhoneNumber(formData.phone) : ""}
+                        onChange={(e) =>
+                          isEditing && setFormData({ ...formData, phone: e.target.value })
+                        }
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                        readOnly={!isEditing}
+                      />
+                    </div>
+                    
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Vehicle Info */}
+          {/* Vehicle Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
+            <div className="bg-[#1A1A1A] rounded-xl p-6">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-gray-400">Year</Label>
@@ -378,8 +409,7 @@ export function TaskDetailsModal({
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, year: e.target.value })
                     }
-                    placeholder="2015"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                     readOnly={!isEditing}
                   />
                 </div>
@@ -390,8 +420,7 @@ export function TaskDetailsModal({
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, make: e.target.value })
                     }
-                    placeholder="Honda"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                     readOnly={!isEditing}
                   />
                 </div>
@@ -402,8 +431,7 @@ export function TaskDetailsModal({
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, model: e.target.value })
                     }
-                    placeholder="Civic"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                     readOnly={!isEditing}
                   />
                 </div>
@@ -414,8 +442,7 @@ export function TaskDetailsModal({
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, engine_type: e.target.value })
                     }
-                    placeholder="1.8L i-VTEC"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                     readOnly={!isEditing}
                   />
                 </div>
@@ -428,8 +455,7 @@ export function TaskDetailsModal({
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, vin: e.target.value })
                     }
-                    placeholder="VIN"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                     readOnly={!isEditing}
                   />
                 </div>
@@ -440,162 +466,112 @@ export function TaskDetailsModal({
                     onChange={(e) =>
                       isEditing && setFormData({ ...formData, mileage: e.target.value })
                     }
-                    placeholder="Enter mileage"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                     readOnly={!isEditing}
                   />
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Priority</Label>
-                  <Input
-                    value={formData.taskPriority}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, taskPriority: e.target.value })
-                    }
-                    placeholder="High / Medium / Low"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                    readOnly={!isEditing}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Assigned To</Label>
-                  <Input
-                    value={formData.assignedToName}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, assignedToName: e.target.value })
-                    }
-                    placeholder="Mechanic Name"
-                    className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d] h-9"
-                    readOnly={!isEditing}
-                  />
-                </div>
-              </div>
-
-              {/* Collapsibles for labour, parts, notes */}
-              <div className="space-y-3 mt-4">
-                <Collapsible>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
-                    Labour
-                    <ChevronDown className="h-4 w-4" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
-                    <textarea
-                      value={formData.labour}
-                      onChange={(e) =>
-                        isEditing && setFormData({ ...formData, labour: e.target.value })
-                      }
-                      className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
-                      placeholder="Enter labour details..."
-                      readOnly={!isEditing}
-                    />
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <Collapsible>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
-                    Parts
-                    <ChevronDown className="h-4 w-4" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
-                    <textarea
-                      value={formData.parts}
-                      onChange={(e) =>
-                        isEditing && setFormData({ ...formData, parts: e.target.value })
-                      }
-                      className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
-                      placeholder="Enter parts details..."
-                      readOnly={!isEditing}
-                    />
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <Collapsible>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-[#1A1A1A] rounded-md text-white">
-                    Notes
-                    <ChevronDown className="h-4 w-4" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="p-3 bg-[#1A1A1A] mt-1 rounded-md">
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => isEditing && setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full h-24 bg-[#222222] text-white p-2 rounded-md resize-none"
-                      placeholder="Enter additional notes..."
-                      readOnly={!isEditing}
-                    />
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-
-              {/* Additional "description" if needed */}
-              <div className="space-y-1.5 mt-4">
-                <Label className="text-gray-400">Detail Description</Label>
+          {/* Work Order Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-white">Work Order Details</h3>
+            <div className="bg-[#1A1A1A] rounded-xl p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
+                <Label className="text-gray-400 self-center sm:col-span-1">Title</Label>
+                <div className="sm:col-span-3">
                 <Input
                   value={formData.detailDescription}
                   onChange={(e) =>
                     isEditing && setFormData({ ...formData, detailDescription: e.target.value })
                   }
-                  placeholder="extra info..."
-                  className="bg-[#1A1A1A] border-0 text-white placeholder-[#9d9d9d]"
+                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
                   readOnly={!isEditing}
                 />
               </div>
 
-              {/* TOTAL COST */}
-              <div className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-md mt-4">
-                <span className="text-white">Total Amount</span>
+              <Label className="text-gray-400 self-center sm:col-span-1">Labour</Label>
+              <div className="flex flex-row gap-2 sm:col-span-3">
                 <Input
-                  type="text"
-                  value={formData.totalAmount}
+                  value={formData.labour}
                   onChange={(e) =>
-                    isEditing && setFormData({ ...formData, totalAmount: e.target.value })
+                    isEditing && setFormData({ ...formData, labour: e.target.value })
                   }
-                  placeholder="Enter amount"
-                  className="w-32 bg-[#222222] border-0 text-white placeholder-[#9d9d9d] text-right"
+                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                  placeholder="Enter labour details"
+                  readOnly={!isEditing}
+                />
+                <span className="text-gray-300 text-md self-center">$</span>
+                <Input
+                  type="number"
+                  value={formData.labourCost}
+                  onChange={(e) =>
+                    isEditing && setFormData({ ...formData, labourCost: e.target.value || "0" })
+                  }
+                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                  placeholder="0.00"
                   readOnly={!isEditing}
                 />
               </div>
+
+              <Label className="text-gray-400 self-center sm:col-span-1">Parts</Label>
+              <div className="flex flex-row gap-2 sm:col-span-3">
+                <Input
+                  value={formData.parts}
+                  onChange={(e) =>
+                    isEditing && setFormData({ ...formData, parts: e.target.value })
+                  }
+                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                  placeholder="Enter parts details"
+                  readOnly={!isEditing}
+                />
+                <span className="text-gray-300 text-md self-center">$</span>
+                <Input
+                  type="number"
+                  value={formData.partsCost}
+                  onChange={(e) =>
+                    isEditing && setFormData({ ...formData, partsCost: e.target.value || "0" })
+                  }
+                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                  placeholder="0.00"
+                  readOnly={!isEditing}
+                />
+              </div>
+
+              <Label className="text-gray-400 self-center sm:col-span-1">Notes</Label>
+              <div className="sm:col-span-3">
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) =>
+                    isEditing && setFormData({ ...formData, notes: e.target.value })
+                  }
+                  className="w-full bg-[#292929] text-white border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[100px]"
+                  readOnly={!isEditing}
+                />
+              </div>
+
+              <Label className="text-gray-400 self-center sm:col-span-1">Total Amount</Label>
+              <div className="flex flex-row gap-2 items-center sm:col-span-3">
+                <span className="text-white text-xl">$ {formData.totalAmount}</span>
+              </div>
+            </div>
             </div>
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0 bg-[#131313]">
-          {/* Left side: "Generate Invoice" + DELETE */}
+        <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
               onClick={() => {
-                generateInvoice(initialTask.id, shopId).then((success) => {
-                  if (success) {
-                    toast.success("Invoice generated successfully", {
-                      action: {
-                        label: "View Invoice",
-                        onClick: () => {
-                          router.push("/invoices")
-                        },
-                      },
-                    })
-                  } else {
-                    toast.error("Invoice already exists", {
-                      action: {
-                        label: "View Invoice",
-                        onClick: () => {
-                          router.push("/invoices")
-                        },
-                      },
-                    })
-                  }
-                })
+                generateInvoice(initialTask.id, shopId)
               }}
             >
               Generate Invoice
             </Button>
-
-            {/* DELETE BUTTON */}
             <Button
               variant="destructive"
               className="px-4 py-3 h-auto bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
@@ -606,7 +582,6 @@ export function TaskDetailsModal({
             </Button>
           </div>
 
-          {/* Right side: Cancel/Save OR Close */}
           <div className="flex items-center gap-4">
             {isEditing ? (
               <>
@@ -618,7 +593,7 @@ export function TaskDetailsModal({
                   Cancel
                 </Button>
                 <Button
-                  className="px-8 py-3 h-auto bg-[#b22222] hover:bg-[#e23232] text-white rounded-lg"
+                  className="px-8 py-3 h-auto bg-[#22C55E] hover:bg-[#22C55E]/80 text-white rounded-lg"
                   onClick={handleSave}
                 >
                   Save Changes
