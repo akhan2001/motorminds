@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { SearchIcon } from "lucide-react";
+import { decodeVin } from '@/app/utils/vin-decode';
+import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
 interface CustomerVehicleDialogProps {
     isOpen: boolean;
@@ -16,6 +21,7 @@ interface Vehicle {
     model: string;
     color: string;
     vin: string;
+    engine: string;
 }
 
 export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: CustomerVehicleDialogProps) {
@@ -25,9 +31,25 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
         model: "",
         color: "",
         vin: "",
+        engine: "",
     });
+    const YEARS = Array.from({ length: new Date().getFullYear() - 1960 }, (_, i) => new Date().getFullYear() - i);
 
     const handleAddVehicle = () => {
+        // Validate required fields
+        if (!newVehicle.year) {
+            toast.error("Year is required");
+            return;
+        }
+        if (!newVehicle.make) {
+            toast.error("Make is required");
+            return;
+        }
+        if (!newVehicle.model) {
+            toast.error("Model is required");
+            return;
+        }
+
         onAddVehicle(newVehicle);
         setNewVehicle({
             year: "",
@@ -35,8 +57,26 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
             model: "",
             color: "",
             vin: "",
+            engine: "",
         });
         onOpenChange(false);
+    };
+
+    const handleVinLookup = async () => {
+        try {
+            const vehicleData = await decodeVin(newVehicle.vin);
+            if (vehicleData) {
+                setNewVehicle({
+                    ...newVehicle,
+                    year: vehicleData.year,
+                    make: vehicleData.make,
+                    model: vehicleData.model,
+                    engine: vehicleData.engine,
+                });
+            }
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to decode VIN');
+        }
     };
 
     return (
@@ -51,8 +91,8 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
                     
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="year" className="text-left text-gray-300">Year</Label>
-                            <Input
+                            {/* <Label htmlFor="year" className="text-left text-gray-300">Year</Label> */}
+                            {/* <Input
                                 id="year"
                                 value={newVehicle.year}
                                 onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
@@ -61,7 +101,27 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
                                 type="number"
                                 min="1960"
                                 max={new Date().getFullYear()}
-                            />
+                            /> */}
+
+                            <Label htmlFor="year" className="text-left text-gray-300">Year</Label>
+                            <Select
+                                value={newVehicle.year}
+                                onValueChange={(value) => setNewVehicle({ ...newVehicle, year: value })}
+                            >
+                                <SelectTrigger className="w-full bg-[#292929] text-white border-[#626262]">
+                                    <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#292929] text-white border-[#626262] max-h-[200px]">
+                                    {YEARS.map((year) => (
+                                        <SelectItem 
+                                            key={year} 
+                                            value={year.toString()}
+                                        >
+                                            {year}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -87,6 +147,17 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="engine" className="text-left text-gray-300">Engine</Label>
+                            <Input
+                                id="engine"
+                                value={newVehicle.engine}
+                                onChange={(e) => setNewVehicle({ ...newVehicle, engine: e.target.value })}
+                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                placeholder="Engine"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="color" className="text-left text-gray-300">Color</Label>
                             <Input
                                 id="color"
@@ -97,15 +168,26 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
                             />
                         </div>
 
+                        <Separator />
+
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="vin" className="text-left text-gray-300">VIN</Label>
-                            <Input
-                                id="vin"
-                                value={newVehicle.vin}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="VIN"
-                            />
+                            <div className="col-span-3 flex items-center gap-2">
+                                <Input
+                                    id="vin"
+                                    value={newVehicle.vin}
+                                    onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value })}
+                                    className="flex-1 bg-[#292929] text-white border-[#626262]"
+                                    placeholder="VIN"
+                                />
+                                <Button 
+                                    variant="outline" 
+                                    className="bg-[#292929] text-white border-[#626262]"
+                                    onClick={handleVinLookup}
+                                >
+                                    <SearchIcon className="w-4 h-4" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
 

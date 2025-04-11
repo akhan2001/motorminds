@@ -23,6 +23,15 @@ interface CustomerSheetProps {
     onCustomerUpdated: () => void;
 }
 
+interface Vehicle {
+    year: string;
+    make: string;
+    model: string;
+    color: string;
+    vin: string;
+    engine: string;
+}
+
 export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdated }: CustomerSheetProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -47,7 +56,8 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         make: "",
         model: "",
         color: "",
-        vin: ""
+        vin: "",
+        engine: ""
     });
     const [emailToSend, setEmailToSend] = useState("");
     const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -86,33 +96,15 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
         onOpenChange(open);
     };
 
-    const handleAddVehicle = async () => {
-        // Validate year
-        const year = parseInt(newVehicle.year);
-        const currentYear = new Date().getFullYear();
-        
-        if (!year || year < 1960 || year > currentYear) {
-            toast.error(`Year must be between 1960 and ${currentYear}`);
-            return;
-        }
-
-        if (!newVehicle.make.trim()) {
-            toast.error("Make is required");
-            return;
-        }
-
-        if (!newVehicle.model.trim()) {
-            toast.error("Model is required");
-            return;
-        }
-
+    const handleAddVehicle = async (vehicle: Vehicle) => {
         try {
             const addedVehicle = await createCustomerVehicle(customer.id, {
-                year: newVehicle.year,
-                make: newVehicle.make,
-                model: newVehicle.model,
-                color: newVehicle.color || null,
-                vin: newVehicle.vin || null
+                year: vehicle.year,
+                make: vehicle.make,
+                model: vehicle.model,
+                color: vehicle.color || null,
+                vin: vehicle.vin || null,
+                engine: vehicle.engine || null
             });
 
             if (addedVehicle) {
@@ -121,14 +113,6 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 // Refresh vehicles list
                 const vehicles = await getCustomerVehicles(customer.id);
                 setCustomerVehicles(vehicles);
-                // Reset form
-                setNewVehicle({
-                    year: "",
-                    make: "",
-                    model: "",
-                    color: "",
-                    vin: ""
-                });
             } else {
                 toast.error("Failed to add vehicle");
             }

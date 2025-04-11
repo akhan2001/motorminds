@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MoreVertical, Gauge, Clock, Car, Plus } from "lucide-react";
 import { CustomerVehicleDialog } from "../../components/customer-vehicle-dialog";
 import { useState } from "react";
-
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 interface CustomerVehicleCardProps {
     customerVehicles: any[];
 }
@@ -25,11 +25,19 @@ export function CustomerVehicleCard({ customerVehicles }: CustomerVehicleCardPro
                         <CardHeader className="pb-2">
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl">
-                                    {vehicle.year} {vehicle.make} {vehicle.model}
+                                    {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.engine_type && <span className="text-gray-400 text-sm">({vehicle.engine_type})</span>}
                                 </CardTitle>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+                                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                             {vehicle.color && (
                                 <CardDescription className="text-gray-400">

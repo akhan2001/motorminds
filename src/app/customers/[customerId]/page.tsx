@@ -144,7 +144,7 @@ export default function CustomerPage() {
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Customers" />
             {/* Main Content */}
-            <main className="flex-grow container mx-auto px-4 py-6 mb-16 md:mb-0">
+            <main className="flex-grow container mx-auto px-4 py-6 mb-16 md:mb-0 max-w-[1300px]">
 
                 {/* Breadcrumb Navigation */}
                 <Breadcrumb className="mb-6">

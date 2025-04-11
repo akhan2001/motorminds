@@ -240,6 +240,7 @@ export async function createCustomerVehicle(customerId: string, vehicleData: any
                 model: vehicleData.model,
                 color: vehicleData.color || null,
                 vin: vehicleData.vin || null,
+                engine_type: vehicleData.engine || null,
                 created_at: new Date().toISOString()
             })
             .select()
