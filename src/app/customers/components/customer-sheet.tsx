@@ -212,7 +212,11 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 toast.error("Failed to delete vehicle");
             }
         } catch (error) {
-            toast.error("Error deleting vehicle");
+            if (error instanceof Error && error.message === 'Vehicle is in use') {
+                toast.error("Vehicle is currently in an open work order. Please close the work order before deleting the vehicle.");
+            } else {
+                toast.error("Error deleting vehicle");
+            }
             console.error("Error deleting vehicle:", error);
         }
         setIsDeletingVehicle(null);
