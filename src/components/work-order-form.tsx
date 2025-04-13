@@ -185,42 +185,42 @@ useEffect(() => {
 // ------------------------------------------------------------------
 const handleCustomerChange = (value: string) => {
 	if (value === "new") {
-	// "Add New Customer" - only reset customer-related fields
-	setWorkOrderData(prev => ({
-		...prev,
-		customerId: "new",
-		customerName: "",
-		customerPhone: "",
-		customerEmail: "",
-		customerAddress: "",
-		selectedVehicleId: "new", // default to new vehicle as well
-		year: "",
-		make: "",
-		model: "",
-		engineType: "",
-		vin: "",
-	}))
-	setCurrentVehicles([])
-	} else {
-	// existing customer - only update customer-related fields
-	const selectedCust = customerOptions.find((opt) => opt.id === value)
-	if (selectedCust) {
+		// "Add New Customer" - only reset customer-related fields
 		setWorkOrderData(prev => ({
-		...prev,
-		customerId: selectedCust.id,
-		customerName: selectedCust.name,
-		customerPhone: selectedCust.phone,
-		selectedVehicleId: "", // user hasn't chosen which vehicle yet
-		// Clear out vehicle fields until they pick a vehicle
-		year: "",
-		make: "",
-		model: "",
-		engineType: "",
-		vin: "",
+			...prev,
+			customerId: "new",
+			customerName: "",
+			customerPhone: "",
+			customerEmail: "",
+			customerAddress: "",
+			selectedVehicleId: "new", // default to new vehicle as well
+			year: "",
+			make: "",
+			model: "",
+			engineType: "",
+			vin: "",
 		}))
-		// store their vehicles for the second dropdown
-		setCurrentVehicles(selectedCust.vehicles)
-	}
+		setCurrentVehicles([])
+	} else {
+		// existing customer - only update customer-related fields
+		const selectedCust = customerOptions.find((opt) => opt.id === value)
+		if (selectedCust) {
+			setWorkOrderData(prev => ({
+			...prev,
+			customerId: selectedCust.id,
+			customerName: selectedCust.name,
+			customerPhone: selectedCust.phone,
+			selectedVehicleId: "", // user hasn't chosen which vehicle yet
+			// Clear out vehicle fields until they pick a vehicle
+			year: "",
+			make: "",
+			model: "",
+			engineType: "",
+			vin: "",
+			}))
+			// store their vehicles for the second dropdown
+			setCurrentVehicles(selectedCust.vehicles)
+		}
 	}
 }
 
@@ -272,10 +272,11 @@ const handleAssignedToChange = (value: string) => {
 // 6) Validate & Save the form
 // ------------------------------------------------------------------
 function handleSave() {
+	console.log("workOrderData", workOrderData)
 	// 1. Customer validation
 	if (!workOrderData.customerId) {
-	toast.error("Please pick a customer or create a new one before saving.")
-	return
+		toast.error("Please pick a customer or create a new one before saving.")
+		return
 	}
 
 	// 2. New customer validation
@@ -329,28 +330,19 @@ function handleSave() {
 
 	const newTask: Task = {
 		id: Date.now().toString(),
-		title:
-			workOrderData.taskName ||
-			`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		title: workOrderData.taskName || `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
 		vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
 		date: new Date().toISOString().split("T")[0],
 		status: "red",
 		column: "todo",
 		priority: workOrderData.priority,
 	}
+
+	console.log(newTask)
 	onAddTask(newTask)
 
 	onClose()
 }
-
-function testFunction() {
-	console.log("testFunction")
-	console.log(workOrderData)
-	console.log(customerOptions)
-	console.log(currentVehicles)
-	console.log(staffOptions)
-}
-
 
 // Add this after your other useEffects
 useEffect(() => {
@@ -753,8 +745,8 @@ return (
 					Cancel
 				</Button>
 				<Button
-					//onClick={handleSave}
-					onClick={testFunction}
+					onClick={handleSave}
+					//onClick={testFunction}
 					className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2"
 					disabled={!workOrderData.customerId}
 				>
