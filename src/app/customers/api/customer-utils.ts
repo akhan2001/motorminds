@@ -259,6 +259,11 @@ export async function createCustomerVehicle(customerId: string, vehicleData: any
 }
 
 export async function deleteCustomerVehicle(vehicleId: string) {
+    const isInUse = await checkVehicleInUse(vehicleId);
+    if (isInUse) {
+        throw new Error('Vehicle is in use');
+    }
+
     const { error } = await supabase
         .from('customer_vehicles')
         .delete()
@@ -266,6 +271,16 @@ export async function deleteCustomerVehicle(vehicleId: string) {
 
     if (error) throw error;
     return true;
+}
+
+export async function checkVehicleInUse(vehicleId: string) {
+    const { data, error } = await supabase
+        .from('repair_orders')
+        .select('*')
+        .eq('vehicle_id', vehicleId);
+    
+    if (error) throw error;
+    return data && data.length > 0 ? data : false;
 }
 
 export async function sendEmail(email: string, subject: string, body: string, recipient_name: string) {
