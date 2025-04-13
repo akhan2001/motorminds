@@ -115,66 +115,66 @@ const [selectedPartsId, setSelectedPartsId] = useState<string | undefined>(undef
 // ------------------------------------------------------------------
 useEffect(() => {
 	async function fetchShopAndData() {
-	// a) get logged-in user
-	const {
-		data: { user },
-	} = await supabase.auth.getUser()
-	if (!user) return
+		// a) get logged-in user
+		const {
+			data: { user },
+		} = await supabase.auth.getUser()
+		if (!user) return
 
-	// b) find the user's shop_id from "users"
-	const { data: userData, error: userError } = await supabase
-		.from("users")
-		.select("shop_id")
-		.eq("id", user.id)
-		.single()
-	if (userError || !userData?.shop_id) {
-		console.error("Error fetching shop_id", userError)
-		return
-	}
-	setShopId(userData.shop_id)
+		// b) find the user's shop_id from "users"
+		const { data: userData, error: userError } = await supabase
+			.from("users")
+			.select("shop_id")
+			.eq("id", user.id)
+			.single()
+		if (userError || !userData?.shop_id) {
+			console.error("Error fetching shop_id", userError)
+			return
+		}
+		setShopId(userData.shop_id)
 
-	// c) fetch the customers for this shop directly from "customers"
-	//    (including their vehicles from "customer_vehicles")
-	const { data: customersData, error: customersError } = await supabase
-		.from("customers")
-		.select("*, customer_vehicles(*)")
-		.eq("shop_id", userData.shop_id)
-	if (customersError) {
-		console.error("Error fetching customers", customersError)
-	} else if (customersData) {
-		// build an array of { id, name, vehicles[] }
-		const options: CustomerOption[] = customersData.map((cust: any) => ({
-			id: cust.id,
-			name: cust.customer_name,
-			phone: cust.customer_phone,
-			vehicles: (cust.customer_vehicles || []).map((v: any) => ({
-				id: v.id,
-				year: v.year,
-				make: v.make,
-				model: v.model,
-				engine_type: v.engine_type,
-				vin: v.vin,
-			})),
-		}))
-		setCustomerOptions(options)
-	}
+		// c) fetch the customers for this shop directly from "customers"
+		//    (including their vehicles from "customer_vehicles")
+		const { data: customersData, error: customersError } = await supabase
+			.from("customers")
+			.select("*, customer_vehicles(*)")
+			.eq("shop_id", userData.shop_id)
+		if (customersError) {
+			console.error("Error fetching customers", customersError)
+		} else if (customersData) {
+			// build an array of { id, name, vehicles[] }
+			const options: CustomerOption[] = customersData.map((cust: any) => ({
+				id: cust.id,
+				name: cust.customer_name,
+				phone: cust.customer_phone,
+				vehicles: (cust.customer_vehicles || []).map((v: any) => ({
+					id: v.id,
+					year: v.year,
+					make: v.make,
+					model: v.model,
+					engine_type: v.engine_type,
+					vin: v.vin,
+				})),
+			}))
+			setCustomerOptions(options)
+		}
 
-	// d) fetch staff from "shop_staff"
-	const { data: staffData, error: staffErr } = await supabase
-		.from("shop_staff")
-		.select("id, staff_name, role")
-		.eq("shop_id", userData.shop_id)
+		// d) fetch staff from "shop_staff"
+		const { data: staffData, error: staffErr } = await supabase
+			.from("shop_staff")
+			.select("id, staff_name, role")
+			.eq("shop_id", userData.shop_id)
 
-	console.log(staffData)
+		console.log(staffData)
 
-	if (!staffErr && staffData) {
-		const staffList: StaffOption[] = staffData.map((s: any) => ({
-		id: s.id,
-		staff_name: s.staff_name,
-		role: s.role,
-		}))
-		setStaffOptions(staffList)
-	}
+		if (!staffErr && staffData) {
+			const staffList: StaffOption[] = staffData.map((s: any) => ({
+			id: s.id,
+			staff_name: s.staff_name,
+			role: s.role,
+			}))
+			setStaffOptions(staffList)
+		}
 	}
 
 	fetchShopAndData()
@@ -229,34 +229,35 @@ const handleCustomerChange = (value: string) => {
 // ------------------------------------------------------------------
 const handleVehicleChange = (value: string) => {
 	if (value === "new") {
-	// user wants to add new vehicle
-	setWorkOrderData(prev => ({
-		...prev,
-		selectedVehicleId: "new",
-		year: "",
-		make: "",
-		model: "",
-		engineType: "",
-		vin: "",
-		color: "",
-		mileage: "",
-	}))
+		// user wants to add new vehicle
+		setWorkOrderData(prev => ({
+			...prev,
+			selectedVehicleId: "new",
+			year: "",
+			make: "",
+			model: "",
+			engineType: "",
+			vin: "",
+			color: "",
+			mileage: "",
+		}))
 	} else {
-	// user picked an existing vehicle
-	const chosen = currentVehicles.find((v) => v.id === value)
-	if (!chosen) return
+		// user picked an existing vehicle
+		const chosen = currentVehicles.find((v) => v.id === value)
+		if (!chosen) return
 
-	setWorkOrderData(prev => ({
-		...prev,
-		selectedVehicleId: chosen.id,
-		year: chosen.year || "",
-		make: chosen.make || "",
-		model: chosen.model || "",
-		engineType: chosen.engine_type || "",
-		vin: chosen.vin || "",
-		color: chosen.color || "",
-		mileage: chosen.mileage || "",
-	}))
+		// Make sure we store the actual vehicle ID that was selected
+		setWorkOrderData(prev => ({
+			...prev,
+			selectedVehicleId: value, // Use the exact value passed from the selector
+			year: chosen.year || "",
+			make: chosen.make || "",
+			model: chosen.model || "",
+			engineType: chosen.engine_type || "",
+			vin: chosen.vin || "",
+			color: chosen.color || "",
+			mileage: chosen.mileage || "",
+		}))
 	}
 }
 
@@ -279,61 +280,75 @@ function handleSave() {
 
 	// 2. New customer validation
 	if (workOrderData.customerId === "new") {
-	if (!workOrderData.customerName.trim()) {
-		toast.error("Please enter customer name.")
-		return
-	}
-	if (!workOrderData.customerPhone.trim()) {
-		toast.error("Please enter customer phone number.")
-		return
-	}
-	if (workOrderData.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workOrderData.customerEmail)) {
-		toast.error("Please enter a valid email address.")
-		return
-	}
+		if (!workOrderData.customerName.trim()) {
+			toast.error("Please enter customer name.")
+			return
+		}
+		if (!workOrderData.customerPhone.trim()) {
+			toast.error("Please enter customer phone number.")
+			return
+		}
+		if (workOrderData.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(workOrderData.customerEmail)) {
+			toast.error("Please enter a valid email address.")
+			return
+		}
 	}
 
 	// 3. Task name validation
 	if (!workOrderData.taskName) {
-	toast.error("Please enter a task name.")
-	return
+		toast.error("Please enter a task name.")
+		return
 	}
 
 	// 4. Vehicle validation
 	// If they selected an existing vehicle, we just need to verify they actually picked one
 	if (workOrderData.customerId !== "new" && !workOrderData.selectedVehicleId) {
-	toast.error("Please select a vehicle or add a new one.")
-	return
+		toast.error("Please select a vehicle or add a new one.")
+		return
 	}
 
 	// For both new vehicles and selected vehicles, we need at least year, make, and model
 	if (!workOrderData.year || !workOrderData.make || !workOrderData.model) {
-	toast.error("Please provide vehicle year, make, and model.")
-	return
+		toast.error("Please provide vehicle year, make, and model.")
+		return
 	}
 
 	// 5. Amount validation
-	if (!workOrderData.totalAmount) {
-	toast.error("Please enter an amount.")
-	return
-	}
+	// if (!workOrderData.totalAmount) {
+	// 	toast.error("Please enter an amount.")
+	// 	return
+	// }
 
-	onSave(workOrderData)
+	// When creating the final data to save, make sure vehicle ID is included
+	const dataToSave = {
+		...workOrderData,
+		vehicleId: workOrderData.selectedVehicleId === "new" ? null : workOrderData.selectedVehicleId
+	};
+
+	onSave(dataToSave)
 
 	const newTask: Task = {
-	id: Date.now().toString(),
-	title:
-		workOrderData.taskName ||
-		`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-	vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-	date: new Date().toISOString().split("T")[0],
-	status: "red",
-	column: "todo",
-	priority: workOrderData.priority,
+		id: Date.now().toString(),
+		title:
+			workOrderData.taskName ||
+			`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		date: new Date().toISOString().split("T")[0],
+		status: "red",
+		column: "todo",
+		priority: workOrderData.priority,
 	}
 	onAddTask(newTask)
 
 	onClose()
+}
+
+function testFunction() {
+	console.log("testFunction")
+	console.log(workOrderData)
+	console.log(customerOptions)
+	console.log(currentVehicles)
+	console.log(staffOptions)
 }
 
 
@@ -738,7 +753,8 @@ return (
 					Cancel
 				</Button>
 				<Button
-					onClick={handleSave}
+					//onClick={handleSave}
+					onClick={testFunction}
 					className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2"
 					disabled={!workOrderData.customerId}
 				>

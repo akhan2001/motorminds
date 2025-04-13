@@ -178,7 +178,9 @@ export default function MechanicsHub() {
           .from("repair_order_details")
           .update({
             labour: detail.labour,
+            labour_cost: detail.labour_cost,
             parts: detail.parts,
+            parts_cost: detail.parts_cost,
             notes: detail.notes,
             cost: detail.cost,
             mileage: detail.mileage,
@@ -395,7 +397,9 @@ export default function MechanicsHub() {
           repair_order_id: newRepairOrderId,
           description: formData.taskName,
           labour: parseString(formData.labor),    // use parseString to handle empty strings
+          labour_cost: parseDouble(formData.laborCost),
           parts: parseString(formData.parts),     // use parseString to handle empty strings
+          parts_cost: parseDouble(formData.partsCost),
           notes: parseString(formData.notes),     // use parseString to handle empty strings
           cost: parseDouble(formData.totalAmount),
           mileage: parseDouble(formData.mileage),
