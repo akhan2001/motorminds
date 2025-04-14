@@ -565,35 +565,23 @@ export function TaskDetailsModal({
         <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0 bg-[#131313]">
           {/* Left side: "Generate Invoice" + DELETE */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
-              onClick={() => {
-                generateInvoice(initialTask.id, shopId).then((success) => {
-                  if (success) {
-                    toast.success("Invoice generated successfully", {
-                      action: {
-                        label: "View Invoice",
-                        onClick: () => {
-                          router.push("/invoices")
-                        },
-                      },
-                    })
-                  } else {
-                    toast.error("Invoice already exists", {
-                      action: {
-                        label: "View Invoice",
-                        onClick: () => {
-                          router.push("/invoices")
-                        },
-                      },
-                    })
-                  }
-                })
-              }}
-            >
-              Generate Invoice
-            </Button>
+            {status === "completed" && (
+              <Button
+                variant="outline"
+                className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+                onClick={() => {
+                  generateInvoice(initialTask.id, shopId).then(result => {
+                    if (result === false) {
+                      toast.error("Invoice already exists for this work order");
+                    } else if (result === true) {
+                      toast.success("Invoice generated successfully");
+                    }
+                  });
+                }}
+              >
+                Generate Invoice
+              </Button>
+            )}
 
             {/* DELETE BUTTON */}
             <Button

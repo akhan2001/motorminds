@@ -13,6 +13,8 @@ interface InvoiceData {
     amount: number
     labour: string
     parts: string
+    labour_cost: string
+    parts_cost: string
     notes: string
     mileage: string
     description: string
@@ -34,7 +36,7 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
     // Get the work order details data
     const { data: detailsData, error } = await supabase
         .from('repair_order_details')
-        .select('cost, labour, parts, notes, mileage, description, Assigned_to')
+        .select('cost, labour, parts, notes, mileage, description, Assigned_to, labour_cost, parts_cost')
         .eq('id', workOrderDetailsID)
 
     // console.log("Amount: " + amount?.[0].cost)
@@ -79,6 +81,8 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         amount: detailsData?.[0].cost,
         labour: detailsData?.[0].labour,
         parts: detailsData?.[0].parts,
+        labour_cost: detailsData?.[0].labour_cost,
+        parts_cost: detailsData?.[0].parts_cost,
         notes: detailsData?.[0].notes,
         mileage: detailsData?.[0].mileage,
         description: detailsData?.[0].description,
@@ -119,6 +123,8 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: stri
             amount: invoiceData.amount,
             labour: invoiceData.labour,
             parts: invoiceData.parts,
+            labour_cost: invoiceData.labour_cost,
+            parts_cost: invoiceData.parts_cost,
             notes: invoiceData.notes,
             mileage: invoiceData.mileage,
             description: invoiceData.description,
