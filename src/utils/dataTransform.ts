@@ -39,7 +39,15 @@ export function transformData(data: any[]): TransformedData {
 
     // Build the vehicle display
     let vehicleString = "Unknown vehicle"
-    const v = order.customers?.customer_vehicles?.[0]
+
+    // Get the specific vehicle associated with this repair order
+    // Each repair order should have a vehicle_id field
+    const vehicleId = order.vehicle_id
+    const allVehicles = order.customers?.customer_vehicles || []
+
+    // Find the correct vehicle by its ID
+    const v = allVehicles.find((vehicle: any) => vehicle.id === vehicleId)
+
     if (v) {
       vehicleString = `${v.year ?? ""} ${v.make ?? ""} ${v.model ?? ""}`.trim() || "Unknown vehicle"
     }

@@ -20,11 +20,14 @@ import { v4 as uuidv4 } from "uuid"
 import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
 import { toast } from "sonner"
+import { createCustomerVehicle, createNewCustomer } from "../customers/api/customer-utils"
+import { createWorkOrder } from "./util/mechanics-hub-utils"
+import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
 
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
   const searchParams = useSearchParams()
-  const queryView = searchParams.get("view") as "board" | "calendar" | "list" | null
+  const queryView = searchParams?.get("view") as "board" | "calendar" | "list" | null
 
   // Default to "board" unless query param says otherwise
   const [currentView, setCurrentView] = useState<"board" | "calendar" | "list">("board")
@@ -151,6 +154,12 @@ export default function MechanicsHub() {
         console.error("Error fetching single record:", error)
         return
       }
+      
+      // Ensure we have the vehicle_id for highlighting the correct vehicle
+      if (data && !data.vehicle_id) {
+        console.warn("No vehicle_id found in repair order, attempting to fix display")
+      }
+      
       setSelectedTask(data)
     } catch (err) {
       console.error("Unexpected error in handleTaskClick:", err)
@@ -182,6 +191,11 @@ export default function MechanicsHub() {
             notes: detail.notes,
             cost: detail.cost,
             mileage: detail.mileage,
+            labour_cost: detail.labour_cost,
+            parts_cost: detail.parts_cost,
+            description: detail.description,
+            task_priority: detail.task_priority,
+            mechanic_id: detail.mechanic_id
           })
           .eq("id", detail.id)
         if (detailErr) throw detailErr
@@ -191,25 +205,34 @@ export default function MechanicsHub() {
       if (updated.customers?.id) {
         const { error: custErr } = await supabase
           .from("customers")
-          .update({ customer_name: updated.customers.customer_name })
+          .update({ 
+            customer_name: updated.customers.customer_name,
+            customer_email: updated.customers.customer_email,
+            customer_phone: updated.customers.customer_phone
+          })
           .eq("id", updated.customers.id)
         if (custErr) throw custErr
       }
 
-      // 4) update first vehicle if changed
-      const firstVehicle = updated.customers?.customer_vehicles?.[0]
-      if (firstVehicle?.id) {
-        const { error: vehicleErr } = await supabase
-          .from("customer_vehicles")
-          .update({
-            year: firstVehicle.year,
-            make: firstVehicle.make,
-            model: firstVehicle.model,
-            engine_type: firstVehicle.engine_type,
-            vin: firstVehicle.vin,
-          })
-          .eq("id", firstVehicle.id)
-        if (vehicleErr) throw vehicleErr
+      // 4) update the specific vehicle associated with this repair order
+      if (updated.vehicle_id && updated.customers?.customer_vehicles) {
+        const vehicleToUpdate = updated.customers.customer_vehicles.find(
+          v => v.id === updated.vehicle_id
+        );
+        
+        if (vehicleToUpdate) {
+          const { error: vehicleErr } = await supabase
+            .from("customer_vehicles")
+            .update({
+              year: vehicleToUpdate.year,
+              make: vehicleToUpdate.make,
+              model: vehicleToUpdate.model,
+              engine_type: vehicleToUpdate.engine_type,
+              vin: vehicleToUpdate.vin,
+            })
+            .eq("id", vehicleToUpdate.id)
+          if (vehicleErr) throw vehicleErr
+        }
       }
 
       if (user?.id) {
@@ -362,8 +385,62 @@ export default function MechanicsHub() {
             )
           }
         } else {
-          // For now, just use the first existing vehicle if multiple
-          vehicleId = existingVeh[0].id
+          // If user selected a specific vehicle, use that ID
+          if (formData.selectedVehicleId && formData.selectedVehicleId !== "new") {
+            // Verify the selected vehicle exists and belongs to this customer
+            const selectedVehicleExists = existingVeh.some(v => v.id === formData.selectedVehicleId);
+            
+            if (selectedVehicleExists) {
+              vehicleId = formData.selectedVehicleId;
+            } else {
+              // If selected vehicle not found, create a new one if details provided
+              if (formData.year || formData.make || formData.model || formData.engineType || formData.vin) {
+                const newVehId = uuidv4();
+                const { error: vehErr } = await supabase
+                  .from("customer_vehicles")
+                  .insert({
+                    id: newVehId,
+                    customer_id: customerId,
+                    year: parseString(formData.year),
+                    make: parseString(formData.make),
+                    model: parseString(formData.model),
+                    engine_type: parseString(formData.engineType),
+                    vin: parseString(formData.vin),
+                  })
+                  .single();
+                if (vehErr) throw vehErr;
+                vehicleId = newVehId;
+              } else {
+                throw new Error("Selected vehicle not found and no vehicle details provided.");
+              }
+            }
+          }
+          // If user selected "new" but we have existing vehicles, create a new one
+          else if (formData.selectedVehicleId === "new") {
+            if (formData.year || formData.make || formData.model || formData.engineType || formData.vin) {
+              const newVehId = uuidv4();
+              const { error: vehErr } = await supabase
+                .from("customer_vehicles")
+                .insert({
+                  id: newVehId,
+                  customer_id: customerId,
+                  year: parseString(formData.year),
+                  make: parseString(formData.make),
+                  model: parseString(formData.model),
+                  engine_type: parseString(formData.engineType),
+                  vin: parseString(formData.vin),
+                })
+                .single();
+              if (vehErr) throw vehErr;
+              vehicleId = newVehId;
+            } else {
+              throw new Error("New vehicle selected but no vehicle details provided.");
+            }
+          }
+          // Default to first vehicle only if no selection was made
+          else {
+            vehicleId = existingVeh[0].id;
+          }
         }
       }
 
@@ -396,6 +473,8 @@ export default function MechanicsHub() {
           description: formData.taskName,
           labour: parseString(formData.labor),    // use parseString to handle empty strings
           parts: parseString(formData.parts),     // use parseString to handle empty strings
+          labour_cost: parseDouble(formData.laborCost),
+          parts_cost: parseDouble(formData.partsCost),
           notes: parseString(formData.notes),     // use parseString to handle empty strings
           cost: parseDouble(formData.totalAmount),
           mileage: parseDouble(formData.mileage),
@@ -424,80 +503,81 @@ export default function MechanicsHub() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      {/* Top Navigation */}
-      <Nav activeLink="Mechanic Hub" />
+    <div className="flex min-h-screen bg-black text-white">
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation */}
+        <Nav activeLink="Mechanic Hub" />
 
-      <main className="flex-1 flex flex-col p-6 min-h-0">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="mb-8 shrink-0"
-        >
-          <p className="text-[#9d9d9d] mb-1"></p>
-          <div className="flex items-center justify-between">
-            <h1 className="text-4xl font-bold text-white flex items-center gap-2">
-              <div className="w-1 h-8 bg-[#b22222]" />
-              Mechanics Hub
-            </h1>
-            <Button
-              className="bg-[#b22222] hover:bg-[#e23232] rounded-full px-8 py-2.5 h-auto"
-              onClick={() => setIsWorkOrderFormOpen(true)}
-            >
-              <Plus className="mr-2 h-5 w-5" /> ADD NEW JOB
-            </Button>
-          </div>
-        </motion.div>
+        <main className="flex flex-col p-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="mb-8 shrink-0"
+          >
+            <div className="flex items-center justify-between">
+              <h1 className="text-4xl font-bold text-white flex items-center gap-2">
+                <div className="w-1 h-8 bg-[#b22222]" />
+                Mechanics Hub
+              </h1>
+              <Button
+                className="bg-[#b22222] hover:bg-[#e23232] rounded-full px-8 py-2.5 h-auto"
+                onClick={() => setIsWorkOrderFormOpen(true)}
+              >
+                <Plus className="mr-2 h-5 w-5" /> ADD NEW JOB
+              </Button>
+            </div>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="mb-8"
-        >
-          {/* Existing Toggle: "board" | "calendar" plus link to /tasks */}
-          {currentView !== "list" && <ViewToggle onViewChange={handleViewChange} />}
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mb-8"
+          >
+            {/* Existing Toggle: "board" | "calendar" plus link to /tasks */}
+            {currentView !== "list" && <ViewToggle onViewChange={handleViewChange} />}
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-          className="flex-1 min-h-0 overflow-auto"
-        >
-          {currentView === "board" && (
-            <TaskBoard
-              tasks={repairOrders.boardData}
-              onTaskClick={handleTaskClick}
-              onStatusChange={handleStatusChange}
-            />
-          )}
-          {currentView === "calendar" && (
-            <CalendarView tasks={repairOrders.calendarData} onTaskClick={handleTaskClick} />
-          )}
-          {currentView === "list" && (
-            <TaskListView tasks={repairOrders.listData} onTaskClick={handleTaskClick} />
-          )}
-        </motion.div>
-      </main>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+            className="flex-1 min-h-0 overflow-auto"
+          >
+            {currentView === "board" && (
+              <TaskBoard
+                tasks={repairOrders.boardData}
+                onTaskClick={handleTaskClick}
+                onStatusChange={handleStatusChange}
+              />
+            )}
+            {currentView === "calendar" && (
+              <CalendarView tasks={repairOrders.calendarData} onTaskClick={handleTaskClick} />
+            )}
+            {currentView === "list" && (
+              <TaskListView tasks={repairOrders.listData} onTaskClick={handleTaskClick} />
+            )}
+          </motion.div>
+        </main>
 
-      {isWorkOrderFormOpen && (
-        <WorkOrderForm
-          onClose={() => setIsWorkOrderFormOpen(false)}
-          onSave={handleSaveWorkOrder}
-          onAddTask={() => {}}
-        />
-      )}
+        {isWorkOrderFormOpen && (
+          <WorkOrderForm
+            onClose={() => setIsWorkOrderFormOpen(false)}
+            onSave={handleSaveWorkOrder}
+            onAddTask={() => {}}
+          />
+        )}
 
-      {selectedTask && (
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={handleCloseModal}
-          onSave={handleSaveTask}
-          shopId={shopId || ""}
-        />
-      )}
+        {selectedTask && (
+          <TaskDetailsModal
+            task={selectedTask}
+            onClose={handleCloseModal}
+            onSave={handleSaveTask}
+            shopId={shopId || ""}
+          />
+        )}
+      </div>
     </div>
   )
 }

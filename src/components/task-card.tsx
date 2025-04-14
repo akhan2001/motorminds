@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock } from "lucide-react"
+import { Clock, ArrowUpRight } from "lucide-react"
 import { motion } from "framer-motion"
 
 interface Task {
@@ -43,9 +43,20 @@ export function TaskCard({ task, onClick, isCompact = false }: TaskCardProps) {
         {!isCompact && (
           <>
             {/* Date */}
-            <div className="flex items-center gap-2 text-[#979797] pb-2">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm">{formatDate(task.date)}</span>
+            <div className="flex items-center justify-between text-[#979797] pb-2">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">{formatDate(task.date)}</span>
+              </div>
+              <button 
+                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                onClick={(e) => {
+                  e.preventDefault(); // Prevent card click event from firing
+                  // Add your click handler here if needed
+                }}
+              >
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
             </div>
 
             {/* Horizontal Line */}
