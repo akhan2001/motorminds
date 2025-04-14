@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/lib/supabase"
 import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
@@ -36,6 +37,7 @@ export interface DetailedRepairOrder {
     customer_name?: string
     customer_email?: string
     customer_phone?: string
+    customer_address?: string
     customer_vehicles?: Array<{
       id: string
       year?: string
@@ -43,6 +45,7 @@ export interface DetailedRepairOrder {
       model?: string
       engine_type?: string
       vin?: string
+      color?: string
     }>
   }
 }
@@ -62,6 +65,11 @@ export function TaskDetailsModal({
 }: TaskDetailsModalProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
+  
+  // Add staff options state
+  const [staffOptions, setStaffOptions] = useState<Array<{id: string, staff_name: string, role: string}>>([])
+  // Add selectedStaffId state to track the selected staff member
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("")
 
   // ------------------
   // STATUS mapping
@@ -125,6 +133,7 @@ export function TaskDetailsModal({
     model: vehicleToUse?.model || "",
     engine_type: vehicleToUse?.engine_type || "",
     vin: vehicleToUse?.vin || "",
+    color: vehicleToUse?.color || "",
     mileage: firstDetail?.mileage || "",
     labour: firstDetail?.labour || "",
     labourCost: firstDetail?.labour_cost || "0",
@@ -137,7 +146,30 @@ export function TaskDetailsModal({
     assignedToName: "",
     email: initialTask.customers?.customer_email || "",
     phone: initialTask.customers?.customer_phone || "",
+    address: initialTask.customers?.customer_address || "",
   })
+
+  // ------------------
+  // Fetch shop staff options when component mounts
+  // ------------------
+  useEffect(() => {
+    async function fetchStaffOptions() {
+      if (!shopId) return;
+      
+      const { data: staffData, error: staffErr } = await supabase
+        .from("shop_staff")
+        .select("id, staff_name, role")
+        .eq("shop_id", shopId);
+        
+      if (!staffErr && staffData) {
+        setStaffOptions(staffData);
+      } else {
+        console.error("Error fetching staff options:", staffErr);
+      }
+    }
+    
+    fetchStaffOptions();
+  }, [shopId]);
 
   // ------------------
   // Fetch staff_name if there's mechanic_id
@@ -145,6 +177,8 @@ export function TaskDetailsModal({
   useEffect(() => {
     async function fetchStaffName() {
       if (firstDetail?.mechanic_id) {
+        setSelectedStaffId(firstDetail.mechanic_id);
+        
         const { data: staffRow, error: staffErr } = await supabase
           .from("shop_staff")
           .select("staff_name")
@@ -163,6 +197,7 @@ export function TaskDetailsModal({
           }))
         }
       } else {
+        setSelectedStaffId("");
         setFormData((prev) => ({
           ...prev,
           assignedToName: "",
@@ -200,6 +235,7 @@ export function TaskDetailsModal({
       model: v?.model || "",
       engine_type: v?.engine_type || "",
       vin: v?.vin || "",
+      color: v?.color || "",
       mileage: d?.mileage || "",
       labour: d?.labour || "",
       labourCost: d?.labour_cost || "0",
@@ -212,6 +248,7 @@ export function TaskDetailsModal({
       assignedToName: "",
       email: initialTask.customers?.customer_email || "",
       phone: initialTask.customers?.customer_phone || "",
+      address: initialTask.customers?.customer_address || "",
     })
   }, [initialTask])
 
@@ -232,6 +269,9 @@ export function TaskDetailsModal({
   function handleSave() {
     const dbStatus = mapLocalStatusToDb(status)
     
+    // Debug: Log the selected staff ID
+    console.log("Saving task with selectedStaffId:", selectedStaffId)
+    
     // First create a base updated object
     const updated: DetailedRepairOrder = {
       ...initialTask,
@@ -240,6 +280,7 @@ export function TaskDetailsModal({
         ? [
             {
               ...initialTask.repair_order_details[0],
+              mechanic_id: selectedStaffId || undefined,
               mileage: formData.mileage,
               labour: formData.labour,
               labour_cost: formData.labourCost,
@@ -257,6 +298,7 @@ export function TaskDetailsModal({
         customer_name: formData.customerName,
         customer_email: formData.email,
         customer_phone: formData.phone,
+        customer_address: formData.address,
         customer_vehicles: [...(initialTask.customers.customer_vehicles || [])],
       } : undefined,
     }
@@ -311,6 +353,26 @@ export function TaskDetailsModal({
       toast.error("Failed to remove task: " + err.message)
     }
   }
+
+  // Handle staff selection change
+  const handleStaffChange = (value: string) => {
+    setSelectedStaffId(value === "none" ? "" : value);
+    
+    if (value && value !== "none") {
+      const selectedStaff = staffOptions.find(staff => staff.id === value);
+      if (selectedStaff) {
+        setFormData(prev => ({
+          ...prev,
+          assignedToName: selectedStaff.staff_name
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        assignedToName: ""
+      }));
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden p-4">
@@ -427,6 +489,17 @@ export function TaskDetailsModal({
                         readOnly={!isEditing}
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-400">Address</Label>
+                      <Input
+                        value={formData.address ? formatPhoneNumber(formData.address) : ""}
+                        onChange={(e) =>
+                          isEditing && setFormData({ ...formData, address: e.target.value })
+                        }
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                        readOnly={!isEditing}
+                      />
+                    </div>
                     
                   </div>
                 </div>
@@ -438,7 +511,7 @@ export function TaskDetailsModal({
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
             <div className="bg-[#1A1A1A] rounded-xl p-6">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-gray-400">Year</Label>
                   <Input
@@ -483,8 +556,19 @@ export function TaskDetailsModal({
                     readOnly={!isEditing}
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-gray-400">Color</Label>
+                  <Input
+                    value={formData.color}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, color: e.target.value })
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                    readOnly={!isEditing}
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mt-3">
                 <div className="space-y-1.5">
                   <Label className="text-gray-400">VIN</Label>
                   <Input
@@ -518,81 +602,109 @@ export function TaskDetailsModal({
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
                 <Label className="text-gray-400 self-center sm:col-span-1">Title</Label>
                 <div className="sm:col-span-3">
-                <Input
-                  value={formData.detailDescription}
-                  onChange={(e) =>
-                    isEditing && setFormData({ ...formData, detailDescription: e.target.value })
-                  }
-                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                  readOnly={!isEditing}
-                />
-              </div>
+                  <Input
+                    value={formData.detailDescription}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, detailDescription: e.target.value })
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    readOnly={!isEditing}
+                  />
+                </div>
 
-              <Label className="text-gray-400 self-center sm:col-span-1">Labour</Label>
-              <div className="flex flex-row gap-2 sm:col-span-3">
-                <Input
-                  value={formData.labour}
-                  onChange={(e) =>
-                    isEditing && setFormData({ ...formData, labour: e.target.value })
-                  }
-                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                  placeholder="Enter labour details"
-                  readOnly={!isEditing}
-                />
-                <span className="text-gray-300 text-md self-center">$</span>
-                <Input
-                  type="number"
-                  value={formData.labourCost}
-                  onChange={(e) =>
-                    isEditing && setFormData({ ...formData, labourCost: e.target.value || "0" })
-                  }
-                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
-                  placeholder="0.00"
-                  readOnly={!isEditing}
-                />
-              </div>
+                <Label className="text-gray-400 self-center sm:col-span-1">Labour</Label>
+                <div className="flex flex-row gap-2 sm:col-span-3">
+                  <Input
+                    value={formData.labour}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, labour: e.target.value })
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    placeholder="Enter labour details"
+                    readOnly={!isEditing}
+                  />
+                  <span className="text-gray-300 text-md self-center">$</span>
+                  <Input
+                    type="number"
+                    value={formData.labourCost}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, labourCost: e.target.value || "0" })
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                    placeholder="0.00"
+                    readOnly={!isEditing}
+                  />
+                </div>
 
-              <Label className="text-gray-400 self-center sm:col-span-1">Parts</Label>
-              <div className="flex flex-row gap-2 sm:col-span-3">
-                <Input
-                  value={formData.parts}
-                  onChange={(e) =>
-                    isEditing && setFormData({ ...formData, parts: e.target.value })
-                  }
-                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                  placeholder="Enter parts details"
-                  readOnly={!isEditing}
-                />
-                <span className="text-gray-300 text-md self-center">$</span>
-                <Input
-                  type="number"
-                  value={formData.partsCost}
-                  onChange={(e) =>
-                    isEditing && setFormData({ ...formData, partsCost: e.target.value || "0" })
-                  }
-                  className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
-                  placeholder="0.00"
-                  readOnly={!isEditing}
-                />
-              </div>
+                <Label className="text-gray-400 self-center sm:col-span-1">Assigned To</Label>
+                <div className="sm:col-span-3">
+                  {isEditing ? (
+                    <Select 
+                      value={selectedStaffId || "none"} 
+                      onValueChange={handleStaffChange}
+                    >
+                      <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full">
+                        <SelectValue placeholder="Select a staff member" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                        <SelectItem value="none">None</SelectItem>
+                        {staffOptions.map((staff) => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      value={formData.assignedToName}
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                      readOnly={true}
+                    />
+                  )}
+                </div>
 
-              <Label className="text-gray-400 self-center sm:col-span-1">Notes</Label>
-              <div className="sm:col-span-3">
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) =>
-                    isEditing && setFormData({ ...formData, notes: e.target.value })
-                  }
-                  className="w-full bg-[#292929] text-white border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[100px]"
-                  readOnly={!isEditing}
-                />
-              </div>
+                <Label className="text-gray-400 self-center sm:col-span-1">Parts</Label>
+                <div className="flex flex-row gap-2 sm:col-span-3">
+                  <Input
+                    value={formData.parts}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, parts: e.target.value })
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                    placeholder="Enter parts details"
+                    readOnly={!isEditing}
+                  />
+                  <span className="text-gray-300 text-md self-center">$</span>
+                  <Input
+                    type="number"
+                    value={formData.partsCost}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, partsCost: e.target.value || "0" })
+                    }
+                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                    placeholder="0.00"
+                    readOnly={!isEditing}
+                  />
+                </div>
 
-              <Label className="text-gray-400 self-center sm:col-span-1">Total Amount</Label>
-              <div className="flex flex-row gap-2 items-center sm:col-span-3">
-                <span className="text-white text-xl">$ {formData.totalAmount}</span>
+                <Label className="text-gray-400 self-center sm:col-span-1">Notes</Label>
+                <div className="sm:col-span-3">
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) =>
+                      isEditing && setFormData({ ...formData, notes: e.target.value })
+                    }
+                    className="w-full bg-[#292929] text-white border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[100px]"
+                    readOnly={!isEditing}
+                  />
+                </div>
+
+                <Label className="text-gray-400 self-center sm:col-span-1">Total Amount</Label>
+                <div className="flex flex-row gap-2 items-center sm:col-span-3">
+                  <span className="text-white text-xl">$ {formData.totalAmount}</span>
+                </div>
               </div>
-            </div>
             </div>
           </div>
         </div>
@@ -601,22 +713,30 @@ export function TaskDetailsModal({
         <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0">
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              className="px-8 py-3 h-auto bg-[#1A1A1A] border-[#222222] text-[#9d9d9d] hover:bg-[#222222] hover:text-white rounded-lg"
-              onClick={() => {
-                generateInvoice(initialTask.id, shopId)
-              }}
-            >
-              Generate Invoice
-            </Button>
-            <Button
               variant="destructive"
-              className="px-4 py-3 h-auto bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
+              className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
               onClick={handleDelete}
             >
               <Trash2 className="h-4 w-4" />
               Delete
             </Button>
+            {status === "completed" && (
+              <Button
+                variant="outline"
+                className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+                onClick={() => {
+                  generateInvoice(initialTask.id, shopId).then(result => {
+                    if (result === false) {
+                      toast.error("Invoice already exists for this work order");
+                    } else if (result === true) {
+                      toast.success("Invoice generated successfully");
+                    }
+                  });
+                }}
+              >
+                Generate Invoice
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-4">

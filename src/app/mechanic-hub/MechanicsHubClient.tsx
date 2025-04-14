@@ -22,6 +22,7 @@ import LoadingPage from "@/components/loading"
 import { toast } from "sonner"
 import { createCustomerVehicle, createNewCustomer } from "../customers/api/customer-utils"
 import { createWorkOrder } from "./util/mechanics-hub-utils"
+import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
 
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
@@ -193,7 +194,8 @@ export default function MechanicsHub() {
             labour_cost: detail.labour_cost,
             parts_cost: detail.parts_cost,
             description: detail.description,
-            task_priority: detail.task_priority
+            task_priority: detail.task_priority,
+            mechanic_id: detail.mechanic_id
           })
           .eq("id", detail.id)
         if (detailErr) throw detailErr
@@ -501,19 +503,18 @@ export default function MechanicsHub() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
-      {/* Top Navigation */}
-      <Nav activeLink="Mechanic Hub" />
+    <div className="flex min-h-screen bg-black text-white">
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation */}
+        <Nav activeLink="Mechanic Hub" />
 
-      <main className="flex flex-col p-8">
-        {/* <div className="container mx-auto max-w-[1300px]"> */}
+        <main className="flex flex-col p-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
             className="mb-8 shrink-0"
           >
-            <p className="text-[#9d9d9d] mb-1"></p>
             <div className="flex items-center justify-between">
               <h1 className="text-4xl font-bold text-white flex items-center gap-2">
                 <div className="w-1 h-8 bg-[#b22222]" />
@@ -558,25 +559,25 @@ export default function MechanicsHub() {
               <TaskListView tasks={repairOrders.listData} onTaskClick={handleTaskClick} />
             )}
           </motion.div>
-        {/* </div> */}
-      </main>
+        </main>
 
-      {isWorkOrderFormOpen && (
-        <WorkOrderForm
-          onClose={() => setIsWorkOrderFormOpen(false)}
-          onSave={handleSaveWorkOrder}
-          onAddTask={() => {}}
-        />
-      )}
+        {isWorkOrderFormOpen && (
+          <WorkOrderForm
+            onClose={() => setIsWorkOrderFormOpen(false)}
+            onSave={handleSaveWorkOrder}
+            onAddTask={() => {}}
+          />
+        )}
 
-      {selectedTask && (
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={handleCloseModal}
-          onSave={handleSaveTask}
-          shopId={shopId || ""}
-        />
-      )}
+        {selectedTask && (
+          <TaskDetailsModal
+            task={selectedTask}
+            onClose={handleCloseModal}
+            onSave={handleSaveTask}
+            shopId={shopId || ""}
+          />
+        )}
+      </div>
     </div>
   )
 }
