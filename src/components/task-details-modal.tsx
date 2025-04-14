@@ -17,6 +17,7 @@ export interface DetailedRepairOrder {
   id: string
   created_at: string
   status: string // "Pending" | "In Progress" | "Completed"
+  vehicle_id?: string
   repair_order_details?: Array<{
     id: string
     mechanic_id?: string
@@ -92,9 +93,15 @@ export function TaskDetailsModal({
     mapDbStatusToLocal(initialTask.status)
   )
 
-  // Extract the first row in details + vehicles
+  // Extract the first row in details
   const firstDetail = initialTask.repair_order_details?.[0]
-  const firstVehicle = initialTask.customers?.customer_vehicles?.[0]
+  
+  // Instead of using the first vehicle, find the matching vehicle using vehicle_id
+  const matchingVehicle = initialTask.vehicle_id && initialTask.customers?.customer_vehicles 
+    ? initialTask.customers.customer_vehicles.find(v => v.id === initialTask.vehicle_id)
+    : null;
+  // Fallback to first vehicle if no matching vehicle found
+  const vehicleToUse = matchingVehicle || initialTask.customers?.customer_vehicles?.[0];
 
   const combinedContact = [
     initialTask.customers?.customer_email,
@@ -113,11 +120,11 @@ export function TaskDetailsModal({
     customerName: initialTask.customers?.customer_name || "",
     description: combinedContact,
     date: initialTask.created_at || "",
-    year: firstVehicle?.year || "",
-    make: firstVehicle?.make || "",
-    model: firstVehicle?.model || "",
-    engine_type: firstVehicle?.engine_type || "",
-    vin: firstVehicle?.vin || "",
+    year: vehicleToUse?.year || "",
+    make: vehicleToUse?.make || "",
+    model: vehicleToUse?.model || "",
+    engine_type: vehicleToUse?.engine_type || "",
+    vin: vehicleToUse?.vin || "",
     mileage: firstDetail?.mileage || "",
     labour: firstDetail?.labour || "",
     labourCost: firstDetail?.labour_cost || "0",
@@ -169,7 +176,14 @@ export function TaskDetailsModal({
   useEffect(() => {
     setStatus(mapDbStatusToLocal(initialTask.status))
     const d = initialTask.repair_order_details?.[0]
-    const v = initialTask.customers?.customer_vehicles?.[0]
+    
+    // Find the matching vehicle using vehicle_id
+    const matchingVehicle = initialTask.vehicle_id && initialTask.customers?.customer_vehicles 
+      ? initialTask.customers.customer_vehicles.find(v => v.id === initialTask.vehicle_id)
+      : null;
+    // Fallback to first vehicle if no matching vehicle found
+    const v = matchingVehicle || initialTask.customers?.customer_vehicles?.[0];
+    
     const combo = [
       initialTask.customers?.customer_email,
       initialTask.customers?.customer_phone,
@@ -217,6 +231,8 @@ export function TaskDetailsModal({
   // ------------------
   function handleSave() {
     const dbStatus = mapLocalStatusToDb(status)
+    
+    // First create a base updated object
     const updated: DetailedRepairOrder = {
       ...initialTask,
       status: dbStatus,
@@ -236,10 +252,31 @@ export function TaskDetailsModal({
             },
           ]
         : [],
-      customers: {
-        ...initialTask.customers,
+      customers: initialTask.customers ? {
+        id: initialTask.customers.id,
         customer_name: formData.customerName,
-      },
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        customer_vehicles: [...(initialTask.customers.customer_vehicles || [])],
+      } : undefined,
+    }
+    
+    // Update vehicle information if we have a vehicle_id and customer vehicles
+    if (updated.vehicle_id && updated.customers?.customer_vehicles) {
+      const vehicleIndex = updated.customers.customer_vehicles.findIndex(
+        v => v.id === updated.vehicle_id
+      );
+      
+      if (vehicleIndex >= 0) {
+        updated.customers.customer_vehicles[vehicleIndex] = {
+          ...updated.customers.customer_vehicles[vehicleIndex],
+          year: formData.year,
+          make: formData.make,
+          model: formData.model,
+          engine_type: formData.engine_type,
+          vin: formData.vin,
+        };
+      }
     }
 
     onSave(updated)

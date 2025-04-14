@@ -13,3 +13,17 @@ export async function createWorkOrder(workOrderData: any) {
     return data
 }
 
+export async function getRepairOrders(shopId: string) {
+    const { data, error } = await supabase
+        .from("repair_orders")
+        .select("*")
+        .eq("shop_id", shopId)
+        .order("created_at", { ascending: false });
+    
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    return data
+}
+
