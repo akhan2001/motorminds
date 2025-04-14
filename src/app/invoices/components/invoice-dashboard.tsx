@@ -290,6 +290,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                                 clientName={invoice.client_name}
                                 clientAddress={invoice.client_address}
                                 clientEmail={invoice.client_email}
+                                description={invoice.description}
                                 vehicleInfo={invoice.vehicle_information ? {
                                     year: invoice.vehicle_information.year,
                                     make: invoice.vehicle_information.make,
