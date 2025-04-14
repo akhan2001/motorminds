@@ -289,8 +289,8 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
 
                 <div className="space-y-4 sm:space-y-6">
                     {/* Shop information */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Shop Information</h3>
+                    <h3 className="text-lg font-medium pl-6">Shop Information</h3>
+                    <div className="space-y-4 bg-[#1A1A1A] rounded-xl px-6 py-4">
                         <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="shopName">Shop Name</Label>
@@ -326,10 +326,11 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                         </div>
                     </div>
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+       
+                    <h3 className="text-lg font-medium pl-6">Client & Vehicle Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#1A1A1A] rounded-xl p-6">
                         {/* Customer selection */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 ">
                             <label className="text-gray-300 text-sm font-medium mb-1 block">Customer Information</label>
                             <div className="flex flex-wrap gap-2">
                                 <div className="w-full sm:w-auto sm:flex-1">
@@ -481,8 +482,13 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                         </div>
                     </div>
 
-                    {/* Invoice date */}
-                    <div className="space-y-2">
+                    {/* Invoice date
+                    <div className="space-y-2 bg-[#1A1A1A] rounded-xl p-6">
+                    </div> */}
+
+                    {/* Invoice details */}
+                    <h3 className="text-lg font-medium pl-6">Invoice Details</h3>
+                    <div className="space-y-3 bg-[#1A1A1A] rounded-xl p-6">
                         <label className="text-gray-300 text-sm font-medium mb-1 block">Invoice Date</label>
                         <Input
                             className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500"
@@ -491,11 +497,6 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             onChange={(e) => setInvoiceDate(e.target.value)}
                             max={formattedDate}
                         />
-                    </div>
-
-                    {/* Invoice details */}
-                    <div className="space-y-3">
-                        <label className="text-gray-300 text-sm font-medium block">Invoice Details</label>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Title</label>
