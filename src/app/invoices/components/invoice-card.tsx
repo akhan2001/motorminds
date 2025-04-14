@@ -86,7 +86,7 @@ export function InvoiceCard({
                     {/* Invoice Number and Status - Top Left */}
                     <div>
                         <h3 className="text-lg sm:text-xl font-bold flex flex-wrap items-center gap-2 text-white">
-                            Invoice #{displayNumber || invoiceNumber}
+                            {description || workOrder || "No description available"} Invoice
                             <span className={`${status === 'PAID' ? 'text-green-500' : 'text-red-500'} text-sm px-2 py-0.5 rounded-full border ${status === 'PAID' ? 'border-green-800' : 'border-red-800'}`}>
                                 {status}
                             </span>
@@ -94,7 +94,8 @@ export function InvoiceCard({
                     </div>
                     {/* Description/Title - Top Right */}
                     <div className="text-right text-gray-400">
-                        <p className="font-medium text-white">{description || workOrder || "No description available"}</p>
+                        {/* <p className="font-medium text-white">{description || workOrder || "No description available"}</p> */}
+                        Invoice #{displayNumber || invoiceNumber}
                     </div>
                 </div>
                 
