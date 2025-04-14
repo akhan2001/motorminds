@@ -17,6 +17,7 @@ interface InvoiceCardProps {
     clientAddress?: string
     clientEmail?: string
     workOrder?: string
+    description?: string
     vehicleInfo?: {
         year?: string
         make?: string
@@ -39,6 +40,7 @@ export function InvoiceCard({
     clientAddress,
     clientEmail,
     workOrder,
+    description,
     vehicleInfo = {},
     onClick,
     onStatusChange,
@@ -79,42 +81,51 @@ export function InvoiceCard({
                 whileHover={{ scale: 1.005 }}
                 onClick={handleCardClick}
             >
+                {/* Top Section */}
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                    {/* Invoice Number and Status - Top Left */}
                     <div>
                         <h3 className="text-lg sm:text-xl font-bold flex flex-wrap items-center gap-2 text-white">
-                            Invoice # {displayNumber || invoiceNumber} 
-                            <span className={`${status === 'PAID' ? 'text-green-500' : 'text-red-500'}`}>
-                                ({status})
+                            Invoice #{displayNumber || invoiceNumber}
+                            <span className={`${status === 'PAID' ? 'text-green-500' : 'text-red-500'} text-sm px-2 py-0.5 rounded-full border ${status === 'PAID' ? 'border-green-800' : 'border-red-800'}`}>
+                                {status}
                             </span>
                         </h3>
-                        {shopName && <p className="text-gray-400 text-sm">{shopName}</p>}
-                        {shopAddress && <p className="text-gray-400 text-sm">{shopAddress}</p>}
                     </div>
-                    <div className="text-left sm:text-right text-gray-400 w-full sm:w-auto">
-                        <p className="text-xs uppercase mb-1">BILL TO</p>
-                        <p className="font-medium">{clientName}</p>
-                        <p className="text-sm">{clientAddress}</p>
-                        <p className="text-sm">{clientEmail}</p>
+                    {/* Description/Title - Top Right */}
+                    <div className="text-right text-gray-400">
+                        <p className="font-medium text-white">{description || workOrder || "No description available"}</p>
                     </div>
                 </div>
                 
-                <Separator className="my-3 bg-gray-800" />
+                <Separator className="my-4 bg-gray-800" />
                 
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-2 text-gray-400">
+                {/* Bottom Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Customer Info - Bottom Left */}
                     <div>
-                        <p className="text-xs uppercase mb-1">VEHICLE</p>
-                        <p className="font-medium">{vehicleDisplay}</p>
-                        {vehicleInfo.license_plate && vehicleInfo.license_plate !== "NULL" && <p className="text-sm">{vehicleInfo.license_plate}</p>}
+                        <p className="text-xs uppercase mb-1 text-gray-400">CUSTOMER</p>
+                        <p className="font-medium text-white">{clientName}</p>
+                        <p className="text-sm text-gray-400">{clientAddress}</p>
+                        <p className="text-sm text-gray-400">{clientEmail}</p>
                     </div>
-                    <div className="text-left sm:text-right mt-2 sm:mt-0 w-full sm:w-auto">
+                    {/* Vehicle Info - Bottom Middle */}
+                    <div>
+                        <p className="text-xs uppercase mb-1 text-gray-400">VEHICLE</p>
+                        <p className="font-medium text-white">{vehicleDisplay}</p>
+                        {vehicleInfo.license_plate && vehicleInfo.license_plate !== "NULL" && 
+                            <p className="text-sm text-gray-400">Plate: {vehicleInfo.license_plate}</p>
+                        }
+                    </div>
+                    {/* Amount - Bottom Right */}
+                    <div className="text-right">
                         <p className="text-xs text-gray-400 uppercase mb-1">
                             {status === "PAID" ? "AMOUNT PAID" : "AMOUNT DUE"}
                         </p>
-                        {status === "PAID" ? 
-                            <p className="text-xl font-bold text-green-500">{amount}</p> : 
-                            <p className="text-xl font-bold text-red-500">{amount}</p>
-                        }
-                        <p className="text-sm text-gray-400">Issued on: {issueDate}</p>
+                        <p className={`text-2xl font-bold ${status === "PAID" ? "text-green-500" : "text-red-500"}`}>
+                            {amount}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">Issued on: {issueDate}</p>
                     </div>
                 </div>
             </motion.div>
