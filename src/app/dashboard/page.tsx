@@ -27,6 +27,8 @@ import {
   endOfMonth,
 } from "date-fns"
 
+import { CustomersComponent } from "@/app/dashboard/components/customers-component"
+
 /* ------------------ Additional Types ------------------ */
 interface ChatMessage {
   role: "user" | "assistant" | "system"
@@ -684,79 +686,7 @@ export default function DashboardPage() {
 
             {/* Column 3 => Chat */}
             <div className="flex flex-col">
-              <h2 className="text-2xl font-bold mb-2">MIA AI</h2>
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center">
-                  <CustomChatStart />
-                  <form
-                    onSubmit={handleSubmit}
-                    className="mt-6 w-full max-w-[600px] px-2"
-                  >
-                    <div className="flex gap-2">
-                      <input
-                        className="flex-1 p-2 rounded-md bg-[#222222] text-white"
-                        placeholder="Ask me anything..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="bg-red-600 text-white px-4"
-                      >
-                        {isLoading ? "Sending..." : "Send"}
-                      </Button>
-                    </div>
-                  </form>
-                  <ChatFooter />
-                </div>
-              ) : (
-                <div className="flex-1 min-h-0 flex flex-col bg-transparent">
-                  <ScrollArea className="flex-1 overflow-y-auto mb-4 pr-2">
-                    <div className="space-y-4">
-                      {messages.map((msg, midx) => {
-                        let isIntermediate = false
-                        try {
-                          const parsed = JSON.parse(msg.content)
-                          if (parsed.action && parsed.observation) {
-                            isIntermediate = true
-                          }
-                        } catch {}
-                        return isIntermediate ? (
-                          <IntermediateStep key={midx} message={msg as any} />
-                        ) : (
-                          <ChatMessageBubble
-                            key={midx}
-                            message={msg as any}
-                            sources={[]}
-                          />
-                        )
-                      })}
-                    </div>
-                  </ScrollArea>
-
-                  <form onSubmit={handleSubmit} className="mt-auto mb-4">
-                    <div className="flex gap-2">
-                      <input
-                        className="flex-1 p-2 rounded-md bg-[#222222] text-white"
-                        placeholder="Ask me anything..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="bg-red-600 text-white px-4"
-                      >
-                        {isLoading ? "Sending..." : "Send"}
-                      </Button>
-                    </div>
-                  </form>
-                  <ChatFooter />
-                </div>
-              )}
+              <CustomersComponent shopId={shop?.id || ""} />
             </div>
           </div>
         </main>

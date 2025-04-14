@@ -310,34 +310,34 @@ function handleSave() {
 	// 4. Vehicle validation
 	// If they selected an existing vehicle, we just need to verify they actually picked one
 	if (workOrderData.customerId !== "new" && !workOrderData.selectedVehicleId) {
-	toast.error("Please select a vehicle or add a new one.")
-	return
+		toast.error("Please select a vehicle or add a new one.")
+		return
 	}
 
 	// For both new vehicles and selected vehicles, we need at least year, make, and model
 	if (!workOrderData.year || !workOrderData.make || !workOrderData.model) {
-	toast.error("Please provide vehicle year, make, and model.")
-	return
+		toast.error("Please provide vehicle year, make, and model.")
+		return
 	}
 
 	// 5. Amount validation
 	if (!workOrderData.totalAmount) {
-	toast.error("Please enter an amount.")
-	return
+		toast.error("Please enter an amount.")
+		return
 	}
 
 	onSave(workOrderData)
 
 	const newTask: Task = {
-	id: Date.now().toString(),
-	title:
-		workOrderData.taskName ||
-		`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-	vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-	date: new Date().toISOString().split("T")[0],
-	status: "red",
-	column: "todo",
-	priority: workOrderData.priority,
+		id: Date.now().toString(),
+		title:
+			workOrderData.taskName ||
+			`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		date: new Date().toISOString().split("T")[0],
+		status: "red",
+		column: "todo",
+		priority: workOrderData.priority,
 	}
 
 	console.log(newTask)
