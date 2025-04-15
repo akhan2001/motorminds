@@ -72,12 +72,12 @@ export function CustomerVehicleCard({ customerVehicles }: CustomerVehicleCardPro
                             </div>
                         </CardContent>
                         <CardFooter className="border-t border-[#333] pt-3">
-                            <Button 
+                            {/* <Button 
                                 variant="outline" 
                                 className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full"
                             >
                                 Service History
-                            </Button>
+                            </Button> */}
                         </CardFooter>
                     </Card>
                 ))

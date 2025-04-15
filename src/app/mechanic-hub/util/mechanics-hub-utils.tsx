@@ -27,3 +27,16 @@ export async function getRepairOrders(shopId: string) {
     return data
 }
 
+export async function openRepairOrder(orderId: string) {
+    const { data, error } = await supabase
+        .from("repair_orders")
+        .update({ status: "open" })
+        .eq("id", orderId)
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    return data
+}
+
