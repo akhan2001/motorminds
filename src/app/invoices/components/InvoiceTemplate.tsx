@@ -1,15 +1,16 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { formatPhoneNumber } from "../utils/invoice-utils";
-import { getShopBranding } from "@/utils/supabase/supabase-shop";
-import { useState } from "react";
-import { useEffect } from "react";
-
+import { getShopBranding, getShopId } from "@/utils/supabase/supabase-shop";
+import { useState, useEffect } from "react";
 // Create styles
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#FFFFFF',
-        padding: 30,
+        paddingLeft: 30,
+        paddingRight: 30,
+        paddingBottom: 10,
+        paddingTop: 10,
         fontFamily: 'Helvetica'
     },
     header: {
@@ -17,8 +18,22 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         justifyContent: 'space-between'
     },
+    logoSection: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        marginBottom: 15
+    },
+    logoContainer: {
+        marginBottom: 10
+    },
+    logo: {
+        width: 60,
+        height: 60,
+        objectFit: 'contain'
+    },
     companyInfo: {
-        width: '100%'
+        width: '100%',
+        textAlign: 'left'
     },
     companyName: {
         fontSize: 15,
@@ -50,7 +65,7 @@ const styles = StyleSheet.create({
         color: '#555'
     },
     customerSection: {
-        marginTop: 20,
+        marginTop: 15,
         marginBottom: 20
     },
     sectionTitle: {
@@ -148,6 +163,22 @@ const styles = StyleSheet.create({
     },
     detailContent: {
         marginBottom: 5
+    },
+    tagline: {
+        fontSize: 10,
+        color: '#555',
+        marginBottom: 4,
+        fontStyle: 'italic'
+    },
+    shopAbout: {
+        fontSize: 9,
+        color: '#666',
+        marginBottom: 6,
+        textAlign: 'left',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        maxWidth: '80%',
+        lineHeight: 1.3
     }
 });
 
@@ -155,14 +186,9 @@ const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
-    const [shopBranding, setShopBranding] = useState<any>(null);
-
-    useEffect(() => {
-        getShopBranding(invoice.shopId).then((data) => {
-            setShopBranding(data);
-        });
-    }, [invoice.shopId]);
+export const InvoiceTemplate = ({ invoice, shopBranding }: { invoice: any, shopBranding?: any }) => {
+    // Add debug log for branding data
+    // console.log("InvoiceTemplate received shopBranding:", shopBranding);
     
     // Format currency
     const formatCurrency = (amount: number | undefined | null) => {
@@ -182,21 +208,49 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
     const taxAmount = subtotal * (taxRate / 100);
     const total = subtotal + taxAmount;
     
+    // Safe check for logo URL to ensure it's properly formatted
+    const logoUrl = shopBranding?.logo_image_url ? 
+        shopBranding.logo_image_url.startsWith('http') ? 
+            shopBranding.logo_image_url : 
+            `https://${shopBranding.logo_image_url.replace(/^\/\//, '')}` 
+        : null;
+    
+    // console.log("Logo URL:", logoUrl);
+    
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
+                    {/* Logo and company info - now stacked vertically */}
+                    <View style={styles.logoSection}>
+                        {logoUrl && (
+                            <View style={styles.logoContainer}>
+                                <Image 
+                                    src={logoUrl}
+                                    style={styles.logo}
+                                />
+                            </View>
+                        )}
+                        <View style={styles.companyInfo}>
+                            <Text style={styles.companyName}>{shopBranding?.shop_name || invoice.shopName}</Text>
+                            {shopBranding?.shop_tagline && (
+                                <Text style={styles.tagline}>{shopBranding.shop_tagline}</Text>
+                            )}
+                            {/* {shopBranding?.shop_about && (
+                                <Text style={styles.shopAbout}>{shopBranding.shop_about}</Text>
+                            )} */}
+                            <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
+                            <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
+                            <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                        </View>
+                    </View>
+                    
+                    {/* Right side with invoice details */}
                     <View style={styles.invoiceDetails}>
                         <Text style={styles.invoiceDate}>Date: {formatDate(invoiceDate)}</Text>
                         <Text style={styles.invoiceTitle}>INVOICE</Text>
                         <Text style={styles.invoiceNumber}>{invoice.displayNumber}</Text>
-                    </View>
-                    <View style={styles.companyInfo}>
-                        <Text style={styles.companyName}>{invoice.shopName}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
-                        <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
                     </View>
                 </View>
                 

@@ -48,6 +48,9 @@ interface InvoiceDialogProps {
 }
 
 export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialogProps) {
+    // Log shopId for debugging
+    // console.log("InvoiceDialog received shopId:", shopId);
+    
     const [status, setStatus] = useState(invoice.status);
     const [isDownloading, setIsDownloading] = useState(false);
     const [isSending, setIsSending] = useState(false);
@@ -276,7 +279,13 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
 
     const handleDownload = async () => {
         try {
-            const result = await generateInvoicePDF(invoice);
+            // Make sure to pass the shop ID explicitly
+            const invoiceWithShopId = {
+                ...invoice,
+                shopId: shopId
+            };
+            console.log("Sending to PDF generator with shopId:", shopId);
+            const result = await generateInvoicePDF(invoiceWithShopId);
             if (result) {
                 console.log("Invoice downloaded successfully");
                 toast.success("Invoice downloaded successfully");

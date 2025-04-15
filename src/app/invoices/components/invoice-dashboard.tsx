@@ -164,6 +164,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             mileage: invoice.mileage,
             description: invoice.description,
             assignedTo: invoice.assigned_to,
+            shopId: invoice.shop_id,
             vehicleInfo: invoice.vehicle_information ? {
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,
