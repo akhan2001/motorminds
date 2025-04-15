@@ -5,13 +5,19 @@ import { History, Wrench, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/app/invoices/utils/invoice-utils";
+import { openRepairOrder } from "@/app/mechanic-hub/util/mechanics-hub-utils";
+import { useState } from "react";
+import { TaskDetailsModal } from "@/components/task-details-modal";
+import { supabase } from "@/lib/supabase";
 
 interface CustomerHistoryCardProps {
     workOrders: any[];
+    shopId: string;
 }
 
-export function CustomerHistoryCard({ workOrders }: CustomerHistoryCardProps) {
+export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardProps) {
     const router = useRouter();
+    const [selectedTask, setSelectedTask] = useState<any>(null);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -24,6 +30,78 @@ export function CustomerHistoryCard({ workOrders }: CustomerHistoryCardProps) {
             default:
                 return 'bg-gray-500';
         }
+    }
+
+    async function handleViewDetails(orderId: string) {
+        try {
+            // First update the status to "open" (keeping the existing functionality)
+            await openRepairOrder(orderId);
+            
+            // Then fetch the full task details
+            const { data, error } = await supabase
+                .from("repair_orders")
+                .select(`
+                    *,
+                    repair_order_details(*),
+                    customers(
+                        *,
+                        customer_vehicles(*)
+                    )
+                `)
+                .eq("id", orderId)
+                .single();
+
+            if (error) {
+                console.error("Error fetching task details:", error);
+                return;
+            }
+            
+            if (data) {
+                setSelectedTask(data);
+            }
+        } catch (err) {
+            console.error("Error handling view details:", err);
+        }
+    }
+
+    async function handleSaveTask(updated: any) {
+        try {
+            // 1) update status in "repair_orders"
+            const { error: mainErr } = await supabase
+                .from("repair_orders")
+                .update({ status: updated.status })
+                .eq("id", updated.id);
+            
+            if (mainErr) throw mainErr;
+
+            // 2) update first detail
+            const detail = updated.repair_order_details?.[0];
+            if (detail?.id) {
+                const { error: detailErr } = await supabase
+                    .from("repair_order_details")
+                    .update({
+                        labour: detail.labour,
+                        parts: detail.parts,
+                        notes: detail.notes,
+                        cost: detail.cost,
+                        mileage: detail.mileage,
+                        description: detail.description,
+                        task_priority: detail.task_priority,
+                    })
+                    .eq("id", detail.id);
+                
+                if (detailErr) throw detailErr;
+            }
+
+            // Close the modal
+            setSelectedTask(null);
+        } catch (err) {
+            console.error("Error saving task:", err);
+        }
+    }
+
+    function handleCloseModal() {
+        setSelectedTask(null);
     }
 
     return (
@@ -66,7 +144,7 @@ export function CustomerHistoryCard({ workOrders }: CustomerHistoryCardProps) {
                             <Button 
                                 variant="ghost" 
                                 className="text-gray-300 hover:text-white hover:bg-[#292929] w-full"
-                                // onClick={() => router.push(`/work-orders/${order.id}`)}
+                                onClick={() => handleViewDetails(order.id)}
                             >
                                 View Details
                             </Button>
@@ -83,6 +161,16 @@ export function CustomerHistoryCard({ workOrders }: CustomerHistoryCardProps) {
                         Create Work Order
                     </Button>
                 </div>
+            )}
+
+            {/* Task Details Modal */}
+            {selectedTask && (
+                <TaskDetailsModal
+                    task={selectedTask}
+                    onClose={handleCloseModal}
+                    onSave={handleSaveTask}
+                    shopId={shopId}
+                />
             )}
         </div>
     )

@@ -124,12 +124,6 @@ export function WorkOrderPartsLabor({
     setShowCustomForm(false)
   }
 
-  const handleRemoveItem = (id: string) => {
-    const updatedItems = items.filter(item => item.id !== id)
-    setItems(updatedItems)
-    updateTotal(updatedItems)
-  }
-
   const handleItemClick = (item: Item) => {
     if (item.type === "labor") {
       if (selectedLaborId === item.id && onDeselectLabor) {
@@ -279,17 +273,6 @@ export function WorkOrderPartsLabor({
                               )}
                               <p className="text-sm text-blue-400">${item.cost.toFixed(2)}</p>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveItem(item.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-white hover:bg-transparent"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
                           </div>
                         </div>
                       );
@@ -335,17 +318,6 @@ export function WorkOrderPartsLabor({
                                 )}
                               </div>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveItem(item.id);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-white hover:bg-transparent"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
                           </div>
                         </div>
                       );
