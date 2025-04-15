@@ -1,5 +1,9 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { formatPhoneNumber } from "../utils/invoice-utils";
+import { getShopBranding } from "@/utils/supabase/supabase-shop";
+import { useState } from "react";
+import { useEffect } from "react";
+
 // Create styles
 const styles = StyleSheet.create({
     page: {
@@ -152,6 +156,14 @@ const formatDate = (date: string) => {
 };
 
 export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
+    const [shopBranding, setShopBranding] = useState<any>(null);
+
+    useEffect(() => {
+        getShopBranding(invoice.shopId).then((data) => {
+            setShopBranding(data);
+        });
+    }, [invoice.shopId]);
+    
     // Format currency
     const formatCurrency = (amount: number | undefined | null) => {
         if (amount === undefined || amount === null) {

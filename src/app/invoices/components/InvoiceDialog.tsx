@@ -361,22 +361,28 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                             
                             {invoice.labour && (
                                 <div className="mb-2">
-                                    <p className="text-white font-medium">Labour:</p>
-                                    <p className="text-gray-400 whitespace-pre-line">{invoice.labour} - {formatCurrency(invoice.labour_cost)}</p>
+                                    <p className="text-gray-400 font-medium">Labour:</p>
+                                    <div className="flex justify-between items-start text-white">
+                                        <p className="whitespace-pre-line">{invoice.labour}</p>
+                                        <p className="ml-2 font-semibold">{formatCurrency(invoice.labour_cost)}</p>
+                                    </div>
                                 </div>
                             )}
                             
                             {invoice.parts && (
                                 <div className="mb-2">
-                                    <p className="text-white font-medium">Parts:</p>
-                                    <p className="text-gray-400 whitespace-pre-line">{invoice.parts} - {formatCurrency(invoice.parts_cost)}</p>
+                                    <p className="text-gray-400 font-medium">Parts:</p>
+                                    <div className="flex justify-between items-start text-white">
+                                        <p className="whitespace-pre-line">{invoice.parts}</p>
+                                        <p className="ml-2 font-semibold">{formatCurrency(invoice.parts_cost)}</p>
+                                    </div>
                                 </div>
                             )}
                             
                             {invoice.notes && (
                                 <div className="mb-2">
-                                    <p className="text-white font-medium">Notes:</p>
-                                    <p className="text-gray-400">{invoice.notes}</p>
+                                    <p className="text-gray-400 font-medium">Notes:</p>
+                                    <p className="text-white">{invoice.notes}</p>
                                 </div>
                             )}
                         </div>
@@ -385,11 +391,6 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                         
                         {/* Amount and Status */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#222222] p-4 rounded-lg border border-[#333333]">
-                            <div>
-                                <p className="text-gray-400 font-medium">Amount Due:</p>
-                                <p className="text-xl font-bold text-white">{formatAmount(invoice.amount)}</p>
-                            </div>
-                            
                             <div className="flex flex-col gap-2">   
                                 <Button
                                     onClick={toggleStatus}
@@ -404,6 +405,11 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                                 <span className="text-xs text-gray-500 text-center">
                                     Click to mark as {status === "PAID" ? "unpaid" : "paid"}
                                 </span>
+                            </div>
+
+                            <div>
+                                <p className="text-gray-400 font-medium">Amount Due:</p>
+                                <p className="text-xl font-bold text-white">{formatAmount(invoice.amount)}</p>
                             </div>
                         </div>
                     </div>
