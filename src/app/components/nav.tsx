@@ -1,7 +1,7 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
-import { Settings, HelpCircle, Menu } from "lucide-react"
+import { Settings, HelpCircle, Menu, ChevronDown } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -57,9 +57,21 @@ export function Nav(
 
 	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
+	// Define mechanic hub subitems
+	const mechanicHubSubItems = [
+		{ name: "Work Orders", href: "/mechanic-hub" },
+		{ name: "Tasks", href: "/tasks" },
+		{ name: "Services & Parts", href: "/mechanic-hub/service-parts" },
+	]
+
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
-		{ name: "Mechanic Hub", href: "/mechanic-hub" },
+		{ 
+			name: "Mechanic Hub", 
+			href: "/mechanic-hub",
+			hasDropdown: true,
+			subItems: mechanicHubSubItems
+		},
 		// { name: "Tasks", href: "/tasks" },
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/invoices" },
@@ -72,6 +84,12 @@ export function Nav(
 		setActiveLink(name)
 		router.push(href)
 		setOpen(false) // Close sheet when navigation occurs
+	}
+
+	const handleSubItemClick = (parentName: string, href: string) => {
+		setActiveLink(parentName)
+		router.push(href)
+		setOpen(false)
 	}
 
 	const handleLogout = async () => {
@@ -118,21 +136,51 @@ export function Nav(
 					{/* Center: Navigation Links */}
 					<div className="hidden lg:flex items-center gap-8">
 						{navItems.map((item) => (
-							<a
-							key={item.name}
-							href="#"
-							onClick={() => handleNavClick(item.name, item.href)}
-							className={`py-2 border-b-2 ${
-								activeLink === item.name
-								? "text-[#b22222] border-[#b22222]"
-								: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
-							}`}
-							>
-							{item.name}
-							{item.name === "Mia AI" &&
-							<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
-							}
-							</a>
+							item.hasDropdown ? (
+								<div key={item.name} className="relative flex flex-col">
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<button 
+												className={`py-2 border-b-2 flex items-center gap-1 ${
+													activeLink === item.name
+													? "text-[#b22222] border-[#b22222]"
+													: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+												}`}
+											>
+												{item.name}
+												<ChevronDown className="h-4 w-4" />
+											</button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f] min-w-[180px]">
+											{item.subItems?.map((subItem) => (
+												<DropdownMenuItem 
+													key={subItem.name}
+													onClick={() => handleSubItemClick(item.name, subItem.href)}
+													className="cursor-pointer hover:bg-[#1f1f1f] hover:text-white"
+												>
+													{subItem.name}
+												</DropdownMenuItem>
+											))}
+										</DropdownMenuContent>
+									</DropdownMenu>
+								</div>
+							) : (
+								<a
+									key={item.name}
+									href="#"
+									onClick={() => handleNavClick(item.name, item.href)}
+									className={`py-2 border-b-2 ${
+										activeLink === item.name
+										? "text-[#b22222] border-[#b22222]"
+										: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+									}`}
+								>
+									{item.name}
+									{item.name === "Mia AI" &&
+									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
+									}
+								</a>
+							)
 						))}
 					</div>
 				</div>
