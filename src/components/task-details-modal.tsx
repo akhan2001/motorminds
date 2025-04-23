@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase"
 import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
 import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
+import MechanicsHubChat from "@/app/mechanic-hub/components/mechanics-hub-chat"
 
 export interface DetailedRepairOrder {
   id: string
@@ -375,442 +376,462 @@ export function TaskDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden p-4">
-      <div className="bg-[#131313] w-full max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* HEADER */}
-        <div className="flex items-center justify-between p-6 border-b border-[#222222] shrink-0">
-          <div className="space-y-1">
-            <h2 className="text-white text-xl sm:text-2xl">Work Order <span className="text-gray-400 text-sm">#{initialTask.id}</span></h2>
-            <p className="text-gray-400 text-xs sm:text-sm">
-              Manage work order details and customer information.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {!isEditing && (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden">
+      <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[80vw]">
+        {/* Main content */}
+        <div className="flex-1 flex flex-col">
+          {/* HEADER */}
+          <div className="flex items-center justify-between p-6 border-b border-[#222222] shrink-0">
+            <div className="space-y-1">
+              <h2 className="text-white text-xl sm:text-2xl">Work Order <span className="text-gray-400 text-sm">#{initialTask.id}</span></h2>
+              <p className="text-gray-400 text-xs sm:text-sm">
+                Manage work order details and customer information.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="text-gray-400 hover:text-white border-[#222222]"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="text-gray-400 hover:text-white border-[#222222]"
-                onClick={() => setIsEditing(true)}
+                className="text-gray-400 hover:text-white"
+                onClick={onClose}
               >
-                <Edit2 className="h-4 w-4" />
+                <X className="h-6 w-6" />
               </Button>
-            )}
+            </div>
+          </div>
+
+          {/* STATUS BUTTONS */}
+          <div className="flex items-center gap-4 p-4 border-b border-[#222222]">
             <Button
               variant="ghost"
-              size="icon"
-              className="text-gray-400 hover:text-white"
-              onClick={onClose}
+              className={`flex items-center gap-2 ${
+                status === "not-started" ? "text-white" : "text-gray-400"
+              }`}
+              onClick={() => isEditing && setStatus("not-started")}
             >
-              <X className="h-6 w-6" />
+              <div className="w-3 h-3 rounded-full bg-[#e23232]" />
+              Not Started
+            </Button>
+            <Button
+              variant="ghost"
+              className={`flex items-center gap-2 ${
+                status === "in-progress" ? "text-white" : "text-gray-400"
+              }`}
+              onClick={() => isEditing && setStatus("in-progress")}
+            >
+              <div className="w-3 h-3 rounded-full bg-[#d6cd24]" />
+              In Progress
+            </Button>
+            <Button
+              variant="ghost"
+              className={`flex items-center gap-2 ${
+                status === "completed" ? "text-white" : "text-gray-400"
+              }`}
+              onClick={() => isEditing && setStatus("completed")}
+            >
+              <div className="w-3 h-3 rounded-full bg-[#1eb386]" />
+              Completed
             </Button>
           </div>
-        </div>
 
-        {/* STATUS BUTTONS */}
-        <div className="flex items-center gap-4 p-4 border-b border-[#222222]">
-          <Button
-            variant="ghost"
-            className={`flex items-center gap-2 ${
-              status === "not-started" ? "text-white" : "text-gray-400"
-            }`}
-            onClick={() => isEditing && setStatus("not-started")}
-          >
-            <div className="w-3 h-3 rounded-full bg-[#e23232]" />
-            Not Started
-          </Button>
-          <Button
-            variant="ghost"
-            className={`flex items-center gap-2 ${
-              status === "in-progress" ? "text-white" : "text-gray-400"
-            }`}
-            onClick={() => isEditing && setStatus("in-progress")}
-          >
-            <div className="w-3 h-3 rounded-full bg-[#d6cd24]" />
-            In Progress
-          </Button>
-          <Button
-            variant="ghost"
-            className={`flex items-center gap-2 ${
-              status === "completed" ? "text-white" : "text-gray-400"
-            }`}
-            onClick={() => isEditing && setStatus("completed")}
-          >
-            <div className="w-3 h-3 rounded-full bg-[#1eb386]" />
-            Completed
-          </Button>
-        </div>
+          {/* MAIN CONTENT */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Customer Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-white">Customer Information</h3>
+              <div className="bg-[#1A1A1A] rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src="/placeholder.svg?height=64&width=64" />
+                    <AvatarFallback className="bg-[#b22222] text-white text-xl">
+                      {formData.customerName?.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-gray-400">Customer Name</Label>
+                        <Input
+                          value={formData.customerName}
+                          onChange={(e) =>
+                            isEditing && setFormData({ ...formData, customerName: e.target.value })
+                          }
+                          className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                          readOnly={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-gray-400">Email</Label>
+                        <Input
+                          value={formData.email}
+                          onChange={(e) =>
+                            isEditing && setFormData({ ...formData, email: e.target.value })
+                          }
+                          className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                          readOnly={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-gray-400">Phone</Label>
+                        <Input
+                          value={formData.phone ? formatPhoneNumber(formData.phone) : ""}
+                          onChange={(e) =>
+                            isEditing && setFormData({ ...formData, phone: e.target.value })
+                          }
+                          className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                          readOnly={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-gray-400">Address</Label>
+                        <Input
+                          value={formData.address || ""}
+                          onChange={(e) =>
+                            isEditing && setFormData({ ...formData, address: e.target.value })
+                          }
+                          className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                          readOnly={!isEditing}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        {/* MAIN CONTENT */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Customer Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">Customer Information</h3>
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src="/placeholder.svg?height=64&width=64" />
-                  <AvatarFallback className="bg-[#b22222] text-white text-xl">
-                    {formData.customerName?.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-gray-400">Customer Name</Label>
+            {/* Vehicle Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
+              <div className="bg-[#1A1A1A] rounded-xl p-6">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">Year</Label>
+                    <Input
+                      value={formData.year}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, year: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">Make</Label>
+                    <Input
+                      value={formData.make}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, make: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">Model</Label>
+                    <Input
+                      value={formData.model}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, model: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">Engine</Label>
+                    <Input
+                      value={formData.engine_type}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, engine_type: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">Color</Label>
+                    <Input
+                      value={formData.color}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, color: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">VIN</Label>
+                    <Input
+                      value={formData.vin}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, vin: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-400">Mileage</Label>
+                    <Input
+                      value={formData.mileage}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, mileage: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Work Order Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-white">Work Order Details</h3>
+              <div className="bg-[#1A1A1A] rounded-xl p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
+                  <Label className="text-gray-400 self-center sm:col-span-1">Title</Label>
+                  <div className="sm:col-span-3">
+                    <Input
+                      value={formData.detailDescription}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, detailDescription: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+
+                  <Label className="text-gray-400 self-center sm:col-span-1">Priority</Label>
+                  <div className="sm:col-span-3">
+                    {isEditing ? (
+                      <Select 
+                        value={formData.taskPriority || "Medium"} 
+                        onValueChange={(value) => setFormData({ ...formData, taskPriority: value })}
+                      >
+                        <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                          <SelectItem value="High">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full bg-[#e23232] mr-2"></div>
+                              High
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="Medium">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full bg-[#d6cd24] mr-2"></div>
+                              Medium
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="Low">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 rounded-full bg-[#1eb386] mr-2"></div>
+                              Low
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex items-center gap-2 h-10 px-3 bg-[#292929] border border-[#626262] rounded-md">
+                        <div className={`w-2 h-2 rounded-full ${
+                          formData.taskPriority === "High" ? "bg-[#e23232]" : 
+                          formData.taskPriority === "Low" ? "bg-[#1eb386]" : "bg-[#d6cd24]"
+                        }`}></div>
+                        <span className="text-white">{formData.taskPriority}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <Label className="text-gray-400 self-center sm:col-span-1">Labour</Label>
+                  <div className="flex flex-row gap-2 sm:col-span-3">
+                    <Input
+                      value={formData.labour}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, labour: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                      placeholder="Enter labour details"
+                      readOnly={!isEditing}
+                    />
+                    <span className="text-gray-300 text-md self-center">$</span>
+                    <Input
+                      type="number"
+                      value={formData.labourCost}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, labourCost: e.target.value || "0" })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                      placeholder="0.00"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+
+                  <Label className="text-gray-400 self-center sm:col-span-1">Assigned To</Label>
+                  <div className="sm:col-span-3">
+                    {isEditing ? (
+                      <Select 
+                        value={selectedStaffId || "none"} 
+                        onValueChange={handleStaffChange}
+                      >
+                        <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full">
+                          <SelectValue placeholder="Select a staff member" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                          <SelectItem value="none">None</SelectItem>
+                          {staffOptions.map((staff) => (
+                            <SelectItem key={staff.id} value={staff.id}>
+                              {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
                       <Input
-                        value={formData.customerName}
-                        onChange={(e) =>
-                          isEditing && setFormData({ ...formData, customerName: e.target.value })
-                        }
-                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                        readOnly={!isEditing}
+                        value={formData.assignedToName}
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                        readOnly={true}
                       />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-gray-400">Email</Label>
-                      <Input
-                        value={formData.email}
-                        onChange={(e) =>
-                          isEditing && setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-gray-400">Phone</Label>
-                      <Input
-                        value={formData.phone ? formatPhoneNumber(formData.phone) : ""}
-                        onChange={(e) =>
-                          isEditing && setFormData({ ...formData, phone: e.target.value })
-                        }
-                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-gray-400">Address</Label>
-                      <Input
-                        value={formData.address || ""}
-                        onChange={(e) =>
-                          isEditing && setFormData({ ...formData, address: e.target.value })
-                        }
-                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                        readOnly={!isEditing}
-                      />
-                    </div>
-                    
+                    )}
+                  </div>
+
+                  <Label className="text-gray-400 self-center sm:col-span-1">Parts</Label>
+                  <div className="flex flex-row gap-2 sm:col-span-3">
+                    <Input
+                      value={formData.parts}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, parts: e.target.value })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
+                      placeholder="Enter parts details"
+                      readOnly={!isEditing}
+                    />
+                    <span className="text-gray-300 text-md self-center">$</span>
+                    <Input
+                      type="number"
+                      value={formData.partsCost}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, partsCost: e.target.value || "0" })
+                      }
+                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
+                      placeholder="0.00"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+
+                  <Label className="text-gray-400 self-center sm:col-span-1">Notes</Label>
+                  <div className="sm:col-span-3">
+                    <textarea
+                      value={formData.notes}
+                      onChange={(e) =>
+                        isEditing && setFormData({ ...formData, notes: e.target.value })
+                      }
+                      className="w-full bg-[#292929] text-white border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[100px]"
+                      readOnly={!isEditing}
+                    />
+                  </div>
+
+                  <Label className="text-gray-400 self-center sm:col-span-1">Total Amount</Label>
+                  <div className="flex flex-row gap-2 items-center sm:col-span-3">
+                    <span className="text-white text-xl">$ {formData.totalAmount}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Vehicle Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Year</Label>
-                  <Input
-                    value={formData.year}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, year: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Make</Label>
-                  <Input
-                    value={formData.make}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, make: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Model</Label>
-                  <Input
-                    value={formData.model}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, model: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Engine</Label>
-                  <Input
-                    value={formData.engine_type}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, engine_type: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Color</Label>
-                  <Input
-                    value={formData.color}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, color: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">VIN</Label>
-                  <Input
-                    value={formData.vin}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, vin: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-gray-400">Mileage</Label>
-                  <Input
-                    value={formData.mileage}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, mileage: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                    readOnly={!isEditing}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Work Order Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-white">Work Order Details</h3>
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
-                <Label className="text-gray-400 self-center sm:col-span-1">Title</Label>
-                <div className="sm:col-span-3">
-                  <Input
-                    value={formData.detailDescription}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, detailDescription: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                    readOnly={!isEditing}
-                  />
-                </div>
-
-                <Label className="text-gray-400 self-center sm:col-span-1">Priority</Label>
-                <div className="sm:col-span-3">
-                  {isEditing ? (
-                    <Select 
-                      value={formData.taskPriority || "Medium"} 
-                      onValueChange={(value) => setFormData({ ...formData, taskPriority: value })}
-                    >
-                      <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full">
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                        <SelectItem value="High">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-[#e23232] mr-2"></div>
-                            High
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="Medium">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-[#d6cd24] mr-2"></div>
-                            Medium
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="Low">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-[#1eb386] mr-2"></div>
-                            Low
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="flex items-center gap-2 h-10 px-3 bg-[#292929] border border-[#626262] rounded-md">
-                      <div className={`w-2 h-2 rounded-full ${
-                        formData.taskPriority === "High" ? "bg-[#e23232]" : 
-                        formData.taskPriority === "Low" ? "bg-[#1eb386]" : "bg-[#d6cd24]"
-                      }`}></div>
-                      <span className="text-white">{formData.taskPriority}</span>
-                    </div>
-                  )}
-                </div>
-
-                <Label className="text-gray-400 self-center sm:col-span-1">Labour</Label>
-                <div className="flex flex-row gap-2 sm:col-span-3">
-                  <Input
-                    value={formData.labour}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, labour: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                    placeholder="Enter labour details"
-                    readOnly={!isEditing}
-                  />
-                  <span className="text-gray-300 text-md self-center">$</span>
-                  <Input
-                    type="number"
-                    value={formData.labourCost}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, labourCost: e.target.value || "0" })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
-                    placeholder="0.00"
-                    readOnly={!isEditing}
-                  />
-                </div>
-
-                <Label className="text-gray-400 self-center sm:col-span-1">Assigned To</Label>
-                <div className="sm:col-span-3">
-                  {isEditing ? (
-                    <Select 
-                      value={selectedStaffId || "none"} 
-                      onValueChange={handleStaffChange}
-                    >
-                      <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full">
-                        <SelectValue placeholder="Select a staff member" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                        <SelectItem value="none">None</SelectItem>
-                        {staffOptions.map((staff) => (
-                          <SelectItem key={staff.id} value={staff.id}>
-                            {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      value={formData.assignedToName}
-                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                      readOnly={true}
-                    />
-                  )}
-                </div>
-
-                <Label className="text-gray-400 self-center sm:col-span-1">Parts</Label>
-                <div className="flex flex-row gap-2 sm:col-span-3">
-                  <Input
-                    value={formData.parts}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, parts: e.target.value })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-full"
-                    placeholder="Enter parts details"
-                    readOnly={!isEditing}
-                  />
-                  <span className="text-gray-300 text-md self-center">$</span>
-                  <Input
-                    type="number"
-                    value={formData.partsCost}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, partsCost: e.target.value || "0" })
-                    }
-                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
-                    placeholder="0.00"
-                    readOnly={!isEditing}
-                  />
-                </div>
-
-                <Label className="text-gray-400 self-center sm:col-span-1">Notes</Label>
-                <div className="sm:col-span-3">
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) =>
-                      isEditing && setFormData({ ...formData, notes: e.target.value })
-                    }
-                    className="w-full bg-[#292929] text-white border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[100px]"
-                    readOnly={!isEditing}
-                  />
-                </div>
-
-                <Label className="text-gray-400 self-center sm:col-span-1">Total Amount</Label>
-                <div className="flex flex-row gap-2 items-center sm:col-span-3">
-                  <span className="text-white text-xl">$ {formData.totalAmount}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0">
-          <div className="flex items-center gap-2">
-            {/* DELETE BUTTON */}
-            <Button
-              variant="destructive"
-              className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </Button>
-            {status === "completed" && (
+          {/* FOOTER */}
+          <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0">
+            <div className="flex items-center gap-2">
+              {/* DELETE BUTTON */}
               <Button
-                variant="outline"
-                className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
-                onClick={() => {
-                  generateInvoice(initialTask.id, shopId).then(result => {
-                    if (result === false) {
-                      toast.error("Invoice already exists for this work order");
-                    } else if (result === true) {
-                      toast.success("Invoice generated successfully");
-                    }
-                  });
-                }}
+                variant="destructive"
+                className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
+                onClick={handleDelete}
               >
-                Generate Invoice
+                <Trash2 className="h-4 w-4" />
+                Delete
               </Button>
-            )}
-          </div>
+              {status === "completed" && (
+                <Button
+                  variant="outline"
+                  className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+                  onClick={() => {
+                    generateInvoice(initialTask.id, shopId).then(result => {
+                      if (result === false) {
+                        toast.error("Invoice already exists for this work order");
+                      } else if (result === true) {
+                        toast.success("Invoice generated successfully");
+                      }
+                    });
+                  }}
+                >
+                  Generate Invoice
+                </Button>
+              )}
+            </div>
 
-          <div className="flex items-center gap-4">
-            {isEditing ? (
-              <>
+            <div className="flex items-center gap-4">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    className="border border-[#626262] px-8 text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="px-8 bg-[#22C55E] hover:bg-[#22C55E]/80 text-white rounded-lg"
+                    onClick={handleSave}
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
                 <Button
                   variant="outline"
                   className="border border-[#626262] px-8 text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto"
-                  onClick={() => setIsEditing(false)}
+                  onClick={onClose}
                 >
-                  Cancel
+                  Close
                 </Button>
-                <Button
-                  className="px-8 bg-[#22C55E] hover:bg-[#22C55E]/80 text-white rounded-lg"
-                  onClick={handleSave}
-                >
-                  Save Changes
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="outline"
-                className="border border-[#626262] px-8 text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto"
-                onClick={onClose}
-              >
-                Close
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
+
+			{/* Right side panel */}
+			<div className="w-[350px] bg-[#131313] border-l border-[#222222] flex flex-col h-full">
+				{/* Header */}
+				<div className="p-4 border-b border-[#222222]">
+					<h3 className="text-lg font-medium text-white">Mia AI Insights</h3>
+				</div>
+				
+				{/* Content */}
+				<div className="flex-1 overflow-hidden">
+					<MechanicsHubChat 
+						shopId={shopId} 
+						taskId={initialTask.id} 
+						workOrderData={initialTask}
+					/>
+				</div>
+			</div>
+
+		</div>
     </div>
   )
 }
