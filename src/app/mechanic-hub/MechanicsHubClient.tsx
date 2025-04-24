@@ -21,7 +21,7 @@ import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
 import { toast } from "sonner"
 import { createCustomerVehicle, createNewCustomer } from "../customers/api/customer-utils"
-import { createWorkOrder } from "./util/mechanics-hub-utils"
+import { createCustomerRetention, createWorkOrder } from "./util/mechanics-hub-utils"
 import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
 
 export default function MechanicsHub() {
@@ -485,104 +485,9 @@ export default function MechanicsHub() {
       if (detailErr) throw detailErr
 
       // 6) Create a customer retention record
-      const newRetentionId = uuidv4();
-      try {
-        // First generate AI insights for this work order
-        const insightsResponse = await fetch("/mechanic-hub/api", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [{
-              id: '1',
-              role: 'assistant',
-              content: "Analyze this work order for retention opportunities:"
-            }],
-            work_order_data: {
-              id: newRepairOrderId,
-              customer_id: customerId,
-              vehicle_id: vehicleId,
-              // Include other relevant work order data
-              repair_order_details: [{
-                description: formData.taskName,
-                labour: formData.labor,
-                parts: formData.parts,
-                labour_cost: parseDouble(formData.laborCost),
-                parts_cost: parseDouble(formData.partsCost),
-                notes: formData.notes,
-                mileage: formData.mileage,
-                task_priority: formData.priority
-              }]
-            },
-            shop_id: shopId
-          })
-        });
-
-        let insightsData = {};
-        let summary = "";
-        
-        if (insightsResponse.ok) {
-          const data = await insightsResponse.json();
-          if (data.content) {
-            // Parse JSON from AI response
-            const jsonMatch = data.content.match(/```json\s*([\s\S]*?)\s*```/);
-            if (jsonMatch && jsonMatch[1]) {
-              insightsData = JSON.parse(jsonMatch[1]);
-              // Get summary text (after the JSON)
-              summary = data.content.replace(/```json\s*[\s\S]*?\s*```/g, '').trim();
-            }
-          }
-        }
-
-        // Calculate the recommended follow-up date based on the service type
-        // (e.g., 3 months for regular maintenance, 6 months for major repairs)
-        const followupDate = new Date();
-        if (formData.taskName.toLowerCase().includes('oil change') || 
-            formData.labor.toLowerCase().includes('oil change')) {
-          // Oil changes typically need follow-up in 3-6 months
-          followupDate.setMonth(followupDate.getMonth() + 3);
-        } else if (formData.taskPriority === 'high' || parseDouble(formData.totalAmount || '0') > 500) {
-          // Major repairs might need quicker follow-up
-          followupDate.setMonth(followupDate.getMonth() + 1);
-        } else {
-          // Default follow-up in 6 months
-          followupDate.setMonth(followupDate.getMonth() + 6);
-        }
-        
-        // Create the retention record
-        const { error: retentionErr } = await supabase
-          .from("customer_retention")
-          .insert({
-            id: newRetentionId,
-            shop_id: shopId,
-            work_order_id: newRepairOrderId,
-            customer_id: customerId,
-            vehicle_id: vehicleId,
-            
-            status: 'pending',
-            priority: insightsData.flags?.some((f: any) => f.type === 'urgent') ? 'high' : 'medium',
-            
-            recommended_followup_date: followupDate.toISOString().split('T')[0],
-            next_service_due_date: followupDate.toISOString().split('T')[0],
-            
-            insights_json: insightsData,
-            summary: summary,
-
-            contact_method_preference: formData.customerEmail ? 'email' : 'phone',
-          });
-          
-        if (retentionErr) {
-          // Log error but don't block work order creation
-          console.error("Error creating retention record:", retentionErr);
-          // Optional: toast.warning("Created work order but couldn't create retention record");
-        } else {
-          console.log("Created retention record:", newRetentionId);
-          // Optional: toast.success("Work Order and Retention Record created!")
-        }
-      } catch (retentionError) {
-        // Log error but don't block work order creation flow
-        console.error("Failed to create retention record:", retentionError);
-      }
-
+      const retentionData = await createCustomerRetention(newRepairOrderId, shopId)
+      console.log("Created retention record:", retentionData)
+      
       toast.success("Work Order successfully created!")
       await fetchRepairOrders(user.id) // re-fetch your data
     } catch (err: any) {
