@@ -64,6 +64,11 @@ export function Nav(
 		{ name: "Services & Parts", href: "/mechanic-hub/service-parts" },
 	]
 
+	const leadGenerationSubItems = [
+		{ name: "Leads", href: "/lead-generation" },
+		{ name: "Customer Retention", href: "/lead-generation/customer-retention" },
+	]
+
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
 		{ 
@@ -75,7 +80,12 @@ export function Nav(
 		// { name: "Tasks", href: "/tasks" },
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/invoices" },
-		{ name: "Lead Generation", href: "/lead-generation" },
+		{ 
+			name: "Lead Generation", 
+			href: "/lead-generation",
+			hasDropdown: true,
+			subItems: leadGenerationSubItems
+		},
 		{ name: "Loyalty", href: "/loyalty" },
 		{ name: "Customers", href: "/customers" },
 	]

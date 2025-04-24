@@ -1,21 +1,20 @@
 'use client'
 
-import { Nav } from "../components/nav"
-import { useEffect, useState } from "react"
-import { getLeads } from "./utils/lead"
 import { checkUser } from "@/utils/supabase/supabase-auth"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { Nav } from "@/app/components/nav"
 import { getShopId } from "@/utils/supabase/supabase-shop"
-import { LeadDashboard } from "./components/lead-dashboard"
+import { useRouter } from "next/navigation"
 import LoadingPage from "@/components/loading"
+import CustomerRetentionDashboard from "./components/customer-retention-dashboard"
 
-export default function LeadGenerationPage() {
-	const router = useRouter()
-	const [shopId, setShopId] = useState<string | null>(null)
+export default function CustomerRetentionPage() {
+    const router = useRouter()
+    const [shopId, setShopId] = useState<string | null>(null)
     const [user, setUser] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
 
-	useEffect(() => {
+    useEffect(() => {
         async function fetchUserData() {
             setIsLoading(true)
             try {
@@ -38,7 +37,7 @@ export default function LeadGenerationPage() {
         fetchUserData()
     }, [router])
 
-	if (isLoading) {
+    if (isLoading) {
         return (
             <LoadingPage page="Lead Generation" />
         )
@@ -58,7 +57,8 @@ export default function LeadGenerationPage() {
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Lead Generation" />
-            <LeadDashboard shopId={shopId} user={user} />
-		</div>
-	)
+            
+            <CustomerRetentionDashboard shopId={shopId} />
+        </div>
+    )
 }
