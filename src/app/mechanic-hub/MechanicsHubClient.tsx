@@ -21,7 +21,7 @@ import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
 import { toast } from "sonner"
 import { createCustomerVehicle, createNewCustomer } from "../customers/api/customer-utils"
-import { createCustomerRetention, createWorkOrder } from "./util/mechanics-hub-utils"
+import { createCustomerRetention, createMiaInsights, createWorkOrder } from "./util/mechanics-hub-utils"
 import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
 
 export default function MechanicsHub() {
@@ -484,9 +484,23 @@ export default function MechanicsHub() {
         .single()
       if (detailErr) throw detailErr
 
-      // 6) Create a customer retention record
-      const retentionData = await createCustomerRetention(newRepairOrderId, shopId)
-      console.log("Created retention record:", retentionData)
+      
+      // 6) Create Mia AI Insights
+      const insightsData = await createMiaInsights(newRepairOrderId, shopId)
+      if (insightsData?.success) {
+        console.log("Created Mia AI Insights:", insightsData.insights)
+      } else {
+        console.error("Failed to create Mia AI Insights:", insightsData?.message)
+      }
+      
+      // // 7) Create Lead
+      // const leadData = await createLead(newRepairOrderId, shopId)
+      // console.log("Created lead:", leadData)
+
+
+      // 8) Create a customer retention record
+      // const retentionData = await createCustomerRetention(newRepairOrderId, shopId)
+      // console.log("Created retention record:", retentionData)
       
       toast.success("Work Order successfully created!")
       await fetchRepairOrders(user.id) // re-fetch your data

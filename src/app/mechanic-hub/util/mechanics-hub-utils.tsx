@@ -153,7 +153,7 @@ export async function createCustomerRetention(workOrderId: string, shopId: strin
                 vehicle_id: vehicleId,
                 
                 status: 'pending',
-                priority: insightsData.flags?.some((f: any) => f.type === 'urgent') ? 'high' : 'medium',
+                // priority: insightsData.flags?.some((f: any) => f.type === 'urgent') ? 'high' : 'medium',
                 timeframe: timeframe,
                 
                 recommended_followup_date: followupDate.toISOString().split('T')[0],
@@ -180,3 +180,121 @@ export async function createCustomerRetention(workOrderId: string, shopId: strin
         return null;
     }
 }
+
+/**
+ * Creates a Mia AI insights record with AI-generated insights
+ * @param workOrderId The ID of the work order to create Mia AI insights for
+ * @param shopId The shop ID for the Mia AI insights record
+ * @returns The newly created Mia AI insights record ID or null if creation failed
+ */
+export async function createMiaInsights(workOrderId: string, shopId: string) {
+    try {
+        // 1) First, get the work order details
+        const { data: workOrderData, error: workOrderError } = await supabase
+            .from("repair_orders")
+            .select(`
+                *,
+                repair_order_details(*),
+                customers(*),
+                customer_vehicles(*)
+            `)
+            .eq("id", workOrderId)
+            .single();
+        
+        if (workOrderError || !workOrderData) {
+            console.error("Failed to fetch work order data:", workOrderError);
+            return null;
+        }
+
+        // 2) Call the API to get AI insights
+        const insightResponse = await fetch("/mechanic-hub/api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages: [{ role: "user", content: "Provide upsell suggestions for this work order." }],
+                work_order_data: workOrderData,
+                shop_id: shopId
+            })
+        });
+
+        if (!insightResponse.ok) {
+            throw new Error("Failed to generate Mia insights");
+        }
+
+        const aiResponse = await insightResponse.json();
+        
+        // 3) Parse the AI response to extract the JSON
+        const jsonMatch = aiResponse.content.match(/```json\n([\s\S]*?)\n```/);
+        const insightsData = jsonMatch ? JSON.parse(jsonMatch[1]) : {};
+        
+        // Check if repair_order_details record exists first
+        const { data: existingRecord } = await supabase
+            .from("repair_order_details")
+            .select("id")
+            .eq("repair_order_id", workOrderId)
+            .single();
+
+        let updateError;
+
+        if (existingRecord) {
+            // If record exists, use update instead of upsert
+            const { error } = await supabase
+                .from("repair_order_details")
+                .update({
+                    mia_insights: {
+                        upsell_suggestions: insightsData.upsellSuggestions || [],
+                        flags: insightsData.flags || [],
+                        customer_actions: insightsData.customerActions || [],
+                        raw_response: aiResponse.content,
+                        generated_at: new Date().toISOString(),
+                        version: "1.0"
+                    }
+                })
+                .eq("repair_order_id", workOrderId);
+            
+            updateError = error;
+        } else {
+            // If no record exists, insert a new one
+            const { error } = await supabase
+                .from("repair_order_details")
+                .insert({
+                    repair_order_id: workOrderId,
+                    mia_insights: {
+                        upsell_suggestions: insightsData.upsellSuggestions || [],
+                        flags: insightsData.flags || [],
+                        customer_actions: insightsData.customerActions || [],
+                        raw_response: aiResponse.content,
+                        generated_at: new Date().toISOString(),
+                        version: "1.0"
+                    }
+                });
+            
+            updateError = error;
+        }
+
+        if (updateError) {
+            console.error("Database error:", updateError);
+            throw new Error("Failed to save insights to database");
+        }
+
+        return {
+            success: true,
+            insights: insightsData,
+            message: "Mia insights created successfully"
+        };
+    } catch (error) {
+        console.error("Error in createMiaInsights:", error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error occurred"
+        };
+    }
+}
+
+// export async function createLead(workOrderId: string, shopId: string) {
+//     const { data, error } = await supabase
+//         .from("leads")
+//         .insert({
+//             work_order_id: workOrderId,
+
+

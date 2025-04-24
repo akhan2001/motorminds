@@ -467,7 +467,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, customerName: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly={!isEditing}
+                          readOnly
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -478,7 +478,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, email: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly={!isEditing}
+                          readOnly
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -489,7 +489,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, phone: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly={!isEditing}
+                          readOnly
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -500,7 +500,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, address: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly={!isEditing}
+                          readOnly
                         />
                       </div>
                     </div>
@@ -816,16 +816,11 @@ export function TaskDetailsModal({
 
 			{/* Right side panel */}
 			<div className="w-[350px] bg-[#131313] border-l border-[#222222] flex flex-col h-full">
-				{/* Header */}
-				<div className="p-4 border-b border-[#222222]">
-					<h3 className="text-lg font-medium text-white">Mia AI Insights</h3>
-				</div>
-				
 				{/* Content */}
 				<div className="flex-1 overflow-hidden">
 					<MechanicsHubChat 
 						shopId={shopId} 
-						taskId={initialTask.id} 
+						taskId={initialTask.id}
 						workOrderData={initialTask}
 					/>
 				</div>
