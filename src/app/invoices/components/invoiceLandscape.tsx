@@ -1,35 +1,44 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { formatPhoneNumber } from "../utils/invoice-utils";
+
 // Create styles
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#FFFFFF',
-        padding: 30,
+        padding: 25,
         fontFamily: 'Helvetica'
     },
-    header: {
-        marginBottom: 20,
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10
+    },
+    headerLeft: {
+        width: '60%',
+        flexDirection: 'column'
+    },
+    headerRight: {
+        width: '35%',
         flexDirection: 'column',
-        justifyContent: 'space-between'
+        alignItems: 'flex-end'
     },
     companyInfo: {
-        width: '100%'
+        marginBottom: 8
     },
     companyName: {
         fontSize: 15,
         fontWeight: 'bold',
-        marginBottom: 4
+        marginBottom: 3
     },
     detailFonts: {
         fontSize: 10,
         color: '#555',
-        marginBottom: 2
+        marginBottom: 1
     },
     invoiceTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        textAlign: 'left',
         marginBottom: 2
     },
     invoiceNumber: {
@@ -37,37 +46,35 @@ const styles = StyleSheet.create({
         color: '#555',
         marginBottom: 2
     },
-    invoiceDetails: {
+    invoiceDate: {
+        fontSize: 10,
+        color: '#555',
+        marginBottom: 2
+    },
+    infoRow: {
+        flexDirection: 'row',
         marginBottom: 10
     },
-    invoiceDate: {
-        textAlign: 'right',
-        fontSize: 10,
-        color: '#555'
-    },
-    customerSection: {
-        marginTop: 20,
-        marginBottom: 20
+    infoColumn: {
+        width: '33%',
+        paddingRight: 10
     },
     sectionTitle: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginBottom: 6,
-        backgroundColor: '#f0f0f0',
-        padding: 6
-    },
-    customerInfo: {
         fontSize: 12,
-        marginBottom: 3
+        fontWeight: 'bold',
+        marginBottom: 4,
+        backgroundColor: '#f0f0f0',
+        padding: 4
     },
     table: {
-        marginTop: 20
+        marginTop: 10,
+        marginBottom: 8
     },
     tableHeader: {
         flexDirection: 'row',
         backgroundColor: '#f0f0f0',
         paddingHorizontal: 8,
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderBottomWidth: 1,
         borderBottomColor: '#cccccc',
         fontWeight: 'bold'
@@ -75,97 +82,81 @@ const styles = StyleSheet.create({
     tableRow: {
         flexDirection: 'row',
         paddingHorizontal: 8,
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderBottomWidth: 1,
         borderBottomColor: '#eeeeee'
     },
     descCol: { width: '70%', fontSize: 10 },
-    // qtyCol: { width: '15%', fontSize: 10, textAlign: 'center' },
-    // rateCol: { width: '20%', fontSize: 10, textAlign: 'right' },
     amountCol: { width: '30%', fontSize: 10, textAlign: 'right' },
-    summarySection: {
-        marginTop: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#cccccc',
-        paddingTop: 10
-    },
     summaryRow: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        marginTop: 8
+    },
+    summaryLeft: {
+        width: '65%',
+    },
+    summaryRight: {
+        width: '35%',
+    },
+    summaryTable: {
+        width: '100%',
+    },
+    summaryLine: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 3,
+        fontSize: 10
+    },
+    totalLine: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 4,
+        borderTopWidth: 1,
+        borderTopColor: '#333',
+        marginTop: 3,
         fontSize: 12,
-        marginBottom: 5
-    },
-    summaryLabel: {
-        width: '20%',
-        textAlign: 'right',
-        paddingRight: 10
-    },
-    summaryValue: {
-        width: '25%',
-        textAlign: 'right',
         fontWeight: 'bold'
     },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginTop: 5,
-        marginBottom: 10,
-        borderTopWidth: 2,
-        borderTopColor: '#333',
-        paddingTop: 5
+    notes: {
+        fontSize: 10,
+        marginBottom: 6,
+        paddingHorizontal: 4
     },
     footer: {
-        marginTop: 40,
-        paddingTop: 10,
+        marginTop: 15,
+        paddingTop: 6,
         borderTopWidth: 1,
         borderTopColor: '#cccccc',
-        fontSize: 10,
+        fontSize: 9,
         textAlign: 'center',
         color: '#555',
-        position: 'relative',
-        bottom: 0
-    },
-    paymentInfo: {
-        marginTop: 20,
-        fontSize: 10,
-        color: '#555'
-    },
-    paymentTitle: {
-        fontWeight: 'bold',
-        marginBottom: 3
+        position: 'absolute',
+        bottom: 15,
+        left: 0,
+        right: 0
     },
     detailsSection: {
-        marginBottom: 10
-    },
-    detailLabel: {
-        fontWeight: 'bold'
-    },
-    detailContent: {
-        marginBottom: 5
+        marginBottom: 6
     },
     signatureSection: {
-        marginTop: 20,
+        marginTop: 15,
         flexDirection: 'row'
     },
     agreementText: {
         fontSize: 8,
         color: '#555',
-        width: '60%',
-        paddingRight: 15,
-        lineHeight: 1.5
+        width: '65%',
+        paddingRight: 10,
+        lineHeight: 1.3
     },
     signatureBox: {
-        width: '40%',
-        alignItems: 'flex-end'
+        width: '35%',
     },
     signatureLine: {
         borderBottomWidth: 1,
         borderBottomColor: '#555',
-        marginBottom: 5,
-        paddingBottom: 15,
-        width: '100%'
+        marginBottom: 3,
+        paddingBottom: 12
     },
     signatureLabel: {
         fontSize: 8,
@@ -174,14 +165,14 @@ const styles = StyleSheet.create({
     },
     dateLabel: {
         fontSize: 8,
-        marginTop: 10,
+        marginTop: 8,
         color: '#555'
     },
     dateLine: {
         borderBottomWidth: 1,
         borderBottomColor: '#555',
-        marginBottom: 5,
-        paddingBottom: 15,
+        marginBottom: 3,
+        paddingBottom: 12,
         width: '60%'
     }
 });
@@ -190,11 +181,11 @@ const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
+export const InvoiceLandscape = ({ invoice }: { invoice: any }) => {
     // Format currency
     const formatCurrency = (amount: number | undefined | null) => {
         if (amount === undefined || amount === null) {
-            return '0.00';
+            return '$0.00';
         }
         return `$${amount.toFixed(2)}`;
     };
@@ -203,66 +194,73 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
     const invoiceDate = formatDate(invoice.issueDate);
 
     // Calculate totals
-    const subtotal = invoice.amount; // invoice.labour_cost + invoice.parts_cost;
-
+    const subtotal = invoice.amount;
     const taxRate = 13;
     const taxAmount = subtotal * (taxRate / 100);
     const total = subtotal + taxAmount;
     
     return (
         <Document>
-            <Page size="A4" style={styles.page}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.invoiceDetails}>
-                        <Text style={styles.invoiceDate}>Date: {formatDate(invoiceDate)}</Text>
+            <Page size="A4" orientation="landscape" style={styles.page}>
+                {/* Header Row */}
+                <View style={styles.headerRow}>
+                    <View style={styles.headerLeft}>
+                        <View style={styles.companyInfo}>
+                            <Text style={styles.companyName}>{invoice.shopName}</Text>
+                            <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
+                            <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
+                            <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                        </View>
+                    </View>
+                    <View style={styles.headerRight}>
                         <Text style={styles.invoiceTitle}>INVOICE</Text>
                         <Text style={styles.invoiceNumber}>{invoice.displayNumber}</Text>
-                    </View>
-                    <View style={styles.companyInfo}>
-                        <Text style={styles.companyName}>{invoice.shopName}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
-                        <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                        <Text style={styles.invoiceDate}>Date: {formatDate(invoiceDate)}</Text>
                     </View>
                 </View>
                 
-                {/* Customer Information */}
-                <View style={styles.customerSection}>
-                    <Text style={styles.sectionTitle}>BILL TO</Text>
-                    <Text style={styles.detailFonts}>{invoice.clientName || ''}</Text>
-                    <Text style={styles.detailFonts}>{invoice.clientAddress || ''}</Text>
-                    <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
-                    <Text style={styles.detailFonts}>{invoice.clientEmail || ''}</Text>
-                </View>
-                
-                {/* Vehicle Information */}
-                <View style={styles.customerSection}>
-                    <Text style={styles.sectionTitle}>VEHICLE DETAILS</Text>
-                    <Text style={styles.detailFonts}>
-                        {invoice.vehicleInfo?.year || ''} {invoice.vehicleInfo?.make || ''} {invoice.vehicleInfo?.model || ''}
-                    </Text>
-                    <Text style={styles.detailFonts}>{invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" ? '' : invoice.vehicleInfo?.license_plate}</Text>
-                    <Text style={styles.detailFonts}>{invoice.mileage || ''}</Text>
+                {/* Customer and Vehicle Information Row */}
+                <View style={styles.infoRow}>
+                    <View style={styles.infoColumn}>
+                        <Text style={styles.sectionTitle}>BILL TO</Text>
+                        <Text style={styles.detailFonts}>{invoice.clientName || ''}</Text>
+                        <Text style={styles.detailFonts}>{invoice.clientAddress || ''}</Text>
+                        <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
+                        <Text style={styles.detailFonts}>{invoice.clientEmail || ''}</Text>
+                    </View>
+                    
+                    <View style={styles.infoColumn}>
+                        <Text style={styles.sectionTitle}>VEHICLE DETAILS</Text>
+                        <Text style={styles.detailFonts}>
+                            {invoice.vehicleInfo?.year || ''} {invoice.vehicleInfo?.make || ''} {invoice.vehicleInfo?.model || ''}
+                        </Text>
+                        <Text style={styles.detailFonts}>{invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" ? '' : invoice.vehicleInfo?.license_plate}</Text>
+                        <Text style={styles.detailFonts}>{invoice.mileage || ''}</Text>
+                    </View>
+                    
+                    <View style={styles.infoColumn}>
+                        <Text style={styles.sectionTitle}>PAYMENT INFO</Text>
+                        <Text style={styles.detailFonts}>Payment Due: {formatDate(invoice.issueDate)}</Text>
+                        <Text style={styles.detailFonts}>Payment Method: {invoice.paymentMethod || 'TBD'}</Text>
+                    </View>
                 </View>
                 
                 {/* Items Table */}
                 <View style={styles.table}>
-                    <Text style={styles.companyName}>{invoice.description}</Text>
+                    {invoice.description && (
+                        <Text style={styles.companyName}>{invoice.description}</Text>
+                    )}
                     <View style={styles.tableHeader}>
                         <Text style={styles.descCol}>Description</Text>
-                        {/* <Text style={styles.qtyCol}>Quantity</Text>
-                        <Text style={styles.rateCol}>Rate</Text> */}
                         <Text style={styles.amountCol}>Amount</Text>
                     </View>
                     
-                    {/* Table Rows - if no items, show at least one empty row */}
+                    {/* Table Rows */}
                     {invoice.description || invoice.labour || invoice.parts || invoice.notes ? (
                         <View style={styles.detailsSection}>                            
                             {invoice.labour && (
                                 <View style={styles.tableRow}>
                                     <Text style={styles.descCol}>Labour: {invoice.labour}</Text>
-                                    {/* <Text style={styles.qtyCol}>1</Text> */}
                                     <Text style={styles.amountCol}>{formatCurrency(invoice.labour_cost)}</Text>
                                 </View>
                             )}
@@ -270,7 +268,6 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                             {invoice.parts && (
                                 <View style={styles.tableRow}>
                                     <Text style={styles.descCol}>Parts: {invoice.parts}</Text>
-                                    {/* <Text style={styles.qtyCol}>1</Text> */}
                                     <Text style={styles.amountCol}>{formatCurrency(invoice.parts_cost)}</Text>
                                 </View>
                             )}
@@ -284,26 +281,35 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     ) : (
                         <View style={styles.tableRow}>
                             <Text style={styles.descCol}>Service</Text>
-                            {/* <Text style={styles.qtyCol}>1</Text> */}
-                            {/* <Text style={styles.rateCol}>{formatCurrency(0)}</Text> */}
                             <Text style={styles.amountCol}>{formatCurrency(0)}</Text>
                         </View>
                     )}
                 </View>
                 
-                {/* Summary */}
-                <View style={styles.summarySection}>
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Subtotal</Text>
-                        <Text style={styles.summaryValue}>{formatCurrency(invoice.amount)}</Text>
+                {/* Summary Row */}
+                <View style={styles.summaryRow}>
+                    <View style={styles.summaryLeft}>
+                        <Text style={styles.sectionTitle}>NOTES</Text>
+                        <Text style={styles.notes}>
+                            {invoice.additionalNotes || 'Thank you for your business. Please contact us if you have any questions.'}
+                        </Text>
                     </View>
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Tax</Text>
-                        <Text style={styles.summaryValue}>{formatCurrency(taxAmount)}</Text>
-                    </View>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.summaryLabel}>TOTAL</Text>
-                        <Text style={styles.summaryValue}>{formatCurrency(total)}</Text>
+                    
+                    <View style={styles.summaryRight}>
+                        <View style={styles.summaryTable}>
+                            <View style={styles.summaryLine}>
+                                <Text>Subtotal:</Text>
+                                <Text>{formatCurrency(invoice.amount)}</Text>
+                            </View>
+                            <View style={styles.summaryLine}>
+                                <Text>Tax ({taxRate}%):</Text>
+                                <Text>{formatCurrency(taxAmount)}</Text>
+                            </View>
+                            <View style={styles.totalLine}>
+                                <Text>TOTAL:</Text>
+                                <Text>{formatCurrency(total)}</Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
                 
@@ -328,8 +334,7 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 {/* Footer */}
                 <View style={styles.footer}>
-                    <Text>Thank you for your business!</Text>
-                    <Text>Powered by Motorminds</Text>
+                    <Text>Thank you for your business! Powered by Motorminds</Text>
                 </View>
             </Page>
         </Document>
