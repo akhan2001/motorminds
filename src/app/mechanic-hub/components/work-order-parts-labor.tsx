@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, X, Edit2, Wrench, PackageOpen } from "lucide-react"
+import { Wrench, PackageOpen } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { useRouter } from "next/navigation"
+import { Separator } from "@/components/ui/separator"
 
 interface Item {
   id: string
@@ -58,15 +59,9 @@ export function WorkOrderPartsLabor({
 }: WorkOrderPartsLaborProps) {
   const router = useRouter()
   const [items, setItems] = useState<Item[]>([])
-  const [newItem, setNewItem] = useState<Partial<Item>>({
-    type: "labor",
-    name: "",
-    description: "",
-    cost: 0,
-  })
   const [isLoading, setIsLoading] = useState(true)
   const [shopId, setShopId] = useState<string | null>(null)
-  const [showCustomForm, setShowCustomForm] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     const fetchShopServices = async () => {
@@ -106,24 +101,6 @@ export function WorkOrderPartsLabor({
     fetchShopServices()
   }, [])
 
-  const handleAddItem = () => {
-    if (!newItem.name || !newItem.cost) return
-    
-    const item: Item = {
-      id: Date.now().toString(),
-      type: newItem.type as "labor" | "parts",
-      name: newItem.name,
-      description: newItem.description || "",
-      cost: Number(newItem.cost),
-      ...(newItem.type === "parts" && { quantity: 1 })
-    }
-    
-    setItems([...items, item])
-    setNewItem({ ...newItem, name: "", description: "", cost: 0 })
-    updateTotal([...items, item])
-    setShowCustomForm(false)
-  }
-
   const handleItemClick = (item: Item) => {
     if (item.type === "labor") {
       if (selectedLaborId === item.id && onDeselectLabor) {
@@ -149,6 +126,15 @@ export function WorkOrderPartsLabor({
     router.push("/mechanic-hub/service-parts")
   }
 
+  // Filter items based on search query
+  const filteredItems = items.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  
+  const filteredLaborItems = filteredItems.filter(item => item.type === "labor")
+  const filteredPartsItems = filteredItems.filter(item => item.type === "parts")
+
   return (
     <div className="w-[350px] bg-[#131313] border-l border-[#222222] flex flex-col h-full">
       {/* Header */}
@@ -170,113 +156,57 @@ export function WorkOrderPartsLabor({
             >
               Go to Services & Parts
             </Button>
-            <Button
-              onClick={() => setShowCustomForm(true)}
-              className="bg-[#333] hover:bg-[#444] text-white w-full"
-            >
-              Add Custom Item
-            </Button>
           </div>
         </div>
       ) : (
         <>
-          {/* Add custom item button */}
-          <div className="p-4 border-b border-[#222222]">
-            <Button
-              onClick={() => setShowCustomForm(!showCustomForm)}
-              className="bg-[#22C55E] hover:bg-[#22C55E]/80 text-white w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" /> Add Custom Item
-            </Button>
-          </div>
-
-          {/* Custom item form */}
-          {showCustomForm && (
-            <div className="p-4 space-y-3 border-b border-[#222222]">
-              <Select
-                value={newItem.type as string}
-                onValueChange={(value: "labor" | "parts") => setNewItem({ ...newItem, type: value })}
-              >
-                <SelectTrigger className="bg-[#1A1A1A] text-white border-[#333333] focus:ring-0 focus:ring-offset-0">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1A1A1A] text-white border-[#333333]">
-                  <SelectItem value="labor">Labor</SelectItem>
-                  <SelectItem value="parts">Parts</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Input
-                placeholder="Name"
-                value={newItem.name}
-                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                className="bg-[#1A1A1A] text-white border-[#333333] focus:ring-0 focus:ring-offset-0"
-              />
-
-              <Input
-                placeholder="Description (optional)"
-                value={newItem.description}
-                onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                className="bg-[#1A1A1A] text-white border-[#333333] focus:ring-0 focus:ring-offset-0"
-              />
-
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Cost"
-                  value={newItem.cost ? newItem.cost.toFixed(2) : ""}
-                  onChange={(e) => setNewItem({ ...newItem, cost: parseFloat(e.target.value) || 0 })}
-                  className="bg-[#1A1A1A] text-white border-[#333333] focus:ring-0 focus:ring-offset-0"
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddItem}
-                  className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 px-3"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Items list */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-2">
+              {/* Search bar */}
+              <div className="mb-4">
+                <Input
+                  className="bg-[#131313] border-[#333] focus:ring-0 placeholder-gray-500"
+                  placeholder="Search for parts or labor..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Separator className="my-4 bg-[#333]" />
+              
               {/* Labor section */}
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
                   <Wrench className="h-3.5 w-3.5 mr-1.5" /> LABOR
                 </h4>
-                {items.filter(item => item.type === "labor").length > 0 ? (
-                  items
-                    .filter(item => item.type === "labor")
-                    .map((item) => {
-                      const isSelected = item.id === selectedLaborId;
-                      const borderStyle = isSelected 
-                        ? "border-2 border-blue-500" 
-                        : "border border-[#333333]";
-                      
-                      return (
-                        <div
-                          key={item.id}
-                          className={cn(
-                            "group p-3 rounded bg-[#1A1A1A] hover:bg-[#222222] transition-colors cursor-pointer mb-2",
-                            borderStyle
-                          )}
-                          onClick={() => handleItemClick(item)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="text-sm text-white font-medium">{item.name}</p>
-                              {item.description && (
-                                <p className="text-xs text-gray-400 mt-1 mb-1">{item.description}</p>
-                              )}
-                              <p className="text-sm text-blue-400">${item.cost.toFixed(2)}</p>
-                            </div>
+                {filteredLaborItems.length > 0 ? (
+                  filteredLaborItems.map((item) => {
+                    const isSelected = item.id === selectedLaborId;
+                    const borderStyle = isSelected 
+                      ? "border-2 border-blue-500" 
+                      : "border border-[#333333]";
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "group p-3 rounded bg-[#1A1A1A] hover:bg-[#222222] transition-colors cursor-pointer mb-2",
+                          borderStyle
+                        )}
+                        onClick={() => handleItemClick(item)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm text-white font-medium">{item.name}</p>
+                            {item.description && (
+                              <p className="text-xs text-gray-400 mt-1 mb-1">{item.description}</p>
+                            )}
+                            <p className="text-sm text-blue-400">${item.cost.toFixed(2)}</p>
                           </div>
                         </div>
-                      );
-                    })
+                      </div>
+                    );
+                  })
                 ) : (
                   <p className="text-xs text-gray-500 italic">No labor items available</p>
                 )}
@@ -287,41 +217,39 @@ export function WorkOrderPartsLabor({
                 <h4 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
                   <PackageOpen className="h-3.5 w-3.5 mr-1.5" /> PARTS
                 </h4>
-                {items.filter(item => item.type === "parts").length > 0 ? (
-                  items
-                    .filter(item => item.type === "parts")
-                    .map((item) => {
-                      const isSelected = item.id === selectedPartsId;
-                      const borderStyle = isSelected 
-                        ? "border-2 border-purple-500" 
-                        : "border border-[#333333]";
-                      
-                      return (
-                        <div
-                          key={item.id}
-                          className={cn(
-                            "group p-3 rounded bg-[#1A1A1A] hover:bg-[#222222] transition-colors cursor-pointer mb-2",
-                            borderStyle
-                          )}
-                          onClick={() => handleItemClick(item)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="text-sm text-white font-medium">{item.name}</p>
-                              {item.description && (
-                                <p className="text-xs text-gray-400 mt-1 mb-1">{item.description}</p>
+                {filteredPartsItems.length > 0 ? (
+                  filteredPartsItems.map((item) => {
+                    const isSelected = item.id === selectedPartsId;
+                    const borderStyle = isSelected 
+                      ? "border-2 border-purple-500" 
+                      : "border border-[#333333]";
+                    
+                    return (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "group p-3 rounded bg-[#1A1A1A] hover:bg-[#222222] transition-colors cursor-pointer mb-2",
+                          borderStyle
+                        )}
+                        onClick={() => handleItemClick(item)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm text-white font-medium">{item.name}</p>
+                            {item.description && (
+                              <p className="text-xs text-gray-400 mt-1 mb-1">{item.description}</p>
+                            )}
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm text-purple-400">${item.cost.toFixed(2)}</p>
+                              {item.quantity && (
+                                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                               )}
-                              <div className="flex justify-between items-center">
-                                <p className="text-sm text-purple-400">${item.cost.toFixed(2)}</p>
-                                {item.quantity && (
-                                  <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                                )}
-                              </div>
                             </div>
                           </div>
                         </div>
-                      );
-                    })
+                      </div>
+                    );
+                  })
                 ) : (
                   <p className="text-xs text-gray-500 italic">No parts items available</p>
                 )}
