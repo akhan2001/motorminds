@@ -4,7 +4,7 @@ import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@
 import { getLeads, formatDate, updateLeadStatus, deleteLead } from "../utils/lead"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MessageCircle, UserPlus, Check, Trash, Calendar, FileText } from 'lucide-react';
+import { Mail, Phone, MessageCircle, UserPlus, Check, Trash, Calendar, FileText, ChevronDown, ChevronRight, Clock } from 'lucide-react';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@/components/ui/tooltip";
@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { createNewCustomer, checkCustomerExists } from "@/app/customers/api/customer-utils";
 import { getCustomerRetention, getCustomerFromRetention, getVehicleFromRetention, getWorkOrderFromRetention, updateRetentionStatus } from "../customer-retention/utils/customer-retention";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const statusColors = {
     "NEW": "bg-[#36612A]",
@@ -49,6 +51,7 @@ export function LeadTable({
     const [selectedLead, setSelectedLead] = useState<any>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
 
     useEffect(() => {
         const fetchLeads = async () => {
@@ -258,12 +261,22 @@ export function LeadTable({
         }
     }
 
+    // Toggle row expansion
+    const toggleRowExpansion = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setExpandedRows(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
+
     return (
         <div className="space-y-4">
             <div className="rounded-md border border-[#222] overflow-hidden">
                 <Table>
                     <TableHeader className="bg-[#222] border-none">
                         <TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
+                            <TableHead className="w-8"></TableHead>
                             <TableHead className="text-[#888] font-medium">CUSTOMER</TableHead>
                             <TableHead className="text-[#888] font-medium">DATE</TableHead>
                             <TableHead className="text-[#888] font-medium">MESSAGE/SUMMARY</TableHead>
@@ -276,195 +289,290 @@ export function LeadTable({
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                                <TableCell colSpan={8} className="text-center py-8 text-gray-400">
                                     Loading data...
                                 </TableCell>
                             </TableRow>
                         ) : filteredData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                                <TableCell colSpan={8} className="text-center py-8 text-gray-400">
                                     No data found
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filteredData.map((item) => (
-                                <TableRow 
-                                    className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" 
-                                    key={`${item.dataType}-${item.id}`} 
-                                    onClick={() => handleLeadClick(item)}
-                                >
-                                    <TableCell className="text-white">
-                                        <div className="flex items-center gap-2">
-                                            {(item.status === "NEW" || item.timeframe === "immediate") && (
-                                                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                <>
+                                    <TableRow 
+                                        className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" 
+                                        key={`${item.dataType}-${item.id}`} 
+                                        onClick={() => item.dataType === 'lead' && handleLeadClick(item)}
+                                    >
+                                        <TableCell className="w-8 p-0 pl-2">
+                                            {item.dataType === 'retention' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 p-0"
+                                                    onClick={(e) => toggleRowExpansion(item.id, e)}
+                                                >
+                                                    {expandedRows[item.id] ? 
+                                                        <ChevronDown className="h-4 w-4" /> : 
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    }
+                                                </Button>
                                             )}
-                                            {item.customer_name}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-white">
-                                        {formatDate(item.updated_at || item.created_at)}
-                                    </TableCell>
-                                    <TableCell className="text-white">
-                                        {item.dataType === 'lead' && item.rewards_claim ? (
-                                            <div className="flex items-center">
-                                                <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
-                                                {item.message}
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            <div className="flex items-center gap-2">
+                                                {(item.status === "NEW" || item.timeframe === "immediate") && (
+                                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                                )}
+                                                {item.customer_name}
                                             </div>
-                                        ) : (
-                                            <div className="max-w-md truncate">
-                                                {item.message}
-                                            </div>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-white">
-                                        <Badge className={`border-none text-white ${item.dataType === 'lead' ? 'bg-[#2F4858]' : 'bg-[#5D3A9B]'}`}>
-                                            {item.dataType === 'lead' ? 'Lead' : 'Retention'}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-white">
-                                        {item.dataType === 'lead' ? (
-                                            <Badge variant="outline" className={`border-none text-white ${statusColors[item.status as keyof typeof statusColors]}`}>
-                                                {item.status}
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="outline" className={`border-none text-white ${timeframeColors[item.timeframe as keyof typeof timeframeColors]}`}>
-                                                {item.timeframe === 'mid_term' ? 'Mid-Term' : 
-                                                 item.timeframe === 'long_term' ? 'Long-Term' : 'Immediate'}
-                                            </Badge>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-white">
-                                        {item.dataType === 'retention' ? (
-                                            <div className={`font-medium ${getPriorityColor(item.priority)}`}>
-                                                {item.priority ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1) : '-'}
-                                            </div>
-                                        ) : (
-                                            <div>-</div>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-white">
-                                        <div className="flex gap-4">
-                                            {item.dataType === 'lead' ? (
-                                                <>
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <button>
-                                                                    <Mail 
-                                                                        className="w-4 h-4" 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            window.open(`mailto:${item.customer_email || item.email}`, '_blank');
-                                                                        }}
-                                                                    />
-                                                                </button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                <p>Send Email</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                    {item.status != "CUSTOMER" ? (
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button>
-                                                                        <UserPlus 
-                                                                            className="w-4 h-4 text-green-500 hover:text-green-400"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleCreateCustomer(e, item.id);
-                                                                            }}
-                                                                        />
-                                                                    </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                    <p>Create Customer</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    ) : (
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <div>
-                                                                        <Check className="w-4 h-4 text-green-500" />
-                                                                    </div>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                    <p>Customer Created</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    )}
-                                                </>
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            {formatDate(item.updated_at || item.created_at)}
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            {item.dataType === 'lead' && item.rewards_claim ? (
+                                                <div className="flex items-center">
+                                                    <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
+                                                    {item.message}
+                                                </div>
                                             ) : (
-                                                <>
-                                                    {item.status !== 'completed' && (
+                                                <div className="max-w-md truncate">
+                                                    {item.message}
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            <Badge className={`border-none text-white ${item.dataType === 'lead' ? 'bg-[#2F4858]' : 'bg-[#5D3A9B]'}`}>
+                                                {item.dataType === 'lead' ? 'Lead' : 'Retention'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            {item.dataType === 'lead' ? (
+                                                <Badge variant="outline" className={`border-none text-white ${statusColors[item.status as keyof typeof statusColors]}`}>
+                                                    {item.status}
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className={`border-none text-white ${timeframeColors[item.timeframe as keyof typeof timeframeColors]}`}>
+                                                    {item.timeframe === 'mid_term' ? 'Mid-Term' : 
+                                                     item.timeframe === 'long_term' ? 'Long-Term' : 'Immediate'}
+                                                </Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            {item.dataType === 'retention' ? (
+                                                <div className={`font-medium ${getPriorityColor(item.priority)}`}>
+                                                    {item.priority ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1) : '-'}
+                                                </div>
+                                            ) : (
+                                                <div>-</div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            <div className="flex gap-4">
+                                                {item.dataType === 'lead' ? (
+                                                    <>
                                                         <TooltipProvider>
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <button>
-                                                                        <Calendar 
+                                                                        <Mail 
                                                                             className="w-4 h-4" 
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                handleRetentionStatusChange(item.id, 'scheduled');
+                                                                                window.open(`mailto:${item.customer_email || item.email}`, '_blank');
                                                                             }}
                                                                         />
                                                                     </button>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                    <p>Schedule Follow-up</p>
+                                                                    <p>Send Email</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
-                                                    )}
-                                                    
-                                                    {item.status !== 'completed' && (
+                                                        {item.status != "CUSTOMER" ? (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button>
+                                                                            <UserPlus 
+                                                                                className="w-4 h-4 text-green-500 hover:text-green-400"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleCreateCustomer(e, item.id);
+                                                                                }}
+                                                                            />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                                        <p>Create Customer</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        ) : (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <div>
+                                                                            <Check className="w-4 h-4 text-green-500" />
+                                                                        </div>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                                        <p>Customer Created</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {item.status !== 'completed' && (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button>
+                                                                            <Calendar 
+                                                                                className="w-4 h-4" 
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleRetentionStatusChange(item.id, 'scheduled');
+                                                                                }}
+                                                                            />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                                        <p>Schedule Follow-up</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        )}
+                                                        
+                                                        {item.status !== 'completed' && (
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button>
+                                                                            <Check 
+                                                                                className="w-4 h-4 text-green-500" 
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleRetentionStatusChange(item.id, 'completed');
+                                                                                }}
+                                                                            />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                                        <p>Mark as Completed</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        )}
+                                                        
                                                         <TooltipProvider>
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <button>
-                                                                        <Check 
-                                                                            className="w-4 h-4 text-green-500" 
+                                                                        <FileText 
+                                                                            className="w-4 h-4" 
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                handleRetentionStatusChange(item.id, 'completed');
+                                                                                // View details implementation
                                                                             }}
                                                                         />
                                                                     </button>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                    <p>Mark as Completed</p>
+                                                                    <p>View Details</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                    {/* Expanded row content for retention tasks */}
+                                    {item.dataType === 'retention' && expandedRows[item.id] && (
+                                        <TableRow className="bg-[#161616]">
+                                            <TableCell colSpan={8} className="py-4 px-6">
+                                                <div className="space-y-3">
+                                                    {/* Vehicle Information */}
+                                                    {item.vehicle_info && (
+                                                        <div>
+                                                            <h4 className="text-xs text-gray-400 uppercase mb-1">Vehicle</h4>
+                                                            <p className="text-white">{item.vehicle_info}</p>
+                                                        </div>
                                                     )}
                                                     
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <button>
-                                                                    <FileText 
-                                                                        className="w-4 h-4" 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            // View details implementation
-                                                                        }}
-                                                                    />
-                                                                </button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                <p>View Details</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-                                                </>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+                                                    {/* Follow-up Date */}
+                                                    {item.recommended_followup_date && (
+                                                        <div>
+                                                            <h4 className="text-xs text-gray-400 uppercase mb-1 flex items-center">
+                                                                <Clock className="h-3 w-3 mr-1" /> Follow-up Date
+                                                            </h4>
+                                                            <p className="text-white">{formatDate(item.recommended_followup_date)}</p>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Detailed Summary */}
+                                                    {item.summary && (
+                                                        <div>
+                                                            <h4 className="text-xs text-gray-400 uppercase mb-1">Detailed Summary</h4>
+                                                            <p className="text-white whitespace-pre-wrap">{item.summary}</p>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* AI Insights */}
+                                                    {item.insights_json && item.insights_json.upsellSuggestions && item.insights_json.upsellSuggestions.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <h4 className="text-xs text-gray-400 uppercase mb-1">Recommended Services</h4>
+                                                            <div className="space-y-2">
+                                                                {item.insights_json.upsellSuggestions.map((suggestion: any, index: number) => (
+                                                                    <div key={index} className="p-2 bg-[#1A1A1A] border border-[#333] rounded-md">
+                                                                        <p className="text-sm font-medium text-white">{suggestion.title}</p>
+                                                                        <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
+                                                                        {suggestion.estimatedValue && (
+                                                                            <p className="text-xs text-green-400 mt-1">
+                                                                                ${typeof suggestion.estimatedValue === 'number' ? 
+                                                                                  suggestion.estimatedValue.toFixed(2) : suggestion.estimatedValue}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Actions */}
+                                                    <div className="flex gap-2 mt-4">
+                                                        <Button 
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-xs"
+                                                            onClick={() => handleRetentionStatusChange(item.id, 'scheduled')}
+                                                        >
+                                                            <Calendar className="h-3.5 w-3.5 mr-1" />
+                                                            Schedule Follow-up
+                                                        </Button>
+                                                        
+                                                        <Button 
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-xs bg-green-900/30 text-green-400 border-green-900/50 hover:bg-green-900/50"
+                                                            onClick={() => handleRetentionStatusChange(item.id, 'completed')}
+                                                        >
+                                                            <Check className="h-3.5 w-3.5 mr-1" />
+                                                            Mark Complete
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </>
                             ))
                         )}
                     </TableBody>
