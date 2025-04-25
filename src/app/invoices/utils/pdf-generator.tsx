@@ -1,10 +1,15 @@
 import { pdf } from "@react-pdf/renderer";
 import { InvoiceTemplate } from "../components/InvoiceTemplate";
+import { InvoiceLandscape } from "../components/invoiceLandscape";
 
-export async function generateInvoicePDF(invoice: any) {
+export async function generateInvoicePDF(invoice: any, isLandscape: boolean = false) {
     try {
-        // Create a PDF blob
-        const blob = await pdf(<InvoiceTemplate invoice={invoice} />).toBlob();
+        // Create a PDF blob based on the selected format
+        const blob = await pdf(
+            isLandscape 
+                ? <InvoiceLandscape invoice={invoice} /> 
+                : <InvoiceTemplate invoice={invoice} />
+        ).toBlob();
 
         // Create a download link
         const url = URL.createObjectURL(blob);

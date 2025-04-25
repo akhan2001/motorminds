@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { createCustomerVehicle, createNewCustomer } from "../customers/api/customer-utils"
 import { createCustomerRetention, createMiaInsights, createWorkOrder } from "./util/mechanics-hub-utils"
 import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
+import { generateMiaInsights } from "../mia/utils/insightsGenerator"
 
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
@@ -486,11 +487,18 @@ export default function MechanicsHub() {
 
       
       // 6) Create Mia AI Insights
-      const insightsData = await createMiaInsights(newRepairOrderId, shopId)
+      // const insightsData = await createMiaInsights(newRepairOrderId, shopId)
+      // if (insightsData?.success) {
+      //   console.log("Created Mia AI Insights:", insightsData.insights)
+      // } else {
+      //   console.error("Failed to create Mia AI Insights:", insightsData?.message)
+      // }
+
+      const insightsData = await generateMiaInsights(newRepairOrderId, shopId)
       if (insightsData?.success) {
         console.log("Created Mia AI Insights:", insightsData.insights)
       } else {
-        console.error("Failed to create Mia AI Insights:", insightsData?.message)
+        console.error("Failed to create Mia AI Insights:", insightsData?.error)
       }
       
       // // 7) Create Lead

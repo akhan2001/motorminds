@@ -1,0 +1,34 @@
+[
+  {
+    "service_name": "Oil Change",
+    "description": "Standard oil change service including oil filter replacement",
+    "price": 49.99,
+    "type": "labor"
+  },
+  {
+    "service_name": "Brake Inspection",
+    "description": "Complete brake system inspection and adjustment",
+    "price": 69.95,
+    "type": "labor"
+  },
+  {
+    "service_name": "Engine Diagnostics",
+    "description": "Computer diagnostics to identify engine problems",
+    "price": 89.99,
+    "type": "labor"
+  },
+  {
+    "service_name": "Oil Filter",
+    "description": "Premium quality oil filter",
+    "price": 12.99,
+    "quantity": 1,
+    "type": "parts"
+  },
+  {
+    "service_name": "Brake Pads (Set)",
+    "description": "High-performance ceramic brake pads - front or rear set",
+    "price": 79.99,
+    "quantity": 1,
+    "type": "parts"
+  }
+]

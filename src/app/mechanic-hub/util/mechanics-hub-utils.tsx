@@ -41,6 +41,67 @@ export async function openRepairOrder(orderId: string) {
     return data
 }
 
+export async function shopHasServices(shopId: string): Promise<boolean> {
+    const { count, error } = await supabase
+        .from("shop_services")
+        .select("*", { count: "exact" })
+        .eq("shop_id", shopId)
+    
+    if (error) {
+        console.error("Error checking shop services:", error)
+        return false
+    }
+    
+    return count !== null && count > 0
+}
+
+export async function seedDefaultServices(shopId: string, defaultServices: any[]): Promise<boolean> {
+    try {
+        // Add shop_id to each service
+        const servicesWithShopId = defaultServices.map(service => ({
+            ...service,
+            shop_id: shopId
+        }))
+        
+        const { error } = await supabase
+            .from("shop_services")
+            .insert(servicesWithShopId)
+        
+        if (error) {
+            console.error("Error seeding default services:", error)
+            return false
+        }
+        
+        return true
+    } catch (error) {
+        console.error("Error in seedDefaultServices:", error)
+        return false
+    }
+}
+
+export async function resetShopServices(shopId: string, defaultServices: any[]): Promise<boolean> {
+    try {
+        // First, delete all existing services for the shop
+        const { error: deleteError } = await supabase
+            .from("shop_services")
+            .delete()
+            .eq("shop_id", shopId)
+        
+        if (deleteError) {
+            console.error("Error deleting existing services:", deleteError)
+            return false
+        }
+        
+        // Then seed with default services
+        return await seedDefaultServices(shopId, defaultServices)
+    } catch (error) {
+        console.error("Error in resetShopServices:", error)
+        return false
+    }
+}
+
+
+
 /**
  * Creates a customer retention record with AI-generated insights
  * @param workOrderId The ID of the work order to create retention for
@@ -290,11 +351,4 @@ export async function createMiaInsights(workOrderId: string, shopId: string) {
         };
     }
 }
-
-// export async function createLead(workOrderId: string, shopId: string) {
-//     const { data, error } = await supabase
-//         .from("leads")
-//         .insert({
-//             work_order_id: workOrderId,
-
 

@@ -322,34 +322,34 @@ export function LeadTable({
                                                 </Button>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-white">
-                                            <div className="flex items-center gap-2">
+                                <TableCell className="text-white">
+                                    <div className="flex items-center gap-2">
                                                 {(item.status === "NEW" || item.timeframe === "immediate") && (
-                                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                                )}
+                                            <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                        )}
                                                 {item.customer_name}
-                                            </div>
-                                        </TableCell>
+                                    </div>
+                                </TableCell>
                                         <TableCell className="text-white">
                                             {formatDate(item.updated_at || item.created_at)}
                                         </TableCell>
-                                        <TableCell className="text-white">
+                                <TableCell className="text-white">
                                             {item.dataType === 'lead' && item.rewards_claim ? (
-                                                <div className="flex items-center">
-                                                    <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
+                                        <div className="flex items-center">
+                                            <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
                                                     {item.message}
-                                                </div>
-                                            ) : (
+                                        </div>
+                                    ) : (
                                                 <div className="max-w-md truncate">
                                                     {item.message}
                                                 </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-white">
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-white">
                                             <Badge className={`border-none text-white ${item.dataType === 'lead' ? 'bg-[#2F4858]' : 'bg-[#5D3A9B]'}`}>
                                                 {item.dataType === 'lead' ? 'Lead' : 'Retention'}
-                                            </Badge>
-                                        </TableCell>
+                                    </Badge>
+                                </TableCell>
                                         <TableCell className="text-white">
                                             {item.dataType === 'lead' ? (
                                                 <Badge variant="outline" className={`border-none text-white ${statusColors[item.status as keyof typeof statusColors]}`}>
@@ -371,60 +371,60 @@ export function LeadTable({
                                                 <div>-</div>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-white">
-                                            <div className="flex gap-4">
+                                <TableCell className="text-white">
+                                    <div className="flex gap-4">
                                                 {item.dataType === 'lead' ? (
                                                     <>
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button>
-                                                                        <Mail 
-                                                                            className="w-4 h-4" 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button>
+                                                        <Mail 
+                                                            className="w-4 h-4" 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                                 window.open(`mailto:${item.customer_email || item.email}`, '_blank');
-                                                                            }}
-                                                                        />
-                                                                    </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                    <p>Send Email</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
+                                                            }}
+                                                        />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                    <p>Send Email</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                                         {item.status != "CUSTOMER" ? (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button>
-                                                                            <UserPlus 
-                                                                                className="w-4 h-4 text-green-500 hover:text-green-400"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <button>
+                                                            <UserPlus 
+                                                                className="w-4 h-4 text-green-500 hover:text-green-400"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
                                                                                     handleCreateCustomer(e, item.id);
-                                                                                }}
-                                                                            />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                        <p>Create Customer</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        ) : (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <div>
-                                                                            <Check className="w-4 h-4 text-green-500" />
-                                                                        </div>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                        <p>Customer Created</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
+                                                                }}
+                                                            />
+                                                        </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                        <p>Create Customer</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        ) : (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div>
+                                                            <Check className="w-4 h-4 text-green-500" />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
+                                                        <p>Customer Created</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                                         )}
                                                     </>
                                                 ) : (
@@ -490,10 +490,10 @@ export function LeadTable({
                                                             </Tooltip>
                                                         </TooltipProvider>
                                                     </>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
+                                        )}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
                                     {/* Expanded row content for retention tasks */}
                                     {item.dataType === 'retention' && expandedRows[item.id] && (
                                         <TableRow className="bg-[#161616]">

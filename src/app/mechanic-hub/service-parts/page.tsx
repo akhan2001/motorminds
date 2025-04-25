@@ -35,11 +35,15 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card"
-import { Plus, Edit2, Trash2, Search } from "lucide-react"
+import { Plus, Edit2, Trash2, Search, RefreshCw } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "@/lib/supabase"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
+import { useRouter } from "next/navigation"
+import { shopHasServices, seedDefaultServices, resetShopServices } from "../util/mechanics-hub-utils"
+import defaultLabourParts from "./labour-parts.json"
+import { ServicePartsDialog } from "./components/service-parts-dialog"
 
 interface Service {
   id: string
@@ -69,29 +73,63 @@ export default function ServiceParts() {
   })
   const [shopId, setShopId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
+  // Auth check
   useEffect(() => {
-    const fetchShopId = async () => {
-      try {
-        const user = await checkUser()
-        if (user) {
-          const id = await getShopId(user.id)
-          setShopId(id)
-          fetchServices(id)
+    async function fetchUserData() {
+        setIsLoading(true)
+        try {
+            const userData = await checkUser()
+            if (userData) {
+                const shop = await getShopId(userData.id)
+                setShopId(shop)
+            } else {
+                router.push('/login')
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            router.push('/login')
+        } finally {
+            setIsLoading(false)
         }
-      } catch (error) {
-        console.error("Error fetching shop ID:", error)
-      }
     }
+    fetchUserData()
+  }, [router])
 
-    fetchShopId()
-  }, [])
+  // Load services when shopId is available
+  useEffect(() => {
+    if (shopId) {
+      initializeServices(shopId)
+    }
+  }, [shopId])
 
   useEffect(() => {
     if (services.length > 0) {
       filterServices()
     }
   }, [searchQuery, activeTab, services])
+
+  // Initialize services - check if shop has services and seed if not
+  const initializeServices = async (shopId: string) => {
+    setIsLoading(true)
+    try {
+      // Check if shop already has services
+      const hasServices = await shopHasServices(shopId)
+      
+      // If no services exist, seed with default data
+      if (!hasServices) {
+        await seedDefaultServices(shopId, defaultLabourParts)
+      }
+      
+      // Fetch services
+      await fetchServices(shopId)
+    } catch (error) {
+      console.error("Error initializing services:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const fetchServices = async (shopId: string) => {
     setIsLoading(true)
@@ -220,98 +258,57 @@ export default function ServiceParts() {
     setIsEditDialogOpen(true)
   }
 
+  const handleResetServices = async () => {
+    if (!shopId) return
+    
+    if (!confirm("This will reset all services and parts to the default set. Any customizations will be lost. Continue?")) {
+      return
+    }
+    
+    setIsLoading(true)
+    try {
+      const success = await resetShopServices(shopId, defaultLabourParts)
+      if (success) {
+        await fetchServices(shopId)
+      } else {
+        alert("Failed to reset services. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error resetting services:", error)
+      alert("An error occurred while resetting services.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
     return (
     <div className="flex flex-col h-screen bg-[#0d0d0d] text-white">
             <Nav activeLink="Mechanic Hub" />
       <div className="flex-1 p-6 max-w-7xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Service & Parts Catalog</h1>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#22C55E] hover:bg-[#22C55E]/90 text-white">
-                <Plus className="w-4 h-4 mr-2" /> Add New
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-[#1A1A1A] text-white border-[#333]">
-              <DialogHeader>
-                <DialogTitle>Add New Service or Part</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label htmlFor="type" className="text-sm font-medium">Type</label>
-                  <Select
-                    value={newService.type}
-                    onValueChange={(value: "labor" | "parts") => {
-                      const newQuantity = value === "labor" ? undefined : 1;
-                      setNewService({ 
-                        ...newService, 
-                        type: value,
-                        quantity: newQuantity
-                      });
-                    }}
-                  >
-                    <SelectTrigger className="bg-[#131313] border-[#333] focus:ring-0">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#131313] border-[#333] text-white">
-                      <SelectItem value="labor">Labor</SelectItem>
-                      <SelectItem value="parts">Parts</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="serviceName" className="text-sm font-medium">Service/Part Name</label>
-                  <Input 
-                    id="serviceName"
-                    value={newService.service_name}
-                    onChange={(e) => setNewService({ ...newService, service_name: e.target.value })}
-                    className="bg-[#131313] border-[#333] focus:ring-0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="description" className="text-sm font-medium">Description</label>
-                  <Textarea
-                    id="description"
-                    value={newService.description}
-                    onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-                    className="bg-[#131313] border-[#333] focus:ring-0 min-h-24"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label htmlFor="price" className="text-sm font-medium">Price ($)</label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={newService.price?.toString()}
-                      onChange={(e) => setNewService({ ...newService, price: parseFloat(e.target.value) || 0 })}
-                      className="bg-[#131313] border-[#333] focus:ring-0"
-                    />
-                  </div>
-                  {newService.type === "parts" && (
-                    <div className="space-y-2">
-                      <label htmlFor="quantity" className="text-sm font-medium">Quantity</label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        value={newService.quantity?.toString()}
-                        onChange={(e) => setNewService({ ...newService, quantity: parseInt(e.target.value) || 1 })}
-                        className="bg-[#131313] border-[#333] focus:ring-0"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-[#333] text-white">
-                  Cancel
-                </Button>
-                <Button onClick={handleAddService} className="bg-[#22C55E] hover:bg-[#22C55E]/90 text-white">
-                  Add Item
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <div className="flex space-x-2">
+            {/* <Button
+              onClick={handleResetServices}
+              variant="outline"
+              className="border-[#333] text-white hover:bg-[#333] hover:text-white"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" /> Reset to Defaults
+            </Button> */}
+            <ServicePartsDialog 
+              isOpen={isAddDialogOpen}
+              onOpenChange={setIsAddDialogOpen}
+              formData={{
+                service_name: newService.service_name || "",
+                description: newService.description || "",
+                price: newService.price || 0,
+                quantity: newService.quantity,
+                type: newService.type || "labor"
+              }}
+              onFormChange={(data) => setNewService({ ...newService, ...data })}
+              onSubmit={handleAddService}
+            />
+          </div>
         </div>
 
         <Card className="bg-[#131313] border-[#333] mb-6">
