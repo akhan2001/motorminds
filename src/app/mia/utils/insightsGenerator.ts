@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { ImmediateInsights, InsightsResponse } from '../types/MiaInsights';
+import { addToMiaCustomerInsights } from './miaCustomerInsightsUtil';
 
 /**
  * Generates Mia insights for a specific work order
@@ -65,6 +66,18 @@ export async function generateMiaInsights(workOrderId: string, shopId: string) {
                     success: false,
                     error: 'Failed to save insights to database'
                 };
+            }
+            
+            // 2. Add to mia_customer_insights table
+            const insightsTableResult = await addToMiaCustomerInsights(
+                workOrderId,
+                shopId,
+                result.insights as ImmediateInsights
+            );
+            
+            if (!insightsTableResult.success) {
+                console.error('Error adding to mia_customer_insights:', insightsTableResult.error);
+                // Continue execution even if this fails
             }
         }
 
