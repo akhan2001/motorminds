@@ -6,12 +6,13 @@ import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
 import { InvoiceDialog } from "./InvoiceDialog"
 import { fetchAllInvoices, formatCurrency, formatDate } from "../utils/invoice-utils"
-import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon } from "lucide-react"
+import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import LoadingPage from "@/components/loading"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
 
 export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     const [invoices, setInvoices] = useState<any[]>([])
@@ -22,6 +23,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [isDateFilterActive, setIsDateFilterActive] = useState(true)
+    const [searchQuery, setSearchQuery] = useState("")
     
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
@@ -126,17 +128,32 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     const sortedInvoices = useMemo(() => {
         return [...filteredInvoices]
             .filter(invoice => {
-                if (!isDateFilterActive) return true // Show all if date filter is inactive
-                if (!selectedDate) return true
-                return format(new Date(invoice.issue_date), "yyyy-MM-dd") === 
-                       format(selectedDate, "yyyy-MM-dd")
+                // Date filter
+                if (isDateFilterActive && selectedDate) {
+                    const dateMatches = format(new Date(invoice.issue_date), "yyyy-MM-dd") === 
+                                       format(selectedDate, "yyyy-MM-dd");
+                    if (!dateMatches) return false;
+                }
+                
+                // Search query filter
+                if (searchQuery.trim() !== "") {
+                    const query = searchQuery.toLowerCase();
+                    const invoiceNumberMatch = invoice.invoice_number?.toLowerCase().includes(query) || 
+                                              invoice.display_id?.toLowerCase().includes(query);
+                    const clientNameMatch = invoice.client_name?.toLowerCase().includes(query);
+                    const descriptionMatch = invoice.description?.toLowerCase().includes(query);
+                    
+                    return invoiceNumberMatch || clientNameMatch || descriptionMatch;
+                }
+                
+                return true;
             })
             .sort((a, b) => {
                 const dateA = new Date(a.issue_date).getTime()
                 const dateB = new Date(b.issue_date).getTime()
                 return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
             })
-    }, [filteredInvoices, isDateFilterActive, selectedDate, sortOrder])
+    }, [filteredInvoices, isDateFilterActive, selectedDate, sortOrder, searchQuery])
 
 
     // Map invoice data to the format expected by InvoiceDialog
@@ -189,11 +206,25 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                         </p>
                     </div>
                     <div className="flex flex-row gap-4 w-full sm:w-auto justify-end">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-4 sm:px-7 py-1.5 text-xs sm:text-sm" onClick={handleOpenForm}>
+                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-md px-4 sm:px-7 py-1.5 text-xs sm:text-sm" onClick={handleOpenForm}>
                             <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                             ADD INVOICE
                         </Button>
                     </div>
+                </div>
+
+                {/* Search input for invoice number, client name, and description */}
+                <div className="relative mb-4">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <Search className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <Input
+                        type="text"
+                        placeholder="Search by invoice number, client name, or title..."
+                        className="pl-10 bg-[#131313] border border-[#222] text-white"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
 
                 {/* The 3 Filter Boxes */}
@@ -308,6 +339,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                                 <p className="text-gray-400 text-lg sm:text-xl">
                                     No {selectedFilter === "all" ? "" : selectedFilter === "paid" ? "paid" : "unpaid"} invoices 
                                     {isDateFilterActive ? ` for ${format(selectedDate, "MMMM d, yyyy")}` : ""}
+                                    {searchQuery ? ` matching "${searchQuery}"` : ""}
                                 </p>
                             </div>
                         </div>
