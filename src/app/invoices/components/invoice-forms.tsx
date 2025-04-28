@@ -6,18 +6,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getShopInfo } from "@/utils/supabase/supabase-shop";
 import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
-import { createNewInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { createNewInvoice, formatPhoneNumber, updateInvoice } from "@/app/invoices/utils/invoice-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated }: { 
+
+export default function InvoiceForm({ 
+    onClose, 
+    shopId, 
+    isOpen, 
+    onInvoiceCreated,
+    mode = "create",
+    existingInvoice = null
+}: { 
     onClose: () => void, 
     shopId: string, 
     isOpen: boolean,
-    onInvoiceCreated?: () => void 
+    onInvoiceCreated?: () => void,
+    mode?: "create" | "edit",
+    existingInvoice?: any
 }) {
     // Form state
     const [shopName, setShopName] = useState("");
@@ -218,30 +228,74 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         setAssignedTo(value);
     };
 
+    // Add new useEffect to populate form with existing data when in edit mode
+    useEffect(() => {
+        if (mode === "edit" && existingInvoice) {
+            // Populate customer info
+            if (existingInvoice.customer_id) {
+                setSelectedCustomerId(existingInvoice.customer_id);
+            } else if (existingInvoice.client_name) {
+                setShowNewClientForm(true);
+                setClientInfo({
+                    client_name: existingInvoice.client_name || '',
+                    client_phone: existingInvoice.client_phone || '',
+                    client_address: existingInvoice.client_address || '',
+                    client_email: existingInvoice.client_email || ''
+                });
+            }
+            
+            // Populate vehicle info
+            if (existingInvoice.vehicle_id) {
+                setSelectedVehicleId(existingInvoice.vehicle_id);
+            } else if (existingInvoice.vehicle_information) {
+                setShowNewVehicleForm(true);
+                const vehicleInfo = existingInvoice.vehicle_information;
+                setManualVehicleInfo({
+                    year: vehicleInfo.year || '',
+                    make: vehicleInfo.make || '',
+                    model: vehicleInfo.model || '',
+                    license_plate: vehicleInfo.license_plate || ''
+                });
+                setVehicleInfo(vehicleInfo);
+            }
+            
+            // Populate invoice details
+            setInvoiceDate(existingInvoice.issue_date?.split('T')[0] || formattedDate);
+            setDescription(existingInvoice.description || '');
+            setLabour(existingInvoice.labour || '');
+            setLabourCost(existingInvoice.labour_cost?.toString() || '0');
+            setParts(existingInvoice.parts || '');
+            setPartsCost(existingInvoice.parts_cost?.toString() || '0');
+            setNotes(existingInvoice.notes || '');
+            setMileage(existingInvoice.mileage || '');
+            setAssignedTo(existingInvoice.assigned_to || '');
+            
+            // Recalculate total (this will be automatic through the useEffect on labourCost/partsCost)
+        }
+    }, [mode, existingInvoice, formattedDate]);
+
+    // Update handleSave to handle both create and edit
     const handleSave = async () => {
         if (!validateForm()) return;
         
         setIsSubmitting(true);
         
         try {
-            // Create the invoice data with proper validation
-
-            if (showNewClientForm) {
-                console.log("Creating new client invoice");
-                console.log("Client info:", clientInfo);
-            }
-
+            // Create the invoice data structure
             const invoiceData = {
+                // Include invoice_number only for edit mode
+                ...(mode === "edit" && { invoice_number: existingInvoice.invoice_number }),
                 shop_id: shopId,
                 shop_name: shopName || "Unknown Shop",
                 shop_address: shopAddress || "",
                 shop_email: shopEmail || "",
                 shop_phone: shopPhone || "",
-                // Use client info from the form if showNewClientForm is true, otherwise use selected customer
+                // Client info...
                 client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
                 client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
                 client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
                 client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
+                // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
                 labour_cost: parseFloat(labourCost) || 0,
@@ -251,27 +305,38 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 mileage: mileage || "",
                 description: description || "",
                 assigned_to: assignedTo || "",
-                amount: parseFloat(labourCost) + parseFloat(partsCost) || 0,
-                status: "UNPAID",
+                amount: parseFloat(total) || 0,
+                // For edit mode, keep existing status; for create mode, set to "UNPAID"
+                status: mode === "edit" ? existingInvoice.status : "UNPAID",
                 vehicle_info: vehicleInfo
             };
             
-            console.log("Sending invoice data:", invoiceData);
-            
-            const result = await createNewInvoice(invoiceData, shopId);
+            // Call the appropriate API function based on mode
+            let result;
+            if (mode === "edit") {
+                // We'll create this function in the next step
+                result = await updateInvoice(invoiceData, shopId);
+                if (result) {
+                    toast.success("Invoice updated successfully");
+                }
+            } else {
+                result = await createNewInvoice(invoiceData, shopId);
+                if (result) {
+                    toast.success("Invoice created successfully");
+                }
+            }
             
             if (result) {
-                toast.success("Invoice created successfully");
                 if (onInvoiceCreated) {
                     onInvoiceCreated();
                 }
                 onClose();
             } else {
-                toast.error("Failed to create invoice");
+                toast.error(`Failed to ${mode === "edit" ? "update" : "create"} invoice`);
             }
         } catch (error) {
-            console.error("Error creating invoice:", error);
-            toast.error("Failed to create invoice: " + (error as Error).message || "Unknown error");
+            console.error(`Error ${mode === "edit" ? "updating" : "creating"} invoice:`, error);
+            toast.error(`Failed to ${mode === "edit" ? "update" : "create"} invoice: ${(error as Error).message || "Unknown error"}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -314,9 +379,11 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw]">
                 <DialogHeader>
-                    <DialogTitle className="text-white text-xl sm:text-2xl">Create New Invoice</DialogTitle>
+                    <DialogTitle className="text-white text-xl sm:text-2xl">
+                        {mode === "edit" ? "Edit Invoice" : "Create New Invoice"}
+                    </DialogTitle>
                     <DialogDescription className="text-gray-400 text-xs sm:text-sm">
-                        Fill in the details below to create a new invoice.
+                        Fill in the details below to {mode === "edit" ? "update the" : "create a new"} invoice.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -660,7 +727,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             onClick={handleSave}
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? "Creating..." : "Create Invoice"}
+                            {isSubmitting ? (mode === "edit" ? "Updating..." : "Creating...") : (mode === "edit" ? "Update Invoice" : "Create Invoice")}
                         </Button>
                     </div>
                 </DialogFooter>

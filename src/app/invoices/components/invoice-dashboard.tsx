@@ -66,7 +66,11 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     }
 
     const handleCloseForm = () => {
-        setIsFormOpen(false)
+        setIsFormOpen(false);
+        // Clear selected invoice if we were in edit mode
+        if (selectedInvoice && !isDialogOpen) {
+            setSelectedInvoice(null);
+        }
     }
 
     const handleOpenInvoice = (invoice: any) => {
@@ -160,6 +164,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     const mapInvoiceToDialogFormat = (invoice: any) => {
         return {
             invoiceNumber: invoice.invoice_number,
+            invoice_number: invoice.invoice_number,
             displayNumber: invoice.display_id,
             workOrder: invoice.workorder_id,
             status: invoice.status,
@@ -193,6 +198,15 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 license_plate: ""
             }
         }
+    }
+
+    const handleEditInvoice = () => {
+        // Close dialog and refresh invoices to get the updated data
+        setIsDialogOpen(false);
+        // Open the form with the selected invoice data
+        setSelectedInvoice(selectedInvoice);
+        setIsFormOpen(true);
+        refreshInvoices();
     }
 
     return (
@@ -353,6 +367,8 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 onClose={handleCloseForm}
                 shopId={shopId}
                 onInvoiceCreated={refreshInvoices}
+                mode={selectedInvoice && isFormOpen ? "edit" : "create"}
+                existingInvoice={selectedInvoice && isFormOpen ? mapInvoiceToDialogFormat(selectedInvoice) : null}
             />
 
             {/* Invoice detail dialog */}
@@ -362,6 +378,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                     onClose={handleCloseInvoice}
                     invoice={mapInvoiceToDialogFormat(selectedInvoice)}
                     shopId={shopId}
+                    onEdit={handleEditInvoice}
                 />
             )}
         </div>
