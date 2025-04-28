@@ -147,10 +147,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         const labour = parseFloat(labourCost) || 0;
         const parts = parseFloat(partsCost) || 0;
         const subtotal = labour + parts;
-        const taxRate = 0.13; // 13% tax rate
-        const tax = subtotal * taxRate;
-        const total = subtotal + tax;
-        setTotal(total.toFixed(2));
+        setTotal(subtotal.toFixed(2));
     };
 
     const handleCustomerChange = (value: string) => {
@@ -254,7 +251,7 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 mileage: mileage || "",
                 description: description || "",
                 assigned_to: assignedTo || "",
-                amount: parseFloat(total) || 0,
+                amount: parseFloat(labourCost) + parseFloat(partsCost) || 0,
                 status: "UNPAID",
                 vehicle_info: vehicleInfo
             };
@@ -278,6 +275,39 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Function to reset all form values
+    const resetFormValues = () => {
+        setSelectedCustomerId("");
+        setSelectedCustomer(null);
+        setSelectedVehicleId("");
+        setVehicleInfo(null);
+        setInvoiceDate(formattedDate);
+        setLabour("");
+        setLabourCost("0");
+        setParts("");
+        setPartsCost("0");
+        setNotes("");
+        setMileage("");
+        setDescription("");
+        setAssignedTo("");
+        setTotal("0.00");
+        setShowNewClientForm(false);
+        setShowNewVehicleForm(false);
+        setClientInfo({
+            client_name: '',
+            client_phone: '',
+            client_address: '',
+            client_email: ''
+        });
+        setManualVehicleInfo({
+            year: '',
+            make: '',
+            model: '',
+            license_plate: ''
+        });
+        toast.success("Form cleared");
     };
 
     return (
@@ -607,22 +637,32 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                     </div>
                 </div>
                 
-                <DialogFooter className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <DialogFooter className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:justify-between w-full">
                     <Button 
                         variant="outline" 
-                        onClick={onClose} 
-                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
-                        disabled={isSubmitting}
+                        onClick={resetFormValues} 
+                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-3 sm:order-1"
                     >
-                        Cancel
+                        Clear Form
                     </Button>
-                    <Button 
-                        className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2" 
-                        onClick={handleSave}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? "Creating..." : "Create Invoice"}
-                    </Button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto order-1 sm:order-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={onClose} 
+                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2" 
+                            onClick={handleSave}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "Creating..." : "Create Invoice"}
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
