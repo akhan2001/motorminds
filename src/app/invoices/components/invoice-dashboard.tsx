@@ -206,7 +206,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                         </p>
                     </div>
                     <div className="flex flex-row gap-4 w-full sm:w-auto justify-end">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-4 sm:px-7 py-1.5 text-xs sm:text-sm" onClick={handleOpenForm}>
+                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-md px-4 sm:px-7 py-1.5 text-xs sm:text-sm" onClick={handleOpenForm}>
                             <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                             ADD INVOICE
                         </Button>

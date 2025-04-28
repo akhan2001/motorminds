@@ -146,7 +146,10 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const calculateTotal = () => {
         const labour = parseFloat(labourCost) || 0;
         const parts = parseFloat(partsCost) || 0;
-        const total = labour + parts;
+        const subtotal = labour + parts;
+        const taxRate = 0.13; // 13% tax rate
+        const tax = subtotal * taxRate;
+        const total = subtotal + tax;
         setTotal(total.toFixed(2));
     };
 
@@ -524,8 +527,12 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     placeholder="Enter labour cost"
                                     type="number"
                                     value={labourCost}
-                                    // set labour cost to 0 if labour is or negative
-                                    onChange={(e) => setLabourCost(e.target.value || "0")}
+                                    onChange={(e) => {
+                                        // Remove leading zeros and set value
+                                        const value = e.target.value;
+                                        const cleanValue = value.replace(/^0+/, '') || "0";
+                                        setLabourCost(cleanValue);
+                                    }}
                                 />
                             </div>
 
@@ -562,8 +569,12 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     placeholder="Enter parts cost"
                                     type="number"
                                     value={partsCost}
-                                    // set parts cost to 0 if parts is or negative
-                                    onChange={(e) => setPartsCost(e.target.value || "0")}
+                                    onChange={(e) => {
+                                        // Remove leading zeros and set value
+                                        const value = e.target.value;
+                                        const cleanValue = value.replace(/^0+/, '') || "0";
+                                        setPartsCost(cleanValue);
+                                    }}
                                 />
                             </div>
 
@@ -578,16 +589,19 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             </div>
                             
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Total Amount</label>
-                            <div className="flex flex-row gap-2 items-center sm:col-span-3">
-                                <span className="text-white text-xl">$ {total}</span>
-                                {/* <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    // placeholder="Enter the amount"
-                                    type="number"
-                                    value={total}
-                                    onChange={(e) => setTotal(e.target.value)}
-                                    disabled
-                                /> */}
+                            <div className="flex flex-col gap-1 items-start sm:col-span-3">
+                                <div className="flex flex-row justify-between w-full">
+                                    <span className="text-white text-base font-medium">Subtotal:</span>
+                                    <span className="text-white text-base font-medium">$ {((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)).toFixed(2)}</span>
+                                </div>
+                                <div className="flex flex-row justify-between w-full">
+                                    <span className="text-gray-400 text-sm">Tax (13%):</span>
+                                    <span className="text-gray-300 text-sm">$ {(((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)) * 0.13).toFixed(2)}</span>
+                                </div>
+                                <div className="flex flex-row justify-between w-full border-t border-[#333] pt-1 mt-1">
+                                    <span className="text-white text-xl font-medium">Total:</span>
+                                    <span className="text-white text-xl">$ {total}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
