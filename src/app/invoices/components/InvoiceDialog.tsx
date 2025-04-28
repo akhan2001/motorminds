@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { DownloadIcon, TrashIcon, MailIcon, LayoutIcon } from 'lucide-react';
+import { DownloadIcon, TrashIcon, MailIcon, LayoutIcon, EditIcon } from 'lucide-react';
 import { toast } from "sonner";
 import { formatCurrency, formatDate, setInvoiceStatus } from '../utils/invoice-utils';
 import { deleteInvoice } from '../utils/invoice-utils';
@@ -15,6 +15,7 @@ interface InvoiceDialogProps {
     isOpen: boolean;
     onClose: () => void;
     shopId?: string;
+    onEdit?: (invoice: any) => void;
     invoice: {
         invoiceNumber: string;
         displayNumber: string;
@@ -47,7 +48,7 @@ interface InvoiceDialogProps {
     };
 }
 
-export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialogProps) {
+export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: InvoiceDialogProps) {
     const [status, setStatus] = useState(invoice.status);
     const [isDownloading, setIsDownloading] = useState(false);
     const [isSending, setIsSending] = useState(false);
@@ -75,6 +76,19 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
         } catch (error) {
             console.error("Error updating invoice status:", error);
             toast.error("Failed to update invoice status");
+        }
+    };
+
+    const handleEdit = () => {
+        console.log("Edit button clicked for invoice:", invoice.invoiceNumber);
+        
+        if (onEdit) {
+            console.log("onEdit prop exists, calling it with invoice data");
+            onEdit(invoice);
+            onClose();
+        } else {
+            console.error("onEdit prop is not provided to InvoiceDialog component");
+            toast.error("Edit functionality is not connected properly");
         }
     };
 
@@ -268,6 +282,13 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice }: InvoiceDialo
                     >
                         <LayoutIcon className="w-4 h-4 mr-2" />
                         {isLandscape ? "Portrait" : "Landscape"}
+                    </Button>
+                    <Button 
+                        className="bg-green-600 text-white w-full sm:w-auto hover:bg-green-700 border-none" 
+                        onClick={handleEdit}
+                    >
+                        <EditIcon className="w-4 h-4 mr-2" />
+                        Edit
                     </Button>
                     <Button 
                         className="bg-gray-600 text-white w-full sm:w-auto hover:bg-gray-700 border-none" 
