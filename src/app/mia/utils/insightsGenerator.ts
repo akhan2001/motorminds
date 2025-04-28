@@ -74,10 +74,33 @@ export async function generateMiaInsights(workOrderId: string, shopId: string) {
                 shopId,
                 result.insights as ImmediateInsights
             );
-            
-            if (!insightsTableResult.success) {
-                console.error('Error adding to mia_customer_insights:', insightsTableResult.error);
-                // Continue execution even if this fails
+
+            // 3. Add ID to insights_ids[] in repair_order_details table
+            const { data: currentDetails, error: fetchError } = await supabase
+                .from('repair_order_details')
+                .select('insights_ids')
+                .eq('repair_order_id', workOrderId)
+                .single();
+
+            if (fetchError) {
+                console.error('Error fetching current insights_ids:', fetchError);
+            } else {
+                // Append the new ID to the existing array (or create a new array if null)
+                const currentIds = currentDetails.insights_ids || [];
+                
+                // Only add if not already in the array
+                if (!currentIds.includes(insightsTableResult.data?.id)) {
+                    const { error: updateError } = await supabase
+                        .from('repair_order_details')
+                        .update({
+                            insights_ids: [...currentIds, insightsTableResult.data?.id]
+                        })
+                        .eq('repair_order_id', workOrderId);
+                        
+                    if (updateError) {
+                        console.error('Error updating insights_ids array:', updateError);
+                    }
+                }
             }
         }
 
