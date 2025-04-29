@@ -162,6 +162,13 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
 
     // Map invoice data to the format expected by InvoiceDialog
     const mapInvoiceToDialogFormat = (invoice: any) => {
+        // Construct the logo URL using the shop_id
+        let shopLogoUrl = null;
+        if (invoice.shop_id) {
+            // We'll let the PDF generator try both formats
+            shopLogoUrl = `https://zjkdltcpjzyzisbgznyj.supabase.co/storage/v1/object/public/motorminds/shop_logos/${invoice.shop_id}/${invoice.shop_id}_logo`;
+        }
+        
         return {
             invoiceNumber: invoice.invoice_number,
             invoice_number: invoice.invoice_number,
@@ -172,6 +179,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             shopAddress: invoice.shop_address,
             shopEmail: invoice.shop_email,
             shopPhone: invoice.shop_phone,
+            shopLogo: shopLogoUrl,
             amount: invoice.amount,
             issueDate: invoice.issue_date,
             clientName: invoice.client_name,

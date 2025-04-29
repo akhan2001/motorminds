@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import { formatPhoneNumber } from "../utils/invoice-utils";
 // Create styles
 const styles = StyleSheet.create({
@@ -11,10 +11,31 @@ const styles = StyleSheet.create({
     header: {
         marginBottom: 20,
         flexDirection: 'column',
-        justifyContent: 'space-between'
+    },
+    headerContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        width: '100%'
+    },
+    headerLeft: {
+        width: '60%',
+        flexDirection: 'column'
+    },
+    headerRight: {
+        width: '35%',
+        flexDirection: 'column',
+        alignItems: 'flex-end'
+    },
+    logo: {
+        width: 160,
+        height: 70,
+        objectFit: 'contain',
+        marginBottom: 10
     },
     companyInfo: {
-        width: '100%'
+        width: '100%',
+        marginTop: 5
     },
     companyName: {
         fontSize: 15,
@@ -29,7 +50,6 @@ const styles = StyleSheet.create({
     invoiceTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        textAlign: 'left',
         marginBottom: 2
     },
     invoiceNumber: {
@@ -37,20 +57,21 @@ const styles = StyleSheet.create({
         color: '#555',
         marginBottom: 2
     },
+    invoiceDate: {
+        fontSize: 10,
+        color: '#555',
+        textAlign: 'right',
+        marginBottom: 2
+    },
     invoiceDetails: {
         marginBottom: 10
     },
-    invoiceDate: {
-        textAlign: 'right',
-        fontSize: 10,
-        color: '#555'
-    },
     customerSection: {
         marginTop: 20,
-        marginBottom: 20
+        marginBottom: 10
     },
     sectionTitle: {
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: 'bold',
         marginBottom: 6,
         backgroundColor: '#f0f0f0',
@@ -183,6 +204,12 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         paddingBottom: 15,
         width: '60%'
+    },
+    logoContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10
     }
 });
 
@@ -214,16 +241,28 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <View style={styles.invoiceDetails}>
-                        <Text style={styles.invoiceDate}>Date: {formatDate(invoiceDate)}</Text>
-                        <Text style={styles.invoiceTitle}>INVOICE</Text>
-                        <Text style={styles.invoiceNumber}>{invoice.displayNumber}</Text>
-                    </View>
-                    <View style={styles.companyInfo}>
-                        <Text style={styles.companyName}>{invoice.shopName}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
-                        <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
-                        <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                    <View style={styles.headerContent}>
+                        <View style={styles.headerLeft}>
+                            {invoice.shopLogo && (
+                                <Image 
+                                    src={invoice.shopLogo}
+                                    style={styles.logo}
+                                    cache={false}
+                                />
+                            )}
+                            <View style={styles.companyInfo}>
+                                <Text style={styles.companyName}>{invoice.shopName}</Text>
+                                <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
+                                <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
+                                <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                            </View>
+                        </View>
+                        
+                        <View style={styles.headerRight}>
+                            <Text style={styles.invoiceTitle}>INVOICE</Text>
+                            <Text style={styles.invoiceNumber}>{invoice.displayNumber}</Text>
+                            <Text style={styles.invoiceDate}>Date: {formatDate(invoiceDate)}</Text>
+                        </View>
                     </View>
                 </View>
                 
@@ -321,8 +360,6 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     <View style={styles.signatureBox}>
                         <View style={styles.signatureLine}></View>
                         <Text style={styles.signatureLabel}>Customer Signature</Text>
-                        <Text style={styles.dateLabel}>Date:</Text>
-                        <View style={styles.dateLine}></View>
                     </View>
                 </View>
                 
