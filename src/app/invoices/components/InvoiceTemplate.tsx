@@ -20,10 +20,11 @@ const styles = StyleSheet.create({
     },
     headerLeft: {
         width: '60%',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        alignItems: 'flex-start'
     },
     headerRight: {
-        width: '35%',
+        width: '50%',
         flexDirection: 'column',
         alignItems: 'flex-end'
     },
@@ -48,7 +49,7 @@ const styles = StyleSheet.create({
         marginBottom: 2
     },
     invoiceTitle: {
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 2
     },
@@ -67,11 +68,11 @@ const styles = StyleSheet.create({
         marginBottom: 10
     },
     customerSection: {
-        marginTop: 20,
+        marginTop: 10,
         marginBottom: 10
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 'bold',
         marginBottom: 6,
         backgroundColor: '#f0f0f0',
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
         marginBottom: 5
     },
     signatureSection: {
-        marginTop: 20,
+        marginTop: 10,
         flexDirection: 'row'
     },
     agreementText: {
@@ -259,7 +260,7 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                         </View>
                         
                         <View style={styles.headerRight}>
-                            <Text style={styles.invoiceTitle}>INVOICE</Text>
+                            <Text style={styles.invoiceTitle}>{invoice.description} Invoice</Text>
                             <Text style={styles.invoiceNumber}>{invoice.displayNumber}</Text>
                             <Text style={styles.invoiceDate}>Date: {formatDate(invoiceDate)}</Text>
                         </View>
@@ -287,7 +288,6 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 {/* Items Table */}
                 <View style={styles.table}>
-                    <Text style={styles.companyName}>{invoice.description}</Text>
                     <View style={styles.tableHeader}>
                         <Text style={styles.descCol}>Description</Text>
                         {/* <Text style={styles.qtyCol}>Quantity</Text>
