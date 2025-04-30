@@ -697,7 +697,7 @@ export default function InvoiceForm({
                                 </div>
                                 <div className="flex flex-row justify-between w-full border-t border-[#333] pt-1 mt-1">
                                     <span className="text-white text-xl font-medium">Total:</span>
-                                    <span className="text-white text-xl">$ {total}</span>
+                                    <span className="text-white text-xl">$ {((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0) + (((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)) * 0.13)).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>

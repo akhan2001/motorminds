@@ -12,12 +12,25 @@ export async function fetchAllInvoices(shopId: string) {
 		return [];
 	}
 
-	return data || [];
+	// Get shop details to add to invoices
+	const shopDetails = await fetchShopBusinessDetails(shopId);
+	
+	// Add shop details to each invoice
+	const invoicesWithShopDetails = data?.map(invoice => ({
+		...invoice,
+		hst_number: invoice.hst_number || shopDetails.hst_number,
+		business_number: invoice.business_number || shopDetails.business_number
+	})) || [];
+	
+	return invoicesWithShopDetails;
 }
 
 // Fetch invoice data by ID
 export async function getInvoiceData(id: string) {
-	const { data, error } = await supabase.from('invoices').select('*').eq('invoice_number', id);
+	const { data, error } = await supabase
+		.from('invoices')
+		.select('*')
+		.eq('invoice_number', id);
 
 	if (error) {
 		console.error('Error fetching invoice:', error);
@@ -78,7 +91,36 @@ export function formatPhoneNumber(phoneNumber: string | null | undefined): strin
 
 // Calculate total with tax
 export function calculateTotalWithTax(amount: number, taxRate: number): number {
-return amount + amount * taxRate;
+	return amount + amount * taxRate;
+}
+
+// Function to get business details from the shops table
+export async function fetchShopBusinessDetails(shopId: string) {
+	if (!shopId) {
+		console.error('No shop ID provided for fetchShopBusinessDetails');
+		return { hst_number: '', business_number: '' };
+	}
+	
+	try {
+		const { data, error } = await supabase
+			.from('shops')
+			.select('hst_number, business_number')
+			.eq('id', shopId)
+			.single();
+		
+		if (error) {
+			console.error('Error fetching business details:', error);
+			return { hst_number: '', business_number: '' };
+		}
+		
+		return {
+			hst_number: data?.hst_number || '',
+			business_number: data?.business_number || ''
+		};
+	} catch (err) {
+		console.error('Error in fetchShopBusinessDetails:', err);
+		return { hst_number: '', business_number: '' };
+	}
 }
 
 export async function setInvoiceStatus(invoiceId: string, status: string, shopId: string) {
