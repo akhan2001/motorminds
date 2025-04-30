@@ -211,6 +211,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 10
+    },
+    businessInfo: {
+        fontSize: 10,
+        color: '#555',
+        marginTop: 3
     }
 });
 
@@ -256,6 +261,12 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                                 <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
                                 <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
                                 <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                                {invoice.hst_number && (
+                                    <Text style={styles.businessInfo}>HST#: {invoice.hst_number}</Text>
+                                )}
+                                {invoice.business_number && (
+                                    <Text style={styles.businessInfo}>Business#: {invoice.business_number}</Text>
+                                )}
                             </View>
                         </View>
                         

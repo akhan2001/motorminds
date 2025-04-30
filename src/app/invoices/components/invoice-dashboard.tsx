@@ -5,7 +5,7 @@ import InvoiceForm from "./invoice-forms"
 import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
 import { InvoiceDialog } from "./InvoiceDialog"
-import { fetchAllInvoices, formatCurrency, formatDate } from "../utils/invoice-utils"
+import { fetchAllInvoices, formatCurrency, formatDate, fetchShopBusinessDetails } from "../utils/invoice-utils"
 import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import LoadingPage from "@/components/loading"
@@ -73,15 +73,16 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
         }
     }
 
-    const handleOpenInvoice = (invoice: any) => {
-        setSelectedInvoice(invoice)
-        setIsDialogOpen(true)
+    const handleOpenInvoice = async (invoice: any) => {
+        const formattedInvoice = await mapInvoiceToDialogFormat(invoice);
+        setSelectedInvoice(formattedInvoice);
+        setIsDialogOpen(true);
     }
 
     const handleCloseInvoice = () => {
-        setIsDialogOpen(false)
+        setIsDialogOpen(false);
         // Refresh invoices when dialog closes to get any updates
-        refreshInvoices()
+        refreshInvoices();
     }
 
     // Filter the displayed invoices
@@ -161,12 +162,26 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
 
 
     // Map invoice data to the format expected by InvoiceDialog
-    const mapInvoiceToDialogFormat = (invoice: any) => {
+    const mapInvoiceToDialogFormat = async (invoice: any) => {
         // Construct the logo URL using the shop_id
         let shopLogoUrl = null;
         if (invoice.shop_id) {
             // We'll let the PDF generator try both formats
             shopLogoUrl = `https://zjkdltcpjzyzisbgznyj.supabase.co/storage/v1/object/public/motorminds/shop_logos/${invoice.shop_id}/${invoice.shop_id}_logo`;
+        }
+        
+        // Get the business details from the shop record if not already in the invoice
+        let businessDetails = { 
+            hst_number: invoice.hst_number || '',
+            business_number: invoice.business_number || ''
+        };
+        
+        if (invoice.shop_id && (!invoice.hst_number && !invoice.business_number)) {
+            try {
+                businessDetails = await fetchShopBusinessDetails(invoice.shop_id);
+            } catch (error) {
+                console.error("Error fetching shop business details:", error);
+            }
         }
         
         return {
@@ -194,6 +209,8 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             mileage: invoice.mileage,
             description: invoice.description,
             assignedTo: invoice.assigned_to,
+            hst_number: businessDetails.hst_number,
+            business_number: businessDetails.business_number,
             vehicleInfo: invoice.vehicle_information ? {
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,
@@ -208,13 +225,15 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
         }
     }
 
-    const handleEditInvoice = () => {
+    const handleEditInvoice = async () => {
         // Close dialog and refresh invoices to get the updated data
         setIsDialogOpen(false);
-        // Open the form with the selected invoice data
-        setSelectedInvoice(selectedInvoice);
-        setIsFormOpen(true);
-        refreshInvoices();
+        
+        if (selectedInvoice) {
+            // Open the form with the selected invoice data - already formatted by handleOpenInvoice
+            setIsFormOpen(true);
+            refreshInvoices();
+        }
     }
 
     return (
@@ -310,10 +329,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                         </Button>
                         <Button
                             className="bg-[#131313] border border-[#222] hover:border-gray-500 text-xs sm:text-sm"
-                            onClick={() => {
-                                setSelectedDate(new Date());
-                                setIsDateFilterActive(true);
-                            }}
+                            onClick={() => setIsDateFilterActive(true)}
                         >
                             Today
                         </Button>
@@ -376,7 +392,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 shopId={shopId}
                 onInvoiceCreated={refreshInvoices}
                 mode={selectedInvoice && isFormOpen ? "edit" : "create"}
-                existingInvoice={selectedInvoice && isFormOpen ? mapInvoiceToDialogFormat(selectedInvoice) : null}
+                existingInvoice={selectedInvoice}
             />
 
             {/* Invoice detail dialog */}
@@ -384,7 +400,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 <InvoiceDialog
                     isOpen={isDialogOpen}
                     onClose={handleCloseInvoice}
-                    invoice={mapInvoiceToDialogFormat(selectedInvoice)}
+                    invoice={selectedInvoice}
                     shopId={shopId}
                     onEdit={handleEditInvoice}
                 />

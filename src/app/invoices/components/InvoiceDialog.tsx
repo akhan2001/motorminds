@@ -39,6 +39,8 @@ interface InvoiceDialogProps {
         mileage: string;
         description: string;
         assignedTo: string;
+        hst_number: string;
+        business_number: string;
         vehicleInfo: {
             year: string;
             make: string;

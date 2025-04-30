@@ -174,6 +174,11 @@ const styles = StyleSheet.create({
         marginBottom: 3,
         paddingBottom: 12,
         width: '60%'
+    },
+    businessInfo: {
+        fontSize: 10,
+        color: '#555',
+        marginTop: 3
     }
 });
 
@@ -210,6 +215,12 @@ export const InvoiceLandscape = ({ invoice }: { invoice: any }) => {
                             <Text style={styles.detailFonts}>{invoice.shopAddress}</Text>
                             <Text style={styles.detailFonts}>{formatPhoneNumber(invoice.shopPhone)}</Text>
                             <Text style={styles.detailFonts}>{invoice.shopEmail}</Text>
+                            {invoice.hst_number && (
+                                <Text style={styles.businessInfo}>HST#: {invoice.hst_number}</Text>
+                            )}
+                            {invoice.business_number && (
+                                <Text style={styles.businessInfo}>Business#: {invoice.business_number}</Text>
+                            )}
                         </View>
                     </View>
                     <View style={styles.headerRight}>
