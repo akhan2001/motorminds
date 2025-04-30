@@ -161,3 +161,65 @@ export async function deleteInvoice(invoiceId: string, shopId: string) {
 
 	return data;
 }
+
+export async function updateInvoice(invoiceData: any, shopId: string) {
+	try {
+		// Validate that we have an invoice number to update
+		if (!invoiceData.invoice_number) {
+			console.error("No invoice number provided for update");
+			throw new Error("Invoice number is required for updates");
+		}
+		
+		// Prepare the data structure for update
+		const dataToUpdate = {
+			shop_id: shopId,
+			status: invoiceData.status || "UNPAID",
+			shop_name: invoiceData.shop_name,
+			shop_address: invoiceData.shop_address,
+			shop_email: invoiceData.shop_email,
+			shop_phone: invoiceData.shop_phone,
+			client_name: invoiceData.client_name,
+			client_address: invoiceData.client_address,
+			client_email: invoiceData.client_email,
+			client_phone: invoiceData.client_phone,
+			amount: invoiceData.amount,
+			issue_date: invoiceData.issue_date,
+			labour: invoiceData.labour,
+			labour_cost: invoiceData.labour_cost,
+			parts: invoiceData.parts,
+			parts_cost: invoiceData.parts_cost,
+			notes: invoiceData.notes,
+			mileage: invoiceData.mileage,
+			description: invoiceData.description,
+			assigned_to: invoiceData.assigned_to,
+			customer_id: invoiceData.customer_id,
+			vehicle_information: invoiceData.vehicle_info
+		};
+		
+		// Log update operation for debugging
+		console.log(`Updating invoice ${invoiceData.invoice_number}`);
+		
+		// Execute the update operation with Supabase
+		const { data, error } = await supabase
+			.from('invoices')
+			.update(dataToUpdate)
+			.eq('invoice_number', invoiceData.invoice_number)
+			.eq('shop_id', shopId) // Additional security check
+			.select();
+			
+		if (error) {
+			console.error("Supabase update error:", error);
+			throw error;
+		}
+		
+		if (!data || data.length === 0) {
+			console.error("No invoice was updated - may not exist or no permission");
+			throw new Error("Failed to update invoice - not found or permission denied");
+		}
+		
+		return data;
+	} catch (error) {
+		console.error("Error in updateInvoice:", error);
+		throw error;
+	}
+}

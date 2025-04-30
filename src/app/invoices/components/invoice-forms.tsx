@@ -6,18 +6,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getShopInfo } from "@/utils/supabase/supabase-shop";
 import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
-import { createNewInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { createNewInvoice, formatPhoneNumber, updateInvoice } from "@/app/invoices/utils/invoice-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated }: { 
+
+export default function InvoiceForm({ 
+    onClose, 
+    shopId, 
+    isOpen, 
+    onInvoiceCreated,
+    mode = "create",
+    existingInvoice = null
+}: { 
     onClose: () => void, 
     shopId: string, 
     isOpen: boolean,
-    onInvoiceCreated?: () => void 
+    onInvoiceCreated?: () => void,
+    mode?: "create" | "edit",
+    existingInvoice?: any
 }) {
     // Form state
     const [shopName, setShopName] = useState("");
@@ -146,8 +156,8 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
     const calculateTotal = () => {
         const labour = parseFloat(labourCost) || 0;
         const parts = parseFloat(partsCost) || 0;
-        const total = labour + parts;
-        setTotal(total.toFixed(2));
+        const subtotal = labour + parts;
+        setTotal(subtotal.toFixed(2));
     };
 
     const handleCustomerChange = (value: string) => {
@@ -218,30 +228,74 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
         setAssignedTo(value);
     };
 
+    // Add new useEffect to populate form with existing data when in edit mode
+    useEffect(() => {
+        if (mode === "edit" && existingInvoice) {
+            // Populate customer info
+            if (existingInvoice.customer_id) {
+                setSelectedCustomerId(existingInvoice.customer_id);
+            } else if (existingInvoice.client_name) {
+                setShowNewClientForm(true);
+                setClientInfo({
+                    client_name: existingInvoice.client_name || '',
+                    client_phone: existingInvoice.client_phone || '',
+                    client_address: existingInvoice.client_address || '',
+                    client_email: existingInvoice.client_email || ''
+                });
+            }
+            
+            // Populate vehicle info
+            if (existingInvoice.vehicle_id) {
+                setSelectedVehicleId(existingInvoice.vehicle_id);
+            } else if (existingInvoice.vehicle_information) {
+                setShowNewVehicleForm(true);
+                const vehicleInfo = existingInvoice.vehicle_information;
+                setManualVehicleInfo({
+                    year: vehicleInfo.year || '',
+                    make: vehicleInfo.make || '',
+                    model: vehicleInfo.model || '',
+                    license_plate: vehicleInfo.license_plate || ''
+                });
+                setVehicleInfo(vehicleInfo);
+            }
+            
+            // Populate invoice details
+            setInvoiceDate(existingInvoice.issue_date?.split('T')[0] || formattedDate);
+            setDescription(existingInvoice.description || '');
+            setLabour(existingInvoice.labour || '');
+            setLabourCost(existingInvoice.labour_cost?.toString() || '0');
+            setParts(existingInvoice.parts || '');
+            setPartsCost(existingInvoice.parts_cost?.toString() || '0');
+            setNotes(existingInvoice.notes || '');
+            setMileage(existingInvoice.mileage || '');
+            setAssignedTo(existingInvoice.assigned_to || '');
+            
+            // Recalculate total (this will be automatic through the useEffect on labourCost/partsCost)
+        }
+    }, [mode, existingInvoice, formattedDate]);
+
+    // Update handleSave to handle both create and edit
     const handleSave = async () => {
         if (!validateForm()) return;
         
         setIsSubmitting(true);
         
         try {
-            // Create the invoice data with proper validation
-
-            if (showNewClientForm) {
-                console.log("Creating new client invoice");
-                console.log("Client info:", clientInfo);
-            }
-
+            // Create the invoice data structure
             const invoiceData = {
+                // Include invoice_number only for edit mode
+                ...(mode === "edit" && { invoice_number: existingInvoice.invoice_number }),
                 shop_id: shopId,
                 shop_name: shopName || "Unknown Shop",
                 shop_address: shopAddress || "",
                 shop_email: shopEmail || "",
                 shop_phone: shopPhone || "",
-                // Use client info from the form if showNewClientForm is true, otherwise use selected customer
+                // Client info...
                 client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
                 client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
                 client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
                 client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
+                // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
                 labour: labour || "",
                 labour_cost: parseFloat(labourCost) || 0,
@@ -252,38 +306,84 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                 description: description || "",
                 assigned_to: assignedTo || "",
                 amount: parseFloat(total) || 0,
-                status: "UNPAID",
+                // For edit mode, keep existing status; for create mode, set to "UNPAID"
+                status: mode === "edit" ? existingInvoice.status : "UNPAID",
                 vehicle_info: vehicleInfo
             };
             
-            console.log("Sending invoice data:", invoiceData);
-            
-            const result = await createNewInvoice(invoiceData, shopId);
+            // Call the appropriate API function based on mode
+            let result;
+            if (mode === "edit") {
+                // We'll create this function in the next step
+                result = await updateInvoice(invoiceData, shopId);
+                if (result) {
+                    toast.success("Invoice updated successfully");
+                }
+            } else {
+                result = await createNewInvoice(invoiceData, shopId);
+                if (result) {
+                    toast.success("Invoice created successfully");
+                }
+            }
             
             if (result) {
-                toast.success("Invoice created successfully");
                 if (onInvoiceCreated) {
                     onInvoiceCreated();
                 }
                 onClose();
             } else {
-                toast.error("Failed to create invoice");
+                toast.error(`Failed to ${mode === "edit" ? "update" : "create"} invoice`);
             }
         } catch (error) {
-            console.error("Error creating invoice:", error);
-            toast.error("Failed to create invoice: " + (error as Error).message || "Unknown error");
+            console.error(`Error ${mode === "edit" ? "updating" : "creating"} invoice:`, error);
+            toast.error(`Failed to ${mode === "edit" ? "update" : "create"} invoice: ${(error as Error).message || "Unknown error"}`);
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Function to reset all form values
+    const resetFormValues = () => {
+        setSelectedCustomerId("");
+        setSelectedCustomer(null);
+        setSelectedVehicleId("");
+        setVehicleInfo(null);
+        setInvoiceDate(formattedDate);
+        setLabour("");
+        setLabourCost("0");
+        setParts("");
+        setPartsCost("0");
+        setNotes("");
+        setMileage("");
+        setDescription("");
+        setAssignedTo("");
+        setTotal("0.00");
+        setShowNewClientForm(false);
+        setShowNewVehicleForm(false);
+        setClientInfo({
+            client_name: '',
+            client_phone: '',
+            client_address: '',
+            client_email: ''
+        });
+        setManualVehicleInfo({
+            year: '',
+            make: '',
+            model: '',
+            license_plate: ''
+        });
+        toast.success("Form cleared");
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw]">
                 <DialogHeader>
-                    <DialogTitle className="text-white text-xl sm:text-2xl">Create New Invoice</DialogTitle>
+                    <DialogTitle className="text-white text-xl sm:text-2xl">
+                        {mode === "edit" ? "Edit Invoice" : "Create New Invoice"}
+                    </DialogTitle>
                     <DialogDescription className="text-gray-400 text-xs sm:text-sm">
-                        Fill in the details below to create a new invoice.
+                        Fill in the details below to {mode === "edit" ? "update the" : "create a new"} invoice.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -524,8 +624,12 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     placeholder="Enter labour cost"
                                     type="number"
                                     value={labourCost}
-                                    // set labour cost to 0 if labour is or negative
-                                    onChange={(e) => setLabourCost(e.target.value || "0")}
+                                    onChange={(e) => {
+                                        // Remove leading zeros and set value
+                                        const value = e.target.value;
+                                        const cleanValue = value.replace(/^0+/, '') || "0";
+                                        setLabourCost(cleanValue);
+                                    }}
                                 />
                             </div>
 
@@ -562,8 +666,12 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                                     placeholder="Enter parts cost"
                                     type="number"
                                     value={partsCost}
-                                    // set parts cost to 0 if parts is or negative
-                                    onChange={(e) => setPartsCost(e.target.value || "0")}
+                                    onChange={(e) => {
+                                        // Remove leading zeros and set value
+                                        const value = e.target.value;
+                                        const cleanValue = value.replace(/^0+/, '') || "0";
+                                        setPartsCost(cleanValue);
+                                    }}
                                 />
                             </div>
 
@@ -578,37 +686,50 @@ export default function InvoiceForm({ onClose, shopId, isOpen, onInvoiceCreated 
                             </div>
                             
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Total Amount</label>
-                            <div className="flex flex-row gap-2 items-center sm:col-span-3">
-                                <span className="text-white text-xl">$ {total}</span>
-                                {/* <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    // placeholder="Enter the amount"
-                                    type="number"
-                                    value={total}
-                                    onChange={(e) => setTotal(e.target.value)}
-                                    disabled
-                                /> */}
+                            <div className="flex flex-col gap-1 items-start sm:col-span-3">
+                                <div className="flex flex-row justify-between w-full">
+                                    <span className="text-white text-base font-medium">Subtotal:</span>
+                                    <span className="text-white text-base font-medium">$ {((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)).toFixed(2)}</span>
+                                </div>
+                                <div className="flex flex-row justify-between w-full">
+                                    <span className="text-gray-400 text-sm">Tax (13%):</span>
+                                    <span className="text-gray-300 text-sm">$ {(((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)) * 0.13).toFixed(2)}</span>
+                                </div>
+                                <div className="flex flex-row justify-between w-full border-t border-[#333] pt-1 mt-1">
+                                    <span className="text-white text-xl font-medium">Total:</span>
+                                    <span className="text-white text-xl">$ {total}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <DialogFooter className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <DialogFooter className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:justify-between w-full">
                     <Button 
                         variant="outline" 
-                        onClick={onClose} 
-                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
-                        disabled={isSubmitting}
+                        onClick={resetFormValues} 
+                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-3 sm:order-1"
                     >
-                        Cancel
+                        Clear Form
                     </Button>
-                    <Button 
-                        className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2" 
-                        onClick={handleSave}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? "Creating..." : "Create Invoice"}
-                    </Button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto order-1 sm:order-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={onClose} 
+                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2" 
+                            onClick={handleSave}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (mode === "edit" ? "Updating..." : "Creating...") : (mode === "edit" ? "Update Invoice" : "Create Invoice")}
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
