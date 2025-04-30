@@ -61,6 +61,8 @@ const shopFormSchema = z.object({
 		message: "Services offered must be at least 5 characters.",
 	}),
 	website: z.string().url().optional().or(z.literal("")),
+	hst_number: z.string().optional().or(z.literal("")),
+	business_number: z.string().optional().or(z.literal("")),
 	logo_image_url: z.string().url().optional().or(z.literal("")),
 	banner_image_url: z.string().url().optional().or(z.literal("")),
 	facebook_url: z.string().url().optional().or(z.literal("")),
@@ -220,6 +222,8 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 			twitter_url: "",
 			instagram_url: "",
 			youtube_url: "",
+			hst_number: "",
+			business_number: "",
 		},
 		mode: "onChange",
 	})
@@ -266,6 +270,8 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 						twitter_url: shop.twitter_url || "",
 						instagram_url: shop.instagram_url || "",
 						youtube_url: shop.youtube_url || "",
+						hst_number: shop.hst_number || "",
+						business_number: shop.business_number || "",
 					})
 				}
 			} catch (error) {
@@ -772,6 +778,50 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 								</FormItem>
 								)}
 								/>
+
+								<div className="grid grid-cols-2 gap-4">
+									<FormField
+										control={form.control}
+										name="hst_number"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>HST Number</FormLabel>
+												<FormControl>
+													<Input 
+														placeholder="1234567890"
+														className="bg-[#292929] border-[#626262] text-white"
+														{...field}
+													/>
+												</FormControl>
+												<FormDescription>
+													Your shop's HST number.
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="business_number"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Business Number</FormLabel>
+												<FormControl>
+													<Input 
+														placeholder="1234567890"
+														className="bg-[#292929] border-[#626262] text-white"
+														{...field}
+													/>
+												</FormControl>
+												<FormDescription>
+													Your shop's business number.
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
 							</div>
 							
 							<div className="space-y-6">
@@ -796,7 +846,7 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 								)}
 								/>
 
-<div className="flex items-center justify-between">
+								<div className="flex items-center justify-between">
 									<h4 className="text-lg font-medium">Shop Staff</h4>
 									<Button
 										type="button"
