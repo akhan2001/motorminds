@@ -504,15 +504,33 @@ export default function MechanicsHub() {
       //     console.error("Failed to create Mia AI Insights:", error)
       //   })
       
-      createMiaInsights(newRepairOrderId, shopId)
+      createMiaInsights(newRepairOrderId, shopId, "immediate")
 
       toast.success("Work Order successfully created!")
+
+      // Create new lead
+      //createLead(newRepairOrderId, shopId)
+
       await fetchRepairOrders(user.id) // re-fetch your data
     } catch (err: any) {
       console.error("Error creating work order:", err)
       toast.error("Error creating work order: " + err.message)
     } finally {
       setIsWorkOrderFormOpen(false)
+    }
+  }
+
+  async function handleCloseWorkOrder(workOrderId: string) {
+    //This will generate Mia AI Insights for the work order when it is completed / closed
+    if (shopId) {
+      createMiaInsights(workOrderId, shopId, "future")
+      //closeWorkOrder(workOrderId) // TODO: Implement this function
+      toast.success("Work Order closed")
+      await fetchRepairOrders(user.id)
+    } else {
+      toast.error("Shop ID not found")
+      console.error("Shop ID not found")
+      return
     }
   }
 

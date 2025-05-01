@@ -249,10 +249,10 @@ export async function createCustomerRetention(workOrderId: string, shopId: strin
  * @param shopId The shop ID for the Mia AI insights record
  * @returns The newly created Mia AI insights record ID or null if creation failed
  */
-export async function createMiaInsights(repairOrderId: string, shopId: string) {
+export async function createMiaInsights(repairOrderId: string, shopId: string, term: string) {
     // Start a background process to generate insights without blocking
     setTimeout(() => {
-        generateMiaInsights(repairOrderId, shopId)
+        generateMiaInsights(repairOrderId, shopId, term)
             .then(result => {
                 if (result?.success) {
                     console.log("Background Mia AI Insights completed for order:", repairOrderId)
