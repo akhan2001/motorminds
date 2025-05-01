@@ -21,8 +21,10 @@ import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
 import { toast } from "sonner"
 import { createCustomerVehicle, createNewCustomer } from "../customers/api/customer-utils"
-import { createWorkOrder } from "./util/mechanics-hub-utils"
+import { createCustomerRetention, createMiaInsights, createWorkOrder } from "./util/mechanics-hub-utils"
 import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
+import { generateMiaInsights } from "../mia/utils/insightsGenerator"
+import { createCustomerLead } from "../lead-generation/utils/lead"
 
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
@@ -484,13 +486,64 @@ export default function MechanicsHub() {
         .single()
       if (detailErr) throw detailErr
 
+      // const insightsData = await generateMiaInsights(newRepairOrderId, shopId)
+      // if (insightsData?.success) {
+      //   console.log("Created Mia AI Insights:", insightsData.insights)
+      // } else {
+      //   console.error("Failed to create Mia AI Insights:", insightsData?.error)
+      // }
+
+      // generateMiaInsights(newRepairOrderId, shopId)
+      //   .then(result => {
+      //     if (result?.success) {
+      //       console.log("Created Mia AI Insights:", result.insights)
+      //     } else {
+      //       console.error("Failed to create Mia AI Insights:", result?.error)
+      //     }
+      //   })
+      //   .catch(error => {
+      //     console.error("Failed to create Mia AI Insights:", error)
+      //   })
+      
+      createMiaInsights(newRepairOrderId, shopId, "immediate")
+
       toast.success("Work Order successfully created!")
+
+      // Create new lead
+      try {
+        createCustomerLead({
+          shop_id: shopId,
+          customer_id: customerId,
+          vehicle_id: vehicleId,
+          repair_order_id: newRepairOrderId,
+          lead_type: "new",
+          priority: "high",
+          timeframe: "immediate"
+        })
+      } catch (err) {
+        console.error("Error creating customer lead:", err)
+      }
+
       await fetchRepairOrders(user.id) // re-fetch your data
     } catch (err: any) {
       console.error("Error creating work order:", err)
       toast.error("Error creating work order: " + err.message)
     } finally {
       setIsWorkOrderFormOpen(false)
+    }
+  }
+
+  async function handleCloseWorkOrder(workOrderId: string) {
+    //This will generate Mia AI Insights for the work order when it is completed / closed
+    if (shopId) {
+      createMiaInsights(workOrderId, shopId, "future")
+      //closeWorkOrder(workOrderId) // TODO: Implement this function
+      toast.success("Work Order closed")
+      await fetchRepairOrders(user.id)
+    } else {
+      toast.error("Shop ID not found")
+      console.error("Shop ID not found")
+      return
     }
   }
 

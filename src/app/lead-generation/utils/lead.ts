@@ -1,3 +1,5 @@
+import { getCustomerDetails } from "@/app/customers/api/customer-utils"
+import { getInsightDetails } from "@/app/mia/utils/customerInsightsFunctions"
 import { supabase } from "@/lib/supabase"
 
 export const getLeads = async (shopId: string) => {
@@ -148,3 +150,38 @@ export async function deleteLead(leadId: string, shopId: string) {
     return data
 }
 
+export async function createCustomerLead(leadFormData: any) {
+    const shopName = await getShopName(leadFormData.shop_id);
+
+    const customerDetails = await getCustomerDetails(leadFormData.customer_id);
+    
+    const { data, error } = await supabase
+        .from("leads")
+        .insert({
+            shop_id: leadFormData.shop_id,
+            shop_name: shopName.shop_name,
+            customer_name: customerDetails.customer_name,
+            email: customerDetails.customer_email,
+            phone: customerDetails.customer_phone,
+            message: "This lead was created from Mia AI Insights.",
+            status: "NEW",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            notes: leadFormData.notes,
+            repair_order_id: leadFormData.repair_order_id,
+            vehicle_id: leadFormData.vehicle_id,
+            customer_id: leadFormData.customer_id,
+            insight_id: leadFormData.insight_id,
+            lead_type: "Workorder",
+            priority: "High",
+            timeframe: "Immediate",
+            follow_up_date: leadFormData.follow_up_date
+        })
+        .select()
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
