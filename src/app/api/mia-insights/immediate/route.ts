@@ -54,51 +54,75 @@ export async function POST(req: Request) {
 
         // Construct the prompt for AI with explicit structure requirements
         const prompt = `
-            You are Mia, an AI assistant for auto repair shops.
-            Based on this work order data, provide immediate upsell suggestions and service recommendations.
-            
+            You are Mia, an AI assistant for auto repair shops. Analyze this work order data and provide immediate upsell suggestions and service recommendations.
+
             Work Order: ${JSON.stringify(workOrderData)}
-            
-            Generate a list of immediate upsell opportunities that:
-            1. Are relevant to the current visit
-            2. Would be quick to perform
-            3. Provide value to both the customer and shop
-            
-            Also identify any maintenance flags or warnings.
-            
-            CRITICAL: Return ONLY a valid JSON object with EXACTLY this structure:
+
+            Your task:
+            1. Generate a list of immediate upsell opportunities that are relevant to the current visit
+            2. Identify any maintenance flags or warnings
+            3. Create a brief summary
+
+            CRITICAL: Your entire response must be ONLY a valid JSON object with EXACTLY this structure:
             {
-              "upsell_suggestions": [
+            "upsell_suggestions": [
                 {
-                  "title": "string",
-                  "description": "string",
-                  "estimatedValue": number,
-                  "priority": "high" | "medium" | "low"
+                "title": "string",
+                "description": "string",
+                "estimatedValue": number,
+                "priority": "high" | "medium" | "low"
                 }
-              ],
-              "flags": [
+            ],
+            "flags": [
                 {
-                  "type": "warning" | "urgent" | "info",
-                  "message": "string"
+                "type": "warning" | "urgent" | "info",
+                "message": "string"
                 }
-              ],
-              "summary": "string"
+            ],
+            "summary": "string"
             }
-            
-            The response MUST include all these fields and follow this exact structure.
+
+            DO NOT include any text, explanations, or markdown formatting outside of this JSON object.
         `;
 
         // Call OpenAI API
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [
-                { role: 'system', content: 'You are a diagnostic AI for auto repair shops. You only respond with valid JSON in the specified format.' },
-                { role: 'user', content: prompt }
-            ],
-            temperature: 0.2,
-            max_tokens: 1000,
-            response_format: { type: "json_object" } // Enforce JSON response
-        });
+        let response;
+        try {
+            response = await openai.chat.completions.create({
+                model: 'gpt-4',
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: 'You are a diagnostic AI for auto repair shops. You MUST respond with ONLY valid JSON without any markdown formatting, explanation, or additional text. Your entire response should be a single JSON object that can be directly parsed.'
+                    },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 1000
+            });
+        } catch (openaiError) {
+            console.error('OpenAI API error:', openaiError);
+            // If the model doesn't exist or there's another model-specific issue,
+            // try with a different model
+            try {
+                console.log('Attempting fallback to GPT-3.5 model...');
+                response = await openai.chat.completions.create({
+                    model: 'gpt-3.5-turbo',
+                    messages: [
+                        { 
+                            role: 'system', 
+                            content: 'You are a diagnostic AI for auto repair shops. You MUST respond with ONLY valid JSON without any markdown formatting, explanation, or additional text. Your entire response should be a single JSON object that can be directly parsed.'
+                        },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.2,
+                    max_tokens: 1000
+                });
+            } catch (fallbackError) {
+                console.error('Fallback model also failed:', fallbackError);
+                throw new Error(`OpenAI API failed: ${openaiError instanceof Error ? openaiError.message : 'Unknown error'}`);
+            }
+        }
 
         // Extract and parse the AI response
         const aiResponse = response.choices[0]?.message?.content;
@@ -106,17 +130,44 @@ export async function POST(req: Request) {
             throw new Error('Empty response from AI');
         }
 
-        // Parse the JSON response
-        const parsedResponse = JSON.parse(
-            aiResponse.replace(/```json|```/g, '').trim()
-        );
+        // Parse the JSON response - improved parsing logic to handle different formats
+        let parsedResponse;
+        try {
+            // First try to parse the raw response
+            parsedResponse = JSON.parse(aiResponse.trim());
+        } catch (e) {
+            // If direct parsing fails, try to extract JSON from markdown code blocks
+            const jsonMatch = aiResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (jsonMatch && jsonMatch[1]) {
+                try {
+                    parsedResponse = JSON.parse(jsonMatch[1].trim());
+                } catch (e2) {
+                    console.error('Failed to parse JSON from code block:', e2);
+                    parsedResponse = null;
+                }
+            } else {
+                // Try one more approach - find anything that looks like JSON
+                const possibleJson = aiResponse.match(/(\{[\s\S]*\})/);
+                if (possibleJson && possibleJson[1]) {
+                    try {
+                        parsedResponse = JSON.parse(possibleJson[1].trim());
+                    } catch (e3) {
+                        console.error('Failed to parse JSON from possible match:', e3);
+                        parsedResponse = null;
+                    }
+                } else {
+                    console.error('Could not find valid JSON in response');
+                    parsedResponse = null;
+                }
+            }
+        }
         
         // Validate the structure
         let insights: ImmediateInsights;
-        if (validateInsights(parsedResponse)) {
+        if (parsedResponse && validateInsights(parsedResponse)) {
             insights = parsedResponse;
         } else {
-            console.warn('AI response did not match expected structure, using default', parsedResponse);
+            console.warn('AI response did not match expected structure or could not be parsed, using default', parsedResponse);
             insights = createDefaultInsights();
         }
 
@@ -127,8 +178,9 @@ export async function POST(req: Request) {
         });
     } catch (error) {
         console.error('Error generating immediate insights:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { success: false, error: 'Failed to generate insights' },
+            { success: false, error: `Failed to generate insights: ${errorMessage}` },
             { status: 500 }
         );
     }

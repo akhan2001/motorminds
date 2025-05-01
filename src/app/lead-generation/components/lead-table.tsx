@@ -4,17 +4,15 @@ import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@
 import { getLeads, formatDate, updateLeadStatus, deleteLead } from "../utils/lead"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MessageCircle, UserPlus, Check, Trash, Calendar, FileText, ChevronDown, ChevronRight, Clock } from 'lucide-react';
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipContent } from "@/components/ui/tooltip";
+import { Mail, Phone, MessageCircle, UserPlus, Check, Trash, ChevronDown, ChevronRight, Clock } from 'lucide-react';
 import { LeadSheet } from "./lead-sheet";
 import { toast } from "sonner";
 import { createNewCustomer, checkCustomerExists } from "@/app/customers/api/customer-utils";
-import { getCustomerRetention, getCustomerFromRetention, getVehicleFromRetention, getWorkOrderFromRetention, updateRetentionStatus } from "../customer-retention/utils/customer-retention";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import CustomerInsightsDisplay from "./customer-insights-display";
+import React from "react";
 
 const statusColors = {
     "NEW": "bg-[#36612A]",
@@ -23,12 +21,6 @@ const statusColors = {
     "NOT INTERESTED": "bg-[#7A1F20]",
     "FOLLOW UP": "bg-[#5D3A9B]",
     "CUSTOMER": "bg-[#1E5631]"
-}
-
-const timeframeColors = {
-    "immediate": "bg-[#36612A]",
-    "mid_term": "bg-[#9B870C]",
-    "long_term": "bg-[#5D3A9B]"
 }
 
 export function LeadTable({ 
@@ -45,144 +37,113 @@ export function LeadTable({
     statusFilter?: string
 }) {
     const [leads, setLeads] = useState<any[]>([])
-    const [retentionTasks, setRetentionTasks] = useState<any[]>([])
-    const [combinedData, setCombinedData] = useState<any[]>([])
     const [filteredData, setFilteredData] = useState<any[]>([])
     const [selectedLead, setSelectedLead] = useState<any>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
+    const [insightsData, setInsightsData] = useState<Record<string, any>>({})
 
     useEffect(() => {
         const fetchLeads = async () => {
-            const leads = await getLeads(shopId)
-            setLeads(leads)
-        }
-        
-        const fetchRetentionTasks = async () => {
             setIsLoading(true)
             try {
-                const { data: retentionData, error } = await getCustomerRetention(shopId)
-
-                if (error || !retentionData) {
-                    throw error || new Error('No data returned')
+                const leads = await getLeads(shopId)
+                console.log("Fetched leads:", leads);
+                setLeads(leads)
+                
+                // Look for work order leads and fetch their insights
+                const workOrderLeads = leads.filter(lead => 
+                    lead.lead_type?.toLowerCase() === 'work_order' || 
+                    lead.lead_type?.toLowerCase() === 'workorder'
+                )
+                console.log("Work order leads:", workOrderLeads);
+                
+                for (const lead of workOrderLeads) {
+                    if (lead.repair_order_id) {
+                        console.log("Fetching insights for lead:", lead.id, "repair order:", lead.repair_order_id);
+                        await fetchInsightsForLead(lead.id, lead.repair_order_id)
+                    }
                 }
-
-                // Use the same formatting approach as in customer-retention-dashboard.tsx
-                const formattedTasks = await Promise.all(retentionData.map(async (task: any) => {
-                    const customer = await getCustomerFromRetention(task.customer_id)
-                    const vehicle = await getVehicleFromRetention(task.vehicle_id)
-                    const workOrder = await getWorkOrderFromRetention(task.work_order_id)
-                    return {
-                        ...task,
-                        customer_name: customer.data?.customer_name || 'Unknown Customer',
-                        vehicle_info: vehicle.data?.year + ' ' + vehicle.data?.make + ' ' + vehicle.data?.model || 'Unknown Vehicle',
-                        created_at: workOrder.data?.created_at || task.created_at
-                    };
-                }))
-
-                setRetentionTasks(formattedTasks)
+                
+                setIsLoading(false)
             } catch (error) {
-                console.error("Error fetching retention tasks:", error)
-                toast.error("Failed to load retention tasks")
-            } finally {
+                console.error("Error fetching leads:", error)
+                toast.error("Failed to load leads")
                 setIsLoading(false)
             }
         }
         
         fetchLeads()
-        fetchRetentionTasks()
     }, [shopId])
 
-    // Combine lead and retention data
-    useEffect(() => {
-        // Process leads
-        const leadsWithType = leads.map(lead => ({
-            ...lead,
-            dataType: 'lead',
-            timeframe: lead.status === 'NEW' ? 'immediate' : 'mid_term'
-        }))
-        
-        // Process retention tasks
-        const retentionWithType = retentionTasks.map(task => ({
-            ...task,
-            dataType: 'retention',
-            message: task.summary || '',
-            status: task.status.toUpperCase()
-        }))
-        
-        // Combine and sort by date
-        const combined = [...leadsWithType, ...retentionWithType]
-        combined.sort((a, b) => {
-            const dateA = new Date(a.updated_at || a.created_at)
-            const dateB = new Date(b.updated_at || b.created_at)
-            return dateB.getTime() - dateA.getTime() // Sort descending (newest first)
-        })
-        
-        setCombinedData(combined)
-    }, [leads, retentionTasks])
+    const fetchInsightsForLead = async (leadId: string, repairOrderId: string) => {
+        try {
+            // Fetch insights from repair_order_details
+            const { data, error } = await supabase
+                .from("repair_order_details")
+                .select("mia_insights")
+                .eq("repair_order_id", repairOrderId)
+                .single()
+            
+            if (!error && data && data.mia_insights) {
+                setInsightsData(prev => ({
+                    ...prev,
+                    [leadId]: data.mia_insights
+                }))
+            }
+        } catch (error) {
+            console.error("Error fetching insights for lead:", error)
+        }
+    }
 
     // Apply filters whenever dependencies change
     useEffect(() => {
         applyFilters()
-    }, [combinedData, activeFilter, searchQuery, statusFilter])
+    }, [leads, activeFilter, searchQuery, statusFilter])
 
     const applyFilters = () => {
-        let filtered = [...combinedData]
+        let filtered = [...leads]
         
         // Apply activeFilter (from LeadFilter component cards)
-        filtered = filtered.filter(item => {
-            if (item.dataType === 'lead') {
-                switch (activeFilter) {
-                    case 'ALL':
-                        return true;
-                    case 'NEW':
-                        return item.status === 'NEW';
-                    case 'REWARD':
-                        return Boolean(item.rewards_claim);
-                    case 'CUSTOMER':
-                        return item.status === 'CUSTOMER';
-                    default:
-                        return true;
-                }
-            } else {
-                // For retention items
-                if (activeFilter === 'ALL') return true;
-                if (activeFilter === 'NEW' && item.timeframe === 'immediate') return true;
-                return false;
+        filtered = filtered.filter(lead => {
+            switch (activeFilter) {
+                case 'ALL':
+                    return true;
+                case 'NEW':
+                    return lead.status === 'NEW';
+                case 'REWARD':
+                    return Boolean(lead.rewards_claim);
+                case 'CUSTOMER':
+                    return lead.status === 'CUSTOMER';
+                default:
+                    return true;
             }
         })
         
         // Apply status filter from dropdown
         if (statusFilter !== 'all') {
-            filtered = filtered.filter(item => {
-                if (item.dataType === 'lead') {
-                    return item.status === statusFilter;
-                } else {
-                    // For retention items, map the status filter to timeframe
-                    if (statusFilter === 'NEW') return item.timeframe === 'immediate';
-                    if (statusFilter === 'FOLLOW UP') return item.timeframe === 'mid_term';
-                    return false;
-                }
-            })
+            filtered = filtered.filter(lead => lead.status === statusFilter)
         }
         
         // Apply search query
         if (searchQuery) {
             const query = searchQuery.toLowerCase()
-            filtered = filtered.filter(item => {
-                const customerName = item.customer_name?.toLowerCase() || '';
-                const message = item.message?.toLowerCase() || '';
-                const status = item.status?.toLowerCase() || '';
-                const timeframe = item.timeframe?.toLowerCase() || '';
-                const vehicleInfo = item.vehicle_info?.toLowerCase() || '';
+            filtered = filtered.filter(lead => {
+                const customerName = lead.customer_name?.toLowerCase() || '';
+                const message = lead.message?.toLowerCase() || '';
+                const status = lead.status?.toLowerCase() || '';
+                const email = lead.email?.toLowerCase() || '';
+                const phone = lead.phone?.toLowerCase() || '';
+                const leadType = lead.lead_type?.toLowerCase() || '';
                 
                 return (
                     customerName.includes(query) ||
                     message.includes(query) ||
                     status.includes(query) ||
-                    timeframe.includes(query) ||
-                    vehicleInfo.includes(query)
+                    email.includes(query) ||
+                    phone.includes(query) ||
+                    leadType.includes(query)
                 );
             })
         }
@@ -190,10 +151,29 @@ export function LeadTable({
         setFilteredData(filtered)
     }
 
-    const handleLeadClick = (item: any) => {
-        setSelectedLead(item)
-        setIsSheetOpen(true)
+    const handleLeadClick = (lead: any) => {
+        // If it's a work order lead, toggle expansion instead of opening sheet
+        if (lead.lead_type?.toLowerCase() === 'work_order' || lead.lead_type?.toLowerCase() === 'workorder') {
+            console.log("Toggling work order row");
+            toggleRowExpansion(lead.id);
+        } else {
+            setSelectedLead(lead);
+            setIsSheetOpen(true);
+        }
     }
+
+    const toggleRowExpansion = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        // console.log("Toggling row expansion for:", id);
+        setExpandedRows(prev => {
+            const newState = {
+                ...prev,
+                [id]: !prev[id]
+            };
+            // console.log("New expanded state:", newState);
+            return newState;
+        });
+    };
 
     const handleCreateCustomer = async (e: React.MouseEvent, leadId: string) => {
         e.stopPropagation();
@@ -230,45 +210,19 @@ export function LeadTable({
         }
     };
 
-    const handleRetentionStatusChange = async (taskId: string, newStatus: string) => {
-        try {
-            const result = await updateRetentionStatus(taskId, newStatus.toLowerCase());
-
-            if (!result.success) {
-                throw result.error;
-            }
-
-            // Update local state
-            setRetentionTasks(prev => 
-                prev.map(task => 
-                    task.id === taskId ? { ...task, status: newStatus.toLowerCase() } : task
-                )
-            )
-            
-            toast.success(`Task marked as ${newStatus}`)
-        } catch (error) {
-            console.error("Error updating task status:", error)
-            toast.error("Failed to update task status")
-        }
-    }
+    const handleSendEmail = (e: React.MouseEvent, email: string) => {
+        e.stopPropagation();
+        window.open(`mailto:${email}`, '_blank');
+    };
 
     const getPriorityColor = (priority: string) => {
-        switch (priority) {
+        switch (priority?.toLowerCase()) {
             case 'high': return 'text-red-500';
             case 'medium': return 'text-yellow-500';
             case 'low': return 'text-green-500';
             default: return 'text-gray-500';
         }
     }
-
-    // Toggle row expansion
-    const toggleRowExpansion = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setExpandedRows(prev => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
-    };
 
     return (
         <div className="space-y-4">
@@ -279,315 +233,216 @@ export function LeadTable({
                             <TableHead className="w-8"></TableHead>
                             <TableHead className="text-[#888] font-medium">CUSTOMER</TableHead>
                             <TableHead className="text-[#888] font-medium">DATE</TableHead>
-                            <TableHead className="text-[#888] font-medium">MESSAGE/SUMMARY</TableHead>
-                            <TableHead className="text-[#888] font-medium">TYPE</TableHead>
-                            <TableHead className="text-[#888] font-medium">STATUS/TIMEFRAME</TableHead>
-                            <TableHead className="text-[#888] font-medium">PRIORITY</TableHead>
+                            <TableHead className="text-[#888] font-medium">MESSAGE</TableHead>
+                            <TableHead className="text-[#888] font-medium">STATUS</TableHead>
+                            <TableHead className="text-[#888] font-medium">LEAD TYPE</TableHead>
                             <TableHead className="text-[#888] font-medium">ACTIONS</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-gray-400">
+                                <TableCell colSpan={7} className="text-center py-8 text-gray-400">
                                     Loading data...
                                 </TableCell>
                             </TableRow>
                         ) : filteredData.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-gray-400">
-                                    No data found
+                                <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                                    No leads found
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredData.map((item) => (
-                                <>
+                            filteredData.map((lead) => (
+                                <React.Fragment key={lead.id}>
                                     <TableRow 
-                                        className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer" 
-                                        key={`${item.dataType}-${item.id}`} 
-                                        onClick={() => item.dataType === 'lead' && handleLeadClick(item)}
+                                        className={`border-b border-[#222] ${(lead.lead_type?.toLowerCase() === 'work_order' || lead.lead_type?.toLowerCase() === 'workorder') ? 'hover:bg-[#1a1a1a] cursor-pointer' : 'hover:bg-[#1a1a1a]'}`}
+                                        onClick={() => handleLeadClick(lead)}
                                     >
                                         <TableCell className="w-8 p-0 pl-2">
-                                            {item.dataType === 'retention' && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 p-0"
-                                                    onClick={(e) => toggleRowExpansion(item.id, e)}
-                                                >
-                                                    {expandedRows[item.id] ? 
-                                                        <ChevronDown className="h-4 w-4" /> : 
-                                                        <ChevronRight className="h-4 w-4" />
-                                                    }
-                                                </Button>
+                                            {(lead.lead_type?.toLowerCase() === 'work_order' || lead.lead_type?.toLowerCase() === 'workorder') && (
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={(e) => {
+                                                            toggleRowExpansion(lead.id);
+                                                        }}
+                                                    >
+                                                        {expandedRows[lead.id] ? 
+                                                            <ChevronDown className="h-4 w-4" /> : 
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        }
+                                                    </Button>
+                                                </div>
                                             )}
                                         </TableCell>
-                                <TableCell className="text-white">
-                                    <div className="flex items-center gap-2">
-                                                {(item.status === "NEW" || item.timeframe === "immediate") && (
-                                            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                        )}
-                                                {item.customer_name}
-                                    </div>
-                                </TableCell>
                                         <TableCell className="text-white">
-                                            {formatDate(item.updated_at || item.created_at)}
+                                            <div className="flex items-center gap-2">
+                                                {lead.status === "NEW" && (
+                                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                                )}
+                                                {lead.customer_name}
+                                            </div>
                                         </TableCell>
-                                <TableCell className="text-white">
-                                            {item.dataType === 'lead' && item.rewards_claim ? (
-                                        <div className="flex items-center">
-                                            <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
-                                                    {item.message}
-                                        </div>
-                                    ) : (
+                                        <TableCell className="text-white">
+                                            {formatDate(lead.updated_at || lead.created_at)}
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            {lead.rewards_claim ? (
+                                                <div className="flex items-center">
+                                                    <Badge className="bg-blue-500/20 text-blue-400 border-none mr-2">Reward</Badge>
+                                                    {lead.message}
+                                                </div>
+                                            ) : (
                                                 <div className="max-w-md truncate">
-                                                    {item.message}
+                                                    {lead.message}
                                                 </div>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-white">
-                                            <Badge className={`border-none text-white ${item.dataType === 'lead' ? 'bg-[#2F4858]' : 'bg-[#5D3A9B]'}`}>
-                                                {item.dataType === 'lead' ? 'Lead' : 'Retention'}
-                                    </Badge>
-                                </TableCell>
-                                        <TableCell className="text-white">
-                                            {item.dataType === 'lead' ? (
-                                                <Badge variant="outline" className={`border-none text-white ${statusColors[item.status as keyof typeof statusColors]}`}>
-                                                    {item.status}
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline" className={`border-none text-white ${timeframeColors[item.timeframe as keyof typeof timeframeColors]}`}>
-                                                    {item.timeframe === 'mid_term' ? 'Mid-Term' : 
-                                                     item.timeframe === 'long_term' ? 'Long-Term' : 'Immediate'}
-                                                </Badge>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-white">
-                                            {item.dataType === 'retention' ? (
-                                                <div className={`font-medium ${getPriorityColor(item.priority)}`}>
-                                                    {item.priority ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1) : '-'}
-                                                </div>
-                                            ) : (
-                                                <div>-</div>
-                                            )}
+                                            <Badge variant="outline" className={`border-none text-white ${statusColors[lead.status as keyof typeof statusColors]}`}>
+                                                {lead.status}
+                                            </Badge>
                                         </TableCell>
-                                <TableCell className="text-white">
-                                    <div className="flex gap-4">
-                                                {item.dataType === 'lead' ? (
-                                                    <>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <button>
-                                                        <Mail 
-                                                            className="w-4 h-4" 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                                window.open(`mailto:${item.customer_email || item.email}`, '_blank');
-                                                            }}
-                                                        />
+                                        <TableCell className="text-white">
+                                            <Badge className={`border-none text-white ${(lead.lead_type?.toLowerCase() === 'work_order' || lead.lead_type?.toLowerCase() === 'workorder') ? 'bg-[#5D3A9B]' : 'bg-[#2F4858]'}`}>
+                                                {lead.lead_type ? (lead.lead_type.charAt(0).toUpperCase() + lead.lead_type.slice(1)).replace('_', ' ') : "Website"}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-white">
+                                            <div className="flex gap-4">
+                                                <button 
+                                                    title="Send Email"
+                                                    className="hover:text-blue-400"
+                                                    onClick={(e) => handleSendEmail(e, lead.email)}
+                                                >
+                                                    <Mail className="w-4 h-4" />
+                                                </button>
+                                                
+                                                {lead.status !== "CUSTOMER" ? (
+                                                    <button 
+                                                        title="Create Customer"
+                                                        className="text-green-500 hover:text-green-400"
+                                                        onClick={(e) => handleCreateCustomer(e, lead.id)}
+                                                    >
+                                                        <UserPlus className="w-4 h-4" />
                                                     </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                    <p>Send Email</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                                        {item.status != "CUSTOMER" ? (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <button>
-                                                            <UserPlus 
-                                                                className="w-4 h-4 text-green-500 hover:text-green-400"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                                    handleCreateCustomer(e, item.id);
-                                                                }}
-                                                            />
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                        <p>Create Customer</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        ) : (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div>
-                                                            <Check className="w-4 h-4 text-green-500" />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                        <p>Customer Created</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                                        )}
-                                                    </>
                                                 ) : (
-                                                    <>
-                                                        {item.status !== 'completed' && (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button>
-                                                                            <Calendar 
-                                                                                className="w-4 h-4" 
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleRetentionStatusChange(item.id, 'scheduled');
-                                                                                }}
-                                                                            />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                        <p>Schedule Follow-up</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        )}
-                                                        
-                                                        {item.status !== 'completed' && (
-                                                            <TooltipProvider>
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <button>
-                                                                            <Check 
-                                                                                className="w-4 h-4 text-green-500" 
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleRetentionStatusChange(item.id, 'completed');
-                                                                                }}
-                                                                            />
-                                                                        </button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                        <p>Mark as Completed</p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </TooltipProvider>
-                                                        )}
-                                                        
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button>
-                                                                        <FileText 
-                                                                            className="w-4 h-4" 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                // View details implementation
-                                                                            }}
-                                                                        />
-                                                                    </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent className="bg-[#1f1f1f] text-white border-none">
-                                                                    <p>View Details</p>
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                    </>
-                                        )}
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                                    {/* Expanded row content for retention tasks */}
-                                    {item.dataType === 'retention' && expandedRows[item.id] && (
-                                        <TableRow className="bg-[#161616]">
-                                            <TableCell colSpan={8} className="py-4 px-6">
-                                                <div className="space-y-3">
-                                                    {/* Vehicle Information */}
-                                                    {item.vehicle_info && (
-                                                        <div>
-                                                            <h4 className="text-xs text-gray-400 uppercase mb-1">Vehicle</h4>
-                                                            <p className="text-white">{item.vehicle_info}</p>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {/* Follow-up Date */}
-                                                    {item.recommended_followup_date && (
-                                                        <div>
-                                                            <h4 className="text-xs text-gray-400 uppercase mb-1 flex items-center">
-                                                                <Clock className="h-3 w-3 mr-1" /> Follow-up Date
-                                                            </h4>
-                                                            <p className="text-white">{formatDate(item.recommended_followup_date)}</p>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {/* Detailed Summary */}
-                                                    {item.summary && (
-                                                        <div>
-                                                            <h4 className="text-xs text-gray-400 uppercase mb-1">Detailed Summary</h4>
-                                                            <p className="text-white whitespace-pre-wrap">{item.summary}</p>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {/* AI Insights */}
-                                                    {item.insights_json && item.insights_json.upsellSuggestions && item.insights_json.upsellSuggestions.length > 0 && (
-                                                        <div className="space-y-2">
-                                                            <h4 className="text-xs text-gray-400 uppercase mb-1">Recommended Services</h4>
-                                                            <div className="space-y-2">
-                                                                {item.insights_json.upsellSuggestions.map((suggestion: any, index: number) => (
-                                                                    <div key={index} className="p-2 bg-[#1A1A1A] border border-[#333] rounded-md">
-                                                                        <p className="text-sm font-medium text-white">{suggestion.title}</p>
-                                                                        <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
-                                                                        {suggestion.estimatedValue && (
-                                                                            <p className="text-xs text-green-400 mt-1">
-                                                                                ${typeof suggestion.estimatedValue === 'number' ? 
-                                                                                  suggestion.estimatedValue.toFixed(2) : suggestion.estimatedValue}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {/* Actions */}
-                                                    <div className="flex gap-2 mt-4">
-                                                        <Button 
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs"
-                                                            onClick={() => handleRetentionStatusChange(item.id, 'scheduled')}
-                                                        >
-                                                            <Calendar className="h-3.5 w-3.5 mr-1" />
-                                                            Schedule Follow-up
-                                                        </Button>
-                                                        
-                                                        <Button 
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-xs bg-green-900/30 text-green-400 border-green-900/50 hover:bg-green-900/50"
-                                                            onClick={() => handleRetentionStatusChange(item.id, 'completed')}
-                                                        >
-                                                            <Check className="h-3.5 w-3.5 mr-1" />
-                                                            Mark Complete
-                                                        </Button>
+                                                    <div title="Customer Created">
+                                                        <Check className="w-4 h-4 text-green-500" />
                                                     </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                    
+                                    {/* Expanded row content for work order leads */}
+                                    {(lead.lead_type?.toLowerCase() === 'work_order' || lead.lead_type?.toLowerCase() === 'workorder') && expandedRows[lead.id] && (
+                                        <TableRow className="bg-[#161616]" key={`expanded-${lead.id}`}>
+                                            <TableCell colSpan={7} className="py-4 px-6">
+                                                <div className="space-y-3">
+                                                    {/* {console.log("Rendering expanded content for lead:", lead.id, "vehicle info:", lead.vehicle_info, "insights:", insightsData[lead.id])} */}
+                                                    
+                                                    {/* Default content when nothing is available */}
+                                                    {!lead.vehicle_info && !lead.repair_order_id && (
+                                                        <div className="p-4 border border-dashed border-[#333] rounded-md">
+                                                            <p className="text-center text-gray-400">No additional information available for this work order.</p>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    
+                                                    {/* Customer Insights Component */}
+                                                    {lead.repair_order_id && (
+                                                        <CustomerInsightsDisplay repairOrderId={lead.repair_order_id} />
+                                                    )}
+                                                    
+                                                    {/* Legacy Insights Display - Keep as fallback */}
+                                                    {!lead.repair_order_id && insightsData[lead.id] && (
+                                                        <>
+                                                            {/* Summary */}
+                                                            {insightsData[lead.id].summary && (
+                                                                <div>
+                                                                    <h4 className="text-xs text-gray-400 uppercase mb-1">Summary</h4>
+                                                                    <p className="text-white whitespace-pre-wrap">{insightsData[lead.id].summary}</p>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {/* Upsell Suggestions */}
+                                                            {insightsData[lead.id].upsell_suggestions && insightsData[lead.id].upsell_suggestions.length > 0 && (
+                                                                <div className="space-y-2">
+                                                                    <h4 className="text-xs text-gray-400 uppercase mb-1">Recommended Services</h4>
+                                                                    <div className="space-y-2">
+                                                                        {insightsData[lead.id].upsell_suggestions.map((suggestion: any, index: number) => (
+                                                                            <div key={index} className="p-2 bg-[#1A1A1A] border border-[#333] rounded-md">
+                                                                                <div className="flex justify-between items-start">
+                                                                                    <p className="text-sm font-medium text-white">{suggestion.title}</p>
+                                                                                    <Badge className={`${getPriorityColor(suggestion.priority)}`}>
+                                                                                        {suggestion.priority}
+                                                                                    </Badge>
+                                                                                </div>
+                                                                                <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
+                                                                                {suggestion.estimatedValue && (
+                                                                                    <p className="text-xs text-green-400 mt-1">
+                                                                                        ${typeof suggestion.estimatedValue === 'number' ? 
+                                                                                        suggestion.estimatedValue.toFixed(2) : suggestion.estimatedValue}
+                                                                                    </p>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {/* Flags */}
+                                                            {insightsData[lead.id].flags && insightsData[lead.id].flags.length > 0 && (
+                                                                <div className="space-y-2">
+                                                                    <h4 className="text-xs text-gray-400 uppercase mb-1">Flags</h4>
+                                                                    <div className="space-y-2">
+                                                                        {insightsData[lead.id].flags.map((flag: any, index: number) => (
+                                                                            <div key={index} className="p-2 bg-[#1A1A1A] border border-[#333] rounded-md">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <Badge className={`${flag.type === 'urgent' ? 'bg-red-500/20 text-red-400' : 
+                                                                                                   flag.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                                                                                   'bg-blue-500/20 text-blue-400'}`}>
+                                                                                        {flag.type}
+                                                                                    </Badge>
+                                                                                    <p className="text-sm text-white">{flag.message}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                    
+                                                    {!insightsData[lead.id] && (
+                                                        <div className="text-gray-400 text-sm italic">
+                                                            No insights available for this work order.
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     )}
-                                </>
+                                </React.Fragment>
                             ))
                         )}
                     </TableBody>
                 </Table>
-                <LeadSheet
+                {/* <LeadSheet
                     lead={selectedLead}
                     isOpen={isSheetOpen}
                     onOpenChange={setIsSheetOpen}
                     sendEmail={() => {
-                        window.open(`mailto:${selectedLead?.email || selectedLead?.customer_email}`, '_blank')
+                        window.open(`mailto:${selectedLead?.email}`, '_blank')
                     }}
                     callPhone={() => {
-                        window.open(`tel:${selectedLead?.phone || selectedLead?.customer_phone}`, '_blank')
+                        window.open(`tel:${selectedLead?.phone}`, '_blank')
                     }}
-                />
+                /> */}
             </div>
         </div>
     )

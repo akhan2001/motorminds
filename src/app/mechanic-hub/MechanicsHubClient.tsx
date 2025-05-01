@@ -24,6 +24,7 @@ import { createCustomerVehicle, createNewCustomer } from "../customers/api/custo
 import { createCustomerRetention, createMiaInsights, createWorkOrder } from "./util/mechanics-hub-utils"
 import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
 import { generateMiaInsights } from "../mia/utils/insightsGenerator"
+import { createCustomerLead } from "../lead-generation/utils/lead"
 
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
@@ -509,7 +510,19 @@ export default function MechanicsHub() {
       toast.success("Work Order successfully created!")
 
       // Create new lead
-      //createLead(newRepairOrderId, shopId)
+      try {
+        createCustomerLead({
+          shop_id: shopId,
+          customer_id: customerId,
+          vehicle_id: vehicleId,
+          repair_order_id: newRepairOrderId,
+          lead_type: "new",
+          priority: "high",
+          timeframe: "immediate"
+        })
+      } catch (err) {
+        console.error("Error creating customer lead:", err)
+      }
 
       await fetchRepairOrders(user.id) // re-fetch your data
     } catch (err: any) {

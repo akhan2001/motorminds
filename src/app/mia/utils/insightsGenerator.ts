@@ -31,7 +31,7 @@ export async function generateMiaInsights(workOrderId: string, shopId: string, t
         }
 
         // Step 2: Call the insights API
-        const response = await fetch(`/api/mia-insights/${term}`, {
+        const response = await fetch(`/api/mia-insights/refresh`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
