@@ -193,49 +193,105 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
             priority = 'high';
         }
         
-        // Update the mia_customer_insights table with the new analysis
+        // First, check if the record exists
+        let recordExists = false;
+        
         if (miaCustomerInsightId) {
-            const { error: updateError } = await supabase
+            // Check if the specific insight exists
+            const { data: existingInsight, error: checkError } = await supabase
                 .from('mia_customer_insights')
-                .update({
-                    analysis: insights,
-                    summary: insights.summary,
-                    priority: priority,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', miaCustomerInsightId);
-            
-            console.log("Updated mia_customer_insights by id", miaCustomerInsightId);
+                .select('id')
+                .eq('id', miaCustomerInsightId)
+                .maybeSingle();
                 
-            if (updateError) {
-                console.error('Error updating mia_customer_insights:', updateError);
-                throw new Error('Failed to update insights in database');
-            }
-        } else if (workOrderData) {
-            // If no miaCustomerInsightId was provided but we have workOrderData,
-            // try to find and update the record by repair_order_id
-            const { error: updateError } = await supabase
+            recordExists = !!existingInsight;
+            console.log("Checking insight by ID:", miaCustomerInsightId, "exists:", recordExists);
+        } else if (workOrderData?.id) {
+            // Check if insight exists for this repair order
+            const { data: existingInsight, error: checkError } = await supabase
                 .from('mia_customer_insights')
-                .update({
-                    analysis: insights,
-                    summary: insights.summary,
-                    priority: priority,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('repair_order_id', workOrderData.id);
-            
-            console.log("Updated mia_customer_insights by repair_order_id", workOrderData.id);
+                .select('id')
+                .eq('repair_order_id', workOrderData.id)
+                .maybeSingle();
                 
-            if (updateError) {
-                console.error('Error updating mia_customer_insights by repair_order_id:', updateError);
-                throw new Error('Failed to update insights in database');
-            }
+            recordExists = !!existingInsight;
+            console.log("Checking insight by repair_order_id:", workOrderData.id, "exists:", recordExists);
         }
-
-        return {
-            success: true,
-            insights
-        };
+        
+        if (recordExists) {
+            // Update existing record
+            const updateData = {
+                analysis: insights,
+                summary: insights.summary,
+                priority: priority,
+                updated_at: new Date().toISOString()
+            };
+            
+            let updateResult;
+            
+            if (miaCustomerInsightId) {
+                // Update by insight ID
+                const { data, error: updateError } = await supabase
+                    .from('mia_customer_insights')
+                    .update(updateData)
+                    .eq('id', miaCustomerInsightId)
+                    .select()
+                    .single();
+                
+                if (updateError) {
+                    console.error('Error updating mia_customer_insights:', updateError);
+                    throw new Error('Failed to update insights in database');
+                }
+                
+                updateResult = data;
+                console.log("Updated existing insight by ID:", miaCustomerInsightId);
+            } else {
+                // Update by repair order ID
+                const { data, error: updateError } = await supabase
+                    .from('mia_customer_insights')
+                    .update(updateData)
+                    .eq('repair_order_id', workOrderData.id)
+                    .select()
+                    .single();
+                
+                if (updateError) {
+                    console.error('Error updating mia_customer_insights by repair_order_id:', updateError);
+                    throw new Error('Failed to update insights in database');
+                }
+                
+                updateResult = data;
+                console.log("Updated existing insight by repair_order_id:", workOrderData.id);
+            }
+            
+            return {
+                success: true,
+                insights,
+                data: updateResult
+            };
+        } else {
+            // Insert new record using addToMiaCustomerInsights
+            if (!workOrderData?.id || !workOrderData?.shop_id) {
+                throw new Error('Missing required work order data for creating new insight');
+            }
+            
+            console.log("Creating new insight for repair order:", workOrderData.id);
+            const insertResult = await addToMiaCustomerInsights(
+                workOrderData.id,
+                workOrderData.shop_id,
+                insights
+            );
+            
+            if (!insertResult.success) {
+                throw new Error(insertResult.error || 'Failed to create new insight');
+            }
+            
+            return {
+                success: true,
+                insights,
+                data: insertResult.data,
+                isNewRecord: true
+            };
+        }
     } catch (error) {
         console.error('Error in generateImmediateAnalysis:', error);
         return {

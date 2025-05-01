@@ -100,7 +100,7 @@ export async function POST(req: Request) {
             Notes: ${orderDetails.notes}
             Parts: ${orderDetails.parts}
             Labour: ${orderDetails.labour}
-            Mileage: ${orderDetails.mileage}
+            Mileage: ${orderDetails.mileage} - Mileage is in kilometers
             Total: ${orderDetails.total}
             
             Return a JSON object with EXACTLY this structure:
