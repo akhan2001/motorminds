@@ -41,6 +41,7 @@ interface VehicleData {
 	vin?: string
 	color?: string
 	mileage?: string
+	licensePlate?: string
 }
 
 // Customer dropdown option
@@ -81,7 +82,7 @@ const [workOrderData, setWorkOrderData] = useState({
 	vin: "",
 	mileage: "",
 	priority: "high" as "high" | "medium" | "low",
-	assignedTo: "",
+	assignedTo: "" as string | null,
 	labor: "",
 	parts: "",
 	notes: "",
@@ -89,6 +90,7 @@ const [workOrderData, setWorkOrderData] = useState({
 	laborCost: "0",
 	partsCost: "0",
 	color: "",
+	licensePlate: "",
 })
 
 // The list of possible customers (each with an array of vehicles)
@@ -148,6 +150,9 @@ useEffect(() => {
 				model: v.model,
 				engine_type: v.engine_type,
 				vin: v.vin,
+				color: v.color,
+				mileage: v.mileage,
+				licensePlate: v.license_plate,
 			})),
 		}))
 		setCustomerOptions(options)
@@ -193,6 +198,9 @@ const handleCustomerChange = (value: string) => {
 			model: "",
 			engineType: "",
 			vin: "",
+			color: "",
+			mileage: "",
+			licensePlate: "",
 		}))
 		setCurrentVehicles([])
 	} else {
@@ -221,6 +229,9 @@ const handleCustomerChange = (value: string) => {
 							model: "",
 							engineType: "",
 							vin: "",
+							color: "",
+							mileage: "",
+							licensePlate: "",
 						}))
 					}
 				})
@@ -247,6 +258,7 @@ const handleVehicleChange = (value: string) => {
 		vin: "",
 		color: "",
 		mileage: "",
+		licensePlate: "",
 	}))
 	} else {
 	// user picked an existing vehicle
@@ -263,6 +275,7 @@ const handleVehicleChange = (value: string) => {
 		vin: chosen.vin || "",
 		color: chosen.color || "",
 		mileage: chosen.mileage || "",
+		licensePlate: chosen.licensePlate || "",
 	}))
 	}
 }
@@ -271,7 +284,11 @@ const handleVehicleChange = (value: string) => {
 // 5) Handling staff
 // ------------------------------------------------------------------
 const handleAssignedToChange = (value: string) => {
-	setWorkOrderData(prev => ({ ...prev, assignedTo: value }))
+	// Set to null when "none" is selected to avoid UUID validation error
+	setWorkOrderData(prev => ({ 
+		...prev, 
+		assignedTo: value === "none" ? null : value 
+	}))
 }
 
 // ------------------------------------------------------------------
@@ -620,17 +637,32 @@ return (
 								</div>
 								</div>
 
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">Mileage</Label>
-								<Input
-									value={workOrderData.mileage}
-									onChange={(e) =>
-									setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-									placeholder="e.g. 45,000 miles"
-									disabled={!workOrderData.customerId}
-								/>
+								<div className="grid grid-cols-2 gap-3">
+									<div className="space-y-1.5">
+										<Label className="text-gray-400">License Plate</Label>
+										<Input
+											value={workOrderData.licensePlate || ""}
+											onChange={(e) =>
+												setWorkOrderData(prev => ({ ...prev, licensePlate: e.target.value.toUpperCase() }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. ABC123"
+											disabled={!workOrderData.customerId}
+										/>
+									</div>
+
+									<div className="space-y-1.5">
+										<Label className="text-gray-400">Mileage</Label>
+										<Input
+											value={workOrderData.mileage}
+											onChange={(e) =>
+											setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. 45,000 miles"
+											disabled={!workOrderData.customerId}
+										/>
+									</div>
 								</div>
 							</div>
 							</div>
@@ -723,7 +755,7 @@ return (
 								<Label className="text-gray-400 self-center sm:col-span-1">Assigned To</Label>
 								<div className="sm:col-span-3">
 									<Select 
-										value={workOrderData.assignedTo} 
+										value={workOrderData.assignedTo || ""} 
 										onValueChange={handleAssignedToChange}
 										disabled={!workOrderData.customerId}
 									>

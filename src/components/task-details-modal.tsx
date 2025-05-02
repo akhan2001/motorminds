@@ -47,6 +47,7 @@ export interface DetailedRepairOrder {
       engine_type?: string
       vin?: string
       color?: string
+      licensePlate?: string
     }>
   }
 }
@@ -148,6 +149,7 @@ export function TaskDetailsModal({
     email: initialTask.customers?.customer_email || "",
     phone: initialTask.customers?.customer_phone || "",
     address: initialTask.customers?.customer_address || "",
+    licensePlate: vehicleToUse?.licensePlate || "",
   })
 
   // ------------------
@@ -250,6 +252,7 @@ export function TaskDetailsModal({
       email: initialTask.customers?.customer_email || "",
       phone: initialTask.customers?.customer_phone || "",
       address: initialTask.customers?.customer_address || "",
+      licensePlate: v?.licensePlate || "",
     })
   }, [initialTask])
 
@@ -294,32 +297,8 @@ export function TaskDetailsModal({
             },
           ]
         : [],
-      customers: initialTask.customers ? {
-        id: initialTask.customers.id,
-        customer_name: formData.customerName,
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        customer_address: formData.address,
-        customer_vehicles: [...(initialTask.customers.customer_vehicles || [])],
-      } : undefined,
-    }
-    
-    // Update vehicle information if we have a vehicle_id and customer vehicles
-    if (updated.vehicle_id && updated.customers?.customer_vehicles) {
-      const vehicleIndex = updated.customers.customer_vehicles.findIndex(
-        v => v.id === updated.vehicle_id
-      );
-      
-      if (vehicleIndex >= 0) {
-        updated.customers.customer_vehicles[vehicleIndex] = {
-          ...updated.customers.customer_vehicles[vehicleIndex],
-          year: formData.year,
-          make: formData.make,
-          model: formData.model,
-          engine_type: formData.engine_type,
-          vin: formData.vin,
-        };
-      }
+      // Preserve original customer data instead of overwriting with form values
+      customers: initialTask.customers
     }
 
     onSave(updated)
@@ -389,16 +368,6 @@ export function TaskDetailsModal({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {!isEditing && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="text-gray-400 hover:text-white border-[#222222]"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit2 className="h-4 w-4" />
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -467,7 +436,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, customerName: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly
+                          readOnly={true}
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -478,7 +447,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, email: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly
+                          readOnly={true}
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -489,7 +458,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, phone: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly
+                          readOnly={true}
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -500,7 +469,7 @@ export function TaskDetailsModal({
                             isEditing && setFormData({ ...formData, address: e.target.value })
                           }
                           className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                          readOnly
+                          readOnly={true}
                         />
                       </div>
                     </div>
@@ -522,7 +491,7 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, year: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
+                      readOnly={true}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -533,7 +502,7 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, make: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
+                      readOnly={true}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -544,7 +513,7 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, model: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
+                      readOnly={true}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -555,7 +524,7 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, engine_type: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
+                      readOnly={true}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -566,7 +535,7 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, color: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
+                      readOnly={true}
                     />
                   </div>
                 </div>
@@ -579,19 +548,32 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, vin: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
+                      readOnly={true}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-gray-400">Mileage</Label>
-                    <Input
-                      value={formData.mileage}
-                      onChange={(e) =>
-                        isEditing && setFormData({ ...formData, mileage: e.target.value })
-                      }
-                      className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={!isEditing}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-400">License Plate</Label>
+                      <Input
+                        value={formData.licensePlate || ""}
+                        onChange={(e) =>
+                          isEditing && setFormData({ ...formData, licensePlate: e.target.value.toUpperCase() })
+                        }
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                        readOnly={true}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-400">Mileage</Label>
+                      <Input
+                        value={formData.mileage}
+                        onChange={(e) =>
+                          isEditing && setFormData({ ...formData, mileage: e.target.value })
+                        }
+                        className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                        readOnly={!isEditing}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -802,13 +784,23 @@ export function TaskDetailsModal({
                   </Button>
                 </>
               ) : (
-                <Button
-                  variant="outline"
-                  className="border border-[#626262] px-8 text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto"
-                  onClick={onClose}
-                >
-                  Close
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto"
+                    onClick={onClose}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </>
               )}
             </div>
           </div>
