@@ -433,7 +433,23 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 				.delete()
 				.eq('id', staffId);
 
-			if (error) throw error;
+			if (error) {
+				// Check if this is a foreign key constraint error
+				if (error.code === '23503' && error.message.includes('repair_order_details')) {
+					// Instead of deleting, set shop_id to null
+					const { error: updateError } = await supabase
+						.from('shop_staff')
+						.update({ shop_id: null })
+						.eq('id', staffId);
+					
+					if (updateError) throw updateError;
+					
+					setShopStaff(prev => prev.filter(staff => staff.id !== staffId));
+					toast.success('Staff removed from shop successfully');
+					return;
+				}
+				throw error;
+			}
 
 			setShopStaff(prev => prev.filter(staff => staff.id !== staffId));
 			toast.success('Staff member removed successfully');
