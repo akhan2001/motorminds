@@ -68,6 +68,11 @@ export function Nav(
 		{ name: "Lead Generation", href: "/lead-generation" },
 		{ name: "Opportunity Management", href: "/lead-generation/customer-retention" },
 	]
+	
+	const customerSubItems = [
+		{ name: "All Customers", href: "/customers" },
+		{ name: "Customer Intake Form", href: "/customer-intake" },
+	]
 
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
@@ -87,7 +92,13 @@ export function Nav(
 			// subItems: leadGenerationSubItems
 		},
 		{ name: "Loyalty", href: "/loyalty" },
-		{ name: "Customers", href: "/customers" },
+		{ 
+			name: "Customers", 
+			href: "/customers",
+			hasDropdown: true,
+			subItems: customerSubItems
+		},
+		// { name: "Customer Intake", href: "/customer-intake" },
 	]
 
 	const handleNavClick = (name: string, href: string) => {

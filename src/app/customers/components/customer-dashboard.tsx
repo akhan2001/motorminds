@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { CustomerForm } from "./customer-form";
+import { useRouter } from "next/navigation";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
     const [isAdding, setIsAdding] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const router = useRouter();
 
     const handleCustomerAdded = () => {
         setIsAdding(false);
