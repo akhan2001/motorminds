@@ -71,12 +71,6 @@ export default function CustomerIntakePage() {
             />
             <span className="text-white font-medium">Motorminds</span>
           </div>
-          <button 
-            onClick={() => router.push('/dashboard')} 
-            className="text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            Back to Dashboard
-          </button>
         </div>
       </header>
       
