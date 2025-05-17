@@ -71,6 +71,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 					(customer.customer_name && customer.customer_name.toLowerCase().includes(lowerCaseQuery)) ||
 					(customer.customer_email && customer.customer_email.toLowerCase().includes(lowerCaseQuery)) ||
 					(customer.customer_phone && customer.customer_phone.toLowerCase().includes(lowerCaseQuery)) ||
+					(customer.license_plate && customer.license_plate.toLowerCase().includes(lowerCaseQuery)) ||
 					(customer.customer_address && customer.customer_address.toLowerCase().includes(lowerCaseQuery))
 				);
 				setCustomers(filtered);
@@ -203,7 +204,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
 					<Input
 						className="pl-10 bg-[#131313] border-[#222] hover:border-[#444] focus:border-[#555] text-white w-full"
-						placeholder="Search by name, email, phone, or address..."
+						placeholder="Search by name, email, phone, license plate, or address..."
 						value={searchQuery}
 						onChange={handleSearchChange}
 					/>
@@ -223,7 +224,8 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 								<TableHead className="text-white font-medium">Name</TableHead>
 								<TableHead className="text-white font-medium hidden sm:table-cell">Email</TableHead>
 								<TableHead className="text-white font-medium hidden md:table-cell">Phone</TableHead>
-								<TableHead className="text-white font-medium hidden lg:table-cell">Address</TableHead>
+								<TableHead className="text-white font-medium hidden lg:table-cell">License Plate</TableHead>
+								<TableHead className="text-white font-medium hidden xl:table-cell">Address</TableHead>
 							</TableRow>
 						</TableHeader>
 
@@ -245,13 +247,16 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 											{formatPhoneNumber(customer.customer_phone)}
 										</TableCell>
 										<TableCell className="text-foreground hidden lg:table-cell">
+											{customer.license_plate || "-"}
+										</TableCell>
+										<TableCell className="text-foreground hidden xl:table-cell">
 											{customer.customer_address}
 										</TableCell>
 									</TableRow>
 								))
 							) : (
 								<TableRow>
-									<TableCell colSpan={4} className="text-center py-8 text-gray-400">
+									<TableCell colSpan={5} className="text-center py-8 text-gray-400">
 										{isLoading ? "Loading customers..." : searchQuery ? "No matching customers found" : "No customers found"}
 									</TableCell>
 								</TableRow>

@@ -2,14 +2,22 @@
 
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from "@/components/ui/button"
-import { Menu, Settings, HelpCircle, LogOut } from "lucide-react"
+import { Menu, Settings, HelpCircle, LogOut, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+
+interface NavItem {
+    name: string;
+    href: string;
+    hasDropdown?: boolean;
+    subItems?: Array<{ name: string; href: string }>;
+}
 
 interface MobileNavProps {
-    navItems: Array<{ name: string; href: string }>;
+    navItems: NavItem[];
     activeLink: string;
     avatar: string;
     open: boolean;
@@ -27,9 +35,18 @@ export function MobileNav({
     handleNavClick, 
     handleLogout 
 }: MobileNavProps) {
-const router = useRouter();
+    const router = useRouter();
+    const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
-return (
+    const toggleExpand = (itemName: string) => {
+        if (expandedItem === itemName) {
+            setExpandedItem(null);
+        } else {
+            setExpandedItem(itemName);
+        }
+    };
+
+    return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
@@ -86,21 +103,52 @@ return (
                 </SheetHeader>
                 <div className="flex-1 py-4">
                     {navItems.map((item) => (
-                    <a
-                        key={item.name}
-                        href="#"
-                        onClick={() => handleNavClick(item.name, item.href)}
-                        className={`flex items-center px-4 py-3 ${
-                        activeLink === item.name
-                        ? "bg-[#222] text-[#b22222]"
-                        : "text-[#979797] hover:bg-[#1A1A1A] hover:text-white"
-                        }`}
-                    >
-                        {item.name}
-                        {item.name === "Mia AI" &&
-                        <Badge variant="outline" className="text-xs ml-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
-                        }
-                    </a>
+                        <div key={item.name}>
+                            {item.hasDropdown ? (
+                                <>
+                                    <button
+                                        onClick={() => toggleExpand(item.name)}
+                                        className={`flex items-center justify-between w-full px-4 py-3 ${
+                                            activeLink === item.name
+                                            ? "bg-[#222] text-[#b22222]"
+                                            : "text-[#979797] hover:bg-[#1A1A1A] hover:text-white"
+                                        }`}
+                                    >
+                                        <span>{item.name}</span>
+                                        <ChevronRight className={`w-4 h-4 transition-transform ${expandedItem === item.name ? 'rotate-90' : ''}`} />
+                                    </button>
+                                    {expandedItem === item.name && item.subItems && (
+                                        <div className="bg-[#181818]">
+                                            {item.subItems.map(subItem => (
+                                                <a
+                                                    key={subItem.name}
+                                                    href="#"
+                                                    onClick={() => handleNavClick(item.name, subItem.href)}
+                                                    className="flex items-center px-8 py-2 text-[#979797] hover:bg-[#222] hover:text-white"
+                                                >
+                                                    {subItem.name}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <a
+                                    href="#"
+                                    onClick={() => handleNavClick(item.name, item.href)}
+                                    className={`flex items-center px-4 py-3 ${
+                                        activeLink === item.name
+                                        ? "bg-[#222] text-[#b22222]"
+                                        : "text-[#979797] hover:bg-[#1A1A1A] hover:text-white"
+                                    }`}
+                                >
+                                    {item.name}
+                                    {item.name === "Mia AI" &&
+                                        <Badge variant="outline" className="text-xs ml-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
+                                    }
+                                </a>
+                            )}
+                        </div>
                     ))}
                 </div>
                 <div className="border-t border-[#222] p-4">
