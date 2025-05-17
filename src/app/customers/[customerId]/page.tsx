@@ -259,7 +259,7 @@ export default function CustomerPage() {
 
                     {/* Work Order History Tab */}
                     <TabsContent value="history" className="mt-6" id="history">
-                        <CustomerHistoryCard workOrders={workOrders} />
+                        <CustomerHistoryCard workOrders={workOrders} shopId={shopId || ''} />
                     </TabsContent>
 
                     {/* Messages Tab */}

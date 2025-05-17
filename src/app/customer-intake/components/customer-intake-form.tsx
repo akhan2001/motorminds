@@ -45,7 +45,10 @@ const formSchema = z.object({
     .min(1, { message: 'Vehicle model is required' }),
   
   year: z.string()
-    .min(4, { message: 'Vehicle year is required' }),
+    .min(4, { message: 'Vehicle year is required' })
+    .refine((val) => !isNaN(Number(val)), { message: 'Year must be a number' })
+    .refine((val) => Number(val) >= 1900 && Number(val) <= new Date().getFullYear() + 1, 
+      { message: `Year must be between 1900 and ${new Date().getFullYear() + 1}` }),
   
   licensePlate: z.string()
     .min(1, { message: 'License plate is required' })
@@ -275,10 +278,13 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
                       <FormLabel className="text-gray-300">Year <span className="text-[#b22222]">*</span></FormLabel>
                       <FormControl>
                         <Input 
+                          type="number"
                           placeholder="2022" 
                           {...field} 
                           className="bg-[#131313] border-[#222] text-white focus:ring-1 focus:ring-[#b22222] focus:border-[#b22222]"
                           required
+                          min={1900}
+                          max={new Date().getFullYear() + 1}
                         />
                       </FormControl>
                       <FormMessage className="text-[#b22222]" />

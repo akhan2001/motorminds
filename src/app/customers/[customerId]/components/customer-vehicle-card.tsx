@@ -53,13 +53,13 @@ export function CustomerVehicleCard({ customerVehicles }: CustomerVehicleCardPro
                                 </div>
                                 <div>
                                     <p className="text-gray-400 text-sm">License Plate</p>
-                                    <p>{vehicle.license_plate || vehicle.license_plate === null || vehicle.license_plate === undefined || vehicle.license_plate === '' ? 'Not recorded' : vehicle.license_plate}</p>
+                                    <p>{vehicle.license_plate === null || vehicle.license_plate === undefined || vehicle.license_plate === '' ? 'Not recorded' : vehicle.license_plate}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-400 text-sm">Mileage</p>
                                     <div className="flex items-center">
                                         <Gauge className="h-4 w-4 mr-1 text-gray-400" />
-                                        <p>{vehicle.mileage ? `${vehicle.mileage} mi` : 'Not recorded'}</p>
+                                        <p>{vehicle.mileage ? `${vehicle.mileage} km` : 'Not recorded'}</p>
                                     </div>
                                 </div>
                                 <div>
