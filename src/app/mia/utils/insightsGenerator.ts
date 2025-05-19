@@ -162,7 +162,10 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ workOrderData: workOrderData }),
+            body: JSON.stringify({ 
+                workOrderData: workOrderData,
+                shopId: workOrderData.shop_id
+            }),
         });
 
         if (!response.ok) {
