@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 import { ImmediateInsights, InsightPriority, FlagType } from '@/app/mia/types/MiaInsights';
+import { supabase } from '@/lib/supabase';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -42,8 +43,8 @@ function createDefaultInsights(): ImmediateInsights {
 
 export async function POST(req: Request) {
     try {
-        // Extract work order data from request
-        const { workOrderData } = await req.json();
+        // Extract work order data and shop ID from request
+        const { workOrderData, shopId } = await req.json();
         
         if (!workOrderData) {
             return NextResponse.json(
@@ -52,9 +53,33 @@ export async function POST(req: Request) {
             );
         }
 
-        // Construct the prompt for AI with explicit structure requirements
+        if (!shopId) {
+            return NextResponse.json(
+                { success: false, error: 'Shop ID is required' },
+                { status: 400 }
+            );
+        }
+
+        // Get shop information
+        const { data: shopData, error: shopError } = await supabase
+            .from('shops')
+            .select('shop_about')
+            .eq('id', shopId)
+            .single();
+
+        if (shopError) {
+            console.error('Error fetching shop data:', shopError);
+            return NextResponse.json(
+                { success: false, error: 'Failed to fetch shop information' },
+                { status: 500 }
+            );
+        }
+
+        // Construct the prompt for AI with explicit structure requirements and shop customization
         const prompt = `
             You are Mia, an AI assistant for auto repair shops. Analyze this work order data and provide immediate upsell suggestions and service recommendations.
+
+            ${shopData?.shop_about ? `Shop Information: ${shopData.shop_about}` : ''}
 
             Work Order: ${JSON.stringify(workOrderData)}
 
@@ -62,6 +87,8 @@ export async function POST(req: Request) {
             1. Generate a list of immediate upsell opportunities that are relevant to the current visit
             2. Identify any maintenance flags or warnings
             3. Create a brief summary
+
+            ${shopData?.shop_about ? 'IMPORTANT: Customize your suggestions based on the shop\'s specialties and services mentioned in the shop information.' : ''}
 
             CRITICAL: Your entire response must be ONLY a valid JSON object with EXACTLY this structure:
             {

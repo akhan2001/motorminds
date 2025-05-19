@@ -47,13 +47,35 @@ function extractJsonFromString(str: string): any {
 
 export async function POST(req: Request) {
     try {
-        // Extract workOrderData from the request
-        const { workOrderData } = await req.json();
+        // Extract workOrderData and shopId from the request
+        const { workOrderData, shopId } = await req.json();
         
         if (!workOrderData) {
             return NextResponse.json(
                 { success: false, error: 'Work order data is required' },
                 { status: 400 }
+            );
+        }
+
+        if (!shopId) {
+            return NextResponse.json(
+                { success: false, error: 'Shop ID is required' },
+                { status: 400 }
+            );
+        }
+
+        // Get shop information
+        const { data: shopData, error: shopError } = await supabase
+            .from('shops')
+            .select('shop_about')
+            .eq('id', shopId)
+            .single();
+
+        if (shopError) {
+            console.error('Error fetching shop data:', shopError);
+            return NextResponse.json(
+                { success: false, error: 'Failed to fetch shop information' },
+                { status: 500 }
             );
         }
 
@@ -90,10 +112,12 @@ export async function POST(req: Request) {
         console.log("vehicleInfo", vehicleInfo);
         console.log("orderDetails", orderDetails);
 
-        // Construct prompt with all available information
+        // Construct prompt with all available information and shop customization
         const prompt = `
             You are Mia, an AI assistant for auto repair shops.
             Generate upsell suggestions that are quick, cheap and relevant to the work order based on the following information:
+            
+            ${shopData?.shop_about ? `Shop Information: ${shopData.shop_about}` : ''}
             
             ${vehicleInfo ? `Vehicle: ${vehicleInfo.year} ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.color} ${vehicleInfo.engine_type}` : 'Vehicle: Information not available'}
             Title: ${orderDetails.description}
@@ -102,6 +126,8 @@ export async function POST(req: Request) {
             Labour: ${orderDetails.labour}
             Mileage: ${orderDetails.mileage} - Mileage is in kilometers
             Total: ${orderDetails.total}
+            
+            ${shopData?.shop_about ? 'IMPORTANT: Customize your suggestions based on the shop\'s specialties and services mentioned in the shop information.' : ''}
             
             Return a JSON object with EXACTLY this structure:
             {
