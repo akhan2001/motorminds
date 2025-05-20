@@ -26,6 +26,8 @@ export interface Task {
   title: string
   status: "todo" | "inProgress" | "done"
   statusColor: string
+  vehicle: string
+  date: string
   [key: string]: any
 }
 
@@ -36,6 +38,7 @@ interface TaskBoardProps {
     done: Task[]
   }
   onTaskClick: (task: Task) => void
+  onStatusChange: (taskId: string, newStatus: string) => void
 }
 
 // Convert local "todo|inProgress|done" => DB "Pending|In Progress|Completed"
@@ -69,6 +72,7 @@ function getStatusColor(status: "todo" | "inProgress" | "done"): string {
 export function TaskBoard({
   tasks = { todo: [], inProgress: [], done: [] },
   onTaskClick,
+  onStatusChange,
 }: TaskBoardProps) {
   // Local columns for instant reorder
   const [columns, setColumns] = useState(tasks)
@@ -172,7 +176,7 @@ export function TaskBoard({
       return
     }
 
-    const currentTask = findTaskAll(active.id)
+    const currentTask = findTaskAll(active.id as string)
     if (!currentTask) {
       setActiveId(null)
       return
@@ -187,39 +191,41 @@ export function TaskBoard({
     // If same column => reorder
     if (overColumn === currentTask.status) {
       if (overId !== active.id) {
-        reorderTaskWithinSameColumn(active.id, overId, currentTask.status)
+        reorderTaskWithinSameColumn(active.id as string, overId, currentTask.status)
       }
       setActiveId(null)
       return
     }
 
     // Otherwise, you're dropping into a different column => move
+    const updatedTask: Task = {
+      ...currentTask,
+      status: overColumn,
+      statusColor: getStatusColor(overColumn),
+      vehicle: currentTask.vehicle,
+      date: currentTask.date
+    }
+
+    // Update local state immediately for better UX
     setColumns((prev) => ({
       ...prev,
       [currentTask.status]: prev[currentTask.status].filter(
         (t) => t.id !== currentTask.id
       ),
-      [overColumn]: [
-        ...prev[overColumn],
-        {
-          ...currentTask,
-          status: overColumn,
-          statusColor: getStatusColor(overColumn),
-        },
-      ],
+      [overColumn]: [...prev[overColumn], updatedTask],
     }))
 
-    // Also update DB if you want to reflect the new status
+    // Also update DB and notify parent
     const dbStatus = localStatusToDb(overColumn)
     try {
-      const { error } = await supabase
-        .from("repair_orders")
-        .update({ status: dbStatus })
-        .eq("id", active.id)
-      if (error) {
-        console.error("Error updating task status:", error)
-      }
+      await onStatusChange(active.id as string, dbStatus)
     } catch (err) {
+      // If update fails, revert the local state
+      setColumns((prev) => ({
+        ...prev,
+        [overColumn]: prev[overColumn].filter((t) => t.id !== currentTask.id),
+        [currentTask.status]: [...prev[currentTask.status], currentTask],
+      }))
       console.error("Error updating task status:", err)
     }
 
