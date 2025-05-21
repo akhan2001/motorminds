@@ -382,11 +382,11 @@ const calculateTotal = () => {
 // 7) Render
 // ------------------------------------------------------------------
 return (
-	<div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden">
+	<div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
 		<div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[80vw]">
 			{/* Main content */}
-			<div className="flex-1 flex flex-col">
-				<div className="p-4 sm:p-6 overflow-y-auto">
+			<div className="flex-1 flex flex-col min-h-0">
+				<div className="p-4 sm:p-6 overflow-y-auto flex-1">
 					{/* Header */}
 					<div className="flex items-center justify-between pb-4 border-b border-[#222222]">
 						<div className="space-y-1">
@@ -742,10 +742,15 @@ return (
 									<span className="text-gray-300 text-md self-center">$</span>
 									<Input
 										type="number"
-										value={workOrderData.laborCost}
-										onChange={(e) =>
-										setWorkOrderData(prev => ({ ...prev, laborCost: e.target.value || "0" }))
-										}
+										value={workOrderData.laborCost === "0" ? "" : workOrderData.laborCost}
+										onChange={(e) => {
+											const value = e.target.value;
+											// If empty, set to "0", otherwise use the value as is
+											setWorkOrderData(prev => ({ 
+												...prev, 
+												laborCost: value === "" ? "0" : value.replace(/^0+/, '')
+											}))
+										}}
 										className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
 										placeholder="0.00"
 										disabled={!workOrderData.customerId}
@@ -787,10 +792,15 @@ return (
 									<span className="text-gray-300 text-md self-center">$</span>
 									<Input
 										type="number"
-										value={workOrderData.partsCost}
-										onChange={(e) =>
-										setWorkOrderData(prev => ({ ...prev, partsCost: e.target.value || "0" }))
-										}
+										value={workOrderData.partsCost === "0" ? "" : workOrderData.partsCost}
+										onChange={(e) => {
+											const value = e.target.value;
+											// If empty, set to "0", otherwise use the value as is
+											setWorkOrderData(prev => ({ 
+												...prev, 
+												partsCost: value === "" ? "0" : value.replace(/^0+/, '')
+											}))
+										}}
 										className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
 										placeholder="0.00"
 										disabled={!workOrderData.customerId}

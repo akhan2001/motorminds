@@ -12,9 +12,10 @@ interface RewardSheetProps {
 	reward: any | null
 	isOpen: boolean
 	onOpenChange: (open: boolean) => void
+	onRewardCreated?: () => void
 }
 
-export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) {
+export function RewardSheet({ reward, isOpen, onOpenChange, onRewardCreated }: RewardSheetProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [statusValue, setStatusValue] = useState<boolean | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
@@ -47,8 +48,9 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 			if (success) {
 				toast.success("Reward updated successfully");
 				setIsEditing(false);
-				// Force refresh to get updated data
-				window.location.reload();
+				if (onRewardCreated) {
+					onRewardCreated();
+				}
 			} else {
 				toast.error("Failed to update reward");
 			}
@@ -81,8 +83,9 @@ export function RewardSheet({ reward, isOpen, onOpenChange }: RewardSheetProps) 
 				if (success) {
 					toast.success("Reward deleted successfully");
 					onOpenChange(false);
-					// Use router.refresh() here if available, or window.location.reload()
-					window.location.reload();
+					if (onRewardCreated) {
+						onRewardCreated();
+					}
 				} else {
 					toast.error("Failed to delete reward. Try again later.");
 				}

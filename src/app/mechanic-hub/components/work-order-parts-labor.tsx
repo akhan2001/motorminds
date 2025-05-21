@@ -136,9 +136,9 @@ export function WorkOrderPartsLabor({
   const filteredPartsItems = filteredItems.filter(item => item.type === "parts")
 
   return (
-    <div className="w-[350px] bg-[#131313] border-l border-[#222222] flex flex-col h-full">
+    <div className="w-[350px] bg-[#1A1A1A] border-l border-[#222222] flex flex-col min-h-0">
       {/* Header */}
-      <div className="p-4 border-b border-[#222222]">
+      <div className="p-4 border-b border-[#222222] flex-shrink-0">
         <h3 className="text-lg font-medium text-white">Labor & Parts</h3>
       </div>
 
@@ -160,20 +160,19 @@ export function WorkOrderPartsLabor({
         </div>
       ) : (
         <>
-          {/* Items list */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-2">
-              {/* Search bar */}
-              <div className="mb-4">
-                <Input
-                  className="bg-[#131313] border-[#333] focus:ring-0 placeholder-gray-500"
-                  placeholder="Search for parts or labor..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Separator className="my-4 bg-[#333]" />
-              
+          {/* Search bar - Fixed */}
+          <div className="p-4 border-b border-[#222222] flex-shrink-0">
+            <Input
+              className="bg-[#131313] border-[#333] focus:ring-0 placeholder-gray-500"
+              placeholder="Search for parts or labor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Scrollable content */}
+          <div className="overflow-y-auto flex-1">
+            <div className="p-4 space-y-4">
               {/* Labor section */}
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-400 mb-2 flex items-center">
