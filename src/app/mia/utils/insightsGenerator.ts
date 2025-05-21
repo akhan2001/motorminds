@@ -36,7 +36,10 @@ export async function generateMiaInsights(workOrderId: string, shopId: string, t
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ workOrderData: workOrder }),
+            body: JSON.stringify({ 
+                workOrderData: workOrder,
+                shopId: shopId 
+            }),
         });
 
         if (!response.ok) {

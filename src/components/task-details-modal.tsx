@@ -47,7 +47,7 @@ export interface DetailedRepairOrder {
       engine_type?: string
       vin?: string
       color?: string
-      licensePlate?: string
+      license_plate?: string
     }>
   }
 }
@@ -149,7 +149,8 @@ export function TaskDetailsModal({
     email: initialTask.customers?.customer_email || "",
     phone: initialTask.customers?.customer_phone || "",
     address: initialTask.customers?.customer_address || "",
-    licensePlate: vehicleToUse?.licensePlate || "",
+    licensePlate: vehicleToUse?.license_plate || "",
+    vehicle_id: vehicleToUse?.id || "",
   })
 
   // ------------------
@@ -252,7 +253,8 @@ export function TaskDetailsModal({
       email: initialTask.customers?.customer_email || "",
       phone: initialTask.customers?.customer_phone || "",
       address: initialTask.customers?.customer_address || "",
-      licensePlate: v?.licensePlate || "",
+      licensePlate: v?.license_plate || "",
+      vehicle_id: v?.id || "",
     })
   }, [initialTask])
 
@@ -270,13 +272,30 @@ export function TaskDetailsModal({
   // ------------------
   // SAVE CHANGES
   // ------------------
-  function handleSave() {
+  async function handleSave() {
     const dbStatus = mapLocalStatusToDb(status)
     
     // Debug: Log the selected staff ID
     console.log("Saving task with selectedStaffId:", selectedStaffId)
     
-    // First create a base updated object
+    // First update the vehicle information if color or license plate changed
+    if (formData.vehicle_id && (formData.color !== vehicleToUse?.color || formData.licensePlate !== vehicleToUse?.license_plate)) {
+      const { error: vehicleUpdateError } = await supabase
+        .from('customer_vehicles')
+        .update({
+          color: formData.color,
+          license_plate: formData.licensePlate
+        })
+        .eq('id', formData.vehicle_id);
+
+      if (vehicleUpdateError) {
+        console.error('Error updating vehicle:', vehicleUpdateError);
+        toast.error('Failed to update vehicle information');
+        return;
+      }
+    }
+    
+    // Create a base updated object
     const updated: DetailedRepairOrder = {
       ...initialTask,
       status: dbStatus,
@@ -297,8 +316,15 @@ export function TaskDetailsModal({
             },
           ]
         : [],
-      // Preserve original customer data instead of overwriting with form values
-      customers: initialTask.customers
+      customers: initialTask.customers ? {
+        ...initialTask.customers,
+        id: initialTask.customers.id,
+        customer_vehicles: initialTask.customers.customer_vehicles?.map(v => 
+          v.id === formData.vehicle_id 
+            ? { ...v, color: formData.color, license_plate: formData.licensePlate }
+            : v
+        )
+      } : undefined
     }
 
     onSave(updated)
@@ -535,7 +561,7 @@ export function TaskDetailsModal({
                         isEditing && setFormData({ ...formData, color: e.target.value })
                       }
                       className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                      readOnly={true}
+                      readOnly={!isEditing}
                     />
                   </div>
                 </div>
@@ -560,7 +586,7 @@ export function TaskDetailsModal({
                           isEditing && setFormData({ ...formData, licensePlate: e.target.value.toUpperCase() })
                         }
                         className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                        readOnly={true}
+                        readOnly={!isEditing}
                       />
                     </div>
                     <div className="space-y-1.5">
