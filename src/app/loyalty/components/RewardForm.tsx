@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createReward } from "../utils/LoyaltyUtils";
+import { Sparkles } from "lucide-react";
 
 export default function RewardForm({ onClose, shopId, onRewardCreated }: { 
     onClose: () => void, 
@@ -14,28 +15,50 @@ export default function RewardForm({ onClose, shopId, onRewardCreated }: {
     const [rewardName, setRewardName] = useState("");
     const [rewardDescription, setRewardDescription] = useState("");
     const [points, setPoints] = useState(0);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const toTitleCase = (str: string) => {
+        return str.replace(/\w\S*/g, (txt) => {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    };
+
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const titleCaseValue = toTitleCase(e.target.value);
+        setRewardName(titleCaseValue);
+    };
+
+    const generateDescription = async () => {
+        if (!rewardName) return;
+        
+        setIsGenerating(true);
+        try {
+            const response = await fetch("/api/generate-reward-description", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ 
+                    title: rewardName,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to generate description");
+            }
+
+            const data = await response.json();
+            setRewardDescription(data.description);
+            toast.success("Description generated!");
+        } catch (error) {
+            console.error("Error generating description:", error);
+            toast.error("Failed to generate description. Please try again.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const handleSubmit = async () => {
-        // console.log({ rewardName, rewardDescription, points });
-        // const shopID = await getShopID();
-
-        // // Create a new reward with app/loyalty/api/route.ts
-        // const response = await fetch("/loyalty/api", {
-        //     method: "POST",
-        //     headers: {
-        //         "Content-Type": "application/json",
-        //     },
-        //     body: JSON.stringify({ name: rewardName, description: rewardDescription, points_required: points, shop_id: shopID }),
-        // });
-
-        // if (response.ok) {
-        //     console.log("Reward created successfully");
-        //     toast.success("Reward created successfully");
-        // } else {
-        //     console.log("Failed to create reward");
-        //     toast.error("Failed to create reward. Try again later.");
-        // }
-        
         const rewardData = {
             name: rewardName,
             description: rewardDescription,
@@ -46,7 +69,6 @@ export default function RewardForm({ onClose, shopId, onRewardCreated }: {
         try {
             const response = await createReward(rewardData);
             toast.success("Reward created successfully");
-            // Call onRewardCreated before closing
             if (onRewardCreated) {
                 onRewardCreated();
             }
@@ -75,7 +97,7 @@ export default function RewardForm({ onClose, shopId, onRewardCreated }: {
                             className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1"
                             placeholder="E.g., Free Oil Change, 10% Off Next Service" 
                             value={rewardName} 
-                            onChange={(e) => setRewardName(e.target.value)} 
+                            onChange={handleTitleChange}
                         />
                         <p className="text-gray-500 text-xs mt-1">
                             Enter a short and catchy title for the reward.
@@ -84,7 +106,19 @@ export default function RewardForm({ onClose, shopId, onRewardCreated }: {
 
                     {/* Reward Description */}
                     <div>
-                        <label className="text-gray-300 text-sm">Reward Description</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="text-gray-300 text-sm">Reward Description</label>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 text-xs gap-1.5 text-red-500 hover:text-red-500 hover:bg-red-500/10"
+                                onClick={generateDescription}
+                                disabled={!rewardName || isGenerating}
+                            >
+                                <Sparkles className="h-3.5 w-3.5" />
+                                {isGenerating ? "Generating..." : "Generate Description"}
+                            </Button>
+                        </div>
                         <textarea
                             className="bg-[#292929] text-white text-sm border border-[#626262] mt-1 w-full p-2 rounded-md"
                             placeholder="Describe what the customer gets when they redeem this reward."
@@ -96,31 +130,6 @@ export default function RewardForm({ onClose, shopId, onRewardCreated }: {
                             Explain any conditions or details about how customers can use this reward.
                         </p>
                     </div>
-
-                    {/* Reward Points */}
-                    {/* <div>
-                        <label className="text-gray-300 text-sm">Reward Points</label>
-                        <Select onValueChange={(value) => setPoints(parseInt(value))} disabled={true}>
-                            <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
-                                <SelectValue placeholder="Select a reward point value" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1">
-                                <SelectItem value="0">0</SelectItem>
-                                <SelectItem value="100">100</SelectItem>
-                                <SelectItem value="200">200</SelectItem>
-                                <SelectItem value="300">300</SelectItem>
-                                <SelectItem value="500">500</SelectItem>
-                                <SelectItem value="1000">1000</SelectItem>
-                                <Input 
-                                type="number" 
-                                className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 mt-1" 
-                                placeholder="Enter a custom point value"
-                                value={points}
-                                onChange={(e) => setPoints(parseInt(e.target.value))}
-                                />
-                            </SelectContent>
-                        </Select>
-                    </div> */}
                 </div>
 
                 <DialogFooter>
@@ -130,6 +139,7 @@ export default function RewardForm({ onClose, shopId, onRewardCreated }: {
                     <Button 
                         onClick={handleSubmit} 
                         className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
+                        disabled={!rewardName || !rewardDescription}
                     >
                         Save Reward
                     </Button>
