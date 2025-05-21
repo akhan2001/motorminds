@@ -742,10 +742,15 @@ return (
 									<span className="text-gray-300 text-md self-center">$</span>
 									<Input
 										type="number"
-										value={workOrderData.laborCost}
-										onChange={(e) =>
-										setWorkOrderData(prev => ({ ...prev, laborCost: e.target.value || "0" }))
-										}
+										value={workOrderData.laborCost === "0" ? "" : workOrderData.laborCost}
+										onChange={(e) => {
+											const value = e.target.value;
+											// If empty, set to "0", otherwise use the value as is
+											setWorkOrderData(prev => ({ 
+												...prev, 
+												laborCost: value === "" ? "0" : value.replace(/^0+/, '')
+											}))
+										}}
 										className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
 										placeholder="0.00"
 										disabled={!workOrderData.customerId}
@@ -787,10 +792,15 @@ return (
 									<span className="text-gray-300 text-md self-center">$</span>
 									<Input
 										type="number"
-										value={workOrderData.partsCost}
-										onChange={(e) =>
-										setWorkOrderData(prev => ({ ...prev, partsCost: e.target.value || "0" }))
-										}
+										value={workOrderData.partsCost === "0" ? "" : workOrderData.partsCost}
+										onChange={(e) => {
+											const value = e.target.value;
+											// If empty, set to "0", otherwise use the value as is
+											setWorkOrderData(prev => ({ 
+												...prev, 
+												partsCost: value === "" ? "0" : value.replace(/^0+/, '')
+											}))
+										}}
 										className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 w-[150px]"
 										placeholder="0.00"
 										disabled={!workOrderData.customerId}
