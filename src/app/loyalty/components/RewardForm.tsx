@@ -6,7 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { createReward } from "../utils/LoyaltyUtils";
 
-export default function RewardForm({ onClose, shopId }: { onClose: () => void, shopId: string }) {
+export default function RewardForm({ onClose, shopId, onRewardCreated }: { 
+    onClose: () => void, 
+    shopId: string,
+    onRewardCreated?: () => void 
+}) {
     const [rewardName, setRewardName] = useState("");
     const [rewardDescription, setRewardDescription] = useState("");
     const [points, setPoints] = useState(0);
@@ -42,11 +46,14 @@ export default function RewardForm({ onClose, shopId }: { onClose: () => void, s
         try {
             const response = await createReward(rewardData);
             toast.success("Reward created successfully");
+            // Call onRewardCreated before closing
+            if (onRewardCreated) {
+                onRewardCreated();
+            }
+            onClose();
         } catch (error) {
             toast.error("Failed to create reward. Try again later.");
         }
-
-        onClose();
     };
 
     return (

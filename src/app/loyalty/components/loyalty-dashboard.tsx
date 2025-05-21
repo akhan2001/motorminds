@@ -16,7 +16,12 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
     const [activeRewards, setActiveRewards] = useState<any[]>([])
     const [numberOfRewardPoints, setNumberOfRewardPoints] = useState(0)
     const [user, setUser] = useState<any>(null)
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
     const router = useRouter()
+
+    const handleRefresh = () => {
+        setRefreshTrigger(prev => prev + 1)
+    }
 
     useEffect(() => {
         const loadRewards = async () => {
@@ -29,7 +34,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
         if (shopId) {
             loadRewards()
         }
-    }, [shopId])
+    }, [shopId, refreshTrigger])
 
     return (
         <main className="flex items-center justify-center py-8">
@@ -116,7 +121,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
 
                 <section className="mb-10">
                     <h2 className="text-xl font-semibold mb-4">Your Rewards</h2>
-                        <RewardsTable shopId={shopId}/>
+                        <RewardsTable shopId={shopId} refreshTrigger={refreshTrigger}/>
                 </section>
                 {/* <section className="mb-10">
                     <h2 className="text-xl font-semibold mb-4">Customers who have claimed rewards</h2>
@@ -125,7 +130,11 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
 
                 <section className="mb-10">
                 {/* Add/Edit Reward Modal */}
-                {isAdding && <RewardForm onClose={() => setIsAdding(false)} shopId={shopId}/>}
+                {isAdding && <RewardForm 
+                    onClose={() => setIsAdding(false)} 
+                    shopId={shopId}
+                    onRewardCreated={handleRefresh}
+                />}
                 </section>
             </div>
         </main>

@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getRewards } from "../utils/LoyaltyUtils"
 import { RewardSheet } from "./RewardSheet"
 
-export function RewardsTable({ shopId }: { shopId?: string }) {
+export function RewardsTable({ shopId, refreshTrigger }: { shopId?: string, refreshTrigger?: number }) {
     const [rewards, setRewards] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [selectedReward, setSelectedReward] = useState<any>(null)
@@ -15,6 +15,30 @@ export function RewardsTable({ shopId }: { shopId?: string }) {
     const handleRewardClick = (reward: any) => {
         setSelectedReward(reward)
         setIsSheetOpen(true)
+    }
+
+    const handleRefresh = () => {
+        // Trigger a refresh by incrementing the refreshTrigger in the parent
+        if (refreshTrigger !== undefined) {
+            const fetchRewards = async () => {
+                if (!shopId) return;
+                
+                try {
+                    const data = await getRewards(shopId)
+                    if (data && data.length > 0) {
+                        setRewards(data)
+                    } else {
+                        setRewards([])
+                    }
+                } catch (error) {
+                    console.error("Error fetching rewards:", error)
+                    setError("Failed to fetch rewards. Please try again later.")
+                    setRewards([])
+                }
+            }
+            
+            fetchRewards()
+        }
     }
     
     // Get rewards from /loyalty/utils/LoyaltyUtils.ts
@@ -47,7 +71,7 @@ export function RewardsTable({ shopId }: { shopId?: string }) {
         setIsLoading(true)
         setError(null)
         fetchRewards()
-    }, [shopId])
+    }, [shopId, refreshTrigger])
     
 
     return (
@@ -99,6 +123,7 @@ export function RewardsTable({ shopId }: { shopId?: string }) {
                 reward={selectedReward}
                 isOpen={isSheetOpen}
                 onOpenChange={setIsSheetOpen}
+                onRewardCreated={handleRefresh}
             />
         </div>
     )
