@@ -756,7 +756,14 @@ export function TaskDetailsModal({
                       if (result === false) {
                         toast.error("Invoice already exists for this work order");
                       } else if (result === true) {
-                        toast.success("Invoice generated successfully");
+                        toast.success("Invoice generated successfully", {
+                          action: {
+                            label: "Go to Invoices",
+                            onClick: () => {
+                              router.push("/invoices");
+                            }
+                          }
+                        });
                       }
                     });
                   }}
