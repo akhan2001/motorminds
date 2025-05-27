@@ -91,6 +91,7 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [createdWorkOrderId, setCreatedWorkOrderId] = useState<string | null>(null)
+  const [customerVehicles, setCustomerVehicles] = useState<any[]>([])
   const router = useRouter()
 
   const form = useForm<FormValues>({
@@ -184,46 +185,52 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
       form.setValue('email', customer.customer_email || '')
       form.setValue('phone', customer.customer_phone || '')
       
-      // Fetch customer's vehicles
+      // Fetch ALL customer's vehicles
       const { data: vehicles, error: vehiclesError } = await supabase
         .from('customer_vehicles')
         .select('*')
         .eq('customer_id', customerId)
         .order('created_at', { ascending: false })
-        .limit(1)
       
       if (vehiclesError) {
         console.error("Error fetching customer vehicles:", vehiclesError)
       }
       
-      // If customer has vehicles, populate the first/most recent one
-      if (vehicles && vehicles.length > 0) {
-        const latestVehicle = vehicles[0]
-        setSelectedVehicle(latestVehicle)
-        form.setValue('make', latestVehicle.make || '')
-        form.setValue('model', latestVehicle.model || '')
-        form.setValue('year', latestVehicle.year ? latestVehicle.year.toString() : '')
-        form.setValue('licensePlate', latestVehicle.license_plate || '')
-      } else {
-        // If no vehicle, just populate license plate from customer if available
-        form.setValue('make', '')
-        form.setValue('model', '')
-        form.setValue('year', '')
-        form.setValue('licensePlate', customer.license_plate || '')
-      }
+      // Store all vehicles in state
+      setCustomerVehicles(vehicles || [])
+      
+      // Clear vehicle form fields until one is selected
+      form.setValue('make', '')
+      form.setValue('model', '')
+      form.setValue('year', '')
+      form.setValue('licensePlate', '')
+      
     } catch (error) {
       console.error('Error fetching customer details:', error)
       toast.error('Failed to load customer details')
     }
   }
 
-  // Reset vehicle fields to add a new vehicle
-  const handleAddAnotherVehicle = () => {
-    form.setValue('make', '')
-    form.setValue('model', '')
-    form.setValue('year', '')
-    form.setValue('licensePlate', '')
-    setSelectedVehicle(null)
+  // Add a handler for vehicle selection
+  const handleVehicleSelect = (vehicleId: string) => {
+    if (vehicleId === 'new') {
+      // User wants to add a new vehicle
+      setSelectedVehicle(null)
+      form.setValue('make', '')
+      form.setValue('model', '')
+      form.setValue('year', '')
+      form.setValue('licensePlate', '')
+    } else {
+      // Find the selected vehicle
+      const vehicle = customerVehicles.find(v => v.id === vehicleId)
+      if (vehicle) {
+        setSelectedVehicle(vehicle)
+        form.setValue('make', vehicle.make || '')
+        form.setValue('model', vehicle.model || '')
+        form.setValue('year', vehicle.year ? vehicle.year.toString() : '')
+        form.setValue('licensePlate', vehicle.license_plate || '')
+      }
+    }
   }
 
   // Move the timeout useEffect outside of the conditional block to avoid React errors
@@ -577,7 +584,34 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
                 </div>
               )}
               
-              <p className="text-xs text-gray-400 mt-2">Select a customer to update their information or add a new vehicle.</p>
+              {/* Add Vehicle Selector */}
+              {selectedCustomerId && customerVehicles.length > 0 && (
+                <div className="mt-4">
+                  <label className="text-gray-300 mb-2 block">Select Vehicle</label>
+                  <Select onValueChange={handleVehicleSelect}>
+                    <SelectTrigger className="bg-[#131313] border-[#222] text-white focus:ring-1 focus:ring-[#b22222] focus:border-[#b22222]">
+                      <SelectValue placeholder="Choose a vehicle or add a new one" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1A1A1A] border-[#222] text-white">
+                      {customerVehicles.map(vehicle => (
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate || 'No plate'}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="new" className="text-[#b22222]">+ Add New Vehicle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              <p className="text-xs text-gray-400 mt-2">
+                {selectedCustomerId 
+                  ? customerVehicles.length > 0 
+                    ? "Select a vehicle or add a new one." 
+                    : "This customer has no vehicles. Please add one."
+                  : "Select a customer to update their information or add a new vehicle."
+                }
+              </p>
             </div>
           </TabsContent>
         </Tabs>
@@ -783,20 +817,6 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
             </div>
 
             <div className="pt-6 flex flex-col space-y-3">
-              {activeTab === 'existing' && selectedCustomerId && (
-                <>
-                  {selectedVehicle && (
-                    <Button 
-                      type="button"
-                      onClick={handleAddAnotherVehicle}
-                      className="w-full bg-[#333] hover:bg-[#444] text-white border-none"
-                    >
-                      Add Another Vehicle
-                    </Button>
-                  )}
-                </>
-              )}
-              
               <Button 
                 type="submit" 
                 className="w-full bg-[#b22222] hover:bg-[#8c1c1c] text-white border-none"

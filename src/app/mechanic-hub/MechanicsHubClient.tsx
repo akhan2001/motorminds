@@ -26,6 +26,26 @@ import { MechanicsHubSidebar } from "./components/MechanicsHubSidebar"
 import { generateMiaInsights } from "../mia/utils/insightsGenerator"
 import { createCustomerLead } from "../lead-generation/utils/lead"
 
+interface RepairOrderItem {
+  id: string
+  title: string
+  status: "todo" | "inProgress" | "done"
+  statusColor: string
+  vehicle: string
+  date: string
+  [key: string]: any
+}
+
+interface TransformedData {
+  boardData: {
+    todo: RepairOrderItem[]
+    inProgress: RepairOrderItem[]
+    done: RepairOrderItem[]
+  }
+  calendarData: { [date: string]: RepairOrderItem[] }
+  listData: RepairOrderItem[]
+}
+
 export default function MechanicsHub() {
   // New: read ?view=board or ?view=calendar or ?view=list
   const searchParams = useSearchParams()
@@ -36,10 +56,10 @@ export default function MechanicsHub() {
 
   const [selectedTask, setSelectedTask] = useState<DetailedRepairOrder | null>(null)
   const [isWorkOrderFormOpen, setIsWorkOrderFormOpen] = useState(false)
-  const [repairOrders, setRepairOrders] = useState({
-    boardData: {},
+  const [repairOrders, setRepairOrders] = useState<TransformedData>({
+    boardData: { todo: [], inProgress: [], done: [] },
     calendarData: {},
-    listData: [],
+    listData: []
   })
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
@@ -119,17 +139,99 @@ export default function MechanicsHub() {
    */
   async function handleStatusChange(taskId: string, newStatus: string) {
     try {
+      // Update the database
       const { error } = await supabase
         .from("repair_orders")
         .update({ status: newStatus })
         .eq("id", taskId)
       if (error) throw error
 
-      if (user?.id) {
-        await fetchRepairOrders(user.id)
-      }
+      // Update local state without fetching from server
+      setRepairOrders((prev) => {
+        const newBoardData = { ...prev.boardData }
+        const newCalendarData = { ...prev.calendarData }
+        const newListData = [...prev.listData]
+
+        // Find the task in all data structures
+        let taskToUpdate: RepairOrderItem | null = null
+        let sourceColumn: string | null = null
+
+        // Check in board data
+        for (const [column, tasks] of Object.entries(newBoardData)) {
+          const taskIndex = tasks.findIndex((t) => t.id === taskId)
+          if (taskIndex !== -1) {
+            taskToUpdate = tasks[taskIndex]
+            sourceColumn = column
+            tasks.splice(taskIndex, 1)
+            break
+          }
+        }
+
+        if (taskToUpdate) {
+          // Update the task's status
+          const localStatus = mapDbStatusToLocal(newStatus)
+          taskToUpdate.status = localStatus
+          taskToUpdate.statusColor = getStatusColor(localStatus)
+
+          // Add to the new column
+          newBoardData[localStatus].push(taskToUpdate)
+
+          // Update calendar data
+          const dateKey = taskToUpdate.date.split('T')[0]
+          if (newCalendarData[dateKey]) {
+            const calendarTaskIndex = newCalendarData[dateKey].findIndex((t) => t.id === taskId)
+            if (calendarTaskIndex !== -1) {
+              newCalendarData[dateKey][calendarTaskIndex] = taskToUpdate
+            }
+          }
+
+          // Update list data
+          const listTaskIndex = newListData.findIndex((t) => t.id === taskId)
+          if (listTaskIndex !== -1) {
+            newListData[listTaskIndex] = taskToUpdate
+          }
+        }
+
+        return {
+          boardData: newBoardData,
+          calendarData: newCalendarData,
+          listData: newListData
+        }
+      })
     } catch (err) {
       console.error("handleStatusChange error:", err)
+      throw err // Re-throw to let the TaskBoard component handle the error
+    }
+  }
+
+  // Helper function to map DB status to local status
+  function mapDbStatusToLocal(dbStatus: string): "todo" | "inProgress" | "done" {
+    switch (dbStatus) {
+      case "Pending":
+        return "todo"
+      case "In Progress":
+        return "inProgress"
+      case "Completed":
+        return "done"
+      default:
+        return "todo"
+    }
+  }
+
+  // Helper function to get status color
+  function getStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case "pending":
+      case "todo":
+        return "#e23232"
+      case "in progress":
+      case "inprogress":
+        return "#d6cd24"
+      case "completed":
+      case "done":
+        return "#1eb386"
+      default:
+        return "#e23232"
     }
   }
 
