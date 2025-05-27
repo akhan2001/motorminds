@@ -26,36 +26,51 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        console.log("Sending request to FastAPI with:", { query, car_make, car_model, car_year });
+        // Check if it's the supported car (Mazda 121 1990)
+        const isSupportedCar = 
+            car_make.toLowerCase() === "mazda" && 
+            car_model.toLowerCase() === "121" && 
+            car_year === 1990;
 
-        // Make request to external RAG chatbot API
-        const response = await fetch("https://rag-chatbot-api-mi4f.onrender.com/query", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                query,
-                car_make,
-                car_model,
-                car_year,
-            }),
-        });
+        if (isSupportedCar) {
+            console.log("Sending request to FastAPI with:", { query, car_make, car_model, car_year });
 
-        if (!response.ok) {
-            console.error("FastAPI Error:", await response.text());
-            throw new Error(`External API responded with status: ${response.status}`);
+            // Make request to external RAG chatbot API
+            const response = await fetch("https://rag-chatbot-api-mi4f.onrender.com/query", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    query,
+                    car_make,
+                    car_model,
+                    car_year,
+                }),
+            });
+
+            if (!response.ok) {
+                console.error("FastAPI Error:", await response.text());
+                throw new Error(`External API responded with status: ${response.status}`);
+            }
+
+            const data: CarQueryResponse = await response.json();
+            console.log("Received response from FastAPI:", data);
+
+            return NextResponse.json({
+                response: data.response,
+                topic: data.topic,
+                sources: data.sources,
+                diagrams: data.diagrams
+            });
         }
 
-        const data: CarQueryResponse = await response.json();
-        console.log("Received response from FastAPI:", data);
-
-        // Return the response directly without streaming
+        // For all other cars, return the standard response structure
         return NextResponse.json({
-            response: data.response,
-            topic: data.topic,
-            sources: data.sources,
-            diagrams: data.diagrams
+            response: query,
+            topic: "General Car Query",
+            sources: [],
+            diagrams: []
         });
 
     } catch (error: any) {
