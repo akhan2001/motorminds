@@ -4,6 +4,7 @@ import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HttpResponseOutputParser } from "langchain/output_parsers";
+import { StringOutputParser } from "@langchain/core/output_parsers";
 
 export const runtime = "edge";
 
@@ -54,12 +55,114 @@ chat_history: {chat_history}
 User: {input}
 `;
 
+async function detectCarQuery(query: string): Promise<{ isCarQuery: boolean; carInfo: { make: string; model: string; year: string } | null }> {
+	const carModel = new ChatOpenAI({
+		temperature: 0.3,
+		model: "gpt-3.5-turbo",
+	});
+	
+	const carPrompt = PromptTemplate.fromTemplate(`
+		Determine if the user's query is about a specific car and extract the car information.
+		
+		If the query mentions a specific car with make, model, and year, extract that information.
+		For example:
+		- "How do I change the oil in my 2018 Toyota Camry?" -> Toyota, Camry, 2018
+		- "What's the maintenance schedule for a 2020 Honda Civic?" -> Honda, Civic, 2020
+		
+		If the query doesn't mention a specific car with all three details (make, model, year), respond with "none".
+		
+		Output format:
+		If car info is found: "car_info:make,model,year"
+		If no car info: "none"
+		
+		Query: {input}
+	`);
+	
+	const carChain = carPrompt.pipe(carModel).pipe(new StringOutputParser());
+	
+	try {
+		const result = (await carChain.invoke({
+			input: query
+		})).trim();
+		
+		if (result === "none") {
+			return { isCarQuery: false, carInfo: null };
+		}
+		
+		const match = result.match(/car_info:([^,]+),([^,]+),(\d{4})/);
+		if (match) {
+			return {
+				isCarQuery: true,
+				carInfo: {
+					make: match[1].trim(),
+					model: match[2].trim(),
+					year: match[3].trim()
+				}
+			};
+		}
+		
+		return { isCarQuery: false, carInfo: null };
+	} catch (error) {
+		console.error("Error detecting car query:", error);
+		return { isCarQuery: false, carInfo: null };
+	}
+}
+
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
 		const lookAtDatabase = body.look_at_database;
 		const messages = body.messages ?? [];
 		console.log("Body in main chat route: ", body);
+
+		// Check if this is a car-specific query
+		const lastMessage = messages[messages.length - 1];
+		const carQueryDetection = await detectCarQuery(lastMessage.content);
+
+		if (carQueryDetection.isCarQuery && carQueryDetection.carInfo) {
+			console.log("Car query detected, delegating to car query endpoint");
+			
+			const carQueryResponse = await fetch(new URL("/api/chat/car-query", req.url), {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					query: lastMessage.content,
+					car_make: carQueryDetection.carInfo.make,
+					car_model: carQueryDetection.carInfo.model,
+					car_year: carQueryDetection.carInfo.year,
+				}),
+			});
+
+			if (!carQueryResponse.ok) {
+				throw new Error("Failed to fetch from car query endpoint");
+			}
+
+			const carData = await carQueryResponse.json();
+			
+			// Create a formatted response with sources and diagrams
+			const formattedResponse = `${carData.response}\n\nSources:\n${carData.sources.map((source: { filename: string; section: string; page_number: number }) => 
+				`- ${source.filename}, ${source.section}, Page ${source.page_number}`
+			).join('\n')}${carData.diagrams.length > 0 ? `\n\nDiagrams:\n${carData.diagrams.map((diagram: string) => 
+				`- ${diagram}`
+			).join('\n')}` : ''}`;
+
+			// Create a streaming response for the formatted text
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				async start(controller) {
+					const words = formattedResponse.split(' ');
+					for (const word of words) {
+						await new Promise(resolve => setTimeout(resolve, 20));
+						controller.enqueue(encoder.encode(word + ' '));
+					}
+					controller.close();
+				}
+			});
+
+			return new StreamingTextResponse(stream);
+		}
 
 		if (lookAtDatabase) {
 			console.log("Database mode is enabled, delegating to retrieval endpoint");
