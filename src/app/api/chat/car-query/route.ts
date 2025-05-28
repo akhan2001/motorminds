@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
 
         // Check if it's the supported car (Mazda 121 1990)
         const isSupportedCar = 
-            car_make.toLowerCase() === "mazda" && 
-            car_model.toLowerCase() === "121" && 
-            car_year === 1990;
+            String(car_make).toLowerCase() === "mazda" && 
+            String(car_model).toLowerCase() === "121" && 
+            String(car_year) === "1990";
 
         if (isSupportedCar) {
             console.log("Sending request to FastAPI with:", { query, car_make, car_model, car_year });
