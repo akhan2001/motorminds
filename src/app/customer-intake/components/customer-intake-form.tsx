@@ -64,12 +64,8 @@ const formSchema = z.object({
     .max(10, { message: 'License plate is too long' }),
   
   mainReason: z.string()
-    .optional()
-    .or(z.literal('')), // Allow empty string
-    
-  customReason: z.string()
-    .optional()
-    .or(z.literal('')) // Allow empty string
+    .min(1, { message: 'Please enter the reason for your visit' })
+    .max(200, { message: 'Reason is too long' })
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -105,7 +101,6 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
       year: '',
       licensePlate: '',
       mainReason: '',
-      customReason: '',
     },
     mode: 'onBlur',
   })
@@ -251,16 +246,10 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
   // Helper function to create a work order
   async function createWorkOrderFlow(customerId: string, vehicleId: string, formData: FormValues) {
     try {
-      // Only create work order if a main reason is selected
+      // Only create work order if a main reason is provided
       if (!formData.mainReason || formData.mainReason.trim() === '') {
-        console.log("No main reason selected, skipping work order creation");
+        console.log("No main reason provided, skipping work order creation");
         return null;
-      }
-      
-      // Determine the description to use
-      let description = formData.mainReason;
-      if (formData.mainReason === 'Other' && formData.customReason) {
-        description = formData.customReason;
       }
       
       // Create a repair order (work order)
@@ -287,12 +276,12 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
         .insert({
           id: newDetailId,
           repair_order_id: newRepairOrderId,
-          description: description,
+          description: formData.mainReason,
           labour: null,
           parts: null,
           labour_cost: null,
           parts_cost: null,
-          notes: `Created from customer intake form. Customer needs help with ${description}.`,
+          notes: `Created from customer intake form. Customer needs help with ${formData.mainReason}.`,
           cost: null,
           mileage: null,
           task_priority: "medium",
@@ -479,7 +468,7 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
                   <span className="font-semibold">Vehicle:</span> {form.getValues().year} {form.getValues().make} {form.getValues().model}
                 </p>
                 <p className="text-gray-300 mb-2">
-                  <span className="font-semibold">Service:</span> {form.getValues().mainReason === 'Other' ? form.getValues().customReason : form.getValues().mainReason}
+                  <span className="font-semibold">Service:</span> {form.getValues().mainReason}
                 </p>
                 <p className="text-xs text-gray-500 mt-3 break-all">
                   Work Order ID: {createdWorkOrderId}
@@ -760,61 +749,28 @@ export default function CustomerIntakeForm({ shopId, user }: CustomerIntakeFormP
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="mainReason"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel className="text-gray-300">Main Reason for Visit</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-[#131313] border-[#222] text-white focus:ring-1 focus:ring-[#b22222] focus:border-[#b22222]">
-                            <SelectValue placeholder="Select the main reason for your visit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-[#1A1A1A] border-[#222] text-white">
-                          <SelectItem value="Brakes">Brakes</SelectItem>
-                          <SelectItem value="Suspension">Suspension</SelectItem>
-                          <SelectItem value="Engine">Engine</SelectItem>
-                          <SelectItem value="Transmission">Transmission</SelectItem>
-                          <SelectItem value="Oil Change">Oil Change</SelectItem>
-                          <SelectItem value="Tire Service">Tire Service</SelectItem>
-                          <SelectItem value="General Maintenance">General Maintenance</SelectItem>
-                          <SelectItem value="Electrical">Electrical</SelectItem>
-                          <SelectItem value="AC/Heating">AC/Heating</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-[#b22222]" />
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch('mainReason') === 'Other' && (
-                  <FormField
-                    control={form.control}
-                    name="customReason"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel className="text-gray-300">Please specify</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter the reason for your visit" 
-                            {...field} 
-                            className="bg-[#131313] border-[#222] text-white focus:ring-1 focus:ring-[#b22222] focus:border-[#b22222]"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-[#b22222]" />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
             </div>
+
+            {/* Main Reason for Visit */}
+            <FormField
+              control={form.control}
+              name="mainReason"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel className="text-gray-300">Main Reason for Visit <span className="text-[#b22222]">*</span></FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter the reason for your visit" 
+                      {...field} 
+                      className="bg-[#131313] border-[#222] text-white focus:ring-1 focus:ring-[#b22222] focus:border-[#b22222]"
+                      required
+                    />
+                  </FormControl>
+                  <FormMessage className="text-[#b22222]" />
+                </FormItem>
+              )}
+            />
 
             <div className="pt-6 flex flex-col space-y-3">
               <Button 
