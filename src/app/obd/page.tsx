@@ -8,7 +8,7 @@ import LoadingPage from '@/components/loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from '@/components/ui/button'
-import { AlertCircle, AlertTriangle, CheckCircle2, Gauge, TableIcon, LayoutGrid } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Gauge, TableIcon, LayoutGrid, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     Table,
@@ -30,48 +30,62 @@ interface OBDData {
     status: 'healthy' | 'warning' | 'critical'
 }
 
+interface ContactRequest {
+    id: string
+    vehicle_id: string
+    message: string
+    status: string
+    created_at: string
+}
+
 export default function OBDPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [obdData, setObdData] = useState<OBDData[]>([])
+    const [contactRequests, setContactRequests] = useState<ContactRequest[]>([])
     const [statusFilter, setStatusFilter] = useState<string>('all')
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('table')
     const router = useRouter()
 
     useEffect(() => {
-        const fetchOBDData = async () => {
-            // First, let's create the table if it doesn't exist
-            const { error: createError } = await supabase.rpc('create_obd_table')
-            if (createError) {
-                console.log('Table might already exist or error:', createError)
-            }
-
-            // Now fetch the data
-            const { data, error } = await supabase
+        const fetchData = async () => {
+            // Fetch OBD data
+            const { data: obdData, error: obdError } = await supabase
                 .from('vehicle_obd_data')
                 .select('*')
                 .order('timestamp', { ascending: false })
                 .limit(50)
 
-            if (error) {
-                console.error('Error fetching OBD data:', error)
-                return
+            if (obdError) {
+                console.error('Error fetching OBD data:', obdError)
+            } else {
+                setObdData(obdData as OBDData[])
             }
 
-            setObdData(data as OBDData[])
+            // Fetch contact requests
+            const { data: contactData, error: contactError } = await supabase
+                .from('shop_contact_requests')
+                .select('*')
+                .order('created_at', { ascending: false })
+
+            if (contactError) {
+                console.error('Error fetching contact requests:', contactError)
+            } else {
+                setContactRequests(contactData as ContactRequest[])
+            }
+
             setIsLoading(false)
         }
 
-        fetchOBDData()
+        fetchData()
 
-        // Set up real-time subscription
-        const subscription = supabase
+        // Set up real-time subscriptions
+        const obdSubscription = supabase
             .channel('vehicle_obd_data_changes')
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'vehicle_obd_data'
             }, async (payload) => {
-                // For now, just add the new data directly
                 setObdData(prev => [payload.new as OBDData, ...prev.slice(0, 49)])
                 if (payload.new.status === 'critical') {
                     toast.error('Critical vehicle alert!', {
@@ -81,8 +95,24 @@ export default function OBDPage() {
             })
             .subscribe()
 
+        // Subscribe to contact requests
+        const contactSubscription = supabase
+            .channel('shop_contact_requests_changes')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'shop_contact_requests'
+            }, async (payload) => {
+                setContactRequests(prev => [payload.new as ContactRequest, ...prev])
+                toast.info('New contact request!', {
+                    description: `Vehicle ${payload.new.vehicle_id} needs assistance.`
+                })
+            })
+            .subscribe()
+
         return () => {
-            subscription.unsubscribe()
+            obdSubscription.unsubscribe()
+            contactSubscription.unsubscribe()
         }
     }, [])
 
@@ -93,6 +123,53 @@ export default function OBDPage() {
             })
             if (!response.ok) throw new Error('Failed to simulate data')
             toast.success('Simulated new OBD data')
+        } catch (error) {
+            console.error('Error simulating data:', error)
+            toast.error('Failed to simulate data')
+        }
+    }
+
+    const simulateSpecificIssue = async (type: 'engine-failure' | 'brake-warning' | 'transmission') => {
+        const mockData: Record<typeof type, {
+            rpm: number,
+            engine_temp: number,
+            fuel_level: number,
+            dtc_codes: string[],
+            status: 'healthy' | 'warning' | 'critical'
+        }> = {
+            'engine-failure': {
+                rpm: 4800,
+                engine_temp: 115,
+                fuel_level: 45,
+                dtc_codes: ['P0302', 'P0303', 'P0304'],
+                status: 'critical'
+            },
+            'brake-warning': {
+                rpm: 1200,
+                engine_temp: 85,
+                fuel_level: 65,
+                dtc_codes: ['C0121', 'C0122'],
+                status: 'warning'
+            },
+            'transmission': {
+                rpm: 3200,
+                engine_temp: 95,
+                fuel_level: 55,
+                dtc_codes: ['P0700', 'P0730'],
+                status: 'warning'
+            }
+        }
+
+        try {
+            const { error } = await supabase
+                .from('vehicle_obd_data')
+                .insert({
+                    vehicle_id: 'demo-vehicle-1',
+                    ...mockData[type]
+                })
+
+            if (error) throw error
+            toast.success(`Simulated ${type.replace('-', ' ')} scenario`)
         } catch (error) {
             console.error('Error simulating data:', error)
             toast.error('Failed to simulate data')
@@ -255,7 +332,8 @@ export default function OBDPage() {
                                 <SelectItem value="critical">Critical</SelectItem>
                             </SelectContent>
                         </Select>
-                        <div className="flex rounded-md border border-zinc-800">
+                        
+                        <div className="flex rounded-lg overflow-hidden">
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -273,11 +351,83 @@ export default function OBDPage() {
                                 <LayoutGrid className="h-4 w-4" />
                             </Button>
                         </div>
-                        <Button onClick={simulateData}>
-                            Simulate Data
+                    </div>
+                </div>
+
+                {/* Simulation Controls */}
+                <div className="mb-8">
+                    <h2 className="text-xl font-bold mb-4">Simulation Controls</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Button 
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => simulateSpecificIssue('engine-failure')}
+                        >
+                            Simulate Engine Failure
+                        </Button>
+                        <Button 
+                            className="bg-yellow-600 hover:bg-yellow-700"
+                            onClick={() => simulateSpecificIssue('brake-warning')}
+                        >
+                            Simulate Brake Warning
+                        </Button>
+                        <Button 
+                            className="bg-orange-600 hover:bg-orange-700"
+                            onClick={() => simulateSpecificIssue('transmission')}
+                        >
+                            Simulate Transmission Issue
                         </Button>
                     </div>
                 </div>
+
+                {/* Contact Requests Section */}
+                {contactRequests.length > 0 && (
+                    <div className="mb-8">
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <MessageSquare className="h-5 w-5" />
+                            Contact Requests
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {contactRequests.map((request) => (
+                                <Card key={request.id} className="bg-zinc-900 border-zinc-800">
+                                    <CardHeader>
+                                        <CardTitle className="text-lg">Vehicle: {request.vehicle_id}</CardTitle>
+                                        <CardDescription>
+                                            {new Date(request.created_at).toLocaleString()}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-gray-300">{request.message}</p>
+                                        <div className="mt-4">
+                                            <Button
+                                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                                onClick={async () => {
+                                                    try {
+                                                        const { error } = await supabase
+                                                            .from('shop_contact_requests')
+                                                            .update({ status: 'resolved' })
+                                                            .eq('id', request.id)
+                                                        
+                                                        if (error) throw error
+                                                        
+                                                        setContactRequests(prev => 
+                                                            prev.filter(r => r.id !== request.id)
+                                                        )
+                                                        toast.success('Request marked as resolved')
+                                                    } catch (error) {
+                                                        console.error('Error resolving request:', error)
+                                                        toast.error('Failed to resolve request')
+                                                    }
+                                                }}
+                                            >
+                                                Mark as Resolved
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {viewMode === 'table' ? <TableView /> : <GridView />}
             </div>
