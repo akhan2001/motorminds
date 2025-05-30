@@ -1,6 +1,7 @@
 'use client'
 
 import { VehicleServiceForm } from '@/components/vehicle-service-form'
+import { VehicleWarning } from '@/components/vehicle-warning'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -21,6 +22,8 @@ export default function FordEscapePage() {
                     <div>
                         <h1 className="text-3xl font-bold mb-2">2023 Ford Escape</h1>
                         <p className="text-gray-600 mb-6">Schedule service for your vehicle</p>
+                        
+                        <VehicleWarning vehicleId="550e8400-e29b-41d4-a716-446655440002" />
                         
                         <div className="relative aspect-video w-full mb-6">
                             <Image

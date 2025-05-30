@@ -8,7 +8,7 @@ import LoadingPage from '@/components/loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from '@/components/ui/button'
-import { AlertCircle, AlertTriangle, CheckCircle2, Gauge, TableIcon, LayoutGrid, MessageSquare } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Gauge, TableIcon, LayoutGrid, MessageSquare, ThermometerSun, Disc } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     Table,
@@ -34,7 +34,7 @@ interface ContactRequest {
     id: string
     vehicle_id: string
     message: string
-    status: string
+    status: 'pending' | 'resolved'
     created_at: string
 }
 
@@ -48,32 +48,40 @@ export default function OBDPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            // Fetch OBD data
-            const { data: obdData, error: obdError } = await supabase
-                .from('vehicle_obd_data')
-                .select('*')
-                .order('timestamp', { ascending: false })
-                .limit(50)
+            try {
+                // Fetch OBD data
+                const { data: obdData, error: obdError } = await supabase
+                    .from('vehicle_obd_data')
+                    .select('*')
+                    .order('timestamp', { ascending: false })
+                    .limit(50)
 
-            if (obdError) {
-                console.error('Error fetching OBD data:', obdError)
-            } else {
-                setObdData(obdData as OBDData[])
+                if (obdError) {
+                    console.error('Error fetching OBD data:', obdError)
+                    toast.error('Failed to fetch vehicle data')
+                } else {
+                    setObdData(obdData as OBDData[])
+                }
+
+                // Fetch contact requests with proper error handling
+                const { data: contactData, error: contactError } = await supabase
+                    .from('shop_contact_requests')
+                    .select('id, vehicle_id, message, status, created_at')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false })
+
+                if (contactError) {
+                    console.error('Error fetching contact requests:', contactError)
+                    toast.error('Failed to fetch contact requests')
+                } else {
+                    setContactRequests(contactData || [])
+                }
+            } catch (error) {
+                console.error('Error in fetchData:', error)
+                toast.error('An error occurred while fetching data')
+            } finally {
+                setIsLoading(false)
             }
-
-            // Fetch contact requests
-            const { data: contactData, error: contactError } = await supabase
-                .from('shop_contact_requests')
-                .select('*')
-                .order('created_at', { ascending: false })
-
-            if (contactError) {
-                console.error('Error fetching contact requests:', contactError)
-            } else {
-                setContactRequests(contactData as ContactRequest[])
-            }
-
-            setIsLoading(false)
         }
 
         fetchData()
@@ -95,18 +103,23 @@ export default function OBDPage() {
             })
             .subscribe()
 
-        // Subscribe to contact requests
+        // Subscribe to contact requests with proper channel name and error handling
         const contactSubscription = supabase
             .channel('shop_contact_requests_changes')
             .on('postgres_changes', {
-                event: 'INSERT',
+                event: '*',
                 schema: 'public',
-                table: 'shop_contact_requests'
+                table: 'shop_contact_requests',
+                filter: 'status=eq.pending'
             }, async (payload) => {
-                setContactRequests(prev => [payload.new as ContactRequest, ...prev])
-                toast.info('New contact request!', {
-                    description: `Vehicle ${payload.new.vehicle_id} needs assistance.`
-                })
+                if (payload.eventType === 'INSERT') {
+                    setContactRequests(prev => [payload.new as ContactRequest, ...prev])
+                    toast.info('New contact request!', {
+                        description: `Vehicle ${payload.new.vehicle_id} needs assistance.`
+                    })
+                } else if (payload.eventType === 'UPDATE' && payload.new.status === 'resolved') {
+                    setContactRequests(prev => prev.filter(r => r.id !== payload.new.id))
+                }
             })
             .subscribe()
 
@@ -130,7 +143,15 @@ export default function OBDPage() {
     }
 
     const simulateSpecificIssue = async (type: 'engine-failure' | 'brake-warning' | 'transmission') => {
+        // Generate UUIDs for demo vehicles if they don't exist
+        const demoVehicles = {
+            'chevrolet-camaro-1': '550e8400-e29b-41d4-a716-446655440000',
+            'audi-a4-1': '550e8400-e29b-41d4-a716-446655440001',
+            'ford-escape-1': '550e8400-e29b-41d4-a716-446655440002'
+        }
+
         const mockData: Record<typeof type, {
+            vehicle_id: string,
             rpm: number,
             engine_temp: number,
             fuel_level: number,
@@ -138,6 +159,7 @@ export default function OBDPage() {
             status: 'healthy' | 'warning' | 'critical'
         }> = {
             'engine-failure': {
+                vehicle_id: demoVehicles['chevrolet-camaro-1'],
                 rpm: 4800,
                 engine_temp: 115,
                 fuel_level: 45,
@@ -145,6 +167,7 @@ export default function OBDPage() {
                 status: 'critical'
             },
             'brake-warning': {
+                vehicle_id: demoVehicles['audi-a4-1'],
                 rpm: 1200,
                 engine_temp: 85,
                 fuel_level: 65,
@@ -152,6 +175,7 @@ export default function OBDPage() {
                 status: 'warning'
             },
             'transmission': {
+                vehicle_id: demoVehicles['ford-escape-1'],
                 rpm: 3200,
                 engine_temp: 95,
                 fuel_level: 55,
@@ -161,14 +185,21 @@ export default function OBDPage() {
         }
 
         try {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('vehicle_obd_data')
-                .insert({
-                    vehicle_id: 'demo-vehicle-1',
-                    ...mockData[type]
-                })
+                .insert(mockData[type])
+                .select()
+                .single()
 
-            if (error) throw error
+            if (error) {
+                console.error('Supabase error:', error)
+                throw error
+            }
+
+            if (!data) {
+                throw new Error('No data returned from insert')
+            }
+
             toast.success(`Simulated ${type.replace('-', ' ')} scenario`)
         } catch (error) {
             console.error('Error simulating data:', error)
@@ -211,23 +242,23 @@ export default function OBDPage() {
     }
 
     const TableView = () => (
-        <div className="rounded-md border border-zinc-800">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 overflow-hidden">
             <Table>
                 <TableHeader>
-                    <TableRow className="border-zinc-800 hover:bg-zinc-900">
-                        <TableHead>Vehicle ID</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>RPM</TableHead>
-                        <TableHead>Engine Temp</TableHead>
-                        <TableHead>Fuel Level</TableHead>
-                        <TableHead>DTC Codes</TableHead>
-                        <TableHead>Last Updated</TableHead>
+                    <TableRow className="hover:bg-zinc-800 border-zinc-800">
+                        <TableHead className="text-zinc-100">Vehicle ID</TableHead>
+                        <TableHead className="text-zinc-100">Status</TableHead>
+                        <TableHead className="text-zinc-100">RPM</TableHead>
+                        <TableHead className="text-zinc-100">Engine Temp</TableHead>
+                        <TableHead className="text-zinc-100">Fuel Level</TableHead>
+                        <TableHead className="text-zinc-100">DTC Codes</TableHead>
+                        <TableHead className="text-zinc-100">Last Updated</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {filteredData.map((data) => (
-                        <TableRow key={data.id} className="border-zinc-800 hover:bg-zinc-900">
-                            <TableCell className="font-medium">{data.vehicle_id}</TableCell>
+                        <TableRow key={data.id} className="hover:bg-zinc-800 border-zinc-800">
+                            <TableCell className="font-medium text-zinc-100">{data.vehicle_id}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
                                     {getStatusIcon(data.status)}
@@ -236,22 +267,22 @@ export default function OBDPage() {
                                     </span>
                                 </div>
                             </TableCell>
-                            <TableCell>{data.rpm}</TableCell>
-                            <TableCell>{data.engine_temp}°C</TableCell>
-                            <TableCell>{data.fuel_level}%</TableCell>
+                            <TableCell className="text-zinc-100">{data.rpm}</TableCell>
+                            <TableCell className="text-zinc-100">{data.engine_temp}°C</TableCell>
+                            <TableCell className="text-zinc-100">{data.fuel_level}%</TableCell>
                             <TableCell>
                                 <div className="flex flex-wrap gap-1">
                                     {data.dtc_codes && data.dtc_codes.map((code) => (
                                         <span 
                                             key={code}
-                                            className="px-2 py-0.5 text-xs rounded-full bg-red-900/50 text-red-200"
+                                            className="px-2 py-0.5 text-xs rounded-full bg-red-900/50 text-red-100 font-medium"
                                         >
                                             {code}
                                         </span>
                                     ))}
                                 </div>
                             </TableCell>
-                            <TableCell>{new Date(data.timestamp).toLocaleString()}</TableCell>
+                            <TableCell className="text-zinc-300">{new Date(data.timestamp).toLocaleString()}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -265,10 +296,10 @@ export default function OBDPage() {
                 <Card key={data.id} className="bg-zinc-900 border-zinc-800">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <div>
-                            <CardTitle className="text-lg">
+                            <CardTitle className="text-lg text-zinc-100">
                                 Vehicle ID: {data.vehicle_id}
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-zinc-300">
                                 {new Date(data.timestamp).toLocaleString()}
                             </CardDescription>
                         </div>
@@ -277,28 +308,34 @@ export default function OBDPage() {
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-center gap-2">
-                                <Gauge className="h-4 w-4 text-gray-400" />
+                                <Gauge className="h-4 w-4 text-blue-300" />
                                 <div>
-                                    <p className="text-sm text-gray-400">RPM</p>
-                                    <p>{data.rpm}</p>
+                                    <p className="text-sm text-zinc-300">RPM</p>
+                                    <p className="font-medium text-zinc-100">{data.rpm}</p>
                                 </div>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-400">Engine Temp</p>
-                                <p>{data.engine_temp}°C</p>
+                            <div className="flex items-center gap-2">
+                                <ThermometerSun className="h-4 w-4 text-blue-300" />
+                                <div>
+                                    <p className="text-sm text-zinc-300">Engine Temp</p>
+                                    <p className="font-medium text-zinc-100">{data.engine_temp}°C</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-400">Fuel Level</p>
-                                <p>{data.fuel_level}%</p>
+                            <div className="flex items-center gap-2">
+                                <Disc className="h-4 w-4 text-blue-300" />
+                                <div>
+                                    <p className="text-sm text-zinc-300">Fuel Level</p>
+                                    <p className="font-medium text-zinc-100">{data.fuel_level}%</p>
+                                </div>
                             </div>
                             {data.dtc_codes && data.dtc_codes.length > 0 && (
                                 <div className="col-span-2">
-                                    <p className="text-sm text-gray-400">DTC Codes</p>
-                                    <div className="flex flex-wrap gap-2 mt-1">
+                                    <p className="text-sm text-zinc-300 mb-2">DTC Codes</p>
+                                    <div className="flex flex-wrap gap-2">
                                         {data.dtc_codes.map((code) => (
                                             <span 
                                                 key={code}
-                                                className="px-2 py-1 text-xs rounded-full bg-red-900/50 text-red-200"
+                                                className="px-2 py-1 text-xs rounded-full bg-red-900/50 text-red-100 font-medium"
                                             >
                                                 {code}
                                             </span>
@@ -314,30 +351,33 @@ export default function OBDPage() {
     )
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-black">
             <Nav activeLink="OBD" />
             
             <div className="container mx-auto px-4 py-8">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-2xl font-bold">Vehicle Diagnostics</h1>
+                    <div className="flex items-center gap-3">
+                        <Gauge className="h-8 w-8 text-blue-300" />
+                        <h1 className="text-2xl font-bold text-zinc-100">Vehicle Diagnostics</h1>
+                    </div>
                     <div className="flex gap-4">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800 text-zinc-100">
                                 <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
-                                <SelectItem value="healthy">Healthy</SelectItem>
-                                <SelectItem value="warning">Warning</SelectItem>
-                                <SelectItem value="critical">Critical</SelectItem>
+                            <SelectContent className="bg-zinc-900 border-zinc-800">
+                                <SelectItem value="all" className="text-zinc-100">All Statuses</SelectItem>
+                                <SelectItem value="healthy" className="text-zinc-100">Healthy</SelectItem>
+                                <SelectItem value="warning" className="text-zinc-100">Warning</SelectItem>
+                                <SelectItem value="critical" className="text-zinc-100">Critical</SelectItem>
                             </SelectContent>
                         </Select>
                         
-                        <div className="flex rounded-lg overflow-hidden">
+                        <div className="flex rounded-lg overflow-hidden border border-zinc-800">
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className={`rounded-none ${viewMode === 'table' ? 'bg-zinc-800' : ''}`}
+                                className={`rounded-none ${viewMode === 'table' ? 'bg-zinc-800 text-blue-300' : 'bg-zinc-900 text-zinc-300'}`}
                                 onClick={() => setViewMode('table')}
                             >
                                 <TableIcon className="h-4 w-4" />
@@ -345,7 +385,7 @@ export default function OBDPage() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className={`rounded-none ${viewMode === 'grid' ? 'bg-zinc-800' : ''}`}
+                                className={`rounded-none ${viewMode === 'grid' ? 'bg-zinc-800 text-blue-300' : 'bg-zinc-900 text-zinc-300'}`}
                                 onClick={() => setViewMode('grid')}
                             >
                                 <LayoutGrid className="h-4 w-4" />
@@ -356,22 +396,22 @@ export default function OBDPage() {
 
                 {/* Simulation Controls */}
                 <div className="mb-8">
-                    <h2 className="text-xl font-bold mb-4">Simulation Controls</h2>
+                    <h2 className="text-xl font-bold mb-4 text-zinc-100">Simulation Controls</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Button 
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-red-900 hover:bg-red-800 text-red-100"
                             onClick={() => simulateSpecificIssue('engine-failure')}
                         >
                             Simulate Engine Failure
                         </Button>
                         <Button 
-                            className="bg-yellow-600 hover:bg-yellow-700"
+                            className="bg-yellow-900 hover:bg-yellow-800 text-yellow-100"
                             onClick={() => simulateSpecificIssue('brake-warning')}
                         >
                             Simulate Brake Warning
                         </Button>
                         <Button 
-                            className="bg-orange-600 hover:bg-orange-700"
+                            className="bg-orange-900 hover:bg-orange-800 text-orange-100"
                             onClick={() => simulateSpecificIssue('transmission')}
                         >
                             Simulate Transmission Issue
@@ -382,46 +422,46 @@ export default function OBDPage() {
                 {/* Contact Requests Section */}
                 {contactRequests.length > 0 && (
                     <div className="mb-8">
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <MessageSquare className="h-5 w-5" />
+                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-zinc-100">
+                            <MessageSquare className="h-5 w-5 text-blue-300" />
                             Contact Requests
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {contactRequests.map((request) => (
                                 <Card key={request.id} className="bg-zinc-900 border-zinc-800">
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Vehicle: {request.vehicle_id}</CardTitle>
-                                        <CardDescription>
+                                        <CardTitle className="text-lg text-zinc-100">
+                                            Vehicle: {request.vehicle_id}
+                                        </CardTitle>
+                                        <CardDescription className="text-zinc-300">
                                             {new Date(request.created_at).toLocaleString()}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-gray-300">{request.message}</p>
-                                        <div className="mt-4">
-                                            <Button
-                                                className="w-full bg-blue-600 hover:bg-blue-700"
-                                                onClick={async () => {
-                                                    try {
-                                                        const { error } = await supabase
-                                                            .from('shop_contact_requests')
-                                                            .update({ status: 'resolved' })
-                                                            .eq('id', request.id)
-                                                        
-                                                        if (error) throw error
-                                                        
-                                                        setContactRequests(prev => 
-                                                            prev.filter(r => r.id !== request.id)
-                                                        )
-                                                        toast.success('Request marked as resolved')
-                                                    } catch (error) {
-                                                        console.error('Error resolving request:', error)
-                                                        toast.error('Failed to resolve request')
-                                                    }
-                                                }}
-                                            >
-                                                Mark as Resolved
-                                            </Button>
-                                        </div>
+                                        <p className="text-zinc-100 mb-4">{request.message}</p>
+                                        <Button
+                                            className="w-full bg-blue-900 hover:bg-blue-800 text-blue-100"
+                                            onClick={async () => {
+                                                try {
+                                                    const { error } = await supabase
+                                                        .from('shop_contact_requests')
+                                                        .update({ status: 'resolved' })
+                                                        .eq('id', request.id)
+                                                    
+                                                    if (error) throw error
+                                                    
+                                                    setContactRequests(prev => 
+                                                        prev.filter(r => r.id !== request.id)
+                                                    )
+                                                    toast.success('Request marked as resolved')
+                                                } catch (error) {
+                                                    console.error('Error resolving request:', error)
+                                                    toast.error('Failed to resolve request')
+                                                }
+                                            }}
+                                        >
+                                            Mark as Resolved
+                                        </Button>
                                     </CardContent>
                                 </Card>
                             ))}
