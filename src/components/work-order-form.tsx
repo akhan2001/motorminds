@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 import { decodeVin } from '@/app/utils/vin-decode'
 import { WorkOrderPartsLabor } from "@/app/mechanic-hub/components/work-order-parts-labor"
+import { VehicleSearchContainer } from "@/app/mechanic-hub/components/vehicle-search-container"
 
 // Minimal Task interface for local usage
 interface Task {
@@ -92,6 +94,9 @@ const [workOrderData, setWorkOrderData] = useState({
 	color: "",
 	licensePlate: "",
 })
+
+// Add search mode state
+const [searchMode, setSearchMode] = useState<'customer' | 'vehicle'>('customer')
 
 // The list of possible customers (each with an array of vehicles)
 const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([])
@@ -406,267 +411,319 @@ return (
 					</div>
 
 					<div className="space-y-4 sm:space-y-6 py-4">
+						{/* Search Mode Toggle */}
+						<Tabs 
+							defaultValue="customer" 
+							className="w-full"
+							onValueChange={(value) => setSearchMode(value as 'customer' | 'vehicle')}
+						>
+							<TabsList className="grid w-fit grid-cols-2 bg-[#1A1A1A] border-[#626262]">
+								<TabsTrigger 
+									value="customer" 
+									className="data-[state=active]:bg-[#292929] data-[state=active]:text-white"
+								>
+									Search By Customer
+								</TabsTrigger>
+								<TabsTrigger 
+									value="vehicle"
+									className="data-[state=active]:bg-[#292929] data-[state=active]:text-white"
+								>
+									Search By Vehicle
+								</TabsTrigger>
+							</TabsList>
 
-						{/* Customer Information */}
-						<div className="space-y-4">
-							<h3 className="text-lg font-medium text-white">Customer Information</h3>
-							<div className="bg-[#1A1A1A] rounded-xl p-6">
-								<div className="flex items-start gap-4">
-									<Avatar className="h-16 w-16">
-									<AvatarImage src="/placeholder.svg?height=64&width=64" />
-									<AvatarFallback className="bg-[#b22222] text-white text-xl">
-										{workOrderData.customerName?.split(' ').map(n => n[0]).join('')}
-									</AvatarFallback>
-									</Avatar>
-									<div className="flex-1 space-y-4">
-									<div className="flex flex-wrap gap-2">
-										<div className="w-full sm:w-auto sm:flex-1">
+							<TabsContent value="customer">
+								{/* Customer Information */}
+								<div className="space-y-4">
+									<h3 className="text-lg font-medium text-white">Customer Information</h3>
+									<div className="bg-[#1A1A1A] rounded-xl p-6">
+										<div className="flex items-start gap-4">
+											<Avatar className="h-16 w-16">
+											<AvatarImage src="/placeholder.svg?height=64&width=64" />
+											<AvatarFallback className="bg-[#b22222] text-white text-xl">
+												{workOrderData.customerName?.split(' ').map(n => n[0]).join('')}
+											</AvatarFallback>
+											</Avatar>
+											<div className="flex-1 space-y-4">
+											<div className="flex flex-wrap gap-2">
+												<div className="w-full sm:w-auto sm:flex-1">
+												<Select
+													value={workOrderData.customerId}
+													onValueChange={handleCustomerChange}
+												>
+													<SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500">
+													<SelectValue placeholder="Select Customer" />
+													</SelectTrigger>
+													<SelectContent className="bg-[#292929] text-white border-[#626262]">
+													<SelectItem value="new">+ Add New Customer</SelectItem>
+													{customerOptions.map((option) => (
+														<SelectItem key={option.id} value={option.id}>
+														{option.name} <span className="text-gray-400 text-xs">{formatPhoneNumber(option.phone)}</span>
+														</SelectItem>
+													))}
+													</SelectContent>
+												</Select>
+												</div>
+											</div>
+
+											{/* {workOrderData.customerId === "new" && ( */}
+												<div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+													<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+														{/* First row */}
+														<div>
+															<Input
+																className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+																placeholder="Customer Name"
+																value={workOrderData.customerName}
+																onChange={(e) =>
+																	setWorkOrderData(prev => ({ ...prev, customerName: e.target.value }))
+																}
+																disabled={workOrderData.customerId !== "new"}
+																required={workOrderData.customerId !== "new"}
+															/>
+														</div>
+														<div>
+															<Input
+																className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+																placeholder="Phone Number"
+																value={formatPhoneNumber(workOrderData.customerPhone)}
+																onChange={(e) =>
+																	setWorkOrderData(prev => ({ ...prev, customerPhone: e.target.value }))
+																}
+																disabled={workOrderData.customerId !== "new"}
+																required={workOrderData.customerId !== "new"}
+															/>
+														</div>
+														
+														{/* Second row */}
+														<div>
+															<Input
+																className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+																placeholder="Email Address"
+																type="email"
+																value={workOrderData.customerEmail}
+																onChange={(e) =>
+																	setWorkOrderData(prev => ({ ...prev, customerEmail: e.target.value }))
+																}
+																disabled={workOrderData.customerId !== "new"}
+															/>
+														</div>
+														<div>
+															<Input
+																className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+																placeholder="Address"
+																value={workOrderData.customerAddress}
+																onChange={(e) =>
+																	setWorkOrderData(prev => ({ ...prev, customerAddress: e.target.value }))
+																}
+																disabled={workOrderData.customerId !== "new"}
+															/>
+														</div>
+													</div>
+												</div>
+											{/* )} */}
+											</div>
+										</div>
+									</div>
+								</div>
+
+								{/* Vehicle Information */}
+								<div className="space-y-4">
+									<h3 className="text-lg font-medium text-white">Vehicle Information</h3>
+									<div className="bg-[#1A1A1A] rounded-xl p-6">
+									{workOrderData.customerId && workOrderData.customerId !== "new" && (
+										<div className="mb-4">
 										<Select
-											value={workOrderData.customerId}
-											onValueChange={handleCustomerChange}
+											value={workOrderData.selectedVehicleId}
+											onValueChange={handleVehicleChange}
 										>
 											<SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500">
-											<SelectValue placeholder="Select Customer" />
+											<SelectValue placeholder="Select a vehicle" />
 											</SelectTrigger>
 											<SelectContent className="bg-[#292929] text-white border-[#626262]">
-											<SelectItem value="new">+ Add New Customer</SelectItem>
-											{customerOptions.map((option) => (
-												<SelectItem key={option.id} value={option.id}>
-												{option.name} <span className="text-gray-400 text-xs">{formatPhoneNumber(option.phone)}</span>
+											{currentVehicles.map((v) => (
+												<SelectItem key={v.id} value={v.id}>
+												{`${v.year ?? ""} ${v.make ?? ""} ${v.model ?? ""}`.trim() || "Unnamed Vehicle"}
 												</SelectItem>
 											))}
+											<SelectItem value="new">+ Add New Vehicle</SelectItem>
 											</SelectContent>
 										</Select>
 										</div>
+									)}
+
+									<div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+										<div className="space-y-1.5">
+										<Label className="text-gray-400">Year</Label>
+										<Input
+											value={workOrderData.year}
+											onChange={(e) =>
+											setWorkOrderData(prev => ({ ...prev, year: e.target.value }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. 2015"
+											disabled={!workOrderData.customerId}
+										/>
+										</div>
+
+										<div className="space-y-1.5">
+										<Label className="text-gray-400">Make</Label>
+										<Input
+											value={workOrderData.make}
+											onChange={(e) =>
+											setWorkOrderData(prev => ({ ...prev, make: e.target.value }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. Honda"
+											disabled={!workOrderData.customerId}
+										/>
+										</div>
+
+										<div className="space-y-1.5">
+										<Label className="text-gray-400">Model</Label>
+										<Input
+											value={workOrderData.model}
+											onChange={(e) =>
+											setWorkOrderData(prev => ({ ...prev, model: e.target.value }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. Civic"
+											disabled={!workOrderData.customerId}
+										/>
+										</div>
+
+										<div className="space-y-1.5">
+										<Label className="text-gray-400">Engine</Label>
+										<Input
+											value={workOrderData.engineType}
+											onChange={(e) =>
+											setWorkOrderData(prev => ({ ...prev, engineType: e.target.value }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. 1.8L i-VTEC"
+											disabled={!workOrderData.customerId}
+										/>
+										</div>
+
+										<div className="space-y-1.5">
+										<Label className="text-gray-400">Color</Label>
+										<Input
+											value={workOrderData.color || ""}
+											onChange={(e) =>
+											setWorkOrderData(prev => ({ ...prev, color: e.target.value }))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+											placeholder="e.g. Silver"
+											disabled={!workOrderData.customerId}
+										/>
+										</div>
 									</div>
 
-									{/* {workOrderData.customerId === "new" && ( */}
-										<div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
-											<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-												{/* First row */}
-												<div>
-													<Input
-														className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-														placeholder="Customer Name"
-														value={workOrderData.customerName}
-														onChange={(e) =>
-															setWorkOrderData(prev => ({ ...prev, customerName: e.target.value }))
-														}
-														disabled={workOrderData.customerId !== "new"}
-														required={workOrderData.customerId !== "new"}
-													/>
-												</div>
-												<div>
-													<Input
-														className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-														placeholder="Phone Number"
-														value={formatPhoneNumber(workOrderData.customerPhone)}
-														onChange={(e) =>
-															setWorkOrderData(prev => ({ ...prev, customerPhone: e.target.value }))
-														}
-														disabled={workOrderData.customerId !== "new"}
-														required={workOrderData.customerId !== "new"}
-													/>
-												</div>
-												
-												{/* Second row */}
-												<div>
-													<Input
-														className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-														placeholder="Email Address"
-														type="email"
-														value={workOrderData.customerEmail}
-														onChange={(e) =>
-															setWorkOrderData(prev => ({ ...prev, customerEmail: e.target.value }))
-														}
-														disabled={workOrderData.customerId !== "new"}
-													/>
-												</div>
-												<div>
-													<Input
-														className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-														placeholder="Address"
-														value={workOrderData.customerAddress}
-														onChange={(e) =>
-															setWorkOrderData(prev => ({ ...prev, customerAddress: e.target.value }))
-														}
-														disabled={workOrderData.customerId !== "new"}
-													/>
-												</div>
+									<div className="grid grid-cols-2 gap-3 mt-3">
+										<div className="space-y-1.5">
+										<Label className="text-gray-400">VIN</Label>
+										<div className="flex gap-2">
+											<Input
+											value={workOrderData.vin}
+											onChange={(e) =>
+												setWorkOrderData(prev => ({ 
+												...prev, 
+												vin: e.target.value.toUpperCase() 
+												}))
+											}
+											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 flex-1"
+											placeholder="Enter VIN number"
+											disabled={!workOrderData.customerId}
+											/>
+											<Button
+											type="button"
+											variant="outline"
+											className="bg-[#292929] text-white border-[#626262] hover:bg-[#626262] hover:text-white"
+											onClick={async () => {
+												try {
+												const vehicleData = await decodeVin(workOrderData.vin);
+												if (vehicleData) {
+													setWorkOrderData(prev => ({
+													...prev,
+													year: vehicleData.year,
+													make: vehicleData.make,
+													model: vehicleData.model,
+													engineType: vehicleData.engine,
+													}));
+													toast.success("Vehicle information decoded successfully");
+												}
+												} catch (error) {
+												toast.error(error instanceof Error ? error.message : 'Failed to decode VIN');
+												}
+											}}
+											disabled={!workOrderData.customerId || !workOrderData.vin}
+											>
+											<SearchIcon className="h-4 w-4" />
+											</Button>
+										</div>
+										</div>
+
+										<div className="grid grid-cols-2 gap-3">
+											<div className="space-y-1.5">
+												<Label className="text-gray-400">License Plate</Label>
+												<Input
+													value={workOrderData.licensePlate || ""}
+													onChange={(e) =>
+														setWorkOrderData(prev => ({ ...prev, licensePlate: e.target.value.toUpperCase() }))
+													}
+													className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+													placeholder="e.g. ABC123"
+													disabled={!workOrderData.customerId}
+												/>
+											</div>
+
+											<div className="space-y-1.5">
+												<Label className="text-gray-400">Mileage</Label>
+												<Input
+													value={workOrderData.mileage}
+													onChange={(e) =>
+													setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
+													}
+													className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+													placeholder="e.g. 45,000 miles"
+													disabled={!workOrderData.customerId}
+												/>
 											</div>
 										</div>
-									{/* )} */}
+									</div>
 									</div>
 								</div>
-							</div>
-						</div>
+							</TabsContent>
 
-						{/* Vehicle Information */}
-						<div className="space-y-4">
-							<h3 className="text-lg font-medium text-white">Vehicle Information</h3>
-							<div className="bg-[#1A1A1A] rounded-xl p-6">
-							{workOrderData.customerId && workOrderData.customerId !== "new" && (
-								<div className="mb-4">
-								<Select
-									value={workOrderData.selectedVehicleId}
-									onValueChange={handleVehicleChange}
-								>
-									<SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500">
-									<SelectValue placeholder="Select a vehicle" />
-									</SelectTrigger>
-									<SelectContent className="bg-[#292929] text-white border-[#626262]">
-									{currentVehicles.map((v) => (
-										<SelectItem key={v.id} value={v.id}>
-										{`${v.year ?? ""} ${v.make ?? ""} ${v.model ?? ""}`.trim() || "Unnamed Vehicle"}
-										</SelectItem>
-									))}
-									<SelectItem value="new">+ Add New Vehicle</SelectItem>
-									</SelectContent>
-								</Select>
-								</div>
-							)}
-
-							<div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">Year</Label>
-								<Input
-									value={workOrderData.year}
-									onChange={(e) =>
-									setWorkOrderData(prev => ({ ...prev, year: e.target.value }))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-									placeholder="e.g. 2015"
-									disabled={!workOrderData.customerId}
-								/>
-								</div>
-
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">Make</Label>
-								<Input
-									value={workOrderData.make}
-									onChange={(e) =>
-									setWorkOrderData(prev => ({ ...prev, make: e.target.value }))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-									placeholder="e.g. Honda"
-									disabled={!workOrderData.customerId}
-								/>
-								</div>
-
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">Model</Label>
-								<Input
-									value={workOrderData.model}
-									onChange={(e) =>
-									setWorkOrderData(prev => ({ ...prev, model: e.target.value }))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-									placeholder="e.g. Civic"
-									disabled={!workOrderData.customerId}
-								/>
-								</div>
-
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">Engine</Label>
-								<Input
-									value={workOrderData.engineType}
-									onChange={(e) =>
-									setWorkOrderData(prev => ({ ...prev, engineType: e.target.value }))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-									placeholder="e.g. 1.8L i-VTEC"
-									disabled={!workOrderData.customerId}
-								/>
-								</div>
-
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">Color</Label>
-								<Input
-									value={workOrderData.color || ""}
-									onChange={(e) =>
-									setWorkOrderData(prev => ({ ...prev, color: e.target.value }))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-									placeholder="e.g. Silver"
-									disabled={!workOrderData.customerId}
-								/>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-2 gap-3 mt-3">
-								<div className="space-y-1.5">
-								<Label className="text-gray-400">VIN</Label>
-								<div className="flex gap-2">
-									<Input
-									value={workOrderData.vin}
-									onChange={(e) =>
-										setWorkOrderData(prev => ({ 
-										...prev, 
-										vin: e.target.value.toUpperCase() 
-										}))
-									}
-									className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 flex-1"
-									placeholder="Enter VIN number"
-									disabled={!workOrderData.customerId}
-									/>
-									<Button
-									type="button"
-									variant="outline"
-									className="bg-[#292929] text-white border-[#626262] hover:bg-[#626262] hover:text-white"
-									onClick={async () => {
-										try {
-										const vehicleData = await decodeVin(workOrderData.vin);
-										if (vehicleData) {
+							<TabsContent value="vehicle" className="mt-0">
+								<VehicleSearchContainer
+									onVehicleSelect={(vehicle) => {
+										// Find the customer associated with this vehicle
+										const customer = customerOptions.find(c => 
+											c.vehicles.some(v => v.id === vehicle.id)
+										);
+										
+										if (customer) {
 											setWorkOrderData(prev => ({
-											...prev,
-											year: vehicleData.year,
-											make: vehicleData.make,
-											model: vehicleData.model,
-											engineType: vehicleData.engine,
+												...prev,
+												customerId: customer.id,
+												customerName: customer.name,
+												customerPhone: customer.phone,
+												selectedVehicleId: vehicle.id,
+												year: vehicle.year || "",
+												make: vehicle.make || "",
+												model: vehicle.model || "",
+												engineType: vehicle.engine_type || "",
+												vin: vehicle.vin || "",
+												color: vehicle.color || "",
+												mileage: vehicle.mileage || "",
+												licensePlate: vehicle.license_plate || "",
 											}));
-											toast.success("Vehicle information decoded successfully");
-										}
-										} catch (error) {
-										toast.error(error instanceof Error ? error.message : 'Failed to decode VIN');
 										}
 									}}
-									disabled={!workOrderData.customerId || !workOrderData.vin}
-									>
-									<SearchIcon className="h-4 w-4" />
-									</Button>
-								</div>
-								</div>
-
-								<div className="grid grid-cols-2 gap-3">
-									<div className="space-y-1.5">
-										<Label className="text-gray-400">License Plate</Label>
-										<Input
-											value={workOrderData.licensePlate || ""}
-											onChange={(e) =>
-												setWorkOrderData(prev => ({ ...prev, licensePlate: e.target.value.toUpperCase() }))
-											}
-											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-											placeholder="e.g. ABC123"
-											disabled={!workOrderData.customerId}
-										/>
-									</div>
-
-									<div className="space-y-1.5">
-										<Label className="text-gray-400">Mileage</Label>
-										<Input
-											value={workOrderData.mileage}
-											onChange={(e) =>
-											setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
-											}
-											className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-											placeholder="e.g. 45,000 miles"
-											disabled={!workOrderData.customerId}
-										/>
-									</div>
-								</div>
-							</div>
-							</div>
-						</div>
+								/>
+							</TabsContent>
+						</Tabs>
 
 						{/* Work Order Details */}
 						<div className="space-y-4">
@@ -827,7 +884,6 @@ return (
 							</div>
 							</div>
 						</div>
-
 					</div>
 				</div>
 
