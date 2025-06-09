@@ -60,7 +60,7 @@ export default function VehiclesPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav activeLink="Vehicles" />
+            <Nav activeLink="Customers" />
             <main className="container mx-auto p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">All Vehicles</h1>
