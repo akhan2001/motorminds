@@ -72,6 +72,7 @@ export function Nav(
 	const customerSubItems = [
 		{ name: "All Customers", href: "/customers" },
 		{ name: "Customer Intake Form", href: "/customer-intake" },
+		{ name: "Customer Vehicles", href: "/customers/customer-vehicles" },
 	]
 
 	const navItems = [
