@@ -1,7 +1,7 @@
 "use client"
 
 import { supabase } from "@/lib/supabase"
-import { Settings, HelpCircle, Menu, ChevronDown } from "lucide-react"
+import { Settings, HelpCircle, Menu, ChevronDown, MessageCircle } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -208,6 +208,9 @@ export function Nav(
 				</div>
 				{/* Right: Actions */}
 				<div className="hidden lg:flex items-center gap-4">
+					<button className="text-[#979797] hover:text-white transition-colors" onClick={() => router.push("/messages")}>
+						<MessageCircle className="inline-block w-5 h-5" />
+					</button>
 					<button className="text-[#979797] hover:text-white transition-colors">
 						{/* <span className="hidden md:inline mr-2">Help</span> */}
 						<AlertDialog>
