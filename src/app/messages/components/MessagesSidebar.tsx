@@ -24,7 +24,7 @@ interface Props {
 
 export default function MessagesSidebar({ onSelect, activeId }: Props) {
     return (
-        <aside className="w-[300px] border-r border-[#1f1f1f] p-4 bg-[#0d0d0d] text-white">
+        <aside className="w-[300px] border-r border-[#1f1f1f] p-4 bg-black text-white">
             <h2 className="text-xl font-semibold mb-4">Messages</h2>
             <input
                 type="text"

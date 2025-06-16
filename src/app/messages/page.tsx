@@ -57,8 +57,10 @@ export default function MessagesPage() {
 
     return (
         <div className="min-h-screen bg-black text-white">
-            <Nav activeLink="Invoices" />
-            <div className="max-w-[1400px] mx-auto flex border border-[#1f1f1f] rounded-lg overflow-hidden pt-16">
+            <div className="pb-16">
+                <Nav activeLink="Messages" />
+            </div>
+            <div className="max-w-[1400px] mx-auto flex border border-[#1f1f1f] rounded-lg overflow-hidden">
                 <MessagesSidebar
                     onSelect={(convo) => setActiveConversation(convo)}
                     activeId={activeConversation?.id || null}

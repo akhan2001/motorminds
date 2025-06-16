@@ -33,7 +33,11 @@ export default function MessagePanel({ conversation }: Props) {
             <div className="flex-1 overflow-y-auto mb-4">
                 <div className="mb-2">
                     <div className="bg-[#1f1f1f] p-3 rounded-md w-fit mb-1 text-sm">See you later</div>
-                    <div className="bg-[#b22222] text-white p-3 rounded-md w-fit text-sm self-end">Are you available next week?</div>
+                    <div className="flex justify-end mb-4">
+                        <div className="bg-[#b22222] text-white p-3 rounded-md w-fit text-sm">
+                            Are you available next week?
+                        </div>
+                    </div>
                 </div>
             </div>
 
