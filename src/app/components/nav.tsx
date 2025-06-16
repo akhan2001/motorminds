@@ -68,7 +68,7 @@ export function Nav(
 		{ name: "Lead Generation", href: "/lead-generation" },
 		{ name: "Opportunity Management", href: "/lead-generation/customer-retention" },
 	]
-	
+
 	const customerSubItems = [
 		{ name: "All Customers", href: "/customers" },
 		{ name: "Customer Intake Form", href: "/customer-intake" },
@@ -77,8 +77,8 @@ export function Nav(
 
 	const navItems = [
 		{ name: "Dashboard", href: "/" },
-		{ 
-			name: "Mechanic Hub", 
+		{
+			name: "Mechanic Hub",
 			href: "/mechanic-hub",
 			hasDropdown: true,
 			subItems: mechanicHubSubItems
@@ -86,19 +86,20 @@ export function Nav(
 		// { name: "Tasks", href: "/tasks" },
 		{ name: "Mia AI", href: "/chat" },
 		{ name: "Invoices", href: "/invoices" },
-		{ 
+		{
 			name: "Lead Generation", href: "/lead-generation",
 			// href: "/lead-generation",
 			// hasDropdown: true,
 			// subItems: leadGenerationSubItems
 		},
 		{ name: "Loyalty", href: "/loyalty" },
-		{ 
-			name: "Customers", 
+		{
+			name: "Customers",
 			href: "/customers",
 			hasDropdown: true,
 			subItems: customerSubItems
 		},
+		{ name: "Messages", href: "/messages" },
 		// { name: "Customer Intake", href: "/customer-intake" },
 	]
 
@@ -129,30 +130,30 @@ export function Nav(
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}
 					<div className="flex items-center gap-4 py-3">
-						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
-						onClick={() => router.push("/")}
+						<div
+							className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
+							onClick={() => router.push("/")}
 						>
 							<Image
-							src="/motorminds-logo-white (1).svg"
-							alt="Motorminds Logo"
-							width={35}
-							height={35}
-							className="w-8 h-8"
+								src="/motorminds-logo-white (1).svg"
+								alt="Motorminds Logo"
+								width={35}
+								height={35}
+								className="w-8 h-8"
 							/>
 							<span className="text-white font-medium">Motorminds</span>
 						</div>
 						<div className="hidden lg:block">
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-white border-[#979797]">Premium</Badge>
-								</TooltipTrigger>
-								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
-									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Badge variant="outline" className="cursor-default text-white border-[#979797]">Premium</Badge>
+									</TooltipTrigger>
+									<TooltipContent className="bg-[#1f1f1f] text-white border-none">
+										<p className="text-xs text-[#FBBC05]">You are a premium user</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 						</div>
 					</div>
 					{/* Center: Navigation Links */}
@@ -162,12 +163,11 @@ export function Nav(
 								<div key={item.name} className="relative flex flex-col">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<button 
-												className={`py-2 border-b-2 flex items-center gap-1 ${
-													activeLink === item.name
-													? "text-[#b22222] border-[#b22222]"
-													: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
-												}`}
+											<button
+												className={`py-2 border-b-2 flex items-center gap-1 ${activeLink === item.name
+														? "text-[#b22222] border-[#b22222]"
+														: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+													}`}
 											>
 												{item.name}
 												<ChevronDown className="h-4 w-4" />
@@ -175,7 +175,7 @@ export function Nav(
 										</DropdownMenuTrigger>
 										<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f] min-w-[180px]">
 											{item.subItems?.map((subItem) => (
-												<DropdownMenuItem 
+												<DropdownMenuItem
 													key={subItem.name}
 													onClick={() => handleSubItemClick(item.name, subItem.href)}
 													className="cursor-pointer hover:bg-[#1f1f1f] hover:text-white"
@@ -191,15 +191,14 @@ export function Nav(
 									key={item.name}
 									href="#"
 									onClick={() => handleNavClick(item.name, item.href)}
-									className={`py-2 border-b-2 ${
-										activeLink === item.name
-										? "text-[#b22222] border-[#b22222]"
-										: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
-									}`}
+									className={`py-2 border-b-2 ${activeLink === item.name
+											? "text-[#b22222] border-[#b22222]"
+											: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+										}`}
 								>
 									{item.name}
 									{item.name === "Mia AI" &&
-									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
+										<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
 									}
 								</a>
 							)
@@ -239,14 +238,14 @@ export function Nav(
 					</button> */}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-								<Avatar className="w-7 h-7 cursor-pointer">
-									<AvatarImage src={avatar} />
-									<AvatarFallback>AK</AvatarFallback>
-								</Avatar>
+							<Avatar className="w-7 h-7 cursor-pointer">
+								<AvatarImage src={avatar} />
+								<AvatarFallback>AK</AvatarFallback>
+							</Avatar>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 							<AlertDialog>
-							<AlertDialogTrigger asChild>
+								<AlertDialogTrigger asChild>
 									<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
 										<LogOut className="w-4 h-4 mr-2" />
 										Logout
@@ -284,7 +283,7 @@ export function Nav(
 				</div>
 				{/* Right: Mobile Menu (only visible on mobile) */}
 				<div className="lg:hidden">
-					<MobileNav 
+					<MobileNav
 						navItems={navItems}
 						activeLink={activeLink}
 						avatar={avatar}
