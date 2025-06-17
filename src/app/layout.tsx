@@ -35,7 +35,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${bricolageGrotesque.variable} antialiased`}>
         <Providers>
-          {children}
+              {children}
         </Providers>
         <Toaster />
         <Analytics />

@@ -40,17 +40,37 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 	const handleRefreshInsights = async () => {
 		if (refreshing || !taskId || !workOrderData) return;
 		
+		// Additional validation
+		if (!shopId) {
+			console.error("Error refreshing insights: Shop ID is required");
+			return;
+		}
+		
 		try {
 			setRefreshing(true);
 			
+			// Ensure workOrderData has the shop_id property
+			const workOrderWithShopId = {
+				...workOrderData,
+				shop_id: shopId, // Ensure shop_id is included
+				id: taskId // Ensure the repair order ID is included
+			};
+			
+			console.log("Refreshing insights with data:", {
+				shopId,
+				taskId,
+				hasWorkOrderData: !!workOrderData
+			});
+			
 			const result = await generateImmediateAnalysis(
-				workOrderData,
+				workOrderWithShopId,
 				insights?.id || ''
 			);
 			
 			if (result.success) {
 				// Fetch the latest data after generation
 				await fetchInsights();
+				console.log("Insights refreshed successfully");
 			} else {
 				console.error("Error refreshing insights:", result.error);
 			}

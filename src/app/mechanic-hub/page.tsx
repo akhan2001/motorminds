@@ -5,6 +5,7 @@ import { EnhancedWorkOrderList } from "@/components/enhanced-work-order-list"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import { CreateWorkOrderButton } from "./components/CreateWorkOrderButton"
 
 export default function MechanicHubPage() {
 	const [shopId, setShopId] = useState<string | null>(null)
@@ -59,10 +60,27 @@ export default function MechanicHubPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-black">
+		<div className="min-h-screen bg-black text-white">
 			<Nav activeLink="Mechanic Hub" />
 			<div className="p-8">
-				<h1 className="text-4xl font-bold text-white mb-8">Mechanics Hub</h1>
+				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
+					<div className="flex flex-col">
+						<h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2">Mechanic Hub</h1>
+						<p className="text-gray-400 text-sm sm:text-base">
+							View and manage work orders assigned to you. You can also view your own work orders and see the status of your work orders.
+						</p>
+					</div>
+					<div className="flex flex-row gap-4 w-full sm:w-auto justify-end">
+						<CreateWorkOrderButton 
+							shopId={shopId}
+							onWorkOrderCreated={() => {
+								// Refresh the work order list if needed
+								console.log("Work order created, refreshing list...")
+								router.refresh()
+							}}
+						/>
+					</div>
+				</div>
 				<div className="bg-[#1A1A1A] rounded-lg shadow-lg p-6">
 					<EnhancedWorkOrderList 
 						shopId={shopId}
