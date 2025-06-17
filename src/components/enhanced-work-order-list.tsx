@@ -1,11 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Search, Filter, ChevronDown, ChevronUp, LayoutGrid, List, LayoutList } from 'lucide-react'
+import { Search, Filter, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Select,
   SelectContent,
@@ -15,8 +14,6 @@ import {
 } from '@/components/ui/select'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWorkOrders, useFilteredWorkOrders, type WorkOrder } from '@/hooks/useWorkOrders'
-import { WorkOrderThinView } from '@/app/mechanic-hub/components/WorkOrderThinView'
-import { WorkOrderNormalView } from '@/app/mechanic-hub/components/WorkOrderNormalView'
 import { WorkOrderCardView } from '@/app/mechanic-hub/components/WorkOrderCardView'
 import { TaskDetailsModal, type DetailedRepairOrder } from '@/components/task-details-modal'
 
@@ -26,20 +23,18 @@ interface EnhancedWorkOrderListProps {
 }
 
 const statusColors = {
-  'Pending': 'bg-[#b22222]',
-  'In Progress': 'bg-[#d6cd24]',
-  'Waiting on Customer': 'bg-[#9d9d9d]',
-  'Completed': 'bg-[#1eb386]',
-  'Cancelled': 'bg-[#e23232]'
+  'Pending': 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20',
+  'In Progress': 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
+  'Waiting on Customer': 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20',
+  'Completed': 'bg-green-500/10 text-green-500 hover:bg-green-500/20',
+  'Cancelled': 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
 }
 
 const priorityColors = {
-  'High': 'bg-[#b22222]',
-  'Medium': 'bg-[#d6cd24]',
-  'Low': 'bg-[#1eb386]'
+  'High': 'bg-red-500/10 text-red-500 hover:bg-red-500/20',
+  'Medium': 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20',
+  'Low': 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
 }
-
-type ViewType = 'thin' | 'normal' | 'card'
 
 export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWorkOrderListProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -50,11 +45,9 @@ export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWork
     'Completed': true,
     'Cancelled': true
   })
-  const [expandedWorkOrder, setExpandedWorkOrder] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [technicianFilter, setTechnicianFilter] = useState<string>('all')
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all')
-  const [viewType, setViewType] = useState<ViewType>('normal')
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<DetailedRepairOrder | null>(null)
 
   const { data: workOrders, isLoading } = useWorkOrders(shopId)
@@ -71,10 +64,6 @@ export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWork
       ...prev,
       [status]: !prev[status]
     }))
-  }
-
-  const toggleWorkOrder = (workOrderId: string) => {
-    setExpandedWorkOrder(expandedWorkOrder === workOrderId ? null : workOrderId)
   }
 
   const handleWorkOrderClick = (order: WorkOrder) => {
@@ -138,109 +127,56 @@ export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWork
     )
   }
 
-  const renderWorkOrder = (order: WorkOrder) => {
-    const props = {
-      order,
-      statusColors,
-      priorityColors,
-      onClick: () => handleWorkOrderClick(order),
-      onWorkOrderClick
-    }
-
-    switch (viewType) {
-      case 'thin':
-        return <WorkOrderThinView key={order.id} {...props} />
-      case 'card':
-        return <WorkOrderCardView key={order.id} {...props} />
-      default:
-        return (
-          <WorkOrderNormalView
-            key={order.id}
-            {...props}
-            isExpanded={expandedWorkOrder === order.id}
-            onToggleExpand={toggleWorkOrder}
-          />
-        )
-    }
-  }
-
   return (
     <>
-      <div className="flex flex-col h-full bg-[#1A1A1A] rounded-lg">
-        {/* Header with search, filters, and view options */}
+      <div className="flex flex-col h-full bg-[#1A1A1A]">
+        {/* Header */}
         <div className="p-4 border-b border-[#222222]">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9d9d9d] h-4 w-4" />
-              <Input
-                placeholder="Search by VIN, Customer, or Vehicle..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-[#222222] border-[#333333] text-white placeholder-[#9d9d9d]"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
-                <SelectValue placeholder="Filter by Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#222222] border-[#333333]">
-                <SelectItem value="all" className="text-white">All Statuses</SelectItem>
-                {Object.keys(statusColors).map(status => (
-                  <SelectItem key={status} value={status} className="text-white">{status}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={technicianFilter} onValueChange={setTechnicianFilter}>
-              <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
-                <SelectValue placeholder="Filter by Technician" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#222222] border-[#333333]">
-                <SelectItem value="all" className="text-white">All Technicians</SelectItem>
-                {Array.from(new Set<string>(workOrders?.flatMap((order: WorkOrder) => 
-                  order.repair_order_details
-                    .map((detail) => detail.Assigned_to)
-                    .filter((tech): tech is string => tech !== null)
-                ) || [])).map((tech) => (
-                  <SelectItem key={tech} value={tech} className="text-white">{tech}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-              <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#222222] border-[#333333]">
-                <SelectItem value="all" className="text-white">All Time</SelectItem>
-                <SelectItem value="today" className="text-white">Today</SelectItem>
-                <SelectItem value="week" className="text-white">This Week</SelectItem>
-                <SelectItem value="month" className="text-white">This Month</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={viewType === 'thin' ? 'bg-[#222222]' : ''}
-                onClick={() => setViewType('thin')}
-              >
-                <LayoutList className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={viewType === 'normal' ? 'bg-[#222222]' : ''}
-                onClick={() => setViewType('normal')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={viewType === 'card' ? 'bg-[#222222]' : ''}
-                onClick={() => setViewType('card')}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
+          <div className="flex flex-col gap-4">
+            {/* Search and Filters */}
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9d9d9d]" />
+                <Input
+                  placeholder="Search by VIN, Customer, or Vehicle..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 bg-[#222222] border-[#333333] text-white placeholder:text-[#9d9d9d]"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Waiting on Customer">Waiting on Customer</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={technicianFilter} onValueChange={setTechnicianFilter}>
+                <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
+                  <SelectValue placeholder="All Technicians" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Technicians</SelectItem>
+                  {/* Add technician options here */}
+                </SelectContent>
+              </Select>
+              <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
+                  <SelectValue placeholder="All Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -276,15 +212,18 @@ export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWork
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {viewType === 'card' ? (
-                      <div className="grid grid-cols-1 gap-4 p-4">
-                        {orders.map((order) => renderWorkOrder(order))}
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-[#222222]">
-                        {orders.map((order) => renderWorkOrder(order))}
-                      </div>
-                    )}
+                    <div className="grid grid-cols-1 gap-4 p-4">
+                      {orders.map((order) => (
+                        <WorkOrderCardView
+                          key={order.id}
+                          order={order}
+                          statusColors={statusColors}
+                          priorityColors={priorityColors}
+                          onClick={() => handleWorkOrderClick(order)}
+                          onWorkOrderClick={onWorkOrderClick}
+                        />
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
