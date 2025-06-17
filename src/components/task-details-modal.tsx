@@ -14,6 +14,7 @@ import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
 import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 import MechanicsHubChat from "@/app/mechanic-hub/components/mechanics-hub-chat"
+import { WorkOrderStatusButtons } from "./work-order-status-buttons"
 
 export interface DetailedRepairOrder {
   id: string
@@ -72,36 +73,7 @@ export function TaskDetailsModal({
   const [staffOptions, setStaffOptions] = useState<Array<{id: string, staff_name: string, role: string}>>([])
   // Add selectedStaffId state to track the selected staff member
   const [selectedStaffId, setSelectedStaffId] = useState<string>("")
-
-  // ------------------
-  // STATUS mapping
-  // ------------------
-  function mapDbStatusToLocal(dbStatus: string): "not-started" | "in-progress" | "completed" {
-    switch (dbStatus) {
-      case "In Progress":
-        return "in-progress"
-      case "Completed":
-        return "completed"
-      case "Pending":
-      default:
-        return "not-started"
-    }
-  }
-  function mapLocalStatusToDb(local: "not-started" | "in-progress" | "completed") {
-    switch (local) {
-      case "in-progress":
-        return "In Progress"
-      case "completed":
-        return "Completed"
-      case "not-started":
-      default:
-        return "Pending"
-    }
-  }
-
-  const [status, setStatus] = useState<"not-started" | "in-progress" | "completed">(
-    mapDbStatusToLocal(initialTask.status)
-  )
+  const [currentStatus, setCurrentStatus] = useState(initialTask.status)
 
   // Extract the first row in details
   const firstDetail = initialTask.repair_order_details?.[0]
@@ -213,7 +185,6 @@ export function TaskDetailsModal({
 
   // If the parent re-renders with a new task
   useEffect(() => {
-    setStatus(mapDbStatusToLocal(initialTask.status))
     const d = initialTask.repair_order_details?.[0]
     
     // Find the matching vehicle using vehicle_id
@@ -273,32 +244,10 @@ export function TaskDetailsModal({
   // SAVE CHANGES
   // ------------------
   async function handleSave() {
-    const dbStatus = mapLocalStatusToDb(status)
-    
-    // Debug: Log the selected staff ID
-    console.log("Saving task with selectedStaffId:", selectedStaffId)
-    
-    // First update the vehicle information if color or license plate changed
-    if (formData.vehicle_id && (formData.color !== vehicleToUse?.color || formData.licensePlate !== vehicleToUse?.license_plate)) {
-      const { error: vehicleUpdateError } = await supabase
-        .from('customer_vehicles')
-        .update({
-          color: formData.color,
-          license_plate: formData.licensePlate
-        })
-        .eq('id', formData.vehicle_id);
-
-      if (vehicleUpdateError) {
-        console.error('Error updating vehicle:', vehicleUpdateError);
-        toast.error('Failed to update vehicle information');
-        return;
-      }
-    }
-    
     // Create a base updated object
     const updated: DetailedRepairOrder = {
       ...initialTask,
-      status: dbStatus,
+      status: currentStatus,
       repair_order_details: initialTask.repair_order_details?.length
         ? [
             {
@@ -397,7 +346,7 @@ export function TaskDetailsModal({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white hover:bg-zinc-800"
                 onClick={onClose}
               >
                 <X className="h-6 w-6" />
@@ -405,39 +354,12 @@ export function TaskDetailsModal({
             </div>
           </div>
 
-          {/* STATUS BUTTONS */}
-          <div className="flex items-center gap-4 p-4 border-b border-[#222222]">
-            <Button
-              variant="ghost"
-              className={`flex items-center gap-2 ${
-                status === "not-started" ? "text-white" : "text-gray-400"
-              }`}
-              onClick={() => isEditing && setStatus("not-started")}
-            >
-              <div className="w-3 h-3 rounded-full bg-[#e23232]" />
-              Not Started
-            </Button>
-            <Button
-              variant="ghost"
-              className={`flex items-center gap-2 ${
-                status === "in-progress" ? "text-white" : "text-gray-400"
-              }`}
-              onClick={() => isEditing && setStatus("in-progress")}
-            >
-              <div className="w-3 h-3 rounded-full bg-[#d6cd24]" />
-              In Progress
-            </Button>
-            <Button
-              variant="ghost"
-              className={`flex items-center gap-2 ${
-                status === "completed" ? "text-white" : "text-gray-400"
-              }`}
-              onClick={() => isEditing && setStatus("completed")}
-            >
-              <div className="w-3 h-3 rounded-full bg-[#1eb386]" />
-              Completed
-            </Button>
-          </div>
+          {/* Replace old status buttons with new component */}
+          <WorkOrderStatusButtons 
+            workOrderId={initialTask.id} 
+            initialStatus={initialTask.status}
+            onStatusChange={(newStatus) => setCurrentStatus(newStatus)}
+          />
 
           {/* MAIN CONTENT */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -773,7 +695,7 @@ export function TaskDetailsModal({
                 <Trash2 className="h-4 w-4" />
                 Delete
               </Button>
-              {status === "completed" && (
+              {currentStatus === "completed" && (
                 <Button
                   variant="outline"
                   className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"

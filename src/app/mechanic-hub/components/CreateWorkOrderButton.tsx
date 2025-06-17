@@ -17,6 +17,7 @@ interface CreateWorkOrderButtonProps {
 
 export function CreateWorkOrderButton({ shopId, onWorkOrderCreated }: CreateWorkOrderButtonProps) {
     const [isWorkOrderFormOpen, setIsWorkOrderFormOpen] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Helper to convert empty string -> null, otherwise parse float
     function parseDouble(str: string) {
@@ -31,11 +32,14 @@ export function CreateWorkOrderButton({ shopId, onWorkOrderCreated }: CreateWork
     }
 
     async function handleSaveWorkOrder(formData: any) {
+        if (isSubmitting) return; // Prevent multiple submissions
+        
         if (!shopId) {
             toast.error("Shop ID is required")
             return
         }
 
+        setIsSubmitting(true); // Start submission
         console.log("Create new order with data:", formData)
 
         try {
@@ -291,6 +295,7 @@ export function CreateWorkOrderButton({ shopId, onWorkOrderCreated }: CreateWork
             console.error("Error creating work order:", err)
             toast.error("Error creating work order: " + err.message)
         } finally {
+            setIsSubmitting(false) // Reset submission state
             setIsWorkOrderFormOpen(false)
         }
     }
@@ -300,14 +305,24 @@ export function CreateWorkOrderButton({ shopId, onWorkOrderCreated }: CreateWork
             <Button 
                 className="bg-red-600 hover:bg-red-700 text-white rounded-md px-4 sm:px-7 py-1.5 text-xs sm:text-sm"
                 onClick={() => setIsWorkOrderFormOpen(true)}
+                disabled={isSubmitting}
             >
-                <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                Create Work Order
+                {isSubmitting ? (
+                    <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                        Creating...
+                    </div>
+                ) : (
+                    <>
+                        <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                        Create Work Order
+                    </>
+                )}
             </Button>
 
             {isWorkOrderFormOpen && (
                 <WorkOrderForm
-                    onClose={() => setIsWorkOrderFormOpen(false)}
+                    onClose={() => !isSubmitting && setIsWorkOrderFormOpen(false)}
                     onSave={handleSaveWorkOrder}
                     onAddTask={() => {}}
                 />
