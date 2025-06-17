@@ -3,12 +3,15 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { TasksProvider } from "@/contexts/tasks-context";
 import { Analytics } from "@vercel/analytics/react"
-import Providers from "./providers"
+import { ThemeProvider } from "next-themes";
+import { ConfirmationProvider } from "@/app/components/confirmation-service";
 
 const bricolageGrotesque = Bricolage_Grotesque({
-  subsets: ["latin"],
   variable: "--font-bricolage-grotesque",
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
 });
 
 // const geistSans = Geist({
@@ -22,21 +25,25 @@ const bricolageGrotesque = Bricolage_Grotesque({
 // });
 
 export const metadata: Metadata = {
-  title: "MotorMinds",
-  description: "AI-Powered Auto Repair Shop Management",
+  title: "Motorminds App",
+  description: "A Shop Management Platform for Automotive Businesses",
 };
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
       <body className={`${bricolageGrotesque.variable} antialiased`}>
-        <Providers>
-          {children}
-        </Providers>
+        {/* <ThemeProvider> */}
+          <TasksProvider>
+            <ConfirmationProvider>
+              {children}
+            </ConfirmationProvider>
+          </TasksProvider>
+        {/* </ThemeProvider> */}
         <Toaster />
         <Analytics />
       </body>
