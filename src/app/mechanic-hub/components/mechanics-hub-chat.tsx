@@ -6,6 +6,7 @@ import { DollarSign, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { ImmediateInsights, UpsellSuggestion, InsightFlag } from "@/app/mia/types/MiaInsights";
 import { Button } from "@/components/ui/button";
 import { generateImmediateAnalysis } from "@/app/mia/utils/insightsGenerator";
+import { toast } from "sonner";
 
 export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { shopId: string, taskId: string, workOrderData: DetailedRepairOrder }) {
 	const [insights, setInsights] = useState<any>(null);
@@ -40,24 +41,50 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 	const handleRefreshInsights = async () => {
 		if (refreshing || !taskId || !workOrderData) return;
 		
+		// Additional validation
+		if (!shopId) {
+			console.error("Error refreshing insights: Shop ID is required");
+			return;
+		}
+		
 		try {
 			setRefreshing(true);
 			
+			// Ensure workOrderData has the shop_id property
+			const workOrderWithShopId = {
+				...workOrderData,
+				shop_id: shopId, // Ensure shop_id is included
+				id: taskId // Ensure the repair order ID is included
+			};
+			
+			console.log("Refreshing insights with data:", {
+				shopId,
+				taskId,
+				hasWorkOrderData: !!workOrderData
+			});
+			
 			const result = await generateImmediateAnalysis(
-				workOrderData,
+				workOrderWithShopId,
 				insights?.id || ''
 			);
 			
 			if (result.success) {
 				// Fetch the latest data after generation
 				await fetchInsights();
+				console.log("Insights refreshed successfully");
+				toast.success("Insights refreshed successfully");
 			} else {
 				console.error("Error refreshing insights:", result.error);
+				toast.error("Failed to refresh insights");
 			}
 		} catch (error) {
 			console.error("Error refreshing insights:", error);
+			toast.error("Failed to refresh insights");
 		} finally {
-			setRefreshing(false);
+			// Add a minimum delay before allowing another refresh
+			setTimeout(() => {
+				setRefreshing(false);
+			}, 1000); // 1 second minimum delay
 		}
 	};
 	
@@ -70,13 +97,15 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 					<Button 
 						variant="ghost" 
 						size="sm" 
-						className="h-8 w-8 p-0" 
+						className={`h-8 w-8 p-0 transition-opacity duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
 						onClick={handleRefreshInsights}
 						disabled={refreshing || loading}
-						title="Regenerate insights"
+						title={refreshing ? "Refreshing insights..." : "Regenerate insights"}
 					>
 						<RefreshCw className={`h-4 w-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
-						<span className="sr-only">Refresh insights</span>
+						<span className="sr-only">
+							{refreshing ? "Refreshing insights..." : "Refresh insights"}
+						</span>
 					</Button>
 				</div>
 			</div>

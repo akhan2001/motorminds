@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Search, Filter, ChevronDown, ChevronUp } from 'lucide-react'
+import { Search, Filter, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useWorkOrders, useFilteredWorkOrders, type WorkOrder } from '@/hooks/useWorkOrders'
 import { WorkOrderCardView } from '@/app/mechanic-hub/components/WorkOrderCardView'
 import { TaskDetailsModal, type DetailedRepairOrder } from '@/components/task-details-modal'
+import { WorkOrderThinView } from '@/app/mechanic-hub/components/WorkOrderThinView'
 
 interface EnhancedWorkOrderListProps {
   shopId: string
@@ -36,18 +37,20 @@ const priorityColors = {
   'Low': 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
 }
 
+// Add status order constant
+const STATUS_ORDER = ['Pending', 'In Progress', 'Completed', 'Waiting on Customer', 'Cancelled'];
+
 export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWorkOrderListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     'Pending': true,
     'In Progress': true,
-    'Waiting on Customer': true,
-    'Completed': true,
-    'Cancelled': true
+    'Completed': false,
+    'Waiting on Customer': false,
+    'Cancelled': false
   })
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [technicianFilter, setTechnicianFilter] = useState<string>('all')
-  const [dateRangeFilter, setDateRangeFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<DetailedRepairOrder | null>(null)
 
   const { data: workOrders, isLoading } = useWorkOrders(shopId)
@@ -55,8 +58,8 @@ export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWork
     workOrders,
     searchQuery,
     statusFilter,
-    technicianFilter,
-    dateRangeFilter
+    'all', // removed technician filter
+    'all'  // removed date range filter
   )
 
   const toggleGroup = (status: string) => {
@@ -157,78 +160,93 @@ export function EnhancedWorkOrderList({ shopId, onWorkOrderClick }: EnhancedWork
                   <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={technicianFilter} onValueChange={setTechnicianFilter}>
-                <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
-                  <SelectValue placeholder="All Technicians" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Technicians</SelectItem>
-                  {/* Add technician options here */}
-                </SelectContent>
-              </Select>
-              <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-                <SelectTrigger className="w-[180px] bg-[#222222] border-[#333333] text-white">
-                  <SelectValue placeholder="All Time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 border border-[#333333] rounded-md p-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`px-3 ${viewMode === 'card' ? 'bg-[#333333] text-white' : 'text-[#9d9d9d]'}`}
+                  onClick={() => setViewMode('card')}
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Cards
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`px-3 ${viewMode === 'list' ? 'bg-[#333333] text-white' : 'text-[#9d9d9d]'}`}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  List
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Work Orders List */}
         <div className="flex-1 overflow-auto">
-          {Object.entries(filteredWorkOrders).map(([status, orders]) => (
-            <div key={status} className="border-b border-[#222222] last:border-b-0">
-              {/* Group Header */}
-              <div 
-                className="sticky top-0 bg-[#1A1A1A] px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-[#222222]"
-                onClick={() => toggleGroup(status)}
-              >
-                <div className="flex items-center gap-2">
-                  <Badge className={statusColors[status as keyof typeof statusColors]}>
-                    {status}
-                  </Badge>
-                  <span className="text-sm text-[#9d9d9d]">({orders.length})</span>
+          {STATUS_ORDER.map((status) => {
+            const orders = filteredWorkOrders[status] || [];
+            if (orders.length === 0) return null;
+            
+            return (
+              <div key={status} className="border-b border-[#222222] last:border-b-0">
+                {/* Group Header */}
+                <div 
+                  className="sticky top-0 bg-[#1A1A1A] px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-[#222222]"
+                  onClick={() => toggleGroup(status)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Badge className={statusColors[status as keyof typeof statusColors]}>
+                      {status}
+                    </Badge>
+                    <span className="text-sm text-[#9d9d9d]">({orders.length})</span>
+                  </div>
+                  {expandedGroups[status] ? (
+                    <ChevronUp className="h-4 w-4 text-[#9d9d9d]" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-[#9d9d9d]" />
+                  )}
                 </div>
-                {expandedGroups[status] ? (
-                  <ChevronUp className="h-4 w-4 text-[#9d9d9d]" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-[#9d9d9d]" />
-                )}
-              </div>
 
-              {/* Group Content */}
-              <AnimatePresence>
-                {expandedGroups[status] && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="grid grid-cols-1 gap-4 p-4">
-                      {orders.map((order) => (
-                        <WorkOrderCardView
-                          key={order.id}
-                          order={order}
-                          statusColors={statusColors}
-                          priorityColors={priorityColors}
-                          onClick={() => handleWorkOrderClick(order)}
-                          onWorkOrderClick={onWorkOrderClick}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                {/* Group Content */}
+                <AnimatePresence>
+                  {expandedGroups[status] && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className={`grid gap-4 p-4 ${viewMode === 'card' ? 'grid-cols-1' : 'grid-cols-1'}`}>
+                        {orders.map((order) => (
+                          viewMode === 'card' ? (
+                            <WorkOrderCardView
+                              key={order.id}
+                              order={order}
+                              statusColors={statusColors}
+                              priorityColors={priorityColors}
+                              onClick={() => handleWorkOrderClick(order)}
+                              onWorkOrderClick={onWorkOrderClick}
+                            />
+                          ) : (
+                            <WorkOrderThinView
+                              key={order.id}
+                              order={order}
+                              statusColors={statusColors}
+                              priorityColors={priorityColors}
+                              onClick={() => handleWorkOrderClick(order)}
+                            />
+                          )
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
 

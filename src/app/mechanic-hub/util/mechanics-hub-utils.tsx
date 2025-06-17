@@ -245,30 +245,41 @@ export async function createCustomerRetention(workOrderId: string, shopId: strin
 
 /**
  * Creates a Mia AI insights record with AI-generated insights
- * @param workOrderId The ID of the work order to create Mia AI insights for
+ * @param repairOrderId The ID of the work order to create Mia AI insights for
  * @param shopId The shop ID for the Mia AI insights record
+ * @param term The type of insights to generate ('immediate' or 'long-term')
  * @returns The newly created Mia AI insights record ID or null if creation failed
  */
 export async function createMiaInsights(repairOrderId: string, shopId: string, term: string) {
+    if (!repairOrderId || !shopId) {
+        console.error("Missing required parameters:", { repairOrderId, shopId });
+        return {
+            success: false,
+            message: 'Missing required parameters'
+        };
+    }
+
     // Start a background process to generate insights without blocking
-    setTimeout(() => {
-        generateMiaInsights(repairOrderId, shopId, term)
-            .then(result => {
-                if (result?.success) {
-                    console.log("Background Mia AI Insights completed for order:", repairOrderId)
-                } else {
-                    console.error("Background Mia AI Insights failed for order:", repairOrderId, result?.error)
-                }
-            })
-            .catch(err => {
-                console.error("Error in background Mia Insights generation:", err)
-            })
-    }, 100) // Small delay to ensure database transactions complete
+    setTimeout(async () => {
+        try {
+            console.log("Starting background Mia AI Insights generation for order:", repairOrderId);
+            
+            const result = await generateMiaInsights(repairOrderId, shopId, term);
+            
+            if (result?.success) {
+                console.log("Background Mia AI Insights completed for order:", repairOrderId);
+            } else {
+                console.error("Background Mia AI Insights failed for order:", repairOrderId, result?.error);
+            }
+        } catch (err) {
+            console.error("Error in background Mia Insights generation:", err);
+        }
+    }, 100); // Small delay to ensure database transactions complete
 
     // Return immediately so the main flow can continue
     return {
         success: true,
         message: 'Mia insights generation started in background'
-    }
+    };
 }
 

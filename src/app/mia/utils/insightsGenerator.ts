@@ -159,6 +159,15 @@ export async function getOrGenerateMiaInsights(workOrderId: string, shopId: stri
 
 export async function generateImmediateAnalysis(workOrderData: any, miaCustomerInsightId: string) {
     try {
+        // Validate required data
+        if (!workOrderData?.shop_id) {
+            console.error('Missing shop_id in workOrderData:', workOrderData);
+            return {
+                success: false,
+                error: 'Shop ID is required'
+            };
+        }
+
         // Call the API to generate the immediate insights
         const response = await fetch('/api/mia-insights/refresh', {
             method: 'POST',
@@ -186,14 +195,14 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
             throw new Error(result.error || 'Failed to generate insights');
         }
 
-        console.log(result);
+        console.log('Insights generation result:', result);
         
         const insights = result.insights as ImmediateInsights;
         
         // Calculate priority based on the insights
         let priority = 'medium';
-        const hasUrgentFlag = insights.flags.some(flag => flag.type === 'urgent');
-        const hasHighPriority = insights.upsell_suggestions.some(sugg => sugg.priority === 'high');
+        const hasUrgentFlag = insights.flags?.some(flag => flag.type === 'urgent') || false;
+        const hasHighPriority = insights.upsell_suggestions?.some(sugg => sugg.priority === 'high') || false;
         
         if (hasUrgentFlag || hasHighPriority) {
             priority = 'high';
