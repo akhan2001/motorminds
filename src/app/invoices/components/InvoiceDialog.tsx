@@ -41,6 +41,8 @@ interface InvoiceDialogProps {
         assignedTo: string;
         hst_number: string;
         business_number: string;
+        labour_items: { description: string; cost: number }[];
+        parts_items: { description: string; cost: number }[];
         vehicleInfo: {
             year: string;
             make: string;
@@ -226,18 +228,30 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: Invo
                                     <p className="text-lg font-semibold text-white">{invoice.description}</p>
                                 </div>
                             )}
-                            
-                            {invoice.labour && (
+
+                            {/* --- Labour Section --- */}
+                            {(invoice.labour || (invoice.labour_items && invoice.labour_items.length > 0)) && (
                                 <div className="mb-2">
                                     <p className="text-white font-medium">Labour:</p>
-                                    <p className="text-gray-400 whitespace-pre-line">{invoice.labour} - {formatCurrency(invoice.labour_cost)}</p>
+                                    {invoice.labour && (
+                                        <p className="text-gray-400 whitespace-pre-line ml-2">{invoice.labour} - {formatCurrency(invoice.labour_cost)}</p>
+                                    )}
+                                    {invoice.labour_items && invoice.labour_items.map((item, index) => (
+                                        item.description && <p key={`labour-${index}`} className="text-gray-400 whitespace-pre-line ml-2">{item.description} - {formatCurrency(item.cost)}</p>
+                                    ))}
                                 </div>
                             )}
-                            
-                            {invoice.parts && (
+
+                            {/* --- Parts Section --- */}
+                            {(invoice.parts || (invoice.parts_items && invoice.parts_items.length > 0)) && (
                                 <div className="mb-2">
                                     <p className="text-white font-medium">Parts:</p>
-                                    <p className="text-gray-400 whitespace-pre-line">{invoice.parts} - {formatCurrency(invoice.parts_cost)}</p>
+                                    {invoice.parts && (
+                                        <p className="text-gray-400 whitespace-pre-line ml-2">{invoice.parts} - {formatCurrency(invoice.parts_cost)}</p>
+                                    )}
+                                    {invoice.parts_items && invoice.parts_items.map((item, index) => (
+                                        item.description && <p key={`parts-${index}`} className="text-gray-400 whitespace-pre-line ml-2">{item.description} - {formatCurrency(item.cost)}</p>
+                                    ))}
                                 </div>
                             )}
                             

@@ -695,7 +695,7 @@ export function TaskDetailsModal({
                 <Trash2 className="h-4 w-4" />
                 Delete
               </Button>
-              {currentStatus === "completed" && (
+              {currentStatus === "Completed" && (
                 <Button
                   variant="outline"
                   className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"

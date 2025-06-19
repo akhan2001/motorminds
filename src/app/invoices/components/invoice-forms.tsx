@@ -46,6 +46,10 @@ export default function InvoiceForm({
     const [labourCost, setLabourCost] = useState("0");
     const [parts, setParts] = useState("");
     const [partsCost, setPartsCost] = useState("0");
+    
+    // New state for multiple items
+    const [labourItems, setLabourItems] = useState<{id: string, description: string, cost: string}[]>([]);
+    const [partsItems, setPartsItems] = useState<{id: string, description: string, cost: string}[]>([]);
     const [notes, setNotes] = useState("");
     const [mileage, setMileage] = useState("");
     const [description, setDescription] = useState("");
@@ -151,12 +155,16 @@ export default function InvoiceForm({
 
     useEffect(() => {
         calculateTotal();
-    }, [labourCost, partsCost]);
+    }, [labourCost, partsCost, labourItems, partsItems]);
 
     const calculateTotal = () => {
-        const labour = parseFloat(labourCost) || 0;
-        const parts = parseFloat(partsCost) || 0;
-        const subtotal = labour + parts;
+        const singleLabour = parseFloat(labourCost) || 0;
+        const singleParts = parseFloat(partsCost) || 0;
+        
+        const labourItemsTotal = labourItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+        const partsItemsTotal = partsItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+        
+        const subtotal = singleLabour + singleParts + labourItemsTotal + partsItemsTotal;
         setTotal(subtotal.toFixed(2));
     };
 
@@ -228,6 +236,81 @@ export default function InvoiceForm({
         setAssignedTo(value);
     };
 
+    // Helper functions for managing labour items
+    const addLabourItem = () => {
+        if (labourItems.length >= 10) {
+            toast.error("Maximum 10 labour items allowed");
+            return;
+        }
+        setLabourItems([...labourItems, { id: uuidv4(), description: "", cost: "0" }]);
+    };
+
+    const removeLabourItem = (id: string) => {
+        setLabourItems(labourItems.filter(item => item.id !== id));
+    };
+
+    const updateLabourItem = (id: string, field: 'description' | 'cost', value: string) => {
+        setLabourItems(labourItems.map(item => 
+            item.id === id ? { ...item, [field]: value } : item
+        ));
+    };
+
+    // Helper functions for managing parts items
+    const addPartsItem = () => {
+        if (partsItems.length >= 10) {
+            toast.error("Maximum 10 parts items allowed");
+            return;
+        }
+        setPartsItems([...partsItems, { id: uuidv4(), description: "", cost: "0" }]);
+    };
+
+    const removePartsItem = (id: string) => {
+        setPartsItems(partsItems.filter(item => item.id !== id));
+    };
+
+    const updatePartsItem = (id: string, field: 'description' | 'cost', value: string) => {
+        setPartsItems(partsItems.map(item => 
+            item.id === id ? { ...item, [field]: value } : item
+        ));
+    };
+
+    // Reset form when opening in create mode or when modal opens
+    useEffect(() => {
+        if (isOpen && mode === "create") {
+            // Reset all form fields for new invoice
+            setSelectedCustomerId("");
+            setSelectedCustomer(null);
+            setSelectedVehicleId("");
+            setVehicleInfo(null);
+            setInvoiceDate(formattedDate);
+            setLabour("");
+            setLabourCost("0");
+            setParts("");
+            setPartsCost("0");
+            setLabourItems([]);
+            setPartsItems([]);
+            setNotes("");
+            setMileage("");
+            setDescription("");
+            setAssignedTo("");
+            setTotal("0.00");
+            setShowNewClientForm(false);
+            setShowNewVehicleForm(false);
+            setClientInfo({
+                client_name: '',
+                client_phone: '',
+                client_address: '',
+                client_email: ''
+            });
+            setManualVehicleInfo({
+                year: '',
+                make: '',
+                model: '',
+                license_plate: ''
+            });
+        }
+    }, [isOpen, mode, formattedDate]);
+
     // Add new useEffect to populate form with existing data when in edit mode
     useEffect(() => {
         if (mode === "edit" && existingInvoice) {
@@ -270,6 +353,23 @@ export default function InvoiceForm({
             setMileage(existingInvoice.mileage || '');
             setAssignedTo(existingInvoice.assigned_to || '');
             
+            // Populate labour and parts items arrays if they exist
+            if (existingInvoice.labour_items && Array.isArray(existingInvoice.labour_items)) {
+                setLabourItems(existingInvoice.labour_items.map((item: any) => ({
+                    id: uuidv4(),
+                    description: item.description || '',
+                    cost: item.cost?.toString() || '0'
+                })));
+            }
+            
+            if (existingInvoice.parts_items && Array.isArray(existingInvoice.parts_items)) {
+                setPartsItems(existingInvoice.parts_items.map((item: any) => ({
+                    id: uuidv4(),
+                    description: item.description || '',
+                    cost: item.cost?.toString() || '0'
+                })));
+            }
+            
             // Recalculate total (this will be automatic through the useEffect on labourCost/partsCost)
         }
     }, [mode, existingInvoice, formattedDate]);
@@ -308,7 +408,16 @@ export default function InvoiceForm({
                 amount: parseFloat(total) || 0,
                 // For edit mode, keep existing status; for create mode, set to "UNPAID"
                 status: mode === "edit" ? existingInvoice.status : "UNPAID",
-                vehicle_info: vehicleInfo
+                vehicle_info: vehicleInfo,
+                // Add the new arrays
+                labour_items: labourItems.map(item => ({
+                    description: item.description,
+                    cost: parseFloat(item.cost) || 0
+                })),
+                parts_items: partsItems.map(item => ({
+                    description: item.description,
+                    cost: parseFloat(item.cost) || 0
+                }))
             };
             
             // Call the appropriate API function based on mode
@@ -353,6 +462,8 @@ export default function InvoiceForm({
         setLabourCost("0");
         setParts("");
         setPartsCost("0");
+        setLabourItems([]);
+        setPartsItems([]);
         setNotes("");
         setMileage("");
         setDescription("");
@@ -377,8 +488,9 @@ export default function InvoiceForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw]">
-                <DialogHeader>
+            <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-0 max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] flex flex-col">
+                {/* Sticky Header */}
+                <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#222222] rounded-t-lg">
                     <DialogTitle className="text-white text-xl sm:text-2xl">
                         {mode === "edit" ? "Edit Invoice" : "Create New Invoice"}
                     </DialogTitle>
@@ -387,7 +499,9 @@ export default function InvoiceForm({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 sm:space-y-6">
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                    <div className="space-y-4 sm:space-y-6">
                     {/* Shop information */}
                     <h3 className="text-lg font-medium pl-6">Shop Information</h3>
                     <div className="space-y-4 bg-[#1A1A1A] rounded-xl px-6 py-4">
@@ -611,26 +725,75 @@ export default function InvoiceForm({
                             </div>
                             
                             <label className="text-gray-300 text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Labour</label>
-                            <div className="flex flex-row gap-2 sm:col-span-3">
-                                <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter labour"
-                                    value={labour}
-                                    onChange={(e) => setLabour(e.target.value)}
-                                />
-                                <span className="text-gray-300 text-md self-center">$</span>
-                                <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter labour cost"
-                                    type="number"
-                                    value={labourCost}
-                                    onChange={(e) => {
-                                        // Remove leading zeros and set value
-                                        const value = e.target.value;
-                                        const cleanValue = value.replace(/^0+/, '') || "0";
-                                        setLabourCost(cleanValue);
-                                    }}
-                                />
+                            <div className="sm:col-span-3 space-y-2">
+                                {/* Original single labour item */}
+                                <div className="flex flex-row gap-2">
+                                    <Input
+                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        placeholder="Enter labour"
+                                        value={labour}
+                                        onChange={(e) => setLabour(e.target.value)}
+                                    />
+                                    <span className="text-gray-300 text-md self-center">$</span>
+                                    <Input
+                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        placeholder="Enter labour cost"
+                                        type="number"
+                                        value={labourCost}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            const cleanValue = value.replace(/^0+/, '') || "0";
+                                            setLabourCost(cleanValue);
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Additional labour items */}
+                                {labourItems.map((item) => (
+                                    <div key={item.id} className="flex flex-row gap-2">
+                                        <Input
+                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                            placeholder="Enter labour description"
+                                            value={item.description}
+                                            onChange={(e) => updateLabourItem(item.id, 'description', e.target.value)}
+                                        />
+                                        <span className="text-gray-300 text-md self-center">$</span>
+                                        <Input
+                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                            placeholder="Enter cost"
+                                            type="number"
+                                            value={item.cost}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                const cleanValue = value.replace(/^0+/, '') || "0";
+                                                updateLabourItem(item.id, 'cost', cleanValue);
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
+                                            onClick={() => removeLabourItem(item.id)}
+                                        >
+                                            <MinusIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+
+                                {/* Add labour item button */}
+                                {labourItems.length < 10 && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                                        onClick={addLabourItem}
+                                    >
+                                        <PlusIcon className="h-4 w-4 mr-2" />
+                                        Add Labour Item
+                                    </Button>
+                                )}
                             </div>
 
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Assigned To</label>
@@ -653,26 +816,75 @@ export default function InvoiceForm({
                             </div>
 
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Parts</label>
-                            <div className="flex flex-row gap-2 sm:col-span-3">
-                                <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter parts"
-                                    value={parts}
-                                    onChange={(e) => setParts(e.target.value)}
-                                />
-                                <span className="text-gray-300 text-md self-center">$</span>
-                                <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                    placeholder="Enter parts cost"
-                                    type="number"
-                                    value={partsCost}
-                                    onChange={(e) => {
-                                        // Remove leading zeros and set value
-                                        const value = e.target.value;
-                                        const cleanValue = value.replace(/^0+/, '') || "0";
-                                        setPartsCost(cleanValue);
-                                    }}
-                                />
+                            <div className="sm:col-span-3 space-y-2">
+                                {/* Original single parts item */}
+                                <div className="flex flex-row gap-2">
+                                    <Input
+                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        placeholder="Enter parts"
+                                        value={parts}
+                                        onChange={(e) => setParts(e.target.value)}
+                                    />
+                                    <span className="text-gray-300 text-md self-center">$</span>
+                                    <Input
+                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        placeholder="Enter parts cost"
+                                        type="number"
+                                        value={partsCost}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            const cleanValue = value.replace(/^0+/, '') || "0";
+                                            setPartsCost(cleanValue);
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Additional parts items */}
+                                {partsItems.map((item) => (
+                                    <div key={item.id} className="flex flex-row gap-2">
+                                        <Input
+                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                            placeholder="Enter parts description"
+                                            value={item.description}
+                                            onChange={(e) => updatePartsItem(item.id, 'description', e.target.value)}
+                                        />
+                                        <span className="text-gray-300 text-md self-center">$</span>
+                                        <Input
+                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                            placeholder="Enter cost"
+                                            type="number"
+                                            value={item.cost}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                const cleanValue = value.replace(/^0+/, '') || "0";
+                                                updatePartsItem(item.id, 'cost', cleanValue);
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
+                                            onClick={() => removePartsItem(item.id)}
+                                        >
+                                            <MinusIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+
+                                {/* Add parts item button */}
+                                {partsItems.length < 10 && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                                        onClick={addPartsItem}
+                                    >
+                                        <PlusIcon className="h-4 w-4 mr-2" />
+                                        Add Parts Item
+                                    </Button>
+                                )}
                             </div>
 
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Notes</label>
@@ -689,22 +901,23 @@ export default function InvoiceForm({
                             <div className="flex flex-col gap-1 items-start sm:col-span-3">
                                 <div className="flex flex-row justify-between w-full">
                                     <span className="text-white text-base font-medium">Subtotal:</span>
-                                    <span className="text-white text-base font-medium">$ {((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)).toFixed(2)}</span>
+                                    <span className="text-white text-base font-medium">$ {parseFloat(total).toFixed(2)}</span>
                                 </div>
                                 <div className="flex flex-row justify-between w-full">
                                     <span className="text-gray-400 text-sm">Tax (13%):</span>
-                                    <span className="text-gray-300 text-sm">$ {(((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)) * 0.13).toFixed(2)}</span>
+                                    <span className="text-gray-300 text-sm">$ {(parseFloat(total) * 0.13).toFixed(2)}</span>
                                 </div>
                                 <div className="flex flex-row justify-between w-full border-t border-[#333] pt-1 mt-1">
                                     <span className="text-white text-xl font-medium">Total:</span>
-                                    <span className="text-white text-xl">$ {((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0) + (((parseFloat(labourCost) || 0) + (parseFloat(partsCost) || 0)) * 0.13)).toFixed(2)}</span>
+                                    <span className="text-white text-xl">$ {(parseFloat(total) + (parseFloat(total) * 0.13)).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
                 
-                <DialogFooter className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:justify-between w-full">
+                <DialogFooter className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:justify-between w-full px-6 py-4">
                     <Button 
                         variant="outline" 
                         onClick={resetFormValues} 
