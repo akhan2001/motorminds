@@ -211,6 +211,8 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             assignedTo: invoice.assigned_to,
             hst_number: businessDetails.hst_number,
             business_number: businessDetails.business_number,
+            labour_items: invoice.labour_items || [],
+            parts_items: invoice.parts_items || [],
             vehicleInfo: invoice.vehicle_information ? {
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,

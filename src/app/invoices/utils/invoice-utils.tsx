@@ -165,7 +165,9 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 			description: invoiceData.description,
 			assigned_to: invoiceData.assigned_to,
 			customer_id: invoiceData.customer_id,
-			vehicle_information: invoiceData.vehicle_info
+			vehicle_information: invoiceData.vehicle_info,
+			labour_items: invoiceData.labour_items || [],
+			parts_items: invoiceData.parts_items || []
 		};
 
 		// console.log(invoiceData.vehicle_info)
@@ -235,7 +237,9 @@ export async function updateInvoice(invoiceData: any, shopId: string) {
 			description: invoiceData.description,
 			assigned_to: invoiceData.assigned_to,
 			customer_id: invoiceData.customer_id,
-			vehicle_information: invoiceData.vehicle_info
+			vehicle_information: invoiceData.vehicle_info,
+			labour_items: invoiceData.labour_items || [],
+			parts_items: invoiceData.parts_items || []
 		};
 		
 		// Log update operation for debugging
