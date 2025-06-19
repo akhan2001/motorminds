@@ -306,39 +306,62 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                         <Text style={styles.amountCol}>Amount</Text>
                     </View>
                     
-                    {/* Table Rows - if no items, show at least one empty row */}
-                    {invoice.description || invoice.labour || invoice.parts || invoice.notes ? (
-                        <View style={styles.detailsSection}>                            
-                            {invoice.labour && (
-                                <View style={styles.tableRow}>
-                                    <Text style={styles.descCol}>Labour: {invoice.labour}</Text>
-                                    {/* <Text style={styles.qtyCol}>1</Text> */}
-                                    <Text style={styles.amountCol}>{formatCurrency(invoice.labour_cost)}</Text>
+                    {/* Table Rows - show all items */}
+                    <View style={styles.detailsSection}>
+                        {/* Original single labour item */}
+                        {invoice.labour && (
+                            <View style={styles.tableRow}>
+                                <Text style={styles.descCol}>Labour: {invoice.labour}</Text>
+                                <Text style={styles.amountCol}>{formatCurrency(invoice.labour_cost)}</Text>
+                            </View>
+                        )}
+                        
+                        {/* Additional labour items */}
+                        {invoice.labour_items && Array.isArray(invoice.labour_items) && invoice.labour_items.map((item: any, index: number) => (
+                            item.description && (
+                                <View key={`labour-${index}`} style={styles.tableRow}>
+                                    <Text style={styles.descCol}>Labour: {item.description}</Text>
+                                    <Text style={styles.amountCol}>{formatCurrency(item.cost)}</Text>
                                 </View>
-                            )}
-                            
-                            {invoice.parts && (
-                                <View style={styles.tableRow}>
-                                    <Text style={styles.descCol}>Parts: {invoice.parts}</Text>
-                                    {/* <Text style={styles.qtyCol}>1</Text> */}
-                                    <Text style={styles.amountCol}>{formatCurrency(invoice.parts_cost)}</Text>
+                            )
+                        ))}
+                        
+                        {/* Original single parts item */}
+                        {invoice.parts && (
+                            <View style={styles.tableRow}>
+                                <Text style={styles.descCol}>Parts: {invoice.parts}</Text>
+                                <Text style={styles.amountCol}>{formatCurrency(invoice.parts_cost)}</Text>
+                            </View>
+                        )}
+                        
+                        {/* Additional parts items */}
+                        {invoice.parts_items && Array.isArray(invoice.parts_items) && invoice.parts_items.map((item: any, index: number) => (
+                            item.description && (
+                                <View key={`parts-${index}`} style={styles.tableRow}>
+                                    <Text style={styles.descCol}>Parts: {item.description}</Text>
+                                    <Text style={styles.amountCol}>{formatCurrency(item.cost)}</Text>
                                 </View>
-                            )}
-                            
-                            {invoice.notes && (
-                                <View style={styles.tableRow}>
-                                    <Text style={styles.descCol}>Notes: {invoice.notes}</Text>
-                                </View>
-                            )}
-                        </View>
-                    ) : (
-                        <View style={styles.tableRow}>
-                            <Text style={styles.descCol}>Service</Text>
-                            {/* <Text style={styles.qtyCol}>1</Text> */}
-                            {/* <Text style={styles.rateCol}>{formatCurrency(0)}</Text> */}
-                            <Text style={styles.amountCol}>{formatCurrency(0)}</Text>
-                        </View>
-                    )}
+                            )
+                        ))}
+                        
+                        {/* Notes */}
+                        {invoice.notes && (
+                            <View style={styles.tableRow}>
+                                <Text style={styles.descCol}>Notes: {invoice.notes}</Text>
+                                <Text style={styles.amountCol}>-</Text>
+                            </View>
+                        )}
+                        
+                        {/* Show at least one empty row if no items */}
+                        {!invoice.labour && !invoice.parts && !invoice.notes && 
+                         (!invoice.labour_items || invoice.labour_items.length === 0) && 
+                         (!invoice.parts_items || invoice.parts_items.length === 0) && (
+                            <View style={styles.tableRow}>
+                                <Text style={styles.descCol}>Service</Text>
+                                <Text style={styles.amountCol}>{formatCurrency(0)}</Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
                 
                 {/* Summary */}
