@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   // Protected routes
-  const protectedPaths = ['/obd', '/api/simulate-obd']
+  const protectedPaths = ['/obd', '/api/simulate-obd', '/financials', '/api/financials']
   const isProtectedPath = protectedPaths.some(path => 
     req.nextUrl.pathname.startsWith(path)
   )
@@ -31,14 +31,12 @@ export async function middleware(req: NextRequest) {
 // Ensure the middleware is only called for relevant paths.
 export const config = {
   matcher: [
-    '/obd/:path*',
-    '/api/simulate-obd/:path*',
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth).*)',
   ],
 }

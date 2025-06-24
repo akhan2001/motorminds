@@ -7,6 +7,7 @@ export interface VehicleInformation {
 
 export interface Invoice {
     invoice_number: string
+    shop_id?: string
     display_id?: string
     status: "PAID" | "UNPAID"
     amount: number

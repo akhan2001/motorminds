@@ -7,6 +7,7 @@ import { getShopId } from '@/utils/supabase/supabase-shop'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import LoadingPage from "@/components/loading"
+import AddEmployeeForm from "@/app/settings/components/AddEmployeeForm"
 
 export default function SettingsProfilePage() {
     const [user, setUser] = useState<any>(null)
@@ -48,7 +49,10 @@ export default function SettingsProfilePage() {
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav activeLink="Settings"/>
-            {shopId && <ProfileForm shopId={shopId} />}
+            <div className="p-4 space-y-6">
+                {shopId && <ProfileForm shopId={shopId} />}
+                {/* {shopId && <AddEmployeeForm shopId={shopId} />} */}
+            </div>
         </div>
     )
 }
