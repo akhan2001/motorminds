@@ -6,6 +6,8 @@ import { checkUser } from "@/utils/supabase/supabase-auth"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { FinancialSummaryCard } from "./components/FinancialSummaryCard"
 import { PayrollSummaryCard } from "./components/PayrollSummaryCard"
 import RevenueChart from "./components/RevenueChart"
@@ -136,6 +138,54 @@ export default function Financials() {
                         <div className="rounded-lg border border-[#222] bg-[#131313] p-6 h-full">
                             <h2 className="text-xl font-semibold mb-4">Revenue vs COGS</h2>
                             <RevenueChart data={trendData} />
+                        </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <Link 
+                            href="/financials/cashflow"
+                            className="group rounded-lg border border-[#222] bg-[#131313] p-6 hover:bg-[#1a1a1a] transition-colors"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white group-hover:text-red-400 transition-colors">
+                                        Cash Flow Analytics
+                                    </h3>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                        Detailed revenue and expense tracking
+                                    </p>
+                                </div>
+                                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-red-400 transition-colors" />
+                            </div>
+                        </Link>
+                        
+                        <div className="rounded-lg border border-[#222] bg-[#131313] p-6 opacity-50">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">
+                                        P&L Statements
+                                    </h3>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                        Coming soon...
+                                    </p>
+                                </div>
+                                <ArrowRight className="w-5 h-5 text-gray-400" />
+                            </div>
+                        </div>
+                        
+                        <div className="rounded-lg border border-[#222] bg-[#131313] p-6 opacity-50">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">
+                                        Tax Reports
+                                    </h3>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                        Coming soon...
+                                    </p>
+                                </div>
+                                <ArrowRight className="w-5 h-5 text-gray-400" />
+                            </div>
                         </div>
                     </div>
                 </div>
