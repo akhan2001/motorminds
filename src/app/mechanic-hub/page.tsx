@@ -1,11 +1,12 @@
 'use client'
 
 import { Nav } from "@/app/components/nav"
-import { EnhancedWorkOrderList } from "@/components/enhanced-work-order-list"
+// import { EnhancedWorkOrderList } from "@/components/enhanced-work-order-list"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import { CreateWorkOrderButton } from "./components/CreateWorkOrderButton"
+// import WorkOrderManager from "./work-orders/WorkOrderManager"
 
 export default function MechanicHubPage() {
 	const [shopId, setShopId] = useState<string | null>(null)
@@ -81,7 +82,7 @@ export default function MechanicHubPage() {
 						/>
 					</div>
 				</div>
-				<div className="bg-[#1A1A1A] rounded-lg shadow-lg p-6">
+				{/* <div className="bg-[#1A1A1A] rounded-lg shadow-lg p-6">
 					<EnhancedWorkOrderList 
 						shopId={shopId}
 						onWorkOrderClick={(workOrder) => {
@@ -89,7 +90,8 @@ export default function MechanicHubPage() {
 							// Handle work order click - e.g., open details modal
 						}}
 					/>
-				</div>
+				</div> */}
+				{/* <WorkOrderManager /> */}
 			</div>
 		</div>
 	)
