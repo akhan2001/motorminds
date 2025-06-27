@@ -208,7 +208,12 @@ export function Nav(
 				</div>
 				{/* Right: Actions */}
 				<div className="hidden lg:flex items-center gap-4">
-					<button className="text-[#979797] hover:text-white transition-colors" onClick={() => router.push("/messages")}>
+					<button 
+						className={`${
+							activeLink === "Messages" ? "text-white" : "text-[#979797]"
+						} hover:text-white transition-colors`} 
+						onClick={() => router.push("/messages")}
+					>
 						<MessageCircle className="inline-block w-5 h-5" />
 					</button>
 					<button className="text-[#979797] hover:text-white transition-colors">
