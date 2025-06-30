@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/react"
 import Providers from "./providers"
+import FacebookSdk from "@/app/components/FacebookSdk"
 
 const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
         </Providers>
         <Toaster />
         <Analytics />
+        <FacebookSdk />
       </body>
     </html>
   );

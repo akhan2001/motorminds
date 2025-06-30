@@ -1,6 +1,8 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = (process.env.ENCRYPTION_SECRET_KEY || "CHANGE_ME_32_BYTE_LONG_SECRET__").slice(0, 32); // 32 bytes
+const ENCRYPTION_KEY = (process.env.ENCRYPTION_SECRET_KEY || "CHANGE_ME_32_BYTE_LONG_SECRET__")
+    .padEnd(32, "0")
+    .slice(0, 32); // Ensure exactly 32-byte key
 const IV_LENGTH = 12; // 96-bit nonce recommended for GCM
 
 /**

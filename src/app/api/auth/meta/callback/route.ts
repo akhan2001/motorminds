@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { encrypt } from "@/lib/encryption";
 
 const GRAPH_BASE = "https://graph.facebook.com/v18.0";
@@ -37,7 +37,7 @@ async function getPages(userToken: string) {
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const stateEncoded = searchParams.get("state");
     const error = searchParams.get("error");
     const redirectUri = process.env.META_REDIRECT_URI ?? "https://motorminds.ca/api/auth/meta/callback";
 
@@ -50,6 +50,15 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        // decode state to get shopId
+        let shopIdFromState: string | null = null;
+        if (stateEncoded) {
+            try {
+                const parsed = JSON.parse(Buffer.from(stateEncoded, "base64url").toString());
+                shopIdFromState = parsed.shopId ?? null;
+            } catch {}
+        }
+
         const { access_token: shortToken } = await exchangeCode(code, redirectUri);
         const { access_token: userToken } = await getLongLivedUserToken(shortToken);
 
@@ -59,7 +68,7 @@ export async function GET(request: NextRequest) {
 
         // Assume we link the first page for MVP
         if (!pages || pages.length === 0) {
-            return NextResponse.redirect(`/messages?error=no_pages`);
+            return NextResponse.redirect(new URL(`/messages?error=no_pages`, request.url));
         }
 
         const page = pages[0];
@@ -73,23 +82,45 @@ export async function GET(request: NextRequest) {
 
         // TODO: determine shop_id from logged-in user session.
         // Placeholder: shopId from header for now.
-        const shopId = request.headers.get("x-shop-id");
+        const shopId = shopIdFromState;
         if (!shopId) {
-            return NextResponse.redirect(`/messages?error=shop_missing`);
+            return NextResponse.redirect(new URL(`/messages?error=shop_missing`, request.url));
         }
 
-        // Store in Supabase
-        await supabase.from("connected_pages").upsert({
+        // Store in Supabase (insert first, then update if row exists)
+        const rowPayload = {
             shop_id: shopId,
             page_id: pageId,
             ig_id: igId,
             access_token: encrypt(pageAccessToken),
             platform: "facebook"
-        });
+        };
 
-        return NextResponse.redirect(`/messages?connected=1`);
+        let { error: insertError } = await supabaseAdmin
+            .from("connected_pages")
+            .insert(rowPayload);
+
+        if (insertError) {
+            // Duplicate row? Then update existing record
+            const { code } = insertError as any;
+            if (code === "23505" || insertError.message?.includes("duplicate")) {
+                const { error: updateError } = await supabaseAdmin
+                    .from("connected_pages")
+                    .update(rowPayload)
+                    .eq("shop_id", shopId);
+                if (updateError) {
+                    console.error("Supabase update error", updateError);
+                    return NextResponse.redirect(new URL(`/messages?error=db_error`, request.url));
+                }
+            } else {
+                console.error("Supabase insert error", insertError);
+                return NextResponse.redirect(new URL(`/messages?error=db_error`, request.url));
+            }
+        }
+
+        return NextResponse.redirect(new URL(`/messages?connected=1`, request.url));
     } catch (err: any) {
         console.error(err);
-        return NextResponse.redirect(`/messages?error=oauth_failed`);
+        return NextResponse.redirect(new URL(`/messages?error=oauth_failed`, request.url));
     }
 } 
