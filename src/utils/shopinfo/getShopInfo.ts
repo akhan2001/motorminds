@@ -4,16 +4,21 @@ const supabase = createClientComponentClient();
 
 export async function getShopStaffNames(shopId: string) {
     const { data, error } = await supabase
-        .from('shop_staff')
-        .select('role, staff_name, id')
-        .eq('shop_id', shopId);
+        .from('employees')
+        .select('id, first_name, last_name, role')
+        .eq('shop_id', shopId)
+        .is('termination_date', null); // Only fetch active employees
 
     if (error) {
         console.error("Error fetching shop staff:", error);
         return [];
     }
 
-    return data || [];
+    // Combine first_name and last_name to create full names
+    return data.map(staff => ({
+        ...staff,
+        full_name: `${staff.first_name || ''} ${staff.last_name || ''}`.trim()
+    }));
 }
 
 export async function getShopName(shopId: string) {

@@ -70,7 +70,7 @@ export function TaskDetailsModal({
   const [isEditing, setIsEditing] = useState(false)
   
   // Add staff options state
-  const [staffOptions, setStaffOptions] = useState<Array<{id: string, staff_name: string, role: string}>>([])
+  const [staffOptions, setStaffOptions] = useState<Array<{id: string, full_name: string, role: string}>>([])
   // Add selectedStaffId state to track the selected staff member
   const [selectedStaffId, setSelectedStaffId] = useState<string>("")
   const [currentStatus, setCurrentStatus] = useState(initialTask.status)
@@ -133,12 +133,18 @@ export function TaskDetailsModal({
       if (!shopId) return;
       
       const { data: staffData, error: staffErr } = await supabase
-        .from("shop_staff")
-        .select("id, staff_name, role")
-        .eq("shop_id", shopId);
+        .from("employees")
+        .select("id, first_name, last_name, role")
+        .eq("shop_id", shopId)
+        .is('termination_date', null);
         
       if (!staffErr && staffData) {
-        setStaffOptions(staffData);
+        const options = staffData.map(s => ({
+          id: s.id,
+          full_name: `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+          role: s.role
+        }));
+        setStaffOptions(options);
       } else {
         console.error("Error fetching staff options:", staffErr);
       }
@@ -156,15 +162,16 @@ export function TaskDetailsModal({
         setSelectedStaffId(firstDetail.mechanic_id);
         
         const { data: staffRow, error: staffErr } = await supabase
-          .from("shop_staff")
-          .select("staff_name")
+          .from("employees")
+          .select("first_name, last_name")
           .eq("id", firstDetail.mechanic_id)
           .single()
 
         if (!staffErr && staffRow) {
+          const fullName = `${staffRow.first_name || ''} ${staffRow.last_name || ''}`.trim();
           setFormData((prev) => ({
             ...prev,
-            assignedToName: staffRow.staff_name,
+            assignedToName: fullName,
           }))
         } else {
           setFormData((prev) => ({
@@ -318,7 +325,7 @@ export function TaskDetailsModal({
       if (selectedStaff) {
         setFormData(prev => ({
           ...prev,
-          assignedToName: selectedStaff.staff_name
+          assignedToName: selectedStaff.full_name
         }));
       }
     } else {
@@ -624,7 +631,7 @@ export function TaskDetailsModal({
                           <SelectItem value="none">None</SelectItem>
                           {staffOptions.map((staff) => (
                             <SelectItem key={staff.id} value={staff.id}>
-                              {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                              {staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
                             </SelectItem>
                           ))}
                         </SelectContent>

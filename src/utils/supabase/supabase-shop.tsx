@@ -19,3 +19,18 @@ export async function getShopInfo(shopId: string) {
     if (error) throw error
     return data
 }
+
+export async function getShopName(shopId: string): Promise<string | null> {
+    const { data, error } = await supabase
+        .from('shops')
+        .select('shop_name')
+        .eq('id', shopId)
+        .single();
+
+    if (error) {
+        console.error("Error fetching shop name:", error);
+        return null;
+    }
+
+    return data?.shop_name || null;
+}

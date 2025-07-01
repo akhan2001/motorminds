@@ -10,6 +10,7 @@ import { createNewInvoice, formatPhoneNumber, updateInvoice } from "@/app/invoic
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { InvoiceLineItems } from "./form-sections/InvoiceLineItems";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -57,7 +58,7 @@ export default function InvoiceForm({
     const [total, setTotal] = useState("");
     const [vehicleInfo, setVehicleInfo] = useState<any>(null); //jsonb field
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [staffNames, setStaffNames] = useState<any[]>([]);
+    const [staffNames, setStaffNames] = useState<{id: string, full_name: string, role: string}[]>([]);
     const [showNewClientForm, setShowNewClientForm] = useState(false);
     const [clientInfo, setClientInfo] = useState({
         client_name: '',
@@ -155,16 +156,13 @@ export default function InvoiceForm({
 
     useEffect(() => {
         calculateTotal();
-    }, [labourCost, partsCost, labourItems, partsItems]);
+    }, [labourItems, partsItems]);
 
     const calculateTotal = () => {
-        const singleLabour = parseFloat(labourCost) || 0;
-        const singleParts = parseFloat(partsCost) || 0;
-        
         const labourItemsTotal = labourItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
         const partsItemsTotal = partsItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
         
-        const subtotal = singleLabour + singleParts + labourItemsTotal + partsItemsTotal;
+        const subtotal = labourItemsTotal + partsItemsTotal;
         setTotal(subtotal.toFixed(2));
     };
 
@@ -236,44 +234,6 @@ export default function InvoiceForm({
         setAssignedTo(value);
     };
 
-    // Helper functions for managing labour items
-    const addLabourItem = () => {
-        if (labourItems.length >= 10) {
-            toast.error("Maximum 10 labour items allowed");
-            return;
-        }
-        setLabourItems([...labourItems, { id: uuidv4(), description: "", cost: "0" }]);
-    };
-
-    const removeLabourItem = (id: string) => {
-        setLabourItems(labourItems.filter(item => item.id !== id));
-    };
-
-    const updateLabourItem = (id: string, field: 'description' | 'cost', value: string) => {
-        setLabourItems(labourItems.map(item => 
-            item.id === id ? { ...item, [field]: value } : item
-        ));
-    };
-
-    // Helper functions for managing parts items
-    const addPartsItem = () => {
-        if (partsItems.length >= 10) {
-            toast.error("Maximum 10 parts items allowed");
-            return;
-        }
-        setPartsItems([...partsItems, { id: uuidv4(), description: "", cost: "0" }]);
-    };
-
-    const removePartsItem = (id: string) => {
-        setPartsItems(partsItems.filter(item => item.id !== id));
-    };
-
-    const updatePartsItem = (id: string, field: 'description' | 'cost', value: string) => {
-        setPartsItems(partsItems.map(item => 
-            item.id === id ? { ...item, [field]: value } : item
-        ));
-    };
-
     // Reset form when opening in create mode or when modal opens
     useEffect(() => {
         if (isOpen && mode === "create") {
@@ -283,10 +243,6 @@ export default function InvoiceForm({
             setSelectedVehicleId("");
             setVehicleInfo(null);
             setInvoiceDate(formattedDate);
-            setLabour("");
-            setLabourCost("0");
-            setParts("");
-            setPartsCost("0");
             setLabourItems([]);
             setPartsItems([]);
             setNotes("");
@@ -345,10 +301,6 @@ export default function InvoiceForm({
             // Populate invoice details
             setInvoiceDate(existingInvoice.issue_date?.split('T')[0] || formattedDate);
             setDescription(existingInvoice.description || '');
-            setLabour(existingInvoice.labour || '');
-            setLabourCost(existingInvoice.labour_cost?.toString() || '0');
-            setParts(existingInvoice.parts || '');
-            setPartsCost(existingInvoice.parts_cost?.toString() || '0');
             setNotes(existingInvoice.notes || '');
             setMileage(existingInvoice.mileage || '');
             setAssignedTo(existingInvoice.assigned_to || '');
@@ -397,10 +349,6 @@ export default function InvoiceForm({
                 client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
                 // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
-                labour: labour || "",
-                labour_cost: parseFloat(labourCost) || 0,
-                parts: parts || "",
-                parts_cost: parseFloat(partsCost) || 0,
                 notes: notes || "",
                 mileage: mileage || "",
                 description: description || "",
@@ -458,10 +406,6 @@ export default function InvoiceForm({
         setSelectedVehicleId("");
         setVehicleInfo(null);
         setInvoiceDate(formattedDate);
-        setLabour("");
-        setLabourCost("0");
-        setParts("");
-        setPartsCost("0");
         setLabourItems([]);
         setPartsItems([]);
         setNotes("");
@@ -725,167 +669,40 @@ export default function InvoiceForm({
                             </div>
                             
                             <label className="text-gray-300 text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Labour</label>
-                            <div className="sm:col-span-3 space-y-2">
-                                {/* Original single labour item */}
-                                <div className="flex flex-row gap-2">
-                                    <Input
-                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                        placeholder="Enter labour"
-                                        value={labour}
-                                        onChange={(e) => setLabour(e.target.value)}
-                                    />
-                                    <span className="text-gray-300 text-md self-center">$</span>
-                                    <Input
-                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                        placeholder="Enter labour cost"
-                                        type="number"
-                                        value={labourCost}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const cleanValue = value.replace(/^0+/, '') || "0";
-                                            setLabourCost(cleanValue);
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Additional labour items */}
-                                {labourItems.map((item) => (
-                                    <div key={item.id} className="flex flex-row gap-2">
-                                        <Input
-                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                            placeholder="Enter labour description"
-                                            value={item.description}
-                                            onChange={(e) => updateLabourItem(item.id, 'description', e.target.value)}
-                                        />
-                                        <span className="text-gray-300 text-md self-center">$</span>
-                                        <Input
-                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                            placeholder="Enter cost"
-                                            type="number"
-                                            value={item.cost}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                const cleanValue = value.replace(/^0+/, '') || "0";
-                                                updateLabourItem(item.id, 'cost', cleanValue);
-                                            }}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
-                                            onClick={() => removeLabourItem(item.id)}
-                                        >
-                                            <MinusIcon className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-
-                                {/* Add labour item button */}
-                                {labourItems.length < 10 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
-                                        onClick={addLabourItem}
-                                    >
-                                        <PlusIcon className="h-4 w-4 mr-2" />
-                                        Add Labour Item
-                                    </Button>
-                                )}
-                            </div>
+                            <InvoiceLineItems
+                                title="Labour"
+                                items={labourItems}
+                                onItemsChange={setLabourItems}
+                            />
 
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Assigned To</label>
                             <div className="sm:col-span-3">
-                                <Select value={assignedTo} onValueChange={handleAssignedToChange}>
-                                    <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full">
+                                <Select
+                                    value={assignedTo}
+                                    onValueChange={handleAssignedToChange}
+                                >
+                                    <SelectTrigger className="bg-[#1a1a1a] border-[#333] text-white w-full">
                                         <SelectValue placeholder="Select a staff member" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                    <SelectContent className="bg-[#1a1a1a] border-[#333] text-white">
                                         <SelectItem value="none">
-                                            None
+                                            Unassigned
                                         </SelectItem>
                                         {staffNames.map((staff) => (
-                                            <SelectItem key={staff.id} value={staff.id}>
-                                                {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                                            <SelectItem key={staff.id} value={staff.full_name}>
+                                                {staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Parts</label>
-                            <div className="sm:col-span-3 space-y-2">
-                                {/* Original single parts item */}
-                                <div className="flex flex-row gap-2">
-                                    <Input
-                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                        placeholder="Enter parts"
-                                        value={parts}
-                                        onChange={(e) => setParts(e.target.value)}
-                                    />
-                                    <span className="text-gray-300 text-md self-center">$</span>
-                                    <Input
-                                        className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                        placeholder="Enter parts cost"
-                                        type="number"
-                                        value={partsCost}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const cleanValue = value.replace(/^0+/, '') || "0";
-                                            setPartsCost(cleanValue);
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Additional parts items */}
-                                {partsItems.map((item) => (
-                                    <div key={item.id} className="flex flex-row gap-2">
-                                        <Input
-                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                            placeholder="Enter parts description"
-                                            value={item.description}
-                                            onChange={(e) => updatePartsItem(item.id, 'description', e.target.value)}
-                                        />
-                                        <span className="text-gray-300 text-md self-center">$</span>
-                                        <Input
-                                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                            placeholder="Enter cost"
-                                            type="number"
-                                            value={item.cost}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                const cleanValue = value.replace(/^0+/, '') || "0";
-                                                updatePartsItem(item.id, 'cost', cleanValue);
-                                            }}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
-                                            onClick={() => removePartsItem(item.id)}
-                                        >
-                                            <MinusIcon className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-
-                                {/* Add parts item button */}
-                                {partsItems.length < 10 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
-                                        onClick={addPartsItem}
-                                    >
-                                        <PlusIcon className="h-4 w-4 mr-2" />
-                                        Add Parts Item
-                                    </Button>
-                                )}
-                            </div>
+                            <label className="text-gray-300 text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Parts</label>
+                            <InvoiceLineItems
+                                title="Parts"
+                                items={partsItems}
+                                onItemsChange={setPartsItems}
+                            />
 
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Notes</label>
                             <div className="sm:col-span-3">
