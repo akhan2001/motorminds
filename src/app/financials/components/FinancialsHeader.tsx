@@ -30,11 +30,6 @@ export default function FinancialsHeader({ timeRange, onTimeRangeChange }: Finan
             </SelectContent>
           </Select>
         </div>
-        
-        <Button className="bg-[#E53935] hover:bg-[#c62828] text-white">
-          <FileText className="w-4 h-4 mr-2" />
-          Generate Report
-        </Button>
       </div>
     </div>
   );

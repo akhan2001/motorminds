@@ -73,7 +73,7 @@ export default function QuickActions() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ActionCard
           title="Efficiency Analysis"
-          description="Track fixed costs, parts profitability, and labor rates."
+          description="Track fixed costs, parts, and labor profitability."
           href="/financials/efficiency"
           icon={Gauge}
           isActive={true}
