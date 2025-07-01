@@ -57,7 +57,7 @@ interface CustomerOption {
 // Staff
 interface StaffOption {
 	id: string
-	staff_name: string
+	full_name: string
 	role: string
 }
 
@@ -101,7 +101,7 @@ const [searchMode, setSearchMode] = useState<'customer' | 'vehicle'>('customer')
 // The list of possible customers (each with an array of vehicles)
 const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([])
 // The staff options for "Assigned To"
-const [staffOptions, setStaffOptions] = useState<{ id: string; staff_name: string; role: string }[]>([])
+const [staffOptions, setStaffOptions] = useState<{ id: string; full_name: string; role: string }[]>([])
 // Once user chooses a customer, we store that customer's vehicles here for the second dropdown
 const [currentVehicles, setCurrentVehicles] = useState<VehicleData[]>([])
 // The shop ID from the logged-in user
@@ -163,18 +163,19 @@ useEffect(() => {
 		setCustomerOptions(options)
 	}
 
-	// d) fetch staff from "shop_staff"
+	// d) fetch staff from "employees"
 	const { data: staffData, error: staffErr } = await supabase
-		.from("shop_staff")
-		.select("id, staff_name, role")
+		.from("employees")
+		.select("id, first_name, last_name, role")
 		.eq("shop_id", userData.shop_id)
+		.is('termination_date', null)
 
 	console.log(staffData)
 
 	if (!staffErr && staffData) {
 		const staffList: StaffOption[] = staffData.map((s: any) => ({
 		id: s.id,
-		staff_name: s.staff_name,
+		full_name: `${s.first_name || ''} ${s.last_name || ''}`.trim(),
 		role: s.role,
 		}))
 		setStaffOptions(staffList)
@@ -828,7 +829,7 @@ return (
 											<SelectItem value="none">None</SelectItem>
 											{staffOptions.map((staff) => (
 												<SelectItem key={staff.id} value={staff.id}>
-													{staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+													{staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
 												</SelectItem>
 											))}
 										</SelectContent>

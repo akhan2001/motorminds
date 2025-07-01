@@ -68,6 +68,11 @@ export function Nav(
 		{ name: "Lead Generation", href: "/lead-generation" },
 		{ name: "Opportunity Management", href: "/lead-generation/customer-retention" },
 	]
+
+	const analyticsSubItems = [
+		{ name: "Financials", href: "/financials" },
+		{ name: "Invoices", href: "/invoices" },
+	]
 	
 	const customerSubItems = [
 		{ name: "All Customers", href: "/customers" },
@@ -85,7 +90,12 @@ export function Nav(
 		},
 		// { name: "Tasks", href: "/tasks" },
 		{ name: "Mia AI", href: "/chat" },
-		{ name: "Invoices", href: "/invoices" },
+		{
+			name: "Analytics",
+			href: "/financials",
+			hasDropdown: true,
+			subItems: analyticsSubItems
+		},
 		{ 
 			name: "Lead Generation", href: "/lead-generation",
 			// href: "/lead-generation",

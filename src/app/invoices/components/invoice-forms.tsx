@@ -57,7 +57,7 @@ export default function InvoiceForm({
     const [total, setTotal] = useState("");
     const [vehicleInfo, setVehicleInfo] = useState<any>(null); //jsonb field
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [staffNames, setStaffNames] = useState<any[]>([]);
+    const [staffNames, setStaffNames] = useState<{id: string, full_name: string, role: string}[]>([]);
     const [showNewClientForm, setShowNewClientForm] = useState(false);
     const [clientInfo, setClientInfo] = useState({
         client_name: '',
@@ -798,17 +798,20 @@ export default function InvoiceForm({
 
                             <label className="text-gray-300 text-sm self-center sm:col-span-1">Assigned To</label>
                             <div className="sm:col-span-3">
-                                <Select value={assignedTo} onValueChange={handleAssignedToChange}>
-                                    <SelectTrigger className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full">
+                                <Select
+                                    value={assignedTo}
+                                    onValueChange={handleAssignedToChange}
+                                >
+                                    <SelectTrigger className="bg-[#1a1a1a] border-[#333] text-white w-full">
                                         <SelectValue placeholder="Select a staff member" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                    <SelectContent className="bg-[#1a1a1a] border-[#333] text-white">
                                         <SelectItem value="none">
-                                            None
+                                            Unassigned
                                         </SelectItem>
                                         {staffNames.map((staff) => (
-                                            <SelectItem key={staff.id} value={staff.id}>
-                                                {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                                            <SelectItem key={staff.id} value={staff.full_name}>
+                                                {staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
