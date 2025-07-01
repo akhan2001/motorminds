@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from '@/utils/supabase/server';
 
 // Helper to calculate recurring costs over a period
 function calculateTotalRecurringCost(costs: any[], startDate: Date, endDate: Date): number {
@@ -33,7 +32,6 @@ function calculateTotalRecurringCost(costs: any[], startDate: Date, endDate: Dat
 
 // GET all active fixed costs for a shop
 export async function GET(req: NextRequest) {
-    const supabase = createClient();
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get('shop_id');
     const startDateStr = searchParams.get('start_date');
@@ -69,8 +67,8 @@ export async function GET(req: NextRequest) {
             { data: payrollData, error: payrollError },
             { data: fixedCostsData, error: fixedCostsError }
         ] = await Promise.all([
-            supabase.from('invoices').select('created_at, total, total_cost_of_goods').eq('shop_id', shopId).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
-            supabase.from('employees').select('pay_rate, pay_period').eq('shop_id', shopId).eq('is_active', true),
+            supabase.from('invoices').select('created_at, amount, parts_cost, labour_cost').eq('shop_id', shopId).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
+            supabase.from('employees').select('salary_or_wage, pay_frequency').eq('shop_id', shopId).is('termination_date', null),
             supabase.from('fixed_costs').select('*').eq('shop_id', shopId)
         ]);
         
@@ -79,14 +77,14 @@ export async function GET(req: NextRequest) {
         }
 
         // 2. Calculate totals
-        const totalRevenue = revenueData?.reduce((acc, inv) => acc + inv.total, 0) ?? 0;
-        const totalCogs = revenueData?.reduce((acc, inv) => acc + (inv.total_cost_of_goods ?? 0), 0) ?? 0;
+        const totalRevenue = revenueData?.reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
+        const totalCogs = revenueData?.reduce((acc, inv) => acc + (inv.parts_cost ?? 0) + (inv.labour_cost ?? 0), 0) ?? 0;
         
         const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
         const totalPayroll = payrollData?.reduce((acc, emp) => {
             let dailyRate = 0;
-            if (emp.pay_period === 'hourly') dailyRate = emp.pay_rate * 8; // Assuming 8-hour day
-            if (emp.pay_period === 'salary') dailyRate = emp.pay_rate / 365;
+            if (emp.pay_frequency === 'hourly') dailyRate = emp.salary_or_wage * 8; // Assuming 8-hour day
+            if (emp.pay_frequency === 'salary') dailyRate = emp.salary_or_wage / 365;
             return acc + (dailyRate * daysInPeriod);
         }, 0) ?? 0;
         
@@ -99,13 +97,13 @@ export async function GET(req: NextRequest) {
         const historicalData = [];
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
             const dayStr = d.toISOString().split('T')[0];
-            const dailyRevenue = revenueData?.filter(inv => inv.created_at.startsWith(dayStr)).reduce((acc, inv) => acc + inv.total, 0) ?? 0;
-            const dailyCogs = revenueData?.filter(inv => inv.created_at.startsWith(dayStr)).reduce((acc, inv) => acc + (inv.total_cost_of_goods ?? 0), 0) ?? 0;
+            const dailyRevenue = revenueData?.filter(inv => inv.created_at.startsWith(dayStr)).reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
+            const dailyCogs = revenueData?.filter(inv => inv.created_at.startsWith(dayStr)).reduce((acc, inv) => acc + (inv.parts_cost ?? 0) + (inv.labour_cost ?? 0), 0) ?? 0;
             
             const dailyPayroll = payrollData?.reduce((acc, emp) => {
                  let dailyRate = 0;
-                 if (emp.pay_period === 'hourly') dailyRate = emp.pay_rate * 8;
-                 if (emp.pay_period === 'salary') dailyRate = emp.pay_rate / 365;
+                 if (emp.pay_frequency === 'hourly') dailyRate = emp.salary_or_wage * 8;
+                 if (emp.pay_frequency === 'salary') dailyRate = emp.salary_or_wage / 365;
                  return acc + dailyRate;
             }, 0) ?? 0;
             

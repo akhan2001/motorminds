@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/app/components/nav";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -26,14 +26,14 @@ interface EfficiencyData {
   historicalData: any[];
 }
 
-const Header = ({ onTimeRangeChange }: { onTimeRangeChange: (value: string) => void }) => (
+const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange: (value: string) => void }) => (
     <div className="flex items-center justify-between my-8">
         <div>
             <h1 className="text-3xl font-bold text-white mb-2">Efficiency Analysis</h1>
             <p className="text-gray-400">Analyze your shop's revenue, costs, and overall profitability.</p>
         </div>
         <div className="w-40">
-           <Select defaultValue="30d" onValueChange={onTimeRangeChange}>
+           <Select value={value} onValueChange={onTimeRangeChange}>
                 <SelectTrigger className="bg-black">
                     <SelectValue />
                 </SelectTrigger>
@@ -53,10 +53,15 @@ export default function EfficiencyPage() {
   const [fixedCosts, setFixedCosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [shopId, setShopId] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState("30d");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const timeRange = searchParams?.get("timeRange") || "30d";
 
-  const fetchData = async () => {
+  const handleTimeRangeChange = (newValue: string) => {
+    router.push(`/financials/efficiency?timeRange=${newValue}`);
+  };
+
+  const fetchData = async (range: string) => {
     if (!shopId) return;
     setIsLoading(true);
     
@@ -64,7 +69,7 @@ export default function EfficiencyPage() {
     try {
         const endDate = new Date();
         const startDate = new Date();
-        switch (timeRange) {
+        switch (range) {
             case "7d": startDate.setDate(endDate.getDate() - 7); break;
             case "90d": startDate.setDate(endDate.getDate() - 90); break;
             case "1y": startDate.setFullYear(endDate.getFullYear() - 1); break;
@@ -78,7 +83,14 @@ export default function EfficiencyPage() {
             fetch(`/api/financials/efficiency?shop_id=${shopId}&start_date=${start}&end_date=${end}`)
         ]);
 
-        if (!fixedCostsRes.ok || !efficiencyRes.ok) throw new Error("Failed to fetch data");
+        if (!fixedCostsRes.ok) {
+            console.error("Failed to fetch fixed costs:", fixedCostsRes.status, await fixedCostsRes.text());
+            throw new Error(`Failed to fetch fixed costs: ${fixedCostsRes.status}`);
+        }
+        if (!efficiencyRes.ok) {
+            console.error("Failed to fetch efficiency data:", efficiencyRes.status, await efficiencyRes.text());
+            throw new Error(`Failed to fetch efficiency data: ${efficiencyRes.status}`);
+        }
         
         const fixedCostsResult = await fixedCostsRes.json();
         const efficiencyResult = await efficiencyRes.json();
@@ -109,10 +121,10 @@ export default function EfficiencyPage() {
     getShop();
   }, [router]);
 
-  // Fetch data when shopId or timeRange changes
+  // Fetch data when shopId or timeRange from URL changes
   useEffect(() => {
     if (shopId) {
-      fetchData();
+      fetchData(timeRange);
     }
   }, [shopId, timeRange]);
 
@@ -125,7 +137,7 @@ export default function EfficiencyPage() {
       <Nav activeLink="Financials" />
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
-        <Header onTimeRangeChange={setTimeRange} />
+        <Header value={timeRange} onTimeRangeChange={handleTimeRangeChange} />
         
         {efficiencyData ? (
           <>
@@ -152,7 +164,7 @@ export default function EfficiencyPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-white">Fixed Costs Management</h2>
             {shopId && (
-              <AddFixedCostModal shopId={shopId} onCostAdded={fetchData}>
+              <AddFixedCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
                 <Button className="bg-green-600 hover:bg-green-700 text-white">
                   <PlusCircle className="w-4 h-4 mr-2" />
                   Add Fixed Cost
@@ -160,7 +172,7 @@ export default function EfficiencyPage() {
               </AddFixedCostModal>
             )}
           </div>
-          <FixedCostsTable costs={fixedCosts} onCostUpdated={fetchData} />
+          <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} />
         </div>
       </main>
     </div>
