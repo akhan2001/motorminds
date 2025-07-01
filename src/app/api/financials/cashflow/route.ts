@@ -65,13 +65,36 @@ export async function GET(req: NextRequest) {
       return sum + dailyEquivalent(cost.amount, cost.frequency) * rangeDays
     }, 0)
 
-    // 3. Calculate Net Cashflow
-    const netCashflow = totalRevenue - totalCogs - totalFixedCosts
+    // 3. Fetch Payroll Costs for active employees
+    const { data: employees, error: employeesError } = await supabase
+        .from("employees")
+        .select("salary_or_wage, pay_frequency")
+        .eq("shop_id", shopId)
+        .is("termination_date", null)
+
+    if (employeesError) throw employeesError
+
+    const totalPayrollCosts = employees.reduce((sum, emp) => {
+        const salary = emp.salary_or_wage || 0;
+        let employeeCost = 0;
+        if (emp.pay_frequency === 'hourly') {
+            // Assuming 8 hours/day for the given range. This is a simplification.
+            employeeCost = salary * 8 * rangeDays;
+        } else {
+            // Re-use dailyEquivalent for weekly, monthly, etc. salaries
+            employeeCost = dailyEquivalent(salary, emp.pay_frequency) * rangeDays;
+        }
+        return sum + employeeCost;
+    }, 0);
+
+    // 4. Calculate Net Cashflow
+    const netCashflow = totalRevenue - totalCogs - totalFixedCosts - totalPayrollCosts
 
     return NextResponse.json({
       totalRevenue,
       totalCogs,
       totalFixedCosts,
+      totalPayrollCosts,
       netCashflow,
     })
   } catch (error: any) {

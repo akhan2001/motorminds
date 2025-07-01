@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, FileText, TrendingUp, Calculator } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  FileText,
+  Users,
+  Droplet,
+  Gauge,
+} from "lucide-react";
 
 interface ActionCardProps {
   title: string;
@@ -57,39 +64,46 @@ function ActionCard({ title, description, href, icon: Icon, isActive = true }: A
 
 export default function QuickActions() {
   return (
-    <div className="space-y-6">
+    <div className="my-8 space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-white mb-2">Quick Actions</h2>
-        <p className="text-sm text-gray-400">Access key financial tools and reports</p>
+        <h2 className="text-xl font-semibold text-white mb-2">Financial Tools</h2>
+        <p className="text-sm text-gray-400">Explore financial modules and reports</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ActionCard
-          title="Cash Flow Analytics"
-          description="Detailed revenue and expense tracking with trend analysis"
-          href="/financials/cashflow"
-          icon={BarChart3}
+          title="Efficiency Analysis"
+          description="Track fixed costs, parts profitability, and labor rates."
+          href="/financials/efficiency"
+          icon={Gauge}
           isActive={true}
         />
-        
         <ActionCard
-          title="P&L Statements"
-          description="Generate comprehensive profit and loss statements"
+          title="Liquidity (A/R)"
+          description="Monitor unpaid invoices and aging accounts"
+          href="/financials/liquidity"
+          icon={Droplet}
+          isActive={true}
+        />
+        <ActionCard
+          title="Payroll Analytics"
+          description="Analyze payroll costs and revenue per employee"
+          href="/financials/payroll"
+          icon={Users}
+          isActive={true}
+        />
+        <ActionCard
+          title="Revenue Statements"
+          description="View auto-generated monthly P&L statements"
+          href="/financials/revenue"
           icon={FileText}
-          isActive={false}
+          isActive={true}
         />
-        
         <ActionCard
-          title="Revenue Forecasting"
-          description="AI-powered revenue predictions and growth analysis"
-          icon={TrendingUp}
-          isActive={false}
-        />
-        
-        <ActionCard
-          title="Tax Preparation"
-          description="Automated tax calculations and filing assistance"
-          icon={Calculator}
+          title="Job Efficiency"
+          description="Analyze profitability of quoted vs. actual hours"
+          href="/financials/efficiency"
+          icon={Gauge}
           isActive={false}
         />
       </div>

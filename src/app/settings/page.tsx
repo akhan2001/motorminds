@@ -51,7 +51,7 @@ export default function SettingsProfilePage() {
             <Nav activeLink="Settings"/>
             <div className="p-4 space-y-6">
                 {shopId && <ProfileForm shopId={shopId} />}
-                {/* {shopId && <AddEmployeeForm shopId={shopId} />} */}
+                {shopId && <AddEmployeeForm shopId={shopId} />}
             </div>
         </div>
     )
