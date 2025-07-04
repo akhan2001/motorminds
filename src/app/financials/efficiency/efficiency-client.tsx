@@ -10,6 +10,8 @@ import { getShopId } from "@/utils/supabase/supabase-shop";
 import BreadcrumbNav from "./components/BreadcrumbNav";
 import FixedCostsTable from "./components/FixedCostsTable";
 import AddFixedCostModal from "./components/AddFixedCostModal";
+import AddOneTimeCostModal from "./components/AddOneTimeCostModal";
+import OneTimeCostsTable from "./components/OneTimeCostsTable";
 import SummaryCards from "./components/SummaryCards";
 import CostBreakdownChart from "./components/CostBreakdownChart";
 import HistoricalChart from "./components/HistoricalChart";
@@ -51,6 +53,7 @@ const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange
 export default function EfficiencyClient() {
   const [efficiencyData, setEfficiencyData] = useState<EfficiencyData | null>(null);
   const [fixedCosts, setFixedCosts] = useState([]);
+  const [oneTimeCosts, setOneTimeCosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [shopId, setShopId] = useState<string | null>(null);
   const router = useRouter();
@@ -77,8 +80,9 @@ export default function EfficiencyClient() {
         const start = startDate.toISOString().split('T')[0];
         const end = endDate.toISOString().split('T')[0];
 
-        const [fixedCostsRes, efficiencyRes] = await Promise.all([
+        const [fixedCostsRes, oneTimeCostsRes, efficiencyRes] = await Promise.all([
             fetch(`/api/financials/efficiency?shop_id=${shopId}`),
+            fetch(`/api/financials/one-time?shop_id=${shopId}`),
             fetch(`/api/financials/efficiency?shop_id=${shopId}&start_date=${start}&end_date=${end}`)
         ]);
 
@@ -86,15 +90,21 @@ export default function EfficiencyClient() {
             console.error("Failed to fetch fixed costs:", fixedCostsRes.status, await fixedCostsRes.text());
             throw new Error(`Failed to fetch fixed costs: ${fixedCostsRes.status}`);
         }
+        if (!oneTimeCostsRes.ok) {
+            console.error("Failed to fetch one-time costs:", oneTimeCostsRes.status, await oneTimeCostsRes.text());
+            throw new Error(`Failed to fetch one-time costs: ${oneTimeCostsRes.status}`);
+        }
         if (!efficiencyRes.ok) {
             console.error("Failed to fetch efficiency data:", efficiencyRes.status, await efficiencyRes.text());
             throw new Error(`Failed to fetch efficiency data: ${efficiencyRes.status}`);
         }
         
         const fixedCostsResult = await fixedCostsRes.json();
+        const oneTimeCostsResult = await oneTimeCostsRes.json();
         const efficiencyResult = await efficiencyRes.json();
         
         setFixedCosts(fixedCostsResult);
+        setOneTimeCosts(oneTimeCostsResult);
         setEfficiencyData(efficiencyResult);
 
     } catch (error) {
@@ -164,19 +174,36 @@ export default function EfficiencyClient() {
             </div>
         )}
 
-        <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">Fixed Costs Management</h2>
-            {shopId && (
-              <AddFixedCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
-                <Button className="bg-green-600 hover:bg-green-700 text-white">
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Add Fixed Cost
-                </Button>
-              </AddFixedCostModal>
-            )}
-          </div>
-          <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-white">Recurring Fixed Costs</h2>
+                {shopId && (
+                  <AddFixedCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Add Fixed Cost
+                    </Button>
+                  </AddFixedCostModal>
+                )}
+              </div>
+              <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} />
+            </div>
+
+            <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-white">One-Time Costs</h2>
+                {shopId && (
+                  <AddOneTimeCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Add Cost
+                    </Button>
+                  </AddOneTimeCostModal>
+                )}
+              </div>
+              <OneTimeCostsTable costs={oneTimeCosts} onCostUpdated={() => fetchData(timeRange)} />
+            </div>
         </div>
       </main>
     </div>

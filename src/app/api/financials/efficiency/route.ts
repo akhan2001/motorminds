@@ -65,15 +65,17 @@ export async function GET(req: NextRequest) {
         const [
             { data: revenueData, error: revenueError },
             { data: payrollData, error: payrollError },
-            { data: fixedCostsData, error: fixedCostsError }
+            { data: fixedCostsData, error: fixedCostsError },
+            { data: oneTimeCostsData, error: oneTimeCostsError }
         ] = await Promise.all([
             supabase.from('invoices').select('created_at, amount, parts_cost, labour_cost').eq('shop_id', shopId).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
             supabase.from('employees').select('salary_or_wage, pay_frequency').eq('shop_id', shopId).is('termination_date', null),
-            supabase.from('fixed_costs').select('*').eq('shop_id', shopId)
+            supabase.from('fixed_costs').select('*').eq('shop_id', shopId),
+            supabase.from('one_time_costs').select('*').eq('shop_id', shopId)
         ]);
         
-        if (revenueError || payrollError || fixedCostsError) {
-             throw new Error(revenueError?.message || payrollError?.message || fixedCostsError?.message || "An error occured");
+        if (revenueError || payrollError || fixedCostsError || oneTimeCostsError) {
+             throw new Error(revenueError?.message || payrollError?.message || fixedCostsError?.message || oneTimeCostsError?.message || "An error occured");
         }
 
         // 2. Calculate totals
@@ -88,7 +90,13 @@ export async function GET(req: NextRequest) {
             return acc + (dailyRate * daysInPeriod);
         }, 0) ?? 0;
         
-        const totalFixedCosts = calculateTotalRecurringCost(fixedCostsData ?? [], startDate, endDate);
+        const totalRecurringCosts = calculateTotalRecurringCost(fixedCostsData ?? [], startDate, endDate);
+        const totalOneTimeCosts = (oneTimeCostsData ?? []).filter(c => {
+            const d = new Date(c.cost_date);
+            return d >= startDate && d <= endDate;
+        }).reduce((acc, c) => acc + c.amount, 0);
+        
+        const totalFixedCosts = totalRecurringCosts + totalOneTimeCosts;
         
         const grossProfit = totalRevenue - totalCogs;
         const netProfit = grossProfit - totalPayroll - totalFixedCosts;
@@ -107,7 +115,7 @@ export async function GET(req: NextRequest) {
                  return acc + dailyRate;
             }, 0) ?? 0;
             
-            const dailyFixedCosts = calculateTotalRecurringCost(fixedCostsData ?? [], d, d);
+            const dailyFixedCosts = calculateTotalRecurringCost(fixedCostsData ?? [], d, d) + (oneTimeCostsData ?? []).filter(c => c.cost_date === dayStr).reduce((acc, c) => acc + c.amount, 0);
 
             historicalData.push({
                 date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -122,6 +130,7 @@ export async function GET(req: NextRequest) {
             totalCogs,
             totalPayroll,
             totalFixedCosts,
+            totalOneTimeCosts,
             grossProfit,
             netProfit,
             historicalData,

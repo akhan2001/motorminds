@@ -3,7 +3,6 @@ import { Nav } from "@/app/components/nav";
 export default function LoadingSkeleton() {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      <Nav activeLink="Financials" />
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <div className="animate-pulse">
             {/* Breadcrumb */}
