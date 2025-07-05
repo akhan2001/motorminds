@@ -588,27 +588,22 @@ export default function MechanicsHub() {
         .single()
       if (detailErr) throw detailErr
 
-      // const insightsData = await generateMiaInsights(newRepairOrderId, shopId)
-      // if (insightsData?.success) {
-      //   console.log("Created Mia AI Insights:", insightsData.insights)
-      // } else {
-      //   console.error("Failed to create Mia AI Insights:", insightsData?.error)
-      // }
-
-      // generateMiaInsights(newRepairOrderId, shopId)
-      //   .then(result => {
-      //     if (result?.success) {
-      //       console.log("Created Mia AI Insights:", result.insights)
-      //     } else {
-      //       console.error("Failed to create Mia AI Insights:", result?.error)
-      //     }
-      //   })
-      //   .catch(error => {
-      //     console.error("Failed to create Mia AI Insights:", error)
-      //   })
+      // Trigger Mia AI Insights generation
+      generateMiaInsights(newRepairOrderId, shopId)
+        .then(result => {
+          if (result?.success) {
+            console.log("Created Mia AI Insights:", result.insights);
+            toast.success("AI insights generated for new work order.");
+          } else {
+            console.error("Failed to create Mia AI Insights:", result?.error);
+            toast.error("Could not generate AI insights.");
+          }
+        })
+        .catch(error => {
+          console.error("Error calling generateMiaInsights:", error);
+          toast.error("An error occurred while generating AI insights.");
+        });
       
-      createMiaInsights(newRepairOrderId, shopId, "immediate")
-
       toast.success("Work Order successfully created!")
 
       // Create new lead
@@ -626,7 +621,36 @@ export default function MechanicsHub() {
         console.error("Error creating customer lead:", err)
       }
 
-      await fetchRepairOrders(user.id) // re-fetch your data
+      // Optimistically update the UI instead of re-fetching
+      const newRepairTask: RepairOrderItem = {
+        id: newRepairOrderId,
+        title: formData.taskName || 'New Task',
+        status: 'todo',
+        statusColor: getStatusColor('todo'),
+        vehicle: `${formData.year || ''} ${formData.make || ''} ${formData.model || ''}`.trim(),
+        date: new Date().toISOString(),
+        customer_name: formData.customerName,
+        description: formData.taskName,
+      };
+
+      setRepairOrders(currentOrders => {
+        const newBoardData = { ...currentOrders.boardData, todo: [newRepairTask, ...currentOrders.boardData.todo] };
+        const newListData = [newRepairTask, ...currentOrders.listData];
+        const newCalendarData = { ...currentOrders.calendarData };
+        const dateKey = newRepairTask.date.split('T')[0];
+        
+        if (!newCalendarData[dateKey]) {
+          newCalendarData[dateKey] = [];
+        }
+        newCalendarData[dateKey].unshift(newRepairTask as any);
+
+        return {
+          boardData: newBoardData,
+          calendarData: newCalendarData,
+          listData: newListData,
+        };
+      });
+
     } catch (err: any) {
       console.error("Error creating work order:", err)
       toast.error("Error creating work order: " + err.message)

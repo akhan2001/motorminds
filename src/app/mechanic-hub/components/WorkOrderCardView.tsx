@@ -27,7 +27,10 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
   }
 
   return (
-    <div className="bg-[#222222] rounded-lg overflow-hidden border border-[#333333] hover:border-[#444444] transition-all duration-200 hover:bg-[#252525]">
+    <div 
+      className="bg-[#222222] rounded-lg overflow-hidden border border-[#333333] hover:border-[#444444] transition-all duration-200 hover:bg-[#252525] cursor-pointer"
+      onClick={onClick}
+    >
       <div className="p-4">
         {/* Header Section */}
         <div className="flex items-start justify-between gap-4">
@@ -46,17 +49,6 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
               {vehicle?.year} {vehicle?.make} {vehicle?.model}
             </h3>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-[#9d9d9d] hover:text-white border-[#444444] hover:bg-zinc-800 shrink-0"
-            onClick={(e) => {
-              e.stopPropagation()
-              onClick()
-            }}
-          >
-            View Details
-          </Button>
         </div>
 
         {/* Main Content Grid */}
@@ -125,7 +117,10 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
               variant="ghost"
               size="sm"
               className="text-[#9d9d9d] hover:text-white hover:bg-zinc-800 h-8 w-8 p-0"
-              onClick={handleClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
