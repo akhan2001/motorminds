@@ -64,23 +64,8 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: Invo
         setStatus(invoice.status);
     }, [invoice.status]);
 
-    const handleClose = async () => {
-        try {
-            // Only update if status has changed
-            if (status !== invoice.status) {
-                try {
-                    await setInvoiceStatus(invoice.invoiceNumber, status, shopId as string);
-                    toast.success(`Invoice #${invoice.displayNumber} saved as ${status}`);
-                } catch (error) {
-                    console.error("Error updating invoice status:", error);
-                    toast.error("Failed to update invoice status");
-                }
-            }
-            onClose();
-        } catch (error) {
-            console.error("Error updating invoice status:", error);
-            toast.error("Failed to update invoice status");
-        }
+    const handleClose = () => {
+        onClose();
     };
 
     const handleEdit = () => {
@@ -97,11 +82,18 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: Invo
     };
 
     const toggleStatus = async () => {
+        const newStatus = status === "PAID" ? "UNPAID" : "PAID";
         try {
-            const newStatus = status === "PAID" ? "UNPAID" : "PAID";
+            // Optimistically update the UI
             setStatus(newStatus);
-            // toast.success(`Invoice #${invoice.displayNumber} updated to ${newStatus}`);
+            
+            // Call the server to update the status
+            await setInvoiceStatus(invoice.invoiceNumber, newStatus, shopId as string);
+
+            toast.success(`Invoice #${invoice.displayNumber} marked as ${newStatus}`);
         } catch (error) {
+            // If the API call fails, revert the status and show an error
+            setStatus(status); // Revert to original status
             console.error("Error updating invoice status:", error);
             toast.error("Failed to update invoice status");
         }

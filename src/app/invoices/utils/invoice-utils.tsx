@@ -124,9 +124,17 @@ export async function fetchShopBusinessDetails(shopId: string) {
 }
 
 export async function setInvoiceStatus(invoiceId: string, status: string, shopId: string) {
+	const updateData: { status: string; paid_at?: string | null } = { status: status };
+
+    if (status === "PAID") {
+        updateData.paid_at = new Date().toISOString();
+    } else {
+        updateData.paid_at = null;
+    }
+
 	const { data, error } = await supabase
 	.from('invoices')
-	.update({ status: status })
+	.update(updateData)
 	.eq('invoice_number', invoiceId)
 	.eq('shop_id', shopId);
 

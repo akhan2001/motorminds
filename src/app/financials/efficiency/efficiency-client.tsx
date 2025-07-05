@@ -36,10 +36,11 @@ const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange
         </div>
         <div className="w-40">
            <Select value={value} onValueChange={onTimeRangeChange}>
-                <SelectTrigger className="bg-black">
+                <SelectTrigger className="bg-black text-white">
                     <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#131313] border-[#222]">
+                <SelectContent className="bg-[#131313] border-[#222] text-white">
+                    <SelectItem value="today">Today</SelectItem>
                     <SelectItem value="7d">Last 7 Days</SelectItem>
                     <SelectItem value="30d">Last 30 Days</SelectItem>
                     <SelectItem value="90d">Last 90 Days</SelectItem>
@@ -72,6 +73,7 @@ export default function EfficiencyClient() {
         const endDate = new Date();
         const startDate = new Date();
         switch (range) {
+            case "today": startDate.setDate(endDate.getDate()); break;
             case "7d": startDate.setDate(endDate.getDate() - 7); break;
             case "90d": startDate.setDate(endDate.getDate() - 90); break;
             case "1y": startDate.setFullYear(endDate.getFullYear() - 1); break;

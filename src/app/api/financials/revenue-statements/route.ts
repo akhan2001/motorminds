@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
       .select("amount, parts_cost, labour_cost, parts_items, labour_items")
       .eq("shop_id", shop_id)
       .eq("status", "PAID")
-      .gte("issue_date", period_start_date)
-      .lte("issue_date", period_end_date);
+      .gte("paid_at", period_start_date)
+      .lte("paid_at", period_end_date);
 
     if (invErr) throw invErr;
 

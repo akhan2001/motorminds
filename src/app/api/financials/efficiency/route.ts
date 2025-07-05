@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
     try {
         const startDate = new Date(startDateStr);
         const endDate = new Date(endDateStr);
+        endDate.setUTCHours(23, 59, 59, 999); // Set to end of day to include all of today's data
 
         // 1. Fetch all relevant data in parallel
         const [
@@ -68,7 +69,7 @@ export async function GET(req: NextRequest) {
             { data: fixedCostsData, error: fixedCostsError },
             { data: oneTimeCostsData, error: oneTimeCostsError }
         ] = await Promise.all([
-            supabase.from('invoices').select('created_at, amount, parts_cost, labour_cost').eq('shop_id', shopId).gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
+            supabase.from('invoices').select('created_at, amount, parts_cost, labour_cost, paid_at').eq('shop_id', shopId).eq('status', 'PAID').gte('paid_at', startDate.toISOString()).lte('paid_at', endDate.toISOString()),
             supabase.from('employees').select('salary_or_wage, pay_frequency').eq('shop_id', shopId).is('termination_date', null),
             supabase.from('fixed_costs').select('*').eq('shop_id', shopId),
             supabase.from('one_time_costs').select('*').eq('shop_id', shopId)
@@ -105,8 +106,8 @@ export async function GET(req: NextRequest) {
         const historicalData = [];
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
             const dayStr = d.toISOString().split('T')[0];
-            const dailyRevenue = revenueData?.filter(inv => inv.created_at.startsWith(dayStr)).reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
-            const dailyCogs = revenueData?.filter(inv => inv.created_at.startsWith(dayStr)).reduce((acc, inv) => acc + (inv.parts_cost ?? 0) + (inv.labour_cost ?? 0), 0) ?? 0;
+            const dailyRevenue = revenueData?.filter(inv => inv.paid_at && inv.paid_at.startsWith(dayStr)).reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
+            const dailyCogs = revenueData?.filter(inv => inv.paid_at && inv.paid_at.startsWith(dayStr)).reduce((acc, inv) => acc + (inv.parts_cost ?? 0) + (inv.labour_cost ?? 0), 0) ?? 0;
             
             const dailyPayroll = payrollData?.reduce((acc, emp) => {
                  let dailyRate = 0;
