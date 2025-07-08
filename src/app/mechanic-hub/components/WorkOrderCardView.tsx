@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Clock, Calendar, User, Car, Wrench, DollarSign, Phone, Mail, ChevronDown, ChevronUp, FileText, AlertCircle } from 'lucide-react'
-import { type WorkOrder } from '@/hooks/useWorkOrders'
+import { type WorkOrder } from '@/hooks/use-work-orders'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -45,9 +45,14 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
                 </Badge>
               )}
             </div>
-            <h3 className="text-lg font-semibold text-white">
-              {vehicle?.year} {vehicle?.make} {vehicle?.model}
-            </h3>
+            <div className="flex items-baseline gap-2">
+                <h3 className="text-lg font-semibold text-white">
+                    {detail?.description || 'New Work Order'}
+                </h3>
+                <span className="text-lg font-semibold text-gray-400">
+                    ({vehicle?.year} {vehicle?.make} {vehicle?.model})
+                </span>
+            </div>
           </div>
         </div>
 
@@ -111,7 +116,7 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-[#9d9d9d]">
               <AlertCircle className="h-4 w-4" />
-              <span className="font-medium text-white">Description</span>
+              <span className="font-medium text-white">Further Details</span>
             </div>
             <Button
               variant="ghost"
@@ -129,8 +134,7 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
               )}
             </Button>
           </div>
-          <p className="text-sm text-white/80 line-clamp-2">{detail?.description || 'No description'}</p>
-
+          
           <AnimatePresence>
             {isExpanded && (
               <motion.div

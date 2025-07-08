@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge'
 import { User, Car, DollarSign } from 'lucide-react'
-import { type WorkOrder } from '@/hooks/useWorkOrders'
+import { type WorkOrder } from '@/hooks/use-work-orders'
 import { Button } from '@/components/ui/button'
 
 interface WorkOrderThinViewProps {
