@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 import { ImmediateInsights, InsightPriority, FlagType } from '@/app/mia/types/MiaInsights';
 import { supabase } from '@/lib/supabase';
+import rateLimiter from '@/lib/rate-limiter';
+
+const limiter = rateLimiter({
+    interval: 60 * 1000, // 60 seconds
+    uniqueTokenPerInterval: 500, // Max 500 users per second
+});
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -42,7 +48,11 @@ function createDefaultInsights(): ImmediateInsights {
 }
 
 export async function POST(req: Request) {
+    const ip = req.headers.get('x-forwarded-for') ?? '127.0.0.1';
+    
     try {
+        await limiter.check(new NextResponse(), ip);
+        
         // Extract work order data and shop ID from request
         const { workOrderData, shopId } = await req.json();
         
@@ -203,7 +213,11 @@ export async function POST(req: Request) {
             success: true,
             insights
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'Rate limit exceeded') {
+            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+        }
+        
         console.error('Error generating immediate insights:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(

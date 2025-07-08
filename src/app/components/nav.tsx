@@ -68,7 +68,7 @@ export function Nav() {
 		{ name: "Lead Generation", href: "/lead-generation" },
 		{ name: "Opportunity Management", href: "/lead-generation/customer-retention" },
 	]
-
+	
 	const customerSubItems = [
 		{ name: "All Customers", href: "/customers" },
 		{ name: "Customer Intake Form", href: "/customer-intake" },

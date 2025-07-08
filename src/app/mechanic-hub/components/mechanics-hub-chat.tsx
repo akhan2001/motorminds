@@ -13,6 +13,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 	const [analysis, setAnalysis] = useState<ImmediateInsights | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
+	const [hasRefreshed, setHasRefreshed] = useState(false);
 	
 	const fetchInsights = async () => {
 		if (!taskId) return;
@@ -49,6 +50,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 		
 		try {
 			setRefreshing(true);
+			setHasRefreshed(true);
 			
 			// Ensure workOrderData has the shop_id property
 			const workOrderWithShopId = {
@@ -94,19 +96,21 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			<div className="p-4 border-b border-[#222222] flex-shrink-0">
 				<div className="flex justify-between items-center">
 					<h3 className="text-lg font-medium text-white">Mia Insights</h3>
-					<Button 
-						variant="ghost" 
-						size="sm" 
-						className={`h-8 w-8 p-0 transition-opacity duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
-						onClick={handleRefreshInsights}
-						disabled={refreshing || loading}
-						title={refreshing ? "Refreshing insights..." : "Regenerate insights"}
-					>
-						<RefreshCw className={`h-4 w-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
-						<span className="sr-only">
-							{refreshing ? "Refreshing insights..." : "Refresh insights"}
-						</span>
-					</Button>
+					{!hasRefreshed && (
+						<Button 
+							variant="ghost" 
+							size="sm" 
+							className={`h-8 w-8 p-0 transition-opacity duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
+							onClick={handleRefreshInsights}
+							disabled={refreshing || loading}
+							title={refreshing ? "Refreshing insights..." : "Regenerate insights"}
+						>
+							<RefreshCw className={`h-4 w-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+							<span className="sr-only">
+								{refreshing ? "Refreshing insights..." : "Refresh insights"}
+							</span>
+						</Button>
+					)}
 				</div>
 			</div>
 			
