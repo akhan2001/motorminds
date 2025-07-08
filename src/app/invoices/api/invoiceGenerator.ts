@@ -108,7 +108,7 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
     return invoiceData;
 }
 
-const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: string) => {
+const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: string): Promise<{ invoice_number: string }[] | null> => {
     // console.log(invoiceData)
 
     const { data, error } = await supabase
@@ -136,10 +136,11 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: stri
             shop_id: shopId,
             vehicle_information: invoiceData.vehicle_information
         })
+        .select('invoice_number')
         
     if (error) {
         console.error(error)
-        return;
+        return null;
     }
 
     return data;
@@ -183,7 +184,11 @@ export async function generateInvoice(repairOrderID: any, shopId: string) {
     const invoiceData = await fetchData(repairOrderDetailsID, repairOrderID)
 
     // console.log(invoiceData)
-    createNewInvoice(invoiceData, repairOrderDetailsID, shopId)
+    const newInvoice = await createNewInvoice(invoiceData, repairOrderDetailsID, shopId)
+
+    if (newInvoice) {
+        return newInvoice;
+    }
 
     return true;
     // const invoice = await easyinvoice.createInvoice(data);

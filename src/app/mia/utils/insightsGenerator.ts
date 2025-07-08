@@ -3,11 +3,26 @@ import { ImmediateInsights, LongTermInsights, InsightsResponse } from '../types/
 import { addToMiaCustomerInsights } from './miaCustomerInsightsUtil';
 
 /**
- * Generates Mia insights for a specific work order
+ * Gets existing insights or generates new ones
  */
-export async function generateMiaInsights(workOrderId: string, shopId: string, term: string) {
+export async function getOrGenerateMiaInsights(workOrderId: string, shopId: string, term: string): Promise<InsightsResponse> {
     try {
-        // Step 1: Fetch the work order data
+        // First check if we already have insights
+        const { data: existingInsights, error: insightsError } = await supabase
+            .from('repair_order_details')
+            .select('mia_insights, insights_status')
+            .eq('repair_order_id', workOrderId)
+            .single();
+
+        // If we have valid insights, return them
+        if (!insightsError && existingInsights?.mia_insights && existingInsights?.insights_status === 'generated') {
+            return {
+                success: true,
+                insights: existingInsights.mia_insights as ImmediateInsights
+            };
+        }
+
+        // Otherwise generate new insights
         const { data: workOrder, error: workOrderError } = await supabase
             .from('repair_orders')
             .select(`
@@ -30,8 +45,7 @@ export async function generateMiaInsights(workOrderId: string, shopId: string, t
             };
         }
 
-        // Step 2: Call the insights API
-        const response = await fetch(`/api/mia-insights/refresh`, {
+        const response = await fetch(`/api/mia-insights/immediate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -53,7 +67,6 @@ export async function generateMiaInsights(workOrderId: string, shopId: string, t
 
         const result: InsightsResponse = await response.json();
 
-        // Step 3: Update the repair order with the insights
         if (result.success && result.insights) {
             const { error: updateError } = await supabase
                 .from('repair_order_details')
@@ -65,89 +78,10 @@ export async function generateMiaInsights(workOrderId: string, shopId: string, t
 
             if (updateError) {
                 console.error('Error updating repair order with insights:', updateError);
-                return {
-                    success: false,
-                    error: 'Failed to save insights to database'
-                };
-            }
-            
-            // 2. Add to mia_customer_insights table
-            let insightsTableResult;
-            if (term === 'immediate') {
-                insightsTableResult = await addToMiaCustomerInsights(
-                    workOrderId,
-                    shopId,
-                    result.insights as ImmediateInsights
-                );
-            } else {
-                insightsTableResult = await addToMiaCustomerInsights(
-                    workOrderId,
-                    shopId,
-                    result.insights as LongTermInsights
-                );
-            }
-
-            // 3. Add ID to insights_ids[] in repair_order_details table
-            const { data: currentDetails, error: fetchError } = await supabase
-                .from('repair_order_details')
-                .select('insights_ids')
-                .eq('repair_order_id', workOrderId)
-                .single();
-
-            if (fetchError) {
-                console.error('Error fetching current insights_ids:', fetchError);
-            } else {
-                // Append the new ID to the existing array (or create a new array if null)
-                const currentIds = currentDetails.insights_ids || [];
-                
-                // Only add if not already in the array
-                if (!currentIds.includes(insightsTableResult.data?.id)) {
-                    const { error: updateError } = await supabase
-                        .from('repair_order_details')
-                        .update({
-                            insights_ids: [...currentIds, insightsTableResult.data?.id]
-                        })
-                        .eq('repair_order_id', workOrderId);
-                        
-                    if (updateError) {
-                        console.error('Error updating insights_ids array:', updateError);
-                    }
-                }
             }
         }
 
         return result;
-    } catch (error) {
-        console.error('Error in generateMiaInsights:', error);
-        return {
-            success: false,
-            error: 'Failed to process insights request'
-        };
-    }
-}
-
-/**
- * Gets existing insights or generates new ones
- */
-export async function getOrGenerateMiaInsights(workOrderId: string, shopId: string, term: string): Promise<InsightsResponse> {
-    try {
-        // First check if we already have insights
-        const { data: existingInsights, error: insightsError } = await supabase
-            .from('repair_order_details')
-            .select('mia_insights, insights_status')
-            .eq('repair_order_id', workOrderId)
-            .single();
-
-        // If we have valid insights, return them
-        if (!insightsError && existingInsights?.mia_insights && existingInsights?.insights_status === 'generated') {
-            return {
-                success: true,
-                insights: existingInsights.mia_insights as ImmediateInsights
-            };
-        }
-
-        // Otherwise generate new insights
-        return generateMiaInsights(workOrderId, shopId, term);
     } catch (error) {
         console.error('Error in getOrGenerateMiaInsights:', error);
         return {
@@ -169,7 +103,7 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
         }
 
         // Call the API to generate the immediate insights
-        const response = await fetch('/api/mia-insights/refresh', {
+        const response = await fetch('/api/mia-insights/immediate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -252,14 +186,7 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
                     .eq('id', miaCustomerInsightId)
                     .select()
                     .single();
-                
-                if (updateError) {
-                    console.error('Error updating mia_customer_insights:', updateError);
-                    throw new Error('Failed to update insights in database');
-                }
-                
-                updateResult = data;
-                console.log("Updated existing insight by ID:", miaCustomerInsightId);
+                updateResult = { data, error: updateError };
             } else {
                 // Update by repair order ID
                 const { data, error: updateError } = await supabase
@@ -268,50 +195,41 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
                     .eq('repair_order_id', workOrderData.id)
                     .select()
                     .single();
-                
-                if (updateError) {
-                    console.error('Error updating mia_customer_insights by repair_order_id:', updateError);
-                    throw new Error('Failed to update insights in database');
-                }
-                
-                updateResult = data;
-                console.log("Updated existing insight by repair_order_id:", workOrderData.id);
+                updateResult = { data, error: updateError };
             }
             
-            return {
-                success: true,
-                insights,
-                data: updateResult
-            };
+            if (updateResult.error) {
+                console.error("Error updating Mia customer insight:", updateResult.error);
+                return { success: false, error: updateResult.error.message };
+            }
+            return { success: true, data: updateResult.data };
+
         } else {
-            // Insert new record using addToMiaCustomerInsights
-            if (!workOrderData?.id || !workOrderData?.shop_id) {
-                throw new Error('Missing required work order data for creating new insight');
+            // Create new record
+            const { data: newInsight, error: insertError } = await supabase
+                .from('mia_customer_insights')
+                .insert({
+                    shop_id: workOrderData.shop_id,
+                    customer_id: workOrderData.customer_id,
+                    repair_order_id: workOrderData.id,
+                    analysis: insights,
+                    summary: insights.summary,
+                    priority: priority,
+                })
+                .select()
+                .single();
+                
+            if (insertError) {
+                console.error("Error creating Mia customer insight:", insertError);
+                return { success: false, error: insertError.message };
             }
-            
-            console.log("Creating new insight for repair order:", workOrderData.id);
-            const insertResult = await addToMiaCustomerInsights(
-                workOrderData.id,
-                workOrderData.shop_id,
-                insights
-            );
-            
-            if (!insertResult.success) {
-                throw new Error(insertResult.error || 'Failed to create new insight');
-            }
-            
-            return {
-                success: true,
-                insights,
-                data: insertResult.data,
-                isNewRecord: true
-            };
+            return { success: true, data: newInsight };
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error in generateImmediateAnalysis:', error);
         return {
             success: false,
-            error: error instanceof Error ? error.message : 'Failed to generate insights'
+            error: error.message || 'Failed to process insights request'
         };
     }
 }

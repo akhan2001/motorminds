@@ -74,6 +74,7 @@ export function TaskDetailsModal({
   // Add selectedStaffId state to track the selected staff member
   const [selectedStaffId, setSelectedStaffId] = useState<string>("")
   const [currentStatus, setCurrentStatus] = useState(initialTask.status)
+  const [invoiceInfo, setInvoiceInfo] = useState<{ exists: boolean; id: string | null }>({ exists: false, id: null });
 
   // Extract the first row in details
   const firstDetail = initialTask.repair_order_details?.[0]
@@ -189,6 +190,40 @@ export function TaskDetailsModal({
     }
     fetchStaffName()
   }, [firstDetail?.mechanic_id])
+
+  useEffect(() => {
+    async function checkInvoiceExists() {
+      if (currentStatus !== "Completed" || !initialTask.id || !shopId) {
+        setInvoiceInfo({ exists: false, id: null });
+        return;
+      }
+
+      const firstDetailId = initialTask.repair_order_details?.[0]?.id;
+      if (!firstDetailId) {
+        return;
+      }
+      
+      const { data: existingInvoice, error } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('workorder_id', firstDetailId)
+        .eq('shop_id', shopId)
+        .limit(1);
+
+      if (error) {
+        console.error("Error checking for existing invoice:", error.message);
+        return;
+      }
+      
+      if (existingInvoice && existingInvoice.length > 0) {
+        setInvoiceInfo({ exists: true, id: existingInvoice[0].invoice_number });
+      } else {
+        setInvoiceInfo({ exists: false, id: null });
+      }
+    }
+
+    checkInvoiceExists();
+  }, [initialTask.id, currentStatus, initialTask.repair_order_details, shopId]);
 
   // If the parent re-renders with a new task
   useEffect(() => {
@@ -706,11 +741,27 @@ export function TaskDetailsModal({
                 <Button
                   variant="outline"
                   className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
-                  onClick={() => {
-                    generateInvoice(initialTask.id, shopId).then(result => {
-                      if (result === false) {
+                  onClick={async () => {
+                    if (invoiceInfo.exists && invoiceInfo.id) {
+                      router.push(`/invoices?invoiceId=${invoiceInfo.id}`);
+                      return;
+                    }
+
+                    const result = await generateInvoice(initialTask.id, shopId);
+                    if (result === false) {
                         toast.error("Invoice already exists for this work order");
-                      } else if (result === true) {
+                    } else if (result && result !== true) {
+                        const invoiceId = result[0].invoice_number;
+                        toast.success("Invoice generated successfully", {
+                            action: {
+                                label: "Go to Invoice",
+                                onClick: () => {
+                                    router.push(`/invoices?invoiceId=${invoiceId}`);
+                                }
+                            }
+                        });
+                        setInvoiceInfo({ exists: true, id: invoiceId });
+                    } else if (result === true) {
                         toast.success("Invoice generated successfully", {
                           action: {
                             label: "Go to Invoices",
@@ -719,11 +770,10 @@ export function TaskDetailsModal({
                             }
                           }
                         });
-                      }
-                    });
+                    }
                   }}
                 >
-                  Generate Invoice
+                  {invoiceInfo.exists ? "View Invoice" : "Generate Invoice"}
                 </Button>
               )}
             </div>

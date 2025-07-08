@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
+import { useSearchParams, useRouter } from 'next/navigation'
 import InvoiceForm from "./invoice-forms"
 import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
@@ -13,8 +14,9 @@ import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
+import { ReadonlyURLSearchParams } from "next/navigation"
 
-export default function InvoiceDashboard({ shopId }: { shopId: string }) {
+export default function InvoiceDashboard({ shopId, searchParams }: { shopId: string, searchParams: ReadonlyURLSearchParams | null }) {
     const [invoices, setInvoices] = useState<any[]>([])
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -24,9 +26,21 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [isDateFilterActive, setIsDateFilterActive] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
+    const router = useRouter();
     
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
+
+    // Handle opening invoice from URL
+    useEffect(() => {
+        const invoiceId = searchParams?.get('invoiceId')
+        if (invoiceId && invoices.length > 0) {
+            const invoiceToOpen = invoices.find(inv => inv.invoice_number === invoiceId);
+            if (invoiceToOpen) {
+                handleOpenInvoice(invoiceToOpen);
+            }
+        }
+    }, [searchParams, invoices]);
     
     // Only load invoices when shopId is provided (and on initial mount)
     useEffect(() => {
@@ -81,8 +95,10 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
 
     const handleCloseInvoice = () => {
         setIsDialogOpen(false);
+        setSelectedInvoice(null);
         // Refresh invoices when dialog closes to get any updates
         refreshInvoices();
+        router.push('/invoices', { scroll: false });
     }
 
     // Filter the displayed invoices
