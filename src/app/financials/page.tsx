@@ -93,7 +93,7 @@ export default function Financials() {
     if (isLoading) {
         return (
             <div className="flex flex-col min-h-screen bg-black text-white">
-                <Nav activeLink="Financials" />
+                <Nav />
                 <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                     <nav className="flex items-center space-x-2 text-sm text-gray-400 mb-6">
                         <span className="font-semibold text-white">Financials Dashboard</span>
@@ -106,7 +106,7 @@ export default function Financials() {
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav activeLink="Analytics" />
+            <Nav />
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                 <nav className="flex items-center space-x-2 text-sm text-gray-400 mb-6">
                     <span className="font-semibold text-white">Financials Dashboard</span>

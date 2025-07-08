@@ -48,7 +48,7 @@ export default function SettingsProfilePage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav activeLink="Settings"/>
+            <Nav />
             <div className="p-4 space-y-6">
                 {shopId && <ProfileForm shopId={shopId} />}
                 {shopId && <AddEmployeeForm shopId={shopId} />}

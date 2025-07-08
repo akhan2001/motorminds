@@ -205,7 +205,7 @@ export default function EfficiencyClient() {
   if (isLoading) {
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav activeLink="Financials" />
+            <Nav />
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                 <BreadcrumbNav />
                 <LoadingSkeleton />
@@ -216,7 +216,7 @@ export default function EfficiencyClient() {
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      <Nav activeLink="Financials" />
+      <Nav />
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
         <Header value={timeRange} onTimeRangeChange={handleTimeRangeChange} />

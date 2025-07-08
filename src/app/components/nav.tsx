@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { Settings, HelpCircle, Menu, ChevronDown, MessageCircle } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -17,17 +17,17 @@ import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
 
-export function Nav(
-	props: {
-		activeLink: string
-	}
-) {
+export function Nav() {
 	const router = useRouter()
-	const [activeLink, setActiveLink] = useState(props.activeLink) // Default active link
+	const pathname = usePathname()
 	const { theme, setTheme } = useTheme()
 	const [mounted, setMounted] = useState(false)
 	const [avatar, setAvatar] = useState("")
 	const [open, setOpen] = useState(false)
+
+	if (!pathname) {
+		return null
+	}
 
 	// useEffect only runs on the client, so now we can safely show the UI
 	useEffect(() => {
@@ -103,14 +103,38 @@ export function Nav(
 		// { name: "Customer Intake", href: "/customer-intake" },
 	]
 
+	let activeLink = ""
+	let longestMatch = 0
+
+	for (const item of navItems) {
+		const checkHref = (href: string, itemName: string) => {
+			const isRoot = href === "/"
+			// For root, we need an exact match, otherwise we check for a prefix
+			if ((isRoot && pathname === href) || (!isRoot && pathname.startsWith(href))) {
+				if (href.length > longestMatch) {
+					longestMatch = href.length
+					activeLink = itemName
+				}
+			}
+		}
+
+		// If item has sub-items, check their paths first. A match highlights the parent.
+		if (item.subItems) {
+			for (const subItem of item.subItems) {
+				checkHref(subItem.href, item.name)
+			}
+		}
+
+		// Check the main item itself.
+		checkHref(item.href, item.name)
+	}
+
 	const handleNavClick = (name: string, href: string) => {
-		setActiveLink(name)
 		router.push(href)
 		setOpen(false) // Close sheet when navigation occurs
 	}
 
 	const handleSubItemClick = (parentName: string, href: string) => {
-		setActiveLink(parentName)
 		router.push(href)
 		setOpen(false)
 	}

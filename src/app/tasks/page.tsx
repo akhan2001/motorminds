@@ -364,10 +364,11 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      <Nav activeLink="Tasks" />
-
-      <main className="flex-1 flex flex-col p-6 min-h-0">
+    <div className="flex-1 flex flex-col h-screen bg-black">
+      <header className="sticky top-0 z-10 bg-black">
+        <Nav />
+      </header>
+      <main className="flex-1 overflow-y-auto p-6 md:p-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white flex items-center gap-2">
             <div className="w-1 h-8 bg-[#b22222]" />
