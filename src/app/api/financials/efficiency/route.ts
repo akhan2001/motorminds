@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
 // Helper to calculate recurring costs over a period
+/*
 function calculateTotalRecurringCost(costs: any[], startDate: Date, endDate: Date): number {
     let total = 0;
     const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
@@ -29,6 +30,7 @@ function calculateTotalRecurringCost(costs: any[], startDate: Date, endDate: Dat
 
     return total;
 }
+*/
 
 // GET all active fixed costs for a shop
 export async function GET(req: NextRequest) {
@@ -83,15 +85,23 @@ export async function GET(req: NextRequest) {
         const totalRevenue = revenueData?.reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
         const totalCogs = revenueData?.reduce((acc, inv) => acc + (inv.parts_cost ?? 0) + (inv.labour_cost ?? 0), 0) ?? 0;
         
-        const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
-        const totalPayroll = payrollData?.reduce((acc, emp) => {
-            let dailyRate = 0;
-            if (emp.pay_frequency === 'hourly') dailyRate = emp.salary_or_wage * 8; // Assuming 8-hour day
-            if (emp.pay_frequency === 'salary') dailyRate = emp.salary_or_wage / 365;
-            return acc + (dailyRate * daysInPeriod);
-        }, 0) ?? 0;
+        // Temporarily simplified per user request
+        const totalPayroll = 0;
+        // const daysInPeriod = (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+        // const totalPayroll = payrollData?.reduce((acc, emp) => {
+        //     let dailyRate = 0;
+        //     if (emp.pay_frequency === 'hourly') dailyRate = emp.salary_or_wage * 8; // Assuming 8-hour day
+        //     if (emp.pay_frequency === 'salary') dailyRate = emp.salary_or_wage / 365;
+        //     return acc + (dailyRate * daysInPeriod);
+        // }, 0) ?? 0;
         
-        const totalRecurringCosts = calculateTotalRecurringCost(fixedCostsData ?? [], startDate, endDate);
+        // Temporarily simplified per user request: No proration, just include if start date is in range.
+        // const totalRecurringCosts = calculateTotalRecurringCost(fixedCostsData ?? [], startDate, endDate);
+        const totalRecurringCosts = (fixedCostsData ?? []).filter(c => {
+            const d = new Date(c.start_date);
+            return d >= startDate && d <= endDate;
+        }).reduce((acc, c) => acc + c.amount, 0);
+        
         const totalOneTimeCosts = (oneTimeCostsData ?? []).filter(c => {
             const d = new Date(c.cost_date);
             return d >= startDate && d <= endDate;
@@ -100,7 +110,7 @@ export async function GET(req: NextRequest) {
         const totalFixedCosts = totalRecurringCosts + totalOneTimeCosts;
         
         const grossProfit = totalRevenue - totalCogs;
-        const netProfit = grossProfit - totalPayroll - totalFixedCosts;
+        const netProfit = grossProfit - totalFixedCosts; // Payroll is currently 0
 
         // 4. Generate historical data for charts
         const historicalData = [];
@@ -109,14 +119,19 @@ export async function GET(req: NextRequest) {
             const dailyRevenue = revenueData?.filter(inv => inv.paid_at && inv.paid_at.startsWith(dayStr)).reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
             const dailyCogs = revenueData?.filter(inv => inv.paid_at && inv.paid_at.startsWith(dayStr)).reduce((acc, inv) => acc + (inv.parts_cost ?? 0) + (inv.labour_cost ?? 0), 0) ?? 0;
             
-            const dailyPayroll = payrollData?.reduce((acc, emp) => {
-                 let dailyRate = 0;
-                 if (emp.pay_frequency === 'hourly') dailyRate = emp.salary_or_wage * 8;
-                 if (emp.pay_frequency === 'salary') dailyRate = emp.salary_or_wage / 365;
-                 return acc + dailyRate;
-            }, 0) ?? 0;
+            // Temporarily simplified per user request
+            const dailyPayroll = 0;
+            // const dailyPayroll = payrollData?.reduce((acc, emp) => {
+            //      let dailyRate = 0;
+            //      if (emp.pay_frequency === 'hourly') dailyRate = emp.salary_or_wage * 8;
+            //      if (emp.pay_frequency === 'salary') dailyRate = emp.salary_or_wage / 365;
+            //      return acc + dailyRate;
+            // }, 0) ?? 0;
             
-            const dailyFixedCosts = calculateTotalRecurringCost(fixedCostsData ?? [], d, d) + (oneTimeCostsData ?? []).filter(c => c.cost_date === dayStr).reduce((acc, c) => acc + c.amount, 0);
+            // Temporarily simplified per user request
+            // const dailyFixedCosts = calculateTotalRecurringCost(fixedCostsData ?? [], d, d) + (oneTimeCostsData ?? []).filter(c => c.cost_date === dayStr).reduce((acc, c) => acc + c.amount, 0);
+            const dailyFixedCosts = (fixedCostsData ?? []).filter(c => c.start_date === dayStr).reduce((acc, c) => acc + c.amount, 0) + 
+                                  (oneTimeCostsData ?? []).filter(c => c.cost_date === dayStr).reduce((acc, c) => acc + c.amount, 0);
 
             historicalData.push({
                 date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -135,6 +150,13 @@ export async function GET(req: NextRequest) {
             grossProfit,
             netProfit,
             historicalData,
+            breakdown: {
+                revenue: revenueData,
+                payroll: payrollData,
+                fixedCosts: fixedCostsData,
+                oneTimeCosts: oneTimeCostsData,
+                cogs: revenueData, // cogs are derived from revenue data
+            }
         }), { status: 200 });
 
     } catch (error: any) {

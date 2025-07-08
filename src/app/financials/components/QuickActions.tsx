@@ -93,13 +93,6 @@ export default function QuickActions() {
           isActive={true}
         />
         <ActionCard
-          title="Revenue Statements"
-          description="View auto-generated monthly P&L statements"
-          href="/financials/revenue"
-          icon={FileText}
-          isActive={true}
-        />
-        <ActionCard
           title="Job Efficiency"
           description="Analyze profitability of quoted vs. actual hours"
           href="/financials/efficiency"

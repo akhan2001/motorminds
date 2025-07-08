@@ -17,6 +17,7 @@ import CostBreakdownChart from "./components/CostBreakdownChart";
 import HistoricalChart from "./components/HistoricalChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LoadingSkeleton from "./components/LoadingSkeleton";
+import { BreakdownDialog } from "./components/BreakdownDialog";
 
 interface EfficiencyData {
   totalRevenue: number;
@@ -26,6 +27,13 @@ interface EfficiencyData {
   grossProfit: number;
   netProfit: number;
   historicalData: any[];
+  breakdown: {
+    revenue: any[];
+    payroll: any[];
+    fixedCosts: any[];
+    oneTimeCosts: any[];
+    cogs: any[];
+  };
 }
 
 const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange: (value: string) => void }) => (
@@ -61,9 +69,66 @@ export default function EfficiencyClient() {
   const searchParams = useSearchParams();
   const timeRange = searchParams?.get("timeRange") || "30d";
 
+  // State for the breakdown dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState("");
+  const [dialogData, setDialogData] = useState<any[]>([]);
+  const [dialogColumns, setDialogColumns] = useState<any[]>([]);
+
   const handleTimeRangeChange = (newValue: string) => {
     router.push(`/financials/efficiency?timeRange=${newValue}`);
   };
+
+  const handleCardClick = (metric: string) => {
+    if (!efficiencyData || !efficiencyData.breakdown) return;
+    
+    let title = "";
+    let data: any[] = [];
+    let columns: any[] = [];
+    const { breakdown } = efficiencyData;
+
+    switch(metric) {
+        case 'revenue':
+            title = "Revenue Breakdown";
+            data = breakdown.revenue;
+            columns = [
+                { key: 'paid_at', header: 'Date', render: (d: any) => new Date(d).toLocaleDateString() },
+                { key: 'invoice_number', header: 'Invoice #' },
+                { key: 'amount', header: 'Amount', render: (v: any) => `$${v.toFixed(2)}` },
+            ];
+            break;
+        case 'costs':
+            title = "Total Costs Breakdown";
+            const fixedItems = breakdown.fixedCosts.map(i => ({ source: 'Fixed Cost', date: i.start_date, name: i.cost_name, amount: i.amount }));
+            const oneTimeItems = breakdown.oneTimeCosts.map(i => ({ source: 'One-Time Cost', date: i.cost_date, name: i.cost_name, amount: i.amount }));
+            data = [...fixedItems, ...oneTimeItems];
+            columns = [
+                { key: 'source', header: 'Source' },
+                { key: 'date', header: 'Date', render: (d: any) => d && d !== 'N/A' ? new Date(d).toLocaleDateString() : 'N/A' },
+                { key: 'name', header: 'Details' },
+                { key: 'amount', header: 'Amount', render: (v: any) => `$${v.toFixed(2)}` },
+            ];
+            break;
+        case 'grossProfit':
+             title = "Gross Profit Breakdown";
+             data = breakdown.revenue.map(inv => ({
+                ...inv,
+                cogs: (inv.parts_cost || 0) + (inv.labour_cost || 0),
+                profit: inv.amount - ((inv.parts_cost || 0) + (inv.labour_cost || 0))
+             }))
+             columns = [
+                { key: 'invoice_number', header: 'Invoice #' },
+                { key: 'amount', header: 'Revenue', render: (v: any) => `$${v.toFixed(2)}` },
+                { key: 'cogs', header: 'COGS', render: (v: any) => `$${v.toFixed(2)}` },
+                { key: 'profit', header: 'Gross Profit', render: (v: any) => `$${v.toFixed(2)}` },
+             ];
+             break;
+    }
+    setDialogTitle(title);
+    setDialogData(data);
+    setDialogColumns(columns);
+    setDialogOpen(true);
+  }
 
   const fetchData = async (range: string) => {
     if (!shopId) return;
@@ -158,7 +223,7 @@ export default function EfficiencyClient() {
         
         {efficiencyData ? (
           <>
-            <SummaryCards data={efficiencyData} />
+            <SummaryCards data={efficiencyData} onCardClick={handleCardClick} />
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 my-8">
                 <div className="lg:col-span-3">
@@ -208,6 +273,13 @@ export default function EfficiencyClient() {
             </div>
         </div>
       </main>
+      <BreakdownDialog 
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={dialogTitle}
+        data={dialogData}
+        columns={dialogColumns}
+      />
     </div>
   );
 } 
