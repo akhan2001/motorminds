@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { formatCurrency } from "@/app/financials/utils/formatting";
 
 interface Employee {
     id: string;
@@ -18,8 +19,6 @@ interface EmployeeCostTableProps {
     onEdit: (employee: Employee) => void;
     onDeactivate: (employeeId: string) => void;
 }
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 
 export default function EmployeeCostTable({ employees, onEdit, onDeactivate }: EmployeeCostTableProps) {
     if (employees.length === 0) {

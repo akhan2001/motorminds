@@ -188,4 +188,60 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
+}
+
+// UPDATE an existing fixed cost
+export async function PUT(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { id, cost_name, amount, frequency, category, start_date } = body;
+
+        if (!id || !cost_name || !amount || !frequency || !category || !start_date) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        const { data, error } = await supabase
+            .from("fixed_costs")
+            .update({ cost_name, amount, frequency, category, start_date })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        
+        if (!data) {
+            return NextResponse.json({ error: "Cost not found" }, { status: 404 });
+        }
+
+        return NextResponse.json(data, { status: 200 });
+
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+// DELETE a fixed cost
+export async function DELETE(req: NextRequest) {
+    try {
+        const { id } = await req.json();
+
+        if (!id) {
+            return NextResponse.json({ error: "ID is required" }, { status: 400 });
+        }
+        
+        const { error } = await supabase
+            .from('fixed_costs')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting fixed cost:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        
+        return NextResponse.json({ message: "Cost deleted successfully" }, { status: 200 });
+
+    } catch (err: any) {
+         return NextResponse.json({ error: err.message }, { status: 500 });
+    }
 } 

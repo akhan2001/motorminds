@@ -46,6 +46,13 @@ export default function Financials() {
         const fetchFinancials = async () => {
             setIsLoading(true);
 
+            const formatDate = (date: Date) => {
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
             const endDate = new Date();
             const startDate = new Date();
             switch (timeRange) {
@@ -54,8 +61,8 @@ export default function Financials() {
                 case "1y": startDate.setFullYear(endDate.getFullYear() - 1); break;
                 default: startDate.setDate(endDate.getDate() - 30); break;
             }
-            const start = startDate.toISOString().split('T')[0];
-            const end = endDate.toISOString().split('T')[0];
+            const start = formatDate(startDate);
+            const end = formatDate(endDate);
             
             try {
                 const [payrollRes, efficiencyRes] = await Promise.all([

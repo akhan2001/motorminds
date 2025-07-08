@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatCurrency } from "./formatting";
 
 // Extend the jsPDF type to include the autoTable method
 interface jsPDFWithAutoTable extends jsPDF {
@@ -7,7 +8,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 }
 
 const formatDate = (date: Date) => date.toLocaleDateString('en-US');
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+// const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 
 export const generateArAgingReport = (data: any, allInvoices: any[], shopName: string = "Your Shop") => {
     const doc = new jsPDF() as jsPDFWithAutoTable;

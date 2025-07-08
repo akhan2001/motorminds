@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
-import { formatPhoneNumber } from "../utils/invoice-utils";
+import { formatCurrency } from '@/app/financials/utils/formatting';
 // Create styles
 const styles = StyleSheet.create({
     page: {
@@ -225,13 +225,6 @@ const formatDate = (date: string) => {
 
 export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
     // Format currency
-    const formatCurrency = (amount: number | undefined | null) => {
-        if (amount === undefined || amount === null) {
-            return '0.00';
-        }
-        return `$${amount.toFixed(2)}`;
-    };
-
     // Format date
     const invoiceDate = formatDate(invoice.issueDate);
 

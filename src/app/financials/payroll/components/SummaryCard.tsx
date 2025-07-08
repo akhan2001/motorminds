@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/app/financials/utils/formatting";
+
 interface SummaryCardProps {
     title: string;
     value: number;
@@ -7,10 +9,7 @@ interface SummaryCardProps {
 export default function SummaryCard({ title, value, isCurrency = false }: SummaryCardProps) {
 
     const formattedValue = isCurrency 
-        ? new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-          }).format(value || 0)
+        ? formatCurrency(value)
         : value.toLocaleString();
 
     return (

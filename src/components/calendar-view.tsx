@@ -1,17 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-interface Task {
-  id: string
-  title: string
-  vehicle: string
-  date: string
-  status: "todo" | "inProgress" | "done"
-  statusColor: string
-}
+import { Task } from "@/types/task"
+import { formatDate, formatDateTime } from "@/app/financials/utils/formatting"
 
 interface CalendarViewProps {
   tasks: { [date: string]: Task[] }
@@ -86,9 +79,7 @@ export function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
   }
 
   function getTasksForDate(date: Date) {
-    const dateKey = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-      .toISOString()
-      .split("T")[0]
+    const dateKey = new Date(date.getTime()).toISOString().split("T")[0];
     return tasks[dateKey] || []
   }
 
@@ -102,7 +93,7 @@ export function CalendarView({ tasks, onTaskClick }: CalendarViewProps) {
         {!isCompact && (
           <div className="flex items-center gap-2 text-[#979797] mb-2">
             <Clock className="h-4 w-4" />
-            <span className="text-sm">{new Date(task.date).toLocaleTimeString()}</span>
+            <span className="text-sm">{formatDateTime(task.date)}</span>
           </div>
         )}
         <div className="flex items-center gap-2">

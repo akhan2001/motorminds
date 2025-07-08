@@ -4,12 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Separator } from '@/components/ui/separator';
 import { DownloadIcon, TrashIcon, MailIcon, LayoutIcon, EditIcon } from 'lucide-react';
 import { toast } from "sonner";
-import { formatCurrency, formatDate, setInvoiceStatus } from '../utils/invoice-utils';
+import { formatCurrency } from "@/app/financials/utils/formatting";
 import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
 import { formatPhoneNumber } from '../utils/invoice-utils';
 import { sendInvoiceEmail } from '@/app/customers/api/customer-utils';
 import { generateInvoicePDF } from '../utils/pdf-generator';
+import { formatDate, setInvoiceStatus } from "../utils/invoice-utils";
 
 interface InvoiceDialogProps {
     isOpen: boolean;

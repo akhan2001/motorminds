@@ -202,18 +202,6 @@ export default function EfficiencyClient() {
     }
   }, [shopId, timeRange]);
 
-  if (isLoading) {
-    return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav />
-            <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-                <BreadcrumbNav />
-                <LoadingSkeleton />
-            </main>
-        </div>
-    );
-  }
-
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <Nav />
@@ -221,7 +209,9 @@ export default function EfficiencyClient() {
         <BreadcrumbNav />
         <Header value={timeRange} onTimeRangeChange={handleTimeRangeChange} />
         
-        {efficiencyData ? (
+        {isLoading ? (
+            <LoadingSkeleton />
+        ) : efficiencyData ? (
           <>
             <SummaryCards data={efficiencyData} onCardClick={handleCardClick} />
 
@@ -254,7 +244,7 @@ export default function EfficiencyClient() {
                   </AddFixedCostModal>
                 )}
               </div>
-              <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} />
+              <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} onCostDeleted={() => fetchData(timeRange)} />
             </div>
 
             <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6">

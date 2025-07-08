@@ -75,18 +75,18 @@ export default function AddOneTimeCostModal({ shopId, onCostAdded, children }: A
                 <div className="space-y-4 py-4">
                     <div>
                         <Label htmlFor="costName">Cost Name</Label>
-                        <Input id="costName" placeholder="e.g., New Equipment" value={costName} onChange={(e) => setCostName(e.target.value)} className="bg-black" />
+                        <Input id="costName" placeholder="e.g., New Equipment" value={costName} onChange={(e) => setCostName(e.target.value)} className="bg-zinc-800 border-zinc-700" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="amount">Amount ($)</Label>
-                            <Input id="amount" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} className="bg-black" />
+                            <Input id="amount" type="number" placeholder="500" value={amount} onChange={(e) => setAmount(e.target.value)} className="bg-zinc-800 border-zinc-700" />
                         </div>
                         <div>
                             <Label htmlFor="category">Category</Label>
                             <Select value={category} onValueChange={setCategory}>
-                                <SelectTrigger className="bg-black"><SelectValue /></SelectTrigger>
-                                <SelectContent className="bg-[#131313] border-[#222]">
+                                <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
                                     <SelectItem value="Equipment">Equipment</SelectItem>
                                     <SelectItem value="Repairs">Repairs</SelectItem>
                                     <SelectItem value="Supplies">Supplies</SelectItem>
@@ -98,7 +98,7 @@ export default function AddOneTimeCostModal({ shopId, onCostAdded, children }: A
                     </div>
                     <div>
                         <Label htmlFor="costDate">Date</Label>
-                        <Input id="costDate" type="date" value={costDate} onChange={(e) => setCostDate(e.target.value)} className="bg-black" />
+                        <Input id="costDate" type="date" value={costDate} onChange={(e) => setCostDate(e.target.value)} className="bg-zinc-800 border-zinc-700" />
                     </div>
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>

@@ -15,9 +15,10 @@ interface EditEmployeeModalProps {
     onUpdated: () => void;
 }
 
-export default function EditEmployeeModal({ employee, isOpen, onClose, onUpdated }: EditEmployeeModalProps) {
+export default function EditEmployeeModal({ employee: initialEmployee, isOpen, onClose, onUpdated }: EditEmployeeModalProps) {
     const [formData, setFormData] = useState<EmployeeUpdateData>({});
     const [loading, setLoading] = useState(false);
+    const employee = initialEmployee;
 
     useEffect(() => {
         if (employee) {
@@ -52,7 +53,6 @@ export default function EditEmployeeModal({ employee, isOpen, onClose, onUpdated
         try {
             await updateEmployee(employee.id, updateData);
             onUpdated();
-            onClose();
         } catch (error) {
             console.error("Failed to update employee", error);
             alert("An error occurred while updating the employee.");
@@ -61,41 +61,39 @@ export default function EditEmployeeModal({ employee, isOpen, onClose, onUpdated
         }
     };
 
-    if (!employee) return null;
-
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-[#1a1a1a] border-[#333] text-white">
+            <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-50">
                 <DialogHeader>
-                    <DialogTitle>Edit Employee: {employee.first_name} {employee.last_name}</DialogTitle>
+                    <DialogTitle>Edit Employee: {employee?.first_name} {employee?.last_name}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="first_name">First Name</Label>
-                            <Input id="first_name" value={formData.first_name ?? ''} onChange={handleChange} className="bg-black"/>
+                            <Input id="first_name" value={formData.first_name ?? ''} onChange={handleChange} className="bg-zinc-800 border-zinc-700"/>
                         </div>
                         <div>
                             <Label htmlFor="last_name">Last Name</Label>
-                            <Input id="last_name" value={formData.last_name ?? ''} onChange={handleChange} className="bg-black"/>
+                            <Input id="last_name" value={formData.last_name ?? ''} onChange={handleChange} className="bg-zinc-800 border-zinc-700"/>
                         </div>
                     </div>
                     <div>
                         <Label htmlFor="role">Role</Label>
-                        <Input id="role" value={formData.role ?? ''} onChange={handleChange} className="bg-black"/>
+                        <Input id="role" value={formData.role ?? ''} onChange={handleChange} className="bg-zinc-800 border-zinc-700"/>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="salary_or_wage">Salary / Wage</Label>
-                            <Input id="salary_or_wage" type="number" value={formData.salary_or_wage ?? ''} onChange={handleChange} className="bg-black"/>
+                            <Input id="salary_or_wage" type="number" value={formData.salary_or_wage ?? ''} onChange={handleChange} className="bg-zinc-800 border-zinc-700"/>
                         </div>
                         <div>
                             <Label htmlFor="pay_frequency">Pay Frequency</Label>
                             <Select value={formData.pay_frequency ?? 'hourly'} onValueChange={handleSelectChange}>
-                                <SelectTrigger className="bg-black">
+                                <SelectTrigger className="bg-zinc-800 border-zinc-700">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#131313] border-[#222]">
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
                                     <SelectItem value="hourly">Hourly</SelectItem>
                                     <SelectItem value="weekly">Weekly</SelectItem>
                                     <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
@@ -107,7 +105,7 @@ export default function EditEmployeeModal({ employee, isOpen, onClose, onUpdated
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleSubmit} disabled={loading} className="bg-red-600 hover:bg-red-700">
+                    <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
                         {loading ? "Saving..." : "Save Changes"}
                     </Button>
                 </DialogFooter>

@@ -1,6 +1,7 @@
 import { getCustomerDetails } from "@/app/customers/api/customer-utils"
 import { getInsightDetails } from "@/app/mia/utils/customerInsightsFunctions"
-import { supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase";
+import { formatDate } from "@/app/financials/utils/formatting";
 
 export const getLeads = async (shopId: string) => {
 	const { data, error } = await supabase
@@ -66,16 +67,6 @@ export const createLead = async (leadFormData: any) => {
 	}
 
 	return data;
-}
-
-export function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    };
-    return date.toLocaleDateString(undefined, options);
 }
 
 export async function getTotalLeads(shopId: string) {

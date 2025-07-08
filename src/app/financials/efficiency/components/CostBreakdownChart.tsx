@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from "@/app/financials/utils/formatting";
 
 interface CostBreakdownChartProps {
     data: {
@@ -12,12 +13,6 @@ interface CostBreakdownChartProps {
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-}).format(value);
 
 const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {

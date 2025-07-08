@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowDownRight, ArrowUpRight, DollarSign, Scale, TrendingDown, TrendingUp } from "lucide-react";
+import { formatCurrency } from "@/app/financials/utils/formatting";
 
 interface SummaryCardsProps {
     data: {
@@ -13,12 +14,6 @@ interface SummaryCardsProps {
     };
     onCardClick: (metric: string) => void;
 }
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-}).format(value);
 
 const SummaryCard = ({ title, value, icon, isProfit, onClick }: { title: string, value: string, icon: React.ReactNode, isProfit?: boolean, onClick: () => void }) => {
     const profitColor = isProfit ? (value.startsWith('-') ? 'text-red-500' : 'text-green-500') : 'text-white';

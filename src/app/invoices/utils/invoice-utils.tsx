@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { formatCurrency } from '@/app/financials/utils/formatting';
 
 // Fetch all invoices from the database with improved error handling and performance
 export async function fetchAllInvoices(shopId: string) {
@@ -53,12 +54,12 @@ export async function getInvoiceData(id: string) {
 // }
 
 // Format currency
-export function formatCurrency(amount: number | null | undefined): string {
+/* export function formatCurrency(amount: number | null | undefined): string {
 	if (amount === null || amount === undefined) {
 		return '$0.00';
 	}
 	return `$${Number(amount).toFixed(2)}`;
-}
+} */
 
 // Format date
 export function formatDate(dateString: string): string {

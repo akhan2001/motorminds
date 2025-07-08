@@ -2,16 +2,11 @@
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from "@/app/financials/utils/formatting";
 
 interface HistoricalChartProps {
     data: any[];
 }
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-}).format(value);
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
