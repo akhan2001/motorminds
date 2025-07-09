@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users } from "lucide-react";
 import { SparkLineChart } from '@tremor/react';
 
 // Simple sparkline component
@@ -35,7 +35,8 @@ function SummaryCard({
   subtitle, 
   icon: Icon,
   sparklineData = [],
-  positive = true 
+  positive = true,
+  className = "" 
 }: { 
   title: string; 
   value: string; 
@@ -43,9 +44,10 @@ function SummaryCard({
   icon: any;
   sparklineData?: number[];
   positive?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="relative bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 hover:border-[#333] transition-colors">
+    <div className={`relative bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 hover:border-[#333] transition-colors ${className}`}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -81,33 +83,41 @@ export default function MainSummaryCards({ cashflowData, payrollData, trendData 
   const netCashFlow = (cashflowData?.total_inflow || 0) - (cashflowData?.total_outflow || 0);
   const isPositive = netCashFlow >= 0;
 
+  // Prepare daily metrics
+  const dailyRevenue = (cashflowData?.revenue || 0) / 30;
+  const dailyPayroll = (payrollData?.total_monthly_payroll || 0) / 30;
+  const dailyNetCash = netCashFlow / 30;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div className="flex md:grid md:grid-cols-3 gap-6 mb-8 overflow-x-auto snap-x">
       <SummaryCard
         title="Net Cash Flow"
-        value={`$${Math.abs(netCashFlow).toLocaleString()}`}
-        subtitle={isPositive ? "Positive cash flow" : "Negative cash flow"}
+        value={`$${Math.abs(netCashFlow).toLocaleString(undefined,{maximumFractionDigits:0})}`}
+        subtitle={`Daily avg: $${Math.round(Math.abs(dailyNetCash)).toLocaleString()}`}
         icon={isPositive ? TrendingUp : TrendingDown}
         sparklineData={revenueSparkline}
         positive={isPositive}
+        className="min-w-[260px] snap-start"
       />
       
       <SummaryCard
         title="Monthly Revenue"
         value={`$${(cashflowData?.revenue || 0).toLocaleString()}`}
-        subtitle={`$${Math.round((cashflowData?.revenue || 0) / 30)} avg daily`}
+        subtitle={`Daily avg: $${Math.round(dailyRevenue).toLocaleString()}`}
         icon={DollarSign}
         sparklineData={revenueSparkline}
         positive={true}
+        className="min-w-[260px] snap-start"
       />
       
       <SummaryCard
         title="Monthly Payroll"
         value={`$${(payrollData?.total_monthly_payroll || 0).toLocaleString()}`}
-        subtitle={`${payrollData?.employee_count || 0} employees`}
+        subtitle={`Daily avg: $${Math.round(dailyPayroll).toLocaleString()} (${payrollData?.employee_count || 0} emp)`}
         icon={Users}
         sparklineData={expenseSparkline}
         positive={false}
+        className="min-w-[260px] snap-start"
       />
     </div>
   );

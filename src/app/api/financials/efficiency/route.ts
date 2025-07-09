@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
             { data: fixedCostsData, error: fixedCostsError },
             { data: oneTimeCostsData, error: oneTimeCostsError }
         ] = await Promise.all([
-            supabase.from('invoices').select('created_at, amount, paid_at').eq('shop_id', shopId).eq('status', 'PAID').gte('paid_at', startDate.toISOString()).lte('paid_at', endDate.toISOString()),
+            supabase.from('invoices').select('invoice_number, created_at, amount, paid_at').eq('shop_id', shopId).eq('status', 'PAID').gte('paid_at', startDate.toISOString()).lte('paid_at', endDate.toISOString()),
             supabase.from('fixed_costs').select('*').eq('shop_id', shopId),
             supabase.from('one_time_costs').select('*').eq('shop_id', shopId)
         ]);

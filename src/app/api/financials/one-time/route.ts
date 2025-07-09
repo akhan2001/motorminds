@@ -73,4 +73,38 @@ export async function DELETE(req: NextRequest) {
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
+}
+
+// PUT update an existing one-time cost
+export async function PUT(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { id, cost_name, amount, category, cost_date } = body;
+
+        if (!id || !cost_name || !amount || !cost_date) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        const { data, error } = await supabase
+            .from("one_time_costs")
+            .update({ cost_name, amount, category, cost_date })
+            .eq("id", id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase error updating one-time cost:", error);
+            return NextResponse.json({ error: `Supabase error: ${error.message}` }, { status: 500 });
+        }
+
+        if (!data) {
+            return NextResponse.json({ error: "Cost not found or no changes needed" }, { status: 404 });
+        }
+
+        return NextResponse.json(data, { status: 200 });
+
+    } catch (err: any) {
+        console.error("Error in PUT /api/financials/one-time:", err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
 } 

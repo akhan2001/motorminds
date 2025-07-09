@@ -107,7 +107,7 @@ export default function LiquidityPage() {
   if (isLoading || !data) {
     return (
       <div className="flex flex-col min-h-screen bg-black text-white">
-        <Nav activeLink="Financials" />
+        <Nav />
         <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
           <div className="animate-pulse space-y-8">
             <div className="h-8 bg-[#1a1a1a] rounded w-1/3"></div>
@@ -125,7 +125,7 @@ export default function LiquidityPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
-      <Nav activeLink="Financials" />
+      <Nav />
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
 

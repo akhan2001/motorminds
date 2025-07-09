@@ -85,41 +85,43 @@ export default function FixedCostsTable({ costs, onCostUpdated, onCostDeleted }:
         return <p className="text-center text-gray-400 py-4">No recurring costs have been added yet.</p>;
     }
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Cost Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Frequency</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {costs.map((cost) => (
-                    <TableRow key={cost.id}>
-                        <TableCell>{cost.cost_name}</TableCell>
-                        <TableCell>{cost.category}</TableCell>
-                        <TableCell>{formatCurrency(cost.amount)}</TableCell>
-                        <TableCell className="capitalize">{cost.frequency}</TableCell>
-                        <TableCell>{formatDate(cost.start_date)}</TableCell>
-                        <TableCell>
-                            <DropdownMenu modal={false}>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Open menu</span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-[#131313] border-[#222] text-white">
-                                    <CostActions cost={cost} onCostUpdated={onCostUpdated} onCostDeleted={onCostDeleted} />
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
+        <div className="overflow-x-auto max-h-96">
+            <Table>
+                <TableHeader className="sticky top-0 z-10 bg-[#0A0A0A]">
+                    <TableRow>
+                        <TableHead>Cost Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {costs.map((cost, idx) => (
+                        <TableRow key={cost.id} className={idx % 2 === 0 ? "bg-[#0F0F0F]" : "bg-[#131313]"}>
+                            <TableCell>{cost.cost_name}</TableCell>
+                            <TableCell>{cost.category}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(cost.amount)}</TableCell>
+                            <TableCell className="capitalize">{cost.frequency}</TableCell>
+                            <TableCell>{formatDate(cost.start_date)}</TableCell>
+                            <TableCell>
+                                <DropdownMenu modal={false}>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <span className="sr-only">Open menu</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-[#131313] border-[#222] text-white">
+                                        <CostActions cost={cost} onCostUpdated={onCostUpdated} onCostDeleted={onCostDeleted} />
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     );
 } 

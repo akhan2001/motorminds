@@ -89,29 +89,31 @@ export default function OneTimeCostsTable({ costs, onCostUpdated, onCostDeleted 
         return <p className="text-center text-gray-400 py-4">No one-time costs have been added yet.</p>;
     }
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Cost Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {costs.map((cost) => (
-                    <TableRow key={cost.id}>
-                        <TableCell>{cost.cost_name}</TableCell>
-                        <TableCell>{cost.category}</TableCell>
-                        <TableCell>{formatCurrency(cost.amount)}</TableCell>
-                        <TableCell>{formatDate(cost.cost_date)}</TableCell>
-                        <TableCell>
-                            <CostActions cost={cost} onCostUpdated={onCostUpdated} onCostDeleted={onCostDeleted} />
-                        </TableCell>
+        <div className="overflow-x-auto max-h-96">
+            <Table>
+                <TableHeader className="sticky top-0 z-10 bg-[#0A0A0A]">
+                    <TableRow>
+                        <TableHead>Cost Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {costs.map((cost, idx) => (
+                        <TableRow key={cost.id} className={idx % 2 === 0 ? "bg-[#0F0F0F]" : "bg-[#131313]"}>
+                            <TableCell>{cost.cost_name}</TableCell>
+                            <TableCell>{cost.category}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(cost.amount)}</TableCell>
+                            <TableCell>{formatDate(cost.cost_date)}</TableCell>
+                            <TableCell>
+                                <CostActions cost={cost} onCostUpdated={onCostUpdated} onCostDeleted={onCostDeleted} />
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     );
 } 
