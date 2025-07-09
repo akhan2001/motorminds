@@ -17,6 +17,7 @@ import { IntermediateStep } from "@/app/chat/components/IntermediateStep"
 import CustomChatStart from "@/app/chat/components/CustomChatStart"
 import ChatFooter from "@/app/chat/components/ChatFooter"
 import { Nav } from "../components/nav"
+import { DayTasksSheet } from "./components/DayTasksSheet"
 
 import {
   format,
@@ -159,6 +160,10 @@ export default function DashboardPage() {
   // Tasks -> "To-Do" is "Pending"; "Completed" is "Completed"
   const [tasksToDo, setTasksToDo] = useState(0)
   const [tasksCompleted, setTasksCompleted] = useState(0)
+
+  // -------------- For the DayTasksSheet --------------
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [selectedSheetDate, setSelectedSheetDate] = useState<Date | null>(null)
 
   useEffect(() => {
     // Check if this is the first load or a navigation
@@ -378,6 +383,10 @@ export default function DashboardPage() {
     setTimeout(() => {
       tasksRef.current?.scrollIntoView({ behavior: "smooth" })
     }, 100)
+
+    // New behavior: Open the sheet
+    setSelectedSheetDate(selectedDate)
+    setIsSheetOpen(true)
   }
 
   /**
@@ -581,7 +590,7 @@ export default function DashboardPage() {
       `}</style>
 
       <div className="min-h-screen flex flex-col bg-black text-white">
-        <Nav activeLink="Dashboard" />
+        <Nav />
         <main className="container mx-auto px-4 py-6 flex-1 flex flex-col">
           {/* Header */}
           <div className="mb-6">
@@ -700,6 +709,17 @@ export default function DashboardPage() {
             shopId={shop?.id || ""}
           />
         )}
+
+        <DayTasksSheet
+            isOpen={isSheetOpen}
+            onOpenChange={setIsSheetOpen}
+            selectedDate={selectedSheetDate}
+            tasks={selectedCalTasks}
+            onTaskClick={(task) => {
+                setIsSheetOpen(false);
+                handleCalendarTaskClick(task);
+            }}
+        />
       </div>
     </>
   )
