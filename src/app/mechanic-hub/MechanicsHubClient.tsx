@@ -462,7 +462,7 @@ export default function MechanicsHub() {
 
         const newWorkOrder = await createWorkOrder(workOrderPayload)
         
-        await createCustomerLead(newWorkOrder[0].id, shopId!)
+        await createCustomerLead(newWorkOrder[0].id)
         await getOrGenerateMiaInsights(newWorkOrder[0].id, shopId, 'immediate')
 
         toast.success("Work Order successfully created!")
@@ -498,7 +498,7 @@ export default function MechanicsHub() {
   }
 
   if (isLoading) {
-    return <LoadingPage page="Mechanic Hub" />
+    return <LoadingPage />
   }
 
   return (

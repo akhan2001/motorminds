@@ -11,38 +11,58 @@ import { toast } from "sonner";
 export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { shopId: string, taskId: string, workOrderData: DetailedRepairOrder }) {
 	const [insights, setInsights] = useState<any>(null);
 	const [analysis, setAnalysis] = useState<ImmediateInsights | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
 	const [hasRefreshed, setHasRefreshed] = useState(false);
-	
-	const fetchInsights = async () => {
-		if (!taskId) return;
-		
-		setLoading(true);
-		const { data, error } = await supabase
-			.from("mia_customer_insights")
-			.select("*")
-			.eq("repair_order_id", taskId)
-			.maybeSingle();
-			
-		if (!error && data) {
-			setInsights(data);
-			// Parse the analysis column (which is a JSONB in the database)
-			if (data.analysis) {
-				setAnalysis(data.analysis as ImmediateInsights);
-			}
-		}
-		setLoading(false);
-	};
+	const [refreshCounter, setRefreshCounter] = useState(0);
 	
 	useEffect(() => {
-		fetchInsights();
-	}, [taskId]);
+		let timeoutId: NodeJS.Timeout;
+		setIsLoading(true);
+		setInsights(null);
+		setAnalysis(null);
+
+		const pollForInsights = async (attempt = 1) => {
+			if (!taskId) {
+				setIsLoading(false);
+				return;
+			}
+
+			const { data, error } = await supabase
+				.from("mia_customer_insights")
+				.select("*")
+				.eq("repair_order_id", taskId)
+				.maybeSingle();
+			
+			if (error) {
+				console.error("Error fetching insights:", error);
+				setIsLoading(false);
+				return;
+			}
+
+			if (data) {
+				setInsights(data);
+				if (data.analysis) {
+					setAnalysis(data.analysis as ImmediateInsights);
+				}
+				setIsLoading(false);
+			} else if (attempt < 10) {
+				timeoutId = setTimeout(() => pollForInsights(attempt + 1), 2000);
+			} else {
+				setIsLoading(false);
+			}
+		};
+
+		pollForInsights();
+
+		return () => {
+			clearTimeout(timeoutId);
+		}
+	}, [taskId, refreshCounter]);
 	
 	const handleRefreshInsights = async () => {
 		if (refreshing || !taskId || !workOrderData) return;
 		
-		// Additional validation
 		if (!shopId) {
 			console.error("Error refreshing insights: Shop ID is required");
 			return;
@@ -52,18 +72,11 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			setRefreshing(true);
 			setHasRefreshed(true);
 			
-			// Ensure workOrderData has the shop_id property
 			const workOrderWithShopId = {
 				...workOrderData,
-				shop_id: shopId, // Ensure shop_id is included
-				id: taskId // Ensure the repair order ID is included
+				shop_id: shopId,
+				id: taskId 
 			};
-			
-			console.log("Refreshing insights with data:", {
-				shopId,
-				taskId,
-				hasWorkOrderData: !!workOrderData
-			});
 			
 			const result = await generateImmediateAnalysis(
 				workOrderWithShopId,
@@ -71,9 +84,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			);
 			
 			if (result.success) {
-				// Fetch the latest data after generation
-				await fetchInsights();
-				console.log("Insights refreshed successfully");
+				setRefreshCounter(c => c + 1);
 				toast.success("Insights refreshed successfully");
 			} else {
 				console.error("Error refreshing insights:", result.error);
@@ -83,10 +94,9 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			console.error("Error refreshing insights:", error);
 			toast.error("Failed to refresh insights");
 		} finally {
-			// Add a minimum delay before allowing another refresh
 			setTimeout(() => {
 				setRefreshing(false);
-			}, 1000); // 1 second minimum delay
+			}, 1000);
 		}
 	};
 	
@@ -102,7 +112,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 							size="sm" 
 							className={`h-8 w-8 p-0 transition-opacity duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
 							onClick={handleRefreshInsights}
-							disabled={refreshing || loading}
+							disabled={refreshing || isLoading}
 							title={refreshing ? "Refreshing insights..." : "Regenerate insights"}
 						>
 							<RefreshCw className={`h-4 w-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
@@ -117,13 +127,9 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			{/* Content - Scrollable */}
 			<div className="flex-1 overflow-y-auto min-h-0">
 				<div className="p-4">
-					{loading ? (
+					{isLoading ? (
 						<div className="flex items-center justify-center h-32">
 							<div className="animate-pulse text-gray-400">Loading insights...</div>
-						</div>
-					) : refreshing ? (
-						<div className="flex items-center justify-center h-32">
-							<div className="animate-pulse text-gray-400">Regenerating insights...</div>
 						</div>
 					) : insights ? (
 						<div className="space-y-4">
