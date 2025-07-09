@@ -124,7 +124,7 @@ export default function MechanicHubPage() {
 				/>
 				{selectedTask && shopId && (
                     <TaskDetailsModal
-                        task={selectedTask}
+                        task={selectedTask as any}
                         onClose={handleCloseModal}
                         onSave={handleSave}
                         shopId={shopId}

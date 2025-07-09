@@ -1,67 +1,58 @@
-"use client"
+"use client";
 
-import { ArrowDownRight, ArrowUpRight, DollarSign, Scale, TrendingDown, TrendingUp } from "lucide-react";
+import { DollarSign, TrendingDown, TrendingUp } from "lucide-react";
 
-interface SummaryCardsProps {
-    data: {
-        totalRevenue: number;
-        totalCogs: number;
-        totalPayroll: number;
-        totalFixedCosts: number;
-        grossProfit: number;
-        netProfit: number;
-    };
-    onCardClick: (metric: string) => void;
+interface EfficiencyData {
+    totalRevenue: number;
+    totalOperatingExpenses: number;
+    netProfit: number;
 }
 
-const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-}).format(value);
+interface SummaryCardProps {
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    onClick?: () => void;
+    className?: string;
+}
 
-const SummaryCard = ({ title, value, icon, isProfit, onClick }: { title: string, value: string, icon: React.ReactNode, isProfit?: boolean, onClick: () => void }) => {
-    const profitColor = isProfit ? (value.startsWith('-') ? 'text-red-500' : 'text-green-500') : 'text-white';
-    const profitIcon = isProfit ? (value.startsWith('-') ? <ArrowDownRight className="w-5 h-5"/> : <ArrowUpRight className="w-5 h-5"/>) : icon;
-    
+const SummaryCard = ({ title, value, icon, onClick, className }: SummaryCardProps) => (
+    <div 
+        className={`bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 ${onClick ? 'cursor-pointer hover:bg-[#1a1a1a]' : ''}`}
+        onClick={onClick}
+    >
+        <div className="flex items-center justify-between">
+            <h3 className="text-md font-medium text-gray-400">{title}</h3>
+            {icon}
+        </div>
+        <p className={`text-3xl font-bold mt-2 ${className}`}>
+            {value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+        </p>
+    </div>
+);
+
+
+export default function SummaryCards({ data, onCardClick }: { data: EfficiencyData, onCardClick: (metric: string) => void }) {
     return (
-        <button onClick={onClick} className="w-full bg-[#0A0A0A] border border-[#222] rounded-lg p-5 flex items-center space-x-4 text-left hover:bg-[#111] transition-colors">
-            <div className={`bg-[#1a1a1a] p-3 rounded-full ${profitColor}`}>
-                {profitIcon}
-            </div>
-            <div>
-                <p className="text-gray-400 text-sm">{title}</p>
-                <p className={`text-2xl font-bold ${profitColor}`}>{value}</p>
-            </div>
-        </button>
-    );
-};
-
-
-export default function SummaryCards({ data, onCardClick }: SummaryCardsProps) {
-    if (!data) return null;
-
-    const totalCosts = data.totalFixedCosts;
-
-    const cards = [
-        { key: 'revenue', title: 'Total Revenue', value: data.totalRevenue, icon: <TrendingUp className="w-5 h-5"/> },
-        { key: 'costs', title: 'Total Costs', value: totalCosts, icon: <TrendingDown className="w-5 h-5"/> },
-        { key: 'grossProfit', title: 'Gross Profit', value: data.grossProfit, icon: <DollarSign className="w-5 h-5"/> },
-        { key: 'netProfit', title: 'Net Profit', value: data.netProfit, icon: <Scale className="w-5 h-5"/>, isProfit: true },
-    ]
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {cards.map(card => (
-                <SummaryCard 
-                    key={card.key}
-                    title={card.title} 
-                    value={formatCurrency(card.value)} 
-                    icon={card.icon} 
-                    isProfit={card.isProfit}
-                    onClick={() => onCardClick(card.key)}
-                />
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <SummaryCard 
+                title="Total Revenue"
+                value={data.totalRevenue}
+                icon={<DollarSign className="h-5 w-5 text-gray-500" />}
+                onClick={() => onCardClick('revenue')}
+            />
+            <SummaryCard 
+                title="Total Operating Expenses"
+                value={data.totalOperatingExpenses}
+                icon={<TrendingDown className="h-5 w-5 text-gray-500" />}
+                onClick={() => onCardClick('costs')}
+            />
+            <SummaryCard 
+                title="Net Profit"
+                value={data.netProfit}
+                icon={data.netProfit >= 0 ? <TrendingUp className="h-5 w-5 text-green-500" /> : <TrendingDown className="h-5 w-5 text-red-500" />}
+                className={data.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}
+            />
         </div>
     );
 } 

@@ -68,17 +68,8 @@ export async function getOrGenerateMiaInsights(workOrderId: string, shopId: stri
         const result: InsightsResponse = await response.json();
 
         if (result.success && result.insights) {
-            const { error: updateError } = await supabase
-                .from('repair_order_details')
-                .update({
-                    mia_insights: result.insights,
-                    insights_status: 'generated'
-                })
-                .eq('repair_order_id', workOrderId);
-
-            if (updateError) {
-                console.error('Error updating repair order with insights:', updateError);
-            }
+            // Instead of updating repair_order_details, call the function that handles the upsert
+            await generateImmediateAnalysis(workOrder, '');
         }
 
         return result;
@@ -206,11 +197,22 @@ export async function generateImmediateAnalysis(workOrderData: any, miaCustomerI
 
         } else {
             // Create new record
+            
+            const vehicleId = workOrderData.vehicle_id || workOrderData.customers?.customer_vehicles?.[0]?.id;
+            
+            if (!workOrderData.customer_id) {
+                return { success: false, error: "Customer ID is missing from the work order data." };
+            }
+            if (!vehicleId) {
+                return { success: false, error: "Vehicle ID is missing and no vehicles are associated with the customer." };
+            }
+
             const { data: newInsight, error: insertError } = await supabase
                 .from('mia_customer_insights')
                 .insert({
                     shop_id: workOrderData.shop_id,
                     customer_id: workOrderData.customer_id,
+                    vehicle_id: vehicleId,
                     repair_order_id: workOrderData.id,
                     analysis: insights,
                     summary: insights.summary,

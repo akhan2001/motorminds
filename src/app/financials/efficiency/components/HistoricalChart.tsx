@@ -15,11 +15,14 @@ const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+        const costPayload = payload.find((p: any) => p.dataKey === 'Costs');
+        const revenuePayload = payload.find((p: any) => p.dataKey === 'Revenue');
+
         return (
             <div className="bg-[#1a1a1a] p-3 border border-[#333] rounded-md text-white shadow-lg">
                 <p className="label font-bold">{`${label}`}</p>
-                <p className="text-blue-400">{`Revenue : ${formatCurrency(payload[0].value)}`}</p>
-                <p className="text-orange-400">{`Costs : ${formatCurrency(payload[1].value)}`}</p>
+                {revenuePayload && <p className="text-green-400">{`Revenue : ${formatCurrency(revenuePayload.value)}`}</p>}
+                {costPayload && <p className="text-orange-400">{`Costs : ${formatCurrency(costPayload.value)}`}</p>}
             </div>
         );
     }
@@ -44,7 +47,7 @@ export default function HistoricalChart({ data }: HistoricalChartProps) {
                         <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
                         <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff10' }}/>
                         <Legend />
-                        <Bar dataKey="Revenue" fill="#0088FE" barSize={20} />
+                        <Bar dataKey="Revenue" fill="#22c55e" barSize={20} />
                         <Line type="monotone" dataKey="Costs" stroke="#ff7300" strokeWidth={2} />
                     </ComposedChart>
                 </ResponsiveContainer>

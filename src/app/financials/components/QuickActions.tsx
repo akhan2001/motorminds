@@ -1,11 +1,11 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
   FileText,
   Users,
   Droplet,
   Gauge,
+  Timer,
 } from "lucide-react";
 
 interface ActionCardProps {
@@ -93,10 +93,16 @@ export default function QuickActions() {
           isActive={true}
         />
         <ActionCard
+          title="Financial Reports"
+          description="Generate income statements and other financial reports"
+          href="/financials/reports"
+          icon={FileText}
+          isActive={true}
+        />
+        <ActionCard
           title="Job Efficiency"
-          description="Analyze profitability of quoted vs. actual hours"
-          href="/financials/efficiency"
-          icon={Gauge}
+          description="Measure estimated vs actual labor performance"
+          icon={Timer}
           isActive={false}
         />
       </div>

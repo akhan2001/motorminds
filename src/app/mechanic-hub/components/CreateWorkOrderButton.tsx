@@ -246,29 +246,18 @@ export function CreateWorkOrderButton({ shopId, onWorkOrderCreated }: CreateWork
                 .single()
             if (detailErr) throw detailErr
 
-            // Create Mia insights
-            try {
-                if (!newRepairOrderId || !shopId) {
-                    throw new Error("Missing required data for insights generation");
-                }
-
-                console.log("Creating Mia insights for order:", {
-                    repairOrderId: newRepairOrderId,
-                    shopId: shopId
+            // Create Mia insights asynchronously
+            createMiaInsights(newRepairOrderId, shopId, "immediate")
+                .then(insightsResult => {
+                    if (!insightsResult?.success) {
+                        console.error("Background task: Failed to create Mia insights. The operation was unsuccessful.");
+                    } else {
+                        console.log("Background task: Successfully created Mia insights");
+                    }
+                })
+                .catch(insightsError => {
+                    console.error("Background task: Error creating Mia insights:", insightsError);
                 });
-
-                const insightsResult = await createMiaInsights(newRepairOrderId, shopId, "immediate");
-                
-                if (!insightsResult.success) {
-                    console.error("Failed to create Mia insights:", insightsResult.message);
-                    // Don't throw here - we want to continue with work order creation
-                } else {
-                    console.log("Successfully created Mia insights");
-                }
-            } catch (insightsError) {
-                console.error("Error creating Mia insights:", insightsError);
-                // Don't throw here - we want to continue with work order creation
-            }
 
             toast.success("Work Order successfully created!");
 

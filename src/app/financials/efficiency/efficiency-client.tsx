@@ -19,20 +19,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import { BreakdownDialog } from "./components/BreakdownDialog";
 
+// Correct, simplified data structure
 interface EfficiencyData {
   totalRevenue: number;
-  totalCogs: number;
-  totalPayroll: number;
-  totalFixedCosts: number;
-  grossProfit: number;
+  totalOperatingExpenses: number;
   netProfit: number;
   historicalData: any[];
+  costBreakdown: {
+    recurring: number;
+    oneTime: number;
+  };
   breakdown: {
     revenue: any[];
-    payroll: any[];
     fixedCosts: any[];
     oneTimeCosts: any[];
-    cogs: any[];
   };
 }
 
@@ -61,15 +61,14 @@ const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange
 
 export default function EfficiencyClient() {
   const [efficiencyData, setEfficiencyData] = useState<EfficiencyData | null>(null);
-  const [fixedCosts, setFixedCosts] = useState([]);
-  const [oneTimeCosts, setOneTimeCosts] = useState([]);
+  const [fixedCosts, setFixedCosts] = useState([]); // For the raw data table
+  const [oneTimeCosts, setOneTimeCosts] = useState([]); // For the raw data table
   const [isLoading, setIsLoading] = useState(true);
   const [shopId, setShopId] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const timeRange = searchParams?.get("timeRange") || "30d";
 
-  // State for the breakdown dialog
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogData, setDialogData] = useState<any[]>([]);
@@ -92,37 +91,23 @@ export default function EfficiencyClient() {
             title = "Revenue Breakdown";
             data = breakdown.revenue;
             columns = [
-                { key: 'paid_at', header: 'Date', render: (d: any) => new Date(d).toLocaleDateString() },
-                { key: 'invoice_number', header: 'Invoice #' },
+                { key: 'paid_at', header: 'Date', render: (d: any) => new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" }) },
+                { key: 'invoice_number', header: 'Invoice #', render: (v: any) => <span className="text-blue-400 font-medium">{v}</span> },
                 { key: 'amount', header: 'Amount', render: (v: any) => `$${v.toFixed(2)}` },
             ];
             break;
         case 'costs':
-            title = "Total Costs Breakdown";
-            const fixedItems = breakdown.fixedCosts.map(i => ({ source: 'Fixed Cost', date: i.start_date, name: i.cost_name, amount: i.amount }));
+            title = "Total Operating Expenses Breakdown";
+            const fixedItems = breakdown.fixedCosts.map(i => ({ source: 'Fixed Cost', date: i.date, name: i.cost_name, amount: i.amount }));
             const oneTimeItems = breakdown.oneTimeCosts.map(i => ({ source: 'One-Time Cost', date: i.cost_date, name: i.cost_name, amount: i.amount }));
             data = [...fixedItems, ...oneTimeItems];
             columns = [
                 { key: 'source', header: 'Source' },
-                { key: 'date', header: 'Date', render: (d: any) => d && d !== 'N/A' ? new Date(d).toLocaleDateString() : 'N/A' },
+                { key: 'date', header: 'Date', render: (d: any) => d && d !== 'N/A' ? new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" }) : 'N/A' },
                 { key: 'name', header: 'Details' },
                 { key: 'amount', header: 'Amount', render: (v: any) => `$${v.toFixed(2)}` },
             ];
             break;
-        case 'grossProfit':
-             title = "Gross Profit Breakdown";
-             data = breakdown.revenue.map(inv => ({
-                ...inv,
-                cogs: (inv.parts_cost || 0) + (inv.labour_cost || 0),
-                profit: inv.amount - ((inv.parts_cost || 0) + (inv.labour_cost || 0))
-             }))
-             columns = [
-                { key: 'invoice_number', header: 'Invoice #' },
-                { key: 'amount', header: 'Revenue', render: (v: any) => `$${v.toFixed(2)}` },
-                { key: 'cogs', header: 'COGS', render: (v: any) => `$${v.toFixed(2)}` },
-                { key: 'profit', header: 'Gross Profit', render: (v: any) => `$${v.toFixed(2)}` },
-             ];
-             break;
     }
     setDialogTitle(title);
     setDialogData(data);
@@ -135,6 +120,13 @@ export default function EfficiencyClient() {
     setIsLoading(true);
     
     try {
+        const toLocalISOString = (date: Date) => {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
         const endDate = new Date();
         const startDate = new Date();
         switch (range) {
@@ -144,8 +136,8 @@ export default function EfficiencyClient() {
             case "1y": startDate.setFullYear(endDate.getFullYear() - 1); break;
             default: startDate.setDate(endDate.getDate() - 30); break;
         }
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
+        const start = toLocalISOString(startDate);
+        const end = toLocalISOString(endDate);
 
         const [fixedCostsRes, oneTimeCostsRes, efficiencyRes] = await Promise.all([
             fetch(`/api/financials/efficiency?shop_id=${shopId}`),
@@ -153,26 +145,13 @@ export default function EfficiencyClient() {
             fetch(`/api/financials/efficiency?shop_id=${shopId}&start_date=${start}&end_date=${end}`)
         ]);
 
-        if (!fixedCostsRes.ok) {
-            console.error("Failed to fetch fixed costs:", fixedCostsRes.status, await fixedCostsRes.text());
-            throw new Error(`Failed to fetch fixed costs: ${fixedCostsRes.status}`);
-        }
-        if (!oneTimeCostsRes.ok) {
-            console.error("Failed to fetch one-time costs:", oneTimeCostsRes.status, await oneTimeCostsRes.text());
-            throw new Error(`Failed to fetch one-time costs: ${oneTimeCostsRes.status}`);
-        }
-        if (!efficiencyRes.ok) {
-            console.error("Failed to fetch efficiency data:", efficiencyRes.status, await efficiencyRes.text());
-            throw new Error(`Failed to fetch efficiency data: ${efficiencyRes.status}`);
+        if (!fixedCostsRes.ok || !oneTimeCostsRes.ok || !efficiencyRes.ok) {
+            throw new Error(`Failed to fetch financial data`);
         }
         
-        const fixedCostsResult = await fixedCostsRes.json();
-        const oneTimeCostsResult = await oneTimeCostsRes.json();
-        const efficiencyResult = await efficiencyRes.json();
-        
-        setFixedCosts(fixedCostsResult);
-        setOneTimeCosts(oneTimeCostsResult);
-        setEfficiencyData(efficiencyResult);
+        setFixedCosts(await fixedCostsRes.json());
+        setOneTimeCosts(await oneTimeCostsRes.json());
+        setEfficiencyData(await efficiencyRes.json());
 
     } catch (error) {
       console.error(error);
@@ -254,7 +233,7 @@ export default function EfficiencyClient() {
                   </AddFixedCostModal>
                 )}
               </div>
-              <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} />
+              <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} onCostDeleted={() => fetchData(timeRange)} />
             </div>
 
             <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6">
@@ -269,7 +248,7 @@ export default function EfficiencyClient() {
                   </AddOneTimeCostModal>
                 )}
               </div>
-              <OneTimeCostsTable costs={oneTimeCosts} onCostUpdated={() => fetchData(timeRange)} />
+              <OneTimeCostsTable costs={oneTimeCosts} onCostUpdated={() => fetchData(timeRange)} onCostDeleted={() => fetchData(timeRange)}/>
             </div>
         </div>
       </main>

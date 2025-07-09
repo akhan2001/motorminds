@@ -32,8 +32,27 @@ interface WorkOrderListProps {
 
 export function WorkOrderList({ shopId, workOrders, isLoading, error, onWorkOrderClick }: WorkOrderListProps) {
     const [view, setView] = useState<'card' | 'list'>('card');
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
+
+    const filteredWorkOrders = useMemo(() => {
+        if (!workOrders) return [];
+        if (!statusFilter) return workOrders;
+        return workOrders.filter(order => order.status === statusFilter);
+    }, [workOrders, statusFilter]);
 
     const groupedOrders = useMemo(() => {
+        if (!filteredWorkOrders) return {};
+        return filteredWorkOrders.reduce((acc, order) => {
+            const status = order.status || 'Pending';
+            if (!acc[status]) {
+                acc[status] = [];
+            }
+            acc[status].push(order);
+            return acc;
+        }, {} as Record<string, WorkOrder[]>);
+    }, [filteredWorkOrders]);
+    
+    const allGroupedOrdersForSummary = useMemo(() => {
         if (!workOrders) return {};
         return workOrders.reduce((acc, order) => {
             const status = order.status || 'Pending';
@@ -44,7 +63,7 @@ export function WorkOrderList({ shopId, workOrders, isLoading, error, onWorkOrde
             return acc;
         }, {} as Record<string, WorkOrder[]>);
     }, [workOrders]);
-    
+
     const statusOrder = ['Pending', 'In Progress', 'Waiting on Customer', 'Completed', 'Cancelled'];
 
     if (isLoading) {
@@ -65,7 +84,11 @@ export function WorkOrderList({ shopId, workOrders, isLoading, error, onWorkOrde
 
     return (
         <div>
-            <WorkOrderSummary groupedOrders={groupedOrders} />
+            <WorkOrderSummary 
+                groupedOrders={allGroupedOrdersForSummary} 
+                activeFilter={statusFilter}
+                onFilterChange={setStatusFilter}
+            />
 
             <div className="flex justify-end items-center mb-6">
                 <div className="flex items-center gap-2 p-1 rounded-lg bg-[#222222] border border-[#333333]">
@@ -91,17 +114,22 @@ export function WorkOrderList({ shopId, workOrders, isLoading, error, onWorkOrde
             </div>
 
             <div className="space-y-12">
-                {statusOrder.map(status => (
-                    <WorkOrderStatusColumn
-                        key={status}
-                        title={status}
-                        orders={groupedOrders[status] || []}
-                        view={view}
-                        statusColors={STATUS_COLORS}
-                        priorityColors={PRIORITY_COLORS}
-                        onWorkOrderClick={onWorkOrderClick}
-                    />
-                ))}
+                {statusOrder.map(status => {
+                    if (groupedOrders[status] && groupedOrders[status].length > 0) {
+                        return (
+                            <WorkOrderStatusColumn
+                                key={status}
+                                title={status}
+                                orders={groupedOrders[status]}
+                                view={view}
+                                statusColors={STATUS_COLORS}
+                                priorityColors={PRIORITY_COLORS}
+                                onWorkOrderClick={onWorkOrderClick}
+                            />
+                        );
+                    }
+                    return null;
+                })}
             </div>
         </div>
     );
