@@ -22,6 +22,7 @@ interface ServiceFormData {
     service_name?: string;
     description?: string;
     price?: number;
+    cost?: number; // <-- Add cost
     quantity?: number;
     type?: "labor" | "parts";
 }
@@ -94,7 +95,7 @@ export function ServicePartsDialog({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label htmlFor="price" className="text-sm font-medium">Price ($)</label>
+                            <label htmlFor="price" className="text-sm font-medium">Price (Retail)</label>
                             <Input
                                 id="price"
                                 type="number"
@@ -103,6 +104,21 @@ export function ServicePartsDialog({
                                 className="bg-[#131313] border-[#333] focus:ring-0"
                             />
                         </div>
+                        {formData.type === "parts" && (
+                            <div className="space-y-2">
+                                <label htmlFor="cost" className="text-sm font-medium">Cost (COGS)</label>
+                                <Input
+                                    id="cost"
+                                    type="number"
+                                    value={formData.cost?.toString()}
+                                    onChange={(e) => onFormChange({ cost: parseFloat(e.target.value) || 0 })}
+                                    className="bg-[#131313] border-[#333] focus:ring-0"
+                                    placeholder="Cost to shop"
+                                />
+                            </div>
+                        )}
+                    </div>
+                     <div className="space-y-2">
                         {formData.type === "parts" && (
                             <div className="space-y-2">
                                 <label htmlFor="quantity" className="text-sm font-medium">Quantity</label>
