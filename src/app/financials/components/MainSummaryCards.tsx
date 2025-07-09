@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3 } from "lucide-react";
+import { SparkLineChart } from '@tremor/react';
 
 // Simple sparkline component
 function Sparkline({ data, positive }: { data: number[]; positive?: boolean }) {
@@ -60,19 +61,24 @@ function SummaryCard({
   );
 }
 
+interface TrendData {
+    revenue: number;
+    cost_of_goods_sold: number;
+}
+
 interface MainSummaryCardsProps {
   cashflowData: any;
   payrollData: any;
-  trendData: any[];
+  trendData: TrendData[];
 }
 
 export default function MainSummaryCards({ cashflowData, payrollData, trendData }: MainSummaryCardsProps) {
   // Calculate sparkline data from trend data
-  const revenueSparkline = trendData.slice(-7).map(d => d.revenue || 0);
-  const expenseSparkline = trendData.slice(-7).map(d => d.cost_of_goods_sold || 0);
+  const revenueSparkline = trendData ? trendData.slice(-7).map(d => d.revenue || 0) : [];
+  const expenseSparkline = trendData ? trendData.slice(-7).map(d => d.cost_of_goods_sold || 0) : [];
   
   // Calculate net cash flow
-  const netCashFlow = cashflowData ? (cashflowData.revenue - cashflowData.total_costs) : 0;
+  const netCashFlow = (cashflowData?.total_inflow || 0) - (cashflowData?.total_outflow || 0);
   const isPositive = netCashFlow >= 0;
 
   return (
