@@ -7,7 +7,6 @@ import { getShopId } from '@/utils/supabase/supabase-shop'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import LoadingPage from "@/components/loading"
-import AddEmployeeForm from "@/app/settings/components/AddEmployeeForm"
 
 export default function SettingsProfilePage() {
     const [user, setUser] = useState<any>(null)
@@ -51,7 +50,7 @@ export default function SettingsProfilePage() {
             <Nav />
             <div className="p-4 space-y-6">
                 {shopId && <ProfileForm shopId={shopId} />}
-                {shopId && <AddEmployeeForm shopId={shopId} />}
+                {/*{shopId && <AddEmployeeForm shopId={shopId} />}*/}
             </div>
         </div>
     )

@@ -41,14 +41,14 @@ export const generateIncomeStatementPDF = async (data: IncomeStatementData, shop
         body: data.revenueDetails.map(item => [item.description, `$${item.total_amount.toFixed(2)}`]),
         theme: 'striped',
         styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: [41, 128, 185], fontSize: 12 },
         didDrawPage: () => {}
     });
 
     yPos = (pdf as any).lastAutoTable.finalY + 10;
     
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Total Revenue', 140, yPos);
+    pdf.text('Total Revenue', 14, yPos);
     pdf.text(`$${data.totalRevenue.toFixed(2)}`, 180, yPos);
     yPos += 10;
 
@@ -63,19 +63,19 @@ export const generateIncomeStatementPDF = async (data: IncomeStatementData, shop
         body: data.cogsDetails.map(item => [item.item_name, `$${item.total_cost.toFixed(2)}`]),
         theme: 'striped',
         styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: [41, 128, 185], fontSize: 12 },
         didDrawPage: () => {}
     });
 
     yPos = (pdf as any).lastAutoTable.finalY + 10;
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Total COGS', 140, yPos);
+    pdf.text('Total COGS', 14, yPos);
     pdf.text(`$${data.totalCOGS.toFixed(2)}`, 180, yPos);
     yPos += 10;
 
     // Gross Profit
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Gross Profit', 140, yPos);
+    pdf.text('Gross Profit', 14, yPos);
     pdf.text(`$${data.grossProfit.toFixed(2)}`, 180, yPos);
     yPos += 15;
 
@@ -90,20 +90,20 @@ export const generateIncomeStatementPDF = async (data: IncomeStatementData, shop
         body: data.operatingExpenseDetails.map(item => [item.category, `$${item.total_amount.toFixed(2)}`]),
         theme: 'striped',
         styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: [41, 128, 185], fontSize: 12 },
         didDrawPage: () => {}
     });
 
     yPos = (pdf as any).lastAutoTable.finalY + 10;
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Total Operating Expenses', 140, yPos);
+    pdf.text('Total Operating Expenses', 14, yPos);
     pdf.text(`$${data.totalOperatingExpenses.toFixed(2)}`, 180, yPos);
     yPos += 10;
 
     // Net Profit
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Net Profit', 140, yPos);
+    pdf.text('Net Profit', 14, yPos);
     pdf.text(`$${data.netProfit.toFixed(2)}`, 180, yPos);
 
     // Footer
