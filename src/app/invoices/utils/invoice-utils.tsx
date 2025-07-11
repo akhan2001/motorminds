@@ -221,10 +221,10 @@ export async function deleteInvoice(invoiceId: string, shopId: string) {
 	return data;
 }
 
-export async function updateInvoice(invoiceData: any, shopId: string) {
+export async function updateInvoice(invoiceNumber: string, invoiceData: any, shopId: string) {
 	try {
 		// Validate that we have an invoice number to update
-		if (!invoiceData.invoice_number) {
+		if (!invoiceNumber) {
 			console.error("No invoice number provided for update");
 			throw new Error("Invoice number is required for updates");
 		}
@@ -264,7 +264,7 @@ export async function updateInvoice(invoiceData: any, shopId: string) {
 		const { data, error } = await supabase
 			.from('invoices')
 			.update(dataToUpdate)
-			.eq('invoice_number', invoiceData.invoice_number)
+			.eq('invoice_number', invoiceNumber)
 			.eq('shop_id', shopId) // Additional security check
 			.select();
 			

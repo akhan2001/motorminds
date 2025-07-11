@@ -305,30 +305,40 @@ export const InvoiceTemplate = ({ invoice }: { invoice: any }) => {
                         <Text style={styles.rateCol}>Price</Text>
                         <Text style={styles.amountCol}>Total</Text>
                     </View>
-                    
-                    {/* --- Labour Items --- */}
-                    {invoice.labour_items && invoice.labour_items.length > 0 && (
-                        invoice.labour_items.map((item: any, index: number) => (
-                            <View style={styles.tableRow} key={`labour-${index}`}>
-                                <Text style={styles.descCol}>{item.description || ''}</Text>
-                                <Text style={styles.qtyCol}>1</Text>
-                                <Text style={styles.rateCol}>{formatCurrency(item.cost)}</Text>
-                                <Text style={styles.amountCol}>{formatCurrency(item.cost)}</Text>
-                            </View>
-                        ))
+                    {/* Labour Items */}
+                    {(!invoice.labour_items || invoice.labour_items.length === 0) && invoice.labour_total_price > 0 && (
+                        <View style={styles.tableRow}>
+                            <Text style={styles.descCol}>{invoice.labour || 'General Labour'}</Text>
+                            <Text style={styles.qtyCol}></Text>
+                            <Text style={styles.rateCol}></Text>
+                            <Text style={styles.amountCol}>{formatCurrency(invoice.labour_total_price)}</Text>
+                        </View>
                     )}
-
-                    {/* --- Parts Items --- */}
-                    {invoice.parts_items && invoice.parts_items.length > 0 && (
-                        invoice.parts_items.map((item: any, index: number) => (
-                            <View style={styles.tableRow} key={`parts-${index}`}>
-                                <Text style={styles.descCol}>{item.description || ''}</Text>
-                                <Text style={styles.qtyCol}>{item.quantity || 1}</Text>
-                                <Text style={styles.rateCol}>{formatCurrency(item.cost)}</Text>
-                                <Text style={styles.amountCol}>{formatCurrency(item.cost * (item.quantity || 1))}</Text>
-                            </View>
-                        ))
+                    {invoice.labour_items && invoice.labour_items.map((item: any, index: number) => (
+                        <View key={`labour-${index}`} style={styles.tableRow}>
+                            <Text style={styles.descCol}>{item.description}</Text>
+                            <Text style={styles.qtyCol}>1</Text>
+                            <Text style={styles.rateCol}>{formatCurrency(item.cost)}</Text>
+                            <Text style={styles.amountCol}>{formatCurrency(item.cost)}</Text>
+                        </View>
+                    ))}
+                    {/* Parts Items */}
+                    {(!invoice.parts_items || invoice.parts_items.length === 0) && invoice.parts_total_price > 0 && (
+                        <View style={styles.tableRow}>
+                            <Text style={styles.descCol}>{invoice.parts || 'General Parts'}</Text>
+                            <Text style={styles.qtyCol}></Text>
+                            <Text style={styles.rateCol}></Text>
+                            <Text style={styles.amountCol}>{formatCurrency(invoice.parts_total_price)}</Text>
+                        </View>
                     )}
+                    {invoice.parts_items && invoice.parts_items.map((item: any, index: number) => (
+                        <View key={`parts-${index}`} style={styles.tableRow}>
+                            <Text style={styles.descCol}>{item.description}</Text>
+                            <Text style={styles.qtyCol}>{item.quantity || 1}</Text>
+                            <Text style={styles.rateCol}>{formatCurrency(item.cost)}</Text>
+                            <Text style={styles.amountCol}>{formatCurrency(item.cost * (item.quantity || 1))}</Text>
+                        </View>
+                    ))}
 
                     {/* --- Notes --- */}
                     {invoice.notes && (

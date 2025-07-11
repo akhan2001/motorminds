@@ -238,33 +238,47 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: Invo
                                 </div>
                                 
                                 {/* Labour Items */}
-                                {invoice.labour_items && invoice.labour_items.map((item, index) => (
-                                    <div key={`labour-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
-                                        <div className="col-span-5 text-white">{item.description}</div>
-                                        <div className="col-span-2 text-center text-gray-400">-</div>
-                                        <div className="col-span-2 text-right text-gray-400">-</div>
-                                        <div className="col-span-3 text-right text-white">{formatCurrency(item.cost)}</div>
+                                {(!invoice.labour_items || invoice.labour_items.length === 0) && invoice.labour_total_price > 0 ? (
+                                    <div className="grid grid-cols-12 gap-2 items-center text-sm">
+                                        <div className="col-span-10 text-white">{invoice.labour || 'General Labour'}</div>
+                                        <div className="col-span-2 text-right text-white">{formatCurrency(invoice.labour_total_price)}</div>
                                     </div>
-                                ))}
+                                ) : (
+                                    invoice.labour_items && invoice.labour_items.map((item, index) => (
+                                        <div key={`labour-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
+                                            <div className="col-span-5 text-white">{item.description}</div>
+                                            <div className="col-span-2 text-center text-gray-400">-</div>
+                                            <div className="col-span-2 text-right text-gray-400">-</div>
+                                            <div className="col-span-3 text-right text-white">{formatCurrency(item.cost)}</div>
+                                        </div>
+                                    ))
+                                )}
 
                                 {/* Parts Items */}
-                                {invoice.parts_items && invoice.parts_items.map((item, index) => (
-                                    <div key={`parts-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
-                                        <div className="col-span-5 text-white">{item.description}</div>
-                                        <div className="col-span-2 text-center text-white">{item.quantity}</div>
-                                        <div className="col-span-2 text-right text-red-400">{formatCurrency(item.shop_cost)}</div>
-                                        <div className="col-span-3 text-right text-white">
-                                            {item.quantity && item.quantity > 1 ? (
-                                                <span>
-                                                    {formatCurrency(item.cost * item.quantity)}
-                                                    <span className="text-gray-400 text-xs ml-1">({formatCurrency(item.cost)}/ea)</span>
-                                                </span>
-                                            ) : (
-                                                formatCurrency(item.cost)
-                                            )}
-                                        </div>
+                                {(!invoice.parts_items || invoice.parts_items.length === 0) && invoice.parts_total_price > 0 ? (
+                                    <div className="grid grid-cols-12 gap-2 items-center text-sm">
+                                        <div className="col-span-10 text-white">{invoice.parts || 'General Parts'}</div>
+                                        <div className="col-span-2 text-right text-white">{formatCurrency(invoice.parts_total_price)}</div>
                                     </div>
-                                ))}
+                                ) : (
+                                    invoice.parts_items && invoice.parts_items.map((item, index) => (
+                                        <div key={`parts-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
+                                            <div className="col-span-5 text-white">{item.description}</div>
+                                            <div className="col-span-2 text-center text-white">{item.quantity}</div>
+                                            <div className="col-span-2 text-right text-red-400">{formatCurrency(item.shop_cost)}</div>
+                                            <div className="col-span-3 text-right text-white">
+                                                {item.quantity && item.quantity > 1 ? (
+                                                    <span>
+                                                        {formatCurrency(item.cost * item.quantity)}
+                                                        <span className="text-gray-400 text-xs ml-1">({formatCurrency(item.cost)}/ea)</span>
+                                                    </span>
+                                                ) : (
+                                                    formatCurrency(item.cost)
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                             
                             {invoice.notes && (
@@ -311,13 +325,13 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: Invo
                         <LayoutIcon className="w-4 h-4 mr-2" />
                         {isLandscape ? "Portrait" : "Landscape"}
                     </Button>
-                    <Button 
+                    {/* <Button 
                         className="bg-green-600 text-white w-full sm:w-auto hover:bg-green-700 border-none" 
                         onClick={handleEdit}
                     >
                         <EditIcon className="w-4 h-4 mr-2" />
                         Edit
-                    </Button>
+                    </Button> */}
                     <Button 
                         className="bg-gray-600 text-white w-full sm:w-auto hover:bg-gray-700 border-none" 
                         onClick={handleDownload}

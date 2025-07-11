@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getShopInfo } from "@/utils/supabase/supabase-shop";
 import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
-import { createNewInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { updateInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,16 +15,18 @@ import { MinusIcon, PlusIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-export default function InvoiceForm({ 
+export default function EditInvoiceForm({ 
     onClose, 
     shopId, 
     isOpen, 
-    onInvoiceCreated
+    onInvoiceUpdated,
+    existingInvoice
 }: { 
     onClose: () => void, 
     shopId: string, 
     isOpen: boolean,
-    onInvoiceCreated?: () => void
+    onInvoiceUpdated?: () => void,
+    existingInvoice: any
 }) {
     // Form state
     const [shopName, setShopName] = useState("");
@@ -44,7 +46,6 @@ export default function InvoiceForm({
     const [parts, setParts] = useState("");
     const [partsCost, setPartsCost] = useState("0");
     
-    // New state for multiple items
     const [labourItems, setLabourItems] = useState<{id: string, description: string, cost: string, shop_cost?: string}[]>([]);
     const [partsItems, setPartsItems] = useState<{id: string, description: string, cost: string, shop_cost?: string, quantity?: string}[]>([]);
     const [notes, setNotes] = useState("");
@@ -52,7 +53,7 @@ export default function InvoiceForm({
     const [description, setDescription] = useState("");
     const [assignedTo, setAssignedTo] = useState("");
     const [total, setTotal] = useState("");
-    const [vehicleInfo, setVehicleInfo] = useState<any>(null); //jsonb field
+    const [vehicleInfo, setVehicleInfo] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [staffNames, setStaffNames] = useState<{id: string, full_name: string, role: string}[]>([]);
     const [showNewClientForm, setShowNewClientForm] = useState(false);
@@ -234,46 +235,68 @@ export default function InvoiceForm({
         setAssignedTo(value);
     };
 
+    // Effect to populate form when it opens with existing invoice data
     useEffect(() => {
-        if (isOpen) {
-            resetFormValues();
-        }
-    }, [isOpen]);
+        if (isOpen && existingInvoice) {
+            if (existingInvoice.customer_id) {
+                setSelectedCustomerId(existingInvoice.customer_id);
+            } else if (existingInvoice.client_name) {
+                setShowNewClientForm(true);
+                setClientInfo({
+                    client_name: existingInvoice.client_name || '',
+                    client_phone: existingInvoice.client_phone || '',
+                    client_address: existingInvoice.client_address || '',
+                    client_email: existingInvoice.client_email || ''
+                });
+            }
+            
+            if (existingInvoice.vehicle_id) {
+                setSelectedVehicleId(existingInvoice.vehicle_id);
+            } else if (existingInvoice.vehicleInfo) {
+                setShowNewVehicleForm(true);
+                setVehicleInfo(existingInvoice.vehicleInfo);
+                setManualVehicleInfo(existingInvoice.vehicleInfo);
+            }
 
-    // Update handleSave to handle both create and edit
+            setInvoiceDate(existingInvoice.issueDate?.split('T')[0] || formattedDate);
+            setDescription(existingInvoice.description || '');
+            setNotes(existingInvoice.notes || '');
+            setMileage(existingInvoice.mileage || '');
+            setAssignedTo(existingInvoice.assignedTo || '');
+            
+            if (existingInvoice.labour_items && Array.isArray(existingInvoice.labour_items)) {
+                setLabourItems(existingInvoice.labour_items.map((item: any) => ({
+                    id: uuidv4(),
+                    description: item.description || '',
+                    cost: item.cost?.toString() || '0'
+                })));
+            }
+            
+            if (existingInvoice.parts_items && Array.isArray(existingInvoice.parts_items)) {
+                setPartsItems(existingInvoice.parts_items.map((item: any) => ({
+                    id: uuidv4(),
+                    description: item.description || '',
+                    cost: item.cost?.toString() || '0',
+                    shop_cost: item.shop_cost?.toString() || '0',
+                    quantity: item.quantity?.toString() || '1'
+                })));
+            }
+        }
+    }, [isOpen, existingInvoice, formattedDate]);
+
     const handleSave = async () => {
         if (!validateForm()) return;
         
         setIsSubmitting(true);
         
         try {
-            // Create the invoice data structure
             const invoiceData = {
                 shop_id: shopId,
-                shop_name: shopName || "Unknown Shop",
-                shop_address: shopAddress || "",
-                shop_email: shopEmail || "",
-                shop_phone: shopPhone || "",
-                // Client info...
                 client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
-                client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
-                client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
-                client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
-                // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
                 notes: notes || "",
-                mileage: mileage || "",
-                description: description || "",
-                assigned_to: assignedTo || "",
                 amount: parseFloat(total) || 0,
-                // For edit mode, keep existing status; for create mode, set to "UNPAID"
-                status: "UNPAID",
-                vehicle_info: vehicleInfo,
-                // Add the new arrays
-                labour_items: labourItems.map(item => ({
-                    description: item.description,
-                    cost: parseFloat(item.cost) || 0
-                })),
+                status: existingInvoice.status,
                 parts_items: partsItems.map(item => ({
                     description: item.description,
                     cost: parseFloat(item.cost) || 0,
@@ -282,19 +305,20 @@ export default function InvoiceForm({
                 }))
             };
             
-            const result = await createNewInvoice(invoiceData, shopId);
+            const result = await updateInvoice(existingInvoice.invoice_number, invoiceData, shopId);
+
             if (result) {
-                toast.success("Invoice created successfully");
-                if (onInvoiceCreated) {
-                    onInvoiceCreated();
+                toast.success("Invoice updated successfully");
+                if (onInvoiceUpdated) {
+                    onInvoiceUpdated();
                 }
                 onClose();
             } else {
-                toast.error("Failed to create invoice");
+                toast.error(`Failed to update invoice`);
             }
         } catch (error) {
-            console.error("Error creating invoice:", error);
-            toast.error(`Failed to create invoice: ${(error as Error).message || "Unknown error"}`);
+            console.error(`Error updating invoice:`, error);
+            toast.error(`Failed to update invoice: ${(error as Error).message || "Unknown error"}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -337,10 +361,10 @@ export default function InvoiceForm({
                 {/* Sticky Header */}
                 <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#222222] rounded-t-lg">
                     <DialogTitle className="text-white text-xl sm:text-2xl">
-                        Create New Invoice
+                        Edit Invoice
                     </DialogTitle>
                     <DialogDescription className="text-gray-400 text-xs sm:text-sm">
-                        Fill in the details below to create a new invoice.
+                        Fill in the details below to update the invoice.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -658,7 +682,7 @@ export default function InvoiceForm({
                             onClick={handleSave}
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? "Creating..." : "Create Invoice"}
+                            {isSubmitting ? "Updating..." : "Update Invoice"}
                         </Button>
                     </div>
                 </DialogFooter>
