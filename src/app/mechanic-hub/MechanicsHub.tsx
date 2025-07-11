@@ -30,6 +30,7 @@ export default function MechanicsHub({ shopId }: MechanicsHubProps) {
                     workOrders={workOrders}
                     isLoading={isLoading}
                     error={error}
+                    onWorkOrderClick={() => {}}
                 />
             </div>
         </div>

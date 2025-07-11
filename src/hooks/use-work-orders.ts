@@ -79,10 +79,53 @@ const fetchWorkOrders = async (shopId: string): Promise<WorkOrder[]> => {
 export const useWorkOrders = (shopId: string) => {
   const { data, error, isLoading, mutate } = useSWR<WorkOrder[]>(shopId ? `work_orders_${shopId}` : null, () => fetchWorkOrders(shopId))
 
+  const updateWorkOrderStatus = async (updatedTask: WorkOrder) => {
+    // Optimistically update the local data
+    mutate(
+      (currentData: WorkOrder[] | undefined) => {
+        if (!currentData) return [];
+        return currentData.map(order => 
+          order.id === updatedTask.id ? { ...order, ...updatedTask } : order
+        );
+      }, 
+      false // do not revalidate yet
+    );
+
+    try {
+      // Attempt to update the database
+      const { error: orderError } = await supabase
+        .from('repair_orders')
+        .update({ status: updatedTask.status })
+        .eq('id', updatedTask.id);
+      if (orderError) throw orderError;
+
+      if (updatedTask.repair_order_details && updatedTask.repair_order_details.length > 0) {
+        const detail: any = updatedTask.repair_order_details[0];
+        const { id, ...detailToUpdate } = detail;
+        // The repair_order_id is not part of the update payload for the details table
+        delete detailToUpdate.repair_order_id; 
+
+        const { error: detailError } = await supabase
+          .from('repair_order_details')
+          .update(detailToUpdate)
+          .eq('id', detail.id);
+        if (detailError) throw detailError;
+      }
+    } catch (error) {
+      // If the update fails, revert the local data and re-throw the error
+      mutate(); 
+      throw error;
+    }
+
+    // After a successful update, revalidate to ensure data is in sync
+    mutate();
+  };
+
   return {
     data,
     isLoading,
     error,
     mutate,
+    updateWorkOrderStatus,
   }
 } 

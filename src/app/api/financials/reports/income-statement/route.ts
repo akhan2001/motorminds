@@ -102,30 +102,33 @@ export async function GET(req: NextRequest) {
 
         // Persist a summary row in financial_statements for historical reporting
         try {
-            const { data: insertData, error: insertError } = await supabase
+            const statementData = {
+                shop_id: shopId,
+                statement_type: 'income_statement',
+                period_start_date: startDate,
+                period_end_date: endDate,
+                total_revenue: totalRevenue,
+                total_cogs: totalCOGS,
+                total_fixed_costs: totalFixedCosts,
+                gross_profit: grossProfit,
+                net_profit: netProfit,
+                generated_at: new Date().toISOString(),
+                total_parts_revenue: totalPartsRevenue,
+                total_labor_revenue: totalLaborRevenue,
+            };
+
+            const { data: upsertData, error: upsertError } = await supabase
                 .from('financial_statements')
-                .insert({
-                    shop_id: shopId,
-                    statement_type: 'income_statement',
-                    period_start_date: startDate,
-                    period_end_date: endDate,
-                    total_revenue: totalRevenue,
-                    total_cogs: totalCOGS,
-                    total_fixed_costs: totalFixedCosts,
-                    gross_profit: grossProfit,
-                    net_profit: netProfit,
-                    generated_at: new Date().toISOString(),
-                    total_parts_revenue: totalPartsRevenue,
-                    total_labor_revenue: totalLaborRevenue,
-                })
+                .upsert(statementData, { onConflict: 'shop_id,statement_type,period_start_date' })
                 .select('id')
                 .single();
 
-            if (insertError) {
-                console.error('Failed to insert financial statement:', insertError);
+            if (upsertError) {
+                console.error('Failed to upsert financial statement:', upsertError);
+                // Don't throw here, we can still return the generated statement
             }
 
-            const statementId = insertData?.id ?? null;
+            const statementId = upsertData?.id ?? null;
 
             return NextResponse.json({
                 statementId,
@@ -144,8 +147,8 @@ export async function GET(req: NextRequest) {
             });
 
         } catch (err) {
-            console.error('Error inserting financial statement:', err);
-            // Even if insertion fails, return the statement data
+            console.error('Error during financial statement persistence:', err);
+            // Even if persistence fails, return the statement data
             return NextResponse.json({
                 statementId: null,
                 totalRevenue,
