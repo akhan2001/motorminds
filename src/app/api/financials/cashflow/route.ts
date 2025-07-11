@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     // 1. Fetch data from paid invoices in the date range
     const { data: paidInvoices, error: invoiceError } = await supabase
       .from("invoices")
-      .select("amount, parts_cost, labour_cost")
+      .select("amount, parts_total_price, labour_total_price")
       .eq("shop_id", shopId)
       .eq("status", "PAID")
       .gte("issue_date", startDate)
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     paidInvoices.forEach(inv => {
       totalRevenue += inv.amount || 0
-      totalCogs += (inv.parts_cost || 0) + (inv.labour_cost || 0)
+      totalCogs += (inv.parts_total_price || 0) + (inv.labour_total_price || 0)
     })
 
     // 2. Fetch Fixed Costs from the new 'fixed_costs' table

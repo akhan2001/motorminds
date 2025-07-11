@@ -11,6 +11,13 @@ import { formatPhoneNumber } from '../utils/invoice-utils';
 import { sendInvoiceEmail } from '@/app/customers/api/customer-utils';
 import { generateInvoicePDF } from '../utils/pdf-generator';
 
+interface LineItem {
+    description: string;
+    cost: number;
+    shop_cost?: number;
+    quantity?: number;
+}
+
 interface InvoiceDialogProps {
     isOpen: boolean;
     onClose: () => void;
@@ -32,17 +39,17 @@ interface InvoiceDialogProps {
         clientEmail: string;
         clientPhone: string;
         labour: string;
-        labour_cost: number;
+        labour_total_price: number;
         parts: string;
-        parts_cost: number;
+        parts_total_price: number;
         notes: string;
         mileage: string;
         description: string;
         assignedTo: string;
         hst_number: string;
         business_number: string;
-        labour_items: { description: string; cost: number }[];
-        parts_items: { description: string; cost: number }[];
+        labour_items: LineItem[];
+        parts_items: LineItem[];
         vehicleInfo: {
             year: string;
             make: string;
@@ -221,34 +228,47 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit }: Invo
                                 </div>
                             )}
 
-                            {/* --- Labour Section --- */}
-                            {(invoice.labour || (invoice.labour_items && invoice.labour_items.length > 0)) && (
-                                <div className="mb-2">
-                                    <p className="text-white font-medium">Labour:</p>
-                                    {invoice.labour && (
-                                        <p className="text-gray-400 whitespace-pre-line ml-2">{invoice.labour} - {formatCurrency(invoice.labour_cost)}</p>
-                                    )}
-                                    {invoice.labour_items && invoice.labour_items.map((item, index) => (
-                                        item.description && <p key={`labour-${index}`} className="text-gray-400 whitespace-pre-line ml-2">{item.description} - {formatCurrency(item.cost)}</p>
-                                    ))}
+                            {/* --- Line Items Table --- */}
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-400 border-b border-gray-700 pb-2">
+                                    <div className="col-span-5">DESCRIPTION</div>
+                                    <div className="col-span-2 text-center">QTY</div>
+                                    <div className="col-span-2 text-right">SHOP COST</div>
+                                    <div className="col-span-3 text-right">TOTAL</div>
                                 </div>
-                            )}
+                                
+                                {/* Labour Items */}
+                                {invoice.labour_items && invoice.labour_items.map((item, index) => (
+                                    <div key={`labour-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
+                                        <div className="col-span-5 text-white">{item.description}</div>
+                                        <div className="col-span-2 text-center text-gray-400">-</div>
+                                        <div className="col-span-2 text-right text-gray-400">-</div>
+                                        <div className="col-span-3 text-right text-white">{formatCurrency(item.cost)}</div>
+                                    </div>
+                                ))}
 
-                            {/* --- Parts Section --- */}
-                            {(invoice.parts || (invoice.parts_items && invoice.parts_items.length > 0)) && (
-                                <div className="mb-2">
-                                    <p className="text-white font-medium">Parts:</p>
-                                    {invoice.parts && (
-                                        <p className="text-gray-400 whitespace-pre-line ml-2">{invoice.parts} - {formatCurrency(invoice.parts_cost)}</p>
-                                    )}
-                                    {invoice.parts_items && invoice.parts_items.map((item, index) => (
-                                        item.description && <p key={`parts-${index}`} className="text-gray-400 whitespace-pre-line ml-2">{item.description} - {formatCurrency(item.cost)}</p>
-                                    ))}
-                                </div>
-                            )}
+                                {/* Parts Items */}
+                                {invoice.parts_items && invoice.parts_items.map((item, index) => (
+                                    <div key={`parts-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
+                                        <div className="col-span-5 text-white">{item.description}</div>
+                                        <div className="col-span-2 text-center text-white">{item.quantity}</div>
+                                        <div className="col-span-2 text-right text-red-400">{formatCurrency(item.shop_cost)}</div>
+                                        <div className="col-span-3 text-right text-white">
+                                            {item.quantity && item.quantity > 1 ? (
+                                                <span>
+                                                    {formatCurrency(item.cost * item.quantity)}
+                                                    <span className="text-gray-400 text-xs ml-1">({formatCurrency(item.cost)}/ea)</span>
+                                                </span>
+                                            ) : (
+                                                formatCurrency(item.cost)
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                             
                             {invoice.notes && (
-                                <div className="mb-2">
+                                <div className="mb-2 pt-4">
                                     <p className="text-white font-medium">Notes:</p>
                                     <p className="text-gray-400">{invoice.notes}</p>
                                 </div>

@@ -49,8 +49,8 @@ export default function InvoiceForm({
     const [partsCost, setPartsCost] = useState("0");
     
     // New state for multiple items
-    const [labourItems, setLabourItems] = useState<{id: string, description: string, cost: string}[]>([]);
-    const [partsItems, setPartsItems] = useState<{id: string, description: string, cost: string}[]>([]);
+    const [labourItems, setLabourItems] = useState<{id: string, description: string, cost: string, shop_cost?: string}[]>([]);
+    const [partsItems, setPartsItems] = useState<{id: string, description: string, cost: string, shop_cost?: string, quantity?: string}[]>([]);
     const [notes, setNotes] = useState("");
     const [mileage, setMileage] = useState("");
     const [description, setDescription] = useState("");
@@ -160,7 +160,11 @@ export default function InvoiceForm({
 
     const calculateTotal = () => {
         const labourItemsTotal = labourItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
-        const partsItemsTotal = partsItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+        const partsItemsTotal = partsItems.reduce((sum, item) => {
+            const price = parseFloat(item.cost) || 0;
+            const quantity = parseInt(item.quantity || '1', 10);
+            return sum + (price * quantity);
+        }, 0);
         
         const subtotal = labourItemsTotal + partsItemsTotal;
         setTotal(subtotal.toFixed(2));
@@ -318,7 +322,9 @@ export default function InvoiceForm({
                 setPartsItems(existingInvoice.parts_items.map((item: any) => ({
                     id: uuidv4(),
                     description: item.description || '',
-                    cost: item.cost?.toString() || '0'
+                    cost: item.cost?.toString() || '0',
+                    shop_cost: item.shop_cost?.toString() || '0',
+                    quantity: item.quantity?.toString() || '1'
                 })));
             }
             
@@ -364,7 +370,9 @@ export default function InvoiceForm({
                 })),
                 parts_items: partsItems.map(item => ({
                     description: item.description,
-                    cost: parseFloat(item.cost) || 0
+                    cost: parseFloat(item.cost) || 0,
+                    shop_cost: parseFloat(item.shop_cost || "0") || 0,
+                    quantity: parseInt(item.quantity || "1", 10)
                 }))
             };
             

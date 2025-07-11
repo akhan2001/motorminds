@@ -20,12 +20,14 @@ export interface Invoice {
     client_address?: string
     client_email?: string
     client_phone?: string
+    customer_id?: string
+    vehicle_id?: string
+    labour_total_price?: number
+    parts_total_price?: number
+    paid_at?: string
     workorder_id?: string
     description?: string
     labour?: string
-    labour_cost?: number
-    parts?: string
-    parts_cost?: number
     notes?: string
     mileage?: string
     assigned_to?: string
