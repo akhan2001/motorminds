@@ -68,7 +68,7 @@ export async function updateShopInfo(shopId: string, shopInfo: any) {
 
 export async function getShopStaff(shopId: string) {
     const { data, error } = await supabase
-        .from('shop_staff')
+        .from('employees')
         .select('*')
         .eq('shop_id', shopId);
         
