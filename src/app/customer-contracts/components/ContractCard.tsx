@@ -14,35 +14,38 @@ const statusColors: { [key: string]: string } = {
     declined: "bg-red-500 hover:bg-red-600",
 };
 
-export default function ContractCard({ contract, onEdit, onDelete }: { contract: any; onEdit: () => void; onDelete: () => void; }) {
+export default function ContractCard({ contract, onEdit, onDelete, onDownloadPDF, onPreview, onSend }: { contract: any; onEdit: () => void; onDelete: () => void; onDownloadPDF: () => void; onPreview: () => void; onSend: () => void; }) {
     return (
-        <Card className="bg-[#1A1A1A] border border-[#222222] text-white flex flex-col rounded-xl shadow-lg hover:border-[#333333] transition-all duration-200">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-medium text-gray-200">{contract.title}</CardTitle>
-                <DropdownMenu>
+        <Card 
+            className="bg-[#1A1A1A] border border-[#222222] text-white flex flex-col rounded-xl shadow-lg hover:border-[#333333] transition-all duration-200 cursor-pointer"
+            onClick={onPreview}
+        >
+            <CardHeader className="flex flex-row items-center justify-between p-4">
+                <CardTitle className="text-lg font-semibold text-white">{contract.title}</CardTitle>
+                <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:bg-[#292929] hover:text-white">
+                        <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:bg-[#292929] hover:text-white" onClick={(e) => e.stopPropagation()}>
                             <span className="sr-only">Open menu</span>
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-[#292929] text-white border-[#626262]">
-                        <DropdownMenuItem onClick={onEdit} className="hover:!bg-[#363636] cursor-pointer">Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { /* Send logic here */ }} className="hover:!bg-[#363636] cursor-pointer">Send</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { /* Download logic here */ }} className="hover:!bg-[#363636] cursor-pointer">Download PDF</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500 hover:!bg-red-500/10 hover:!text-red-400 cursor-pointer" onClick={onDelete}>Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit();}} className="hover:!bg-[#363636] cursor-pointer">Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSend(); }} className="hover:!bg-[#363636] cursor-pointer">Send</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownloadPDF();}} className="hover:!bg-[#363636] cursor-pointer">Download PDF</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-500 hover:!bg-red-500/10 hover:!text-red-400 cursor-pointer" onClick={(e) => { e.stopPropagation(); onDelete();}}>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </CardHeader>
-            <CardContent className="flex-grow pt-2">
-                <div className="text-lg font-bold text-white">{contract.customer?.customer_name || 'N/A'}</div>
-                <p className="text-xs text-gray-400">{contract.customer?.customer_email || 'No email'}</p>
-                <p className="text-sm text-gray-300 mt-2">
+            <CardContent className="flex-grow p-4 pt-0">
+                <div className="text-md font-medium text-gray-200">{contract.customer?.customer_name || 'N/A'}</div>
+                <p className="text-xs text-gray-400 mb-3">{contract.customer?.customer_email || 'No email'}</p>
+                <p className="text-sm text-gray-300">
                     {contract.vehicle?.year} {contract.vehicle?.make} {contract.vehicle?.model}
                 </p>
                 <Badge className={`mt-4 text-xs font-semibold py-1 px-3 rounded-full ${statusColors[contract.status] || 'bg-gray-700 hover:bg-gray-800'}`}>{contract.status}</Badge>
             </CardContent>
-            <CardFooter className="text-xs text-gray-500 pt-4 border-t border-[#222222]">
+            <CardFooter className="text-xs text-gray-500 p-4 pt-2 border-t border-[#222222]">
                 Created: {format(new Date(contract.created_at), 'MMM d, yyyy')}
             </CardFooter>
         </Card>
