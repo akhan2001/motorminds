@@ -26,6 +26,7 @@ interface EfficiencyData {
   netProfit: number;
   historicalData: any[];
   costBreakdown: {
+    cogs: number;
     recurring: number;
     oneTime: number;
   };
@@ -96,8 +97,18 @@ export default function EfficiencyClient() {
                 { key: 'amount', header: 'Amount', render: (v: any) => `$${v.toFixed(2)}` },
             ];
             break;
+        case 'cogs':
+            title = "Cost of Goods Sold Breakdown";
+            data = breakdown.revenue.flatMap((inv: any) => inv.parts_items || []);
+            columns = [
+                { key: 'description', header: 'Part/Item' },
+                { key: 'quantity', header: 'Qty', render: (v: any) => v || 1 },
+                { key: 'shop_cost', header: 'Unit Cost', render: (v: any) => `$${(v || 0).toFixed(2)}` },
+                { key: 'total_cost', header: 'Total Cost', render: (v: any, item: any) => `$${((item.shop_cost || 0) * (item.quantity || 1)).toFixed(2)}` },
+            ];
+            break;
         case 'costs':
-            title = "Total Operating Expenses Breakdown";
+            title = "Operating Expenses Breakdown";
             const fixedItems = breakdown.fixedCosts.map(i => ({ source: 'Fixed Cost', date: i.date, name: i.cost_name, amount: i.amount }));
             const oneTimeItems = breakdown.oneTimeCosts.map(i => ({ source: 'One-Time Cost', date: i.cost_date, name: i.cost_name, amount: i.amount }));
             data = [...fixedItems, ...oneTimeItems];

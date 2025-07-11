@@ -9,12 +9,14 @@ import { WorkOrderList } from './components/WorkOrderList'
 import { useWorkOrders, type WorkOrder } from "@/hooks/use-work-orders"
 import { TaskDetailsModal } from "@/components/task-details-modal"
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function MechanicHubPage() {
 	const [shopId, setShopId] = useState<string | null>(null)
 	const [isCheckingUser, setIsCheckingUser] = useState(true)
 	const router = useRouter()
 	const [selectedTask, setSelectedTask] = useState<WorkOrder | null>(null)
+    const queryClient = useQueryClient();
 
 	useEffect(() => {
 		async function checkUser() {
@@ -44,7 +46,8 @@ export default function MechanicHubPage() {
 		data: workOrders, 
 		isLoading: isLoadingWorkOrders, 
 		error, 
-		mutate 
+		mutate,
+		updateWorkOrderStatus,
 	} = useWorkOrders(shopId || '')
 
 	const handleWorkOrderClick = (order: WorkOrder) => {
@@ -55,31 +58,23 @@ export default function MechanicHubPage() {
         setSelectedTask(null);
     };
 
-	const handleSave = async (updatedTask: any) => {
+	const handleSave = async (updatedTaskFromModal: any) => {
+		if (!updateWorkOrderStatus || !selectedTask) return;
+		
+		// Manually construct the final, correctly-shaped object for the update
+		const finalUpdatedTask = {
+			...selectedTask, // Start with the original, full work order
+			status: updatedTaskFromModal.status, // Apply the new status
+			repair_order_details: updatedTaskFromModal.repair_order_details, // Apply the new details
+		};
+
         try {
-            const { error: orderError } = await supabase
-                .from('repair_orders')
-                .update({ status: updatedTask.status })
-                .eq('id', updatedTask.id);
-
-            if (orderError) throw orderError;
-
-            if (updatedTask.repair_order_details && updatedTask.repair_order_details.length > 0) {
-                const detail = updatedTask.repair_order_details[0];
-                const { id, repair_order_id, ...detailToUpdate } = detail;
-                const { error: detailError } = await supabase
-                    .from('repair_order_details')
-                    .update(detailToUpdate)
-                    .eq('id', detail.id);
-
-                if (detailError) throw detailError;
-            }
-            
+			await updateWorkOrderStatus(finalUpdatedTask);
             toast.success("Work order updated successfully!");
-            setSelectedTask(null);
-            mutate();
         } catch (error: any) {
             toast.error(`Failed to update work order: ${error.message}`);
+        } finally {
+            setSelectedTask(null);
         }
     };
 

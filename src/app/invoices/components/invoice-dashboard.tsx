@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { useSearchParams, useRouter } from 'next/navigation'
 import InvoiceForm from "./invoice-forms"
+import EditInvoiceForm from "./EditInvoiceForm"
 import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
 import { InvoiceDialog } from "./InvoiceDialog"
@@ -19,6 +20,7 @@ import { ReadonlyURLSearchParams } from "next/navigation"
 export default function InvoiceDashboard({ shopId, searchParams }: { shopId: string, searchParams: ReadonlyURLSearchParams | null }) {
     const [invoices, setInvoices] = useState<any[]>([])
     const [isFormOpen, setIsFormOpen] = useState(false)
+    const [isEditFormOpen, setIsEditFormOpen] = useState(false)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -75,12 +77,20 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
         }
     }
 
+    const handleEditInvoice = (invoice: any) => {
+        setSelectedInvoice(invoice);
+        setIsDialogOpen(false);
+        setIsEditFormOpen(true);
+    }
+
     const handleOpenForm = () => {
+        setSelectedInvoice(null); // Ensure we're in create mode
         setIsFormOpen(true)
     }
 
     const handleCloseForm = () => {
         setIsFormOpen(false);
+        setIsEditFormOpen(false);
         // Clear selected invoice if we were in edit mode
         if (selectedInvoice && !isDialogOpen) {
             setSelectedInvoice(null);
@@ -218,9 +228,9 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
             clientEmail: invoice.client_email,
             clientPhone: invoice.client_phone,
             labour: invoice.labour,
-            labour_cost: invoice.labour_cost,
+            labour_total_price: invoice.labour_total_price,
             parts: invoice.parts,
-            parts_cost: invoice.parts_cost,
+            parts_total_price: invoice.parts_total_price,
             notes: invoice.notes,
             mileage: invoice.mileage,
             description: invoice.description,
@@ -240,17 +250,6 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 model: "",
                 license_plate: ""
             }
-        }
-    }
-
-    const handleEditInvoice = async () => {
-        // Close dialog and refresh invoices to get the updated data
-        setIsDialogOpen(false);
-        
-        if (selectedInvoice) {
-            // Open the form with the selected invoice data - already formatted by handleOpenInvoice
-            setIsFormOpen(true);
-            refreshInvoices();
         }
     }
 
@@ -409,18 +408,27 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 onClose={handleCloseForm}
                 shopId={shopId}
                 onInvoiceCreated={refreshInvoices}
-                mode={selectedInvoice && isFormOpen ? "edit" : "create"}
-                existingInvoice={selectedInvoice}
             />
 
-            {/* Invoice detail dialog */}
+            {/* Invoice edit form */}
             {selectedInvoice && (
+                <EditInvoiceForm
+                    isOpen={isEditFormOpen}
+                    onClose={handleCloseForm}
+                    shopId={shopId}
+                    onInvoiceUpdated={refreshInvoices}
+                    existingInvoice={selectedInvoice}
+                />
+            )}
+
+            {/* Invoice detail dialog */}
+            {selectedInvoice && !isEditFormOpen && (
                 <InvoiceDialog
                     isOpen={isDialogOpen}
                     onClose={handleCloseInvoice}
                     invoice={selectedInvoice}
                     shopId={shopId}
-                    onEdit={handleEditInvoice}
+                    // onEdit={() => handleEditInvoice(selectedInvoice)}
                 />
             )}
         </div>

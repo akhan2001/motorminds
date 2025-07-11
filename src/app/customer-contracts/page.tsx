@@ -1,15 +1,14 @@
-"use client"
+'use client'
 
-import { ProfileForm } from "@/app/settings/profile-form"
-import { Nav } from "../components/nav"
+import { Nav } from '@/app/components/nav'
+import ContractsDashboard from '@/app/customer-contracts/components/ContractsDashboard'
 import { checkUser } from '@/utils/supabase/supabase-auth'
 import { getShopId } from '@/utils/supabase/supabase-shop'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import LoadingPage from "@/components/loading"
+import LoadingPage from '@/components/loading'
 
-export default function SettingsProfilePage() {
-    const [user, setUser] = useState<any>(null)
+export default function CustomerContractsPage() {
     const [shopId, setShopId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const router = useRouter()
@@ -20,7 +19,6 @@ export default function SettingsProfilePage() {
             try {
                 const userData = await checkUser()
                 if (userData) {
-                    setUser(userData)
                     const shop = await getShopId(userData.id)
                     setShopId(shop)
                 } else {
@@ -38,20 +36,24 @@ export default function SettingsProfilePage() {
     }, [router])
 
     if (isLoading) {
-        return <LoadingPage page="Settings" />
+        return <LoadingPage />
     }
 
     if (!shopId) {
-        router.push('/login')
+        return (
+            <div className="flex flex-col min-h-screen bg-black text-white">
+                <Nav />
+                <div className="flex justify-center items-center h-[80vh]">
+                    <p>No shop found for this user.</p>
+                </div>
+            </div>
+        )
     }
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav />
-            <div className="p-4 space-y-6">
-                {shopId && <ProfileForm shopId={shopId} />}
-                {/*{shopId && <AddEmployeeForm shopId={shopId} />}*/}
-            </div>
+            <ContractsDashboard shopId={shopId} />
         </div>
     )
 }

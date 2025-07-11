@@ -53,10 +53,29 @@ export interface DetailedRepairOrder {
   }
 }
 
+// Define a more specific type for the update payload
+interface UpdatePayload {
+  id: string;
+  status: string;
+  repair_order_details?: Array<{
+    id: string;
+    mechanic_id?: string | null;
+    labour?: string;
+    parts?: string;
+    notes?: string;
+    cost?: string;
+    mileage?: string;
+    task_priority?: string;
+    description?: string;
+    labour_cost?: string;
+    parts_cost?: string;
+  }>
+}
+
 interface TaskDetailsModalProps {
   task: DetailedRepairOrder
   onClose: () => void
-  onSave: (updated: DetailedRepairOrder) => void
+  onSave: (updated: UpdatePayload) => void
   shopId: string
 }
 
@@ -286,15 +305,15 @@ export function TaskDetailsModal({
   // SAVE CHANGES
   // ------------------
   async function handleSave() {
-    // Create a base updated object
-    const updated: DetailedRepairOrder = {
-      ...initialTask,
+    // Create a "patch" object with only the changed fields
+    const updatedFields: UpdatePayload = {
+      id: initialTask.id, // Include ID for matching
       status: currentStatus,
       repair_order_details: initialTask.repair_order_details?.length
         ? [
             {
               ...initialTask.repair_order_details[0],
-              mechanic_id: selectedStaffId || undefined,
+              mechanic_id: selectedStaffId || null,
               mileage: formData.mileage,
               labour: formData.labour,
               labour_cost: formData.labourCost,
@@ -307,19 +326,10 @@ export function TaskDetailsModal({
             },
           ]
         : [],
-      customers: initialTask.customers ? {
-        ...initialTask.customers,
-        id: initialTask.customers.id,
-        customer_vehicles: initialTask.customers.customer_vehicles?.map(v => 
-          v.id === formData.vehicle_id 
-            ? { ...v, color: formData.color, license_plate: formData.licensePlate }
-            : v
-        )
-      } : undefined
-    }
+    };
 
-    onSave(updated)
-    setIsEditing(false)
+    onSave(updatedFields);
+    setIsEditing(false);
   }
 
   // ------------------

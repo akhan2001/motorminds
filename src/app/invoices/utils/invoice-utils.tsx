@@ -172,9 +172,9 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 			amount: invoiceData.amount,
 			issue_date: invoiceData.issue_date,
 			labour: invoiceData.labour,
-			labour_cost: invoiceData.labour_cost,
+			labour_total_price: invoiceData.labour_total_price,
 			parts: invoiceData.parts,
-			parts_cost: invoiceData.parts_cost,
+			parts_total_price: invoiceData.parts_total_price,
 			notes: invoiceData.notes,
 			mileage: invoiceData.mileage,
 			description: invoiceData.description,
@@ -221,10 +221,10 @@ export async function deleteInvoice(invoiceId: string, shopId: string) {
 	return data;
 }
 
-export async function updateInvoice(invoiceData: any, shopId: string) {
+export async function updateInvoice(invoiceNumber: string, invoiceData: any, shopId: string) {
 	try {
 		// Validate that we have an invoice number to update
-		if (!invoiceData.invoice_number) {
+		if (!invoiceNumber) {
 			console.error("No invoice number provided for update");
 			throw new Error("Invoice number is required for updates");
 		}
@@ -244,9 +244,9 @@ export async function updateInvoice(invoiceData: any, shopId: string) {
 			amount: invoiceData.amount,
 			issue_date: invoiceData.issue_date,
 			labour: invoiceData.labour,
-			labour_cost: invoiceData.labour_cost,
+			labour_total_price: invoiceData.labour_total_price,
 			parts: invoiceData.parts,
-			parts_cost: invoiceData.parts_cost,
+			parts_total_price: invoiceData.parts_total_price,
 			notes: invoiceData.notes,
 			mileage: invoiceData.mileage,
 			description: invoiceData.description,
@@ -264,7 +264,7 @@ export async function updateInvoice(invoiceData: any, shopId: string) {
 		const { data, error } = await supabase
 			.from('invoices')
 			.update(dataToUpdate)
-			.eq('invoice_number', invoiceData.invoice_number)
+			.eq('invoice_number', invoiceNumber)
 			.eq('shop_id', shopId) // Additional security check
 			.select();
 			

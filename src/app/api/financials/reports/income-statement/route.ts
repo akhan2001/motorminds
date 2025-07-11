@@ -18,25 +18,15 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        // Fetch revenue data from invoices
+        // Fetch revenue data from invoices, including parts items for COGS calculation
         const { data: revenueData, error: revenueError } = await supabase
             .from('invoices')
-            .select('invoice_number, amount, description, paid_at')
+            .select('invoice_number, amount, description, paid_at, parts_items')
             .eq('shop_id', shopId)
             .gte('paid_at', startDate)
             .lte('paid_at', endDate);
 
         if (revenueError) throw revenueError;
-
-        // Fetch Cost of Goods Sold data (COGS)
-        const { data: cogsData, error: cogsError } = await supabase
-            .from('cost_of_goods_sold')
-            .select('item_name, item_cost, quantity')
-            .eq('shop_id', shopId)
-            .gte('created_at', startDate)
-            .lte('created_at', endDate);
-
-        if (cogsError) throw cogsError;
 
         // Fetch operating expenses from one_time_costs and fixed_costs tables
         const { data: oneTimeCosts, error: oneTimeCostsError } = await supabase
@@ -62,13 +52,26 @@ export async function GET(req: NextRequest) {
             total_amount: item.amount,
         }));
 
-        // Calculate total COGS
-        const totalCOGS = cogsData.reduce((acc, item) => acc + (item.item_cost * (item.quantity || 1)), 0);
-        const cogsDetails = cogsData.map(item => ({
-            item_name: item.item_name,
-            quantity: item.quantity,
-            total_cost: item.item_cost * (item.quantity || 1),
-        }));
+        // Calculate total COGS from invoice parts_items
+        const totalCOGS = revenueData.reduce((acc, invoice) => {
+            if (!invoice.parts_items || !Array.isArray(invoice.parts_items)) {
+                return acc;
+            }
+            const invoiceCogs = invoice.parts_items.reduce((itemAcc, item) => {
+                const shopCost = Number(item.shop_cost) || 0;
+                const quantity = Number(item.quantity) || 1;
+                return itemAcc + (shopCost * quantity);
+            }, 0);
+            return acc + invoiceCogs;
+        }, 0);
+
+        const cogsDetails = revenueData.flatMap(invoice => 
+            (invoice.parts_items || []).map((item: any) => ({
+                item_name: item.description,
+                quantity: item.quantity,
+                total_cost: (Number(item.shop_cost) || 0) * (Number(item.quantity) || 1),
+            }))
+        );
         
         // Gross Profit
         const grossProfit = totalRevenue - totalCOGS;
@@ -99,30 +102,33 @@ export async function GET(req: NextRequest) {
 
         // Persist a summary row in financial_statements for historical reporting
         try {
-            const { data: insertData, error: insertError } = await supabase
+            const statementData = {
+                shop_id: shopId,
+                statement_type: 'income_statement',
+                period_start_date: startDate,
+                period_end_date: endDate,
+                total_revenue: totalRevenue,
+                total_cogs: totalCOGS,
+                total_fixed_costs: totalFixedCosts,
+                gross_profit: grossProfit,
+                net_profit: netProfit,
+                generated_at: new Date().toISOString(),
+                total_parts_revenue: totalPartsRevenue,
+                total_labor_revenue: totalLaborRevenue,
+            };
+
+            const { data: upsertData, error: upsertError } = await supabase
                 .from('financial_statements')
-                .insert({
-                    shop_id: shopId,
-                    statement_type: 'income_statement',
-                    period_start_date: startDate,
-                    period_end_date: endDate,
-                    total_revenue: totalRevenue,
-                    total_cogs: totalCOGS,
-                    total_fixed_costs: totalFixedCosts,
-                    gross_profit: grossProfit,
-                    net_profit: netProfit,
-                    generated_at: new Date().toISOString(),
-                    total_parts_revenue: totalPartsRevenue,
-                    total_labor_revenue: totalLaborRevenue,
-                })
+                .upsert(statementData, { onConflict: 'shop_id,statement_type,period_start_date' })
                 .select('id')
                 .single();
 
-            if (insertError) {
-                console.error('Failed to insert financial statement:', insertError);
+            if (upsertError) {
+                console.error('Failed to upsert financial statement:', upsertError);
+                // Don't throw here, we can still return the generated statement
             }
 
-            const statementId = insertData?.id ?? null;
+            const statementId = upsertData?.id ?? null;
 
             return NextResponse.json({
                 statementId,
@@ -141,8 +147,8 @@ export async function GET(req: NextRequest) {
             });
 
         } catch (err) {
-            console.error('Error inserting financial statement:', err);
-            // Even if insertion fails, return the statement data
+            console.error('Error during financial statement persistence:', err);
+            // Even if persistence fails, return the statement data
             return NextResponse.json({
                 statementId: null,
                 totalRevenue,

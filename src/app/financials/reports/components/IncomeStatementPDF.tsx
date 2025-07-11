@@ -18,103 +18,96 @@ interface IncomeStatementData {
 export const generateIncomeStatementPDF = async (data: IncomeStatementData, shopId: string, statementId?: string | null) => {
     const shopInfo = await getShopInfo(shopId);
     const pdf = new jsPDF();
+    const pageHeight = pdf.internal.pageSize.height;
+    let yPos = 22; // Initial Y position
+    const leftMargin = 14;
+    const rightMargin = pdf.internal.pageSize.width - 14;
 
-    // Header
+    // -- Header --
     pdf.setFontSize(20);
-    pdf.text(shopInfo?.shop_name || 'MotorMinds Auto Shop', 14, 22);
+    pdf.text(shopInfo?.shop_name || 'MotorMinds Auto Shop', leftMargin, yPos);
+    yPos += 10;
     pdf.setFontSize(16);
-    pdf.text(`Income Statement (${statementId ?? 'Draft'})`, 14, 32);
+    pdf.text(`Income Statement (${statementId ?? 'Draft'})`, leftMargin, yPos);
+    yPos += 8;
     pdf.setFontSize(10);
-    pdf.text(`For the period from ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}`, 14, 40);
+    pdf.text(`For the period from ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}`, leftMargin, yPos);
+    yPos += 12;
 
-    let yPos = 50;
+    const drawSection = (title: string, details: any[], total: number, totalLabel: string, head: string[][], bodyKeys: string[]) => {
+        // Pre-emptive check for space before starting a new section
+        if (yPos > pageHeight - 40) { 
+            pdf.addPage();
+            yPos = 22;
+        }
+        
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(title, leftMargin, yPos);
+        yPos += 8;
+        
+        autoTable(pdf, {
+            startY: yPos,
+            head: head,
+            body: details.map(item => bodyKeys.map(key => {
+                if (key === 'total_amount' || key === 'total_cost') {
+                    return `$${(item[key] || 0).toFixed(2)}`;
+                }
+                return item[key];
+            })),
+            theme: 'striped',
+            styles: { fontSize: 10, cellPadding: 2 },
+            headStyles: { fillColor: [41, 128, 185], fontSize: 11 },
+        });
 
-    // Revenue
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Revenue', 14, yPos);
-    yPos += 7;
-    pdf.setFont('helvetica', 'normal');
-    autoTable(pdf, {
-        startY: yPos,
-        head: [['Description', 'Amount']],
-        body: data.revenueDetails.map(item => [item.description, `$${item.total_amount.toFixed(2)}`]),
-        theme: 'striped',
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185] },
-        didDrawPage: () => {}
-    });
+        yPos = (pdf as any).lastAutoTable.finalY;
 
-    yPos = (pdf as any).lastAutoTable.finalY + 10;
+        // Check for space *after* the table and before printing the total
+        if (yPos > pageHeight - 25) {
+            pdf.addPage();
+            yPos = 22;
+        }
+        
+        yPos += 10;
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(totalLabel, leftMargin, yPos);
+        pdf.text(`$${total.toFixed(2)}`, rightMargin, yPos, { align: 'right' });
+        yPos += 12;
+    };
+
+    drawSection('Revenue', data.revenueDetails, data.totalRevenue, 'Total Revenue', [['Description', 'Amount']], ['description', 'total_amount']);
+    drawSection('Cost of Goods Sold', data.cogsDetails, data.totalCOGS, 'Total COGS', [['Item', 'Cost']], ['item_name', 'total_cost']);
     
+    // -- Gross Profit --
+    if (yPos > pageHeight - 30) { pdf.addPage(); yPos = 22; }
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Total Revenue', 140, yPos);
-    pdf.text(`$${data.totalRevenue.toFixed(2)}`, 180, yPos);
-    yPos += 10;
-
-    // Cost of Goods Sold (COGS)
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Cost of Goods Sold', 14, yPos);
-    yPos += 7;
-    pdf.setFont('helvetica', 'normal');
-    autoTable(pdf, {
-        startY: yPos,
-        head: [['Item', 'Cost']],
-        body: data.cogsDetails.map(item => [item.item_name, `$${item.total_cost.toFixed(2)}`]),
-        theme: 'striped',
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185] },
-        didDrawPage: () => {}
-    });
-
-    yPos = (pdf as any).lastAutoTable.finalY + 10;
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Total COGS', 140, yPos);
-    pdf.text(`$${data.totalCOGS.toFixed(2)}`, 180, yPos);
-    yPos += 10;
-
-    // Gross Profit
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Gross Profit', 140, yPos);
-    pdf.text(`$${data.grossProfit.toFixed(2)}`, 180, yPos);
+    pdf.text('Gross Profit', leftMargin, yPos);
+    pdf.text(`$${data.grossProfit.toFixed(2)}`, rightMargin, yPos, { align: 'right' });
     yPos += 15;
 
-    // Operating Expenses
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Operating Expenses', 14, yPos);
-    yPos += 7;
-    pdf.setFont('helvetica', 'normal');
-    autoTable(pdf, {
-        startY: yPos,
-        head: [['Category', 'Amount']],
-        body: data.operatingExpenseDetails.map(item => [item.category, `$${item.total_amount.toFixed(2)}`]),
-        theme: 'striped',
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185] },
-        didDrawPage: () => {}
-    });
+    drawSection('Operating Expenses', data.operatingExpenseDetails, data.totalOperatingExpenses, 'Total Operating Expenses', [['Category', 'Amount']], ['category', 'total_amount']);
 
-    yPos = (pdf as any).lastAutoTable.finalY + 10;
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Total Operating Expenses', 140, yPos);
-    pdf.text(`$${data.totalOperatingExpenses.toFixed(2)}`, 180, yPos);
-    yPos += 10;
-
-    // Net Profit
+    // -- Net Profit --
+    if (yPos > pageHeight - 30) { pdf.addPage(); yPos = 22; }
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Net Profit', 140, yPos);
-    pdf.text(`$${data.netProfit.toFixed(2)}`, 180, yPos);
+    pdf.text('Net Profit', leftMargin, yPos);
+    pdf.text(`$${data.netProfit.toFixed(2)}`, rightMargin, yPos, { align: 'right' });
 
-    // Footer
-    const pageCount = pdf.getNumberOfPages();
+    // -- Footer --
+    const pageCount = (pdf as any).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
-        pdf.setFontSize(10);
-        pdf.text(`Page ${i} of ${pageCount}`, 14, pdf.internal.pageSize.height - 10);
-        pdf.text(`${shopInfo?.shop_name || 'MotorMinds'} | ${shopInfo?.shop_address || ''} | ${shopInfo?.shop_phone || ''}`, pdf.internal.pageSize.width - 14, pdf.internal.pageSize.height - 10, { align: 'right' });
+        const isFirstPage = i === 1;
+        const footerY = pageHeight - 15;
+        
+        pdf.setFontSize(9);
+        pdf.text(`Page ${i} of ${pageCount}`, leftMargin, footerY + 5, { align: 'left' });
+        
+        const footerText = `${shopInfo?.shop_name || 'MotorMinds'} | ${shopInfo?.shop_address || ''} | ${shopInfo?.shop_phone || ''}`;
+        pdf.text(footerText, rightMargin, footerY + 5, { align: 'right' });
     }
-
+    
     const startStr = new Date(data.startDate).toLocaleDateString('en-CA');
     const endStr = new Date(data.endDate).toLocaleDateString('en-CA');
     pdf.save(`Income_Statement_${statementId ?? 'draft'}_${startStr}_to_${endStr}.pdf`);

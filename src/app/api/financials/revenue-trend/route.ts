@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     if (error || !data) {
       const { data: rows, error: qErr } = await supabase
         .from("invoices")
-        .select("period:issue_date, amount, parts_cost, labour_cost")
+        .select("period:issue_date, amount, parts_total_price, labour_total_price")
         .eq("shop_id", shopId)
         .eq("status", "PAID")
         .gte("issue_date", startDate.toISOString())
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
           map[key] = { revenue: 0, cogs: 0 };
         }
         map[key].revenue += row.amount || 0;
-        map[key].cogs += (row.parts_cost || 0) + (row.labour_cost || 0);
+        map[key].cogs += (row.parts_total_price || 0) + (row.labour_total_price || 0);
       });
 
       const trend = Object.keys(map)

@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
             { data: fixedCostsData, error: fixedCostsError },
             { data: oneTimeCostsData, error: oneTimeCostsError }
         ] = await Promise.all([
-            supabase.from('invoices').select('invoice_number, created_at, amount, paid_at').eq('shop_id', shopId).eq('status', 'PAID').gte('paid_at', startDate.toISOString()).lte('paid_at', endDate.toISOString()),
+            supabase.from('invoices').select('invoice_number, created_at, amount, paid_at, parts_items').eq('shop_id', shopId).eq('status', 'PAID').gte('paid_at', startDate.toISOString()).lte('paid_at', endDate.toISOString()),
             supabase.from('fixed_costs').select('*').eq('shop_id', shopId),
             supabase.from('one_time_costs').select('*').eq('shop_id', shopId)
         ]);
@@ -49,8 +49,21 @@ export async function GET(req: NextRequest) {
         }
 
         // 2. Calculate totals
-        const totalRevenue = revenueData?.reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
+        const totalRevenue = revenueData?.reduce((acc: number, inv: any) => acc + inv.amount, 0) ?? 0;
         
+        // Calculate Cost of Goods Sold (COGS) from parts
+        const totalCogs = revenueData?.reduce((acc: number, invoice: any) => {
+            if (!invoice.parts_items || !Array.isArray(invoice.parts_items)) {
+                return acc;
+            }
+            const invoiceCogs = invoice.parts_items.reduce((itemAcc: number, item: any) => {
+                const shopCost = Number(item.shop_cost) || 0;
+                const quantity = Number(item.quantity) || 1;
+                return itemAcc + (shopCost * quantity);
+            }, 0);
+            return acc + invoiceCogs;
+        }, 0) ?? 0;
+
         // Generate recurring cost occurrences and calculate total in one go
         const recurringCostOccurrences = (fixedCostsData ?? []).flatMap(cost => {
             const occurrences = [];
@@ -84,7 +97,7 @@ export async function GET(req: NextRequest) {
         });
         const totalOneTimeCosts = filteredOneTimeCosts.reduce((acc, c) => acc + c.amount, 0);
         
-        const totalOperatingExpenses = totalRecurringCosts + totalOneTimeCosts;
+        const totalOperatingExpenses = totalRecurringCosts + totalOneTimeCosts + totalCogs;
         
         const netProfit = totalRevenue - totalOperatingExpenses;
 
@@ -93,11 +106,23 @@ export async function GET(req: NextRequest) {
         const costsByDate = new Map();
         const revenueByDate = new Map();
 
-        revenueData?.forEach(inv => {
+        revenueData?.forEach((inv: any) => {
             if (inv.paid_at) {
                 const date = new Date(inv.paid_at).toISOString().split('T')[0];
-                const existing = revenueByDate.get(date) || 0;
-                revenueByDate.set(date, existing + inv.amount);
+                const existingRevenue = revenueByDate.get(date) || 0;
+                revenueByDate.set(date, existingRevenue + inv.amount);
+                
+                // Add COGS to the daily costs
+                const invoiceCogs = inv.parts_items?.reduce((acc: number, item: any) => {
+                    const shopCost = Number(item.shop_cost) || 0;
+                    const quantity = Number(item.quantity) || 1;
+                    return acc + (shopCost * quantity);
+                }, 0) || 0;
+
+                if (invoiceCogs > 0) {
+                    const existingCosts = costsByDate.get(date) || 0;
+                    costsByDate.set(date, existingCosts + invoiceCogs);
+                }
             }
         });
 
@@ -131,6 +156,7 @@ export async function GET(req: NextRequest) {
             netProfit,
             historicalData,
             costBreakdown: {
+                cogs: totalCogs,
                 recurring: totalRecurringCosts,
                 oneTime: totalOneTimeCosts,
             },
