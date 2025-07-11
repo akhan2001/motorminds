@@ -116,7 +116,9 @@ export async function POST(request: Request) {
             }
         }
 
-        console.log(shopName);
+        // Sanitize shop name to create a valid email local-part and construct the from address
+        const fromEmailPrefix = businessName.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        const fromAddress = `${businessName} <${fromEmailPrefix}@motorminds.ca>`;
         
         // Generate HTML email using the template
         const htmlEmail = generateEmailHtml({
@@ -137,7 +139,7 @@ export async function POST(request: Request) {
             html: string;
             attachments?: Array<{filename: string, content: string}>;
         } = {
-            from: `${shopName} <info@motorminds.ca>`,
+            from: fromAddress,
             to: email,
             subject: subject,
             text: body, // Plain text fallback

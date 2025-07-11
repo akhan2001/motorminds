@@ -11,7 +11,16 @@ export async function fetchAllContracts(shopId: string) {
     if (!shopId) return [];
     const { data, error } = await supabase
         .from('service_contracts')
-        .select('*')
+        .select(`
+            id, 
+            title, 
+            content,
+            status, 
+            created_at, 
+            customer_id,
+            customer:customers (id, customer_name, customer_email, customer_phone, customer_address), 
+            vehicle:customer_vehicles (id, make, model, year, vin)
+        `)
         .eq('shop_id', shopId)
         .order('created_at', { ascending: false });
 
@@ -70,64 +79,4 @@ export async function deleteContract(contractId: string) {
     }
     toast.success("Contract deleted successfully!");
     return true;
-}
-
-export async function generateContractText(payload: any) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-        toast.error("The OpenAI API key is missing. Please add it to your environment variables to use this feature.");
-        return null;
-    }
-
-    const openai = new OpenAI({
-        apiKey,
-        dangerouslyAllowBrowser: true,
-    });
-
-    const { customer, vehicle, contract_details } = payload;
-     
-    const { data: shop, error: shopError } = await supabase.from("shops").select("*").eq("id", payload.shopId).single();
-    if (shopError || !shop) {
-         toast.error("Could not fetch shop details for AI generation.");
-         return null;
-    }
-
-    const prompt = `
-      You are a legal assistant for an auto repair shop. Generate a service contract.
-      
-      Shop Information:
-      - Name: ${shop.shop_name}
-      - Address: ${shop.shop_address}
-      - Phone: ${shop.shop_phone}
-      - Email: ${shop.shop_email}
-
-      Customer Information:
-      - Name: ${customer.customer_name}
-      - Address: ${customer.customer_address}
-      - Email: ${customer.customer_email}
-      - Phone: ${customer.customer_phone}
-
-      Vehicle Information:
-      - Make: ${vehicle.make}
-      - Model: ${vehicle.model}
-      - Year: ${vehicle.year}
-      - VIN: ${vehicle.vin}
-
-      Contract Details:
-      - Title: ${contract_details.title}
-
-      Generate a professional and clear service contract text based on the information provided. The tone should be formal. Ensure all key details are included. The contract should include sections for "Scope of Work", "Payment Terms", "Authorization", and signature lines for both the shop representative and the customer.
-    `;
-
-    try {
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4",
-            messages: [{ role: "system", content: prompt }],
-        });
-        return { generated_text: completion.choices[0].message.content };
-    } catch (error) {
-        console.error("AI generation failed:", error);
-        toast.error("AI generation failed.");
-        return null;
-    }
 } 
