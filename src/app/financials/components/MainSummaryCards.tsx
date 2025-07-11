@@ -89,19 +89,17 @@ export default function MainSummaryCards({ cashflowData, payrollData, trendData 
   const dailyNetCash = netCashFlow / 30;
 
   return (
-    <div className="flex md:grid md:grid-cols-3 gap-6 mb-8 overflow-x-auto snap-x">
+    <div className="flex md:grid md:grid-cols-4 gap-6 mb-8 overflow-x-auto snap-x">
       <SummaryCard
-        title="Net Cash Flow"
-        value={`$${Math.abs(netCashFlow).toLocaleString(undefined,{maximumFractionDigits:0})}`}
-        subtitle={`Daily avg: $${Math.round(Math.abs(dailyNetCash)).toLocaleString()}`}
-        icon={isPositive ? TrendingUp : TrendingDown}
-        sparklineData={revenueSparkline}
-        positive={isPositive}
+        title="Net Profit"
+        value={`$${(cashflowData?.revenue - cashflowData?.total_costs).toLocaleString(undefined, {maximumFractionDigits:0})}`}
+        subtitle="Revenue - (Costs + COGS)"
+        icon={TrendingUp}
         className="min-w-[260px] snap-start"
       />
       
       <SummaryCard
-        title="Monthly Revenue"
+        title="Total Revenue"
         value={`$${(cashflowData?.revenue || 0).toLocaleString()}`}
         subtitle={`Daily avg: $${Math.round(dailyRevenue).toLocaleString()}`}
         icon={DollarSign}
@@ -110,6 +108,15 @@ export default function MainSummaryCards({ cashflowData, payrollData, trendData 
         className="min-w-[260px] snap-start"
       />
       
+      <SummaryCard
+        title="Total Costs"
+        value={`$${(cashflowData?.total_costs || 0).toLocaleString()}`}
+        subtitle={`COGS: $${(cashflowData?.cogs || 0).toLocaleString()}`}
+        icon={TrendingDown}
+        positive={false}
+        className="min-w-[260px] snap-start"
+      />
+
       <SummaryCard
         title="Monthly Payroll"
         value={`$${(payrollData?.total_monthly_payroll || 0).toLocaleString()}`}

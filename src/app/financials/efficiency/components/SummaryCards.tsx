@@ -31,10 +31,19 @@ const SummaryCard = ({ title, value, icon, onClick, className }: SummaryCardProp
     </div>
 );
 
+interface EfficiencyDataWithBreakdown extends EfficiencyData {
+    costBreakdown: {
+        cogs: number;
+        recurring: number;
+        oneTime: number;
+    }
+}
 
-export default function SummaryCards({ data, onCardClick }: { data: EfficiencyData, onCardClick: (metric: string) => void }) {
+export default function SummaryCards({ data, onCardClick }: { data: EfficiencyDataWithBreakdown, onCardClick: (metric: string) => void }) {
+    const operatingExpenses = data.totalOperatingExpenses - (data.costBreakdown?.cogs || 0);
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <SummaryCard 
                 title="Total Revenue"
                 value={data.totalRevenue}
@@ -42,8 +51,14 @@ export default function SummaryCards({ data, onCardClick }: { data: EfficiencyDa
                 onClick={() => onCardClick('revenue')}
             />
             <SummaryCard 
-                title="Total Operating Expenses"
-                value={data.totalOperatingExpenses}
+                title="Cost of Goods Sold"
+                value={data.costBreakdown?.cogs || 0}
+                icon={<TrendingDown className="h-5 w-5 text-gray-500" />}
+                onClick={() => onCardClick('cogs')}
+            />
+            <SummaryCard 
+                title="Operating Expenses"
+                value={operatingExpenses}
                 icon={<TrendingDown className="h-5 w-5 text-gray-500" />}
                 onClick={() => onCardClick('costs')}
             />

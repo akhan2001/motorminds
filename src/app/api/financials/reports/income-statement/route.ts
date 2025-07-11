@@ -18,25 +18,15 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        // Fetch revenue data from invoices
+        // Fetch revenue data from invoices, including parts items for COGS calculation
         const { data: revenueData, error: revenueError } = await supabase
             .from('invoices')
-            .select('invoice_number, amount, description, paid_at')
+            .select('invoice_number, amount, description, paid_at, parts_items')
             .eq('shop_id', shopId)
             .gte('paid_at', startDate)
             .lte('paid_at', endDate);
 
         if (revenueError) throw revenueError;
-
-        // Fetch Cost of Goods Sold data (COGS)
-        const { data: cogsData, error: cogsError } = await supabase
-            .from('cost_of_goods_sold')
-            .select('item_name, item_cost, quantity')
-            .eq('shop_id', shopId)
-            .gte('created_at', startDate)
-            .lte('created_at', endDate);
-
-        if (cogsError) throw cogsError;
 
         // Fetch operating expenses from one_time_costs and fixed_costs tables
         const { data: oneTimeCosts, error: oneTimeCostsError } = await supabase
@@ -62,13 +52,26 @@ export async function GET(req: NextRequest) {
             total_amount: item.amount,
         }));
 
-        // Calculate total COGS
-        const totalCOGS = cogsData.reduce((acc, item) => acc + (item.item_cost * (item.quantity || 1)), 0);
-        const cogsDetails = cogsData.map(item => ({
-            item_name: item.item_name,
-            quantity: item.quantity,
-            total_cost: item.item_cost * (item.quantity || 1),
-        }));
+        // Calculate total COGS from invoice parts_items
+        const totalCOGS = revenueData.reduce((acc, invoice) => {
+            if (!invoice.parts_items || !Array.isArray(invoice.parts_items)) {
+                return acc;
+            }
+            const invoiceCogs = invoice.parts_items.reduce((itemAcc, item) => {
+                const shopCost = Number(item.shop_cost) || 0;
+                const quantity = Number(item.quantity) || 1;
+                return itemAcc + (shopCost * quantity);
+            }, 0);
+            return acc + invoiceCogs;
+        }, 0);
+
+        const cogsDetails = revenueData.flatMap(invoice => 
+            (invoice.parts_items || []).map((item: any) => ({
+                item_name: item.description,
+                quantity: item.quantity,
+                total_cost: (Number(item.shop_cost) || 0) * (Number(item.quantity) || 1),
+            }))
+        );
         
         // Gross Profit
         const grossProfit = totalRevenue - totalCOGS;

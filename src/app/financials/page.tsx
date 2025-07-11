@@ -17,7 +17,7 @@ export default function Financials() {
     const router = useRouter();
 
     // State for holding fetched data
-    const [cashflowData, setCashflowData] = useState({ revenue: 0, total_costs: 0 });
+    const [cashflowData, setCashflowData] = useState({ revenue: 0, total_costs: 0, cogs: 0 });
     const [payrollData, setPayrollData] = useState({ total_monthly_payroll: 0, employee_count: 0 });
     const [trendData, setTrendData] = useState([]);
 
@@ -75,7 +75,8 @@ export default function Financials() {
                     const data = await efficiencyRes.json();
                     setCashflowData({
                         revenue: data.totalRevenue,
-                        total_costs: data.totalCogs + data.totalPayroll + data.totalFixedCosts,
+                        total_costs: data.totalOperatingExpenses, // This now includes COGS from the API
+                        cogs: data.costBreakdown.cogs,
                     });
                     setTrendData(data.historicalData);
                 }
