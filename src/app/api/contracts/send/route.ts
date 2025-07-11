@@ -12,7 +12,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing required data to send email.' }, { status: 400 });
         }
 
-        const fromAddress = `${shop.shop_name} <noreply@motorminds.ca>`;
+        const sanitizedShopName = shop.shop_name.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+        const emailPrefix = sanitizedShopName.replace(/\s+/g, '').toLowerCase();
+        const fromAddress = `${sanitizedShopName} <${emailPrefix}@motorminds.ca>`;
 
         // Send email with Resend
         const { data, error } = await resend.emails.send({
