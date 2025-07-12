@@ -9,6 +9,8 @@ import Providers from "./providers"
 const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-bricolage-grotesque",
+  display: 'swap', // Optimize font loading
+  preload: true,
 });
 
 // const geistSans = Geist({

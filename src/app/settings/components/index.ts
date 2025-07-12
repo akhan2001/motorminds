@@ -1,0 +1,7 @@
+export { BasicInfoTab } from './BasicInfoTab'
+export { LocationTab } from './LocationTab'
+export { ShopDetailsTab } from './ShopDetailsTab'
+export { ImagesTab } from './ImagesTab'
+export { SocialMediaTab } from './SocialMediaTab'
+export { OperatingHoursSection } from './OperatingHoursSection'
+export { ServicesSection } from './ServicesSection' 

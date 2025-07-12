@@ -7,6 +7,7 @@ import { getShopId } from '@/utils/supabase/supabase-shop'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import LoadingPage from "@/components/loading"
+import { useQuery } from '@tanstack/react-query'
 
 export default function SettingsProfilePage() {
     const [user, setUser] = useState<any>(null)
@@ -14,35 +15,58 @@ export default function SettingsProfilePage() {
     const [isLoading, setIsLoading] = useState(true)
     const router = useRouter()
 
-    useEffect(() => {
-        async function fetchUserData() {
-            setIsLoading(true)
-            try {
-                const userData = await checkUser()
-                if (userData) {
-                    setUser(userData)
-                    const shop = await getShopId(userData.id)
-                    setShopId(shop)
-                } else {
-                    router.push('/login')
-                }
-            } catch (error) {
-                console.error('Error:', error)
+    // Use React Query for user and shop data
+    const { data: userData, isLoading: isUserLoading } = useQuery({
+        queryKey: ['user-data'],
+        queryFn: async () => {
+            const user = await checkUser()
+            if (!user) {
                 router.push('/login')
-            } finally {
-                setIsLoading(false)
+                return null
             }
+            return user
+        },
+        retry: false,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
+
+    const { data: shopIdData, isLoading: isShopIdLoading } = useQuery({
+        queryKey: ['shop-id', userData?.id],
+        queryFn: async () => {
+            if (!userData?.id) return null
+            const shop = await getShopId(userData.id)
+            return shop
+        },
+        enabled: !!userData?.id,
+        retry: false,
+        staleTime: 1000 * 60 * 10, // 10 minutes
+    })
+
+    // Update local state when React Query data changes
+    useEffect(() => {
+        if (userData) {
+            setUser(userData)
         }
-        
-        fetchUserData()
-    }, [router])
+    }, [userData])
+
+    useEffect(() => {
+        if (shopIdData) {
+            setShopId(shopIdData)
+        }
+    }, [shopIdData])
+
+    useEffect(() => {
+        // Set loading state based on React Query loading states
+        setIsLoading(isUserLoading || isShopIdLoading)
+    }, [isUserLoading, isShopIdLoading])
 
     if (isLoading) {
-        return <LoadingPage page="Settings" />
+        return <LoadingPage />
     }
 
     if (!shopId) {
         router.push('/login')
+        return null
     }
 
     return (

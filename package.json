@@ -67,6 +67,7 @@
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
         "common-tags": "^1.8.2",
+        "critters": "^0.0.23",
         "date-fns": "^3.6.0",
         "easyinvoice": "^3.0.47",
         "express": "^4.21.2",

@@ -1,18 +1,15 @@
+/* Critical styles - load first */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Critical font loading */
 body {
   font-family: var(--font-bricolage-grotesque);
+  font-display: swap;
 }
 
-/* .bricolage-grotesque {
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
-  font-variation-settings: "wdth" 100;
-} */
-
+/* Optimize CSS loading */
 @layer base {
   :root {
     --background: #ffffff;
@@ -49,6 +46,7 @@ body {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  
   .dark {
     --background: #000000;
     --foreground: #ffffff;
@@ -89,8 +87,7 @@ body {
   }
 }
 
-
-
+/* Base styles - load after critical */
 @layer base {
   * {
     @apply border-border outline-ring/50;
