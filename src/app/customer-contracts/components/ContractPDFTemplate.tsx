@@ -138,6 +138,19 @@ export const ContractPDFTemplate = ({ contract, shop }: { contract: any, shop: a
                         </Text>
                     );
                 })}
+
+                <View style={styles.signatureContainer}>
+                    <View style={styles.signatureBlock}>
+                        <Text style={styles.signatureLabel}>Customer Signature</Text>
+                        <View style={styles.signatureLine} />
+                        <Text style={styles.signatureLabel}>Date: ________________</Text>
+                    </View>
+                    <View style={styles.signatureBlock}>
+                        <Text style={styles.signatureLabel}>Shop Representative Signature</Text>
+                        <View style={styles.signatureLine} />
+                        <Text style={styles.signatureLabel}>Date: ________________</Text>
+                    </View>
+                </View>
             </Page>
         </Document>
     );

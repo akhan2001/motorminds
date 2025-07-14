@@ -43,7 +43,7 @@ export default function ContractCard({ contract, onEdit, onDelete, onDownloadPDF
                 <p className="text-sm text-gray-300">
                     {contract.vehicle?.year} {contract.vehicle?.make} {contract.vehicle?.model}
                 </p>
-                <Badge className={`mt-4 text-xs font-semibold py-1 px-3 rounded-full ${statusColors[contract.status] || 'bg-gray-700 hover:bg-gray-800'}`}>{contract.status}</Badge>
+                {/* <Badge className={`mt-4 text-xs font-semibold py-1 px-3 rounded-full ${statusColors[contract.status] || 'bg-gray-700 hover:bg-gray-800'}`}>{contract.status}</Badge> */}
             </CardContent>
             <CardFooter className="text-xs text-gray-500 p-4 pt-2 border-t border-[#222222]">
                 Created: {format(new Date(contract.created_at), 'MMM d, yyyy')}

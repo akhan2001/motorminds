@@ -66,7 +66,10 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                                 placeholder="1"
                                 type="number"
                                 value={item.quantity ?? '1'}
-                                onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                onChange={(e) => {
+                                    if (parseFloat(e.target.value) < 1) return;
+                                    updateItem(item.id, 'quantity', e.target.value);
+                                }}
                             />
                         </div>
                     )}
@@ -80,7 +83,10 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                                     placeholder="0.00"
                                     type="number"
                                     value={item.shop_cost ?? '0'}
-                                    onChange={(e) => updateItem(item.id, 'shop_cost', e.target.value)}
+                                    onChange={(e) => {
+                                        if (parseFloat(e.target.value) < 0) return;
+                                        updateItem(item.id, 'shop_cost', e.target.value);
+                                    }}
                                 />
                             </div>
                         </div>
@@ -94,7 +100,10 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                                 placeholder="0.00"
                                 type="number"
                                 value={item.cost}
-                                onChange={(e) => updateItem(item.id, 'cost', e.target.value)}
+                                onChange={(e) => {
+                                    if (parseFloat(e.target.value) < 0) return;
+                                    updateItem(item.id, 'cost', e.target.value);
+                                }}
                             />
                         </div>
                     </div>

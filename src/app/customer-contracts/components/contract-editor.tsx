@@ -292,8 +292,15 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                                     <Label>Maximum authorized amount ($)</Label>
                                     <Input 
                                         type="number"
+                                        min="0"
+                                        step="25"
                                         value={aiQuestions.maxAuthAmount} 
-                                        onChange={(e) => handleAiQuestionChange('maxAuthAmount', e.target.value)}
+                                        onChange={(e) => {
+                                            const value = parseFloat(e.target.value);
+                                            if (value >= 0 || e.target.value === '') {
+                                                handleAiQuestionChange('maxAuthAmount', e.target.value);
+                                            }
+                                        }}
                                         placeholder="Enter amount"
                                         className="bg-zinc-800 border-zinc-700"
                                     />
