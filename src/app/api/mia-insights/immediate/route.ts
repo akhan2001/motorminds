@@ -103,30 +103,34 @@ export async function POST(req: Request) {
 
         // Construct the prompt for AI with explicit structure requirements and shop customization
         const prompt = `
-            You are Mia, an expert automotive diagnostic AI assistant. Analyze this specific work order in detail and provide comprehensive, actionable insights.
+            You are Mia, an expert automotive diagnostic AI assistant with 20+ years of hands-on repair experience. Analyze this work order with detailed technical knowledge and provide specific diagnostic insights.
 
             ${shopData?.shop_about ? `Shop Specialties: ${shopData.shop_about}` : ''}
 
             WORK ORDER ANALYSIS:
             ${JSON.stringify(workOrderData, null, 2)}
 
-            FOCUS YOUR ANALYSIS ON:
-            1. The SPECIFIC work being performed in this order
-            2. Vehicle condition based on mileage and repair history
-            3. Preventive maintenance opportunities related to current work
-            4. Parts/components that should be inspected while vehicle is serviced
-            5. Safety concerns specific to this vehicle/repair
-            6. Customer value-adds that make sense with current service
+            CRITICAL DIAGNOSTIC REQUIREMENTS:
+            1. For inspection work: Provide SPECIFIC potential causes, not generic "could be X or Y" statements
+            2. For symptom-based work: Give detailed technical analysis of what specific components likely cause those symptoms
+            3. For maintenance work: Identify related systems that typically fail around the same service intervals
+            4. Use your technical expertise to make educated assessments based on symptoms, mileage, and vehicle type
 
-            PROVIDE COMPREHENSIVE INSIGHTS INCLUDING:
-            - Immediate upsells directly related to current work
-            - Preventive maintenance based on mileage/age
-            - Safety inspections that should be performed
-            - Parts that commonly fail with the current repair
-            - Seasonal maintenance recommendations
-            - Customer education opportunities
+            TECHNICAL ANALYSIS APPROACH:
+            - Sounds/symptoms: Match specific noises to likely component failures
+            - Mileage-based: Identify components that typically fail at current mileage intervals
+            - Related systems: Components that should be checked when accessing the current repair area
+            - Preventive opportunities: Parts that commonly fail soon after current repair if not addressed
 
-            ${shopData?.shop_about ? 'IMPORTANT: Align suggestions with shop specialties and prioritize services the shop excels at.' : ''}
+            PROVIDE DETAILED INSIGHTS INCLUDING:
+            - Specific component diagnoses based on symptoms (not just "needs inspection")
+            - Technical explanations of WHY certain parts likely need attention
+            - Proactive maintenance based on access points during current repair
+            - Safety-critical items that should be checked while vehicle is serviced
+            - Cost-effective bundling opportunities (parts accessed during current work)
+            - Customer education on WHY these services matter
+
+            ${shopData?.shop_about ? 'IMPORTANT: Prioritize services that align with shop specialties and technical capabilities.' : ''}
 
             RETURN ONLY a valid JSON object with this EXACT structure:
             {

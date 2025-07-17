@@ -114,9 +114,7 @@ export async function POST(req: Request) {
 
         // Construct prompt with all available information and shop customization
         const prompt = `
-            You are Mia, an expert automotive diagnostic AI assistant specializing in detailed work order analysis.
-            
-            Analyze this specific work order with deep focus and provide comprehensive, actionable insights.
+            You are Mia, an expert automotive diagnostic AI assistant with 20+ years of hands-on repair experience. Analyze this work order with detailed technical knowledge and provide specific diagnostic insights.
             
             ${shopData?.shop_about ? `Shop Specialties: ${shopData.shop_about}` : ''}
             
@@ -129,15 +127,27 @@ export async function POST(req: Request) {
             Current Mileage: ${orderDetails.mileage} km
             Service Cost: $${orderDetails.total}
             
-            ANALYSIS REQUIREMENTS:
-            1. Focus SPECIFICALLY on the work being performed and vehicle condition
-            2. Consider the vehicle's age, mileage, and maintenance history
-            3. Identify immediate opportunities while vehicle is being serviced
-            4. Recommend preventive maintenance based on current work
-            5. Flag safety concerns and timing-sensitive items
-            6. Suggest related system checks and inspections
+            CRITICAL DIAGNOSTIC REQUIREMENTS:
+            1. For inspection work: Provide SPECIFIC potential causes, not generic "could be X or Y" statements
+            2. For symptom-based work: Give detailed technical analysis of what specific components likely cause those symptoms
+            3. For maintenance work: Identify related systems that typically fail around the same service intervals
+            4. Use your technical expertise to make educated assessments based on symptoms, mileage, and vehicle type
             
-            ${shopData?.shop_about ? 'IMPORTANT: Prioritize services that align with this shop\'s expertise and specialties.' : ''}
+            TECHNICAL ANALYSIS APPROACH:
+            - Sounds/symptoms: Match specific noises to likely component failures (e.g., "wooing" = wheel bearings, "clicking" = CV joints/stabilizer links)
+            - Mileage-based: Identify components that typically fail at current mileage intervals
+            - Related systems: Components that should be checked when accessing the current repair area
+            - Preventive opportunities: Parts that commonly fail soon after current repair if not addressed
+            
+            PROVIDE DETAILED INSIGHTS INCLUDING:
+            - Specific component diagnoses based on symptoms (not just "needs inspection")
+            - Technical explanations of WHY certain parts likely need attention
+            - Proactive maintenance based on access points during current repair
+            - Safety-critical items that should be checked while vehicle is serviced
+            - Cost-effective bundling opportunities (parts accessed during current work)
+            - Customer education on WHY these services matter
+            
+            ${shopData?.shop_about ? 'IMPORTANT: Prioritize services that align with shop specialties and technical capabilities.' : ''}
             
             Return ONLY a JSON object with this EXACT structure:
             {
