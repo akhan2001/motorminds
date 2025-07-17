@@ -114,38 +114,56 @@ export async function POST(req: Request) {
 
         // Construct prompt with all available information and shop customization
         const prompt = `
-            You are Mia, an AI assistant for auto repair shops.
-            Generate upsell suggestions that are quick, cheap and relevant to the work order based on the following information:
+            You are Mia, an expert automotive diagnostic AI assistant specializing in detailed work order analysis.
             
-            ${shopData?.shop_about ? `Shop Information: ${shopData.shop_about}` : ''}
+            Analyze this specific work order with deep focus and provide comprehensive, actionable insights.
             
-            ${vehicleInfo ? `Vehicle: ${vehicleInfo.year} ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.color} ${vehicleInfo.engine_type}` : 'Vehicle: Information not available'}
-            Title: ${orderDetails.description}
-            Notes: ${orderDetails.notes}
-            Parts: ${orderDetails.parts}
-            Labour: ${orderDetails.labour}
-            Mileage: ${orderDetails.mileage} - Mileage is in kilometers
-            Total: ${orderDetails.total}
+            ${shopData?.shop_about ? `Shop Specialties: ${shopData.shop_about}` : ''}
             
-            ${shopData?.shop_about ? 'IMPORTANT: Customize your suggestions based on the shop\'s specialties and services mentioned in the shop information.' : ''}
+            DETAILED WORK ORDER INFORMATION:
+            Vehicle: ${vehicleInfo ? `${vehicleInfo.year} ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.color} ${vehicleInfo.engine_type}` : 'Information not available'}
+            Work Description: ${orderDetails.description}
+            Technical Notes: ${orderDetails.notes}
+            Parts Used/Needed: ${orderDetails.parts}
+            Labor Required: ${orderDetails.labour}
+            Current Mileage: ${orderDetails.mileage} km
+            Service Cost: $${orderDetails.total}
             
-            Return a JSON object with EXACTLY this structure:
+            ANALYSIS REQUIREMENTS:
+            1. Focus SPECIFICALLY on the work being performed and vehicle condition
+            2. Consider the vehicle's age, mileage, and maintenance history
+            3. Identify immediate opportunities while vehicle is being serviced
+            4. Recommend preventive maintenance based on current work
+            5. Flag safety concerns and timing-sensitive items
+            6. Suggest related system checks and inspections
+            
+            ${shopData?.shop_about ? 'IMPORTANT: Prioritize services that align with this shop\'s expertise and specialties.' : ''}
+            
+            Return ONLY a JSON object with this EXACT structure:
             {
               "upsell_suggestions": [
                 {
                   "title": "string",
-                  "description": "string",
+                  "description": "string - explain how this relates to current work and vehicle condition",
                   "estimatedValue": number,
-                  "priority": "high" | "medium" | "low"
+                  "priority": "high" | "medium" | "low",
+                  "category": "immediate" | "preventive" | "safety" | "seasonal"
                 }
               ],
               "flags": [
                 {
                   "type": "warning" | "urgent" | "info",
-                  "message": "string"
+                  "message": "string - specific flag related to this work order",
+                  "category": "safety" | "maintenance" | "cost" | "timing"
                 }
               ],
-              "summary": "string"
+              "work_order_analysis": {
+                "current_work_assessment": "string - detailed analysis of the specific work being done",
+                "related_systems": ["string"] - systems that should be checked while vehicle is here,
+                "mileage_considerations": "string - what maintenance is due at this mileage",
+                "timing_recommendations": "string - optimal timing for additional services"
+              },
+              "summary": "string - comprehensive summary focused on this specific work order"
             }
             
             RETURN ONLY THE JSON OBJECT WITHOUT ANY EXPLANATION OR MARKDOWN FORMATTING.
@@ -178,19 +196,27 @@ export async function POST(req: Request) {
             parsedResponse = {
                 upsell_suggestions: [
                     {
-                        title: "Regular Maintenance",
-                        description: "General vehicle inspection",
-                        estimatedValue: 50,
-                        priority: "medium"
+                        title: "Regular Maintenance Inspection",
+                        description: "Comprehensive vehicle inspection while in shop for current service",
+                        estimatedValue: 75,
+                        priority: "medium",
+                        category: "preventive"
                     }
                 ],
                 flags: [
                     {
                         type: "info",
-                        message: "Unable to generate specific recommendations"
+                        message: "Unable to generate specific recommendations from available work order data",
+                        category: "maintenance"
                     }
                 ],
-                summary: "Consider a general maintenance check"
+                work_order_analysis: {
+                    current_work_assessment: "Unable to analyze current work from available data.",
+                    related_systems: ["General inspection recommended"],
+                    mileage_considerations: "Consider standard maintenance schedule review",
+                    timing_recommendations: "Complete current service before additional work"
+                },
+                summary: "Consider general maintenance inspection while vehicle is being serviced"
             };
         }
         
