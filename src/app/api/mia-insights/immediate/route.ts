@@ -20,6 +20,14 @@ function validateInsights(data: any): data is ImmediateInsights {
     if (!Array.isArray(data.upsell_suggestions)) return false;
     if (!Array.isArray(data.flags)) return false;
     if (typeof data.summary !== 'string') return false;
+    if (!data.work_order_analysis || typeof data.work_order_analysis !== 'object') return false;
+    
+    // Validate work order analysis structure
+    const analysis = data.work_order_analysis;
+    if (typeof analysis.current_work_assessment !== 'string') return false;
+    if (!Array.isArray(analysis.related_systems)) return false;
+    if (typeof analysis.mileage_considerations !== 'string') return false;
+    if (typeof analysis.timing_recommendations !== 'string') return false;
     
     // Validate each upsell suggestion
     for (const suggestion of data.upsell_suggestions) {
@@ -27,12 +35,14 @@ function validateInsights(data: any): data is ImmediateInsights {
         if (typeof suggestion.description !== 'string') return false;
         if (typeof suggestion.estimatedValue !== 'number') return false;
         if (!['high', 'medium', 'low'].includes(suggestion.priority)) return false;
+        if (!['immediate', 'preventive', 'safety', 'seasonal'].includes(suggestion.category)) return false;
     }
     
     // Validate each flag
     for (const flag of data.flags) {
         if (!['warning', 'urgent', 'info'].includes(flag.type)) return false;
         if (typeof flag.message !== 'string') return false;
+        if (!['safety', 'maintenance', 'cost', 'timing'].includes(flag.category)) return false;
     }
     
     return true;
@@ -43,7 +53,13 @@ function createDefaultInsights(): ImmediateInsights {
     return {
         upsell_suggestions: [],
         flags: [],
-        summary: "Unable to generate structured insights from this work order."
+        work_order_analysis: {
+            current_work_assessment: "Unable to assess current work from available data.",
+            related_systems: [],
+            mileage_considerations: "No mileage data available for analysis.",
+            timing_recommendations: "Complete current work before additional services."
+        },
+        summary: "Unable to generate comprehensive insights from this work order data."
     };
 }
 
@@ -87,36 +103,60 @@ export async function POST(req: Request) {
 
         // Construct the prompt for AI with explicit structure requirements and shop customization
         const prompt = `
-            You are Mia, an AI assistant for auto repair shops. Analyze this work order data and provide immediate upsell suggestions and service recommendations.
+            You are Mia, an expert automotive diagnostic AI assistant with 20+ years of hands-on repair experience. Analyze this work order with detailed technical knowledge and provide specific diagnostic insights.
 
-            ${shopData?.shop_about ? `Shop Information: ${shopData.shop_about}` : ''}
+            ${shopData?.shop_about ? `Shop Specialties: ${shopData.shop_about}` : ''}
 
-            Work Order: ${JSON.stringify(workOrderData)}
+            WORK ORDER ANALYSIS:
+            ${JSON.stringify(workOrderData, null, 2)}
 
-            Your task:
-            1. Generate a list of immediate upsell opportunities that are relevant to the current visit
-            2. Identify any maintenance flags or warnings
-            3. Create a brief summary
+            CRITICAL DIAGNOSTIC REQUIREMENTS:
+            1. For inspection work: Provide SPECIFIC potential causes, not generic "could be X or Y" statements
+            2. For symptom-based work: Give detailed technical analysis of what specific components likely cause those symptoms
+            3. For maintenance work: Identify related systems that typically fail around the same service intervals
+            4. Use your technical expertise to make educated assessments based on symptoms, mileage, and vehicle type
 
-            ${shopData?.shop_about ? 'IMPORTANT: Customize your suggestions based on the shop\'s specialties and services mentioned in the shop information.' : ''}
+            TECHNICAL ANALYSIS APPROACH:
+            - Sounds/symptoms: Match specific noises to likely component failures
+            - Mileage-based: Identify components that typically fail at current mileage intervals
+            - Related systems: Components that should be checked when accessing the current repair area
+            - Preventive opportunities: Parts that commonly fail soon after current repair if not addressed
 
-            CRITICAL: Your entire response must be ONLY a valid JSON object with EXACTLY this structure:
+            PROVIDE DETAILED INSIGHTS INCLUDING:
+            - Specific component diagnoses based on symptoms (not just "needs inspection")
+            - Technical explanations of WHY certain parts likely need attention
+            - Proactive maintenance based on access points during current repair
+            - Safety-critical items that should be checked while vehicle is serviced
+            - Cost-effective bundling opportunities (parts accessed during current work)
+            - Customer education on WHY these services matter
+
+            ${shopData?.shop_about ? 'IMPORTANT: Prioritize services that align with shop specialties and technical capabilities.' : ''}
+
+            RETURN ONLY a valid JSON object with this EXACT structure:
             {
-            "upsell_suggestions": [
+              "upsell_suggestions": [
                 {
-                "title": "string",
-                "description": "string",
-                "estimatedValue": number,
-                "priority": "high" | "medium" | "low"
+                  "title": "string",
+                  "description": "string - explain WHY this relates to current work",
+                  "estimatedValue": number,
+                  "priority": "high" | "medium" | "low",
+                  "category": "immediate" | "preventive" | "safety" | "seasonal"
                 }
-            ],
-            "flags": [
+              ],
+              "flags": [
                 {
-                "type": "warning" | "urgent" | "info",
-                "message": "string"
+                  "type": "warning" | "urgent" | "info",
+                  "message": "string - specific to this work order",
+                  "category": "safety" | "maintenance" | "cost" | "timing"
                 }
-            ],
-            "summary": "string"
+              ],
+              "work_order_analysis": {
+                "current_work_assessment": "string - analysis of the work being done",
+                "related_systems": ["string"] - other systems to check while vehicle is here,
+                "mileage_considerations": "string - what to expect at this mileage",
+                "timing_recommendations": "string - best time for additional work"
+              },
+              "summary": "string - focused summary of this specific work order and opportunities"
             }
 
             DO NOT include any text, explanations, or markdown formatting outside of this JSON object.
