@@ -94,7 +94,7 @@ export default function EfficiencyClient() {
             columns = [
                 { key: 'paid_at', header: 'Date', render: (d: any) => new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" }) },
                 { key: 'invoice_number', header: 'Invoice #', render: (v: any) => <span className="text-blue-400 font-medium">{v}</span> },
-                { key: 'amount', header: 'Amount', render: (v: any) => `$${v.toFixed(2)}` },
+                { key: 'amount', header: 'Amount', render: (v: any) => `$${(v || 0).toFixed(2)}` },
             ];
             break;
         case 'cogs':
