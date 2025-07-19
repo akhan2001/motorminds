@@ -120,9 +120,9 @@ export default function AuthComponent() {
           </Link>
         </div>
         <div className="mt-5 md:mt-6 text-center">
-  <p className="text-xs sm:text-sm text-gray-400">
+  {/* <p className="text-xs sm:text-sm text-gray-400">
     Don't have an account? <Link href="/signup" className="underline hover:text-white">Create Account</Link>
-  </p>
+  </p> */}
 </div>
       </div>
     </div>

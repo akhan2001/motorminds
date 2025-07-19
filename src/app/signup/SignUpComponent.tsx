@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
+import React, { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,12 +16,32 @@ export default function SignUpComponent() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [shopName, setShopName] = useState("")
+  const [fullName, setFullName] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isInvitationSignup, setIsInvitationSignup] = useState(false)
+  
   const router = useRouter()
+  const searchParams = useSearchParams()
   // const { execute } = useTurnstile()
+
+  // Check if this is an invitation signup
+  useEffect(() => {
+    if (!searchParams) return
+    
+    const inviteToken = searchParams.get('invite')
+    const inviteShopName = searchParams.get('shop_name')
+    
+    if (inviteToken) {
+      setIsInvitationSignup(true)
+      if (inviteShopName) {
+        setShopName(decodeURIComponent(inviteShopName))
+      }
+    }
+  }, [searchParams])
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
@@ -37,19 +57,38 @@ export default function SignUpComponent() {
       return
     }
 
+    // If it's invitation signup, require shop name and full name
+    if (isInvitationSignup && (!shopName.trim() || !fullName.trim())) {
+      setError("Shop name and full name are required for invitation signup")
+      return
+    }
+
     try {
+      // Prepare user metadata for the trigger
+      const userMetadata: any = {
+        is_invitation: isInvitationSignup,
+      }
+
+      // Add additional data for invitation signups
+      if (isInvitationSignup) {
+        userMetadata.shop_name = shopName.trim()
+        userMetadata.full_name = fullName.trim()
+        userMetadata.invite_token = searchParams?.get('invite')
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`,
+          data: userMetadata
         }
       })
       
       if (error) throw error
 
       // On success
-      router.push("/login")
+      router.push("/signup-success")
     } catch (err: any) {
       setError(err?.message || "An unknown error occurred")
     }
@@ -110,6 +149,41 @@ export default function SignUpComponent() {
             />
           </div>
 
+          {/* Invitation-specific fields */}
+          {isInvitationSignup && (
+            <>
+              <div>
+                <Label htmlFor="fullName" className="mb-1 sm:mb-1.5 block text-xs sm:text-sm text-gray-300">
+                  Full Name
+                </Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="w-full rounded-lg bg-[#222222] px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444] border-none"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="shopName" className="mb-1 sm:mb-1.5 block text-xs sm:text-sm text-gray-300">
+                  Shop Name
+                </Label>
+                <Input
+                  id="shopName"
+                  type="text"
+                  placeholder="e.g. John's Auto Repair"
+                  value={shopName}
+                  onChange={(e) => setShopName(e.target.value)}
+                  required
+                  className="w-full rounded-lg bg-[#222222] px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-white placeholder-gray-500 outline-none ring-1 ring-gray-700 transition focus:ring-1 focus:ring-[#444444] border-none"
+                />
+              </div>
+            </>
+          )}
+
           <div>
             <Label htmlFor="password" className="mb-1 sm:mb-1.5 block text-xs sm:text-sm text-gray-300">
               Password
@@ -169,7 +243,7 @@ export default function SignUpComponent() {
             </div>
             <div className="ml-2 sm:ml-3 text-xs sm:text-sm">
               <Label htmlFor="terms" className="text-gray-400">
-                I accept the <Link href="/terms" className="underline hover:text-white">Terms and Conditions</Link>
+                I accept the <Link href="https://motorminds.ca/terms" target="_blank" className="underline hover:text-white">Terms and Conditions</Link>
               </Label>
             </div>
             {/* <Turnstile
@@ -179,8 +253,8 @@ export default function SignUpComponent() {
           </div>
 
           {/* This is where you would add Turnstile */}
-          <div className="flex justify-center my-2 sm:my-3">
-            {/* Uncomment to add Turnstile */}
+          {/* <div className="flex justify-center my-2 sm:my-3">
+            Uncomment to add Turnstile
             <Turnstile
               sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
               onSuccess={handleTurnstileSuccess}
@@ -188,7 +262,7 @@ export default function SignUpComponent() {
               responseField={false}
               className="mx-auto scale-90 sm:scale-100"
             />
-          </div>
+          </div> */}
 
           <Button
             type="submit"
