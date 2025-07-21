@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { DetailedRepairOrder } from "@/components/task-details-modal";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, AlertCircle, RefreshCw } from "lucide-react";
+import { DollarSign, Clock, AlertCircle, RefreshCw, Zap } from "lucide-react";
 import { ImmediateInsights, UpsellSuggestion, InsightFlag } from "@/app/mia/types/MiaInsights";
 import { Button } from "@/components/ui/button";
 import { generateImmediateAnalysis } from "@/app/mia/utils/insightsGenerator";
@@ -13,8 +13,45 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 	const [analysis, setAnalysis] = useState<ImmediateInsights | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
-	const [hasRefreshed, setHasRefreshed] = useState(false);
+	const [refreshCount, setRefreshCount] = useState(0);
+	const [lastRefreshTime, setLastRefreshTime] = useState<number>(0);
 	const [refreshCounter, setRefreshCounter] = useState(0);
+	
+	const MAX_REFRESHES = 3;
+	const RATE_LIMIT_DELAY = 10000; // 10 seconds between refreshes
+	
+	// Load refresh count from localStorage on component mount
+	useEffect(() => {
+		if (taskId) {
+			const stored = localStorage.getItem(`mia_refresh_${taskId}`);
+			if (stored) {
+				const data = JSON.parse(stored);
+				setRefreshCount(data.count || 0);
+				setLastRefreshTime(data.lastTime || 0);
+			}
+		}
+	}, [taskId]);
+	
+	// Auto-generate insights for new work orders
+	useEffect(() => {
+		if (!isLoading && !insights && !refreshing && refreshCount === 0 && taskId && workOrderData && shopId) {
+			// Check if this work order was created recently (within last 5 minutes)
+			const workOrderCreatedAt = new Date(workOrderData.created_at);
+			const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+			
+			if (workOrderCreatedAt > fiveMinutesAgo) {
+				handleRefreshInsights();
+			}
+		}
+	}, [isLoading, insights, refreshing, refreshCount, taskId, workOrderData, shopId]);
+	
+	// Debug logging for analysis data (disabled for performance)
+	// useEffect(() => {
+	// 	if (analysis) {
+	// 		console.log("Analysis loaded:", analysis);
+	// 		console.log("Upsell suggestions:", analysis.upsell_suggestions);
+	// 	}
+	// }, [analysis]);
 	
 	useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
@@ -67,10 +104,24 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			console.error("Error refreshing insights: Shop ID is required");
 			return;
 		}
+
+		// Check refresh limit
+		if (refreshCount >= MAX_REFRESHES) {
+			toast.error(`Maximum of ${MAX_REFRESHES} refreshes reached for this work order`);
+			return;
+		}
+
+		// Check rate limit
+		const now = Date.now();
+		const timeSinceLastRefresh = now - lastRefreshTime;
+		if (timeSinceLastRefresh < RATE_LIMIT_DELAY) {
+			const remainingTime = Math.ceil((RATE_LIMIT_DELAY - timeSinceLastRefresh) / 1000);
+			toast.error(`Please wait ${remainingTime} seconds before refreshing again`);
+			return;
+		}
 		
 		try {
 			setRefreshing(true);
-			setHasRefreshed(true);
 			
 			const workOrderWithShopId = {
 				...workOrderData,
@@ -84,8 +135,21 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			);
 			
 			if (result.success) {
+				const newRefreshCount = refreshCount + 1;
+				const newRefreshTime = now;
+				
+				// Update state
+				setRefreshCount(newRefreshCount);
+				setLastRefreshTime(newRefreshTime);
 				setRefreshCounter(c => c + 1);
-				toast.success("Insights refreshed successfully");
+				
+				// Store in localStorage
+				localStorage.setItem(`mia_refresh_${taskId}`, JSON.stringify({
+					count: newRefreshCount,
+					lastTime: newRefreshTime
+				}));
+				
+				toast.success(`Insights refreshed! (${newRefreshCount}/${MAX_REFRESHES} used)`);
 			} else {
 				console.error("Error refreshing insights:", result.error);
 				toast.error("Failed to refresh insights");
@@ -106,20 +170,25 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 			<div className="p-3 md:p-4 border-b border-[#222222] flex-shrink-0">
 				<div className="flex justify-between items-center">
 					<h3 className="text-base md:text-lg font-medium text-white">Mia Insights</h3>
-					{!hasRefreshed && (
+					{refreshCount < MAX_REFRESHES && (
 						<Button 
 							variant="ghost" 
 							size="sm" 
 							className={`h-7 w-7 md:h-8 md:w-8 p-0 transition-opacity duration-200 ${refreshing ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
 							onClick={handleRefreshInsights}
 							disabled={refreshing || isLoading}
-							title={refreshing ? "Refreshing insights..." : "Regenerate insights"}
+							title={refreshing ? "Refreshing insights..." : `Generate insights (${refreshCount}/${MAX_REFRESHES} used)`}
 						>
-							<RefreshCw className={`h-3 w-3 md:h-4 md:w-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+							<Zap className={`h-3 w-3 md:h-4 md:w-4 text-blue-400 ${refreshing ? 'animate-pulse' : ''}`} />
 							<span className="sr-only">
-								{refreshing ? "Refreshing insights..." : "Refresh insights"}
+								{refreshing ? "Refreshing insights..." : "Generate insights"}
 							</span>
 						</Button>
+					)}
+					{refreshCount >= MAX_REFRESHES && (
+						<div className="text-xs text-gray-500">
+							Max refreshes reached
+						</div>
 					)}
 				</div>
 			</div>
@@ -136,7 +205,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 							{/* Insight Priority */}
 							<div>
 								<Badge className={`
-									text-xs md:text-sm
+									text-xs md:text-sm mb-2
 									${insights.priority === 'high' ? 'bg-red-600' : 
 									insights.priority === 'medium' ? 'bg-yellow-600' : 'bg-blue-600'}
 								`}>
@@ -147,7 +216,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 							{/* Work Order Analysis */}
 							{analysis?.work_order_analysis && (
 								<div className="bg-[#1A1A1A] rounded-lg p-3 md:p-4 border border-[#333333]">
-									<h4 className="text-sm md:text-base text-white font-medium mb-2 md:mb-3 flex items-center">
+									<h4 className="text-sm md:text-base text-white font-medium my-2 flex items-center">
 										<Clock className="h-3 w-3 md:h-4 md:w-4 mr-2 text-blue-500" />
 										Work Order Analysis
 									</h4>
@@ -191,7 +260,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 							{/* Flags */}
 							{analysis?.flags && analysis.flags.length > 0 && (
 								<div>
-									<h4 className="text-sm md:text-base text-white font-medium mb-2 flex items-center">
+									<h4 className="text-sm md:text-base text-white font-medium my-2 flex items-center">
 										<AlertCircle className="h-3 w-3 md:h-4 md:w-4 mr-2 text-yellow-500" />
 										Maintenance Flags
 									</h4>
@@ -225,7 +294,7 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 							
 							{/* Upsell Opportunities - Categorized */}
 							<div>
-								<h4 className="text-sm md:text-base text-white font-medium mb-2 flex items-center">
+								<h4 className="text-sm md:text-base text-white font-medium my-2 flex items-center">
 									<DollarSign className="h-3 w-3 md:h-4 md:w-4 mr-2 text-green-500" />
 									Service Opportunities
 								</h4>
@@ -307,8 +376,27 @@ export default function MechanicsHubChat({ shopId, taskId, workOrderData }: { sh
 							)}
 						</div>
 					) : (
-						<div className="text-center py-6 md:py-8 text-gray-400">
+						<div className="text-center py-6 md:py-8 text-gray-400 space-y-4">
 							<p className="text-xs md:text-sm">No insights available for this repair order</p>
+							{refreshCount < MAX_REFRESHES && (
+								<Button
+									onClick={handleRefreshInsights}
+									disabled={refreshing || isLoading}
+									className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 text-sm"
+								>
+									{refreshing ? (
+										<>
+											<RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+											Generating...
+										</>
+									) : (
+										<>
+											<Zap className="h-4 w-4 mr-2" />
+											Generate AI Insights
+										</>
+									)}
+								</Button>
+							)}
 						</div>
 					)}
 				</div>
