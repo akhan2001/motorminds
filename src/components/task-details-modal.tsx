@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 import MechanicsHubChat from "@/app/mechanic-hub/components/mechanics-hub-chat"
 import { WorkOrderStatusButtons } from "./work-order-status-buttons"
+import { ConfirmationDialog } from "@/app/financials/components/ConfirmationDialog"
 
 export interface DetailedRepairOrder {
   id: string
@@ -333,14 +334,9 @@ export function TaskDetailsModal({
   }
 
   // ------------------
-  // DELETE with confirmation + full page reload
+  // DELETE function (confirmation handled by dialog)
   // ------------------
   async function handleDelete() {
-    const confirmed = window.confirm(
-      "Are you sure you want to remove this task from the shop? This action will hide it from the shop's list but keep any existing invoice."
-    )
-    if (!confirmed) return
-  
     try {
       // 1) Instead of truly deleting the order, we simply remove the shop reference:
       const { error: updateErr } = await supabase
@@ -739,14 +735,23 @@ export function TaskDetailsModal({
           <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0">
             <div className="flex items-center gap-2">
               {/* DELETE BUTTON */}
-              <Button
+              <ConfirmationDialog
+                trigger={
+                  <Button
+                    variant="destructive"
+                    className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                }
+                title="Remove Work Order"
+                description="Are you sure you want to remove this task from the shop? This action will hide it from the shop's list but keep any existing invoice."
+                onConfirm={handleDelete}
+                confirmText="Remove"
+                cancelText="Cancel"
                 variant="destructive"
-                className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
+              />
               {currentStatus === "Completed" && (
                 <Button
                   variant="outline"

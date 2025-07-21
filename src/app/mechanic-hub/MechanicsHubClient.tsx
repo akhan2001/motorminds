@@ -471,9 +471,13 @@ export default function MechanicsHub() {
         
         await handleTaskClick({ id: newWorkOrder[0].id });
 
+        // Return the created work order for the form to use
+        return newWorkOrder[0];
+
     } catch (err: any) {
         console.error("Error creating work order:", err)
         toast.error("Error creating work order: " + err.message)
+        throw err; // Re-throw the error so the form can handle it
     } finally {
         setIsWorkOrderFormOpen(false)
     }
