@@ -48,28 +48,34 @@ function validateInsights(data: any): data is ImmediateInsights {
     return true;
 }
 
-// Fast default insights
+// Technical default insights
 function createDefaultInsights(): ImmediateInsights {
     return {
         upsell_suggestions: [{
-            title: "Standard Inspection",
-            description: "General vehicle inspection while in service",
-            estimatedValue: 75,
+            title: "Comprehensive Diagnostic Inspection",
+            description: "Multi-point diagnostic inspection to identify potential issues before they become major repairs. Includes fluid analysis, belt/hose inspection, and system performance checks.",
+            estimatedValue: 150,
             priority: "medium",
+            category: "preventive"
+        }, {
+            title: "Maintenance Service Package",
+            description: "Age-appropriate maintenance services including filter replacements, fluid changes, and wear item inspection based on vehicle mileage and service history.",
+            estimatedValue: 250,
+            priority: "medium", 
             category: "preventive"
         }],
         flags: [{
             type: "info",
-            message: "Consider standard maintenance items",
+            message: "Vehicle age and mileage suggest proactive maintenance to prevent costly repairs",
             category: "maintenance"
         }],
         work_order_analysis: {
-            current_work_assessment: "Standard service work in progress",
-            related_systems: ["General inspection"],
-            mileage_considerations: "Follow manufacturer maintenance schedule",
-            timing_recommendations: "Complete current work first"
+            current_work_assessment: "Current service in progress. Recommend comprehensive inspection to identify additional maintenance needs.",
+            related_systems: ["Engine", "Transmission", "Cooling System", "Brake System"],
+            mileage_considerations: "At this service interval, consider inspecting wear items and preventive maintenance components",
+            timing_recommendations: "Complete current work, then schedule follow-up inspection within 30 days"
         },
-        summary: "Standard maintenance recommendations available"
+        summary: "Technical diagnostic and preventive maintenance recommendations based on vehicle service requirements"
     };
 }
 
@@ -112,46 +118,71 @@ export async function POST(req: Request) {
             );
         }
 
-        // Extract key work order info for faster processing
-        const workDescription = workOrderData?.repair_order_details?.[0]?.description || 'General maintenance';
-        const vehicleInfo = `${workOrderData?.customers?.customer_vehicles?.[0]?.year || ''} ${workOrderData?.customers?.customer_vehicles?.[0]?.make || ''} ${workOrderData?.customers?.customer_vehicles?.[0]?.model || ''}`.trim();
-        const mileage = workOrderData?.repair_order_details?.[0]?.mileage || 'Unknown';
+        // Extract comprehensive vehicle and work order details
+        // Find the correct vehicle using vehicle_id, not just the first one
+        const matchingVehicle = workOrderData?.vehicle_id && workOrderData?.customers?.customer_vehicles 
+            ? workOrderData.customers.customer_vehicles.find((v: any) => v.id === workOrderData.vehicle_id)
+            : null;
+        // Fallback to first vehicle if no matching vehicle found
+        const vehicle = matchingVehicle || workOrderData?.customers?.customer_vehicles?.[0] || {};
+        const workDetails = workOrderData?.repair_order_details?.[0] || {};
+        
+        const year = vehicle.year || 'Unknown';
+        const make = vehicle.make || 'Unknown';
+        const model = vehicle.model || 'Unknown';
+        const engine = vehicle.engine_type || 'Unknown';
+        const vin = vehicle.vin || 'Unknown';
+        const mileage = workDetails.mileage || 'Unknown';
+        const workDescription = workDetails.description || 'General maintenance';
+        const symptoms = workDetails.notes || '';
+        const laborDescription = workDetails.labour || '';
 
-        // Simplified, faster prompt
-        const prompt = `Analyze this auto repair work order and return ONLY valid JSON:
+        // Enhanced technical prompt for vehicle-specific insights
+        const prompt = `You are an expert automotive diagnostician. Analyze this work order for a specific vehicle and provide highly technical, actionable insights.
 
-Work: ${workDescription}
-Vehicle: ${vehicleInfo}
-Mileage: ${mileage}
+        VEHICLE: ${year} ${make} ${model}
+        ENGINE: ${engine}
+        VIN: ${vin}
+        MILEAGE: ${mileage}
+        ISSUE: ${workDescription}
+        SYMPTOMS: ${symptoms}
+        CURRENT WORK: ${laborDescription}
 
-Return this exact JSON structure:
-{
-  "upsell_suggestions": [
-    {
-      "title": "Service Name",
-      "description": "Brief explanation",
-      "estimatedValue": 100,
-      "priority": "high",
-      "category": "preventive"
-    }
-  ],
-  "flags": [
-    {
-      "type": "info",
-      "message": "Brief message",
-      "category": "maintenance"
-    }
-  ],
-  "work_order_analysis": {
-    "current_work_assessment": "Brief assessment",
-    "related_systems": ["System 1"],
-    "mileage_considerations": "Brief note",
-    "timing_recommendations": "Brief timing"
-  },
-  "summary": "Brief summary"
-}
+        Provide vehicle-specific diagnosis considering:
+        1. Known common issues for this exact make/model/year
+        2. Technical root causes based on symptoms
+        3. Specific parts that commonly fail on this vehicle
+        4. Diagnostic tests specific to this issue and vehicle
+        5. Cost estimates for labor and parts
 
-Categories: upsell_suggestions="immediate|preventive|safety|seasonal", flags="safety|maintenance|cost|timing"`;
+        Return ONLY valid JSON:
+        {
+        "upsell_suggestions": [
+            {
+            "title": "Specific Service/Part Name",
+            "description": "Technical explanation of why this specific vehicle needs this service, including known common failures for this make/model/year",
+            "estimatedValue": 400,
+            "priority": "high",
+            "category": "immediate"
+            }
+        ],
+        "flags": [
+            {
+            "type": "urgent",
+            "message": "Vehicle-specific warning based on symptoms and known issues",
+            "category": "safety"
+            }
+        ],
+        "work_order_analysis": {
+            "current_work_assessment": "Technical diagnosis of the specific issue for this vehicle, referencing common problems for this make/model/year",
+            "related_systems": ["Specific systems to check on this vehicle"],
+            "mileage_considerations": "What typically fails at this mileage on this specific vehicle",
+            "timing_recommendations": "Optimal timing for repairs considering vehicle age and known failure patterns"
+        },
+        "summary": "Technical summary with specific diagnosis and vehicle-known issues"
+        }
+
+        Focus on technical accuracy and vehicle-specific knowledge. Reference common issues for this exact vehicle.`;
 
         // Call OpenAI API with timeout and error handling
         let response;
@@ -162,16 +193,16 @@ Categories: upsell_suggestions="immediate|preventive|safety|seasonal", flags="sa
                     messages: [
                         { 
                             role: 'system', 
-                            content: 'You are an auto repair AI. Return ONLY valid JSON with no extra text.'
+                            content: 'You are an expert automotive diagnostician with 20+ years experience. You have deep knowledge of specific vehicle make/model common issues, failure patterns, and technical specifications. Provide highly specific, actionable insights. Return ONLY valid JSON.'
                         },
                         { role: 'user', content: prompt }
                     ],
-                    temperature: 0.1, // Lower for more consistent/faster responses
-                    max_tokens: 1500, // Optimized token count
+                    temperature: 0.2, // Slightly higher for more detailed technical responses
+                    max_tokens: 2500, // Increased for comprehensive technical insights
                     stream: false
                 }),
                 new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('API timeout')), 8000) // 8 second timeout
+                    setTimeout(() => reject(new Error('API timeout')), 12000) // 12 second timeout for detailed responses
                 )
             ]);
         } catch (error) {
