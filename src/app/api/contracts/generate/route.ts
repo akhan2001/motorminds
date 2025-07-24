@@ -14,25 +14,30 @@ export async function POST(req: Request) {
         }
 
         let prompt = `
-            You are a legal assistant for an auto shop. Your task is to generate ONLY the body text for a service contract based on the following parameters.
-            The tone should be formal and clear. The output should consist of only the text of the contract clauses, separated by newlines.
-            Do NOT include a title, headers, footers, placeholders for shop/customer/vehicle information, or signature lines.
+            You are a legal assistant for an auto shop. Your task is to generate ONLY the body text for a service contract that will fit on a single page.
+            
+            IMPORTANT CONSTRAINTS:
+            - Maximum 6-8 short paragraphs (each 2-3 sentences)
+            - Keep content concise and professional
+            - Use clear, simple language
+            - Do NOT include title, headers, footers, customer/shop info, or signature lines
+            
+            The contract should cover work type: "${generationParams.workType}".
 
-            The contract should be tailored for the following type of work: "${generationParams.workType}".
+            Include these clauses based on the requirements:
+            ${generationParams.includeDamageDisclaimer ? '- Pre-existing damage disclaimer' : ''}
+            ${generationParams.authorizeWork ? `- Work authorization up to $${generationParams.maxAuthAmount || 'specified amount'}` : ''}
+            ${generationParams.informWarrantyVoid ? '- Warranty void notification' : ''}
+            ${generationParams.includeNoWarrantyClause ? '- No warranty clause unless specified' : ''}
 
-            Please incorporate the following clauses based on these instructions:
-            - Disclaimer for pre-existing damage: ${generationParams.includeDamageDisclaimer ? 'Yes' : 'No'}
-            - Authorization for work up to a certain amount: ${generationParams.authorizeWork ? 'Yes' : 'No'}
-            - If authorization is granted, the maximum amount is: ${generationParams.maxAuthAmount ? `$${generationParams.maxAuthAmount}` : 'Not specified'}
-            - Inform customer that work may void warranties: ${generationParams.informWarrantyVoid ? 'Yes' : 'No'}
-            - No warranty provided unless specified: ${generationParams.includeNoWarrantyClause ? 'Yes' : 'No'}
-
-            Generate only the contract's body text now.
+            Generate concise contract body text (6-8 short paragraphs maximum). Each paragraph should be 2-3 sentences. Use **bold** for important terms.
         `;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4-turbo",
             messages: [{ role: "system", content: prompt }],
+            max_tokens: 800, // Limit response length
+            temperature: 0.3, // More consistent output
         });
 
         const generated_text = completion.choices[0]?.message?.content?.trim();

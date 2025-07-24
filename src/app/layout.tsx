@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/react"
 import Providers from "./providers"
+import Script from "next/script";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -35,6 +36,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <Script 
+          src="https://cdn.docuseal.com/js/form.js" 
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={`${bricolageGrotesque.variable} antialiased`}>
         <Providers>
               {children}
