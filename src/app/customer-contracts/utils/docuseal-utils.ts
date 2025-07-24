@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { config } from '@/lib/config';
 import { generateContractHTML } from './docuseal-html-template';
+import { createDocuSealSubmissionFreePlan } from './docuseal-free-plan-utils';
 
 export interface CreateSubmissionParams {
     contractId: string;
@@ -43,10 +44,9 @@ export async function createDocuSealSubmission({
     }
 
     try {
-        // Generate HTML content for the contract
+        // First, try HTML-based submission (Pro plan feature)
         const htmlContent = generateContractHTML(contract, contract.shops);
 
-        // Create submission directly from HTML using DocuSeal API
         const docusealResponse = await fetch(`${config.docuseal.apiUrl}/submissions/html`, {
             method: 'POST',
             headers: {
@@ -56,7 +56,7 @@ export async function createDocuSealSubmission({
             body: JSON.stringify({
                 name: `${contract.title} - ${contract.shops.shop_name}`,
                 external_id: `contract-${contract.id}`,
-                send_email: false, // We handle email sending ourselves
+                send_email: false,
                 documents: [
                     {
                         name: contract.title || 'Service Contract',
@@ -76,10 +76,48 @@ export async function createDocuSealSubmission({
 
         if (!docusealResponse.ok) {
             const errorData = await docusealResponse.text();
-            console.error('DocuSeal API error:', errorData);
-            throw new Error('Failed to create DocuSeal submission');
+            console.error('DocuSeal HTML API error:', {
+                status: docusealResponse.status,
+                statusText: docusealResponse.statusText,
+                response: errorData,
+                apiUrl: config.docuseal.apiUrl,
+                hasApiKey: !!config.docuseal.apiKey
+            });
+
+            // If it's a plan limitation error (403/402) or Pro feature error, try free plan approach
+            if (docusealResponse.status === 403 || 
+                docusealResponse.status === 402 || 
+                errorData.includes('Pro') ||
+                errorData.includes('plan') ||
+                errorData.includes('subscription')) {
+                
+                console.log('HTML submissions not available - trying template-based approach for free plan...');
+                return await createDocuSealSubmissionFreePlan({
+                    contractId,
+                    customerEmail,
+                    customerName
+                });
+            }
+            
+            // For other errors, provide detailed message
+            let errorMessage = 'Failed to create DocuSeal submission';
+            try {
+                const parsedError = JSON.parse(errorData);
+                if (parsedError.error) {
+                    errorMessage += `: ${parsedError.error}`;
+                } else if (parsedError.message) {
+                    errorMessage += `: ${parsedError.message}`;
+                }
+            } catch (e) {
+                if (errorData) {
+                    errorMessage += `: ${errorData.substring(0, 200)}`;
+                }
+            }
+            
+            throw new Error(errorMessage);
         }
 
+        // Process successful HTML submission response
         const submissionData = await docusealResponse.json();
         const customerSubmission = submissionData.submitters?.find(
             (submitter: any) => submitter.email === customerEmail
@@ -100,7 +138,6 @@ export async function createDocuSealSubmission({
 
         if (updateError) {
             console.error('Error updating contract:', updateError);
-            // Don't fail the request since DocuSeal submission was created successfully
         }
 
         return {
@@ -109,6 +146,27 @@ export async function createDocuSealSubmission({
         };
 
     } catch (error) {
+        // If HTML submission failed and we haven't tried template approach yet, try it
+        if (error instanceof Error && 
+            (error.message.includes('Failed to create DocuSeal submission') ||
+             error.message.includes('fetch'))) {
+            
+            console.log('HTML submission failed - trying template-based approach...');
+            try {
+                return await createDocuSealSubmissionFreePlan({
+                    contractId,
+                    customerEmail,
+                    customerName
+                });
+            } catch (fallbackError) {
+                console.error('Both HTML and template approaches failed:', {
+                    htmlError: error,
+                    templateError: fallbackError
+                });
+                throw new Error(`DocuSeal integration failed. HTML approach: ${error.message}. Template approach: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}`);
+            }
+        }
+        
         console.error('Error creating DocuSeal submission:', error);
         throw error;
     }

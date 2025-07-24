@@ -137,7 +137,7 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
     const handleGenerate = async () => {
         const requiredQuestionsAnswered = aiQuestions.workType;
         if (!title || !requiredQuestionsAnswered) {
-            toast.error("Please provide a title and the type of work to generate a contract.");
+            toast.error("Please provide a title and describe the work being performed to generate a contract.");
             return;
         }
         setIsGenerating(true);
@@ -196,21 +196,11 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                         <h3 className="text-lg font-medium pl-6">Client & Vehicle Information (Optional)</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#1A1A1A] rounded-xl p-6">
                             <div className="space-y-2">
-                                <Label className="text-gray-300 text-sm font-medium mb-1 block">Customer</Label>
+                                <Label className="text-gray-300 text-sm font-medium mb-1 block hover:text-white transition-colors cursor-pointer">Customer</Label>
                                 <div className="flex items-center gap-2">
                                     <Select value={selectedCustomerId} onValueChange={(value) => { if (value) { setSelectedCustomerId(value); setSelectedVehicleId(''); } }}>
                                         <SelectTrigger className="bg-[#292929] text-white border-[#626262] flex-1"><SelectValue placeholder="Select a customer (or leave blank)" /></SelectTrigger>
-                                        <SelectContent 
-                                            className="bg-[#292929] text-white border-[#626262]" 
-                                            position="popper" 
-                                            sideOffset={8}
-                                            onPointerDownOutside={(e) => {
-                                                const target = e.target as HTMLElement;
-                                                if (target.closest('[data-radix-popper-content-wrapper]')) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                        >
+                                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
                                             {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customer_name}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
@@ -231,21 +221,11 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-gray-300 text-sm font-medium mb-1 block">Vehicle</Label>
+                                <Label className="text-gray-300 text-sm font-medium mb-1 block hover:text-white transition-colors cursor-pointer">Vehicle</Label>
                                 <div className="flex gap-2">
                                     <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId} disabled={!selectedCustomerId}>
                                         <SelectTrigger className="bg-[#292929] text-white border-[#626262]"><SelectValue placeholder="Select a vehicle" /></SelectTrigger>
-                                        <SelectContent 
-                                            className="bg-[#292929] text-white border-[#626262]" 
-                                            position="popper" 
-                                            sideOffset={8}
-                                            onPointerDownOutside={(e) => {
-                                                const target = e.target as HTMLElement;
-                                                if (target.closest('[data-radix-popper-content-wrapper]')) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                        >
+                                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
                                             {customerVehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.year} {v.make} {v.model}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
@@ -256,8 +236,24 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                         <h3 className="text-lg font-medium pl-6">Contract Details</h3>
                          <div className="space-y-3 bg-[#1A1A1A] rounded-xl p-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="title">Title</Label>
-                                <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="bg-[#0000] border-[#626262]" />
+                                <div className="flex justify-between items-center">
+                                    <Label htmlFor="title" className="hover:text-white transition-colors cursor-pointer">Title</Label>
+                                    <span className="text-xs text-gray-400">
+                                        {title.length}/30 characters
+                                    </span>
+                                </div>
+                                <Input 
+                                    id="title" 
+                                    value={title} 
+                                    onChange={(e) => {
+                                        if (e.target.value.length <= 30) {
+                                            setTitle(e.target.value);
+                                        }
+                                    }} 
+                                    maxLength={30}
+                                    placeholder="e.g., Brake Repair Service Agreement"
+                                    className="bg-[#0000] border-[#626262]" 
+                                />
                             </div>
                          </div>
                         
@@ -265,23 +261,23 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                         <p className="text-sm text-gray-400 pl-6 -mt-2 mb-2">Answer these questions to help our AI create a detailed and accurate contract tailored to this job.</p>
                         <div className="space-y-4 bg-[#1A1A1A] rounded-xl p-6">
                             <div className="grid gap-2">
-                                <Label>What type of work is being performed?</Label>
+                                <Label className="hover:text-white transition-colors cursor-pointer">Describe what is being performed for the contract to be generated</Label>
                                 <Input 
                                     value={aiQuestions.workType} 
                                     onChange={(e) => handleAiQuestionChange('workType', e.target.value)}
-                                    placeholder="e.g., Repair, detailing, customization, diagnostic, inspection"
+                                    placeholder="e.g., Replacing front brake pads and rotors under warranty"
                                     className="bg-zinc-800 border-zinc-700"
                                 />
                             </div>
                             <div className="flex items-center justify-between">
-                                <Label>Include disclaimer for pre-existing damage?</Label>
+                                <Label className="hover:text-white transition-colors cursor-pointer">Include disclaimer for pre-existing damage?</Label>
                                 <Switch 
                                     checked={aiQuestions.includeDamageDisclaimer} 
                                     onCheckedChange={(checked) => handleAiQuestionChange('includeDamageDisclaimer', checked)}
                                 />
                             </div>
                              <div className="flex items-center justify-between">
-                                <Label>Does customer authorize work up to a certain amount?</Label>
+                                <Label className="hover:text-white transition-colors cursor-pointer">Does customer authorize work up to a certain amount?</Label>
                                 <Switch 
                                     checked={aiQuestions.authorizeWork} 
                                     onCheckedChange={(checked) => handleAiQuestionChange('authorizeWork', checked)}
@@ -289,7 +285,7 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                             </div>
                             {aiQuestions.authorizeWork && (
                                 <div className="grid gap-2 pl-4">
-                                    <Label>Maximum authorized amount ($)</Label>
+                                    <Label className="hover:text-white transition-colors cursor-pointer">Maximum authorized amount ($)</Label>
                                     <Input 
                                         type="number"
                                         min="0"
@@ -307,14 +303,14 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                                 </div>
                             )}
                             <div className="flex items-center justify-between">
-                                <Label>Inform customer that work may void warranties?</Label>
+                                <Label className="hover:text-white transition-colors cursor-pointer">Inform customer that work may void warranties?</Label>
                                 <Switch 
                                     checked={aiQuestions.informWarrantyVoid} 
                                     onCheckedChange={(checked) => handleAiQuestionChange('informWarrantyVoid', checked)}
                                 />
                             </div>
                             <div className="flex items-center justify-between">
-                                <Label>Include clause stating no warranty is provided unless specified?</Label>
+                                <Label className="hover:text-white transition-colors cursor-pointer">Include clause stating no warranty is provided unless specified?</Label>
                                  <Switch 
                                     checked={aiQuestions.includeNoWarrantyClause} 
                                     onCheckedChange={(checked) => handleAiQuestionChange('includeNoWarrantyClause', checked)}
@@ -325,7 +321,7 @@ export default function ContractEditor({ isOpen, onClose, onSave, contract, shop
                         <div className="space-y-3 bg-[#1A1A1A] rounded-xl p-6">
                             <div className="grid gap-2">
                                 <div className="flex justify-between items-center">
-                                    <Label htmlFor="content">Contract Text</Label>
+                                    <Label htmlFor="content" className="hover:text-white transition-colors cursor-pointer">Contract Text</Label>
                                     <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating || !title || !aiQuestions.workType}>
                                         {isGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
                                         Generate with AI
