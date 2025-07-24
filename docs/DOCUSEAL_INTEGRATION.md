@@ -101,9 +101,12 @@ Use the "Preview Signing Form" option in contract cards to see the HTML output b
 
 ### Development Testing
 ```bash
+# For local development, set environment variable:
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
 # Test webhook locally with ngrok
 ngrok http 3000
-# Update DocuSeal webhook URL to ngrok endpoint
+# Update DocuSeal webhook URL to ngrok endpoint for local testing
 ```
 
 ## Migration Notes

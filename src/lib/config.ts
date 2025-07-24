@@ -2,10 +2,7 @@
 export const config = {
   // App URLs
   app: {
-    baseUrl: process.env.NEXT_PUBLIC_APP_URL || 
-             (process.env.NODE_ENV === 'production' 
-              ? 'https://app.motorminds.ca' 
-              : 'http://localhost:3000'),
+    baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.motorminds.ca',
   },
 
   // DocuSeal configuration
