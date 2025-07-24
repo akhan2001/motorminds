@@ -96,3 +96,80 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* DocuSeal Custom Styling */
+.docuseal-form-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Main Form Styling */
+.form-container {
+  background-color: #ffffff !important;
+  font-family: 'Bricolage Grotesque', sans-serif !important;
+}
+
+.template-title {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+
+.submit-form-button {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+}
+
+.submit-form-button:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.decline-button {
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+  border-radius: 8px !important;
+}
+
+.field-area {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
+.field-area-active {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.steps-progress {
+  background-color: #f3f4f6 !important;
+  border-radius: 8px !important;
+}
+
+.steps-progress-current {
+  background-color: #3b82f6 !important;
+}
+
+/* Completed Form Styling */
+.completed-form-message-title {
+  color: #059669 !important;
+  font-weight: 600 !important;
+}
+
+.completed-form-download-button,
+.completed-form-send-copy-button {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: white !important;
+  border-radius: 8px !important;
+  margin: 8px !important;
+}
+
+/* Company branding */
+.company-logo {
+  max-height: 60px !important;
+}

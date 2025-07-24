@@ -13,6 +13,7 @@ import { ContractPDFTemplate } from './ContractPDFTemplate';
 import { toast } from "sonner";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
 import { SendConfirmationDialog } from "./SendConfirmationDialog";
+import { ContractStatusDashboard } from "./DocuSeal";
 
 export default function ContractsDashboard({ shopId }: { shopId: string; }) {
     const router = useRouter();
@@ -204,6 +205,7 @@ export default function ContractsDashboard({ shopId }: { shopId: string; }) {
             </div>
             
             <ShopInfoCheck shop={shop} />
+            <ContractStatusDashboard shopId={shopId} />
 
             <div className="flex justify-end items-center gap-4 mb-8">
                 <Button
@@ -226,6 +228,7 @@ export default function ContractsDashboard({ shopId }: { shopId: string; }) {
                         onDownloadPDF={() => handleDownloadContractPDF(contract)}
                         onPreview={() => handleOpenPreview(contract)}
                         onSend={() => handleOpenSendConfirmation(contract)}
+                        onRefresh={refreshContracts}
                     />
                 ))}
             </div>
