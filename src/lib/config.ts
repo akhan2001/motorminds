@@ -10,7 +10,8 @@ export const config = {
     apiUrl: process.env.DOCUSEAL_API_URL || 'https://api.docuseal.com',
     baseUrl: process.env.NEXT_PUBLIC_DOCUSEAL_URL || 'https://docuseal.com',
     apiKey: process.env.DOCUSEAL_API_KEY,
-    templateId: process.env.DOCUSEAL_TEMPLATE_ID, // Optional - templates created dynamically
+    // For free plan users, you need to create a template manually and set this ID
+    templateId: process.env.DOCUSEAL_TEMPLATE_ID || process.env.DOCUSEAL_FREE_TEMPLATE_ID,
   },
 
   // Email configuration
