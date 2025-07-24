@@ -156,31 +156,31 @@ export async function POST(req: Request) {
         5. Cost estimates for labor and parts
 
         Return ONLY valid JSON:
-        {
-        "upsell_suggestions": [
             {
+              "upsell_suggestions": [
+                {
             "title": "Specific Service/Part Name",
             "description": "Technical explanation of why this specific vehicle needs this service, including known common failures for this make/model/year",
             "estimatedValue": 400,
             "priority": "high",
             "category": "immediate"
-            }
-        ],
-        "flags": [
-            {
+                }
+              ],
+              "flags": [
+                {
             "type": "urgent",
             "message": "Vehicle-specific warning based on symptoms and known issues",
             "category": "safety"
-            }
-        ],
-        "work_order_analysis": {
+                }
+              ],
+              "work_order_analysis": {
             "current_work_assessment": "Technical diagnosis of the specific issue for this vehicle, referencing common problems for this make/model/year",
             "related_systems": ["Specific systems to check on this vehicle"],
             "mileage_considerations": "What typically fails at this mileage on this specific vehicle",
             "timing_recommendations": "Optimal timing for repairs considering vehicle age and known failure patterns"
-        },
+              },
         "summary": "Technical summary with specific diagnosis and vehicle-known issues"
-        }
+            }
 
         Focus on technical accuracy and vehicle-specific knowledge. Reference common issues for this exact vehicle.`;
 
@@ -236,7 +236,7 @@ export async function POST(req: Request) {
                     parsedResponse = null;
                 }
             } else {
-                parsedResponse = null;
+                    parsedResponse = null;
             }
         }
         

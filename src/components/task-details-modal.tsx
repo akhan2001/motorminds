@@ -737,13 +737,13 @@ export function TaskDetailsModal({
               {/* DELETE BUTTON */}
               <ConfirmationDialog
                 trigger={
-                  <Button
-                    variant="destructive"
-                    className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
+              <Button
+                variant="destructive"
+                className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
                 }
                 title="Remove Work Order"
                 description="Are you sure you want to remove this task from the shop? This action will hide it from the shop's list but keep any existing invoice."

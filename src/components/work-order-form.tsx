@@ -376,22 +376,22 @@ async function handleSave() {
 			toast.success("Work order created successfully!")
 		}
 
-		const newTask: Task = {
+	const newTask: Task = {
 			id: savedWorkOrder?.id || Date.now().toString(),
-			title:
-				workOrderData.taskName ||
-				`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-			vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-			date: new Date().toISOString().split("T")[0],
-			status: "red",
-			column: "todo",
-			priority: workOrderData.priority,
-		}
+		title:
+			workOrderData.taskName ||
+			`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+		date: new Date().toISOString().split("T")[0],
+		status: "red",
+		column: "todo",
+		priority: workOrderData.priority,
+	}
 
-		console.log(newTask)
-		onAddTask(newTask)
+	console.log(newTask)
+	onAddTask(newTask)
 
-		onClose()
+	onClose()
 	} catch (error) {
 		console.error("Error saving work order:", error)
 		toast.error("Failed to create work order. Please try again.")
