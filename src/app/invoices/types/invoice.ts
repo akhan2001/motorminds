@@ -32,4 +32,7 @@ export interface Invoice {
     mileage?: string
     assigned_to?: string
     vehicle_information?: VehicleInformation
+    source?: "customer_generated" | "shop_generated"
+    estimated_amount?: number
+    customer_notes?: string
 } 

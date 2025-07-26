@@ -16,7 +16,7 @@ export function InvoiceFilter({
     return (
         <div
             onClick={onClick}
-            className={`p-4 rounded-lg min-w-[20%] transition-all duration-200 hover:shadow-md ${
+            className={`p-4 rounded-lg w-full min-w-[200px] transition-all duration-200 hover:shadow-md ${
                 active 
                     ? "bg-[#131313] border border-[#222]" 
                     : "border border-[#222] hover:border-gray-500"
