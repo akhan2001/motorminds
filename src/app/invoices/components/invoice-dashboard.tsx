@@ -7,6 +7,7 @@ import EditInvoiceForm from "./EditInvoiceForm"
 import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
 import { InvoiceDialog } from "./InvoiceDialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchAllInvoices, formatCurrency, formatDate, fetchShopBusinessDetails } from "../utils/invoice-utils"
 import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -32,6 +33,8 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
     
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
+    // Active tab for source filtering
+    const [activeSourceTab, setActiveSourceTab] = useState<"all" | "shop_generated" | "customer_generated">("all")
 
     // Handle opening invoice from URL
     useEffect(() => {
@@ -113,10 +116,17 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
 
     // Filter the displayed invoices
     const filteredInvoices = invoices.filter((inv) => {
-        if (selectedFilter === "all")   return true
-        if (selectedFilter === "paid")   return inv.status === "PAID"
-        if (selectedFilter === "unpaid") return inv.status === "UNPAID"
-        return true
+        // Status filter
+        let statusMatch = true;
+        if (selectedFilter === "paid") statusMatch = inv.status === "PAID"
+        else if (selectedFilter === "unpaid") statusMatch = inv.status === "UNPAID"
+        
+        // Source filter
+        let sourceMatch = true;
+        if (activeSourceTab === "shop_generated") sourceMatch = inv.source === "shop_generated"
+        else if (activeSourceTab === "customer_generated") sourceMatch = inv.source === "customer_generated"
+        
+        return statusMatch && sourceMatch;
     })
 
     // Calculate counts for each filter type
@@ -153,6 +163,22 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
     ).length
     const unpaidMonthCount = invoices.filter(invoice => 
         invoice.status === "UNPAID" && isThisMonth(invoice.issue_date)
+    ).length
+
+    // Customer-generated invoices counts
+    const customerTodayCount = invoices.filter(invoice => 
+        invoice.source === "customer_generated" && isToday(invoice.issue_date)
+    ).length
+    const customerMonthCount = invoices.filter(invoice => 
+        invoice.source === "customer_generated" && isThisMonth(invoice.issue_date)
+    ).length
+
+    // Shop-generated invoices counts
+    const shopTodayCount = invoices.filter(invoice => 
+        invoice.source === "shop_generated" && isToday(invoice.issue_date)
+    ).length
+    const shopMonthCount = invoices.filter(invoice => 
+        invoice.source === "shop_generated" && isThisMonth(invoice.issue_date)
     ).length
 
     // Filter and sort the invoices more efficiently using useMemo
@@ -239,6 +265,9 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
             business_number: businessDetails.business_number,
             labour_items: invoice.labour_items || [],
             parts_items: invoice.parts_items || [],
+            source: invoice.source,
+            customer_notes: invoice.customer_notes,
+            estimated_amount: invoice.estimated_amount,
             vehicleInfo: invoice.vehicle_information ? {
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,
@@ -285,32 +314,62 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                     />
                 </div>
 
-                {/* The 3 Filter Boxes */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start mb-6 sm:mb-8">
-                    <div className="grid grid-cols-3 gap-2 w-full min-w-[50%] sm:w-auto">
-                        <InvoiceFilter
-                            title="All"
-                            todayCount={allTodayCount}
-                            monthCount={allMonthCount}
-                            active={selectedFilter === "all"}
-                            onClick={() => setSelectedFilter("all")}
-                        />
-                        <InvoiceFilter
-                            title="Paid"
-                            todayCount={paidTodayCount}
-                            monthCount={paidMonthCount}
-                            active={selectedFilter === "paid"}
-                            onClick={() => setSelectedFilter("paid")}
-                        />
-                        <InvoiceFilter
-                            title="Unpaid"
-                            todayCount={unpaidTodayCount}
-                            monthCount={unpaidMonthCount}
-                            active={selectedFilter === "unpaid"}
-                            onClick={() => setSelectedFilter("unpaid")}
-                        />
+                {/* Status Filter Boxes */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start mb-4">
+                    <div className="w-full sm:w-auto">
+                        <h4 className="text-sm text-gray-400 mb-2">Filter by Status</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:min-w-[600px]">
+                            <InvoiceFilter
+                                title="All"
+                                todayCount={allTodayCount}
+                                monthCount={allMonthCount}
+                                active={selectedFilter === "all"}
+                                onClick={() => setSelectedFilter("all")}
+                            />
+                            <InvoiceFilter
+                                title="Paid"
+                                todayCount={paidTodayCount}
+                                monthCount={paidMonthCount}
+                                active={selectedFilter === "paid"}
+                                onClick={() => setSelectedFilter("paid")}
+                            />
+                            <InvoiceFilter
+                                title="Unpaid"
+                                todayCount={unpaidTodayCount}
+                                monthCount={unpaidMonthCount}
+                                active={selectedFilter === "unpaid"}
+                                onClick={() => setSelectedFilter("unpaid")}
+                            />
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-3 sm:mt-0 sm:ml-auto">
+                </div>
+
+                {/* Source Tabs */}
+                <Tabs value={activeSourceTab} onValueChange={(value) => setActiveSourceTab(value as any)} className="mb-6 sm:mb-8">
+                    <TabsList className="bg-[#131313] border border-[#333] h-12">
+                        <TabsTrigger 
+                            value="all" 
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                        >
+                            All Invoices ({allMonthCount})
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="shop_generated" 
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                        >
+                            Shop Generated ({shopMonthCount})
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="customer_generated" 
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                        >
+                            Customer Requests ({customerMonthCount})
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                
+                <div className="flex flex-wrap gap-2 mb-6 justify-end">
+                    <div className="flex flex-wrap gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -384,6 +443,9 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                                     license_plate: invoice.vehicle_information.license_plate
                                 } : undefined}
                                 workOrder={invoice.workorder_id}
+                                source={invoice.source}
+                                estimatedAmount={invoice.estimated_amount}
+                                customerNotes={invoice.customer_notes}
                                 onClick={() => handleOpenInvoice(invoice)}
                                 onStatusChange={refreshInvoices}
                             />
@@ -428,6 +490,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                     onClose={handleCloseInvoice}
                     invoice={selectedInvoice}
                     shopId={shopId}
+                    onInvoiceUpdated={refreshInvoices}
                     // onEdit={() => handleEditInvoice(selectedInvoice)}
                 />
             )}

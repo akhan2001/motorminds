@@ -22,11 +22,12 @@ export async function fetchAllInvoices(shopId: string) {
 	// Get shop details to add to invoices
 	const shopDetails = await fetchShopBusinessDetails(shopId);
 	
-	// Add shop details to each invoice
+	// Add shop details to each invoice and ensure source field exists
 	const invoicesWithShopDetails = data?.map(invoice => ({
 		...invoice,
 		hst_number: invoice.hst_number || shopDetails.hst_number,
-		business_number: invoice.business_number || shopDetails.business_number
+		business_number: invoice.business_number || shopDetails.business_number,
+		source: invoice.source || 'shop_generated' // Default to shop_generated for existing invoices
 	})) || [];
 	
 	return invoicesWithShopDetails;

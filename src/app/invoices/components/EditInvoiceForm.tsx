@@ -46,6 +46,7 @@ export default function EditInvoiceForm({
     const [parts, setParts] = useState("");
     const [partsCost, setPartsCost] = useState("0");
     
+    // New state for multiple items
     const [labourItems, setLabourItems] = useState<{id: string, description: string, cost: string, shop_cost?: string}[]>([]);
     const [partsItems, setPartsItems] = useState<{id: string, description: string, cost: string, shop_cost?: string, quantity?: string}[]>([]);
     const [notes, setNotes] = useState("");
@@ -53,7 +54,7 @@ export default function EditInvoiceForm({
     const [description, setDescription] = useState("");
     const [assignedTo, setAssignedTo] = useState("");
     const [total, setTotal] = useState("");
-    const [vehicleInfo, setVehicleInfo] = useState<any>(null);
+    const [vehicleInfo, setVehicleInfo] = useState<any>(null); //jsonb field
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [staffNames, setStaffNames] = useState<{id: string, full_name: string, role: string}[]>([]);
     const [showNewClientForm, setShowNewClientForm] = useState(false);
@@ -70,6 +71,84 @@ export default function EditInvoiceForm({
         model: '',
         license_plate: ''
     });
+
+    // Pre-fill form with existing invoice data
+    useEffect(() => {
+        if (existingInvoice && isOpen) {
+            console.log("Pre-filling form with existing invoice:", existingInvoice);
+            
+            // Basic invoice fields
+            setInvoiceDate(existingInvoice.issueDate ? existingInvoice.issueDate.split('T')[0] : formattedDate);
+            setDescription(existingInvoice.description || "");
+            setNotes(existingInvoice.notes || "");
+            setMileage(existingInvoice.mileage || "");
+            setAssignedTo(existingInvoice.assignedTo || "");
+            setTotal(existingInvoice.amount?.toString() || "0");
+            
+            // Vehicle info
+            if (existingInvoice.vehicleInfo) {
+                setVehicleInfo(existingInvoice.vehicleInfo);
+                setManualVehicleInfo({
+                    year: existingInvoice.vehicleInfo.year || '',
+                    make: existingInvoice.vehicleInfo.make || '',
+                    model: existingInvoice.vehicleInfo.model || '',
+                    license_plate: existingInvoice.vehicleInfo.license_plate || ''
+                });
+            }
+            
+            // Client info (set manual form if not from existing customer)
+            setClientInfo({
+                client_name: existingInvoice.clientName || '',
+                client_phone: existingInvoice.clientPhone || '',
+                client_address: existingInvoice.clientAddress || '',
+                client_email: existingInvoice.clientEmail || ''
+            });
+            
+            // Labour items - convert from existing data
+            if (existingInvoice.labour_items && existingInvoice.labour_items.length > 0) {
+                const formattedLabourItems = existingInvoice.labour_items.map((item: any) => ({
+                    id: uuidv4(),
+                    description: item.description || '',
+                    cost: item.cost?.toString() || '0',
+                    shop_cost: item.shop_cost?.toString() || '0'
+                }));
+                setLabourItems(formattedLabourItems);
+            } else if (existingInvoice.labour) {
+                // Fallback to single labour entry
+                setLabourItems([{
+                    id: uuidv4(),
+                    description: existingInvoice.labour,
+                    cost: existingInvoice.labour_total_price?.toString() || '0',
+                    shop_cost: '0'
+                }]);
+            }
+            
+            // Parts items - convert from existing data
+            if (existingInvoice.parts_items && existingInvoice.parts_items.length > 0) {
+                const formattedPartsItems = existingInvoice.parts_items.map((item: any) => ({
+                    id: uuidv4(),
+                    description: item.description || '',
+                    cost: item.cost?.toString() || '0',
+                    shop_cost: item.shop_cost?.toString() || '0',
+                    quantity: item.quantity?.toString() || '1'
+                }));
+                setPartsItems(formattedPartsItems);
+            } else if (existingInvoice.parts) {
+                // Fallback to single parts entry
+                setPartsItems([{
+                    id: uuidv4(),
+                    description: existingInvoice.parts,
+                    cost: existingInvoice.parts_total_price?.toString() || '0',
+                    shop_cost: '0',
+                    quantity: '1'
+                }]);
+            }
+            
+            // Show manual forms for editing
+            setShowNewClientForm(true);
+            setShowNewVehicleForm(true);
+        }
+    }, [existingInvoice, isOpen]);
 
     // Load customers
     useEffect(() => {
@@ -192,17 +271,6 @@ export default function EditInvoiceForm({
             return false;
         }
         
-        // Check either selected customer or new client info
-        if (!showNewClientForm && !selectedCustomerId) {
-            toast.error("Please select a customer");
-            return false;
-        }
-        
-        if (showNewClientForm && !clientInfo.client_name) {
-            toast.error("Please enter client name");
-            return false;
-        }
-        
         if (!invoiceDate) {
             toast.error("Please select an invoice date");
             return false;
@@ -213,10 +281,10 @@ export default function EditInvoiceForm({
             return false;
         }
         
-        // if (!total || isNaN(parseFloat(total)) || parseFloat(total) <= 0) {
-        //     toast.error("Please enter a valid total amount");
-        //     return false;
-        // }
+        if (!clientInfo.client_name) {
+            toast.error("Please enter client name");
+            return false;
+        }
 
         if (!labourCost || isNaN(parseFloat(labourCost)) || parseFloat(labourCost) < 0) {
             toast.error("Labour cost cannot be negative");
@@ -235,78 +303,62 @@ export default function EditInvoiceForm({
         setAssignedTo(value);
     };
 
-    // Effect to populate form when it opens with existing invoice data
     useEffect(() => {
-        if (isOpen && existingInvoice) {
-            if (existingInvoice.customer_id) {
-                setSelectedCustomerId(existingInvoice.customer_id);
-            } else if (existingInvoice.client_name) {
-                setShowNewClientForm(true);
-                setClientInfo({
-                    client_name: existingInvoice.client_name || '',
-                    client_phone: existingInvoice.client_phone || '',
-                    client_address: existingInvoice.client_address || '',
-                    client_email: existingInvoice.client_email || ''
-                });
-            }
-            
-            if (existingInvoice.vehicle_id) {
-                setSelectedVehicleId(existingInvoice.vehicle_id);
-            } else if (existingInvoice.vehicleInfo) {
-                setShowNewVehicleForm(true);
-                setVehicleInfo(existingInvoice.vehicleInfo);
-                setManualVehicleInfo(existingInvoice.vehicleInfo);
-            }
-
-            setInvoiceDate(existingInvoice.issueDate?.split('T')[0] || formattedDate);
-            setDescription(existingInvoice.description || '');
-            setNotes(existingInvoice.notes || '');
-            setMileage(existingInvoice.mileage || '');
-            setAssignedTo(existingInvoice.assignedTo || '');
-            
-            if (existingInvoice.labour_items && Array.isArray(existingInvoice.labour_items)) {
-                setLabourItems(existingInvoice.labour_items.map((item: any) => ({
-                    id: uuidv4(),
-                    description: item.description || '',
-                    cost: item.cost?.toString() || '0'
-                })));
-            }
-            
-            if (existingInvoice.parts_items && Array.isArray(existingInvoice.parts_items)) {
-                setPartsItems(existingInvoice.parts_items.map((item: any) => ({
-                    id: uuidv4(),
-                    description: item.description || '',
-                    cost: item.cost?.toString() || '0',
-                    shop_cost: item.shop_cost?.toString() || '0',
-                    quantity: item.quantity?.toString() || '1'
-                })));
-            }
+        if (isOpen && !existingInvoice) {
+            resetFormValues();
         }
-    }, [isOpen, existingInvoice, formattedDate]);
+    }, [isOpen]);
 
+    // Update handleSave to handle edit mode
     const handleSave = async () => {
         if (!validateForm()) return;
         
         setIsSubmitting(true);
         
         try {
+            // Create the invoice data structure
             const invoiceData = {
+                invoice_number: existingInvoice.invoiceNumber, // Keep the same invoice number for edit
                 shop_id: shopId,
-                client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
+                shop_name: shopName || "Unknown Shop",
+                shop_address: shopAddress || "",
+                shop_email: shopEmail || "",
+                shop_phone: shopPhone || "",
+                // Client info from manual form...
+                client_name: clientInfo.client_name,
+                client_address: clientInfo.client_address,
+                client_email: clientInfo.client_email,
+                client_phone: clientInfo.client_phone,
+                // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
                 notes: notes || "",
+                mileage: mileage || "",
+                description: description || "",
+                assigned_to: assignedTo || "",
                 amount: parseFloat(total) || 0,
-                status: existingInvoice.status,
+                status: existingInvoice.status, // Keep existing status
+                vehicle_information: vehicleInfo,
+                // Add the new arrays
+                labour_items: labourItems.map(item => ({
+                    description: item.description,
+                    cost: parseFloat(item.cost) || 0,
+                    shop_cost: parseFloat(item.shop_cost || "0") || 0
+                })),
                 parts_items: partsItems.map(item => ({
                     description: item.description,
                     cost: parseFloat(item.cost) || 0,
                     shop_cost: parseFloat(item.shop_cost || "0") || 0,
                     quantity: parseInt(item.quantity || "1", 10)
-                }))
+                })),
+                labour_total_price: labourItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0),
+                parts_total_price: partsItems.reduce((sum, item) => {
+                    const price = parseFloat(item.cost) || 0;
+                    const quantity = parseInt(item.quantity || '1', 10);
+                    return sum + (price * quantity);
+                }, 0)
             };
             
-            const result = await updateInvoice(existingInvoice.invoice_number, invoiceData, shopId);
-
+            const result = await updateInvoice(existingInvoice.invoiceNumber, invoiceData, shopId);
             if (result) {
                 toast.success("Invoice updated successfully");
                 if (onInvoiceUpdated) {
@@ -314,10 +366,10 @@ export default function EditInvoiceForm({
                 }
                 onClose();
             } else {
-                toast.error(`Failed to update invoice`);
+                toast.error("Failed to update invoice");
             }
         } catch (error) {
-            console.error(`Error updating invoice:`, error);
+            console.error("Error updating invoice:", error);
             toast.error(`Failed to update invoice: ${(error as Error).message || "Unknown error"}`);
         } finally {
             setIsSubmitting(false);
@@ -352,7 +404,6 @@ export default function EditInvoiceForm({
             model: '',
             license_plate: ''
         });
-        toast.success("Form cleared");
     };
 
     return (
@@ -361,10 +412,10 @@ export default function EditInvoiceForm({
                 {/* Sticky Header */}
                 <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#222222] rounded-t-lg">
                     <DialogTitle className="text-white text-xl sm:text-2xl">
-                        Edit Invoice
+                        Edit Invoice #{existingInvoice?.displayNumber}
                     </DialogTitle>
                     <DialogDescription className="text-gray-400 text-xs sm:text-sm">
-                        Fill in the details below to update the invoice.
+                        Update the details below to edit this invoice.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -447,7 +498,7 @@ export default function EditInvoiceForm({
                                 </Button>
                             </div>
 
-                            {/* New Client Form */}
+                            {/* Client Form - Always shown in edit mode */}
                             {showNewClientForm && (
                                 <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
                                     <Input
@@ -519,7 +570,7 @@ export default function EditInvoiceForm({
                                 </Button>
                             </div>
 
-                            {/* Manual Vehicle Form */}
+                            {/* Vehicle Form - Always shown in edit mode */}
                             {showNewVehicleForm && (
                                 <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
                                     <div className="grid grid-cols-1 gap-2">
@@ -564,10 +615,6 @@ export default function EditInvoiceForm({
                             )}
                         </div>
                     </div>
-
-                    {/* Invoice date
-                    <div className="space-y-2 bg-[#1A1A1A] rounded-xl p-6">
-                    </div> */}
 
                     {/* Invoice details */}
                     <h3 className="text-lg font-medium pl-6">Invoice Details</h3>
@@ -660,14 +707,6 @@ export default function EditInvoiceForm({
                 </div>
                 
                 <DialogFooter className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:justify-between w-full px-6 py-4">
-                    <Button 
-                        variant="outline" 
-                        onClick={resetFormValues} 
-                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-3 sm:order-1"
-                    >
-                        Clear Form
-                    </Button>
-                    
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto order-1 sm:order-2">
                         <Button 
                             variant="outline" 
