@@ -306,7 +306,7 @@ export default function EditInvoiceForm({
     useEffect(() => {
         if (isOpen && !existingInvoice) {
             resetFormValues();
-        }
+            }
     }, [isOpen]);
 
     // Update handleSave to handle edit mode

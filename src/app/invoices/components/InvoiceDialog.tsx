@@ -211,22 +211,22 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-0 w-[95vw] max-w-[95vw] sm:max-w-4xl max-h-[90vh] flex flex-col">
                 {/* Fixed Header */}
                 <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#333333] rounded-t-lg">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                        <DialogTitle className="text-xl font-semibold text-white">
-                            Invoice # {invoice.displayNumber}
-                            <div className="text-gray-400 text-sm">
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                    <div className="text-gray-500 text-sm">
-                                        {invoice.invoiceNumber}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <DialogTitle className="text-xl font-semibold text-white">
+                                Invoice # {invoice.displayNumber}
+                                <div className="text-gray-400 text-sm">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                        <div className="text-gray-500 text-sm">
+                                            {invoice.invoiceNumber}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </DialogTitle>
-                        <DialogDescription className="text-gray-400 text-sm">
-                            Issued on: {formatDateString(invoice.issueDate)}
-                        </DialogDescription>
-                    </div>
-                </DialogHeader>
+                            </DialogTitle>
+                            <DialogDescription className="text-gray-400 text-sm">
+                                Issued on: {formatDateString(invoice.issueDate)}
+                            </DialogDescription>
+                        </div>
+                    </DialogHeader>
                 
                 {/* Scrollable Content */}
                 <div id="invoice-container" className="bg-[#1A1A1A] text-white p-4 sm:p-6 rounded-lg border border-[#333333] flex-1 overflow-y-auto">
@@ -376,8 +376,8 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                             </div>
                         </div>
                     </div>
-                                </div>
-
+                </div>
+        
                 <DialogFooter className=" bottom-0 bg-[#131313] border-t border-[#333333] mt-4 p-4 sm:p-6 flex flex-col sm:flex-row justify-end gap-1">
                     {/* Customer-Generated Invoice Actions */}
                     {isCustomerGenerated && invoice.clientEmail && (
@@ -418,12 +418,12 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                     {/* Delete with AlertDialog to prevent freezing */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button 
-                                className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none"
+                    <Button 
+                        className="bg-red-600 text-white w-full sm:w-auto hover:bg-red-700 border-none" 
                                 variant="outline"
-                            >
-                                <TrashIcon className="w-4 h-4" />
-                            </Button>
+                    >
+                        <TrashIcon className="w-4 h-4" />
+                    </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <AlertDialog

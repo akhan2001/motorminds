@@ -21,7 +21,7 @@ export function InvoiceCalendar({
     const dateMap: Record<string, number> = {};
     
     invoices.forEach(invoice => {
-      const dateKey = format(new Date(invoice.issue_date), "yyyy-MM-dd");
+              const dateKey = format(new Date(invoice.created_at), "yyyy-MM-dd");
       dateMap[dateKey] = (dateMap[dateKey] || 0) + 1;
     });
     

@@ -69,13 +69,13 @@ export function Nav() {
 		{ name: "Opportunity Management", href: "/lead-generation/customer-retention" },
 	]
 	
-	    const customerSubItems = [
-        { name: "All Customers", href: "/customers" },
-        { name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
-        { name: "Customer Intake Form", href: "/customer-intake" },
+	const customerSubItems = [
+		{ name: "All Customers", href: "/customers" },
+		{ name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
+		{ name: "Customer Intake Form", href: "/customer-intake" },
         { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
-        { name: "Customer Contracts", href: "/customer-contracts" },
-    ]
+		{ name: "Customer Contracts", href: "/customer-contracts" },
+	]
 
 	const navItems = [
 		{ name: "Dashboard", href: "/" },

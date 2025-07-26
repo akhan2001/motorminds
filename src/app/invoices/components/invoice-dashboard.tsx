@@ -146,39 +146,39 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
     }
 
     // All invoices counts
-    const allTodayCount = invoices.filter(invoice => isToday(invoice.issue_date)).length
-    const allMonthCount = invoices.filter(invoice => isThisMonth(invoice.issue_date)).length
+    const allTodayCount = invoices.filter(invoice => isToday(invoice.created_at)).length
+    const allMonthCount = invoices.filter(invoice => isThisMonth(invoice.created_at)).length
 
     // Paid invoices counts
     const paidTodayCount = invoices.filter(invoice => 
-        invoice.status === "PAID" && isToday(invoice.issue_date)
+        invoice.status === "PAID" && isToday(invoice.created_at)
     ).length
     const paidMonthCount = invoices.filter(invoice => 
-        invoice.status === "PAID" && isThisMonth(invoice.issue_date)
+        invoice.status === "PAID" && isThisMonth(invoice.created_at)
     ).length
 
     // Unpaid invoices counts
     const unpaidTodayCount = invoices.filter(invoice => 
-        invoice.status === "UNPAID" && isToday(invoice.issue_date)
+        invoice.status === "UNPAID" && isToday(invoice.created_at)
     ).length
     const unpaidMonthCount = invoices.filter(invoice => 
-        invoice.status === "UNPAID" && isThisMonth(invoice.issue_date)
+        invoice.status === "UNPAID" && isThisMonth(invoice.created_at)
     ).length
 
     // Customer-generated invoices counts
     const customerTodayCount = invoices.filter(invoice => 
-        invoice.source === "customer_generated" && isToday(invoice.issue_date)
+        invoice.source === "customer_generated" && isToday(invoice.created_at)
     ).length
     const customerMonthCount = invoices.filter(invoice => 
-        invoice.source === "customer_generated" && isThisMonth(invoice.issue_date)
+        invoice.source === "customer_generated" && isThisMonth(invoice.created_at)
     ).length
 
     // Shop-generated invoices counts
     const shopTodayCount = invoices.filter(invoice => 
-        invoice.source === "shop_generated" && isToday(invoice.issue_date)
+        invoice.source === "shop_generated" && isToday(invoice.created_at)
     ).length
     const shopMonthCount = invoices.filter(invoice => 
-        invoice.source === "shop_generated" && isThisMonth(invoice.issue_date)
+        invoice.source === "shop_generated" && isThisMonth(invoice.created_at)
     ).length
 
     // Filter and sort the invoices more efficiently using useMemo
@@ -187,7 +187,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
             .filter(invoice => {
                 // Date filter
                 if (isDateFilterActive && selectedDate) {
-                    const dateMatches = format(new Date(invoice.issue_date), "yyyy-MM-dd") === 
+                    const dateMatches = format(new Date(invoice.created_at), "yyyy-MM-dd") === 
                                        format(selectedDate, "yyyy-MM-dd");
                     if (!dateMatches) return false;
                 }
@@ -206,8 +206,8 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 return true;
             })
             .sort((a, b) => {
-                const dateA = new Date(a.issue_date).getTime()
-                const dateB = new Date(b.issue_date).getTime()
+                const dateA = new Date(a.created_at).getTime()
+                const dateB = new Date(b.created_at).getTime()
                 return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
             })
     }, [filteredInvoices, isDateFilterActive, selectedDate, sortOrder, searchQuery])
@@ -248,7 +248,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
             shopPhone: invoice.shop_phone,
             shopLogo: shopLogoUrl,
             amount: invoice.amount,
-            issueDate: invoice.issue_date,
+            issueDate: invoice.created_at,
             clientName: invoice.client_name,
             clientAddress: invoice.client_address,
             clientEmail: invoice.client_email,
@@ -319,28 +319,28 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                     <div className="w-full sm:w-auto">
                         <h4 className="text-sm text-gray-400 mb-2">Filter by Status</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:min-w-[600px]">
-                            <InvoiceFilter
-                                title="All"
-                                todayCount={allTodayCount}
-                                monthCount={allMonthCount}
-                                active={selectedFilter === "all"}
-                                onClick={() => setSelectedFilter("all")}
-                            />
-                            <InvoiceFilter
-                                title="Paid"
-                                todayCount={paidTodayCount}
-                                monthCount={paidMonthCount}
-                                active={selectedFilter === "paid"}
-                                onClick={() => setSelectedFilter("paid")}
-                            />
-                            <InvoiceFilter
-                                title="Unpaid"
-                                todayCount={unpaidTodayCount}
-                                monthCount={unpaidMonthCount}
-                                active={selectedFilter === "unpaid"}
-                                onClick={() => setSelectedFilter("unpaid")}
-                            />
-                        </div>
+                        <InvoiceFilter
+                            title="All"
+                            todayCount={allTodayCount}
+                            monthCount={allMonthCount}
+                            active={selectedFilter === "all"}
+                            onClick={() => setSelectedFilter("all")}
+                        />
+                        <InvoiceFilter
+                            title="Paid"
+                            todayCount={paidTodayCount}
+                            monthCount={paidMonthCount}
+                            active={selectedFilter === "paid"}
+                            onClick={() => setSelectedFilter("paid")}
+                        />
+                        <InvoiceFilter
+                            title="Unpaid"
+                            todayCount={unpaidTodayCount}
+                            monthCount={unpaidMonthCount}
+                            active={selectedFilter === "unpaid"}
+                            onClick={() => setSelectedFilter("unpaid")}
+                        />
+                    </div>
                     </div>
                 </div>
 
@@ -429,7 +429,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                                 displayNumber={invoice.display_id}
                                 status={invoice.status}
                                 amount={formatCurrency(invoice.amount)}
-                                issueDate={formatDate(invoice.issue_date)}
+                                issueDate={formatDate(invoice.created_at)}
                                 shopName={invoice.shop_name}
                                 shopAddress={invoice.shop_address}
                                 clientName={invoice.client_name}

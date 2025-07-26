@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { v4 as uuidv4 } from 'uuid'
 
+
+
 export interface CustomerInvoiceData {
   shopId: string
   customerId: string
@@ -70,6 +72,10 @@ export async function createCustomerInvoice(data: CustomerInvoiceData): Promise<
     const invoiceNumber = uuidv4()
     const displayId = await generateDisplayId(data.shopId)
 
+    // Get today's date using the same logic as invoice-forms.tsx
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+
     // Create the invoice record
     const invoiceRecord = {
       invoice_number: invoiceNumber,
@@ -80,7 +86,7 @@ export async function createCustomerInvoice(data: CustomerInvoiceData): Promise<
               status: 'UNPAID' as const,
         amount: 0, // Invoice starts at $0, shop will fill in actual pricing
         estimated_amount: data.estimatedAmount, // Customer's budget expectation
-      issue_date: new Date().toISOString(),
+      issue_date: formattedDate || new Date().toISOString(),
       
       // Shop information
       shop_name: shopData.shop_name,
