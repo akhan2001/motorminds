@@ -1,31 +1,8 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/utils/supabase/middleware';
 
-import type { NextRequest } from 'next/server'
-// import type { Database } from '@/lib/database.types'
-
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-
-  // Create a Supabase client configured to use cookies
-  const supabase = createMiddlewareClient({ req, res })
-
-  // Refresh session if expired
-  const { data: { session } } = await supabase.auth.getSession()
-
-  // Protected routes
-  const protectedPaths = ['/obd', '/api/simulate-obd', '/financials', '/api/financials']
-  const isProtectedPath = protectedPaths.some(path => 
-    req.nextUrl.pathname.startsWith(path)
-  )
-
-  if (isProtectedPath && !session) {
-    const redirectUrl = new URL('/login', req.url)
-    redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  return res
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
 }
 
 // Ensure the middleware is only called for relevant paths.
@@ -37,6 +14,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

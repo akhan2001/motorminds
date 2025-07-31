@@ -1,12 +1,8 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies as getCookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(req: NextRequest) {
-    // Ensure we are using the async cookies() API correctly
-    const cookieStore = await getCookies();
-    // Cast to any to align with expected helper types (runtime safe)
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore as any });
+    const supabase = await createClient();
     
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('startDate');

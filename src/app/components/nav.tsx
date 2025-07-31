@@ -1,7 +1,7 @@
 "use client"
 
-import { supabase } from "@/lib/supabase"
-import { Settings, HelpCircle, Menu, ChevronDown, MessageCircle } from "lucide-react"
+import { createClient } from "@/utils/supabase/client"
+import { Settings, HelpCircle, ChevronDown, MessageCircle } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
@@ -142,12 +142,19 @@ export function Nav() {
 	}
 
 	const handleLogout = async () => {
-		const { error } = await supabase.auth.signOut()
-		if (error) {
+		try {
+			const supabase = createClient()
+			const { error } = await supabase.auth.signOut()
+			
+			if (error) {
+				console.error("Logout error:", error)
+			} else {
+				router.push("/login")
+				router.refresh()
+			}
+		} catch (error) {
 			console.error("Logout error:", error)
 		}
-		router.push("/login")
-		window.location.reload()
 	}
 
 	return (
