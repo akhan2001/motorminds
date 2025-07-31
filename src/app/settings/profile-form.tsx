@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/utils/supabase/client"
 import { useShopSettings } from "@/hooks/useShopSettings"
 import { useSettingsForm } from "@/hooks/useSettingsForm"
 import { 
@@ -23,7 +23,7 @@ import {
     SocialMediaTab 
 } from "./components"
 
-const supabase = createClientComponentClient()
+const supabase = createClient()
 
 const shopFormSchema = z.object({
     shop_name: z

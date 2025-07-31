@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { toast } from 'sonner'
+import { createClient } from '@/utils/supabase/client'
 
-const supabase = createClientComponentClient()
+const supabase = createClient()
 
 // Types
 export interface ShopInfo {

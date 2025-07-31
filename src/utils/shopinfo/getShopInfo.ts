@@ -1,6 +1,6 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 
-const supabase = createClientComponentClient();
+const supabase = createClient();
 
 export async function getShopStaffNames(shopId: string) {
     const { data, error } = await supabase
