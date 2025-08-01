@@ -27,7 +27,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
     const [isLoading, setIsLoading] = useState(true)
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-    const [isDateFilterActive, setIsDateFilterActive] = useState(true)
+    const [isDateFilterActive, setIsDateFilterActive] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
     const router = useRouter();
     

@@ -2,16 +2,10 @@ import { supabase } from "@/lib/supabase";
 
 // Fetch all invoices from the database with improved error handling and performance
 export async function fetchAllInvoices(shopId: string) {
-    const today = new Date();
-    const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-    const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999).toISOString();
-
 	const { data, error } = await supabase
 		.from('invoices')
 		.select('*')
 		.eq('shop_id', shopId)
-        .gte('issue_date', startDate)
-        .lte('issue_date', endDate)
         .order('issue_date', { ascending: false });
 
 	if (error) {
