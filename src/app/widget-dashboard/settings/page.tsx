@@ -16,21 +16,38 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export default function WidgetSettingsPage() {
-    const { register, handleSubmit, control, reset, setValue } = useForm();
+    const { register, handleSubmit, control, reset, formState: { isSubmitting } } = useForm({
+        defaultValues: {
+            widget_config: {
+                primaryColor: "#3b82f6",
+                logoUrl: "",
+                headerText: "",
+                welcomeMessage: ""
+            },
+            authorized_domains: ""
+        }
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetch('/api/dashboard/widget/settings')
             .then(res => res.json())
             .then(data => {
-                reset(data);
-                // react-hook-form's `reset` doesn't handle array values well from a direct JSON object, so we set it manually.
-                if (data.authorized_domains) {
-                    setValue('authorized_domains', data.authorized_domains.join(', '));
+                if (data) {
+                    const preparedData = {
+                        widget_config: {
+                            primaryColor: data.widget_config?.primaryColor || "#3b82f6",
+                            logoUrl: data.widget_config?.logoUrl || "",
+                            headerText: data.widget_config?.headerText || "",
+                            welcomeMessage: data.widget_config?.welcomeMessage || "",
+                        },
+                        authorized_domains: (data.authorized_domains || []).join(", ")
+                    };
+                    reset(preparedData);
                 }
                 setLoading(false);
-            })
-    }, [reset, setValue]);
+            });
+    }, [reset]);
     
     const onSubmit = (data: any) => {
         const payload = {
@@ -52,22 +69,21 @@ export default function WidgetSettingsPage() {
         );
     };
 
-    if (loading) return <div>Loading...</div>
+    if (loading) return <div>Loading settings...</div>
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <Card className="bg-[#131313] border-gray-800">
                 <CardHeader>
                     <CardTitle>Appearance</CardTitle>
                     <CardDescription>Customize the look and feel of your chat widget.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-4">
+                <CardContent className="grid gap-6">
                     <div className="grid gap-2">
                         <Label htmlFor="primaryColor">Primary Color</Label>
                         <Controller
                             name="widget_config.primaryColor"
                             control={control}
-                            defaultValue="#3b82f6"
                             render={({ field }) => <Input {...field} type="color" className="w-24 p-1"/>}
                         />
                     </div>
@@ -86,7 +102,7 @@ export default function WidgetSettingsPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[#131313] border-gray-800">
                 <CardHeader>
                     <CardTitle>Security</CardTitle>
                     <CardDescription>Control where your widget can be embedded.</CardDescription>
@@ -107,7 +123,9 @@ export default function WidgetSettingsPage() {
             </Card>
 
             <div className="flex justify-end">
-                <Button type="submit">Save Settings</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : "Save Settings"}
+                </Button>
             </div>
         </form>
     );

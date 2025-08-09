@@ -2,28 +2,22 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function getShopIdForUser() {
     const supabase = await createClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (!user) {
         return null;
     }
 
-    const { user } = session;
-    // @ts-ignore
-    if (user.app_metadata.shop_id) {
-        // @ts-ignore
-        return user.app_metadata.shop_id;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-        .from('profiles')
+    const { data, error } = await supabase
+        .from('users')
         .select('shop_id')
         .eq('id', user.id)
         .single();
     
-    if (profileError || !profile) {
+    if (error) {
+        console.error("getShopIdForUser Error:", error);
         return null;
     }
 
-    return profile.shop_id;
+    return data.shop_id;
 }

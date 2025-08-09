@@ -24,12 +24,13 @@ export default function WidgetPage() {
     const [isLoading, setIsLoading] = useState(false);
     const searchParams = useSearchParams();
     const shopId = searchParams ? searchParams.get("shopId") : null;
-    const domain = typeof window !== "undefined" ? window.location.hostname : "";
+    const domain = searchParams ? searchParams.get("domain") : null;
     const conversationId = useRef<string | null>(null);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        if (shopId) {
+        if (shopId && domain) {
             fetch(`/api/widget/config/${shopId}`)
                 .then(res => res.json())
                 .then(setConfig);
@@ -40,7 +41,12 @@ export default function WidgetPage() {
                 body: JSON.stringify({ shopId, domain }),
             })
             .then(res => res.json())
-            .then(data => data.token && setToken(data.token))
+            .then(data => {
+                if (data.token) {
+                    setToken(data.token);
+                    setIsAuthenticated(true);
+                }
+            })
             .catch(console.error);
         }
     }, [shopId, domain]);
@@ -51,7 +57,7 @@ export default function WidgetPage() {
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        if (!input.trim() || isLoading || !isAuthenticated) return;
 
         const userMessage: Message = { id: crypto.randomUUID(), role: "user", content: input };
         setMessages(prev => [...prev, userMessage]);
@@ -110,11 +116,11 @@ export default function WidgetPage() {
                     style={styles.input}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type a message..."
-                    disabled={isLoading}
+                    placeholder={isAuthenticated ? "Type a message..." : "Authenticating..."}
+                    disabled={isLoading || !isAuthenticated}
                 />
-                <button type="submit" style={{ ...styles.button, backgroundColor: config.primaryColor }} disabled={isLoading}>
-                    Send
+                <button type="submit" style={{ ...styles.button, backgroundColor: config.primaryColor }} disabled={isLoading || !isAuthenticated}>
+                    {isLoading ? "..." : "Send"}
                 </button>
             </form>
         </div>

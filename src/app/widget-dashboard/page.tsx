@@ -43,22 +43,22 @@ export default function WidgetDashboardPage() {
     }, []);
 
     const renderContent = () => {
-        if (loading) return <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow>;
-        if (error) return <TableRow><TableCell colSpan={4} className="text-center text-red-500">Error: {error}</TableCell></TableRow>;
-        if (conversations.length === 0) return <TableRow><TableCell colSpan={4} className="text-center">No conversations found.</TableCell></TableRow>;
+        if (loading) return <TableRow><TableCell colSpan={4} className="text-center py-12">Loading conversations...</TableCell></TableRow>;
+        if (error) return <TableRow><TableCell colSpan={4} className="text-center py-12 text-red-500">Error: {error}</TableCell></TableRow>;
+        if (conversations.length === 0) return <TableRow><TableCell colSpan={4} className="text-center py-12">No conversations found.</TableCell></TableRow>;
         
         return conversations.map((convo) => (
-            <TableRow key={convo.id}>
+            <TableRow key={convo.id} className="bg-gray-900 border-gray-800">
                 <TableCell>{new Date(convo.created_at).toLocaleString()}</TableCell>
-                <TableCell><Badge>{convo.status}</Badge></TableCell>
-                <TableCell>{convo.messages[convo.messages.length - 1].content.substring(0, 50)}...</TableCell>
-                <TableCell><Button variant="secondary" size="sm">View</Button></TableCell>
+                <TableCell><Badge variant={convo.status === 'open' ? 'default' : 'secondary'}>{convo.status}</Badge></TableCell>
+                <TableCell className="text-gray-400">{convo.messages[convo.messages.length - 1].content.substring(0, 50)}...</TableCell>
+                <TableCell><Button variant="outline" size="sm" className="border-gray-700">View</Button></TableCell>
             </TableRow>
         ));
     };
 
     return (
-        <Card>
+        <Card className="bg-[#131313] border-gray-800">
             <CardHeader>
                 <CardTitle>Recent Conversations</CardTitle>
                 <CardDescription>
@@ -68,7 +68,7 @@ export default function WidgetDashboardPage() {
             <CardContent>
                 <Table>
                     <TableHeader>
-                        <TableRow>
+                        <TableRow className="border-gray-800">
                             <TableHead>Date</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Last Message</TableHead>

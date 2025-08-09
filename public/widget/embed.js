@@ -42,8 +42,9 @@
 
     function createIframe(shopId) {
         const iframe = document.createElement("iframe");
+        const domain = window.location.hostname;
         iframe.id = "motorminds-widget-iframe";
-        iframe.src = `${IFRAME_URL}?shopId=${shopId}`;
+        iframe.src = `${IFRAME_URL}?shopId=${shopId}&domain=${domain}`;
         iframe.style.border = "none";
         iframe.style.width = "400px";
         iframe.style.height = "600px";
