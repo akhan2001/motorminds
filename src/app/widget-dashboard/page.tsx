@@ -58,21 +58,21 @@ export default function WidgetDashboardPage() {
     };
 
     return (
-        <Card className="bg-[#131313] border-gray-800">
+        <Card className="bg-[#131313] border-gray-800 text-white">
             <CardHeader>
                 <CardTitle>Recent Conversations</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-400">
                     A list of the 10 most recent conversations from your widget.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
-                        <TableRow className="border-gray-800">
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Last Message</TableHead>
-                            <TableHead>Actions</TableHead>
+                        <TableRow className="border-gray-800 hover:bg-gray-800">
+                            <TableHead className="text-white">Date</TableHead>
+                            <TableHead className="text-white">Status</TableHead>
+                            <TableHead className="text-white">Last Message</TableHead>
+                            <TableHead className="text-white">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

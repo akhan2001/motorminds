@@ -212,3 +212,4 @@ const styles = {
         transition: "background-color 0.2s",
     } as CSSProperties,
 };
+

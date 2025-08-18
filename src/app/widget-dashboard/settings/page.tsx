@@ -69,14 +69,14 @@ export default function WidgetSettingsPage() {
         );
     };
 
-    if (loading) return <div>Loading settings...</div>
+    if (loading) return <div className="text-white">Loading settings...</div>
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            <Card className="bg-[#131313] border-gray-800">
+            <Card className="bg-[#131313] border-gray-800 text-white">
                 <CardHeader>
                     <CardTitle>Appearance</CardTitle>
-                    <CardDescription>Customize the look and feel of your chat widget.</CardDescription>
+                    <CardDescription className="text-gray-400">Customize the look and feel of your chat widget.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6">
                     <div className="grid gap-2">
@@ -102,10 +102,10 @@ export default function WidgetSettingsPage() {
                 </CardContent>
             </Card>
 
-            <Card className="bg-[#131313] border-gray-800">
+            <Card className="bg-[#131313] border-gray-800 text-white">
                 <CardHeader>
                     <CardTitle>Security</CardTitle>
-                    <CardDescription>Control where your widget can be embedded.</CardDescription>
+                    <CardDescription className="text-gray-400">Control where your widget can be embedded.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <div className="grid gap-2">
@@ -123,7 +123,7 @@ export default function WidgetSettingsPage() {
             </Card>
 
             <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
                     {isSubmitting ? "Saving..." : "Save Settings"}
                 </Button>
             </div>

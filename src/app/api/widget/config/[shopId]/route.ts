@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { corsHeaders } from "@/utils/cors";
 
-export async function GET(request: Request, { params }: { params: { shopId: string } }) {
-    const { shopId } = params;
+export async function GET(request: Request, { params }: { params: Promise<{ shopId: string }> }) {
+    const { shopId } = await params;
 
     if (!shopId) {
         return new NextResponse(JSON.stringify({ error: "Shop ID is required" }), { 
