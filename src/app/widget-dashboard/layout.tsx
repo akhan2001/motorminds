@@ -8,18 +8,17 @@ import { Button } from "@/components/ui/button";
 const navItems = [
     { href: "/widget-dashboard", label: "Conversations" },
     { href: "/widget-dashboard/settings", label: "Settings" },
-    { href: "/widget-dashboard/analytics", label: "Analytics" },
 ];
 
 function WidgetNav() {
     const pathname = usePathname();
     return (
-        <div className="flex items-center gap-2 mb-6 border-b border-gray-800">
+        <div className="flex items-center gap-2 mb-6 border-b border-zinc-800">
             {navItems.map((item) => (
                 <Link href={item.href} key={item.href}>
                     <Button
                         variant="ghost"
-                        className={`rounded-none ${pathname === item.href ? 'border-b-2 border-white text-white' : 'text-gray-400'}`}
+                        className={`rounded-none ${pathname === item.href ? 'border-b-2 border-white text-white' : 'text-zinc-400'}`}
                     >
                         {item.label}
                     </Button>
@@ -37,7 +36,7 @@ export default function WidgetLayout({ children }: { children: React.ReactNode }
                 <div className="container mx-auto max-w-[1300px]">
                     <div className="flex flex-col">
                         <h1 className="text-3xl font-bold">Widget Dashboard</h1>
-                        <p className="text-gray-400 mb-6">
+                        <p className="text-zinc-400 mb-6">
                             Manage your customer-facing chat widget.
                         </p>
                     </div>
