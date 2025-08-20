@@ -51,7 +51,11 @@ export default function WidgetDashboardPage() {
             <TableRow key={convo.id} className="bg-gray-900 border-gray-800">
                 <TableCell>{new Date(convo.created_at).toLocaleString()}</TableCell>
                 <TableCell><Badge variant={convo.status === 'open' ? 'default' : 'secondary'}>{convo.status}</Badge></TableCell>
-                <TableCell className="text-gray-400">{convo.messages[convo.messages.length - 1].content.substring(0, 50)}...</TableCell>
+                <TableCell className="text-gray-400">
+                    {convo.messages && convo.messages.length > 0 && convo.messages[convo.messages.length - 1]?.content 
+                        ? convo.messages[convo.messages.length - 1].content.substring(0, 50) + "..."
+                        : "No messages"}
+                </TableCell>
                 <TableCell><Button variant="outline" size="sm" className="border-gray-700">View</Button></TableCell>
             </TableRow>
         ));

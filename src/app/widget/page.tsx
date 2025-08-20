@@ -18,38 +18,21 @@ interface Message {
 
 export default function WidgetPage() {
     const [config, setConfig] = useState<WidgetConfig | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const searchParams = useSearchParams();
     const shopId = searchParams ? searchParams.get("shopId") : null;
-    const domain = searchParams ? searchParams.get("domain") : null;
     const conversationId = useRef<string | null>(null);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        if (shopId && domain) {
+        if (shopId) {
             fetch(`/api/widget/config/${shopId}`)
                 .then(res => res.json())
                 .then(setConfig);
-
-            fetch("/api/widget/auth", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ shopId, domain }),
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.token) {
-                    setToken(data.token);
-                    setIsAuthenticated(true);
-                }
-            })
-            .catch(console.error);
         }
-    }, [shopId, domain]);
+    }, [shopId]);
     
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -57,7 +40,7 @@ export default function WidgetPage() {
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!input.trim() || isLoading || !isAuthenticated) return;
+        if (!input.trim() || isLoading) return;
 
         const userMessage: Message = { id: crypto.randomUUID(), role: "user", content: input };
         setMessages(prev => [...prev, userMessage]);
@@ -66,8 +49,12 @@ export default function WidgetPage() {
 
         const res = await fetch('/api/widget/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ messages: [...messages, userMessage], conversation_id: conversationId.current })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                messages: [...messages, userMessage], 
+                conversation_id: conversationId.current,
+                shopId: shopId 
+            })
         });
 
         setIsLoading(false);
@@ -116,10 +103,10 @@ export default function WidgetPage() {
                     style={styles.input}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={isAuthenticated ? "Type a message..." : "Authenticating..."}
-                    disabled={isLoading || !isAuthenticated}
+                    placeholder="Type a message..."
+                    disabled={isLoading}
                 />
-                <button type="submit" style={{ ...styles.button, backgroundColor: config.primaryColor }} disabled={isLoading || !isAuthenticated}>
+                <button type="submit" style={{ ...styles.button, backgroundColor: config.primaryColor }} disabled={isLoading}>
                     {isLoading ? "..." : "Send"}
                 </button>
             </form>

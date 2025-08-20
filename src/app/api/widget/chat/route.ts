@@ -3,7 +3,6 @@ import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import jwt from "jsonwebtoken";
 import { createClient } from "@/utils/supabase/server";
 import { corsHeaders } from "@/utils/cors";
 
@@ -12,10 +11,25 @@ const formatMessage = (message: VercelChatMessage) => {
 };
 
 const WIDGET_TEMPLATE = `
-You are a friendly and professional customer service assistant for an auto repair shop.
-Your goal is to answer customer questions, provide information about the shop, and help them schedule appointments.
+You are a friendly and professional customer service assistant for {shop_name}.
+You are an auto repair shop assistant helping customers with their automotive needs.
 
-Keep your responses concise and helpful. If you cannot answer a question, offer to connect the user with a member of the shop's staff.
+Shop Information:
+- Business Name: {shop_name}
+- Location: {shop_address}
+- Phone: {shop_phone}
+- Services: {services_offered}
+- Operating Hours: {operating_hours}
+- About: {shop_about}
+
+Your goal is to:
+- Answer customer questions about automotive services
+- Provide information about {shop_name}'s services and capabilities
+- Help customers understand pricing and scheduling
+- Be helpful and professional representing {shop_name}
+
+Keep your responses concise and helpful. When customers ask about appointments or specific services, 
+provide the shop's contact information: {shop_phone}
 
 Current Conversation:
 {chat_history}
@@ -24,26 +38,46 @@ User: {input}
 Assistant:`;
 
 
-async function verifyToken(request: NextRequest) {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
-    const token = authHeader.substring(7);
-    try {
-        return jwt.verify(token, process.env.WIDGET_JWT_SECRET!);
-    } catch (error) {
-        return null;
-    }
-}
-
 export async function POST(req: NextRequest) {
-    const decodedToken = await verifyToken(req);
-    if (!decodedToken) {
-        return new NextResponse(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
-    }
+    const { messages, conversation_id, shopId } = await req.json();
     
-    const { messages, conversation_id } = await req.json();
-    // @ts-ignore
-    const { shopId } = decodedToken;
+    if (!shopId) {
+        return new NextResponse(JSON.stringify({ error: "Shop ID is required" }), { 
+            status: 400, 
+            headers: corsHeaders 
+        });
+    }
+
+    // Fetch shop information
+    const supabase = await createClient();
+    const { data: shop, error: shopError } = await supabase
+        .from("shops")
+        .select("shop_name, shop_address, shop_phone, shop_about, services_offered, operating_hours")
+        .eq("id", shopId)
+        .single();
+
+    if (shopError || !shop) {
+        return new NextResponse(JSON.stringify({ error: "Shop not found" }), { 
+            status: 404, 
+            headers: corsHeaders 
+        });
+    }
+
+    // Format shop information for the AI prompt
+    const shopInfo = {
+        shop_name: shop.shop_name || "the shop",
+        shop_address: shop.shop_address || "Contact us for location details",
+        shop_phone: shop.shop_phone || "Contact us for phone number",
+        shop_about: shop.shop_about || "We provide professional automotive repair services",
+        services_offered: shop.services_offered ? 
+            (Array.isArray(shop.services_offered) ? shop.services_offered.join(", ") : 
+             typeof shop.services_offered === 'object' ? Object.values(shop.services_offered).join(", ") :
+             shop.services_offered.toString()) : "General automotive repair services",
+        operating_hours: shop.operating_hours ? 
+            (typeof shop.operating_hours === 'object' ? 
+             Object.entries(shop.operating_hours).map(([day, hours]) => `${day}: ${hours}`).join(", ") :
+             shop.operating_hours.toString()) : "Contact us for operating hours"
+    };
 
     const model = new ChatOpenAI({ temperature: 0.7, modelName: "gpt-3.5-turbo" });
     const prompt = PromptTemplate.fromTemplate(WIDGET_TEMPLATE);
@@ -56,9 +90,9 @@ export async function POST(req: NextRequest) {
     const stream = await chain.stream({
         chat_history: chatHistory,
         input: latestMessage,
+        ...shopInfo
     });
 
-    const supabase = await createClient();
     const newConversationId = conversation_id || crypto.randomUUID();
 
     let aiResponse = "";

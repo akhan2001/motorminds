@@ -24,7 +24,27 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json(conversations);
+        // Parse messages JSON for each conversation
+        const parsedConversations = conversations?.map(convo => {
+            let messages = [];
+            try {
+                if (typeof convo.messages === 'string') {
+                    messages = JSON.parse(convo.messages);
+                } else if (Array.isArray(convo.messages)) {
+                    messages = convo.messages;
+                }
+            } catch (parseError) {
+                console.error("Error parsing messages for conversation", convo.id, parseError);
+                messages = [];
+            }
+            
+            return {
+                ...convo,
+                messages: Array.isArray(messages) ? messages : []
+            };
+        }) || [];
+
+        return NextResponse.json(parsedConversations);
 
     } catch (e) {
         const error = e as Error;
