@@ -73,57 +73,77 @@ export default function WidgetSettingsPage() {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            <Card className="bg-[#131313] border-gray-800 text-white">
+            <Card className="bg-[#131313] border-zinc-800 text-white">
                 <CardHeader>
                     <CardTitle>Appearance</CardTitle>
-                    <CardDescription className="text-gray-400">Customize the look and feel of your chat widget.</CardDescription>
+                    <CardDescription className="text-zinc-400">Customize the look and feel of your chat widget.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="primaryColor">Primary Color</Label>
+                        <Label htmlFor="primaryColor" className="text-zinc-200">Primary Color</Label>
                         <Controller
                             name="widget_config.primaryColor"
                             control={control}
-                            render={({ field }) => <Input {...field} type="color" className="w-24 p-1"/>}
+                            render={({ field }) => <Input {...field} type="color" className="w-24 h-10 p-1 border-zinc-600 bg-zinc-800 rounded-md cursor-pointer"/>}
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="logoUrl">Logo URL</Label>
-                        <Input id="logoUrl" {...register("widget_config.logoUrl")} placeholder="https://example.com/logo.png" />
+                        <Label htmlFor="logoUrl" className="text-zinc-200">Logo URL</Label>
+                        <Input 
+                            id="logoUrl" 
+                            {...register("widget_config.logoUrl")} 
+                            placeholder="https://example.com/logo.png" 
+                            className="bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-400 focus:border-blue-500 focus:ring-blue-500"
+                        />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="headerText">Header Text</Label>
-                        <Input id="headerText" {...register("widget_config.headerText")} />
+                        <Label htmlFor="headerText" className="text-zinc-200">Header Text</Label>
+                        <Input 
+                            id="headerText" 
+                            {...register("widget_config.headerText")} 
+                            placeholder="e.g., Chat with us!"
+                            className="bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-400 focus:border-blue-500 focus:ring-blue-500"
+                        />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="welcomeMessage">Welcome Message</Label>
-                        <Textarea id="welcomeMessage" {...register("widget_config.welcomeMessage")} />
+                        <Label htmlFor="welcomeMessage" className="text-zinc-200">Welcome Message</Label>
+                        <Textarea 
+                            id="welcomeMessage" 
+                            {...register("widget_config.welcomeMessage")} 
+                            placeholder="Hello! How can we help you today?"
+                            className="bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-400 focus:border-blue-500 focus:ring-blue-500 min-h-[80px]"
+                        />
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className="bg-[#131313] border-gray-800 text-white">
+            <Card className="bg-[#131313] border-zinc-800 text-white">
                 <CardHeader>
                     <CardTitle>Security</CardTitle>
-                    <CardDescription className="text-gray-400">Control where your widget can be embedded.</CardDescription>
+                    <CardDescription className="text-zinc-400">Control where your widget can be embedded.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="authorized_domains">Authorized Domains</Label>
+                        <Label htmlFor="authorized_domains" className="text-zinc-200">Authorized Domains</Label>
                         <Textarea 
                             id="authorized_domains" 
                             {...register("authorized_domains")} 
                             placeholder="example.com, my-other-site.com" 
+                            className="bg-zinc-800 border-zinc-600 text-white placeholder:text-zinc-400 focus:border-blue-500 focus:ring-blue-500 min-h-[100px]"
                         />
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-zinc-400">
                             A comma-separated list of domains where you want to allow your widget to be embedded.
                         </p>
                     </div>
                 </CardContent>
             </Card>
 
-            <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <div className="flex justify-end pt-4">
+                <Button 
+                    type="submit" 
+                    disabled={isSubmitting} 
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-600 disabled:cursor-not-allowed text-white border-0 px-6 py-2 font-medium transition-colors"
+                >
                     {isSubmitting ? "Saving..." : "Save Settings"}
                 </Button>
             </div>
