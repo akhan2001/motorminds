@@ -58,6 +58,7 @@
         "@tremor/react": "^3.18.7",
         "@types/common-tags": "^1.8.4",
         "@types/lodash.debounce": "^4.0.9",
+        "@types/react-big-calendar": "^1.16.2",
         "@types/string-similarity": "^4.0.2",
         "@uidotdev/usehooks": "^2.4.1",
         "@vercel/analytics": "^1.5.0",

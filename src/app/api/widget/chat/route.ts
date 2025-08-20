@@ -26,10 +26,23 @@ Your goal is to:
 - Answer customer questions about automotive services
 - Provide information about {shop_name}'s services and capabilities
 - Help customers understand pricing and scheduling
-- Be helpful and professional representing {shop_name}
+- Help customers book appointments when they're ready
 
-Keep your responses concise and helpful. When customers ask about appointments or specific services, 
-provide the shop's contact information: {shop_phone}
+APPOINTMENT BOOKING:
+When a customer wants to book an appointment, collect the following information:
+1. Customer name (first and last)
+2. Email address
+3. Phone number
+4. Vehicle information (year, make, model, license plate)
+5. Service type needed
+6. Preferred date and time
+
+Once you have all this information, respond with:
+"BOOK_APPOINTMENT: [customer_name] | [email] | [phone] | [vehicle_year] [vehicle_make] [vehicle_model] | [license_plate] | [service_type] | [preferred_date] | [preferred_time]"
+
+Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | ABC123 | Oil Change | 2024-01-15 | 10:00 AM"
+
+For general questions, provide helpful information and direct them to call {shop_phone} if needed.
 
 Current Conversation:
 {chat_history}
@@ -103,6 +116,27 @@ export async function POST(req: NextRequest) {
                 controller.enqueue(chunk);
             }
 
+            // Check if AI wants to book an appointment
+            if (aiResponse.includes('BOOK_APPOINTMENT:')) {
+                try {
+                    const appointmentResult = await processAppointmentBooking(aiResponse, shopId, supabase);
+                    if (appointmentResult.success) {
+                        const confirmationMessage = `\n\n✅ Great! I've successfully booked your appointment for ${appointmentResult.appointment.appointment_date} at ${appointmentResult.appointment.start_time}. Your confirmation code is: ${appointmentResult.appointment.confirmation_code}`;
+                        aiResponse += confirmationMessage;
+                        controller.enqueue(confirmationMessage);
+                    } else {
+                        const errorMessage = `\n\n❌ I apologize, but I wasn't able to book your appointment automatically. Please call us at ${shop.shop_phone || 'the shop'} and we'll help you schedule it. Error: ${appointmentResult.error}`;
+                        aiResponse += errorMessage;
+                        controller.enqueue(errorMessage);
+                    }
+                } catch (error) {
+                    console.error('Appointment booking error:', error);
+                    const errorMessage = `\n\n❌ I apologize, but I wasn't able to book your appointment automatically. Please call us at ${shop.shop_phone || 'the shop'} and we'll help you schedule it.`;
+                    aiResponse += errorMessage;
+                    controller.enqueue(errorMessage);
+                }
+            }
+
             const finalMessages = [...messages, { role: 'assistant', content: aiResponse }];
             
             await supabase.from("conversations").upsert({
@@ -118,6 +152,151 @@ export async function POST(req: NextRequest) {
     });
 
     return new StreamingTextResponse(responseStream, { headers: corsHeaders });
+}
+
+async function processAppointmentBooking(aiResponse: string, shopId: string, supabase: any) {
+    try {
+        // Extract appointment data from AI response
+        const bookingMatch = aiResponse.match(/BOOK_APPOINTMENT:\s*(.+)/);
+        if (!bookingMatch) {
+            return { success: false, error: 'No appointment data found' };
+        }
+
+        const appointmentData = bookingMatch[1].split('|').map(item => item.trim());
+        
+        if (appointmentData.length < 7) {
+            return { success: false, error: 'Incomplete appointment data' };
+        }
+
+        const [
+            customerName,
+            email,
+            phone,
+            vehicleInfo,
+            licensePlate,
+            serviceType,
+            preferredDate,
+            preferredTime
+        ] = appointmentData;
+
+        const [firstName, ...lastNameParts] = customerName.split(' ');
+        const lastName = lastNameParts.join(' ');
+        
+        const vehicleParts = vehicleInfo.split(' ');
+        const year = parseInt(vehicleParts[0]);
+        const make = vehicleParts[1];
+        const model = vehicleParts.slice(2).join(' ');
+
+        // Parse date and time
+        const appointmentDate = new Date(preferredDate).toISOString().split('T')[0];
+        const [time, period] = preferredTime.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        
+        const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        const endTime = `${(hours + 1).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+        // Create or find customer
+        let customer = await supabase
+            .from('customers')
+            .select('*')
+            .eq('shop_id', shopId)
+            .eq('email', email)
+            .single();
+
+        if (customer.error) {
+            // Create new customer
+            const { data: newCustomer, error: customerError } = await supabase
+                .from('customers')
+                .insert({
+                    shop_id: shopId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone_number: phone
+                })
+                .select()
+                .single();
+
+            if (customerError) {
+                return { success: false, error: 'Failed to create customer' };
+            }
+            customer = { data: newCustomer };
+        }
+
+        // Create or find vehicle
+        let vehicle = await supabase
+            .from('customer_vehicles')
+            .select('*')
+            .eq('customer_id', customer.data.id)
+            .eq('license_plate', licensePlate)
+            .single();
+
+        if (vehicle.error) {
+            // Create new vehicle
+            const { data: newVehicle, error: vehicleError } = await supabase
+                .from('customer_vehicles')
+                .insert({
+                    customer_id: customer.data.id,
+                    year: year,
+                    make: make,
+                    model: model,
+                    license_plate: licensePlate
+                })
+                .select()
+                .single();
+
+            if (vehicleError) {
+                return { success: false, error: 'Failed to create vehicle' };
+            }
+            vehicle = { data: newVehicle };
+        }
+
+        // Create appointment
+        const confirmationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const { data: appointment, error: appointmentError } = await supabase
+            .from('appointments')
+            .insert({
+                shop_id: shopId,
+                customer_id: customer.data.id,
+                vehicle_id: vehicle.data.id,
+                appointment_date: appointmentDate,
+                start_time: startTime,
+                end_time: endTime,
+                service_type: serviceType,
+                confirmation_code: confirmationCode,
+                created_by_customer: true,
+                status: 'scheduled'
+            })
+            .select()
+            .single();
+
+        if (appointmentError) {
+            return { success: false, error: 'Failed to create appointment' };
+        }
+
+        // Create repair order
+        const orderNumber = `RO-${Date.now()}`;
+        await supabase
+            .from('repair_orders')
+            .insert({
+                shop_id: shopId,
+                customer_id: customer.data.id,
+                vehicle_id: vehicle.data.id,
+                appointment_id: appointment.id,
+                order_number: orderNumber,
+                status: 'pending',
+                total_cost: 0
+            });
+
+        return { success: true, appointment, customer: customer.data, vehicle: vehicle.data };
+
+    } catch (error) {
+        console.error('Error processing appointment booking:', error);
+        return { success: false, error: (error as Error).message || 'Unknown error' };
+    }
 }
 
 export async function OPTIONS() {
