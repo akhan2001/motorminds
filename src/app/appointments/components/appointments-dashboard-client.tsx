@@ -171,7 +171,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Calendar - Month View Only */}
-                    <Card className="lg:col-span-3 bg-zinc-900 border-zinc-800">
+                    <Card className="lg:col-span-3 bg-zinc-900 border-zinc-800 text-white">
                         <CardHeader>
                             <CardTitle>Calendar View</CardTitle>
                         </CardHeader>
@@ -201,7 +201,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                     </Card>
 
                     {/* Selected Date Appointments Sidebar */}
-                    <Card className="bg-zinc-900 border-zinc-800">
+                    <Card className="bg-zinc-900 border-zinc-800 text-white">
                         <CardHeader>
                             <CardTitle>
                                 {selectedDate.toDateString() === new Date().toDateString() 
@@ -221,7 +221,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                                 .map((apt) => (
                                     <div 
                                         key={apt.id}
-                                        className="p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 transition-colors"
+                                        className="p-3 border border-zinc-700 rounded-lg cursor-pointer bg-zinc-700 hover:bg-zinc-800 transition-colors text-white"
                                         onClick={() => handleSelectEvent(apt)}
                                     >
                                         <div className="flex items-center justify-between mb-2">
@@ -272,7 +272,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                                 </div>
                                 <div className="ml-3">
                                     <p className="text-sm text-zinc-400">Today</p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-lg font-semibold text-white">
                                         {appointments.filter(apt => {
                                             const today = new Date();
                                             const aptDate = new Date(apt.start);
@@ -292,7 +292,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                                 </div>
                                 <div className="ml-3">
                                     <p className="text-sm text-zinc-400">Confirmed</p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-lg font-semibold text-white">
                                         {appointments.filter(apt => apt.status === 'confirmed').length}
                                     </p>
                                 </div>
@@ -308,7 +308,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                                 </div>
                                 <div className="ml-3">
                                     <p className="text-sm text-zinc-400">In Progress</p>
-                                    <p className="text-lg font-semibold">
+                                    <p className="text-lg font-semibold text-white">
                                         {appointments.filter(apt => apt.status === 'in-progress').length}
                                     </p>
                                 </div>
@@ -324,7 +324,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                                 </div>
                                 <div className="ml-3">
                                     <p className="text-sm text-zinc-400">Total</p>
-                                    <p className="text-lg font-semibold">{appointments.length}</p>
+                                    <p className="text-lg font-semibold text-white">{appointments.length}</p>
                                 </div>
                             </div>
                         </CardContent>

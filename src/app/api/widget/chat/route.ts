@@ -5,6 +5,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { createClient } from "@/utils/supabase/server";
 import { corsHeaders } from "@/utils/cors";
+import { sendAppointmentConfirmationEmail } from "@/lib/email/send-appointment-confirmation";
 
 const formatMessage = (message: VercelChatMessage) => {
     return `${message.role}: ${message.content}`;
@@ -33,14 +34,25 @@ When a customer wants to book an appointment, collect the following information:
 1. Customer name (first and last)
 2. Email address
 3. Phone number
-4. Vehicle information (year, make, model, license plate)
-5. Service type needed
-6. Preferred date and time
+4. Vehicle information (year, make, model)
+5. Service type needed (be smart about their symptoms - see SERVICE INTELLIGENCE below)
+6. Preferred date (time slots will be shown as clickable buttons)
+
+SERVICE INTELLIGENCE:
+Based on customer symptoms, suggest appropriate services:
+- Engine noises, knocking, squealing, grinding = "Engine Diagnosis" or "Engine Repair"
+- Oil leaks, fluid leaks, puddles under car = "Leak Inspection" or "Engine Repair"
+- Braking issues, squeaking brakes, soft pedal = "Brake Inspection" or "Brake Repair"
+- Transmission problems, shifting issues = "Transmission Service"
+- Electrical issues, lights, battery = "Electrical Diagnosis"
+- Heating/cooling issues = "AC/Heating Service"
+- Routine maintenance without symptoms = "Oil Change", "Tune-up", etc.
+- Multiple symptoms or serious problems = "General Inspection" or "Full Diagnosis"
 
 Once you have all this information, respond with:
-"BOOK_APPOINTMENT: [customer_name] | [email] | [phone] | [vehicle_year] [vehicle_make] [vehicle_model] | [license_plate] | [service_type] | [preferred_date] | [preferred_time]"
+"BOOK_APPOINTMENT: [customer_name] | [email] | [phone] | [vehicle_year] [vehicle_make] [vehicle_model] | [service_type] | [preferred_date] | [preferred_time]"
 
-Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | ABC123 | Oil Change | 2024-01-15 | 10:00 AM"
+Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | Engine Diagnosis | 2024-01-15 | 10:00 AM"
 
 For general questions, provide helpful information and direct them to call {shop_phone} if needed.
 
@@ -50,9 +62,63 @@ Current Conversation:
 User: {input}
 Assistant:`;
 
+const BOOKING_TEMPLATE = `
+You are a friendly appointment booking specialist for {shop_name}. Your ONLY job is to collect appointment information step-by-step.
+
+Shop Information:
+- Business Name: {shop_name}
+- Location: {shop_address}
+- Phone: {shop_phone}
+- Services: {services_offered}
+- Operating Hours: {operating_hours}
+
+APPOINTMENT BOOKING PROCESS:
+You need to collect ALL of the following information before booking:
+1. Service type needed (from our available services: {services_offered})
+2. Customer's full name (first and last)
+3. Email address
+4. Phone number
+5. Vehicle information (year, make, model)
+6. Preferred date (ask for specific date like "January 15, 2025" or "tomorrow". If they don't specify, use today's date: {current_date})
+7. Available time slots will be shown as buttons for the customer to choose from
+
+SERVICE TYPE INTELLIGENCE:
+When determining service type, be smart about customer symptoms:
+- Engine noises, knocking, squealing, grinding = "Engine Diagnosis" or "Engine Repair"
+- Oil leaks, fluid leaks, puddles under car = "Leak Inspection" or "Engine Repair"
+- Braking issues, squeaking brakes, soft pedal = "Brake Inspection" or "Brake Repair"
+- Transmission problems, shifting issues = "Transmission Service"
+- Electrical issues, lights, battery = "Electrical Diagnosis"
+- Heating/cooling issues = "AC/Heating Service"
+- Routine maintenance without symptoms = "Oil Change", "Tune-up", etc.
+- Multiple symptoms or serious problems = "General Inspection" or "Full Diagnosis"
+
+IMPORTANT RULES:
+- Ask for ONE piece of information at a time
+- Be conversational and friendly
+- Validate information as you collect it
+- If they give incomplete vehicle info, ask for the missing parts
+- For dates: If customer says "today", "tomorrow", or doesn't specify a date, use appropriate date based on {current_date}
+- For time: After asking "What time would you prefer?", wait for the user to select from available time slots
+- Choose appropriate service type based on customer's described symptoms, not just default to oil change
+- Only proceed to booking when you have ALL required information
+- When you have everything, use this format EXACTLY:
+
+"BOOK_APPOINTMENT: [full_name] | [email] | [phone] | [year] [make] [model] | [service_type] | [date] | [time]"
+
+Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | Engine Diagnosis | 2025-01-15 | 10:00 AM"
+
+Current date for reference: {current_date}
+
+Current Conversation:
+{chat_history}
+
+User: {input}
+Assistant:`;
+
 
 export async function POST(req: NextRequest) {
-    const { messages, conversation_id, shopId } = await req.json();
+    const { messages, conversation_id, shopId, isBookingMode } = await req.json();
     
     if (!shopId) {
         return new NextResponse(JSON.stringify({ error: "Shop ID is required" }), { 
@@ -93,16 +159,21 @@ export async function POST(req: NextRequest) {
     };
 
     const model = new ChatOpenAI({ temperature: 0.7, modelName: "gpt-3.5-turbo" });
-    const prompt = PromptTemplate.fromTemplate(WIDGET_TEMPLATE);
+    const templateToUse = isBookingMode ? BOOKING_TEMPLATE : WIDGET_TEMPLATE;
+    const prompt = PromptTemplate.fromTemplate(templateToUse);
     const parser = new StringOutputParser();
     const chain = prompt.pipe(model).pipe(parser);
 
     const chatHistory = messages.slice(0, -1).map(formatMessage).join("\n");
     const latestMessage = messages[messages.length - 1].content;
     
+    // Add current date for booking template
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
     const stream = await chain.stream({
         chat_history: chatHistory,
         input: latestMessage,
+        current_date: currentDate,
         ...shopInfo
     });
 
@@ -119,9 +190,9 @@ export async function POST(req: NextRequest) {
             // Check if AI wants to book an appointment
             if (aiResponse.includes('BOOK_APPOINTMENT:')) {
                 try {
-                    const appointmentResult = await processAppointmentBooking(aiResponse, shopId, supabase);
+                    const appointmentResult = await processAppointmentBooking(aiResponse, shopId, supabase, shop);
                     if (appointmentResult.success) {
-                        const confirmationMessage = `\n\n✅ Great! I've successfully booked your appointment for ${appointmentResult.appointment.appointment_date} at ${appointmentResult.appointment.start_time}. Your confirmation code is: ${appointmentResult.appointment.confirmation_code}`;
+                        const confirmationMessage = `\n\n✅ Perfect! Your appointment has been confirmed for ${appointmentResult.appointment.appointment_date} at ${appointmentResult.appointment.start_time}.\n\n📧 A confirmation email has been sent to ${appointmentResult.customer.customer_email}.\n\n🎫 Your confirmation code is: ${appointmentResult.appointment.confirmation_code}\n\n📞 If you need to make any changes, please call us at ${shop.shop_phone || 'our shop'}.\n\nThank you for choosing ${shop.shop_name}!`;
                         aiResponse += confirmationMessage;
                         controller.enqueue(confirmationMessage);
                     } else {
@@ -154,7 +225,7 @@ export async function POST(req: NextRequest) {
     return new StreamingTextResponse(responseStream, { headers: corsHeaders });
 }
 
-async function processAppointmentBooking(aiResponse: string, shopId: string, supabase: any) {
+async function processAppointmentBooking(aiResponse: string, shopId: string, supabase: any, shop: any) {
     try {
         // Extract appointment data from AI response
         const bookingMatch = aiResponse.match(/BOOK_APPOINTMENT:\s*(.+)/);
@@ -164,7 +235,7 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
 
         const appointmentData = bookingMatch[1].split('|').map(item => item.trim());
         
-        if (appointmentData.length < 7) {
+        if (appointmentData.length < 6) {
             return { success: false, error: 'Incomplete appointment data' };
         }
 
@@ -173,7 +244,6 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             email,
             phone,
             vehicleInfo,
-            licensePlate,
             serviceType,
             preferredDate,
             preferredTime
@@ -187,8 +257,24 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
         const make = vehicleParts[1];
         const model = vehicleParts.slice(2).join(' ');
 
-        // Parse date and time
-        const appointmentDate = new Date(preferredDate).toISOString().split('T')[0];
+        // Parse date and time with better date handling
+        let appointmentDate;
+        try {
+            // Handle relative dates
+            if (preferredDate.toLowerCase().includes('today')) {
+                appointmentDate = new Date().toISOString().split('T')[0];
+            } else if (preferredDate.toLowerCase().includes('tomorrow')) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                appointmentDate = tomorrow.toISOString().split('T')[0];
+            } else {
+                appointmentDate = new Date(preferredDate).toISOString().split('T')[0];
+            }
+        } catch (error) {
+            // Default to today if date parsing fails
+            appointmentDate = new Date().toISOString().split('T')[0];
+        }
+        
         const [time, period] = preferredTime.split(' ');
         let [hours, minutes] = time.split(':').map(Number);
         
@@ -203,7 +289,7 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             .from('customers')
             .select('*')
             .eq('shop_id', shopId)
-            .eq('email', email)
+            .eq('customer_email', email)
             .single();
 
         if (customer.error) {
@@ -212,10 +298,9 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
                 .from('customers')
                 .insert({
                     shop_id: shopId,
-                    first_name: firstName,
-                    last_name: lastName,
-                    email: email,
-                    phone_number: phone
+                    customer_name: customerName,
+                    customer_email: email,
+                    customer_phone: phone
                 })
                 .select()
                 .single();
@@ -226,29 +311,31 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             customer = { data: newCustomer };
         }
 
-        // Create or find vehicle
+        // Create or find vehicle (matching by year, make, model for this customer)
         let vehicle = await supabase
             .from('customer_vehicles')
             .select('*')
             .eq('customer_id', customer.data.id)
-            .eq('license_plate', licensePlate)
+            .eq('year', year)
+            .eq('make', make)
+            .eq('model', model)
             .single();
 
         if (vehicle.error) {
-            // Create new vehicle
+            // Create new vehicle without license plate requirement
             const { data: newVehicle, error: vehicleError } = await supabase
                 .from('customer_vehicles')
                 .insert({
                     customer_id: customer.data.id,
                     year: year,
                     make: make,
-                    model: model,
-                    license_plate: licensePlate
+                    model: model
                 })
                 .select()
                 .single();
 
             if (vehicleError) {
+                console.error('Vehicle creation error:', vehicleError);
                 return { success: false, error: 'Failed to create vehicle' };
             }
             vehicle = { data: newVehicle };
@@ -290,6 +377,20 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
                 status: 'pending',
                 total_cost: 0
             });
+
+        // Automatically send confirmation email
+        try {
+            await sendAppointmentConfirmationEmail({
+                appointment,
+                customer: customer.data,
+                vehicle: vehicle.data,
+                shop
+            });
+            console.log('Confirmation email sent successfully');
+        } catch (emailError) {
+            console.error('Failed to send confirmation email:', emailError);
+            // Don't fail the appointment creation if email fails
+        }
 
         return { success: true, appointment, customer: customer.data, vehicle: vehicle.data };
 

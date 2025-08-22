@@ -30,9 +30,13 @@ export default function WidgetSettingsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
+        
         fetch('/api/dashboard/widget/settings')
             .then(res => res.json())
             .then(data => {
+                if (!isMounted) return; // Prevent state update if component unmounted
+                
                 if (data) {
                     const preparedData = {
                         widget_config: {
@@ -46,8 +50,17 @@ export default function WidgetSettingsPage() {
                     reset(preparedData);
                 }
                 setLoading(false);
+            })
+            .catch(error => {
+                if (!isMounted) return;
+                console.error('Failed to load settings:', error);
+                setLoading(false);
             });
-    }, [reset]);
+            
+        return () => {
+            isMounted = false;
+        };
+    }, []); // Empty dependency array - only run once on mount
     
     const onSubmit = (data: any) => {
         const payload = {

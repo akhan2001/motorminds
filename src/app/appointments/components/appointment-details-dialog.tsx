@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { User, Car, Clock, FileText, Trash2, Edit3 } from "lucide-react";
+import { User, Car, Clock, FileText, Trash2, Edit3, Mail } from "lucide-react";
 
 interface Appointment {
     id: string;
@@ -154,6 +154,38 @@ export function AppointmentDetailsDialog({
         } catch (error) {
             console.error('Failed to delete appointment:', error);
             toast.error('Failed to delete appointment');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSendConfirmation = async () => {
+        if (!appointment) return;
+
+        // Check if customer has email
+        const customerEmail = appointment.customer?.customer_email || appointment.customer?.email;
+        if (!customerEmail) {
+            toast.error('Customer email is required to send confirmation');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/appointments/send-confirmation/${appointment.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                toast.success('Appointment confirmation sent successfully!');
+                onSuccess(); // Refresh the data to show updated status
+            } else {
+                const error = await response.json();
+                toast.error(error.message || 'Failed to send confirmation');
+            }
+        } catch (error) {
+            console.error('Failed to send appointment confirmation:', error);
+            toast.error('Failed to send confirmation');
         } finally {
             setLoading(false);
         }
@@ -379,6 +411,15 @@ export function AppointmentDetailsDialog({
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Delete
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleSendConfirmation}
+                                disabled={loading || !appointment.customer?.customer_email && !appointment.customer?.email}
+                                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
+                            >
+                                <Mail className="w-4 h-4 mr-2" />
+                                Send Confirmation
                             </Button>
                             <Button
                                 onClick={handleEdit}

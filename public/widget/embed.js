@@ -89,13 +89,32 @@
         container.appendChild(toggleButton);
 
         let isOpen = false;
-        toggleButton.addEventListener("click", () => {
+        
+        function toggleWidget() {
             isOpen = !isOpen;
             iframe.style.display = isOpen ? "block" : "none";
             iframe.style.transform = isOpen ? 'scale(1)' : 'scale(0)';
             toggleButton.innerHTML = isOpen 
                 ? `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
                 : `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path></svg>`;
+        }
+        
+        function closeWidget() {
+            if (isOpen) {
+                isOpen = false;
+                iframe.style.display = "none";
+                iframe.style.transform = 'scale(0)';
+                toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path></svg>`;
+            }
+        }
+        
+        toggleButton.addEventListener("click", toggleWidget);
+        
+        // Listen for messages from the iframe to auto-close widget
+        window.addEventListener("message", (event) => {
+            if (event.data && event.data.type === "CLOSE_WIDGET") {
+                closeWidget();
+            }
         });
     }
 
