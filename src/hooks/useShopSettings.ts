@@ -67,14 +67,16 @@ export function useUpdateShopInfo() {
                 .single()
             
             if (error) {
+                console.error('Database error details:', error);
                 // Handle specific constraint errors
                 if (error.code === '23505') {
+                    console.log('Unique constraint violation:', error.message);
                     if (error.message.includes('business_number')) {
                         throw new Error('Business number already exists. Please use a different number.')
                     } else if (error.message.includes('shop_email')) {
                         throw new Error('Email already exists. Please use a different email.')
                     } else {
-                        throw new Error('A record with this information already exists.')
+                        throw new Error(`A record with this information already exists: ${error.message}`)
                     }
                 }
                 throw error
