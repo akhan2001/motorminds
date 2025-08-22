@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, CSSProperties, useRef } from "react";
+import { useState, useEffect, CSSProperties, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface WidgetConfig {
@@ -16,7 +16,7 @@ interface Message {
     content: string;
 }
 
-export default function WidgetPage() {
+function WidgetContent() {
     const [config, setConfig] = useState<WidgetConfig | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -426,4 +426,12 @@ const styles = {
         transition: "background-color 0.2s",
     } as CSSProperties,
 };
+
+export default function WidgetPage() {
+    return (
+        <Suspense fallback={<div style={{ padding: "20px", textAlign: "center" }}>Loading...</div>}>
+            <WidgetContent />
+        </Suspense>
+    );
+}
 
