@@ -1,6 +1,6 @@
 (function () {
-    const API_BASE_URL = "http://localhost:3000/api/widget";
-    const IFRAME_URL = "http://localhost:3000/widget";
+    const API_BASE_URL = "https://app.motorminds.ca/api/widget";
+    const IFRAME_URL = "https://app.motorminds.ca/widget";
 
     function getShopId() {
         const scriptTag = document.currentScript || document.getElementById("motorminds-widget-script");

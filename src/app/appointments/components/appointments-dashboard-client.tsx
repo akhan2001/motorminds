@@ -221,7 +221,7 @@ export default function AppointmentsDashboardClient({ shopId }: AppointmentsDash
                                 .map((apt) => (
                                     <div 
                                         key={apt.id}
-                                        className="p-3 border border-zinc-700 rounded-lg cursor-pointer bg-zinc-700 hover:bg-zinc-800 transition-colors text-white"
+                                        className="p-3 border border-zinc-700 rounded-lg cursor-pointer bg-zinc-900 hover:bg-zinc-800 transition-colors text-white"
                                         onClick={() => handleSelectEvent(apt)}
                                     >
                                         <div className="flex items-center justify-between mb-2">
