@@ -60,12 +60,8 @@ const shopFormSchema = z.object({
     shop_tagline: z.string().max(100).min(5, {
         message: "Tagline must be at least 5 characters.",
     }),
-    operating_hours: z.string().min(5, {
-        message: "Operating hours must be at least 5 characters.",
-    }),
-    services_offered: z.string().min(5, {
-        message: "Services offered must be at least 5 characters.",
-    }),
+    operating_hours: z.string().optional().or(z.literal("")),
+    services_offered: z.string().optional().or(z.literal("")),
     website: z.string().url().optional().or(z.literal("")),
     hst_number: z.string().optional().or(z.literal("")),
     business_number: z.string().optional().or(z.literal("")),
@@ -267,59 +263,113 @@ export function ProfileForm({ shopId }: { shopId: string }) {
     }, [shopInfo.data])
 
     async function onSubmit(data: ShopFormValues) {
+        console.log('Form submitted with data:', data);
         await updateShopProfile(data)
     }
 
     async function updateShopProfile(data: ShopFormValues) {
-        if (!shopId) return
+        console.log('updateShopProfile called with:', { shopId, data });
+        if (!shopId) {
+            console.error('No shopId provided');
+            return;
+        }
 
         actions.setSaving(true)
         try {
+            // Debug: Check what's being compared
+            console.log('Validation checks:');
+            console.log('Current shop data:', shopInfo.data);
+            console.log('New business_number:', data.business_number);
+            console.log('Current business_number:', shopInfo.data?.business_number);
+            console.log('New shop_email:', data.shop_email);
+            console.log('Current shop_email:', shopInfo.data?.shop_email);
+
             // Validate business number if it's being changed
-            if (data.business_number && data.business_number !== shopInfo.data?.business_number) {
+            if (data.business_number && data.business_number.trim() !== (shopInfo.data?.business_number || '').trim()) {
+                console.log('Checking business number conflict...');
                 // Check if business number already exists
                 const { data: existingShop, error: checkError } = await supabase
                     .from('shops')
-                    .select('id')
-                    .eq('business_number', data.business_number)
+                    .select('id, shop_name')
+                    .eq('business_number', data.business_number.trim())
                     .neq('id', shopId)
                     .single()
 
+                console.log('Business number check result:', { existingShop, checkError });
+
                 if (existingShop) {
-                    toast.error('Business number already exists. Please use a different number.')
+                    toast.error(`Business number already exists (used by ${existingShop.shop_name}). Please use a different number.`)
                     actions.setSaving(false)
                     return
                 }
             }
 
             // Validate email if it's being changed
-            if (data.shop_email && data.shop_email !== shopInfo.data?.shop_email) {
+            if (data.shop_email && data.shop_email.trim() !== (shopInfo.data?.shop_email || '').trim()) {
+                console.log('Checking email conflict...');
                 // Check if email already exists
                 const { data: existingShop, error: checkError } = await supabase
                     .from('shops')
-                    .select('id')
-                    .eq('shop_email', data.shop_email)
+                    .select('id, shop_name')
+                    .eq('shop_email', data.shop_email.trim())
                     .neq('id', shopId)
                     .single()
 
+                console.log('Email check result:', { existingShop, checkError });
+
                 if (existingShop) {
-                    toast.error('Email already exists. Please use a different email.')
+                    toast.error(`Email already exists (used by ${existingShop.shop_name}). Please use a different email.`)
                     actions.setSaving(false)
                     return
                 }
             }
 
             // Make sure operating hours and services are properly formatted as JSONB
+            // Convert empty strings to undefined for optional fields to avoid unique constraint issues
             const formattedData = {
                 ...data,
                 operating_hours: stringifyOperatingHours(state.operatingHours),
-                services_offered: stringifyServices(state.services)
+                services_offered: stringifyServices(state.services),
+                // Convert empty strings to undefined for fields that can be empty/null
+                hst_number: data.hst_number?.trim() || undefined,
+                business_number: data.business_number?.trim() || undefined,
+                website: data.website?.trim() || undefined,
+                logo_image_url: data.logo_image_url?.trim() || undefined,
+                banner_image_url: data.banner_image_url?.trim() || undefined,
+                facebook_url: data.facebook_url?.trim() || undefined,
+                twitter_url: data.twitter_url?.trim() || undefined,
+                instagram_url: data.instagram_url?.trim() || undefined,
+                youtube_url: data.youtube_url?.trim() || undefined,
             }
             
-            await updateShopInfo.mutateAsync({ 
-                shopId, 
-                updates: formattedData 
-            })
+            console.log('Formatted data for update:', formattedData);
+            
+            try {
+                const result = await updateShopInfo.mutateAsync({ 
+                    shopId, 
+                    updates: formattedData 
+                })
+                
+                console.log('Update result:', result);
+                // Success toast is handled by the mutation hook
+            } catch (updateError: any) {
+                console.error('Update failed:', updateError);
+                
+                // Check for specific unique constraint violations
+                if (updateError?.message?.includes('already exists')) {
+                    if (updateError.message.includes('business_number')) {
+                        toast.error('Business number already exists. Please use a different number.');
+                    } else if (updateError.message.includes('shop_email')) {
+                        toast.error('Email already exists. Please use a different email.');
+                    } else {
+                        toast.error('Some information already exists in our system. Please check your email and business number.');
+                    }
+                } else {
+                    toast.error('Failed to update shop information. Please try again.');
+                }
+                actions.setSaving(false);
+                return;
+            }
             
             // Refresh the page to show updated data
             router.refresh()
@@ -473,6 +523,11 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                                 type="submit"
                                 disabled={state.isSaving}
                                 className="bg-blue-600 hover:bg-blue-700 text-white"
+                                onClick={(e) => {
+                                    console.log('Save button clicked');
+                                    console.log('Form state:', form.formState);
+                                    console.log('Form errors:', form.formState.errors);
+                                }}
                             >
                                 {state.isSaving ? (
                                     <>
