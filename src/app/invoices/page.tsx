@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import LoadingPage from '@/components/loading'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { useMiaSidebar } from '@/contexts/MiaSidebarContext'
-import { MiaSidebar } from '../components/mia-sidebar/MiaSidebar'
+import MiaWorkspace from '../components/mia-sidebar/MiaWorkspace'
 
 export default function InvoicesPage() {
     const [shopId, setShopId] = useState<string | null>(null)
@@ -105,9 +105,13 @@ export default function InvoicesPage() {
                     <>
                         <ResizableHandle withHandle className="bg-[#1f1f1f]" />
                         <ResizablePanel defaultSize={35} minSize={30} maxSize={40} className="min-w-[320px] min-h-0">
-                            <div className="h-full px-4 py-4 min-h-0">
-                                <div className="h-full w-full bg-[#0d0d0d] border border-[#1f1f1f] rounded-md overflow-y-auto flex items-center justify-center text-[#979797]">
-                                    <MiaSidebar />
+                            <div className="h-full p-0 min-h-0">
+                                <div className="h-full w-full bg-[#0d0d0d] border border-[#1f1f1f] rounded-md overflow-hidden">
+                                    <MiaWorkspace 
+                                        currentPage="invoices"
+                                        shopId={shopId}
+                                        className="h-full"
+                                    />
                                 </div>
                             </div>
                         </ResizablePanel>
