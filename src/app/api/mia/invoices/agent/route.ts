@@ -15,16 +15,16 @@ export async function POST(request: NextRequest) {
         // Parse request body
         const body = await request.json()
         
-        // Validate request structure
-        const validation = validateInvoicePrompt(body)
-        if (!validation.success) {
+        // Handle Vercel AI SDK format - messages array
+        const messages = body.messages || []
+        const context = body.context || { shop_id: 'default-shop' }
+        
+        if (!messages.length) {
             return Response.json(
-                { error: 'Invalid request format', details: validation.error.errors },
+                { error: 'No messages provided' },
                 { status: 400 }
             )
         }
-        
-        const { message, context } = validation.data
         
         // Authenticate user and validate shop access
         const supabase = await createClient()
@@ -34,35 +34,32 @@ export async function POST(request: NextRequest) {
             return Response.json({ error: 'Authentication required' }, { status: 401 })
         }
         
-        // Verify user has access to the shop
+        // Get shop ID from users table (same approach as invoices page)
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('shop_id')
+            .eq('id', user.id)
+            .single()
+            
+        if (userError || !userData?.shop_id) {
+            console.log('No shop_id found in users table for user:', user.id)
+            return Response.json({ error: 'No shop associated with user. Please complete shop setup.' }, { status: 403 })
+        }
+        
+        // Get shop data from shops table
         const { data: shopData, error: shopError } = await supabase
-            .from('shop_info')
+            .from('shops')
             .select('id, shop_name')
-            .eq('id', context.shop_id)
-            .eq('owner_id', user.id)
+            .eq('id', userData.shop_id)
             .single()
             
         if (shopError || !shopData) {
-            return Response.json({ error: 'Shop access denied' }, { status: 403 })
+            console.log('Shop not found in shops table:', userData.shop_id)
+            return Response.json({ error: 'Shop data not found' }, { status: 403 })
         }
-        
-        // Get conversation history from request or initialize
-        const messages = body.messages || [{ role: 'user', content: message }]
         
         // Create session ID for conversation continuity
-        const sessionId = body.session_id || `${user.id}-${context.shop_id}-${Date.now()}`
-        
-        // Validate agent configuration
-        const agentConfig = validateAgentConfig({
-            shop_id: context.shop_id,
-            current_customer_id: context.current_customer_id,
-            current_vehicle_id: context.current_vehicle_id,
-            current_invoice_id: context.current_invoice_id
-        })
-        
-        if (!agentConfig) {
-            return Response.json({ error: 'Invalid agent configuration' }, { status: 400 })
-        }
+        const sessionId = body.session_id || `${user.id}-${shopData.id}-${Date.now()}`
         
         try {
             // Use Vercel AI SDK for streaming response
@@ -71,30 +68,17 @@ export async function POST(request: NextRequest) {
                 messages: convertToCoreMessages([
                     {
                         role: 'system',
-                        content: `You are MIA (MotorMinds Intelligent Assistant), an advanced AI assistant specialized in automotive shop invoice management for ${shopData.shop_name}.
+                        content: `You are MIA (MotorMinds Intelligent Assistant), a helpful AI assistant for automotive shop management.
 
-## Your Core Capabilities:
-- **Invoice Creation**: Generate detailed invoices with line items, calculations, and proper formatting
-- **Customer Management**: Search, create, and update customer records
-- **Vehicle Tracking**: Manage customer vehicle information and service history
-- **Pricing Assistance**: Suggest competitive pricing for automotive services and parts
-- **Invoice Analytics**: Search and analyze existing invoices and patterns
+You specialize in helping automotive shop staff with:
+- Invoice-related questions and tasks
+- Customer management
+- Vehicle information
+- Shop operations
 
-## Current Context:
-- Shop: ${shopData.shop_name}
-- Shop ID: ${context.shop_id}
-${context.current_customer_id ? `- Active Customer: ${context.current_customer_id}` : ''}
-${context.current_vehicle_id ? `- Active Vehicle: ${context.current_vehicle_id}` : ''}
-${context.current_invoice_id ? `- Working on Invoice: ${context.current_invoice_id}` : ''}
+Current shop: ${shopData.shop_name}
 
-## Communication Style:
-- Be professional, helpful, and automotive-industry knowledgeable
-- Use clear, concise language suitable for busy shop environments
-- Ask clarifying questions when needed, but aim to infer reasonable defaults
-- Provide actionable responses with specific next steps
-- Always confirm important actions before executing them
-
-Focus on helping with invoice-related tasks and questions efficiently and accurately.`
+Be professional, helpful, and concise. Always provide clear and actionable responses.`
                     },
                     ...messages
                 ]),

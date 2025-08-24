@@ -10,6 +10,7 @@ import { Send, Loader2, User, Bot, AlertCircle } from "lucide-react"
 import { useChat } from 'ai/react'
 import { useMiaSidebar } from '@/contexts/MiaSidebarContext'
 import MiaSidebarTop from './MiaSidebarTop'
+import Image from 'next/image'
 
 interface Message {
     id: string
@@ -46,7 +47,7 @@ export default function MiaWorkspace({
         api: '/api/mia/invoices/agent',
         body: {
             context: {
-                shop_id: shopId || 'default-shop',
+                shop_id: shopId || undefined,
                 current_page: activePage
             }
         },
@@ -94,7 +95,7 @@ Just tell me what you need, and I'll walk you through it step by step.`,
     
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        if (!input.trim() || isLoading) return
+        if (!input.trim() || isLoading || !shopId) return
         handleSubmit(e)
     }
     
@@ -110,29 +111,6 @@ Just tell me what you need, and I'll walk you through it step by step.`,
         <div className={`flex flex-col h-full bg-black ${className}`}>
             {/* Top Section with Tools and Context */}
             <MiaSidebarTop currentPage={activePage} />
-            
-            {/* Chat Header */}
-            <div className="px-4 py-3 border-b border-[#2a2a2a]">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#b22222]/20 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-[#b22222]" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-white text-sm">MIA Assistant</h3>
-                            <p className="text-xs text-gray-400">
-                                {isLoading ? 'Thinking...' : 'Ready to help'}
-                            </p>
-                        </div>
-                    </div>
-                    <Badge 
-                        variant="secondary" 
-                        className="bg-green-500/20 text-green-400 text-xs"
-                    >
-                        Online
-                    </Badge>
-                </div>
-            </div>
 
             {/* Error Display */}
             {error && (
@@ -165,8 +143,14 @@ Just tell me what you need, and I'll walk you through it step by step.`,
                                 // Assistant message - full width, no background
                                 <div className="w-full mb-4">
                                     <div className="flex items-start gap-3 mb-2">
-                                        <div className="w-7 h-7 rounded-full bg-[#b22222]/20 flex items-center justify-center flex-shrink-0">
-                                            <Bot className="w-4 h-4 text-[#b22222]" />
+                                        <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
+                                            <Image
+                                                src="/red-motorminds-logo-svg.svg"
+                                                alt="Mia AI"
+                                                width={16}
+                                                height={16}
+                                                className="w-4 h-4"
+                                            />
                                         </div>
                                         <div className="text-xs text-gray-400 mt-1">
                                             MIA • {formatTimestamp(message.createdAt ? new Date(message.createdAt) : new Date())}
@@ -184,8 +168,14 @@ Just tell me what you need, and I'll walk you through it step by step.`,
                     {isLoading && (
                         <div className="w-full mb-4">
                             <div className="flex items-start gap-3 mb-2">
-                                <div className="w-7 h-7 rounded-full bg-[#b22222]/20 flex items-center justify-center flex-shrink-0">
-                                    <Bot className="w-4 h-4 text-[#b22222]" />
+                                <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
+                                    <Image
+                                        src="/red-motorminds-logo-svg.svg"
+                                        alt="Mia AI"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                    />
                                 </div>
                                 <div className="text-xs text-gray-400 mt-1">
                                     MIA • now
@@ -211,18 +201,20 @@ Just tell me what you need, and I'll walk you through it step by step.`,
                         value={input}
                         onChange={handleInputChange}
                         placeholder={
-                            activePage === 'invoices' 
+                            !shopId 
+                                ? "Loading shop information..."
+                                : activePage === 'invoices' 
                                 ? "Ask me to create an invoice, find a customer, or help with pricing..."
                                 : "How can I help you today?"
                         }
-                        disabled={isLoading}
+                        disabled={isLoading || !shopId}
                         className="flex-1 bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500 focus:border-[#b22222] focus:ring-[#b22222]/20"
                         maxLength={500}
                         autoComplete="off"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault()
-                                if (input.trim() && !isLoading) {
+                                if (input.trim() && !isLoading && shopId) {
                                     handleFormSubmit(e as any)
                                 }
                             }
@@ -231,7 +223,7 @@ Just tell me what you need, and I'll walk you through it step by step.`,
                     <Button
                         type="submit"
                         size="sm"
-                        disabled={!input.trim() || isLoading}
+                        disabled={!input.trim() || isLoading || !shopId}
                         className="bg-[#b22222] hover:bg-[#b22222]/80 text-white px-3"
                     >
                         {isLoading ? (

@@ -15,6 +15,7 @@ import {
     FolderOpen,
     Wrench
 } from "lucide-react"
+import Image from "next/image"
 
 interface MiaSidebarTopProps {
     currentPage?: string
@@ -26,17 +27,24 @@ export default function MiaSidebarTop({ currentPage = 'invoices' }: MiaSidebarTo
             {/* Page Context Indicator */}
             <div className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-[#b22222] rounded-full"></div>
+                    {/* <Image  
+                        src="/red-motorminds-logo-svg.svg"
+                        alt="Mia AI"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4"
+                    /> */}
                     <span className="text-sm font-medium text-white">
-                        Current Context: 
+                        Current Page: 
                         <span className="ml-2 px-2 py-1 bg-[#b22222]/30 text-[#b22222] text-sm rounded-full capitalize">
                             {currentPage}
                         </span>
                     </span>
                 </div>
             </div>
+            <Separator className="bg-[#2a2a2a]" />
             {/* Quick Actions - Context Aware */}
-            <div className="space-y-2 px-4">
+            <div className="space-y-2 px-4 py-2">
                 <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Quick Actions
                 </h4>

@@ -105,8 +105,8 @@ export default function InvoicesPage() {
                     <>
                         <ResizableHandle withHandle className="bg-[#1f1f1f]" />
                         <ResizablePanel defaultSize={35} minSize={30} maxSize={40} className="min-w-[320px] min-h-0">
-                            <div className="h-full p-0 min-h-0">
-                                <div className="h-full w-full bg-[#0d0d0d] border border-[#1f1f1f] rounded-md overflow-hidden">
+                            <div className="h-full min-h-0">
+                                <div className="h-full w-full bg-[#0d0d0d] overflow-hidden">
                                     <MiaWorkspace 
                                         currentPage="invoices"
                                         shopId={shopId}
