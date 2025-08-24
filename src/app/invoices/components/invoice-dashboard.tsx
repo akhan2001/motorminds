@@ -285,7 +285,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
     return (
         <div className="flex items-center justify-center py-4 sm:py-8 px-4 sm:px-6">
             <div className="container mx-auto max-w-[1300px]">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
+                <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-sm border-b border-[#1f1f1f] py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                     <div className="flex flex-col">
                         <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2">Invoices</h1>
                         <p className="text-gray-400 text-sm sm:text-base">
