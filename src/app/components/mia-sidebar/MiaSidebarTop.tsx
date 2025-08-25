@@ -13,19 +13,23 @@ import {
     TrendingUp, 
     Plus,
     FolderOpen,
-    Wrench
+    Wrench,
+    X
 } from "lucide-react"
 import Image from "next/image"
+import { useMiaSidebar } from "@/contexts/MiaSidebarContext"
 
 interface MiaSidebarTopProps {
     currentPage?: string
 }
 
 export default function MiaSidebarTop({ currentPage = 'invoices' }: MiaSidebarTopProps) {
+    const { closeSidebar } = useMiaSidebar()
+    
     return (
         <div className="border-b border-[#2a2a2a] bg-black/50">
             {/* Page Context Indicator */}
-            <div className="px-4 py-3">
+            <div className="px-4 py-3 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     {/* <Image  
                         src="/red-motorminds-logo-svg.svg"
@@ -36,11 +40,19 @@ export default function MiaSidebarTop({ currentPage = 'invoices' }: MiaSidebarTo
                     /> */}
                     <span className="text-sm font-medium text-white">
                         Current Page: 
-                        <span className="ml-2 px-2 py-1 bg-[#b22222]/30 text-[#b22222] text-sm rounded-full capitalize">
+                        <span className="ml-2 px-2 py-1 bg-[#b22222]/30 text-[#b22222] text-sm rounded-full capitalize border border-[#b22222]/30">
                             {currentPage}
                         </span>
                     </span>
                 </div>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-400 hover:text-white hover:bg-[#2a2a2a]/50 rounded-md" 
+                    onClick={closeSidebar}
+                >
+                    <X className="w-4 h-4" />
+                </Button>
             </div>
             <Separator className="bg-[#2a2a2a]" />
             {/* Quick Actions - Context Aware */}
@@ -62,7 +74,7 @@ export default function MiaSidebarTop({ currentPage = 'invoices' }: MiaSidebarTo
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="justify-start text-left h-8 px-3 text-gray-300 hover:bg-[#b22222]/20 hover:text-[#b22222]"
+                                className="justify-start text-left h-8 px-3 text-gray-300 hover:bg-[#b22222]/20 hover:text-[#b22222] border border-transparent hover:border-[#b22222]/30"
                             >
                                 <Bell className="w-4 h-4 mr-2" />
                                 Send Reminder
@@ -70,18 +82,10 @@ export default function MiaSidebarTop({ currentPage = 'invoices' }: MiaSidebarTo
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="justify-start text-left h-8 px-3 text-gray-300 hover:bg-[#b22222]/20 hover:text-[#b22222]"
+                                className="justify-start text-left h-8 px-3 text-gray-300 hover:bg-[#b22222]/20 hover:text-[#b22222] border border-transparent hover:border-[#b22222]/30"
                             >
                                 <TrendingUp className="w-4 h-4 mr-2" />
                                 Generate Report
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="justify-start text-left h-8 px-3 text-gray-300 hover:bg-[#b22222]/20 hover:text-[#b22222]"
-                            >
-                                <Users className="w-4 h-4 mr-2" />
-                                Add Customer
                             </Button>
                         </>
                     )}

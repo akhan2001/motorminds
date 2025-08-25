@@ -68,6 +68,21 @@ export const InvoiceSearchSchema = z.object({
     offset: z.number().int().min(0).default(0)
 })
 
+// Invoice sending schema
+export const SendInvoiceSchema = z.object({
+    invoiceIdentifier: z.string().min(1, "Invoice identifier is required"),
+    recipientEmail: z.string().email().optional(),
+    type: z.enum(['auto', 'display_id', 'invoice_number']).default('auto')
+})
+
+// Invoice status update schema
+export const UpdateInvoiceStatusSchema = z.object({
+    invoiceIdentifier: z.string().min(1, "Invoice identifier is required"),
+    status: z.enum(['draft', 'pending', 'sent', 'paid', 'overdue', 'cancelled']),
+    notes: z.string().optional(),
+    type: z.enum(['auto', 'display_id', 'invoice_number']).default('auto')
+})
+
 // AI prompt processing schema
 export const InvoicePromptSchema = z.object({
     message: z.string().min(1, "Message cannot be empty"),
@@ -86,6 +101,8 @@ export type InvoiceLineItem = z.infer<typeof InvoiceLineItemSchema>
 export type CreateInvoice = z.infer<typeof CreateInvoiceSchema>
 export type UpdateInvoice = z.infer<typeof UpdateInvoiceSchema>
 export type InvoiceSearch = z.infer<typeof InvoiceSearchSchema>
+export type SendInvoice = z.infer<typeof SendInvoiceSchema>
+export type UpdateInvoiceStatus = z.infer<typeof UpdateInvoiceStatusSchema>
 export type InvoicePrompt = z.infer<typeof InvoicePromptSchema>
 
 // Helper validation functions
@@ -94,4 +111,6 @@ export const validateVehicle = (data: unknown) => VehicleSchema.safeParse(data)
 export const validateCreateInvoice = (data: unknown) => CreateInvoiceSchema.safeParse(data)
 export const validateUpdateInvoice = (data: unknown) => UpdateInvoiceSchema.safeParse(data)
 export const validateInvoiceSearch = (data: unknown) => InvoiceSearchSchema.safeParse(data)
+export const validateSendInvoice = (data: unknown) => SendInvoiceSchema.safeParse(data)
+export const validateUpdateInvoiceStatus = (data: unknown) => UpdateInvoiceStatusSchema.safeParse(data)
 export const validateInvoicePrompt = (data: unknown) => InvoicePromptSchema.safeParse(data)

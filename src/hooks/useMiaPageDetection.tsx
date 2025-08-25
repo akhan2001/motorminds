@@ -7,6 +7,7 @@ import { useMiaSidebar } from '@/contexts/MiaSidebarContext'
 // Define which pages support Mia AI sidebar
 const SUPPORTED_PAGES = {
     '/invoices': 'invoices',
+    '/loyalty': 'loyalty',
     // Add more pages here as needed
     // '/customers': 'customers',
     // '/mechanic-hub': 'mechanic-hub',

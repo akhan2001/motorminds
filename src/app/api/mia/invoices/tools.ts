@@ -286,7 +286,7 @@ export const searchInvoicesTool = new DynamicStructuredTool({
             invoice_number: invoice.invoice_number,
             status: invoice.status,
             total_amount: formatCurrency(invoice.total_amount || 0),
-            customer: `${invoice.customers.first_name} ${invoice.customers.last_name}`,
+            customer: `${invoice.customers[0].first_name} ${invoice.customers[0].last_name}`,
             customer_email: invoice.customers.email,
             vehicle: `${invoice.customer_vehicles.year} ${invoice.customer_vehicles.make} ${invoice.customer_vehicles.model}`,
             license_plate: invoice.customer_vehicles.license_plate,
@@ -409,6 +409,115 @@ export const createInvoiceTool = new DynamicStructuredTool({
     }
 })
 
+// Send invoice tool
+export const sendInvoiceTool = new DynamicStructuredTool({
+    name: 'send_invoice',
+    description: 'Send an invoice to a customer via email using invoice display ID (like INV-209) or invoice number (UUID)',
+    schema: z.object({
+        invoiceIdentifier: z.string().describe('Invoice display ID (like INV-209, INV-0001) or invoice number (UUID) - the system will auto-detect which type it is'),
+        recipientEmail: z.string().email().optional().describe('Override recipient email (uses customer email by default)')
+    }),
+    func: async ({ invoiceIdentifier, recipientEmail }) => {
+        try {
+            // Call the centralized send invoice API
+            const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/invoices/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    invoiceIdentifier,
+                    type: 'auto', // Auto-detect the identifier type
+                    recipientEmail // Optional override
+                })
+            })
+            
+            const result = await response.json()
+            
+            if (!response.ok) {
+                return `Error sending invoice: ${result.error || 'Unknown error occurred'}${result.details ? ` - ${result.details}` : ''}`
+            }
+            
+            const { data } = result
+            return JSON.stringify({
+                success: true,
+                message: `Invoice ${data.displayId || data.invoiceId} has been successfully sent to ${data.recipientEmail}.`,
+                invoice_id: data.invoiceId,
+                display_id: data.displayId,
+                recipient_email: data.recipientEmail,
+                email_id: data.emailId,
+                sent_at: data.sentAt
+            })
+            
+        } catch (error) {
+            return `Error sending invoice ${invoiceIdentifier}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }
+    }
+})
+
+// Update invoice status tool
+export const updateInvoiceStatusTool = new DynamicStructuredTool({
+    name: 'update_invoice_status',
+    description: 'Update the status of an existing invoice',
+    schema: z.object({
+        invoiceIdentifier: z.string().describe('Invoice display ID or invoice number (UUID)'),
+        status: z.enum(['draft', 'pending', 'sent', 'paid', 'overdue', 'cancelled']).describe('New invoice status'),
+        notes: z.string().optional().describe('Optional notes about the status change')
+    }),
+    func: async ({ invoiceIdentifier, status, notes }) => {
+        const supabase = await createClient()
+        
+        try {
+            // Auto-detect identifier type and find invoice
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(invoiceIdentifier)
+            
+            let query = supabase
+                .from('invoices')
+                .select('id, invoice_number, display_id, status, client_name')
+            
+            if (isUUID) {
+                query = query.eq('invoice_number', invoiceIdentifier)
+            } else {
+                query = query.eq('display_id', invoiceIdentifier)
+            }
+            
+            const { data: invoice, error: findError } = await query.single()
+            
+            if (findError || !invoice) {
+                return `Invoice not found: ${invoiceIdentifier}`
+            }
+            
+            // Update the invoice status
+            const updateData: any = { status }
+            if (notes) {
+                updateData.status_notes = notes
+            }
+            
+            const { error: updateError } = await supabase
+                .from('invoices')
+                .update(updateData)
+                .eq('id', invoice.id)
+            
+            if (updateError) {
+                return `Error updating invoice status: ${updateError.message}`
+            }
+            
+            return JSON.stringify({
+                success: true,
+                message: `Invoice ${invoice.display_id || invoice.invoice_number} status updated to "${status}"`,
+                invoice_id: invoice.invoice_number,
+                display_id: invoice.display_id,
+                previous_status: invoice.status,
+                new_status: status,
+                customer: invoice.client_name
+            })
+            
+        } catch (error) {
+            return `Error updating invoice status: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }
+    }
+})
+
 // Export all tools
 export const invoiceTools = [
     searchCustomersTool,
@@ -418,5 +527,7 @@ export const invoiceTools = [
     calculateInvoiceTotalsTool,
     suggestPricingTool,
     searchInvoicesTool,
-    createInvoiceTool
+    createInvoiceTool,
+    sendInvoiceTool,
+    updateInvoiceStatusTool
 ]

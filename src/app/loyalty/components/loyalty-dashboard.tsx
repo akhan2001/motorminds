@@ -37,7 +37,7 @@ export default function LoyaltyDashboard({ shopId }: { shopId: string }) {
     }, [shopId, refreshTrigger])
 
     return (
-        <main className="flex items-center justify-center py-8">
+        <main className="flex items-center justify-center py-8 px-4">
             <div className="container mx-auto max-w-[1300px]">
                 <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Loyalty Program</h1>
                 <p className="text-gray-400 mb-10">

@@ -167,7 +167,7 @@ export function Nav() {
 					{/* Left: Logo and Premium Badge */}
 					<div className="flex items-center gap-4 py-3">
 						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-full transition-opacity"
+						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
 						onClick={() => router.push("/")}
 						>
 							<Image
