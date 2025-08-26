@@ -57,3 +57,4 @@ next-env.d.ts
 # Local development files
 *.local.*
 local-*
+.vercel
