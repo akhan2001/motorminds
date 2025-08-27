@@ -60,7 +60,8 @@ export default function MiaWorkspace({
         handleSubmit,
         isLoading,
         error,
-        setMessages
+        setMessages,
+        append
     } = useChat({
         api: getApiEndpoint(activePage || 'general'),
         body: {
@@ -121,6 +122,17 @@ Just tell me what you need, and I'll walk you through it step by step.`
         if (!input.trim() || isLoading || !shopId) return
         handleSubmit(e)
     }
+
+    // Function to send a message programmatically (for quick actions)
+    const sendMessage = (message: string) => {
+        if (!message.trim() || isLoading || !shopId) return
+        
+        // Use the append function from useChat to send message directly
+        append({
+            role: 'user',
+            content: message
+        })
+    }
     
     const formatTimestamp = (date: Date) => {
         return new Intl.DateTimeFormat('en-US', {
@@ -166,7 +178,11 @@ Just tell me what you need, and I'll walk you through it step by step.`
     return (
         <div className={`flex flex-col h-full bg-black ${className}`}>
             {/* Top Section with Tools and Context */}
-            <MiaSidebarTop currentPage={activePage || 'general'} />
+            <MiaSidebarTop 
+                currentPage={activePage || 'general'} 
+                onSendMessage={sendMessage}
+                isLoading={isLoading}
+            />
 
             {/* Error Display */}
             {error && (
