@@ -5,11 +5,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/react"
 import Providers from "./providers"
-<<<<<<< HEAD
 import FacebookSdk from "@/app/components/FacebookSdk"
-=======
 import Script from "next/script";
->>>>>>> a16e48365ee5d589199a4c57313b4c5d972d50a6
 
 const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
