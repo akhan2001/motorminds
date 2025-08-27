@@ -86,8 +86,10 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eeeeee'
     },
-    descCol: { width: '70%', fontSize: 10 },
-    amountCol: { width: '30%', fontSize: 10, textAlign: 'right' },
+    descCol: { width: '55%', fontSize: 10, paddingRight: 5 },
+    qtyCol: { width: '15%', fontSize: 10, textAlign: 'center' },
+    rateCol: { width: '15%', fontSize: 10, textAlign: 'right' },
+    amountCol: { width: '15%', fontSize: 10, textAlign: 'right' },
     summaryRow: {
         flexDirection: 'row',
         marginTop: 8
@@ -263,82 +265,65 @@ export const InvoiceLandscape = ({ invoice }: { invoice: any }) => {
                     )}
                     <View style={styles.tableHeader}>
                         <Text style={styles.descCol}>Description</Text>
-                        <Text style={styles.amountCol}>Amount</Text>
+                        <Text style={styles.qtyCol}>Quantity</Text>
+                        <Text style={styles.rateCol}>Price</Text>
+                        <Text style={styles.amountCol}>Total</Text>
                     </View>
                     
-                    {/* --- Labour Items --- */}
-                    {(invoice.labour || (invoice.labour_items && invoice.labour_items.length > 0)) && (
+                    {/* Labour Items */}
+                    {(!invoice.labour_items || invoice.labour_items.length === 0) && invoice.labour_total_price > 0 && (
                         <View style={styles.tableRow}>
-                            <Text style={styles.descCol}>
-                                <Text style={{ fontWeight: 'bold' }}>Labour:</Text>
-                                {invoice.labour ? `\n- ${invoice.labour}` : ''}
-                                {invoice.labour_items && invoice.labour_items.map((item: any) => 
-                                    item.description ? `\n- ${item.description}` : ''
-                                )}
-                            </Text>
-                            <Text style={styles.amountCol}>
-                                {'\n'}
-                                {invoice.labour ? `${formatCurrency(invoice.labour_cost)}\n` : ''}
-                                {invoice.labour_items && invoice.labour_items.map((item: any) => 
-                                    item.description ? `${formatCurrency(item.cost)}\n` : ''
-                                )}
-                            </Text>
+                            <Text style={styles.descCol}>{invoice.labour || 'General Labour'}</Text>
+                            <Text style={styles.qtyCol}></Text>
+                            <Text style={styles.rateCol}></Text>
+                            <Text style={styles.amountCol}>{formatCurrency(invoice.labour_total_price)}</Text>
                         </View>
                     )}
-
-                    {/* --- Parts Items --- */}
-                    {(invoice.parts || (invoice.parts_items && invoice.parts_items.length > 0)) && (
+                    {invoice.labour_items && invoice.labour_items.map((item: any, index: number) => (
+                        <View key={`labour-${index}`} style={styles.tableRow}>
+                            <Text style={styles.descCol}>{item.description}</Text>
+                            <Text style={styles.qtyCol}>1</Text>
+                            <Text style={styles.rateCol}>{formatCurrency(item.cost)}</Text>
+                            <Text style={styles.amountCol}>{formatCurrency(item.cost)}</Text>
+                        </View>
+                    ))}
+                    
+                    {/* Parts Items */}
+                    {(!invoice.parts_items || invoice.parts_items.length === 0) && invoice.parts_total_price > 0 && (
                         <View style={styles.tableRow}>
-                            <Text style={styles.descCol}>
-                                <Text style={{ fontWeight: 'bold' }}>Parts:</Text>
-                                {invoice.parts ? `\n- ${invoice.parts}` : ''}
-                                {invoice.parts_items && invoice.parts_items.map((item: any) => 
-                                    item.description ? `\n- ${item.description}` : ''
-                                )}
-                            </Text>
-                            <Text style={styles.amountCol}>
-                                {'\n'}
-                                {invoice.parts ? `${formatCurrency(invoice.parts_cost)}\n` : ''}
-                                {invoice.parts_items && invoice.parts_items.map((item: any) => 
-                                    item.description ? `${formatCurrency(item.cost)}\n` : ''
-                                )}
-                            </Text>
+                            <Text style={styles.descCol}>{invoice.parts || 'General Parts'}</Text>
+                            <Text style={styles.qtyCol}></Text>
+                            <Text style={styles.rateCol}></Text>
+                            <Text style={styles.amountCol}>{formatCurrency(invoice.parts_total_price)}</Text>
                         </View>
                     )}
-
-                    {/* --- Notes --- */}
-                    {invoice.notes && (
-                        <View style={styles.tableRow}>
-                            <Text style={styles.descCol}>
-                                <Text style={{ fontWeight: 'bold' }}>Notes:</Text>
-                                {`\n${invoice.notes}`}
-                            </Text>
-                            <Text style={styles.amountCol}></Text>
+                    {invoice.parts_items && invoice.parts_items.map((item: any, index: number) => (
+                        <View key={`parts-${index}`} style={styles.tableRow}>
+                            <Text style={styles.descCol}>{item.description}</Text>
+                            <Text style={styles.qtyCol}>{item.quantity || 1}</Text>
+                            <Text style={styles.rateCol}>{formatCurrency(item.cost)}</Text>
+                            <Text style={styles.amountCol}>{formatCurrency(item.cost * (item.quantity || 1))}</Text>
                         </View>
-                    )}
+                    ))}
                 </View>
                 
-                {/* Summary Row */}
                 <View style={styles.summaryRow}>
                     <View style={styles.summaryLeft}>
                         <Text style={styles.sectionTitle}>NOTES</Text>
-                        <Text style={styles.notes}>
-                            {invoice.additionalNotes || 'Thank you for your business. Please contact us if you have any questions.'}
-                        </Text>
+                        <Text style={styles.notes}>{invoice.notes}</Text>
                     </View>
-                    
                     <View style={styles.summaryRight}>
                         <View style={styles.summaryTable}>
                             <View style={styles.summaryLine}>
-                                <Text>Subtotal:</Text>
-                                <Text>{formatCurrency(invoice.amount)}</Text>
+                                <Text>Subtotal</Text>
+                                <Text>{formatCurrency(subtotal)}</Text>
                             </View>
                             <View style={styles.summaryLine}>
-                                <Text>Tax ({taxRate}%):</Text>
+                                <Text>HST ({taxRate}%)</Text>
                                 <Text>{formatCurrency(taxAmount)}</Text>
                             </View>
                             <View style={styles.totalLine}>
-                                <Text>TOTAL:</Text>
+                                <Text>TOTAL</Text>
                                 <Text>{formatCurrency(total)}</Text>
                             </View>
                         </View>

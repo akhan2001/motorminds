@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/utils/supabase/client"
 
 export default function ResetPasswordComponent() {
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const router = useRouter()
 
   const [password, setPassword] = useState("")

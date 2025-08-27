@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 import MechanicsHubChat from "@/app/mechanic-hub/components/mechanics-hub-chat"
 import { WorkOrderStatusButtons } from "./work-order-status-buttons"
+import { ConfirmationDialog } from "@/app/financials/components/ConfirmationDialog"
 
 export interface DetailedRepairOrder {
   id: string
@@ -53,10 +54,29 @@ export interface DetailedRepairOrder {
   }
 }
 
+// Define a more specific type for the update payload
+interface UpdatePayload {
+  id: string;
+  status: string;
+  repair_order_details?: Array<{
+    id: string;
+    mechanic_id?: string | null;
+    labour?: string;
+    parts?: string;
+    notes?: string;
+    cost?: string;
+    mileage?: string;
+    task_priority?: string;
+    description?: string;
+    labour_cost?: string;
+    parts_cost?: string;
+  }>
+}
+
 interface TaskDetailsModalProps {
   task: DetailedRepairOrder
   onClose: () => void
-  onSave: (updated: DetailedRepairOrder) => void
+  onSave: (updated: UpdatePayload) => void
   shopId: string
 }
 
@@ -70,10 +90,11 @@ export function TaskDetailsModal({
   const [isEditing, setIsEditing] = useState(false)
   
   // Add staff options state
-  const [staffOptions, setStaffOptions] = useState<Array<{id: string, staff_name: string, role: string}>>([])
+  const [staffOptions, setStaffOptions] = useState<Array<{id: string, full_name: string, role: string}>>([])
   // Add selectedStaffId state to track the selected staff member
   const [selectedStaffId, setSelectedStaffId] = useState<string>("")
   const [currentStatus, setCurrentStatus] = useState(initialTask.status)
+  const [invoiceInfo, setInvoiceInfo] = useState<{ exists: boolean; id: string | null }>({ exists: false, id: null });
 
   // Extract the first row in details
   const firstDetail = initialTask.repair_order_details?.[0]
@@ -133,12 +154,18 @@ export function TaskDetailsModal({
       if (!shopId) return;
       
       const { data: staffData, error: staffErr } = await supabase
-        .from("shop_staff")
-        .select("id, staff_name, role")
-        .eq("shop_id", shopId);
+        .from("employees")
+        .select("id, first_name, last_name, role")
+        .eq("shop_id", shopId)
+        .is('termination_date', null);
         
       if (!staffErr && staffData) {
-        setStaffOptions(staffData);
+        const options = staffData.map(s => ({
+          id: s.id,
+          full_name: `${s.first_name || ''} ${s.last_name || ''}`.trim(),
+          role: s.role
+        }));
+        setStaffOptions(options);
       } else {
         console.error("Error fetching staff options:", staffErr);
       }
@@ -156,15 +183,16 @@ export function TaskDetailsModal({
         setSelectedStaffId(firstDetail.mechanic_id);
         
         const { data: staffRow, error: staffErr } = await supabase
-          .from("shop_staff")
-          .select("staff_name")
+          .from("employees")
+          .select("first_name, last_name")
           .eq("id", firstDetail.mechanic_id)
           .single()
 
         if (!staffErr && staffRow) {
+          const fullName = `${staffRow.first_name || ''} ${staffRow.last_name || ''}`.trim();
           setFormData((prev) => ({
             ...prev,
-            assignedToName: staffRow.staff_name,
+            assignedToName: fullName,
           }))
         } else {
           setFormData((prev) => ({
@@ -182,6 +210,40 @@ export function TaskDetailsModal({
     }
     fetchStaffName()
   }, [firstDetail?.mechanic_id])
+
+  useEffect(() => {
+    async function checkInvoiceExists() {
+      if (currentStatus !== "Completed" || !initialTask.id || !shopId) {
+        setInvoiceInfo({ exists: false, id: null });
+        return;
+      }
+
+      const firstDetailId = initialTask.repair_order_details?.[0]?.id;
+      if (!firstDetailId) {
+        return;
+      }
+      
+      const { data: existingInvoice, error } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('workorder_id', firstDetailId)
+        .eq('shop_id', shopId)
+        .limit(1);
+
+      if (error) {
+        console.error("Error checking for existing invoice:", error.message);
+        return;
+      }
+      
+      if (existingInvoice && existingInvoice.length > 0) {
+        setInvoiceInfo({ exists: true, id: existingInvoice[0].invoice_number });
+      } else {
+        setInvoiceInfo({ exists: false, id: null });
+      }
+    }
+
+    checkInvoiceExists();
+  }, [initialTask.id, currentStatus, initialTask.repair_order_details, shopId]);
 
   // If the parent re-renders with a new task
   useEffect(() => {
@@ -244,15 +306,15 @@ export function TaskDetailsModal({
   // SAVE CHANGES
   // ------------------
   async function handleSave() {
-    // Create a base updated object
-    const updated: DetailedRepairOrder = {
-      ...initialTask,
+    // Create a "patch" object with only the changed fields
+    const updatedFields: UpdatePayload = {
+      id: initialTask.id, // Include ID for matching
       status: currentStatus,
       repair_order_details: initialTask.repair_order_details?.length
         ? [
             {
               ...initialTask.repair_order_details[0],
-              mechanic_id: selectedStaffId || undefined,
+              mechanic_id: selectedStaffId || null,
               mileage: formData.mileage,
               labour: formData.labour,
               labour_cost: formData.labourCost,
@@ -265,30 +327,16 @@ export function TaskDetailsModal({
             },
           ]
         : [],
-      customers: initialTask.customers ? {
-        ...initialTask.customers,
-        id: initialTask.customers.id,
-        customer_vehicles: initialTask.customers.customer_vehicles?.map(v => 
-          v.id === formData.vehicle_id 
-            ? { ...v, color: formData.color, license_plate: formData.licensePlate }
-            : v
-        )
-      } : undefined
-    }
+    };
 
-    onSave(updated)
-    setIsEditing(false)
+    onSave(updatedFields);
+    setIsEditing(false);
   }
 
   // ------------------
-  // DELETE with confirmation + full page reload
+  // DELETE function (confirmation handled by dialog)
   // ------------------
   async function handleDelete() {
-    const confirmed = window.confirm(
-      "Are you sure you want to remove this task from the shop? This action will hide it from the shop's list but keep any existing invoice."
-    )
-    if (!confirmed) return
-  
     try {
       // 1) Instead of truly deleting the order, we simply remove the shop reference:
       const { error: updateErr } = await supabase
@@ -318,7 +366,7 @@ export function TaskDetailsModal({
       if (selectedStaff) {
         setFormData(prev => ({
           ...prev,
-          assignedToName: selectedStaff.staff_name
+          assignedToName: selectedStaff.full_name
         }));
       }
     } else {
@@ -624,7 +672,7 @@ export function TaskDetailsModal({
                           <SelectItem value="none">None</SelectItem>
                           {staffOptions.map((staff) => (
                             <SelectItem key={staff.id} value={staff.id}>
-                              {staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                              {staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -687,23 +735,48 @@ export function TaskDetailsModal({
           <div className="flex items-center justify-between p-6 border-t border-[#222222] shrink-0">
             <div className="flex items-center gap-2">
               {/* DELETE BUTTON */}
-              <Button
+              <ConfirmationDialog
+                trigger={
+                  <Button
+                    variant="destructive"
+                    className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                }
+                title="Remove Work Order"
+                description="Are you sure you want to remove this task from the shop? This action will hide it from the shop's list but keep any existing invoice."
+                onConfirm={handleDelete}
+                confirmText="Remove"
+                cancelText="Cancel"
                 variant="destructive"
-                className="bg-[#e23232] text-white hover:bg-[#e23232]/80 w-full sm:w-auto order-1 sm:order-2"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
+              />
               {currentStatus === "Completed" && (
                 <Button
                   variant="outline"
                   className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
-                  onClick={() => {
-                    generateInvoice(initialTask.id, shopId).then(result => {
-                      if (result === false) {
+                  onClick={async () => {
+                    if (invoiceInfo.exists && invoiceInfo.id) {
+                      router.push(`/invoices?invoiceId=${invoiceInfo.id}`);
+                      return;
+                    }
+
+                    const result = await generateInvoice(initialTask.id, shopId);
+                    if (result === false) {
                         toast.error("Invoice already exists for this work order");
-                      } else if (result === true) {
+                    } else if (result && result !== true) {
+                        const invoiceId = result[0].invoice_number;
+                        toast.success("Invoice generated successfully", {
+                            action: {
+                                label: "Go to Invoice",
+                                onClick: () => {
+                                    router.push(`/invoices?invoiceId=${invoiceId}`);
+                                }
+                            }
+                        });
+                        setInvoiceInfo({ exists: true, id: invoiceId });
+                    } else if (result === true) {
                         toast.success("Invoice generated successfully", {
                           action: {
                             label: "Go to Invoices",
@@ -712,11 +785,10 @@ export function TaskDetailsModal({
                             }
                           }
                         });
-                      }
-                    });
+                    }
                   }}
                 >
-                  Generate Invoice
+                  {invoiceInfo.exists ? "View Invoice" : "Generate Invoice"}
                 </Button>
               )}
             </div>

@@ -581,7 +581,7 @@ export default function DashboardPage() {
       `}</style>
 
       <div className="min-h-screen flex flex-col bg-black text-white">
-        <Nav activeLink="Dashboard" />
+        <Nav />
         <main className="container mx-auto px-4 py-6 flex-1 flex flex-col">
           {/* Header */}
           <div className="mb-6">

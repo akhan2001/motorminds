@@ -61,7 +61,6 @@ export function LeadTable({
                 
                 for (const lead of workOrderLeads) {
                     if (lead.repair_order_id) {
-                        console.log("Fetching insights for lead:", lead.id, "repair order:", lead.repair_order_id);
                         await fetchInsightsForLead(lead.id, lead.repair_order_id)
                     }
                 }

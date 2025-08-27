@@ -13,8 +13,8 @@ interface InvoiceData {
     amount: number
     labour: string
     parts: string
-    labour_cost: string
-    parts_cost: string
+    labour_total_price: string
+    parts_total_price: string
     notes: string
     mileage: string
     description: string
@@ -34,12 +34,15 @@ interface InvoiceData {
 
 const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
     // Get the work order details data
-    const { data: detailsData, error } = await supabase
+    const { data: detailsData, error: detailsError } = await supabase
         .from('repair_order_details')
         .select('cost, labour, parts, notes, mileage, description, Assigned_to, labour_cost, parts_cost')
         .eq('id', workOrderDetailsID)
 
-    // console.log("Amount: " + amount?.[0].cost)
+    if (detailsError) {
+        console.error("Error fetching repair order details:", detailsError)
+        throw new Error("Failed to fetch repair order details.")
+    }
 
     // Get the work order data
     const { data: workOrderData, error: workOrderError } = await supabase
@@ -47,7 +50,10 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         .select('shop_id, customer_id, vehicle_id')
         .eq('id', workOrderID)
 
-    // console.log("Shop ID: " + workOrderData?.[0].shop_id + "\nCustomer ID: " + workOrderData?.[0].customer_id)
+    if (workOrderError) {
+        console.error("Error fetching work order data:", workOrderError)
+        throw new Error("Failed to fetch work order data.")
+    }
 
     // Grab shop name, address, and email from shop_id
     const { data: shopData, error: shopError } = await supabase
@@ -55,7 +61,10 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         .select('shop_name, shop_address, shop_email')
         .eq('id', workOrderData?.[0].shop_id)
 
-    // console.log("Shop Data: " + shopData?.[0].shop_name + "\n" + shopData?.[0].shop_address + "\n" + shopData?.[0].shop_email)
+    if (shopError) {
+        console.error("Error fetching shop data:", shopError)
+        throw new Error("Failed to fetch shop data.")
+    }
 
     // Grab customer name, address, and email from customer_id
     const { data: customerData, error: customerError } = await supabase
@@ -63,12 +72,21 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         .select('customer_name, customer_address, customer_email')
         .eq('id', workOrderData?.[0].customer_id)
 
+    if (customerError) {
+        console.error("Error fetching customer data:", customerError)
+        throw new Error("Failed to fetch customer data.")
+    }
+
     //Grab vehicle information from vehicle_information table
     const { data: vehicleData, error: vehicleError } = await supabase
         .from('customer_vehicles')
         .select('year, make, model, vin, license_plate')
         .eq('id', workOrderData?.[0].vehicle_id)
 
+    if (vehicleError) {
+        console.error("Error fetching vehicle data:", vehicleError)
+        throw new Error("Failed to fetch vehicle data.")
+    }
     
     // console.log("Customer Data: " + customerData?.[0].customer_name + "\n" + customerData?.[0].customer_address + "\n" + customerData?.[0].customer_email)
 
@@ -81,8 +99,8 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         amount: detailsData?.[0].cost,
         labour: detailsData?.[0].labour,
         parts: detailsData?.[0].parts,
-        labour_cost: detailsData?.[0].labour_cost,
-        parts_cost: detailsData?.[0].parts_cost,
+        labour_total_price: detailsData?.[0].labour_cost,
+        parts_total_price: detailsData?.[0].parts_cost,
         notes: detailsData?.[0].notes,
         mileage: detailsData?.[0].mileage,
         description: detailsData?.[0].description,
@@ -100,15 +118,10 @@ const fetchData = async (workOrderDetailsID: any, workOrderID: any) => {
         }
     }
 
-    if (error) {
-        console.error(error)
-        return;
-    }
-
     return invoiceData;
 }
 
-const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: string) => {
+const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: string): Promise<{ invoice_number: string }[] | null> => {
     // console.log(invoiceData)
 
     const { data, error } = await supabase
@@ -123,8 +136,8 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: stri
             amount: invoiceData.amount,
             labour: invoiceData.labour,
             parts: invoiceData.parts,
-            labour_cost: invoiceData.labour_cost,
-            parts_cost: invoiceData.parts_cost,
+            labour_total_price: invoiceData.labour_total_price,
+            parts_total_price: invoiceData.parts_total_price,
             notes: invoiceData.notes,
             mileage: invoiceData.mileage,
             description: invoiceData.description,
@@ -136,10 +149,11 @@ const createNewInvoice = async (invoiceData: any, workOrderID: any, shopId: stri
             shop_id: shopId,
             vehicle_information: invoiceData.vehicle_information
         })
+        .select('invoice_number')
         
     if (error) {
         console.error(error)
-        return;
+        return null;
     }
 
     return data;
@@ -183,7 +197,11 @@ export async function generateInvoice(repairOrderID: any, shopId: string) {
     const invoiceData = await fetchData(repairOrderDetailsID, repairOrderID)
 
     // console.log(invoiceData)
-    createNewInvoice(invoiceData, repairOrderDetailsID, shopId)
+    const newInvoice = await createNewInvoice(invoiceData, repairOrderDetailsID, shopId)
+
+    if (newInvoice) {
+        return newInvoice;
+    }
 
     return true;
     // const invoice = await easyinvoice.createInvoice(data);

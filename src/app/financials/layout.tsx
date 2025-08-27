@@ -1,0 +1,154 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { FinancialsAuthProvider, useFinancialsAuth } from '@/contexts/FinancialsAuthContext';
+import { FinancialsPasswordModal } from '@/components/financials/FinancialsPasswordModal';
+import { FinancialsSetupPassword } from '@/components/financials/FinancialsSetupPassword';
+import { createClient } from '@/utils/supabase/client';
+
+interface FinancialsLayoutContentProps {
+    children: React.ReactNode;
+}
+
+function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
+    const { isUnlocked, isLocked } = useFinancialsAuth();
+    const [needsPasswordSetup, setNeedsPasswordSetup] = useState<boolean | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Check if shop has financial password set up
+    useEffect(() => {
+        const checkPasswordStatus = async () => {
+            try {
+                const supabase = createClient();
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                
+                if (authError || !user) {
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Get user's shop_id
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('shop_id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (userError || !userData?.shop_id) {
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Check if shop has financial password
+                const { data: shopData, error: shopError } = await supabase
+                    .from('shops')
+                    .select('financials_password_hash')
+                    .eq('id', userData.shop_id)
+                    .single();
+
+                if (shopError) {
+                    console.error('Error checking password status:', shopError);
+                    setIsLoading(false);
+                    return;
+                }
+
+                setNeedsPasswordSetup(!shopData?.financials_password_hash);
+            } catch (error) {
+                console.error('Error in password status check:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkPasswordStatus();
+    }, []);
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-gray-400">Loading financial section...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // First-time setup
+    if (needsPasswordSetup) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
+                <FinancialsSetupPassword
+                    onComplete={() => {
+                        setNeedsPasswordSetup(false);
+                    }}
+                />
+            </div>
+        );
+    }
+
+    // User is locked out or needs to authenticate
+    if (!isUnlocked) {
+        return (
+            <div className="min-h-screen bg-black">
+                {/* Blurred background content */}
+                <div className="absolute inset-0 filter blur-sm pointer-events-none">
+                    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-8">
+                        <div className="max-w-7xl mx-auto">
+                            <h1 className="text-3xl font-bold text-white mb-8">Financial Dashboard</h1>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[1, 2, 3, 4, 5, 6].map((i) => (
+                                    <div key={i} className="bg-gray-800 rounded-lg p-6 h-40" />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Password Modal */}
+                <FinancialsPasswordModal />
+            </div>
+        );
+    }
+
+    // User is authenticated - show content
+    return (
+        <div className="min-h-screen bg-black">
+            {/* Session indicator */}
+            <div className="bg-green-600/10 border-b border-green-600/20 p-2">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center text-green-400 text-sm">
+                        <div className="w-2 h-2 bg-green-400 rounded-full mr-2" />
+                        Financial session active
+                    </div>
+                    <button
+                        onClick={() => {
+                            // This will be handled by the context
+                            window.location.reload();
+                        }}
+                        className="text-green-400 hover:text-green-300 text-sm underline"
+                    >
+                        Lock section
+                    </button>
+                </div>
+            </div>
+            
+            {children}
+        </div>
+    );
+}
+
+interface FinancialsLayoutProps {
+    children: React.ReactNode;
+}
+
+export default function FinancialsLayout({ children }: FinancialsLayoutProps) {
+    return (
+        <FinancialsAuthProvider>
+            <FinancialsLayoutContent>
+                {children}
+            </FinancialsLayoutContent>
+        </FinancialsAuthProvider>
+    );
+}

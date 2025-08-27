@@ -15,6 +15,7 @@ import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
 import { decodeVin } from '@/app/utils/vin-decode'
 import { WorkOrderPartsLabor } from "@/app/mechanic-hub/components/work-order-parts-labor"
 import { VehicleSearchContainer } from "@/app/mechanic-hub/components/vehicle-search-container"
+import { generateImmediateAnalysis, getOrGenerateMiaInsights } from "@/app/mia/utils/insightsGenerator"
 
 // Minimal Task interface for local usage
 interface Task {
@@ -29,7 +30,7 @@ interface Task {
 
 interface WorkOrderFormProps {
 	onClose: () => void
-	onSave: (data: any) => void
+	onSave: (data: any) => Promise<any>
 	onAddTask?: (task: Task) => void
 }
 
@@ -57,7 +58,7 @@ interface CustomerOption {
 // Staff
 interface StaffOption {
 	id: string
-	staff_name: string
+	full_name: string
 	role: string
 }
 
@@ -101,7 +102,7 @@ const [searchMode, setSearchMode] = useState<'customer' | 'vehicle'>('customer')
 // The list of possible customers (each with an array of vehicles)
 const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([])
 // The staff options for "Assigned To"
-const [staffOptions, setStaffOptions] = useState<{ id: string; staff_name: string; role: string }[]>([])
+const [staffOptions, setStaffOptions] = useState<{ id: string; full_name: string; role: string }[]>([])
 // Once user chooses a customer, we store that customer's vehicles here for the second dropdown
 const [currentVehicles, setCurrentVehicles] = useState<VehicleData[]>([])
 // The shop ID from the logged-in user
@@ -163,18 +164,19 @@ useEffect(() => {
 		setCustomerOptions(options)
 	}
 
-	// d) fetch staff from "shop_staff"
+	// d) fetch staff from "employees"
 	const { data: staffData, error: staffErr } = await supabase
-		.from("shop_staff")
-		.select("id, staff_name, role")
+		.from("employees")
+		.select("id, first_name, last_name, role")
 		.eq("shop_id", userData.shop_id)
+		.is('termination_date', null)
 
 	console.log(staffData)
 
 	if (!staffErr && staffData) {
 		const staffList: StaffOption[] = staffData.map((s: any) => ({
 		id: s.id,
-		staff_name: s.staff_name,
+		full_name: `${s.first_name || ''} ${s.last_name || ''}`.trim(),
 		role: s.role,
 		}))
 		setStaffOptions(staffList)
@@ -296,11 +298,18 @@ const handleAssignedToChange = (value: string) => {
 	}))
 }
 
+// Add loading state for save operation
+const [isSaving, setIsSaving] = useState(false)
+
 // ------------------------------------------------------------------
 // 6) Validate & Save the form
 // ------------------------------------------------------------------
-function handleSave() {
+async function handleSave() {
 	console.log("workOrderData", workOrderData)
+	
+	// Prevent multiple save attempts
+	if (isSaving) return
+	
 	// 1. Customer validation
 	if (!workOrderData.customerId) {
 		toast.error("Please pick a customer or create a new one before saving.")
@@ -348,24 +357,47 @@ function handleSave() {
 		return
 	}
 
-	onSave(workOrderData)
+	try {
+		setIsSaving(true)
+		toast.info("Creating work order...")
 
-	const newTask: Task = {
-		id: Date.now().toString(),
-		title:
-			workOrderData.taskName ||
-			`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-		vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
-		date: new Date().toISOString().split("T")[0],
-		status: "red",
-		column: "todo",
-		priority: workOrderData.priority,
+		// Save the work order and wait for the result
+		const savedWorkOrder = await onSave(workOrderData)
+		
+		// Check if we got a valid work order ID back
+		if (savedWorkOrder && savedWorkOrder.id && shopId) {
+			toast.success("Work order created successfully!")
+			
+			// Generate MIA insights in the background (don't wait for it)
+			generateImmediateAnalysis(savedWorkOrder, shopId).catch(error => {
+				console.error("Background MIA insights generation failed:", error)
+			})
+		} else {
+			toast.success("Work order created successfully!")
+		}
+
+		const newTask: Task = {
+			id: savedWorkOrder?.id || Date.now().toString(),
+			title:
+				workOrderData.taskName ||
+				`${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+			vehicle: `${workOrderData.year} ${workOrderData.make} ${workOrderData.model}`,
+			date: new Date().toISOString().split("T")[0],
+			status: "red",
+			column: "todo",
+			priority: workOrderData.priority,
+		}
+
+		console.log(newTask)
+		onAddTask(newTask)
+
+		onClose()
+	} catch (error) {
+		console.error("Error saving work order:", error)
+		toast.error("Failed to create work order. Please try again.")
+	} finally {
+		setIsSaving(false)
 	}
-
-	console.log(newTask)
-	onAddTask(newTask)
-
-	onClose()
 }
 
 // Add this after your other useEffects
@@ -828,7 +860,7 @@ return (
 											<SelectItem value="none">None</SelectItem>
 											{staffOptions.map((staff) => (
 												<SelectItem key={staff.id} value={staff.id}>
-													{staff.staff_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+													{staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
 												</SelectItem>
 											))}
 										</SelectContent>
@@ -900,9 +932,9 @@ return (
 				<Button
 					onClick={handleSave}
 					className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2"
-					disabled={!workOrderData.customerId}
+					disabled={!workOrderData.customerId || isSaving}
 				>
-					Create Work Order
+					{isSaving ? "Creating..." : "Create Work Order"}
 				</Button>
 				</div>
 			</div>

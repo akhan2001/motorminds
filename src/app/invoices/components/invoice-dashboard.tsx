@@ -1,10 +1,13 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
+import { useSearchParams, useRouter } from 'next/navigation'
 import InvoiceForm from "./invoice-forms"
+import EditInvoiceForm from "./EditInvoiceForm"
 import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
 import { InvoiceDialog } from "./InvoiceDialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchAllInvoices, formatCurrency, formatDate, fetchShopBusinessDetails } from "../utils/invoice-utils"
 import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,20 +16,36 @@ import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
+import { ReadonlyURLSearchParams } from "next/navigation"
 
-export default function InvoiceDashboard({ shopId }: { shopId: string }) {
+export default function InvoiceDashboard({ shopId, searchParams }: { shopId: string, searchParams: ReadonlyURLSearchParams | null }) {
     const [invoices, setInvoices] = useState<any[]>([])
     const [isFormOpen, setIsFormOpen] = useState(false)
+    const [isEditFormOpen, setIsEditFormOpen] = useState(false)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-    const [isDateFilterActive, setIsDateFilterActive] = useState(true)
+    const [isDateFilterActive, setIsDateFilterActive] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
+    const router = useRouter();
     
     // The filter: "all" | "paid" | "unpaid"
     const [selectedFilter, setSelectedFilter] = useState<"all" | "paid" | "unpaid">("all")
+    // Active tab for source filtering
+    const [activeSourceTab, setActiveSourceTab] = useState<"all" | "shop_generated" | "customer_generated">("all")
+
+    // Handle opening invoice from URL
+    useEffect(() => {
+        const invoiceId = searchParams?.get('invoiceId')
+        if (invoiceId && invoices.length > 0) {
+            const invoiceToOpen = invoices.find(inv => inv.invoice_number === invoiceId);
+            if (invoiceToOpen) {
+                handleOpenInvoice(invoiceToOpen);
+            }
+        }
+    }, [searchParams, invoices]);
     
     // Only load invoices when shopId is provided (and on initial mount)
     useEffect(() => {
@@ -61,12 +80,20 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
         }
     }
 
+    const handleEditInvoice = (invoice: any) => {
+        setSelectedInvoice(invoice);
+        setIsDialogOpen(false);
+        setIsEditFormOpen(true);
+    }
+
     const handleOpenForm = () => {
+        setSelectedInvoice(null); // Ensure we're in create mode
         setIsFormOpen(true)
     }
 
     const handleCloseForm = () => {
         setIsFormOpen(false);
+        setIsEditFormOpen(false);
         // Clear selected invoice if we were in edit mode
         if (selectedInvoice && !isDialogOpen) {
             setSelectedInvoice(null);
@@ -81,16 +108,25 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
 
     const handleCloseInvoice = () => {
         setIsDialogOpen(false);
+        setSelectedInvoice(null);
         // Refresh invoices when dialog closes to get any updates
         refreshInvoices();
+        router.push('/invoices', { scroll: false });
     }
 
     // Filter the displayed invoices
     const filteredInvoices = invoices.filter((inv) => {
-        if (selectedFilter === "all")   return true
-        if (selectedFilter === "paid")   return inv.status === "PAID"
-        if (selectedFilter === "unpaid") return inv.status === "UNPAID"
-        return true
+        // Status filter
+        let statusMatch = true;
+        if (selectedFilter === "paid") statusMatch = inv.status === "PAID"
+        else if (selectedFilter === "unpaid") statusMatch = inv.status === "UNPAID"
+        
+        // Source filter
+        let sourceMatch = true;
+        if (activeSourceTab === "shop_generated") sourceMatch = inv.source === "shop_generated"
+        else if (activeSourceTab === "customer_generated") sourceMatch = inv.source === "customer_generated"
+        
+        return statusMatch && sourceMatch;
     })
 
     // Calculate counts for each filter type
@@ -110,23 +146,39 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
     }
 
     // All invoices counts
-    const allTodayCount = invoices.filter(invoice => isToday(invoice.issue_date)).length
-    const allMonthCount = invoices.filter(invoice => isThisMonth(invoice.issue_date)).length
+    const allTodayCount = invoices.filter(invoice => isToday(invoice.created_at)).length
+    const allMonthCount = invoices.filter(invoice => isThisMonth(invoice.created_at)).length
 
     // Paid invoices counts
     const paidTodayCount = invoices.filter(invoice => 
-        invoice.status === "PAID" && isToday(invoice.issue_date)
+        invoice.status === "PAID" && isToday(invoice.created_at)
     ).length
     const paidMonthCount = invoices.filter(invoice => 
-        invoice.status === "PAID" && isThisMonth(invoice.issue_date)
+        invoice.status === "PAID" && isThisMonth(invoice.created_at)
     ).length
 
     // Unpaid invoices counts
     const unpaidTodayCount = invoices.filter(invoice => 
-        invoice.status === "UNPAID" && isToday(invoice.issue_date)
+        invoice.status === "UNPAID" && isToday(invoice.created_at)
     ).length
     const unpaidMonthCount = invoices.filter(invoice => 
-        invoice.status === "UNPAID" && isThisMonth(invoice.issue_date)
+        invoice.status === "UNPAID" && isThisMonth(invoice.created_at)
+    ).length
+
+    // Customer-generated invoices counts
+    const customerTodayCount = invoices.filter(invoice => 
+        invoice.source === "customer_generated" && isToday(invoice.created_at)
+    ).length
+    const customerMonthCount = invoices.filter(invoice => 
+        invoice.source === "customer_generated" && isThisMonth(invoice.created_at)
+    ).length
+
+    // Shop-generated invoices counts
+    const shopTodayCount = invoices.filter(invoice => 
+        invoice.source === "shop_generated" && isToday(invoice.created_at)
+    ).length
+    const shopMonthCount = invoices.filter(invoice => 
+        invoice.source === "shop_generated" && isThisMonth(invoice.created_at)
     ).length
 
     // Filter and sort the invoices more efficiently using useMemo
@@ -135,7 +187,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             .filter(invoice => {
                 // Date filter
                 if (isDateFilterActive && selectedDate) {
-                    const dateMatches = format(new Date(invoice.issue_date), "yyyy-MM-dd") === 
+                    const dateMatches = format(new Date(invoice.created_at), "yyyy-MM-dd") === 
                                        format(selectedDate, "yyyy-MM-dd");
                     if (!dateMatches) return false;
                 }
@@ -154,8 +206,8 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 return true;
             })
             .sort((a, b) => {
-                const dateA = new Date(a.issue_date).getTime()
-                const dateB = new Date(b.issue_date).getTime()
+                const dateA = new Date(a.created_at).getTime()
+                const dateB = new Date(b.created_at).getTime()
                 return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
             })
     }, [filteredInvoices, isDateFilterActive, selectedDate, sortOrder, searchQuery])
@@ -196,15 +248,15 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             shopPhone: invoice.shop_phone,
             shopLogo: shopLogoUrl,
             amount: invoice.amount,
-            issueDate: invoice.issue_date,
+            issueDate: invoice.created_at,
             clientName: invoice.client_name,
             clientAddress: invoice.client_address,
             clientEmail: invoice.client_email,
             clientPhone: invoice.client_phone,
             labour: invoice.labour,
-            labour_cost: invoice.labour_cost,
+            labour_total_price: invoice.labour_total_price,
             parts: invoice.parts,
-            parts_cost: invoice.parts_cost,
+            parts_total_price: invoice.parts_total_price,
             notes: invoice.notes,
             mileage: invoice.mileage,
             description: invoice.description,
@@ -213,6 +265,9 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
             business_number: businessDetails.business_number,
             labour_items: invoice.labour_items || [],
             parts_items: invoice.parts_items || [],
+            source: invoice.source,
+            customer_notes: invoice.customer_notes,
+            estimated_amount: invoice.estimated_amount,
             vehicleInfo: invoice.vehicle_information ? {
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,
@@ -224,17 +279,6 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 model: "",
                 license_plate: ""
             }
-        }
-    }
-
-    const handleEditInvoice = async () => {
-        // Close dialog and refresh invoices to get the updated data
-        setIsDialogOpen(false);
-        
-        if (selectedInvoice) {
-            // Open the form with the selected invoice data - already formatted by handleOpenInvoice
-            setIsFormOpen(true);
-            refreshInvoices();
         }
     }
 
@@ -270,9 +314,11 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                     />
                 </div>
 
-                {/* The 3 Filter Boxes */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start mb-6 sm:mb-8">
-                    <div className="grid grid-cols-3 gap-2 w-full min-w-[50%] sm:w-auto">
+                {/* Status Filter Boxes */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start mb-4">
+                    <div className="w-full sm:w-auto">
+                        <h4 className="text-sm text-gray-400 mb-2">Filter by Status</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:min-w-[600px]">
                         <InvoiceFilter
                             title="All"
                             todayCount={allTodayCount}
@@ -295,7 +341,35 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                             onClick={() => setSelectedFilter("unpaid")}
                         />
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-3 sm:mt-0 sm:ml-auto">
+                    </div>
+                </div>
+
+                {/* Source Tabs */}
+                <Tabs value={activeSourceTab} onValueChange={(value) => setActiveSourceTab(value as any)} className="mb-6 sm:mb-8">
+                    <TabsList className="bg-[#131313] border border-[#333] h-12">
+                        <TabsTrigger 
+                            value="all" 
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                        >
+                            All Invoices ({allMonthCount})
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="shop_generated" 
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                        >
+                            Shop Generated ({shopMonthCount})
+                        </TabsTrigger>
+                        <TabsTrigger 
+                            value="customer_generated" 
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                        >
+                            Customer Requests ({customerMonthCount})
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                
+                <div className="flex flex-wrap gap-2 mb-6 justify-end">
+                    <div className="flex flex-wrap gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -355,7 +429,7 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                                 displayNumber={invoice.display_id}
                                 status={invoice.status}
                                 amount={formatCurrency(invoice.amount)}
-                                issueDate={formatDate(invoice.issue_date)}
+                                issueDate={formatDate(invoice.created_at)}
                                 shopName={invoice.shop_name}
                                 shopAddress={invoice.shop_address}
                                 clientName={invoice.client_name}
@@ -369,6 +443,9 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                                     license_plate: invoice.vehicle_information.license_plate
                                 } : undefined}
                                 workOrder={invoice.workorder_id}
+                                source={invoice.source}
+                                estimatedAmount={invoice.estimated_amount}
+                                customerNotes={invoice.customer_notes}
                                 onClick={() => handleOpenInvoice(invoice)}
                                 onStatusChange={refreshInvoices}
                             />
@@ -393,18 +470,28 @@ export default function InvoiceDashboard({ shopId }: { shopId: string }) {
                 onClose={handleCloseForm}
                 shopId={shopId}
                 onInvoiceCreated={refreshInvoices}
-                mode={selectedInvoice && isFormOpen ? "edit" : "create"}
-                existingInvoice={selectedInvoice}
             />
 
-            {/* Invoice detail dialog */}
+            {/* Invoice edit form */}
             {selectedInvoice && (
+                <EditInvoiceForm
+                    isOpen={isEditFormOpen}
+                    onClose={handleCloseForm}
+                    shopId={shopId}
+                    onInvoiceUpdated={refreshInvoices}
+                    existingInvoice={selectedInvoice}
+                />
+            )}
+
+            {/* Invoice detail dialog */}
+            {selectedInvoice && !isEditFormOpen && (
                 <InvoiceDialog
                     isOpen={isDialogOpen}
                     onClose={handleCloseInvoice}
                     invoice={selectedInvoice}
                     shopId={shopId}
-                    onEdit={handleEditInvoice}
+                    onInvoiceUpdated={refreshInvoices}
+                    // onEdit={() => handleEditInvoice(selectedInvoice)}
                 />
             )}
         </div>

@@ -1,0 +1,172 @@
+/* Dark theme overrides for react-big-calendar */
+.rbc-calendar {
+  background-color: rgb(39 39 42) !important;
+  color: white !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove any container borders */
+.dark-calendar {
+  border: none !important;
+  outline: none !important;
+}
+
+.dark-calendar * {
+  box-sizing: border-box;
+}
+
+.rbc-month-view {
+  background-color: rgb(39 39 42) !important;
+  border: none !important;
+}
+
+.rbc-header {
+  background-color: rgb(63 63 70) !important;
+  color: white !important;
+  border-color: rgb(82 82 91) !important;
+  border-width: 1px !important;
+  font-weight: 500;
+}
+
+.rbc-date-cell {
+  background-color: rgb(39 39 42) !important;
+  border-color: rgb(82 82 91) !important;
+  border-width: 1px !important;
+  transition: opacity 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.rbc-date-cell a {
+  color: white !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.rbc-day-bg {
+  background-color: rgb(39 39 42) !important;
+  border-color: rgb(82 82 91) !important;
+  border-width: 1px !important;
+}
+
+.rbc-today {
+  background-color: rgb(63 63 70) !important;
+}
+
+.rbc-off-range-bg {
+  background-color: rgb(24 24 27) !important;
+}
+
+.rbc-month-row {
+  border-color: rgb(82 82 91) !important;
+  border-width: 1px !important;
+}
+
+.rbc-button-link {
+  color: white !important;
+}
+
+.rbc-show-more {
+  color: rgb(96 165 250) !important;
+}
+
+.rbc-event {
+  color: white !important;
+  border: none !important;
+}
+
+.rbc-event-label {
+  color: white !important;
+}
+
+.rbc-event-content {
+  color: white !important;
+}
+
+.rbc-slot-selection {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.rbc-day-slot .rbc-event {
+  border: none !important;
+}
+
+.rbc-off-range {
+  color: rgb(113 113 122) !important;
+}
+
+.rbc-date-cell.rbc-off-range-bg a {
+  color: rgb(113 113 122) !important;
+}
+
+/* Simple opacity hover effects for better UI/UX */
+.rbc-date-cell:hover {
+  opacity: 0.7 !important;
+  cursor: pointer !important;
+}
+
+.rbc-date-cell:hover a {
+  opacity: 0.7 !important;
+}
+
+/* Today's date with simple hover */
+.rbc-today:hover {
+  opacity: 0.7 !important;
+}
+
+/* Off-range dates hover (previous/next month) */
+.rbc-off-range-bg:hover {
+  opacity: 0.5 !important;
+}
+
+.rbc-off-range-bg:hover a {
+  opacity: 0.5 !important;
+}
+
+/* Ensure no white borders anywhere */
+.rbc-calendar,
+.rbc-calendar *,
+.rbc-month-view,
+.rbc-month-view *,
+.dark-calendar,
+.dark-calendar * {
+  border-color: rgb(82 82 91) !important;
+}
+
+/* Remove any default focus outlines that might appear white */
+.rbc-calendar *:focus,
+.rbc-date-cell:focus,
+.rbc-date-cell a:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Ensure proper focus visibility and accessibility */
+.rbc-calendar *[aria-hidden="true"] {
+  pointer-events: none !important;
+}
+
+.rbc-calendar *:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Ensure screen reader content is properly handled */
+.rbc-calendar .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Smooth transitions for all interactive elements */
+.rbc-date-cell,
+.rbc-date-cell a,
+.rbc-event {
+  transition: opacity 0.2s ease !important;
+}

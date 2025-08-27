@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { v4 as uuidv4 } from "uuid"
-import { generateMiaInsights } from '@/app/mia/utils/insightsGenerator'
+import { getOrGenerateMiaInsights } from '@/app/mia/utils/insightsGenerator'
 
 export async function createWorkOrder(workOrderData: any) {
     const { data, error } = await supabase
@@ -252,34 +252,26 @@ export async function createCustomerRetention(workOrderId: string, shopId: strin
  */
 export async function createMiaInsights(repairOrderId: string, shopId: string, term: string) {
     if (!repairOrderId || !shopId) {
-        console.error("Missing required parameters:", { repairOrderId, shopId });
-        return {
-            success: false,
-            message: 'Missing required parameters'
-        };
+        console.error("Missing required parameters for Mia insights creation");
+        return null;
     }
 
-    // Start a background process to generate insights without blocking
-    setTimeout(async () => {
-        try {
-            console.log("Starting background Mia AI Insights generation for order:", repairOrderId);
-            
-            const result = await generateMiaInsights(repairOrderId, shopId, term);
-            
-            if (result?.success) {
-                console.log("Background Mia AI Insights completed for order:", repairOrderId);
-            } else {
-                console.error("Background Mia AI Insights failed for order:", repairOrderId, result?.error);
-            }
-        } catch (err) {
-            console.error("Error in background Mia Insights generation:", err);
-        }
-    }, 100); // Small delay to ensure database transactions complete
+    try {
+        // Generate insights using the provided utility function
+        const insightsResponse = await getOrGenerateMiaInsights(repairOrderId, shopId, term);
 
-    // Return immediately so the main flow can continue
-    return {
-        success: true,
-        message: 'Mia insights generation started in background'
-    };
+        if (insightsResponse.success) {
+            // The insightsGenerator utility now handles saving the insights
+            console.log("Insights generated and saved successfully through getOrGenerateMiaInsights");
+            return { success: true, insights: insightsResponse.insights };
+        } else {
+            console.error("Failed to generate Mia insights:", insightsResponse.error);
+            return null;
+        }
+
+    } catch (error) {
+        console.error("Failed to create Mia insights record:", error);
+        return null;
+    }
 }
 

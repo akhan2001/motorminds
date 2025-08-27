@@ -41,3 +41,19 @@ yarn-error.log*
 next-env.d.ts
 
 /test_files
+
+# supabase
+/supabase/functions/
+
+# Supabase migrations
+/supabase/migrations/
+
+# Widget test files (development only)
+/public/test-widget.html
+/public/test-widget-updated.html
+/test-widget.html
+/test-widget-updated.html
+
+# Local development files
+*.local.*
+local-*

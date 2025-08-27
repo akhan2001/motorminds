@@ -1,1074 +1,547 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getShopInfo, updateShopInfo, getShopStaff, addShopStaff } from "@/utils/shopinfo/getShopInfo"
-import { useState, useEffect } from "react"
+import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2, Clock, Loader2 } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/utils/supabase/client"
+import { useShopSettings } from "@/hooks/useShopSettings"
+import { useSettingsForm } from "@/hooks/useSettingsForm"
+import { 
+    BasicInfoTab, 
+    LocationTab, 
+    ShopDetailsTab, 
+    ImagesTab, 
+    SocialMediaTab 
+} from "./components"
+
+const supabase = createClient()
 
 const shopFormSchema = z.object({
-	shop_name: z
-		.string()
-		.min(2, {
-		message: "Shop name must be at least 2 characters.",
-		})
-		.max(50, {
-		message: "Shop name must not be longer than 50 characters.",
-		}),
-	shop_email: z
-		.string({
-		required_error: "Please enter a valid email.",
-		})
-		.email(),
-	shop_phone: z.string().min(10, {
-		message: "Phone number must be at least 10 digits.",
-	}),
-	shop_address: z.string().min(5, {
-		message: "Address must be at least 5 characters.",
-	}),
-	shop_city: z.string().min(2, {
-		message: "City must be at least 2 characters.",
-	}),
-	shop_province: z.string().min(2, {
-		message: "Province/State must be at least 2 characters.",
-	}),
-	shop_owner: z.string().min(2, {
-		message: "Owner name must be at least 2 characters.",
-	}),
-	shop_about: z.string().max(500).min(10, {
-		message: "About section must be at least 10 characters.",
-	}),
-	shop_tagline: z.string().max(100).min(5, {
-		message: "Tagline must be at least 5 characters.",
-	}),
-	operating_hours: z.string().min(5, {
-		message: "Operating hours must be at least 5 characters.",
-	}),
-	services_offered: z.string().min(5, {
-		message: "Services offered must be at least 5 characters.",
-	}),
-	website: z.string().url().optional().or(z.literal("")),
-	hst_number: z.string().optional().or(z.literal("")),
-	business_number: z.string().optional().or(z.literal("")),
-	logo_image_url: z.string().url().optional().or(z.literal("")),
-	banner_image_url: z.string().url().optional().or(z.literal("")),
-	facebook_url: z.string().url().optional().or(z.literal("")),
-	twitter_url: z.string().url().optional().or(z.literal("")),
-	instagram_url: z.string().url().optional().or(z.literal("")),
-	youtube_url: z.string().url().optional().or(z.literal("")),
+    shop_name: z
+        .string()
+        .min(2, {
+        message: "Shop name must be at least 2 characters.",
+        })
+        .max(50, {
+        message: "Shop name must not be longer than 50 characters.",
+        }),
+    shop_email: z
+        .string({
+        required_error: "Please enter a valid email.",
+        })
+        .email(),
+    shop_phone: z.string().min(10, {
+        message: "Phone number must be at least 10 digits.",
+    }),
+    shop_address: z.string().min(5, {
+        message: "Address must be at least 5 characters.",
+    }),
+    shop_city: z.string().min(2, {
+        message: "City must be at least 2 characters.",
+    }),
+    shop_province: z.string().min(2, {
+        message: "Province/State must be at least 2 characters.",
+    }),
+    shop_owner: z.string().min(2, {
+        message: "Owner name must be at least 2 characters.",
+    }),
+    shop_about: z.string().max(500).min(10, {
+        message: "About section must be at least 10 characters.",
+    }),
+    shop_tagline: z.string().max(100).min(5, {
+        message: "Tagline must be at least 5 characters.",
+    }),
+    operating_hours: z.string().optional().or(z.literal("")),
+    services_offered: z.string().optional().or(z.literal("")),
+    website: z.string().url().optional().or(z.literal("")),
+    hst_number: z.string().optional().or(z.literal("")),
+    business_number: z.string().optional().or(z.literal("")),
+    logo_image_url: z.string().url().optional().or(z.literal("")),
+    banner_image_url: z.string().url().optional().or(z.literal("")),
+    facebook_url: z.string().url().optional().or(z.literal("")),
+    twitter_url: z.string().url().optional().or(z.literal("")),
+    instagram_url: z.string().url().optional().or(z.literal("")),
+    youtube_url: z.string().url().optional().or(z.literal("")),
 })
 
 type ShopFormValues = z.infer<typeof shopFormSchema>
 
 // Add this function to parse services from string to array
 function parseServices(servicesString: string): string[] {
-	try {
-		return JSON.parse(servicesString);
-	} catch (e) {
-		return [];
-	}
+    try {
+        return JSON.parse(servicesString);
+    } catch (e) {
+        return [];
+    }
 }
 
 // Add this function to stringify services from array to string
 function stringifyServices(servicesArray: string[]): string {
-	try {
-		return JSON.stringify(servicesArray);
-	} catch (e) {
-		return "[]";
-	}
+    try {
+        return JSON.stringify(servicesArray);
+    } catch (e) {
+        return "[]";
+    }
 }
 
 // Update the operating hours structure
-type DaySchedule = {
-	closed: boolean;
-	openTime: string;
-	closeTime: string;
+export type DaySchedule = {
+    closed: boolean;
+    openTime: string;
+    closeTime: string;
 }
 
-type WeekSchedule = {
-	Monday: DaySchedule;
-	Tuesday: DaySchedule;
-	Wednesday: DaySchedule;
-	Thursday: DaySchedule;
-	Friday: DaySchedule;
-	Saturday: DaySchedule;
-	Sunday: DaySchedule;
+export type WeekSchedule = {
+    Monday: DaySchedule;
+    Tuesday: DaySchedule;
+    Wednesday: DaySchedule;
+    Thursday: DaySchedule;
+    Friday: DaySchedule;
+    Saturday: DaySchedule;
+    Sunday: DaySchedule;
 }
 
 // Update parse function for operating hours
 function parseOperatingHours(hoursString: string): WeekSchedule {
-	try {
-		const parsed = JSON.parse(hoursString);
-		const defaultSchedule = {
-			closed: false,
-			openTime: "9:00",
-			closeTime: "17:00"
-		};
-		
-		return {
-			Monday: { ...defaultSchedule, ...(parsed.Monday || {}) },
-			Tuesday: { ...defaultSchedule, ...(parsed.Tuesday || {}) },
-			Wednesday: { ...defaultSchedule, ...(parsed.Wednesday || {}) },
-			Thursday: { ...defaultSchedule, ...(parsed.Thursday || {}) },
-			Friday: { ...defaultSchedule, ...(parsed.Friday || {}) },
-			Saturday: { ...defaultSchedule, closed: true, ...(parsed.Saturday || {}) },
-			Sunday: { ...defaultSchedule, closed: true, ...(parsed.Sunday || {}) }
-		};
-	} catch (e) {
-		// Return default structure if parsing fails
-		return {
-			Monday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-			Tuesday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-			Wednesday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-			Thursday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-			Friday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-			Saturday: { closed: true, openTime: "10:00", closeTime: "16:00" },
-			Sunday: { closed: true, openTime: "10:00", closeTime: "16:00" }
-		};
-	}
+    try {
+        const parsed = JSON.parse(hoursString);
+        const defaultSchedule = {
+            closed: false,
+            openTime: "9:00",
+            closeTime: "17:00"
+        };
+        
+        return {
+            Monday: { ...defaultSchedule, ...(parsed.Monday || {}) },
+            Tuesday: { ...defaultSchedule, ...(parsed.Tuesday || {}) },
+            Wednesday: { ...defaultSchedule, ...(parsed.Wednesday || {}) },
+            Thursday: { ...defaultSchedule, ...(parsed.Thursday || {}) },
+            Friday: { ...defaultSchedule, ...(parsed.Friday || {}) },
+            Saturday: { ...defaultSchedule, closed: true, ...(parsed.Saturday || {}) },
+            Sunday: { ...defaultSchedule, closed: true, ...(parsed.Sunday || {}) }
+        };
+    } catch (e) {
+        // Return default structure if parsing fails
+        return {
+            Monday: { closed: false, openTime: "9:00", closeTime: "17:00" },
+            Tuesday: { closed: false, openTime: "9:00", closeTime: "17:00" },
+            Wednesday: { closed: false, openTime: "9:00", closeTime: "17:00" },
+            Thursday: { closed: false, openTime: "9:00", closeTime: "17:00" },
+            Friday: { closed: false, openTime: "9:00", closeTime: "17:00" },
+            Saturday: { closed: true, openTime: "10:00", closeTime: "16:00" },
+            Sunday: { closed: true, openTime: "10:00", closeTime: "16:00" }
+        };
+    }
 }
 
 // Update stringify function for operating hours
 function stringifyOperatingHours(schedule: WeekSchedule): string {
-	try {
-		return JSON.stringify(schedule);
-	} catch (e) {
-		return "{}";
-	}
+    try {
+        return JSON.stringify(schedule);
+    } catch (e) {
+        return "{}";
+    }
 }
 
 // Generate time options for dropdowns
 const timeOptions = () => {
-	const options = [];
-	for (let hour = 0; hour < 24; hour++) {
-		const hourStr = hour.toString().padStart(2, '0');
-		options.push(`${hourStr}:00`);
-		options.push(`${hourStr}:30`);
-	}
-	return options;
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+        const hourStr = hour.toString().padStart(2, '0');
+        options.push(`${hourStr}:00`);
+        options.push(`${hourStr}:30`);
+    }
+    return options;
 };
 
-// Add this type definition
-type ShopStaff = {
-	id: string;
-	shop_id: string;
-	role: string;
-	staff_name: string;
-}
-
 export function ProfileForm({ shopId }: { shopId: string }) {
-	const [shopInfo, setShopInfo] = useState<ShopFormValues | null>(null)
-	const [isLoading, setIsLoading] = useState(true)
-	const router = useRouter()
-	const [isSaving, setIsSaving] = useState(false);
-	const supabase = createClientComponentClient();
-	
-	// Update operating hours state
-	const [operatingHours, setOperatingHours] = useState<WeekSchedule>({
-		Monday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-		Tuesday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-		Wednesday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-		Thursday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-		Friday: { closed: false, openTime: "9:00", closeTime: "17:00" },
-		Saturday: { closed: true, openTime: "10:00", closeTime: "16:00" },
-		Sunday: { closed: true, openTime: "10:00", closeTime: "16:00" }
-	});
-	
-	// Add state for services
-	const [services, setServices] = useState<string[]>([]);
-	const [newService, setNewService] = useState("");
+    const router = useRouter()
+    const { shopInfo, updateShopInfo, isLoading, error } = useShopSettings(shopId)
+    
+    // Use custom hook for form state management
+    const { state, actions } = useSettingsForm()
+    
+    // Use ref to store actions to avoid dependency issues
+    const actionsRef = useRef(actions)
+    actionsRef.current = actions
+    
+    // State for active tab
+    const [activeTab, setActiveTab] = useState("basic")
+    
+    const form = useForm<ShopFormValues>({
+        resolver: zodResolver(shopFormSchema),
+        defaultValues: {
+            shop_name: "",
+            shop_email: "",
+            shop_phone: "",
+            shop_address: "",
+            shop_city: "",
+            shop_province: "",
+            shop_owner: "",
+            shop_about: "",
+            shop_tagline: "",
+            operating_hours: "",
+            services_offered: "",
+            website: "",
+            hst_number: "",
+            business_number: "",
+            logo_image_url: "",
+            banner_image_url: "",
+            facebook_url: "",
+            twitter_url: "",
+            instagram_url: "",
+            youtube_url: "",
+        },
+    })
 
-	// Add timeOptions state
-	const [times] = useState<string[]>(timeOptions());
+    // Generate time options for operating hours
+    const times = timeOptions()
 
-	// In your ProfileForm component, add this state
-	const [shopStaff, setShopStaff] = useState<ShopStaff[]>([]);
-	const [isAddingStaff, setIsAddingStaff] = useState(false);
-	const [newStaffName, setNewStaffName] = useState('');
-	const [newStaffRole, setNewStaffRole] = useState('Mechanic');
+    // Handle hash changes and set active tab
+    useEffect(() => {
+        const handleHashChange = () => {
+            const hash = window.location.hash.replace('#', '')
+            if (hash && ['basic', 'location', 'details', 'images', 'social'].includes(hash)) {
+                setActiveTab(hash)
+            }
+        }
 
-	// Create form with empty initial values
-	const form = useForm<ShopFormValues>({
-		resolver: zodResolver(shopFormSchema),
-		defaultValues: {
-			shop_name: "",
-			shop_email: "",
-			shop_phone: "",
-			shop_address: "",
-			shop_city: "",
-			shop_province: "",
-			shop_owner: "",
-			shop_about: "",
-			shop_tagline: "",
-			operating_hours: "",
-			services_offered: "",
-			website: "",
-			logo_image_url: "",
-			banner_image_url: "",
-			facebook_url: "",
-			twitter_url: "",
-			instagram_url: "",
-			youtube_url: "",
-			hst_number: "",
-			business_number: "",
-		},
-		mode: "onChange",
-	})
+        // Set initial tab from hash
+        handleHashChange()
 
-	// Fetch shop info and update form values when data is available
-	useEffect(() => {
-		async function fetchShopInfo() {
-			setIsLoading(true)
-			try {
-				const shopData = await getShopInfo(shopId)
-				if (shopData && shopData.length > 0) {
-					const shop = shopData[0]
-					setShopInfo(shop)
-					
-					// Parse operating hours if available
-					if (shop.operating_hours) {
-						const parsedHours = parseOperatingHours(shop.operating_hours);
-						setOperatingHours(parsedHours);
-					}
-					
-					// Parse services if available
-					if (shop.services_offered) {
-						const parsedServices = parseServices(shop.services_offered);
-						setServices(parsedServices);
-					}
-					
-					// Reset form with shop data
-					form.reset({
-						shop_name: shop.shop_name || "",
-						shop_email: shop.shop_email || "",
-						shop_phone: shop.shop_phone || "",
-						shop_address: shop.shop_address || "",
-						shop_city: shop.shop_city || "",
-						shop_province: shop.shop_province || "",
-						shop_owner: shop.shop_owner || "",
-						shop_about: shop.shop_about || "",
-						shop_tagline: shop.shop_tagline || "",
-						operating_hours: shop.operating_hours || "",
-						services_offered: shop.services_offered || "",
-						website: shop.website || "",
-						logo_image_url: shop.logo_image_url || "",
-						banner_image_url: shop.banner_image_url || "",
-						facebook_url: shop.facebook_url || "",
-						twitter_url: shop.twitter_url || "",
-						instagram_url: shop.instagram_url || "",
-						youtube_url: shop.youtube_url || "",
-						hst_number: shop.hst_number || "",
-						business_number: shop.business_number || "",
-					})
-				}
-			} catch (error) {
-				console.error("Error fetching shop info:", error)
-				toast.error("Failed to load shop information")
-			} finally {
-				setIsLoading(false)
-			}
-		}
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleHashChange)
+        return () => window.removeEventListener('hashchange', handleHashChange)
+    }, [])
 
-		if (shopId) {
-			fetchShopInfo()
-		}
-	}, [shopId, form])
+    // Load shop data when available
+    useEffect(() => {
+        if (shopInfo.data) {
+            const shop = shopInfo.data
+            
+            // Parse operating hours and services
+            const parsedHours = parseOperatingHours(shop.operating_hours || "")
+            const parsedServices = parseServices(shop.services_offered || "")
+            
+            // Update form with shop data
+            form.reset({
+                shop_name: shop.shop_name || "",
+                shop_email: shop.shop_email || "",
+                shop_phone: shop.shop_phone || "",
+                shop_address: shop.shop_address || "",
+                shop_city: shop.shop_city || "",
+                shop_province: shop.shop_province || "",
+                shop_owner: shop.shop_owner || "",
+                shop_about: shop.shop_about || "",
+                shop_tagline: shop.shop_tagline || "",
+                operating_hours: shop.operating_hours || "",
+                services_offered: shop.services_offered || "",
+                website: shop.website || "",
+                hst_number: shop.hst_number || "",
+                business_number: shop.business_number || "",
+                logo_image_url: shop.logo_image_url || "",
+                banner_image_url: shop.banner_image_url || "",
+                facebook_url: shop.facebook_url || "",
+                twitter_url: shop.twitter_url || "",
+                instagram_url: shop.instagram_url || "",
+                youtube_url: shop.youtube_url || "",
+            })
+            
+            // Update reducer state using ref to avoid dependency issues
+            actionsRef.current.setOperatingHours(parsedHours)
+            actionsRef.current.setServices(parsedServices)
+        }
+    }, [shopInfo.data])
 
-	// Update the form value when operating hours change
-	useEffect(() => {
-		form.setValue('operating_hours', stringifyOperatingHours(operatingHours));
-	}, [operatingHours, form]);
-	
-	// Update the form value when services change
-	useEffect(() => {
-		form.setValue('services_offered', stringifyServices(services));
-	}, [services, form]);
+    async function onSubmit(data: ShopFormValues) {
+        console.log('Form submitted with data:', data);
+        await updateShopProfile(data)
+    }
 
-	// Add this after your existing useEffect that fetches shop info
-	useEffect(() => {
-		async function fetchShopStaff() {
-			try {
-				const staffData = await getShopStaff(shopId)
-				if (staffData && staffData.length > 0) {
-					setShopStaff(staffData)
-				}
+    async function updateShopProfile(data: ShopFormValues) {
+        console.log('updateShopProfile called with:', { shopId, data });
+        if (!shopId) {
+            console.error('No shopId provided');
+            return;
+        }
 
-				if (staffData && staffData.length === 0) {
-					setShopStaff([])
-				}
+        actions.setSaving(true)
+        try {
+            // Debug: Check what's being compared
+            console.log('Validation checks:');
+            console.log('Current shop data:', shopInfo.data);
+            console.log('New business_number:', data.business_number);
+            console.log('Current business_number:', shopInfo.data?.business_number);
+            console.log('New shop_email:', data.shop_email);
+            console.log('Current shop_email:', shopInfo.data?.shop_email);
 
+            // Validate business number if it's being changed
+            if (data.business_number && data.business_number.trim() !== (shopInfo.data?.business_number || '').trim()) {
+                console.log('Checking business number conflict...');
+                // Check if business number already exists
+                const { data: existingShop, error: checkError } = await supabase
+                    .from('shops')
+                    .select('id, shop_name')
+                    .eq('business_number', data.business_number.trim())
+                    .neq('id', shopId)
+                    .single()
 
-			} catch (error) {
-				console.error('Error fetching shop staff:', error);
-				toast.error('Failed to load shop staff');
-			}
-		}
+                console.log('Business number check result:', { existingShop, checkError });
 
-		if (shopId) {
-			fetchShopStaff();
-		}
-	}, [shopId, supabase]);
+                if (existingShop) {
+                    toast.error(`Business number already exists (used by ${existingShop.shop_name}). Please use a different number.`)
+                    actions.setSaving(false)
+                    return
+                }
+            }
 
-	async function onSubmit(data: ShopFormValues) {
-		await updateShopProfile(data);
-	}
+            // Validate email if it's being changed
+            if (data.shop_email && data.shop_email.trim() !== (shopInfo.data?.shop_email || '').trim()) {
+                console.log('Checking email conflict...');
+                // Check if email already exists
+                const { data: existingShop, error: checkError } = await supabase
+                    .from('shops')
+                    .select('id, shop_name')
+                    .eq('shop_email', data.shop_email.trim())
+                    .neq('id', shopId)
+                    .single()
 
-	async function updateShopProfile(data: ShopFormValues) {
-		if (!shopId) return;
+                console.log('Email check result:', { existingShop, checkError });
 
-		console.log(data)
-		
-		setIsSaving(true);
-		try {
-			// Make sure operating hours and services are properly formatted as JSONB
-			const formattedData = {
-				...data,
-				operating_hours: stringifyOperatingHours(operatingHours),
-				services_offered: stringifyServices(services)
-			};
-			
-			const result = await updateShopInfo(shopId, formattedData);
-			
-			if (!result.success) {
-				throw new Error("Failed to update shop information");
-			}
-			
-			toast.success("Shop information updated successfully", {
-				description: "Your shop profile has been updated with the new information.",
-			});
-			
-			// Refresh the page to show updated data
-			router.refresh();
-		} catch (error) {
-			console.error("Error updating shop info:", error);
-			toast.error("Failed to update shop information", {
-				description: "Please try again later.",
-			});
-		} finally {
-			setIsSaving(false);
-		}
-	}
+                if (existingShop) {
+                    toast.error(`Email already exists (used by ${existingShop.shop_name}). Please use a different email.`)
+                    actions.setSaving(false)
+                    return
+                }
+            }
 
-	// Add a function to handle adding a new service
-	const handleAddService = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter' && newService.trim()) {
-			e.preventDefault();
-			if (!services.includes(newService.trim())) {
-				setServices(prev => [...prev, newService.trim()]);
-			}
-			setNewService("");
-		}
-	};
-	
-	// Add a function to remove a service
-	const removeService = (service: string) => {
-		setServices(prev => prev.filter(s => s !== service));
-	};
+            // Make sure operating hours and services are properly formatted as JSONB
+            // Convert empty strings to undefined for optional fields to avoid unique constraint issues
+            const formattedData = {
+                ...data,
+                operating_hours: stringifyOperatingHours(state.operatingHours),
+                services_offered: stringifyServices(state.services),
+                // Convert empty strings to undefined for fields that can be empty/null
+                hst_number: data.hst_number?.trim() || undefined,
+                business_number: data.business_number?.trim() || undefined,
+                website: data.website?.trim() || undefined,
+                logo_image_url: data.logo_image_url?.trim() || undefined,
+                banner_image_url: data.banner_image_url?.trim() || undefined,
+                facebook_url: data.facebook_url?.trim() || undefined,
+                twitter_url: data.twitter_url?.trim() || undefined,
+                instagram_url: data.instagram_url?.trim() || undefined,
+                youtube_url: data.youtube_url?.trim() || undefined,
+            }
+            
+            console.log('Formatted data for update:', formattedData);
+            
+            try {
+                const result = await updateShopInfo.mutateAsync({ 
+                    shopId, 
+                    updates: formattedData 
+                })
+                
+                console.log('Update result:', result);
+                // Success toast is handled by the mutation hook
+            } catch (updateError: any) {
+                console.error('Update failed:', updateError);
+                
+                // Check for specific unique constraint violations
+                if (updateError?.message?.includes('already exists')) {
+                    if (updateError.message.includes('business_number')) {
+                        toast.error('Business number already exists. Please use a different number.');
+                    } else if (updateError.message.includes('shop_email')) {
+                        toast.error('Email already exists. Please use a different email.');
+                    } else {
+                        toast.error('Some information already exists in our system. Please check your email and business number.');
+                    }
+                } else {
+                    toast.error('Failed to update shop information. Please try again.');
+                }
+                actions.setSaving(false);
+                return;
+            }
+            
+            // Refresh the page to show updated data
+            router.refresh()
+        } catch (error) {
+            console.error("Error updating shop info:", error)
+            toast.error("Failed to update shop information", {
+                description: "Please try again later.",
+            })
+        } finally {
+            actions.setSaving(false)
+        }
+    }
 
-	// Add a function to update a specific day's schedule
-	const updateDaySchedule = (day: keyof WeekSchedule, field: keyof DaySchedule, value: any) => {
-		setOperatingHours(prev => ({
-			...prev,
-			[day]: {
-				...prev[day],
-				[field]: value
-			}
-		}));
-	};
+    // Add a function to handle adding a new service
+    const handleAddService = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && state.newService.trim()) {
+            e.preventDefault()
+            if (!state.services.includes(state.newService.trim())) {
+                actions.addService(state.newService.trim())
+            }
+        }
+    }
+    
+    // Add a function to remove a service
+    const removeService = (service: string) => {
+        actions.removeService(service)
+    }
 
-	// Add these functions to handle staff management
-	const handleAddStaff = async () => {
-		try {
-			if (!newStaffName || !newStaffRole) {
-				toast.error('Please fill in all staff details');
-				return;
-			}
+    // Add a function to update a specific day's schedule
+    const updateDaySchedule = (day: keyof WeekSchedule, field: keyof DaySchedule, value: any) => {
+        actions.updateDaySchedule(day, field, value)
+    }
 
-			const newStaff = {
-				role: newStaffRole,
-				staff_name: newStaffName
-			};
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2">Loading shop information...</span>
+            </div>
+        )
+    }
 
-			const result = await addShopStaff(newStaff, shopId);
+    // Show error state
+    if (error) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                    <p className="text-red-500">Failed to load shop information</p>
+                    <Button 
+                        onClick={() => window.location.reload()} 
+                        className="mt-2"
+                    >
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        )
+    }
 
-			if (!result.success) {
-				throw new Error("Failed to add shop staff");
-			}
-
-			setShopStaff(prev => [...prev, result.data]);
-			setNewStaffName('');
-			setNewStaffRole('Mechanic');
-			setIsAddingStaff(false);
-			toast.success('Staff member added successfully');
-		} catch (error) {
-			console.error('Error adding staff:', error);
-			toast.error('Failed to add staff member');
-		}
-	};
-
-	const handleRemoveStaff = async (staffId: string) => {
-		try {
-			// Don't allow removing the owner
-			const staff = shopStaff.find(s => s.id === staffId);
-			if (staff?.role === 'Owner') {
-				toast.error('Cannot remove the shop owner');
-				return;
-			}
-
-			const { error } = await supabase
-				.from('shop_staff')
-				.delete()
-				.eq('id', staffId);
-
-			if (error) {
-				// Check if this is a foreign key constraint error
-				if (error.code === '23503' && error.message.includes('repair_order_details')) {
-					// Instead of deleting, set shop_id to null
-					const { error: updateError } = await supabase
-						.from('shop_staff')
-						.update({ shop_id: null })
-						.eq('id', staffId);
-					
-					if (updateError) throw updateError;
-					
-					setShopStaff(prev => prev.filter(staff => staff.id !== staffId));
-					toast.success('Staff removed from shop successfully');
-					return;
-				}
-				throw error;
-			}
-
-			setShopStaff(prev => prev.filter(staff => staff.id !== staffId));
-			toast.success('Staff member removed successfully');
-		} catch (error) {
-			console.error('Error removing staff:', error);
-			toast.error('Failed to remove staff member');
-		}
-	};
-
-	return (
-		<main className="flex flex-col items-center justify-center py-8">
-			<div className="container mx-auto max-w-[1300px]">
-				<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-					<Tabs defaultValue="basic" className="w-full ">
-						<TabsList className="grid grid-cols-5 mb-8 bg-[#222] border-none text-white">
-							<TabsTrigger 
-								value="basic" 
-								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
-							>
-								Basic Info
-							</TabsTrigger>
-							<TabsTrigger 
-								value="location" 
-								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
-							>
-								Location
-							</TabsTrigger>
-							<TabsTrigger 
-								value="details" 
-								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
-							>
-								Shop Details
-							</TabsTrigger>
-							<TabsTrigger 
-								value="images" 
-								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
-							>
-								Images
-							</TabsTrigger>
-							<TabsTrigger 
-								value="social" 
-								className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
-							>
-								Social Media
-							</TabsTrigger>
-						</TabsList>
-						
-						{/* Basic Information Tab */}
-						<TabsContent value="basic" className="space-y-6">
-							<h3 className="text-xl font-medium">Basic Information</h3>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<FormField
-								control={form.control}
-								name="shop_name"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Shop Name</FormLabel>
-									<FormControl>
-									<Input placeholder="MotorMinds Auto Shop" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										This is your shop's display name.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="shop_email"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Email</FormLabel>
-									<FormControl>
-									<Input placeholder="contact@motorminds.com" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										Your shop's primary contact email.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="shop_phone"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Phone</FormLabel>
-									<FormControl>
-									<Input placeholder="555-123-4567" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										Your shop's primary contact phone number.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="shop_owner"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Owner Name</FormLabel>
-									<FormControl>
-									<Input placeholder="John Smith" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										The name of the shop owner.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							</div>
-						</TabsContent>
-						
-						{/* Location Tab */}
-						<TabsContent value="location" className="space-y-6">
-							<h3 className="text-xl font-medium">Location</h3>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<FormField
-								control={form.control}
-								name="shop_address"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Address</FormLabel>
-									<FormControl>
-									<Input placeholder="123 Main Street" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<div className="grid grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="shop_city"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>City</FormLabel>
-									<FormControl>
-									<Input placeholder="Anytown" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="shop_province"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Province/State</FormLabel>
-									<FormControl>
-									<Input placeholder="CA" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							</div>
-							
-							<FormField
-								control={form.control}
-								name="website"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Website</FormLabel>
-									<FormControl>
-									<Input placeholder="https://motorminds.ca" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										Your shop's website URL.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							</div>
-						</TabsContent>
-						
-						{/* Shop Details Tab */}
-						<TabsContent value="details" className="space-y-6">
-							<h3 className="text-xl font-medium">Shop Details</h3>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div className="space-y-6">
-								<FormField
-								control={form.control}
-								name="shop_tagline"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Tagline</FormLabel>
-									<FormControl>
-									<Input placeholder="Quality Service You Can Trust" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										A short slogan or tagline for your shop.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-								/>
-								
-								<FormField
-									control={form.control}
-									name="operating_hours"
-									render={({ field }) => (
-										<FormItem className="col-span-2">
-											<FormLabel>Operating Hours</FormLabel>
-											<FormDescription>
-												Set your shop's operating hours for each day of the week.
-											</FormDescription>
-											
-											<div className="space-y-4 mt-2">
-												{(Object.keys(operatingHours) as Array<keyof WeekSchedule>).map((day) => (
-													<div key={day} className="grid grid-cols-12 gap-3 items-center">
-														<div className="col-span-3">
-															<div className="flex items-center space-x-2">
-																<Checkbox 
-																	id={`${day}-closed`}
-																	checked={operatingHours[day].closed}
-																	onCheckedChange={(checked) => 
-																		updateDaySchedule(day, 'closed', checked === true)
-																	}
-																	className="bg-[#292929] border-[#626262]"
-																/>
-																<label 
-																	htmlFor={`${day}-closed`}
-																	className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-																>
-																	{day}
-																</label>
-															</div>
-														</div>
-														
-														{!operatingHours[day].closed ? (
-															<>
-																<div className="col-span-4">
-																	<div className="flex items-center">
-																		<span className="text-xs mr-2">Opens at</span>
-																		<Select
-																			value={operatingHours[day].openTime}
-																			onValueChange={(value) => updateDaySchedule(day, 'openTime', value)}
-																		>
-																			<SelectTrigger className="bg-[#292929] border-[#626262] text-white">
-																				<SelectValue placeholder="Select time" />
-																			</SelectTrigger>
-																			<SelectContent className="bg-[#292929] border-[#626262] text-white max-h-[300px]">
-																				{times.map((time) => (
-																					<SelectItem key={`${day}-open-${time}`} value={time}>
-																						{time}
-																					</SelectItem>
-																				))}
-																			</SelectContent>
-																		</Select>
-																	</div>
-																</div>
-																<div className="col-span-4">
-																	<div className="flex items-center">
-																		<span className="text-xs mr-2">Closes at</span>
-																		<Select
-																			value={operatingHours[day].closeTime}
-																			onValueChange={(value) => updateDaySchedule(day, 'closeTime', value)}
-																		>
-																			<SelectTrigger className="bg-[#292929] border-[#626262] text-white">
-																				<SelectValue placeholder="Select time" />
-																			</SelectTrigger>
-																			<SelectContent className="bg-[#292929] border-[#626262] text-white max-h-[300px]">
-																				{times.map((time) => (
-																					<SelectItem key={`${day}-close-${time}`} value={time}>
-																						{time}
-																					</SelectItem>
-																				))}
-																			</SelectContent>
-																		</Select>
-																	</div>
-																</div>
-															</>
-														) : (
-															<div className="col-span-8 text-gray-500 italic">
-																Closed
-															</div>
-														)}
-													</div>
-												))}
-											</div>
-											
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								
-								<FormField
-								control={form.control}
-								name="services_offered"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Services Offered</FormLabel>
-									<FormDescription>
-										List the services your shop offers. Press Enter to add each service.
-									</FormDescription>
-									
-									<div className="space-y-4">
-										<div className="flex flex-wrap gap-2 mb-2">
-											{services.map((service, index) => (
-												<div 
-													key={index} 
-													className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#333] text-white"
-												>
-													<span>{service}</span>
-													<button 
-														type="button"
-														onClick={() => removeService(service)}
-														className="text-gray-400 hover:text-white ml-1"
-													>
-														×
-													</button>
-												</div>
-											))}
-										</div>
-										
-										<FormControl>
-											<Input 
-												placeholder="Type a service and press Enter (e.g., Oil Changes, Brake Repair)" 
-												className="bg-[#292929] border-[#626262] text-white"
-												value={newService}
-												onChange={(e) => setNewService(e.target.value)}
-												onKeyDown={handleAddService}
-											/>
-										</FormControl>
-									</div>
-									
-									<FormMessage />
-								</FormItem>
-								)}
-								/>
-
-								<div className="grid grid-cols-2 gap-4">
-									<FormField
-										control={form.control}
-										name="hst_number"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>HST Number</FormLabel>
-												<FormControl>
-													<Input 
-														placeholder="1234567890"
-														className="bg-[#292929] border-[#626262] text-white"
-														{...field}
-													/>
-												</FormControl>
-												<FormDescription>
-													Your shop's HST number.
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-
-									<FormField
-										control={form.control}
-										name="business_number"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>Business Number</FormLabel>
-												<FormControl>
-													<Input 
-														placeholder="1234567890"
-														className="bg-[#292929] border-[#626262] text-white"
-														{...field}
-													/>
-												</FormControl>
-												<FormDescription>
-													Your shop's business number.
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</div>
-							</div>
-							
-							<div className="space-y-6">
-								<FormField
-								control={form.control}
-								name="shop_about"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>About Your Shop</FormLabel>
-									<FormControl>
-									<Textarea 
-									placeholder="We provide quality auto repair services with a focus on customer satisfaction." 
-									className="resize-none min-h-[250px] bg-[#292929] border-[#626262] text-white"
-									{...field} 
-									/>
-									</FormControl>
-									<FormDescription>
-										Tell customers about your shop, history, and values.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-								/>
-
-								<div className="flex items-center justify-between">
-									<h4 className="text-lg font-medium">Shop Staff</h4>
-									<Button
-										type="button"
-										onClick={() => setIsAddingStaff(true)}
-										className="bg-[#292929] hover:bg-[#333]"
-										disabled={isAddingStaff}
-									>
-										<Plus className="h-4 w-4 mr-2" />
-										Add Staff Member
-									</Button>
-								</div>
-
-								{isAddingStaff && (
-									<div className="grid grid-cols-3 gap-4 p-4 bg-[#1a1a1a] rounded-md">
-										<Input
-											placeholder="Staff Name"
-											value={newStaffName}
-											onChange={(e) => setNewStaffName(e.target.value)}
-											className="bg-[#292929] border-[#626262] text-white"
-										/>
-										<Select
-											value={newStaffRole}
-											onValueChange={setNewStaffRole}
-										>
-											<SelectTrigger className="bg-[#292929] border-[#626262] text-white">
-												<SelectValue placeholder="Select role" />
-											</SelectTrigger>
-											<SelectContent className="bg-[#292929] border-[#626262] text-white">
-												<SelectItem value="Mechanic">Mechanic</SelectItem>
-												<SelectItem value="Service Advisor">Service Advisor</SelectItem>
-												<SelectItem value="Manager">Manager</SelectItem>
-											</SelectContent>
-										</Select>
-										<div className="flex gap-2">
-											<Button
-												type="button"
-												onClick={handleAddStaff}
-												className="bg-[#b91c1c] hover:bg-[#991616]"
-											>
-												Add
-											</Button>
-											<Button
-												type="button"
-												onClick={() => setIsAddingStaff(false)}
-												variant="outline"
-												className="bg-transparent border-[#626262] hover:bg-[#292929]"
-											>
-												Cancel
-											</Button>
-										</div>
-									</div>
-								)}
-
-								<Table className="rounded-md border border-[#222] overflow-hidden">
-									<TableHeader className="bg-[#222] border-none">
-										<TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
-											<TableHead className="text-white">Name</TableHead>
-											<TableHead className="text-white">Role</TableHead>
-											<TableHead className="text-white w-[100px]">Actions</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{shopStaff.map((staff) => (
-											<TableRow key={staff.id} className="hover:bg-[#1a1a1a] border-b border-[#222]">
-												<TableCell className="text-white">{staff.staff_name}</TableCell>
-												<TableCell className="text-white">{staff.role}</TableCell>
-												<TableCell className="text-white">
-													{staff.role !== 'Owner' && (
-														<Button
-															type="button"
-															variant="ghost"
-															onClick={() => handleRemoveStaff(staff.id)}
-															className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-transparent"
-														>
-															<Trash2 className="h-4 w-4" />
-														</Button>
-													)}
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							</div>
-							</div>
-						</TabsContent>
-						
-						{/* Images Tab */}
-						<TabsContent value="images" className="space-y-6">
-							<h3 className="text-xl font-medium">Images</h3>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<FormField
-								control={form.control}
-								name="logo_image_url"
-								render={({ field }) => (
-								<FormItem>
-								<FormLabel>Logo URL</FormLabel>
-								<FormControl>
-								<Input placeholder="https://example.com/logo.png" className="bg-[#292929] border-[#626262] text-white" {...field} />
-								</FormControl>
-								<FormDescription>
-									URL to your shop's logo image.
-								</FormDescription>
-								<FormMessage />
-								</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="banner_image_url"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Banner URL</FormLabel>
-									<FormControl>
-									<Input placeholder="https://example.com/banner.png" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormDescription>
-										URL to your shop's banner image.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							</div>
-						</TabsContent>
-						
-						{/* Social Media Tab */}
-						<TabsContent value="social" className="space-y-6">
-							<h3 className="text-xl font-medium">Social Media</h3>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<FormField
-								control={form.control}
-								name="facebook_url"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Facebook</FormLabel>
-									<FormControl>
-									<Input placeholder="https://facebook.com/motorminds" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="twitter_url"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Twitter</FormLabel>
-									<FormControl>
-									<Input placeholder="https://twitter.com/motorminds" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="instagram_url"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>Instagram</FormLabel>
-									<FormControl>
-									<Input placeholder="https://instagram.com/motorminds" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="youtube_url"
-								render={({ field }) => (
-								<FormItem>
-									<FormLabel>YouTube</FormLabel>
-									<FormControl>
-									<Input placeholder="https://youtube.com/motorminds" className="bg-[#292929] border-[#626262] text-white" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-								)}
-							/>
-							</div>
-						</TabsContent>
-					</Tabs>
-					
-					<Button 
-						type="submit" 
-						className="mt-6 bg-[#b91c1c] hover:bg-[#991616]" 
-						disabled={isSaving}
-					>
-						{isSaving ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Saving...
-							</>
-						) : (
-							"Update Shop Profile"
-						)}
-					</Button>
-				</form>
-				</Form>
-			</div>
-		</main>
-	)
+    return (
+        <main className="flex flex-col items-center justify-center py-8">
+            <div className="container mx-auto max-w-[1300px]">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
+                            <TabsList className="grid grid-cols-5 mb-8 bg-[#222] border-none text-white">
+                                <TabsTrigger 
+                                    value="basic" 
+                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    onClick={() => window.location.hash = '#basic'}
+                                >
+                                    Basic Info
+                                </TabsTrigger>
+                                <TabsTrigger 
+                                    value="location" 
+                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    onClick={() => window.location.hash = '#location'}
+                                >
+                                    Location
+                                </TabsTrigger>
+                                <TabsTrigger 
+                                    value="details" 
+                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    onClick={() => window.location.hash = '#details'}
+                                >
+                                    Shop Details
+                                </TabsTrigger>
+                                <TabsTrigger 
+                                    value="images" 
+                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    onClick={() => window.location.hash = '#images'}
+                                >
+                                    Images
+                                </TabsTrigger>
+                                <TabsTrigger 
+                                    value="social" 
+                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    onClick={() => window.location.hash = '#social'}
+                                >
+                                    Social Media
+                                </TabsTrigger>
+                            </TabsList>
+                            
+                            {/* Basic Information Tab */}
+                            <TabsContent value="basic">
+                                <BasicInfoTab form={form} />
+                            </TabsContent>
+                            
+                            {/* Location Tab */}
+                            <TabsContent value="location">
+                                <LocationTab form={form} />
+                            </TabsContent>
+                            
+                            {/* Shop Details Tab */}
+                            <TabsContent value="details">
+                                <ShopDetailsTab
+                                    form={form}
+                                    operatingHours={state.operatingHours}
+                                    updateDaySchedule={updateDaySchedule}
+                                    times={times}
+                                    services={state.services}
+                                    newService={state.newService}
+                                    setNewService={actions.setNewService}
+                                    handleAddService={handleAddService}
+                                    removeService={removeService}
+                                />
+                            </TabsContent>
+                            
+                            {/* Images Tab */}
+                            <TabsContent value="images">
+                                <ImagesTab form={form} />
+                            </TabsContent>
+                            
+                            {/* Social Media Tab */}
+                            <TabsContent value="social">
+                                <SocialMediaTab form={form} />
+                            </TabsContent>
+                        </Tabs>
+                        
+                        <div className="flex justify-end space-x-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => router.back()}
+                                className="bg-[#292929] hover:bg-[#333] border-[#626262] text-white"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={state.isSaving}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                onClick={(e) => {
+                                    console.log('Save button clicked');
+                                    console.log('Form state:', form.formState);
+                                    console.log('Form errors:', form.formState.errors);
+                                }}
+                            >
+                                {state.isSaving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    "Save Changes"
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            </div>
+        </main>
+    )
 }

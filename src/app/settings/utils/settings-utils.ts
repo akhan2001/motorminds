@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 
 /**
  * Uploads a shop logo to Supabase storage following RLS policies
@@ -8,7 +8,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
  * @returns The URL of the uploaded image, or null if upload failed
  */
 export const uploadShopLogo = async (file: File, shopId: string): Promise<string | null> => {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   if (!file) return null;
   
@@ -66,7 +66,7 @@ export const uploadShopLogo = async (file: File, shopId: string): Promise<string
  * @returns Boolean indicating success or failure
  */
 export const deleteShopLogo = async (logoUrl: string): Promise<boolean> => {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   try {
     // Extract the file path from the URL

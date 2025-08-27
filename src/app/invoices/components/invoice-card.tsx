@@ -24,6 +24,9 @@ interface InvoiceCardProps {
         model?: string
         license_plate?: string
     }
+    source?: "customer_generated" | "shop_generated"
+    estimatedAmount?: number
+    customerNotes?: string
     onClick?: () => void
     onStatusChange?: () => void
 }
@@ -42,6 +45,9 @@ export function InvoiceCard({
     workOrder,
     description,
     vehicleInfo = {},
+    source,
+    estimatedAmount,
+    customerNotes,
     onClick,
     onStatusChange,
 }: InvoiceCardProps) {
@@ -90,12 +96,20 @@ export function InvoiceCard({
                             <span className={`${status === 'PAID' ? 'text-green-500' : 'text-red-500'} text-sm px-2 py-0.5 rounded-full border ${status === 'PAID' ? 'border-green-800' : 'border-red-800'}`}>
                                 {status}
                             </span>
+                            {source === 'customer_generated' && (
+                                <span className="text-blue-400 text-xs px-2 py-0.5 rounded-full border border-blue-800 bg-blue-900/20">
+                                    Customer Request
+                                </span>
+                            )}
                         </h3>
                     </div>
                     {/* Description/Title - Top Right */}
                     <div className="text-right text-gray-400">
                         {/* <p className="font-medium text-white">{description || workOrder || "No description available"}</p> */}
                         Invoice #{displayNumber || invoiceNumber}
+                        {source === 'customer_generated' && estimatedAmount && estimatedAmount > 0 && (
+                            <p className="text-xs text-blue-400 mt-1">Est. Budget: ${estimatedAmount.toFixed(2)}</p>
+                        )}
                     </div>
                 </div>
                 
@@ -129,6 +143,14 @@ export function InvoiceCard({
                         <p className="text-sm text-gray-400 mt-1">Issued on: {issueDate}</p>
                     </div>
                 </div>
+                
+                {/* Customer Notes - Only show for customer-generated invoices */}
+                {source === 'customer_generated' && customerNotes && (
+                    <div className="mt-4 p-3 bg-blue-900/20 border border-blue-800 rounded-md">
+                        <p className="text-xs text-blue-300 font-medium mb-1">Customer Request:</p>
+                        <p className="text-sm text-blue-100">{customerNotes}</p>
+                    </div>
+                )}
             </motion.div>
 
             {/* Only render dialog if using local state approach

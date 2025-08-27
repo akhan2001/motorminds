@@ -1,7 +1,7 @@
 'use client'
 
 import { Nav } from '@/app/components/nav'
-import InvoiceDashboard from './components/invoice-dashboard'
+import InvoiceDashboardClient from './components/invoice-dashboard-client'
 import { checkUser } from '@/utils/supabase/supabase-auth'
 import { getShopId } from '@/utils/supabase/supabase-shop'
 import { useState, useEffect } from 'react'
@@ -37,14 +37,14 @@ export default function InvoicesPage() {
 
     if (isLoading) {
         return (
-            <LoadingPage page="Invoices" />
+            <LoadingPage />
         )
     }
 
     if (!shopId) {
         return (
             <div className="flex flex-col min-h-screen bg-black text-white">
-                <Nav activeLink="Customers" />
+                <Nav />
                 <div className="flex justify-center items-center h-[80vh]">
                     <p>No shop found for this user.</p>
                 </div>
@@ -54,8 +54,8 @@ export default function InvoicesPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav activeLink="Invoices" />
-            <InvoiceDashboard shopId={shopId} />
+            <Nav />
+            <InvoiceDashboardClient shopId={shopId} />
         </div>
     )
 }

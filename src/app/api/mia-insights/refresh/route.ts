@@ -114,38 +114,66 @@ export async function POST(req: Request) {
 
         // Construct prompt with all available information and shop customization
         const prompt = `
-            You are Mia, an AI assistant for auto repair shops.
-            Generate upsell suggestions that are quick, cheap and relevant to the work order based on the following information:
+            You are Mia, an expert automotive diagnostic AI assistant with 20+ years of hands-on repair experience. Analyze this work order with detailed technical knowledge and provide specific diagnostic insights.
             
-            ${shopData?.shop_about ? `Shop Information: ${shopData.shop_about}` : ''}
+            ${shopData?.shop_about ? `Shop Specialties: ${shopData.shop_about}` : ''}
             
-            ${vehicleInfo ? `Vehicle: ${vehicleInfo.year} ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.color} ${vehicleInfo.engine_type}` : 'Vehicle: Information not available'}
-            Title: ${orderDetails.description}
-            Notes: ${orderDetails.notes}
-            Parts: ${orderDetails.parts}
-            Labour: ${orderDetails.labour}
-            Mileage: ${orderDetails.mileage} - Mileage is in kilometers
-            Total: ${orderDetails.total}
+            DETAILED WORK ORDER INFORMATION:
+            Vehicle: ${vehicleInfo ? `${vehicleInfo.year} ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.color} ${vehicleInfo.engine_type}` : 'Information not available'}
+            Work Description: ${orderDetails.description}
+            Technical Notes: ${orderDetails.notes}
+            Parts Used/Needed: ${orderDetails.parts}
+            Labor Required: ${orderDetails.labour}
+            Current Mileage: ${orderDetails.mileage} km
+            Service Cost: $${orderDetails.total}
             
-            ${shopData?.shop_about ? 'IMPORTANT: Customize your suggestions based on the shop\'s specialties and services mentioned in the shop information.' : ''}
+            CRITICAL DIAGNOSTIC REQUIREMENTS:
+            1. For inspection work: Provide SPECIFIC potential causes, not generic "could be X or Y" statements
+            2. For symptom-based work: Give detailed technical analysis of what specific components likely cause those symptoms
+            3. For maintenance work: Identify related systems that typically fail around the same service intervals
+            4. Use your technical expertise to make educated assessments based on symptoms, mileage, and vehicle type
             
-            Return a JSON object with EXACTLY this structure:
+            TECHNICAL ANALYSIS APPROACH:
+            - Sounds/symptoms: Match specific noises to likely component failures (e.g., "wooing" = wheel bearings, "clicking" = CV joints/stabilizer links)
+            - Mileage-based: Identify components that typically fail at current mileage intervals
+            - Related systems: Components that should be checked when accessing the current repair area
+            - Preventive opportunities: Parts that commonly fail soon after current repair if not addressed
+            
+            PROVIDE DETAILED INSIGHTS INCLUDING:
+            - Specific component diagnoses based on symptoms (not just "needs inspection")
+            - Technical explanations of WHY certain parts likely need attention
+            - Proactive maintenance based on access points during current repair
+            - Safety-critical items that should be checked while vehicle is serviced
+            - Cost-effective bundling opportunities (parts accessed during current work)
+            - Customer education on WHY these services matter
+            
+            ${shopData?.shop_about ? 'IMPORTANT: Prioritize services that align with shop specialties and technical capabilities.' : ''}
+            
+            Return ONLY a JSON object with this EXACT structure:
             {
               "upsell_suggestions": [
                 {
                   "title": "string",
-                  "description": "string",
+                  "description": "string - explain how this relates to current work and vehicle condition",
                   "estimatedValue": number,
-                  "priority": "high" | "medium" | "low"
+                  "priority": "high" | "medium" | "low",
+                  "category": "immediate" | "preventive" | "safety" | "seasonal"
                 }
               ],
               "flags": [
                 {
                   "type": "warning" | "urgent" | "info",
-                  "message": "string"
+                  "message": "string - specific flag related to this work order",
+                  "category": "safety" | "maintenance" | "cost" | "timing"
                 }
               ],
-              "summary": "string"
+              "work_order_analysis": {
+                "current_work_assessment": "string - detailed analysis of the specific work being done",
+                "related_systems": ["string"] - systems that should be checked while vehicle is here,
+                "mileage_considerations": "string - what maintenance is due at this mileage",
+                "timing_recommendations": "string - optimal timing for additional services"
+              },
+              "summary": "string - comprehensive summary focused on this specific work order"
             }
             
             RETURN ONLY THE JSON OBJECT WITHOUT ANY EXPLANATION OR MARKDOWN FORMATTING.
@@ -178,19 +206,27 @@ export async function POST(req: Request) {
             parsedResponse = {
                 upsell_suggestions: [
                     {
-                        title: "Regular Maintenance",
-                        description: "General vehicle inspection",
-                        estimatedValue: 50,
-                        priority: "medium"
+                        title: "Regular Maintenance Inspection",
+                        description: "Comprehensive vehicle inspection while in shop for current service",
+                        estimatedValue: 75,
+                        priority: "medium",
+                        category: "preventive"
                     }
                 ],
                 flags: [
                     {
                         type: "info",
-                        message: "Unable to generate specific recommendations"
+                        message: "Unable to generate specific recommendations from available work order data",
+                        category: "maintenance"
                     }
                 ],
-                summary: "Consider a general maintenance check"
+                work_order_analysis: {
+                    current_work_assessment: "Unable to analyze current work from available data.",
+                    related_systems: ["General inspection recommended"],
+                    mileage_considerations: "Consider standard maintenance schedule review",
+                    timing_recommendations: "Complete current service before additional work"
+                },
+                summary: "Consider general maintenance inspection while vehicle is being serviced"
             };
         }
         

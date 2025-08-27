@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Clock, Calendar, User, Car, Wrench, DollarSign, Phone, Mail, ChevronDown, ChevronUp, FileText, AlertCircle } from 'lucide-react'
-import { type WorkOrder } from '@/hooks/useWorkOrders'
+import { type WorkOrder } from '@/hooks/use-work-orders'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -27,7 +27,10 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
   }
 
   return (
-    <div className="bg-[#222222] rounded-lg overflow-hidden border border-[#333333] hover:border-[#444444] transition-all duration-200 hover:bg-[#252525]">
+    <div 
+      className="bg-[#222222] rounded-lg overflow-hidden border border-[#333333] hover:border-[#444444] transition-all duration-200 hover:bg-[#252525] cursor-pointer"
+      onClick={onClick}
+    >
       <div className="p-4">
         {/* Header Section */}
         <div className="flex items-start justify-between gap-4">
@@ -42,21 +45,15 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
                 </Badge>
               )}
             </div>
-            <h3 className="text-lg font-semibold text-white">
-              {vehicle?.year} {vehicle?.make} {vehicle?.model}
-            </h3>
+            <div className="flex items-baseline gap-2">
+                <h3 className="text-lg font-semibold text-white">
+                    {detail?.description || 'New Work Order'}
+                </h3>
+                <span className="text-lg font-semibold text-gray-400">
+                    ({vehicle?.year} {vehicle?.make} {vehicle?.model})
+                </span>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-[#9d9d9d] hover:text-white border-[#444444] hover:bg-zinc-800 shrink-0"
-            onClick={(e) => {
-              e.stopPropagation()
-              onClick()
-            }}
-          >
-            View Details
-          </Button>
         </div>
 
         {/* Main Content Grid */}
@@ -119,13 +116,16 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-[#9d9d9d]">
               <AlertCircle className="h-4 w-4" />
-              <span className="font-medium text-white">Description</span>
+              <span className="font-medium text-white">Further Details</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               className="text-[#9d9d9d] hover:text-white hover:bg-zinc-800 h-8 w-8 p-0"
-              onClick={handleClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -134,8 +134,7 @@ export function WorkOrderCardView({ order, statusColors, priorityColors, onClick
               )}
             </Button>
           </div>
-          <p className="text-sm text-white/80 line-clamp-2">{detail?.description || 'No description'}</p>
-
+          
           <AnimatePresence>
             {isExpanded && (
               <motion.div
