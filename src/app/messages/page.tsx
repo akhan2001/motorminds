@@ -13,6 +13,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabase"
 import Inbox from "./components/Inbox"
 import FacebookConnect from "./components/FacebookConnect"
+import TwilioMessaging from "./components/TwilioMessaging"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { MessageSquare, Phone } from "lucide-react"
 
 export default function Messages() {
     const router = useRouter();
@@ -67,56 +70,72 @@ export default function Messages() {
             <div className="flex items-center justify-center py-4 sm:py-8 px-4 sm:px-6">
                 <div className="container mx-auto max-w-[1300px]">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col w-full">
                             <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2">Messages</h1>
-                            {/* <h3 className="text-lg font-medium mb-1 text-white">Send and Receive Facebook and Instagram messages</h3> */}
-                            <p className="text-gray-400">
-                            Create a message to send to your customers by instagram and facebook. In order to use this feature, your IG profile must be a Professional account (Business/Creator) and connected to the Facebook Page.
+                            <p className="text-gray-400 mb-6">
+                                Communicate with your customers through SMS and social media platforms.
                             </p>
                                     
-                            {isConnected ? (
-                                <Inbox shopId={shopId} />
-                            ) : (
-                             <Card className="bg-[#111] border-[#222] mt-4">
-                                <CardContent className="p-6 flex justify-between items-center">
-                                <div>
-                                    <h3 className="text-lg font-medium mb-1 text-white">Connect your Facebook / Instagram account</h3>
-                                    <p className="text-gray-400">
-                                    Link your shop's Facebook Page and Instagram Business profile to MotorMinds so you can receive and reply to customer messages in one place.
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
-                                        <Avatar className="w-6 h-6">
-                                            <AvatarImage src="/icons8-facebook-50.png" alt="Facebook" />
-                                            <AvatarFallback>
-                                                <Facebook className="h-3 w-3" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <Avatar className="w-6 h-6">
-                                            <AvatarImage src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" />
-                                            <AvatarFallback>
-                                                <Instagram className="h-3 w-3" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </div>
-                                    {shopId && <FacebookConnect shopId={shopId} />}
+                            <Tabs defaultValue="sms" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2 bg-[#222]">
+                                    <TabsTrigger value="sms" className="data-[state=active]:bg-[#333]">
+                                        <Phone className="h-4 w-4 mr-2" />
+                                        SMS Messages
+                                    </TabsTrigger>
+                                    <TabsTrigger value="social" className="data-[state=active]:bg-[#333]">
+                                        <MessageSquare className="h-4 w-4 mr-2" />
+                                        Social Media
+                                    </TabsTrigger>
+                                </TabsList>
 
-                                    {/* <Button
-                                        variant="ghost"
-                                        className="gap-2 text-red-500 hover:text-red-500 hover:bg-red-500/10"
-                                        onClick={() => {
-                                            const url = shopId ? `/api/auth/meta/start?shopId=${shopId}` : "/api/auth/meta/start";
-                                            router.push(url);
-                                        }}
-                                    >
-                                        Connect
-                                        <ArrowRight className="h-4 w-4" />
-                                    </Button> */}
-                                </div>
-                                </CardContent>
-                            </Card>
-                            )}
+                                <TabsContent value="sms" className="mt-6">
+                                    {shopId && <TwilioMessaging shopId={shopId} />}
+                                </TabsContent>
+
+                                <TabsContent value="social" className="mt-6">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h3 className="text-lg font-medium mb-2 text-white">Social Media Messaging</h3>
+                                            <p className="text-gray-400 mb-4">
+                                                Connect your Facebook and Instagram accounts to receive and reply to customer messages in one place.
+                                                Your Instagram profile must be a Professional account (Business/Creator) and connected to a Facebook Page.
+                                            </p>
+                                        </div>
+                                        
+                                        {isConnected ? (
+                                            <Inbox shopId={shopId} />
+                                        ) : (
+                                            <Card className="bg-[#111] border-[#222]">
+                                                <CardContent className="p-6 flex justify-between items-center">
+                                                    <div>
+                                                        <h3 className="text-lg font-medium mb-1 text-white">Connect your Facebook / Instagram account</h3>
+                                                        <p className="text-gray-400">
+                                                            Link your shop's Facebook Page and Instagram Business profile to MotorMinds so you can receive and reply to customer messages in one place.
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
+                                                            <Avatar className="w-6 h-6">
+                                                                <AvatarImage src="/icons8-facebook-50.png" alt="Facebook" />
+                                                                <AvatarFallback>
+                                                                    <Facebook className="h-3 w-3" />
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <Avatar className="w-6 h-6">
+                                                                <AvatarImage src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" />
+                                                                <AvatarFallback>
+                                                                    <Instagram className="h-3 w-3" />
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                        </div>
+                                                        {shopId && <FacebookConnect shopId={shopId} />}
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
                         </div>
                     </div>
                 </div>
