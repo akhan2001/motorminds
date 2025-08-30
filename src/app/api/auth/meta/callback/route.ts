@@ -35,6 +35,12 @@ async function getPages(userToken: string) {
 }
 
 export async function GET(request: NextRequest) {
+    // Check required environment variables
+    if (!process.env.META_APP_ID || !process.env.META_APP_SECRET) {
+        console.error("Missing required Meta environment variables");
+        return NextResponse.redirect(new URL(`/messages?error=config_error`, request.url));
+    }
+
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const stateEncoded = searchParams.get("state");
@@ -85,6 +91,18 @@ export async function GET(request: NextRequest) {
         const shopId = shopIdFromState;
         if (!shopId) {
             return NextResponse.redirect(new URL(`/messages?error=shop_missing`, request.url));
+        }
+
+        // Check if Supabase admin client is available
+        if (!supabaseAdmin) {
+            console.error("Supabase admin client not available");
+            return NextResponse.redirect(new URL(`/messages?error=db_error`, request.url));
+        }
+
+        // Check if encryption key is available
+        if (!process.env.ENCRYPTION_SECRET_KEY) {
+            console.error("Encryption secret key not available");
+            return NextResponse.redirect(new URL(`/messages?error=db_error`, request.url));
         }
 
         // Store in Supabase (insert first, then update if row exists)
