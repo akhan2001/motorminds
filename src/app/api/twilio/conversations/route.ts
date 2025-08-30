@@ -14,7 +14,20 @@ export async function GET(request: NextRequest) {
 
         const { data: conversations, error } = await supabase
             .from('sms_conversations')
-            .select('*')
+            .select(`
+                *,
+                customer:customers(
+                    id,
+                    customer_name,
+                    customer_email,
+                    customer_phone,
+                    customer_address,
+                    customer_vehicle,
+                    license_plate,
+                    notes,
+                    tags
+                )
+            `)
             .eq('shop_id', shopId)
             .order('last_message_at', { ascending: false });
 
@@ -26,6 +39,7 @@ export async function GET(request: NextRequest) {
         // Get the most recent message for each conversation
         const conversationsWithMessages = await Promise.all(
             conversations.map(async (conversation) => {
+                // Use the phone number utility to find messages with different phone formats
                 const { data: recentMessage } = await supabase
                     .from('sms_messages')
                     .select('message_body, created_at, direction')

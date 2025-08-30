@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { getShopIdForUser } from '@/utils/get-shop-id';
 import twilio from 'twilio';
+import { createOrFindCustomerByPhone } from '@/utils/phone-number';
 
 // Initialize Twilio client
 const twilioClient = twilio(
@@ -32,13 +33,34 @@ export async function GET(request: NextRequest) {
 
         let query = supabase
             .from('sms_messages')
-            .select('*')
+            .select(`
+                *,
+                customer:customers(
+                    id,
+                    customer_name,
+                    customer_email,
+                    customer_phone
+                )
+            `)
             .eq('shop_id', shopId)
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: true })
             .limit(limit);
 
         if (customerPhone) {
-            query = query.or(`from_number.eq.${customerPhone},to_number.eq.${customerPhone}`);
+            // Use phone number variations for better matching
+            const phoneVariations = [
+                customerPhone,
+                customerPhone.replace('+', ''),
+                customerPhone.startsWith('+') ? customerPhone.substring(1) : `+${customerPhone}`,
+                customerPhone.startsWith('1') ? customerPhone.substring(1) : `1${customerPhone}`,
+                customerPhone.startsWith('+1') ? customerPhone.substring(2) : `+1${customerPhone}`
+            ].filter((v, index, arr) => arr.indexOf(v) === index); // Remove duplicates
+            
+            const phoneConditions = phoneVariations.map(phone => 
+                `from_number.eq.${phone},to_number.eq.${phone}`
+            ).join(',');
+            
+            query = query.or(phoneConditions);
         }
 
         const { data: messages, error } = await query;
@@ -92,6 +114,21 @@ export async function POST(request: NextRequest) {
 
         const shopPhoneNumber = phoneNumbers[0];
 
+        // Create or find customer from phone number using utility function
+        const { customerId, isNew, customer } = await createOrFindCustomerByPhone(
+            supabase,
+            shopId,
+            to,
+            customerName
+        );
+
+        console.log('✅ Customer processed for outgoing message:', { 
+            customerId, 
+            isNew, 
+            name: customer.customer_name,
+            phone: customer.customer_phone 
+        });
+
         // Send message via Twilio
         const twilioMessage = await twilioClient.messages.create({
             to: to,
@@ -99,7 +136,7 @@ export async function POST(request: NextRequest) {
             body: messageBody,
         });
 
-        // Store message in database
+        // Store message in database with customer reference
         const { data: storedMessage, error: messageError } = await supabase
             .from('sms_messages')
             .insert({
@@ -110,6 +147,7 @@ export async function POST(request: NextRequest) {
                 to_number: to,
                 message_body: messageBody,
                 status: twilioMessage.status,
+                customer_id: customerId,
             })
             .select()
             .single();
@@ -118,13 +156,13 @@ export async function POST(request: NextRequest) {
             console.error('Failed to store message:', messageError);
         }
 
-        // Create or update conversation
+        // Create or update conversation with customer reference
         await supabase
             .from('sms_conversations')
             .upsert({
                 shop_id: shopId,
                 customer_phone: to,
-                customer_name: customerName || null,
+                customer_id: customerId,
                 last_message_at: new Date().toISOString(),
             }, {
                 onConflict: 'shop_id,customer_phone'
