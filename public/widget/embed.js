@@ -1,6 +1,8 @@
 (function () {
-    const API_BASE_URL = "https://app.motorminds.ca/api/widget";
-    const IFRAME_URL = "https://app.motorminds.ca/widget";
+    // Detect if we're in development or production
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE_URL = isDevelopment ? "http://localhost:3000/api/widget" : "https://app.motorminds.ca/api/widget";
+    const IFRAME_URL = isDevelopment ? "http://localhost:3000/widget" : "https://app.motorminds.ca/widget";
 
     function getShopId() {
         const scriptTag = document.currentScript || document.getElementById("motorminds-widget-script");
@@ -43,7 +45,7 @@
     function createIframe(shopId) {
         const iframe = document.createElement("iframe");
         iframe.id = "motorminds-widget-iframe";
-        iframe.src = `${IFRAME_URL}?shopId=${shopId}`;
+        iframe.src = `${IFRAME_URL}?shopId=${shopId}${isDevelopment ? '&dev=' + Date.now() : ''}`;
         iframe.style.border = "none";
         iframe.style.width = "400px";
         iframe.style.height = "600px";
@@ -116,6 +118,15 @@
                 closeWidget();
             }
         });
+        
+        // Expose reload function for development
+        window.reloadMotorMindsWidget = () => {
+            const container = document.getElementById("motorminds-widget-container");
+            if (container) {
+                container.remove();
+            }
+            main();
+        };
     }
 
     if (document.readyState === "loading") {

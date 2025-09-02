@@ -49,7 +49,7 @@ function WidgetContent() {
         const bookingMessage: Message = { 
             id: crypto.randomUUID(), 
             role: "assistant", 
-            content: "I'd love to help you book an appointment! Let me gather some information from you. What service do you need?" 
+            content: "Hello there!" 
         };
         setMessages([bookingMessage]);
         setInput("");

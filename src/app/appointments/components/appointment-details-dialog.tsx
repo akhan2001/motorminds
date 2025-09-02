@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { User, Car, Clock, FileText, Trash2, Edit3, Mail } from "lucide-react";
+import { User, Car, Clock, FileText, Trash2, Edit3, Mail, MessageSquare } from "lucide-react";
 
 interface Appointment {
     id: string;
@@ -186,6 +186,38 @@ export function AppointmentDetailsDialog({
         } catch (error) {
             console.error('Failed to send appointment confirmation:', error);
             toast.error('Failed to send confirmation');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSendSMSConfirmation = async () => {
+        if (!appointment) return;
+
+        // Check if customer has phone number
+        const customerPhone = appointment.customer?.customer_phone || appointment.customer?.phone_number;
+        if (!customerPhone) {
+            toast.error('Customer phone number is required to send SMS');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/appointments/send-sms-confirmation/${appointment.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                toast.success('SMS confirmation sent successfully!');
+                onSuccess(); // Refresh the data to show updated status
+            } else {
+                const error = await response.json();
+                toast.error(error.message || 'Failed to send SMS confirmation');
+            }
+        } catch (error) {
+            console.error('Failed to send SMS confirmation:', error);
+            toast.error('Failed to send SMS confirmation');
         } finally {
             setLoading(false);
         }
@@ -419,7 +451,16 @@ export function AppointmentDetailsDialog({
                                 className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white"
                             >
                                 <Mail className="w-4 h-4 mr-2" />
-                                Send Confirmation
+                                Send Email
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleSendSMSConfirmation}
+                                disabled={loading || !appointment.customer?.customer_phone && !appointment.customer?.phone_number}
+                                className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                            >
+                                <MessageSquare className="w-4 h-4 mr-2" />
+                                Send SMS
                             </Button>
                             <Button
                                 onClick={handleEdit}
