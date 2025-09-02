@@ -106,7 +106,7 @@ export function CreateAppointmentDialog({
             const response = await fetch('/api/customers');
             if (response.ok) {
                 const data = await response.json();
-                setCustomers(data);
+                setCustomers(data.customers || []);
             }
         } catch (error) {
             console.error('Failed to fetch customers:', error);
@@ -212,7 +212,7 @@ export function CreateAppointmentDialog({
                                     <SelectValue placeholder="Select customer" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-800 border-zinc-600">
-                                    {customers.map((customer) => (
+                                    {Array.isArray(customers) && customers.map((customer) => (
                                         <SelectItem key={customer.id} value={customer.id}>
                                             {customer.customer_name || `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unknown Customer'}
                                         </SelectItem>

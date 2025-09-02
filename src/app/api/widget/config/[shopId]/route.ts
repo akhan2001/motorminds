@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { corsHeaders } from "@/utils/cors";
 
 export async function GET(request: Request, { params }: { params: Promise<{ shopId: string }> }) {
@@ -12,7 +12,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ shop
         });
     }
 
-    const supabase = await createClient();
+    // Use service role key for widget access (no authentication required)
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const { data: shop, error } = await supabase
         .from("shops")
         .select("widget_config, shop_name")

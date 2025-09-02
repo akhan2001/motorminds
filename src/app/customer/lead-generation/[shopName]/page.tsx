@@ -19,6 +19,7 @@ import { getActiveRewards } from "@/app/loyalty/utils/LoyaltyUtils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RewardsCard } from "@/app/customer/lead-generation/components/rewards-card";
 import { formatOperatingHours } from "@/app/customer/lead-generation/components/formatOperatingHours";
+import Script from "next/script";
 
 export default function ShopProfile() {
 	const router = useRouter();
@@ -30,7 +31,8 @@ export default function ShopProfile() {
 	const [activeRewards, setActiveRewards] = useState<any[]>([]);
 	const [isLoadingRewards, setIsLoadingRewards] = useState<boolean>(true);
 	const [claimedReward, setClaimedReward] = useState<any | null>(null);
-	const formattedHours = formatOperatingHours(shopData?.operating_hours || "");
+
+	const formattedHours = formatOperatingHours(shopData?.operating_hours);
 
 	// Initialize form data without shopID
 	const [formData, setFormData] = useState({
@@ -99,6 +101,80 @@ export default function ShopProfile() {
 				currentShopID = urlParts[1];
 			}
 		}
+
+		// Widget test functions
+		const showResult = (elementId: string, message: string, isError: boolean = false) => {
+			const element = document.getElementById(elementId);
+			if (element) {
+				element.textContent = message;
+				element.className = isError ? 'mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs font-mono text-red-700 dark:text-red-300' : 'mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs font-mono text-green-700 dark:text-green-300';
+			}
+		};
+
+		const testWidgetConfig = async () => {
+			try {
+				showResult('config-result', 'Testing widget configuration...');
+				
+				const response = await fetch(`/api/widget/config/${shopID}`);
+				const data = await response.json();
+				
+				if (response.ok) {
+					showResult('config-result', `✅ Widget config loaded successfully!\n\nShop: ${data.headerText}\nPrimary Color: ${data.primaryColor}\nWelcome Message: ${data.welcomeMessage}\nPosition: ${data.position}`);
+				} else {
+					showResult('config-result', `❌ Widget config failed: ${data.error}`, true);
+				}
+			} catch (error) {
+				showResult('config-result', `❌ Widget config error: ${(error as Error).message}`, true);
+			}
+		};
+
+		const testWidgetChat = async () => {
+			try {
+				showResult('chat-result', 'Testing widget chat...');
+				
+				const response = await fetch('/api/widget/chat', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						messages: [
+							{ role: 'user', content: 'Hello, I need an oil change' }
+						],
+						conversation_id: null,
+						shopId: shopID,
+						isBookingMode: false
+					})
+				});
+				
+				if (response.ok) {
+					showResult('chat-result', '✅ Widget chat is working!\n\nResponse status: ' + response.status);
+				} else {
+					const errorData = await response.text();
+					showResult('chat-result', `❌ Widget chat failed: ${response.status} ${response.statusText}\n\nError: ${errorData}`, true);
+				}
+			} catch (error) {
+				showResult('chat-result', `❌ Widget chat error: ${(error as Error).message}`, true);
+			}
+		};
+
+		const testWidgetAvailability = async () => {
+			try {
+				showResult('availability-result', 'Testing widget availability...');
+				
+				const today = new Date().toISOString().split('T')[0];
+				const response = await fetch(`/api/widget/availability/${shopID}?date=${today}`);
+				const data = await response.json();
+				
+				if (response.ok) {
+					showResult('availability-result', `✅ Widget availability is working!\n\nDate: ${data.date}\nAvailable slots: ${data.availableSlots?.length || 0}`);
+				} else {
+					showResult('availability-result', `❌ Widget availability failed: ${data.error}`, true);
+				}
+			} catch (error) {
+				showResult('availability-result', `❌ Widget availability error: ${(error as Error).message}`, true);
+			}
+		};
 		
 		if (!currentShopID) {
 			toast.error("Shop information is missing. Please try again.");
@@ -137,6 +213,82 @@ export default function ShopProfile() {
 		} catch (error) {
 			console.error("Error creating lead:", error);
 			toast.error("Failed to send your message. Please try again.");
+		}
+	};
+
+
+
+	// Widget test functions
+	const showResult = (elementId: string, message: string, isError: boolean = false) => {
+		const element = document.getElementById(elementId);
+		if (element) {
+			element.textContent = message;
+			element.className = isError ? 'mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs font-mono text-red-700 dark:text-red-300' : 'mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs font-mono text-green-700 dark:text-green-300';
+		}
+	};
+
+	const testWidgetConfig = async () => {
+		try {
+			showResult('config-result', 'Testing widget configuration...');
+			
+			const response = await fetch(`/api/widget/config/${shopID}`);
+			const data = await response.json();
+			
+			if (response.ok) {
+				showResult('config-result', `✅ Widget config loaded successfully!\n\nShop: ${data.headerText}\nPrimary Color: ${data.primaryColor}\nWelcome Message: ${data.welcomeMessage}\nPosition: ${data.position}`);
+			} else {
+				showResult('config-result', `❌ Widget config failed: ${data.error}`, true);
+			}
+		} catch (error) {
+			showResult('config-result', `❌ Widget config error: ${(error as Error).message}`, true);
+		}
+	};
+
+	const testWidgetChat = async () => {
+		try {
+			showResult('chat-result', 'Testing widget chat...');
+			
+			const response = await fetch('/api/widget/chat', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					messages: [
+						{ role: 'user', content: 'Hello, I need an oil change' }
+					],
+					conversation_id: null,
+					shopId: shopID,
+					isBookingMode: false
+				})
+			});
+			
+			if (response.ok) {
+				showResult('chat-result', '✅ Widget chat is working!\n\nResponse status: ' + response.status);
+			} else {
+				const errorData = await response.text();
+				showResult('chat-result', `❌ Widget chat failed: ${response.status} ${response.statusText}\n\nError: ${errorData}`, true);
+			}
+		} catch (error) {
+			showResult('chat-result', `❌ Widget chat error: ${(error as Error).message}`, true);
+		}
+	};
+
+	const testWidgetAvailability = async () => {
+		try {
+			showResult('availability-result', 'Testing widget availability...');
+			
+			const today = new Date().toISOString().split('T')[0];
+			const response = await fetch(`/api/widget/availability/${shopID}?date=${today}`);
+			const data = await response.json();
+			
+			if (response.ok) {
+				showResult('availability-result', `✅ Widget availability is working!\n\nDate: ${data.date}\nAvailable slots: ${data.availableSlots?.length || 0}`);
+			} else {
+				showResult('availability-result', `❌ Widget availability failed: ${data.error}`, true);
+			}
+		} catch (error) {
+			showResult('availability-result', `❌ Widget availability error: ${(error as Error).message}`, true);
 		}
 	};
 
@@ -207,9 +359,9 @@ export default function ShopProfile() {
 					<div className="h-8 w-48 bg-gray-200 rounded mb-4 mx-auto"></div>
 					<div className="h-4 w-64 bg-gray-200 rounded mx-auto"></div>
 				</div>
-			</div>
-		);
-	}
+					</div>
+	);
+}
 
 	// Mock data for the design
 	const services = [
@@ -511,6 +663,57 @@ export default function ShopProfile() {
 								</form>
 							</CardContent>
 						</Card>
+
+						{/* Widget Test Section */}
+						<Card className="mt-6">
+							<CardHeader>
+								<CardTitle>🧪 Widget Test</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<div className="space-y-4">
+									<div>
+										<h3 className="text-sm font-medium mb-2">Test Widget Configuration</h3>
+										<Button 
+											variant="outline" 
+											size="sm" 
+											onClick={() => testWidgetConfig()}
+											className="w-full"
+										>
+											Test Widget Config
+										</Button>
+										<div id="config-result" className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"></div>
+									</div>
+
+									<div>
+										<h3 className="text-sm font-medium mb-2">Test Widget Chat</h3>
+										<Button 
+											variant="outline" 
+											size="sm" 
+											onClick={() => testWidgetChat()}
+											className="w-full"
+										>
+											Test Widget Chat
+										</Button>
+										<div id="chat-result" className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"></div>
+									</div>
+
+									<div>
+										<h3 className="text-sm font-medium mb-2">Test Widget Availability</h3>
+										<Button 
+											variant="outline" 
+											size="sm" 
+											onClick={() => testWidgetAvailability()}
+											className="w-full"
+										>
+											Test Widget Availability
+										</Button>
+										<div id="availability-result" className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono"></div>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+
+						
 					</div>
 				</div>
 			</div>
@@ -587,6 +790,14 @@ export default function ShopProfile() {
 					</div>
 				</div>
 			</footer>
+
+			{/* MotorMinds Widget Script */}
+			<Script
+				id="motorminds-widget-script"
+				src="/widget/embed.js"
+				data-shop-id={shopID}
+				strategy="afterInteractive"
+			/>
 		</div>
 	);
 }

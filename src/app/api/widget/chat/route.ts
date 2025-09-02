@@ -3,9 +3,10 @@ import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { corsHeaders } from "@/utils/cors";
 import { sendAppointmentConfirmationEmail } from "@/lib/email/send-appointment-confirmation";
+import { sendAppointmentSMSConfirmation } from "@/lib/sms/send-appointment-confirmation";
 
 const formatMessage = (message: VercelChatMessage) => {
     return `${message.role}: ${message.content}`;
@@ -52,7 +53,7 @@ Based on customer symptoms, suggest appropriate services:
 Once you have all this information, respond with:
 "BOOK_APPOINTMENT: [customer_name] | [email] | [phone] | [vehicle_year] [vehicle_make] [vehicle_model] | [service_type] | [preferred_date] | [preferred_time]"
 
-Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | Engine Diagnosis | 2024-01-15 | 10:00 AM"
+Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | Engine Diagnosis | {current_date} | 10:00 AM"
 
 For general questions, provide helpful information and direct them to call {shop_phone} if needed.
 
@@ -98,7 +99,11 @@ IMPORTANT RULES:
 - Be conversational and friendly
 - Validate information as you collect it
 - If they give incomplete vehicle info, ask for the missing parts
-- For dates: If customer says "today", "tomorrow", or doesn't specify a date, use appropriate date based on {current_date}
+- For dates: Convert relative dates correctly:
+  - "today" = {current_date}
+  - "tomorrow" = use the day after {current_date}
+  - "next Monday", "this Friday" = calculate from {current_date}
+  - If they give a specific date, use YYYY-MM-DD format
 - For time: After asking "What time would you prefer?", wait for the user to select from available time slots
 - Choose appropriate service type based on customer's described symptoms, not just default to oil change
 - Only proceed to booking when you have ALL required information
@@ -106,7 +111,7 @@ IMPORTANT RULES:
 
 "BOOK_APPOINTMENT: [full_name] | [email] | [phone] | [year] [make] [model] | [service_type] | [date] | [time]"
 
-Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | Engine Diagnosis | 2025-01-15 | 10:00 AM"
+Example: "BOOK_APPOINTMENT: John Smith | john@email.com | (555) 123-4567 | 2020 Toyota Camry | Engine Diagnosis | {current_date} | 10:00 AM"
 
 Current date for reference: {current_date}
 
@@ -128,7 +133,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch shop information
-    const supabase = await createClient();
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     const { data: shop, error: shopError } = await supabase
         .from("shops")
         .select("shop_name, shop_address, shop_phone, shop_about, services_offered, operating_hours")
@@ -235,6 +243,8 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
 
         const appointmentData = bookingMatch[1].split('|').map(item => item.trim());
         
+        console.log('Extracted appointment data:', appointmentData);
+        
         if (appointmentData.length < 6) {
             return { success: false, error: 'Incomplete appointment data' };
         }
@@ -256,6 +266,19 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
         const year = parseInt(vehicleParts[0]);
         const make = vehicleParts[1];
         const model = vehicleParts.slice(2).join(' ');
+        
+        console.log('Parsed data:', {
+            customerName,
+            email,
+            phone,
+            vehicleInfo,
+            serviceType,
+            preferredDate,
+            preferredTime,
+            year,
+            make,
+            model
+        });
 
         // Parse date and time with better date handling
         let appointmentDate;
@@ -275,40 +298,89 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             appointmentDate = new Date().toISOString().split('T')[0];
         }
         
-        const [time, period] = preferredTime.split(' ');
-        let [hours, minutes] = time.split(':').map(Number);
+        // Clean up the time string (remove quotes and extra characters)
+        const cleanTime = preferredTime.replace(/['"]/g, '').trim();
+        const [time, period] = cleanTime.split(' ');
+        let [hours, minutes] = time.split(':').map(part => {
+            const num = parseInt(part.replace(/[^0-9]/g, ''));
+            return isNaN(num) ? 0 : num;
+        });
         
-        if (period === 'PM' && hours !== 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
+        // Handle period conversion
+        if (period && period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+        if (period && period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        
+        // Ensure valid time values
+        hours = Math.max(0, Math.min(23, hours));
+        minutes = Math.max(0, Math.min(59, minutes));
         
         const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         const endTime = `${(hours + 1).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-        // Create or find customer
+        // Check if customer already exists (by email or phone)
         let customer = await supabase
             .from('customers')
             .select('*')
             .eq('shop_id', shopId)
-            .eq('customer_email', email)
-            .single();
+            .or(`customer_email.eq."${email}",customer_phone.eq."${phone}"`)
+            .maybeSingle();
 
         if (customer.error) {
-            // Create new customer
+            // Create new customer with proper data validation
+            const customerData: any = {
+                shop_id: shopId,
+                customer_name: customerName,
+                customer_phone: phone || null
+            };
+            
+            // Only add email if it's valid
+            if (email && email.trim() && email !== 'NULL') {
+                customerData.customer_email = email.trim();
+            }
+
             const { data: newCustomer, error: customerError } = await supabase
                 .from('customers')
-                .insert({
-                    shop_id: shopId,
-                    customer_name: customerName,
-                    customer_email: email,
-                    customer_phone: phone
-                })
+                .insert(customerData)
                 .select()
                 .single();
 
             if (customerError) {
-                return { success: false, error: 'Failed to create customer' };
+                console.error('Customer creation error details:', customerError);
+                console.error('Customer data attempted:', customerData);
+                return { success: false, error: `Failed to create customer: ${customerError.message}` };
             }
             customer = { data: newCustomer };
+            console.log('✅ New customer created via widget:', newCustomer.id);
+        } else {
+            // Update existing customer with latest info if needed
+            const updateData: any = {};
+            let needsUpdate = false;
+            
+            if (customer.data.customer_name !== customerName) {
+                updateData.customer_name = customerName;
+                needsUpdate = true;
+            }
+            
+            if (customer.data.customer_phone !== phone) {
+                updateData.customer_phone = phone;
+                needsUpdate = true;
+            }
+            
+            if (needsUpdate) {
+                updateData.updated_at = new Date().toISOString();
+                const { error: updateError } = await supabase
+                    .from('customers')
+                    .update(updateData)
+                    .eq('id', customer.data.id);
+                
+                if (updateError) {
+                    console.error('Failed to update existing customer:', updateError);
+                } else {
+                    console.log('✅ Existing customer updated:', customer.data.id);
+                }
+            } else {
+                console.log('✅ Using existing customer:', customer.data.id);
+            }
         }
 
         // Create or find vehicle (matching by year, make, model for this customer)
@@ -319,24 +391,27 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             .eq('year', year)
             .eq('make', make)
             .eq('model', model)
-            .single();
+            .maybeSingle();
 
         if (vehicle.error) {
-            // Create new vehicle without license plate requirement
+            // Create new vehicle with proper data validation
+            const vehicleData: any = {
+                customer_id: customer.data.id,
+                year: year,
+                make: make,
+                model: model
+            };
+
             const { data: newVehicle, error: vehicleError } = await supabase
                 .from('customer_vehicles')
-                .insert({
-                    customer_id: customer.data.id,
-                    year: year,
-                    make: make,
-                    model: model
-                })
+                .insert(vehicleData)
                 .select()
                 .single();
 
             if (vehicleError) {
-                console.error('Vehicle creation error:', vehicleError);
-                return { success: false, error: 'Failed to create vehicle' };
+                console.error('Vehicle creation error details:', vehicleError);
+                console.error('Vehicle data attempted:', vehicleData);
+                return { success: false, error: `Failed to create vehicle: ${vehicleError.message}` };
             }
             vehicle = { data: newVehicle };
         }
@@ -361,7 +436,8 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             .single();
 
         if (appointmentError) {
-            return { success: false, error: 'Failed to create appointment' };
+            console.error('Appointment creation error details:', appointmentError);
+            return { success: false, error: `Failed to create appointment: ${appointmentError.message}` };
         }
 
         // Create repair order
@@ -390,6 +466,21 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
         } catch (emailError) {
             console.error('Failed to send confirmation email:', emailError);
             // Don't fail the appointment creation if email fails
+        }
+
+        // Send SMS confirmation if Twilio is set up
+        try {
+            await sendAppointmentSMSConfirmation({
+                appointment,
+                customer: customer.data,
+                vehicle: vehicle.data,
+                shop,
+                supabase
+            });
+            console.log('SMS confirmation sent successfully');
+        } catch (smsError) {
+            console.error('Failed to send SMS confirmation:', smsError);
+            // Don't fail the appointment creation if SMS fails
         }
 
         return { success: true, appointment, customer: customer.data, vehicle: vehicle.data };

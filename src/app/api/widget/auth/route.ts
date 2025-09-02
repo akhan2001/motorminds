@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import jwt from "jsonwebtoken";
 import { corsHeaders } from "@/utils/cors";
 
@@ -13,7 +13,10 @@ export async function POST(request: Request) {
         });
     }
 
-    const supabase = await createClient();
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     const { data: shop, error } = await supabase
         .from("shops")
         .select("authorized_domains")

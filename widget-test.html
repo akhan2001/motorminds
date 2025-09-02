@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorMinds Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #fee;
+            color: #c53030;
+        }
+        .success {
+            background: #f0fff4;
+            color: #2f855a;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 MotorMinds Widget Test</h1>
+    
+    <div class="test-section">
+        <h2>🔧 Widget Configuration Test</h2>
+        <p>Test if the widget configuration API is working:</p>
+        <button class="test-button" onclick="testWidgetConfig()">Test Widget Config</button>
+        <div id="config-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 Widget Embed Test</h2>
+        <p>Test if the widget can be embedded and loaded:</p>
+        <button class="test-button" onclick="testWidgetEmbed()">Test Widget Embed</button>
+        <div id="embed-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Widget Chat Test</h2>
+        <p>Test if the widget chat API is working:</p>
+        <button class="test-button" onclick="testWidgetChat()">Test Widget Chat</button>
+        <div id="chat-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📅 Widget Availability Test</h2>
+        <p>Test if the widget availability API is working:</p>
+        <button class="test-button" onclick="testWidgetAvailability()">Test Widget Availability</button>
+        <div id="availability-result" class="result"></div>
+    </div>
+
+    <script>
+        // Test shop ID (you can change this to test with different shops)
+        const TEST_SHOP_ID = 'fdd1ab82-22b7-4ae1-86ef-05687a6aaac2';
+        const API_BASE = 'https://app.motorminds.ca/api/widget';
+
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        async function testWidgetConfig() {
+            try {
+                showResult('config-result', 'Testing widget configuration...');
+                
+                const response = await fetch(`${API_BASE}/config/${TEST_SHOP_ID}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('config-result', `✅ Widget config loaded successfully!\n\nShop: ${data.headerText}\nPrimary Color: ${data.primaryColor}\nWelcome Message: ${data.welcomeMessage}\nPosition: ${data.position}`);
+                } else {
+                    showResult('config-result', `❌ Widget config failed: ${data.error}`, true);
+                }
+            } catch (error) {
+                showResult('config-result', `❌ Widget config error: ${error.message}`, true);
+            }
+        }
+
+        async function testWidgetEmbed() {
+            try {
+                showResult('embed-result', 'Testing widget embed...');
+                
+                // Test if the widget page is accessible
+                const response = await fetch('https://app.motorminds.ca/widget?shopId=' + TEST_SHOP_ID);
+                
+                if (response.ok) {
+                    showResult('embed-result', '✅ Widget page is accessible!\n\nWidget URL: https://app.motorminds.ca/widget?shopId=' + TEST_SHOP_ID);
+                } else {
+                    showResult('embed-result', `❌ Widget page not accessible: ${response.status} ${response.statusText}`, true);
+                }
+            } catch (error) {
+                showResult('embed-result', `❌ Widget embed error: ${error.message}`, true);
+            }
+        }
+
+        async function testWidgetChat() {
+            try {
+                showResult('chat-result', 'Testing widget chat...');
+                
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'user', content: 'Hello, I need an oil change' }
+                        ],
+                        conversation_id: null,
+                        shopId: TEST_SHOP_ID,
+                        isBookingMode: false
+                    })
+                });
+                
+                if (response.ok) {
+                    showResult('chat-result', '✅ Widget chat is working!\n\nResponse status: ' + response.status);
+                } else {
+                    const errorData = await response.text();
+                    showResult('chat-result', `❌ Widget chat failed: ${response.status} ${response.statusText}\n\nError: ${errorData}`, true);
+                }
+            } catch (error) {
+                showResult('chat-result', `❌ Widget chat error: ${error.message}`, true);
+            }
+        }
+
+        async function testWidgetAvailability() {
+            try {
+                showResult('availability-result', 'Testing widget availability...');
+                
+                const today = new Date().toISOString().split('T')[0];
+                const response = await fetch(`${API_BASE}/availability/${TEST_SHOP_ID}?date=${today}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('availability-result', `✅ Widget availability is working!\n\nDate: ${data.date}\nAvailable slots: ${data.availableSlots?.length || 0}`);
+                } else {
+                    showResult('availability-result', `❌ Widget availability failed: ${data.error}`, true);
+                }
+            } catch (error) {
+                showResult('availability-result', `❌ Widget availability error: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>
