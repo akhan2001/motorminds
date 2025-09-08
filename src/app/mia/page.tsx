@@ -1,162 +1,249 @@
-'use client';
+'use client'
 
-import { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { useChat } from 'ai/react'
+import type { Message } from 'ai'
+import { ChangeEvent, useState } from 'react'
+
+import { Nav } from "../components/nav"
+import { MiaOnboarding } from "../components/ui/MiaDiagnosticChat/MiaOnboarding"
+import { MiaDiagnosticsHeader } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsHeader"
+import { DiagnosticChatForm } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsChatForm"
+import { MemoizedDiagnosticMessage } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsMessage"
+import { VehicleInputData, DiagnosticMessage } from "../components/ui/MiaDiagnosticChat/MiaDiagnostics.types"
+import { Conversation, ConversationContent, ConversationScrollButton } from "../components/ui/MiaDiagnosticChat/elements/Conversations"
+import { VehicleInfoForm } from "../components/ui/MiaDiagnosticChat/VehicleInfoForm"
 
 export default function MiaPage() {
-  const [shopId, setShopId] = useState('850e8400-e29b-41d4-a716-446655440001'); // Default shop ID
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "👋 Hello! I'm Mia, your shop assistant. How can I help you today? Ask me anything about your customers, orders, or business data."
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [vehicleInfo, setVehicleInfo] = useState<VehicleInputData>({
+        symptoms: ''
+    })
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
 
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+    const [messages, setMessages] = useState<Message[]>([])
+    const [input, setInput] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<Error | undefined>()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!input.trim() || isLoading) return;
-    
-    // Add user message
-    const userMessage = {
-      id: Date.now().toString(),
-      role: 'user' as const,
-      content: input
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-    
-    try {
-      // Send to API
-      const response = await fetch('/mia/api/retrieval', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          shop_id: shopId
-        }),
-      });
-      
-      const data = await response.json();
-      
-      // Add assistant message
-      setMessages(prev => [
-        ...prev, 
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant' as const,
-          content: data.message || "I couldn't process that request."
+    // Temporary manual chat handling for debugging
+    const handleSubmit = async (message: string, vehicleData?: VehicleInputData) => {
+        if (!message.trim()) return
+
+        if (vehicleData) {
+            setVehicleInfo(vehicleData)
         }
-      ]);
-    } catch (error) {
-      console.error('Error:', error);
-      // Add error message
-      setMessages(prev => [
-        ...prev, 
-        {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant' as const,
-          content: "Sorry, I encountered an error processing your request."
-        }
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="mb-8 text-3xl font-bold">Mia - Shop Data Assistant</h1>
-      
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="col-span-2">
-          <div className="flex h-[600px] flex-col rounded-lg border shadow-lg">
-            <div className="flex-none border-b bg-gray-50 p-4">
-              <h2 className="text-lg font-semibold">Ask about your shop data</h2>
-            </div>
+        const userMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: message
+        }
+
+        setMessages(prev => [...prev, userMessage])
+        setInput('')
+        setIsLoading(true)
+        setError(undefined)
+
+        try {
+            const response = await fetch('/api/mia-diagnostics', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messages: [...messages, userMessage],
+                    vehicleInfo: vehicleData || vehicleInfo
+                })
+            })
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`API Error: ${response.status} - ${errorText}`)
+            }
+
+            const data = await response.json()
+            console.log('API Response:', data)
+
+            const assistantMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: data.content || data.fullResponse?.choices?.[0]?.message?.content || 'No response received'
+            }
+
+            setMessages(prev => [...prev, assistantMessage])
+
+        } catch (err) {
+            console.error('Chat Error:', err)
+            setError(err as Error)
             
-            <div className="flex-grow overflow-y-auto p-4">
-              {messages.map((message) => (
-                <div 
-                  key={message.id} 
-                  className={`mb-4 flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-800 shadow-sm'
-                    }`}
-                  >
-                    {message.role === 'assistant' ? (
-                      <div className="prose prose-sm">
-                        <ReactMarkdown>
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
-                    ) : (
-                      <div>{message.content}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-center p-2">
-                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-blue-500"></div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+            const errorMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: `Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`
+            }
+            setMessages(prev => [...prev, errorMessage])
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const stop = () => {
+        setIsLoading(false)
+    }
+
+    const reload = async () => {
+        // Implement reload if needed
+        return null
+    }
+
+
+    const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        setInput(e.target.value)
+    }
+
+    const handlePromptSelect = (prompt: string) => {
+        setInput(prompt)
+        // Focus the textarea after setting the value
+        setTimeout(() => {
+            const textarea = document.querySelector('textarea')
+            textarea?.focus()
+        }, 100)
+    }
+
+    const handleClearMessages = () => {
+        setMessages([])
+        setEditingMessageId(null)
+    }
+
+    const handleCloseAssistant = () => {
+        // Could navigate back or close modal - for now just clear
+        handleClearMessages()
+    }
+
+    const handleMessageDelete = (messageId: string) => {
+        setMessages((prev: Message[]) => prev.filter((msg: Message) => msg.id !== messageId))
+    }
+
+    const handleMessageEdit = (messageId: string) => {
+        const message = messages.find((msg: Message) => msg.id === messageId)
+        if (message && message.role === 'user') {
+            setInput(message.content as string)
+            setEditingMessageId(messageId)
+            // Remove this message and all following messages
+            const messageIndex = messages.findIndex((msg: Message) => msg.id === messageId)
+            setMessages((prev: Message[]) => prev.slice(0, messageIndex))
+        }
+    }
+
+    const handleCancelEdit = () => {
+        setEditingMessageId(null)
+        setInput('')
+    }
+
+    const hasMessages = messages.length > 0
+
+    return (
+        <div className="flex flex-col min-h-screen bg-black text-white">
+            <Nav />
+
+            {/* Header controls */}
+            <div className="px-4 py-3">
+                <MiaDiagnosticsHeader
+                    isChatLoading={isLoading}
+                    onClearMessages={handleClearMessages}
+                    onCloseAssistant={handleCloseAssistant}
+                    vehicleInfo={vehicleInfo}
+                />
             </div>
-            
-            <form onSubmit={handleSubmit} className="flex border-t p-2">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about your shop data..."
-                className="flex-grow resize-none border-0 bg-transparent p-2 focus:outline-none"
-                disabled={isLoading}
-              />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                Send
-              </button>
-            </form>
-          </div>
+
+            {/* Main content area with simple layout */}
+            <div className="flex-1 flex min-h-0">
+                {/* Main Chat Area */}
+                <div className="flex-1 px-4 py-4 min-h-0">
+                    <div className="h-full w-full border border-[#1f1f1f] rounded-md overflow-hidden flex flex-col">
+                        {/* Chat Content */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                            {hasMessages ? (
+                                <Conversation className="flex-1">
+                                    <ConversationContent className="max-w-4xl mx-auto">
+                                        {messages.map((message: Message, index: number) => {
+                                            const isAfterEdited = editingMessageId !== null && 
+                                                messages.findIndex((msg: Message) => msg.id === editingMessageId) < index
+                                            
+                                            return (
+                                                <MemoizedDiagnosticMessage
+                                                    key={message.id}
+                                                    id={message.id}
+                                                    message={message as unknown as DiagnosticMessage}
+                                                    isLoading={isLoading && index === messages.length - 1}
+                                                    onDelete={handleMessageDelete}
+                                                    onEdit={handleMessageEdit}
+                                                    isAfterEditedMessage={isAfterEdited}
+                                                    isBeingEdited={editingMessageId === message.id}
+                                                    onCancelEdit={handleCancelEdit}
+                                                />
+                                            )
+                                        })}
+                                        
+                                        {error && (
+                                            <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                                                <p className="text-red-400 text-sm">
+                                                    <strong>Error:</strong> {error.message}
+                                                </p>
+                                                <button
+                                                    onClick={() => reload()}
+                                                    className="mt-2 text-xs text-red-300 hover:text-red-200 underline"
+                                                >
+                                                    Try again
+                                                </button>
+                                            </div>
+                                        )}
+                                    </ConversationContent>
+                                    <ConversationScrollButton />
+                                </Conversation>
+                            ) : (
+                                /* Onboarding View */
+                                <div className="flex-1 flex items-center justify-center p-4">
+                                    <div className="w-full max-w-4xl">
+                                        <MiaOnboarding
+                                            onValueChange={handlePromptSelect}
+                                            onFocusInput={() => {
+                                                const textarea = document.querySelector('textarea')
+                                                textarea?.focus()
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Chat Input Form - Always at bottom */}
+                        <div className="border-t border-[#444444] p-4 bg-black">
+                            <div className="max-w-4xl mx-auto">
+                                <DiagnosticChatForm
+                                    loading={isLoading}
+                                    value={input}
+                                    onValueChange={handleInputChange}
+                                    onSubmit={handleSubmit}
+                                    onStop={stop}
+                                    isEditing={editingMessageId !== null}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Vehicle Information Sidebar */}
+                <div className="w-80 px-4 py-4 min-h-0">
+                    <div className="h-full w-full border border-[#1f1f1f] rounded-md overflow-y-auto bg-[#0d0d0d]">
+                        <div className="p-4">
+                            <VehicleInfoForm
+                                vehicleInfo={vehicleInfo}
+                                onVehicleInfoChange={setVehicleInfo}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div className="rounded-lg border p-4 shadow-lg">
-          <h2 className="mb-4 text-xl font-semibold">Example Questions</h2>
-          <ul className="space-y-2">
-            <li>• How many customers do I have?</li>
-            <li>• Show me new customers from this month</li>
-            <li>• List my most recent customers</li>
-            <li>• Find customer named John</li>
-            <li>• What's my total revenue?</li>
-            <li>• Which customers made orders this week?</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
+    )
 }
