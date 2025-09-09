@@ -1,12 +1,10 @@
-import { Wrench, AlertTriangle, FileText, Eye, Pencil, Trash2, ExternalLink } from 'lucide-react'
-import { memo, useState } from 'react'
+import { Wrench, AlertTriangle, FileText, Eye, ExternalLink } from 'lucide-react'
+import { memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { toast } from 'sonner'
 
 import { cn } from '@/lib/utils'
-import { ButtonTooltip } from '../../../../components/ui/ButtonTooltip'
 import { DiagnosticMessage, DiagnosticReference, DiagnosticVisualAid } from './MiaDiagnostics.types'
 import { Reasoning } from './elements/Reasonings'
 import { PerplexityReferences } from './PerplexityReferences'
@@ -16,8 +14,6 @@ interface DiagnosticMessageProps {
     message: DiagnosticMessage
     isLoading: boolean
     readOnly?: boolean
-    onDelete?: (id: string) => void
-    onEdit?: (id: string) => void
     isAfterEditedMessage?: boolean
     isBeingEdited?: boolean
     onCancelEdit?: () => void
@@ -142,6 +138,7 @@ const DiagnosticVisualAids = ({ visualAids }: { visualAids: DiagnosticVisualAid[
     )
 }
 
+
 const DiagnosticSummary = ({ message }: { message: DiagnosticMessage }) => {
     const { diagnosticData } = message
 
@@ -222,13 +219,10 @@ const DiagnosticMessageComponent = ({
     message,
     isLoading,
     readOnly,
-    onDelete,
-    onEdit,
     isAfterEditedMessage = false,
     isBeingEdited = false,
     onCancelEdit,
 }: DiagnosticMessageProps) => {
-    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
     
     if (!message) {
         console.error(`DiagnosticMessage component received undefined message prop for id: ${id}`)
@@ -246,20 +240,50 @@ const DiagnosticMessageComponent = ({
         <div
             className={cn(
                 'text-foreground-light text-sm first:mt-0',
-                isUser ? 'text-foreground mt-6' : '',
+                isUser ? 'text-foreground mt-6 flex justify-end' : 'pt-4',
                 isAfterEditedMessage && 'opacity-50 cursor-pointer transition-opacity'
             )}
             onClick={isAfterEditedMessage ? onCancelEdit : undefined}
         >
-            <div className="flex gap-4 w-auto overflow-hidden group">
-                {isUser && (
-                    <div className="w-5 h-5 shrink-0 rounded-full bg-[#f52f2f] flex items-center justify-center translate-y-0.5">
-                        <span className="text-white text-xs font-medium">U</span>
+            {isUser ? (
+                <div className="flex justify-end">
+                    <div className="max-w-[80%]">
+                        <div className="bg-[#f52f2f] rounded-lg p-3 text-white">
+                            {hasTextContent ? (
+                                <div className="prose prose-sm max-w-none break-words text-white [&>p]:text-white [&>p]:font-medium">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={baseMarkdownComponents}
+                                    >
+                                        {content}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                <span className="text-white">User message</span>
+                            )}
+                        </div>
                     </div>
-                )}
+                </div>
+            ) : (
+                <div className="flex gap-4 w-auto overflow-hidden group">
+                    <div className="w-5 h-5 shrink-0 rounded-full bg-transparent flex items-center justify-center translate-y-0.5">
+                        <img 
+                            src="/motorminds-logo-white.png" 
+                            alt="MIA" 
+                            className="w-5 h-5 object-contain"
+                        />
+                    </div>
 
-                <div className="flex-1 min-w-0">
-                    {shouldUsePartsRendering ? (
+                    <div className="flex-1 min-w-0">
+                    {/* Show loading indicator when MIA is loading */}
+                    {isLoading ? (
+                        <div className="flex items-center gap-3 text-gray-400">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-[#f52f2f] border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-sm">MIA is thinking...</span>
+                            </div>
+                        </div>
+                    ) : shouldUsePartsRendering ? (
                         parts.map((part: any, index: number) => {
                             switch (part.type) {
                                 case 'reasoning':
@@ -300,7 +324,8 @@ const DiagnosticMessageComponent = ({
                         <div
                             className={cn(
                                 'prose prose-sm prose-invert max-w-none break-words',
-                                isUser && 'text-foreground [&>p]:font-medium'
+                                isUser && 'text-foreground [&>p]:font-medium',
+                                !isUser && 'text-gray-300 [&>p]:text-gray-300 [&>h1]:text-gray-300 [&>h2]:text-gray-300 [&>h3]:text-gray-300 [&>h4]:text-gray-300 [&>h5]:text-gray-300 [&>h6]:text-gray-300 [&>strong]:text-gray-300 [&>em]:text-gray-300 [&>li]:text-gray-300 [&>ul]:text-gray-300 [&>ol]:text-gray-300'
                             )}
                         >
                             <ReactMarkdown
@@ -311,7 +336,9 @@ const DiagnosticMessageComponent = ({
                             </ReactMarkdown>
                         </div>
                     ) : (
-                        <span className="text-gray-400 italic">MIA is analyzing your vehicle issue...</span>
+                        <div className="text-gray-400 text-sm">
+                            No content available
+                        </div>
                     )}
 
                     {/* Diagnostic-specific content */}
@@ -327,43 +354,11 @@ const DiagnosticMessageComponent = ({
                         </>
                     )}
 
-                    {/* Action buttons - only show for user messages on hover */}
-                    {role === 'user' && onEdit && onDelete && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-1 mb-2">
-                            <ButtonTooltip
-                                variant="ghost"
-                                icon={<Pencil size={14} strokeWidth={1.5} />}
-                                onClick={
-                                    isBeingEdited || isAfterEditedMessage ? onCancelEdit : () => onEdit(id)
-                                }
-                                className="text-gray-400 hover:text-white p-1 rounded mr-2"
-                                aria-label={
-                                    isBeingEdited || isAfterEditedMessage ? 'Cancel editing' : 'Edit message'
-                                }
-                                tooltip={{
-                                    content: {
-                                        side: 'bottom',
-                                        text: isBeingEdited || isAfterEditedMessage ? 'Cancel editing' : 'Edit message',
-                                    },
-                                }}
-                            />
 
-                            <ButtonTooltip
-                                variant="ghost"
-                                icon={<Trash2 size={14} strokeWidth={1.5} />}
-                                tooltip={{ content: { side: 'bottom', text: 'Delete message' } }}
-                                onClick={() => {
-                                    onDelete(id)
-                                    toast.success('Message deleted successfully')
-                                }}
-                                className="text-gray-400 hover:text-white p-1 rounded"
-                                title="Delete message"
-                                aria-label="Delete message"
-                            />
-                        </div>
-                    )}
+                    {/* No action buttons for user messages */}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }

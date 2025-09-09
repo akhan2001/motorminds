@@ -77,6 +77,8 @@ const requestBody = {
         const citations = data.citations || []
         const searchResults = data.search_results || []
         
+        // Images functionality removed
+        
         return Response.json({
             success: true,
             content: content,

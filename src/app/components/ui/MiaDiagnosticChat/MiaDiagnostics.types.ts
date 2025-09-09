@@ -57,6 +57,15 @@ export interface PerplexitySearchResult {
     snippet?: string
 }
 
+export interface DiagnosticImage {
+    id: string
+    title: string
+    description?: string
+    url: string
+    type: 'diagram' | 'photo' | 'chart' | 'video'
+    source?: string
+}
+
 export interface VehicleInputData {
     vin?: string
     year?: string

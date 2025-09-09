@@ -1,10 +1,9 @@
-import { ArrowUp, Loader2, Square } from 'lucide-react'
+import { ArrowRight, LoaderCircle, Square } from 'lucide-react'
 import { ChangeEvent, FormEvent, forwardRef, KeyboardEvent, memo, useRef, useState } from 'react'
 
 import { Button } from '../../../../components/ui/button'
 import { Textarea } from '../../../../components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { ButtonTooltip } from '../../../../components/ui/ButtonTooltip'
 import { VehicleInputData } from './MiaDiagnostics.types'
 
 export interface DiagnosticFormProps {
@@ -99,31 +98,30 @@ const DiagnosticChatFormComponent = forwardRef<HTMLFormElement, DiagnosticFormPr
                         {/* Submit/Stop Button */}
                         {loading ? (
                             onStop ? (
-                                <ButtonTooltip
-                                    variant="outline"
-                                    aria-label="Stop response"
-                                    icon={<Square fill="currentColor" className="scale-75" />}
+                                <Button
+                                    type="button"
                                     onClick={onStop}
-                                    className="w-7 h-7 rounded-full p-0 text-center flex items-center justify-center border-[#444444] text-white hover:bg-[#333333]"
-                                    tooltip={{ content: { side: 'top', text: 'Stop response' } }}
-                                />
+                                    className="flex items-center justify-center rounded-full bg-[#444444] w-10 h-10 hover:bg-[#333333] border border-[#666666]"
+                                    aria-label="Stop response"
+                                >
+                                    <Square size={16} fill="currentColor" className="text-white" />
+                                </Button>
                             ) : (
-                                <Loader2 size={22} className="animate-spin size-7 text-gray-400" strokeWidth={1} />
+                                <div className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10">
+                                    <span role="status" className="flex justify-center">
+                                        <LoaderCircle className="animate-spin h-5 w-5 text-white" />
+                                    </span>
+                                </div>
                             )
                         ) : (
-                            <ButtonTooltip
+                            <Button
                                 type="submit"
-                                aria-label="Send message"
-                                icon={<ArrowUp />}
+                                className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90"
                                 disabled={!canSubmit}
-                                className={cn(
-                                    'w-7 h-7 rounded-full p-0 text-center flex items-center justify-center',
-                                    !canSubmit 
-                                        ? 'opacity-50 bg-[#444444] text-gray-500' 
-                                        : 'bg-[#f52f2f] text-white hover:bg-[#f52f2f]/90'
-                                )}
-                                tooltip={{ content: { side: 'top', text: 'Send message' } }}
-                            />
+                                aria-label="Send message"
+                            >
+                                <ArrowRight className="h-5 w-5 text-white" />
+                            </Button>
                         )}
                     </div>
                 </form>

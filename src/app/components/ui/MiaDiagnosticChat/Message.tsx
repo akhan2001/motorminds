@@ -50,8 +50,6 @@ interface MessageProps {
     resultId?: string
     results: any[]
   }) => void
-  onDelete: (id: string) => void
-  onEdit: (id: string) => void
   isAfterEditedMessage: boolean
   isBeingEdited: boolean
   onCancelEdit: () => void
@@ -65,8 +63,6 @@ const Message = function Message({
   action = null,
   variant = 'default',
   onResults,
-  onDelete,
-  onEdit,
   isAfterEditedMessage = false,
   isBeingEdited = false,
   status,
@@ -277,8 +273,6 @@ export const MemoizedMessage = memo(
     message,
     status,
     onResults,
-    onDelete,
-    onEdit,
     isAfterEditedMessage,
     isBeingEdited,
     onCancelEdit,
@@ -294,8 +288,6 @@ export const MemoizedMessage = memo(
       resultId?: string
       results: any[]
     }) => void
-    onDelete: (id: string) => void
-    onEdit: (id: string) => void
     isAfterEditedMessage: boolean
     isBeingEdited: boolean
     onCancelEdit: () => void
@@ -308,8 +300,6 @@ export const MemoizedMessage = memo(
         isLoading={status === 'submitted' || status === 'streaming'}
         status={status}
         onResults={onResults}
-        onDelete={onDelete}
-        onEdit={onEdit}
         isAfterEditedMessage={isAfterEditedMessage}
         isBeingEdited={isBeingEdited}
         onCancelEdit={onCancelEdit}
