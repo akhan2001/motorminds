@@ -211,7 +211,7 @@ export function CreateAppointmentDialog({
                                 <SelectTrigger className="bg-zinc-800 border-zinc-600">
                                     <SelectValue placeholder="Select customer" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-800 border-zinc-600">
+                                <SelectContent className="bg-zinc-800 border-zinc-600 text-zinc-300">
                                     {Array.isArray(customers) && customers.map((customer) => (
                                         <SelectItem key={customer.id} value={customer.id}>
                                             {customer.customer_name || `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unknown Customer'}
@@ -231,7 +231,7 @@ export function CreateAppointmentDialog({
                                 <SelectTrigger className="bg-zinc-800 border-zinc-600">
                                     <SelectValue placeholder="Select vehicle" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-800 border-zinc-600">
+                                <SelectContent className="bg-zinc-800 border-zinc-600 text-zinc-300">
                                     {vehicles.map((vehicle) => (
                                         <SelectItem key={vehicle.id} value={vehicle.id}>
                                             {vehicle.year} {vehicle.make} {vehicle.model}
@@ -250,7 +250,7 @@ export function CreateAppointmentDialog({
                                 type="date"
                                 value={formData.appointment_date}
                                 onChange={(e) => setFormData(prev => ({ ...prev, appointment_date: e.target.value }))}
-                                className="bg-zinc-800 border-zinc-600"
+                                className="bg-zinc-800 border-zinc-600 text-zinc-300"
                                 required
                             />
                         </div>
@@ -264,7 +264,7 @@ export function CreateAppointmentDialog({
                                 <SelectTrigger className="bg-zinc-800 border-zinc-600">
                                     <SelectValue placeholder="Select service" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-800 border-zinc-600">
+                                <SelectContent className="bg-zinc-800 border-zinc-600 text-zinc-300">
                                     {SERVICE_TYPES.map((service) => (
                                         <SelectItem key={service} value={service}>
                                             {service}
