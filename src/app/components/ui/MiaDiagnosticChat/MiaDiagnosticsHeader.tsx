@@ -13,7 +13,6 @@ interface MiaDiagnosticsHeaderProps {
 export const MiaDiagnosticsHeader = ({
     isChatLoading,
     onClearMessages,
-    onCloseAssistant,
     vehicleInfo,
 }: MiaDiagnosticsHeaderProps) => {
     const getVehicleDisplay = () => {
@@ -50,14 +49,6 @@ export const MiaDiagnosticsHeader = ({
                         className="h-7 w-7 p-0 text-gray-400 hover:text-white"
                         disabled={isChatLoading}
                         tooltip={{ content: { side: 'bottom', text: 'Clear diagnostic session' } }}
-                    />
-                    <ButtonTooltip
-                        variant="ghost"
-                        size="icon"
-                        className="w-7 h-7 text-gray-400 hover:text-white"
-                        onClick={onCloseAssistant}
-                        icon={<X strokeWidth={1.5} />}
-                        tooltip={{ content: { side: 'bottom', text: 'Close MIA diagnostics' } }}
                     />
                 </div>
         </div>

@@ -23,6 +23,11 @@ export interface DiagnosticMessage extends Message {
             max: number
             currency: string
         }
+        // Perplexity API response data
+        perplexityData?: {
+            citations?: string[]
+            searchResults?: PerplexitySearchResult[]
+        }
     }
 }
 
@@ -42,6 +47,14 @@ export interface DiagnosticVisualAid {
     description?: string
     url?: string
     placeholder?: boolean
+}
+
+export interface PerplexitySearchResult {
+    title: string
+    url: string
+    date?: string
+    last_updated?: string
+    snippet?: string
 }
 
 export interface VehicleInputData {

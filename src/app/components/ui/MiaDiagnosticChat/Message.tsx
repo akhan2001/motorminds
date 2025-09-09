@@ -1,17 +1,12 @@
 import { UIMessage as VercelMessage } from '@ai-sdk/react'
-import { CheckIcon, Loader2, Pencil, Trash2 } from 'lucide-react'
-import { createContext, memo, PropsWithChildren, ReactNode, useMemo, useState } from 'react'
+import { CheckIcon, Loader2 } from 'lucide-react'
+import { createContext, memo, PropsWithChildren, ReactNode, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Components } from 'react-markdown/lib/ast-to-react'
 import remarkGfm from 'remark-gfm'
-import { toast } from 'sonner'
 
-import { ProfileImage } from 'components/ui/ProfileImage'
-import { useProfile } from 'lib/profile'
 import { cn, markdownComponents, WarningIcon } from 'ui'
-import { ButtonTooltip } from '../../../../components/ui/ButtonTooltip'
 import { EdgeFunctionBlock } from '../EdgeFunctionBlock/EdgeFunctionBlock'
-import { DeleteMessageConfirmModal } from './DeleteMessageConfirmModal'
 import { DisplayBlockRenderer } from './DisplayBlockRenderer'
 import {
   Heading3,
@@ -77,8 +72,6 @@ const Message = function Message({
   status,
   onCancelEdit,
 }: PropsWithChildren<MessageProps>) {
-  const { profile } = useProfile()
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
   const allMarkdownComponents: Partial<Components> = useMemo(
     () => ({
       ...markdownComponents,
@@ -125,11 +118,9 @@ const Message = function Message({
 
         <div className="flex gap-4 w-auto overflow-hidden group">
           {isUser && (
-            <ProfileImage
-              alt={profile?.username}
-              src={profile?.profileImageUrl}
-              className="w-5 h-5 shrink-0 rounded-full translate-y-0.5"
-            />
+            <div className="w-5 h-5 shrink-0 rounded-full translate-y-0.5 bg-[#f52f2f] flex items-center justify-center">
+              <span className="text-white text-xs font-bold">U</span>
+            </div>
           )}
 
           <div className="flex-1 min-w-0">
@@ -272,54 +263,11 @@ const Message = function Message({
               <span className="text-foreground-lighter italic">Assistant is thinking...</span>
             )}
 
-            {/* Action button - only show for user messages on hover */}
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-1 mb-2">
-              {message.role === 'user' && (
-                <>
-                  <ButtonTooltip
-                    type="text"
-                    icon={<Pencil size={14} strokeWidth={1.5} />}
-                    onClick={
-                      isBeingEdited || isAfterEditedMessage ? onCancelEdit : () => onEdit(id)
-                    }
-                    className="text-foreground-light hover:text-foreground p-1 rounded"
-                    aria-label={
-                      isBeingEdited || isAfterEditedMessage ? 'Cancel editing' : 'Edit message'
-                    }
-                    tooltip={{
-                      content: {
-                        side: 'bottom',
-                        text:
-                          isBeingEdited || isAfterEditedMessage ? 'Cancel editing' : 'Edit message',
-                      },
-                    }}
-                  />
-
-                  <ButtonTooltip
-                    type="text"
-                    icon={<Trash2 size={14} strokeWidth={1.5} />}
-                    tooltip={{ content: { side: 'bottom', text: 'Delete message' } }}
-                    onClick={() => setShowDeleteConfirmModal(true)}
-                    className="text-foreground-light hover:text-foreground p-1 rounded"
-                    title="Delete message"
-                    aria-label="Delete message"
-                  />
-                </>
-              )}
-            </div>
+            {/* No action buttons for user messages */}
           </div>
         </div>
       </div>
 
-      <DeleteMessageConfirmModal
-        visible={showDeleteConfirmModal}
-        onConfirm={() => {
-          onDelete(id)
-          setShowDeleteConfirmModal(false)
-          toast.success('Message deleted successfully')
-        }}
-        onCancel={() => setShowDeleteConfirmModal(false)}
-      />
     </MessageContext.Provider>
   )
 }

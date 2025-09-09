@@ -12,11 +12,18 @@ export async function POST(req: NextRequest) {
 
         const { messages, vehicleInfo, diagnosticMode = 'basic' } = await req.json()
 
+        // Validate request data
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            console.error('Invalid messages in request:', messages)
+            return new Response('Invalid messages in request', { status: 400 })
+        }
+
         console.log('MIA Diagnostics Request:', { 
             messagesCount: messages?.length, 
             vehicleInfo, 
             diagnosticMode,
-            apiKeyPresent: !!process.env.PERPLEXITY_API_KEY
+            apiKeyPresent: !!process.env.PERPLEXITY_API_KEY,
+            firstMessage: messages[0]
         })
 
         // Build comprehensive automotive diagnostic prompt
@@ -28,93 +35,64 @@ export async function POST(req: NextRequest) {
             ...messages
         ]
 
-        // Simplified Perplexity API request with only supported parameters
-        const requestBody = {
-            model: getDiagnosticModel(diagnosticMode),
-            messages: enhancedMessages,
-            stream: false, // Start with non-streaming for debugging
-            max_tokens: 4000,
-            temperature: 0.2,
-            top_p: 0.9
-        }
+// Simplified Perplexity API request with working configuration
+const requestBody = {
+    model: 'sonar-pro', // Use the working model from test-perplexity.js
+    messages: enhancedMessages,
+    stream: false, // Start with non-streaming for debugging
+    max_tokens: 4000,
+    temperature: 0.2,
+    top_p: 0.9
+}
 
         console.log('Perplexity API Request Body:', JSON.stringify(requestBody, null, 2))
 
-                    // Call Perplexity API directly
-                    let response = await fetch(PERPLEXITY_API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestBody)
-                    })
+        // Call Perplexity API directly
+        let response = await fetch(PERPLEXITY_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        })
 
-                    // If the first model fails, try alternative models
-                    if (!response.ok) {
-                        const errorText = await response.text()
-                        console.error('Perplexity API Error with first model:', {
-                            status: response.status,
-                            statusText: response.statusText,
-                            body: errorText
-                        })
-
-                        // Try alternative model names
-                        const alternativeModels = [
-                            'llama-3.1-sonar-small-128k-online',
-                            'llama-3.1-8b-instruct',
-                            'llama-3.1-70b-instruct'
-                        ]
-
-                        for (const altModel of alternativeModels) {
-                            console.log(`Trying alternative model: ${altModel}`)
-                            const altRequestBody = { ...requestBody, model: altModel }
-                            
-                            response = await fetch(PERPLEXITY_API_URL, {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(altRequestBody)
-                            })
-
-                            if (response.ok) {
-                                console.log(`Success with model: ${altModel}`)
-                                break
-                            } else {
-                                const altErrorText = await response.text()
-                                console.error(`Failed with model ${altModel}:`, altErrorText)
-                            }
-                        }
-
-                        if (!response.ok) {
-                            const finalErrorText = await response.text()
-                            console.error('All Perplexity models failed:', {
-                                status: response.status,
-                                statusText: response.statusText,
-                                body: finalErrorText
-                            })
-                            return new Response(`Perplexity API Error: ${response.status} - ${finalErrorText}`, { status: 500 })
-                        }
-                    }
+        // Check if response is successful
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Perplexity API Error:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorText
+            })
+            return new Response(`Perplexity API Error: ${response.status} - ${errorText}`, { status: 500 })
+        }
 
         // Handle non-streaming response for debugging
         const data = await response.json()
         console.log('Perplexity API Response:', data)
         
-        // Extract the response content
+        // Extract the response content and citations
         const content = data.choices?.[0]?.message?.content || 'No response content'
+        const citations = data.citations || []
+        const searchResults = data.search_results || []
         
         return Response.json({
             success: true,
             content: content,
+            citations: citations,
+            searchResults: searchResults,
             fullResponse: data
         })
         
     } catch (error) {
         console.error('MIA Diagnostics API Error:', error)
-        return new Response('Failed to process diagnostic request', { status: 500 })
+        console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : undefined
+        })
+        return new Response(`Failed to process diagnostic request: ${error instanceof Error ? error.message : 'Unknown error'}`, { status: 500 })
     }
 }
 

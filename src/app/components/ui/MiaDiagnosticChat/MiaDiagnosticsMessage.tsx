@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { ButtonTooltip } from '../../../../components/ui/ButtonTooltip'
 import { DiagnosticMessage, DiagnosticReference, DiagnosticVisualAid } from './MiaDiagnostics.types'
 import { Reasoning } from './elements/Reasonings'
+import { PerplexityReferences } from './PerplexityReferences'
 
 interface DiagnosticMessageProps {
     id: string
@@ -319,6 +320,10 @@ const DiagnosticMessageComponent = ({
                             <DiagnosticSummary message={message} />
                             <DiagnosticReferences references={message.diagnosticData.references || []} />
                             <DiagnosticVisualAids visualAids={message.diagnosticData.visualAids || []} />
+                            <PerplexityReferences 
+                                citations={message.diagnosticData.perplexityData?.citations}
+                                searchResults={message.diagnosticData.perplexityData?.searchResults}
+                            />
                         </>
                     )}
 
