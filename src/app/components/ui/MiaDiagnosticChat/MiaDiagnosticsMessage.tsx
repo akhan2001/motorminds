@@ -337,7 +337,7 @@ const DiagnosticMessageComponent = ({
                         </div>
                     ) : (
                         <div className="text-gray-400 text-sm">
-                            No content available
+                            No content available.
                         </div>
                     )}
 
