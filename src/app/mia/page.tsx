@@ -206,6 +206,13 @@ export default function MiaPage() {
                                         onStop={stop}
                                         isEditing={editingMessageId !== null}
                                     />
+                                    
+                                    {/* Disclaimer Footer */}
+                                    <div className="mt-3 text-center">
+                                        <p className="text-xs text-gray-500">
+											MIA may not be perfect. Please verify important information.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
