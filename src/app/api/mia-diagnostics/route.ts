@@ -35,15 +35,15 @@ export async function POST(req: NextRequest) {
             ...messages
         ]
 
-// Simplified Perplexity API request with working configuration
-const requestBody = {
-    model: 'sonar-pro', // Use the working model from test-perplexity.js
-    messages: enhancedMessages,
-    stream: false, // Start with non-streaming for debugging
-    max_tokens: 4000,
-    temperature: 0.2,
-    top_p: 0.9
-}
+        // Simplified Perplexity API request with working configuration
+        const requestBody = {
+            model: 'sonar-pro', // Use the working model from test-perplexity.js
+            messages: enhancedMessages,
+            stream: false, // Start with non-streaming for debugging
+            max_tokens: 4000,
+            temperature: 0.2,
+            top_p: 0.9
+        }
 
         console.log('Perplexity API Request Body:', JSON.stringify(requestBody, null, 2))
 
