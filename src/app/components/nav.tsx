@@ -60,7 +60,7 @@ export function Nav() {
 	// Define mechanic hub subitems
 	const mechanicHubSubItems = [
 		{ name: "Work Orders", href: "/mechanic-hub" },
-		{ name: "Tasks", href: "/tasks" },
+		{ name: "Parts & Ordering", href: "/parts-ordering" },
 		{ name: "Appointments", href: "/appointments" },
 		{ name: "Services & Parts", href: "/mechanic-hub/service-parts" },
 	]
