@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url)
-        const manufacturerId = searchParams.get('manufacturerId')
-
-        if (!manufacturerId) {
-            return NextResponse.json(
-                { success: false, message: 'Manufacturer ID is required' },
-                { status: 400 }
-            )
-        }
-
         const apiKey = process.env.RAPID_API_KEY
         
         if (!apiKey) {
@@ -25,12 +15,14 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        const url = `https://auto-parts-catalog.p.rapidapi.com/models/list/type-id/1/manufacturer-id/${manufacturerId}/lang-id/4/country-filter-id/48`
+        // API call to get manufacturers/makes
+        // Using: typeId=1 (Automobile), langId=4 (English GB), countryFilterId=48 (Canada)
+        const url = `https://auto-parts-catalog.p.rapidapi.com/manufacturers/list/type-id/1/lang-id/4/country-filter-id/48`
         
         const options = {
             method: 'GET',
             headers: {
-                'x-rapidapi-key': apiKey || '',
+                'x-rapidapi-key': apiKey,
                 'x-rapidapi-host': 'auto-parts-catalog.p.rapidapi.com'
             }
         }
@@ -44,14 +36,8 @@ export async function GET(request: NextRequest) {
                 return NextResponse.json(
                     { 
                         success: false, 
-                        message: 'RapidAPI key is invalid or expired. Please check your .env.local file and verify the RAPID_API_KEY.',
-                        error: `Authentication failed: ${errorText}`,
-                        debugInfo: {
-                            status: response.status,
-                            statusText: response.statusText,
-                            url: url,
-                            suggestion: 'Verify your RapidAPI subscription and key validity'
-                        }
+                        message: 'RapidAPI key is invalid or expired.',
+                        error: `Authentication failed: ${errorText}`
                     },
                     { status: 401 }
                 )
@@ -61,41 +47,47 @@ export async function GET(request: NextRequest) {
                 { 
                     success: false, 
                     message: `API request failed with status: ${response.status}`,
-                    error: errorText,
-                    debugInfo: {
-                        status: response.status,
-                        statusText: response.statusText,
-                        url: url
-                    }
+                    error: errorText
                 },
                 { status: response.status }
             )
         }
 
         const result = await response.text()
-        console.log('API Response:', result.substring(0, 500)) // Log first 500 chars
         
-        // Parse the response if it's JSON
-        let modelsData
+        let manufacturersData
         try {
-            modelsData = JSON.parse(result)
+            manufacturersData = JSON.parse(result)
         } catch (parseError) {
-            console.error('JSON Parse Error:', parseError)
-            // If it's not JSON, return the raw text
-            modelsData = result
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    message: 'Invalid JSON response from API',
+                    error: parseError instanceof Error ? parseError.message : 'Unknown parse error'
+                },
+                { status: 500 }
+            )
         }
+
+        // Transform manufacturers data
+        const transformedManufacturers = Array.isArray(manufacturersData) ? manufacturersData.map((manufacturer: any) => ({
+            manufacturerId: manufacturer.manufacturerId || manufacturer.id,
+            manufacturerName: manufacturer.manufacturerName || manufacturer.name || manufacturer.manufacturer,
+            fullInfo: manufacturer // Keep original data for debugging
+        })) : []
 
         return NextResponse.json({
             success: true,
-            data: modelsData,
-            message: 'Models fetched successfully'
+            data: transformedManufacturers,
+            rawData: manufacturersData, // Include raw data for debugging
+            message: 'Manufacturers fetched successfully'
         })
 
     } catch (error) {
         return NextResponse.json(
             { 
                 success: false, 
-                message: 'Failed to fetch models',
+                message: 'Failed to fetch manufacturers',
                 error: error instanceof Error ? error.message : 'Unknown error'
             },
             { status: 500 }

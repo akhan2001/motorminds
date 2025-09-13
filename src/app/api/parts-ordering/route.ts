@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // RapidAPI Auto Parts Catalog configuration
 const RAPIDAPI_BASE = 'https://auto-parts-catalog.p.rapidapi.com'
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || '2960faa880msh52ff4d79eaf0dc9p1241e3jsna4873306e004'
+const RAPIDAPI_KEY = process.env.RAPID_API_KEY
 
 // Default configuration for API calls
 const API_CONFIG = {
@@ -21,6 +21,20 @@ const VEHICLE_DATA = {
 
 export async function GET(request: NextRequest) {
     try {
+        console.log('Parts-ordering API called:', request.url)
+        
+        if (!RAPIDAPI_KEY) {
+            console.error('RAPID_API_KEY environment variable is not set')
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    message: 'RapidAPI key is not configured. Please check your .env.local file.',
+                    error: 'Missing RAPID_API_KEY environment variable'
+                },
+                { status: 500 }
+            )
+        }
+        
         const { searchParams } = new URL(request.url)
         const year = searchParams.get('year') || '2022'
         const category = searchParams.get('category') || 'all'
@@ -28,6 +42,8 @@ export async function GET(request: NextRequest) {
         const model = searchParams.get('model') || ''
         const manufacturerIdParam = searchParams.get('manufacturerId')
         const modelIdParam = searchParams.get('modelId')
+        
+        console.log('Request params:', { year, category, make, model, manufacturerIdParam, modelIdParam })
 
         // Use provided manufacturerId or get first available
         let manufacturerId: number | null = null
@@ -118,11 +134,28 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('Error fetching vehicle parts:', error)
+        
+        // Check if it's an authentication error
+        if (error instanceof Error && error.message.includes('Authentication failed')) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'Authentication Error',
+                    message: 'RapidAPI key is invalid or expired. Please check your .env.local file and verify the RAPID_API_KEY.'
+                },
+                { status: 401 }
+            )
+        }
+        
         return NextResponse.json(
             {
                 success: false,
                 error: 'Failed to fetch parts data',
-                message: 'An error occurred while retrieving parts information'
+                message: error instanceof Error ? error.message : 'An error occurred while retrieving parts information',
+                debugInfo: {
+                    errorType: error instanceof Error ? error.constructor.name : typeof error,
+                    errorMessage: error instanceof Error ? error.message : String(error)
+                }
             },
             { status: 500 }
         )
@@ -131,6 +164,12 @@ export async function GET(request: NextRequest) {
 
 // Helper function to make API calls
 async function makeApiCall(endpoint: string): Promise<any> {
+    console.log('Making API call to:', `${RAPIDAPI_BASE}${endpoint}`)
+    
+    if (!RAPIDAPI_KEY) {
+        throw new Error('RAPID_API_KEY is not configured')
+    }
+    
     const response = await fetch(`${RAPIDAPI_BASE}${endpoint}`, {
         method: 'GET',
         headers: {
@@ -140,7 +179,15 @@ async function makeApiCall(endpoint: string): Promise<any> {
     })
 
     if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        const errorText = await response.text()
+        console.error('API Error Response:', errorText)
+        console.error('Response status:', response.status)
+        
+        if (response.status === 401) {
+            throw new Error(`Authentication failed: RapidAPI key is invalid or expired`)
+        }
+        
+        throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
     return await response.json()
