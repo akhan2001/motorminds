@@ -2,7 +2,7 @@
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { Nav } from "../components/nav"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import MakeModelSelector, { MakeModelSelection } from "@/components/ui/make-model-selector"
 
 interface VehicleEngine {
@@ -46,6 +46,31 @@ interface Part {
     fullInfo?: any    // Original API data for debugging
 }
 
+interface ChatMessage {
+    id: string
+    role: 'user' | 'mia'
+    content: string
+    products?: MiaProduct[]
+    sources?: Source[]
+    timestamp: Date
+}
+
+interface MiaProduct {
+    partName: string
+    partNumber: string
+    compatible: string
+    price: string
+    supplier?: string
+    availability?: string
+    link?: string
+}
+
+interface Source {
+    title: string
+    url: string
+    description: string
+}
+
 export default function PartsOrdering() {
     const [selection, setSelection] = useState<MakeModelSelection>({
         make: '',
@@ -68,6 +93,22 @@ export default function PartsOrdering() {
     const [partsLoading, setPartsLoading] = useState(false)
     const [partsError, setPartsError] = useState<string | null>(null)
 
+    // Chat state
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+    const [chatInput, setChatInput] = useState('')
+    const [chatLoading, setChatLoading] = useState(false)
+    const chatScrollRef = useRef<HTMLDivElement>(null)
+
+    // Cart state (shared between catalog and AI)
+    const [cart, setCart] = useState<Part[]>([])
+    const [cartVisible, setCartVisible] = useState(false)
+    
+    // Cart submission state
+    const [isSubmittingCart, setIsSubmittingCart] = useState(false)
+    const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null)
+    const [submissionError, setSubmissionError] = useState<string | null>(null)
+    const [customerNotes, setCustomerNotes] = useState('')
+
     const handleSelectionChange = (newSelection: MakeModelSelection) => {
         setSelection(newSelection)
         
@@ -89,9 +130,28 @@ export default function PartsOrdering() {
     // Auto-fetch parts when both engine and category are selected
     useEffect(() => {
         if (selectedEngine && selectedCategory) {
-            fetchParts()
+        fetchParts()
         }
     }, [selectedEngine, selectedCategory])
+
+    // Initialize chat with welcome message (client-side only to avoid hydration issues)
+    useEffect(() => {
+        if (chatMessages.length === 0) {
+            setChatMessages([{
+                id: '1',
+                role: 'mia',
+                content: "Hi! I'm Mia, your AI parts advisor. I can help you find the right parts for your vehicle. Just describe what you need!",
+                timestamp: new Date()
+            }])
+        }
+    }, [])
+
+    // Auto-scroll chat to bottom
+    useEffect(() => {
+        if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+        }
+    }, [chatMessages])
 
     const fetchVehicleEngines = async () => {
         try {
@@ -204,6 +264,172 @@ export default function PartsOrdering() {
         setParts([])
     }
 
+    // Chat functions
+    const sendChatMessage = async () => {
+        if (!chatInput.trim() || chatLoading) return
+
+        const userMessage: ChatMessage = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: chatInput.trim(),
+            timestamp: new Date()
+        }
+
+        setChatMessages(prev => [...prev, userMessage])
+        setChatInput('')
+        setChatLoading(true)
+
+        try {
+            // Create vehicle context string
+            const vehicleContext = selection.year && selection.make && selection.model 
+                ? `${selection.year} ${selection.make} ${selection.model}${selectedEngine ? ` (${selectedEngine.engineName})` : ''}`
+                : 'No vehicle selected'
+
+            const response = await fetch('/api/mia', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: userMessage.content,
+                    vehicleContext
+                })
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                const miaMessage: ChatMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'mia',
+                    content: data.message,
+                    products: data.products || [],
+                    sources: data.sources || [],
+                    timestamp: new Date()
+                }
+
+                setChatMessages(prev => [...prev, miaMessage])
+            } else {
+                throw new Error(data.error || 'Failed to get response')
+            }
+        } catch (error) {
+            console.error('Chat error:', error)
+            const errorMessage: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                role: 'mia',
+                content: "I'm sorry, I'm having trouble processing your request. Please try again.",
+                timestamp: new Date()
+            }
+            setChatMessages(prev => [...prev, errorMessage])
+        } finally {
+            setChatLoading(false)
+        }
+    }
+
+    const addToCartFromMia = (product: MiaProduct) => {
+        const cartItem: Part = {
+            id: `mia-${Date.now()}`,
+            articleId: product.partNumber,
+            articleNo: product.partNumber,
+            name: product.partName,
+            description: `${product.supplier ? `From ${product.supplier} - ` : ''}${product.compatible}`,
+            supplier: product.supplier || 'Online Supplier',
+            supplierId: 0,
+            price: parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0,
+            availability: product.availability || 'Available',
+            partNumber: product.partNumber,
+            brandName: product.supplier || 'Various',
+            fullInfo: product
+        }
+
+        setCart(prev => [...prev, cartItem])
+
+        // Add confirmation message to chat
+        const confirmationMessage: ChatMessage = {
+            id: (Date.now() + 2).toString(),
+            role: 'mia',
+            content: `✅ Added "${product.partName}" (${product.partNumber}) from ${product.supplier || 'supplier'} to your cart!${product.link ? ` View details at supplier website.` : ''}`,
+            timestamp: new Date()
+        }
+
+        setChatMessages(prev => [...prev, confirmationMessage])
+    }
+
+    const addToCartFromCatalog = (part: Part) => {
+        setCart(prev => [...prev, part])
+        // Optional: Add success notification
+    }
+
+    const removeFromCart = (itemId: string) => {
+        setCart(prev => prev.filter(item => item.id !== itemId))
+    }
+
+    const submitCart = async () => {
+        if (cart.length === 0) {
+            setSubmissionError('Cart is empty. Please add items before submitting.')
+            return
+        }
+
+        setIsSubmittingCart(true)
+        setSubmissionError(null)
+        setSubmissionSuccess(null)
+
+        try {
+            // Prepare vehicle information
+            const vehicleInfo = {
+                year: selection.year,
+                make: selection.make,
+                model: selection.model,
+                engine: selectedEngine ? {
+                    vehicleId: selectedEngine.vehicleId,
+                    engineName: selectedEngine.engineName,
+                    capacityLt: selectedEngine.capacityLt,
+                    numberOfCylinders: selectedEngine.numberOfCylinders
+                } : undefined
+            }
+
+            const response = await fetch('/api/parts-requests/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    parts: cart,
+                    vehicleInfo,
+                    customerNotes: customerNotes.trim() || undefined,
+                    priority: 'normal'
+                })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to submit parts request')
+            }
+
+            if (data.success) {
+                setSubmissionSuccess(`Parts request submitted successfully! Request ID: ${data.requestId}. Our team will review and contact you soon.`)
+                setCart([]) // Clear cart after successful submission
+                setCustomerNotes('')
+                
+                // Add success message to chat
+                const successMessage: ChatMessage = {
+                    id: (Date.now() + 3).toString(),
+                    role: 'mia',
+                    content: `✅ Your parts request has been submitted successfully! Request ID: ${data.requestId}. Our team will review your request and contact you with pricing and availability. You requested ${data.data.totalParts} items with an estimated total of $${data.data.totalEstimatedPrice.toFixed(2)} CAD.`,
+                    timestamp: new Date()
+                }
+                setChatMessages(prev => [...prev, successMessage])
+            }
+
+        } catch (error) {
+            console.error('Cart submission error:', error)
+            setSubmissionError(error instanceof Error ? error.message : 'Failed to submit parts request. Please try again.')
+        } finally {
+            setIsSubmittingCart(false)
+        }
+    }
+
     return (
         <div className="h-screen flex flex-col bg-[#0d0d0d]">
             <Nav />
@@ -216,7 +442,7 @@ export default function PartsOrdering() {
                                 <div className="text-center mb-8">
                                     <h1 className="text-3xl font-bold text-[#b22222] mb-2">Auto Parts Catalog</h1>
                                     <p className="text-[#979797]">Find the right parts for your vehicle</p>
-                                </div>
+                            </div>
 
                                 {/* Step 1: Vehicle Selection */}
                                 <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 mb-6">
@@ -270,7 +496,7 @@ export default function PartsOrdering() {
                                         ) : (
                                             <div className="text-center py-8 text-[#979797]">No engines available for this model</div>
                                         )}
-                                    </div>
+                                </div>
                                 )}
 
                                 {/* Step 3: Category Selection */}
@@ -285,7 +511,7 @@ export default function PartsOrdering() {
                                         ) : categories.length > 0 ? (
                                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                                                 {categories.map(category => (
-                                                    <button
+                                    <button 
                                                         key={category.categoryId}
                                                         onClick={() => handleCategoryChange(category.categoryId.toString())}
                                                         className={`p-3 rounded-lg text-sm font-medium transition-all ${
@@ -295,7 +521,7 @@ export default function PartsOrdering() {
                                                         }`}
                                                     >
                                                         {category.categoryName}
-                                                    </button>
+                                    </button>
                                                 ))}
                                             </div>
                                         ) : (
@@ -310,8 +536,8 @@ export default function PartsOrdering() {
                                                 </div>
                                                 <div className="text-xs text-[#979797] mt-1">
                                                     Parts will load automatically below
-                                                </div>
-                                            </div>
+                                </div>
+                            </div>
                                         )}
                                     </div>
                                 )}
@@ -348,12 +574,12 @@ export default function PartsOrdering() {
                                                                 <div>
                                                                     <h3 className="font-semibold text-white text-lg">{part.name}</h3>
                                                                     <div className="text-sm text-[#979797]">Article ID: {part.articleId}</div>
-                                                                </div>
-                                                            </div>
+                                </div>
+                                </div>
                                                             {part.price > 0 && (
                                                                 <span className="text-[#b22222] font-bold text-lg">${part.price.toFixed(2)}</span>
-                                                            )}
-                                                        </div>
+                                                    )}
+                                                </div>
                                                         
                                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-[#979797] mb-3">
                                                             <div>
@@ -372,21 +598,24 @@ export default function PartsOrdering() {
                                                                 <span className="font-medium">Availability:</span>
                                                                 <div>{part.availability}</div>
                                                             </div>
-                                                        </div>
+                                                    </div>
 
                                                         <div className="flex justify-end">
-                                                            <button className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] text-white text-sm rounded transition-colors">
-                                                                Add to Cart
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    <button 
+                                                                onClick={() => addToCartFromCatalog(part)}
+                                                                className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] text-white text-sm rounded transition-colors"
+                                                    >
+                                                        Add to Cart
+                                                    </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                             </div>
                                         ) : selectedCategory ? (
                                             <div className="text-center py-8 text-[#979797]">No parts available for this category</div>
                                         ) : null}
-                                    </div>
-                                )}
+                                </div>
+                            )}
                             </div>
                         </div>
                     </ResizablePanel>
@@ -394,8 +623,257 @@ export default function PartsOrdering() {
                     <ResizableHandle withHandle />
 
                     <ResizablePanel defaultSize={40} minSize={35} maxSize={45}>
-                        <div className="h-full bg-[#1a1a1a]">
-                            This is the Mia AI chat
+                        <div className="h-full bg-[#1a1a1a] flex flex-col">
+                            {/* Chat Header */}
+                            <div className="border-b border-[#2a2a2a] p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-[#b22222] rounded-full flex items-center justify-center">
+                                            <span className="text-white font-semibold text-sm">M</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-semibold">Mia AI</h3>
+                                            <p className="text-[#979797] text-xs">Parts Advisor</p>
+                                        </div>
+                                    </div>
+                                    {cart.length > 0 && (
+                                        <button
+                                            onClick={() => setCartVisible(!cartVisible)}
+                                            className="px-3 py-1 bg-[#b22222] hover:bg-[#a01e1e] text-white text-xs rounded transition-colors"
+                                        >
+                                            Cart ({cart.length})
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Cart Panel */}
+                            {cartVisible && (
+                                <div className="border-b border-[#2a2a2a] bg-[#0d0d0d] max-h-48 overflow-y-auto">
+                                    <div className="p-3">
+                                        <h4 className="text-white font-medium text-sm mb-2">Cart Items</h4>
+                                        {cart.length === 0 ? (
+                                            <p className="text-[#979797] text-xs">No items in cart</p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {cart.map(item => (
+                                                    <div key={item.id} className="flex justify-between items-start bg-[#2a2a2a] p-2 rounded text-xs">
+                                                        <div className="flex-1">
+                                                            <div className="text-white font-medium">{item.name}</div>
+                                                            <div className="text-[#979797]">{item.partNumber}</div>
+                                                            <div className="text-[#979797]">{item.supplier}</div>
+                                                            {item.price > 0 && (
+                                                                <div className="text-[#b22222] font-semibold">${item.price.toFixed(2)}</div>
+                                                            )}
+                                                            {item.fullInfo?.link && (
+                                                                <a
+                                                                    href={item.fullInfo.link}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-400 hover:text-blue-300 text-xs underline"
+                                                                >
+                                                                    View at supplier
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => removeFromCart(item.id)}
+                                                            className="text-red-400 hover:text-red-300 ml-2"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Cart Submission Section */}
+                            {cart.length > 0 && (
+                                <div className="border-b border-[#2a2a2a] bg-[#0d0d0d] p-3">
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-white text-sm font-medium mb-2">
+                                                Additional Notes (Optional)
+                                            </label>
+                                            <textarea
+                                                value={customerNotes}
+                                                onChange={(e) => setCustomerNotes(e.target.value)}
+                                                placeholder="Any specific requirements, urgency notes, or questions..."
+                                                className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded text-white text-sm resize-none"
+                                                rows={3}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="text-xs text-[#979797]">
+                                                Total Items: {cart.length} | 
+                                                Est. Total: ${cart.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)} CAD
+                                            </div>
+
+                                            <button
+                                                onClick={submitCart}
+                                                disabled={isSubmittingCart || cart.length === 0}
+                                                className="w-full px-4 py-2 bg-[#b22222] hover:bg-[#cc2222] disabled:bg-[#666] disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                                            >
+                                                {isSubmittingCart ? 'Submitting...' : 'Submit Parts Request'}
+                                            </button>
+
+                                            {submissionSuccess && (
+                                                <div className="p-3 bg-green-900/20 border border-green-700 rounded text-green-300 text-xs">
+                                                    {submissionSuccess}
+                                                </div>
+                                            )}
+
+                                            {submissionError && (
+                                                <div className="p-3 bg-red-900/20 border border-red-700 rounded text-red-300 text-xs">
+                                                    {submissionError}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Chat Messages */}
+                            <div 
+                                ref={chatScrollRef}
+                                className="flex-1 overflow-y-auto p-4 space-y-4"
+                            >
+                                {chatMessages.map(message => (
+                                    <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[80%] ${
+                                            message.role === 'user' 
+                                                ? 'bg-[#b22222] text-white' 
+                                                : 'bg-[#2a2a2a] text-white'
+                                        } rounded-lg p-3`}>
+                                            <div className="text-sm">{message.content}</div>
+                                            
+                                            {/* Product recommendations */}
+                                            {message.products && message.products.length > 0 && (
+                                                <div className="mt-3 space-y-2">
+                                                    {message.products.map((product, index) => (
+                                                        <div key={index} className="bg-[#3a3a3a] rounded-lg p-3 border border-[#4a4a4a]">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <h4 className="font-semibold text-white text-sm">{product.partName}</h4>
+                                                                <span className="text-[#b22222] font-semibold text-sm">{product.price}</span>
+                                                            </div>
+                                                            <div className="text-xs text-[#979797] space-y-1">
+                                                                <div>Part #: {product.partNumber}</div>
+                                                                <div>Compatible: {product.compatible}</div>
+                                                                {product.supplier && (
+                                                                    <div>Supplier: {product.supplier}</div>
+                                                                )}
+                                                                {product.availability && (
+                                                                    <div className={`font-medium ${
+                                                                        product.availability.toLowerCase().includes('in stock') ? 'text-green-400' :
+                                                                        product.availability.toLowerCase().includes('out of stock') ? 'text-red-400' :
+                                                                        'text-yellow-400'
+                                                                    }`}>
+                                                                        {product.availability}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="mt-2 flex gap-2">
+                                                                <button
+                                                                    onClick={() => addToCartFromMia(product)}
+                                                                    className="flex-1 px-3 py-1 bg-[#b22222] hover:bg-[#a01e1e] text-white text-xs rounded transition-colors"
+                                                                >
+                                                                    Add to Cart
+                                                                </button>
+                                                                {product.link && (
+                                                                    <a
+                                                                        href={product.link}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="px-3 py-1 bg-[#4a4a4a] hover:bg-[#5a5a5a] text-white text-xs rounded transition-colors"
+                                                                    >
+                                                                        View
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Sources and references */}
+                                            {message.sources && message.sources.length > 0 && (
+                                                <div className="mt-3 border-t border-[#4a4a4a] pt-2">
+                                                    <div className="text-xs text-[#979797] font-medium mb-2">Sources & References:</div>
+                                                    <div className="space-y-1">
+                                                        {message.sources.slice(0, 3).map((source, index) => (
+                                                            <div key={index} className="text-xs">
+                                                                <a
+                                                                    href={source.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-400 hover:text-blue-300 underline"
+                                                                >
+                                                                    {source.title}
+                                                                </a>
+                                                                {source.description && (
+                                                                    <div className="text-[#979797] mt-0.5">{source.description.slice(0, 100)}...</div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="text-xs text-gray-400 mt-2">
+                                                {message.timestamp.toLocaleTimeString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                {chatLoading && (
+                                    <div className="flex justify-start">
+                                        <div className="bg-[#2a2a2a] rounded-lg p-3">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="flex space-x-1">
+                                                    <div className="w-2 h-2 bg-[#b22222] rounded-full animate-bounce"></div>
+                                                    <div className="w-2 h-2 bg-[#b22222] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                                    <div className="w-2 h-2 bg-[#b22222] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                                </div>
+                                                <span className="text-[#979797] text-sm">Mia is thinking...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Chat Input */}
+                            <div className="border-t border-[#2a2a2a] p-4">
+                                <div className="flex space-x-2">
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                                        placeholder="Ask Mia about parts..."
+                                        disabled={chatLoading}
+                                        className="flex-1 px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#979797] focus:outline-none focus:border-[#b22222] transition-colors disabled:opacity-50"
+                                    />
+                                    <button
+                                        onClick={sendChatMessage}
+                                        disabled={!chatInput.trim() || chatLoading}
+                                        className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                                    >
+                                        Send
+                                    </button>
+                                </div>
+                                
+                                {/* Current vehicle context */}
+                                {(selection.year || selection.make || selection.model) && (
+                                    <div className="mt-2 text-xs text-[#979797]">
+                                        Current vehicle: {selection.year && `${selection.year} `}{selection.make && `${selection.make} `}{selection.model && selection.model}{selectedEngine && ` (${selectedEngine.engineName})`}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </ResizablePanel>
                 </ResizablePanelGroup>
