@@ -4,6 +4,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Nav } from "../components/nav"
 import { useState, useEffect, useRef } from "react"
 import MakeModelSelector, { MakeModelSelection } from "@/components/ui/make-model-selector"
+import { decodeVin } from "../utils/vin-decode"
 
 interface VehicleEngine {
     vehicleId: number
@@ -97,6 +98,8 @@ export default function PartsOrdering() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
     const [chatInput, setChatInput] = useState('')
     const [chatLoading, setChatLoading] = useState(false)
+    const [sessionId, setSessionId] = useState<string | null>(null)
+    const [sessionInitialized, setSessionInitialized] = useState(false)
     const chatScrollRef = useRef<HTMLDivElement>(null)
 
     // Cart state (shared between catalog and AI)
@@ -109,6 +112,13 @@ export default function PartsOrdering() {
     const [submissionError, setSubmissionError] = useState<string | null>(null)
     const [customerNotes, setCustomerNotes] = useState('')
 
+    // VIN decode state
+    const [vinInput, setVinInput] = useState('')
+    const [vinDecoding, setVinDecoding] = useState(false)
+    const [vinDecodeError, setVinDecodeError] = useState<string | null>(null)
+    const [vinDecodeSuccess, setVinDecodeSuccess] = useState<string | null>(null)
+    const [showVinInput, setShowVinInput] = useState(false)
+
     const handleSelectionChange = (newSelection: MakeModelSelection) => {
         setSelection(newSelection)
         
@@ -118,6 +128,11 @@ export default function PartsOrdering() {
         setParts([])
         setEngines([])
         setCategories([])
+        
+        // Clear VIN success message if user manually changes selection
+        if (vinDecodeSuccess) {
+            setVinDecodeSuccess(null)
+        }
     }
 
     // Fetch vehicle engines when make/model selection is complete
@@ -134,17 +149,171 @@ export default function PartsOrdering() {
         }
     }, [selectedEngine, selectedCategory])
 
-    // Initialize chat with welcome message (client-side only to avoid hydration issues)
+    // Update session context when vehicle selection changes
     useEffect(() => {
-        if (chatMessages.length === 0) {
+        if (sessionInitialized && (selection.year || selection.make || selection.model || selectedEngine)) {
+            updateSessionContext({
+                year: parseInt(selection.year) || undefined,
+                make: selection.make || undefined,
+                model: selection.model || undefined,
+                manufacturer_id: selection.manufacturerId || undefined,
+                vehicle_id: selectedEngine?.vehicleId || undefined,
+                engine: selectedEngine?.engineName || undefined
+            })
+        }
+    }, [sessionInitialized, selection.year, selection.make, selection.model, selectedEngine])
+
+    // Initialize chat session and load message history
+    useEffect(() => {
+        initializeSession()
+    }, [])
+
+    const initializeSession = async (skipHistory = false) => {
+        try {
+            console.log('🔄 Initializing session, skipHistory:', skipHistory)
+            // Get or create session
+            const response = await fetch('/api/mia/session')
+            const data = await response.json()
+            
+            if (data.session) {
+                console.log('✅ Got session:', data.session.session_id)
+                setSessionId(data.session.session_id)
+                
+                if (!skipHistory) {
+                    // Load message history
+                    console.log('📜 Loading message history...')
+                    const messagesResponse = await fetch(`/api/mia/messages?sessionId=${data.session.session_id}`)
+                    const messagesData = await messagesResponse.json()
+                    
+                    if (messagesData.messages && messagesData.messages.length > 0) {
+                        console.log('📝 Found', messagesData.messages.length, 'messages, restoring...')
+                        // Convert stored messages to chat messages format
+                        const convertedMessages = messagesData.messages.map((msg: any) => ({
+                            id: msg.id,
+                            role: msg.role === 'assistant' ? 'mia' : msg.role,
+                            content: msg.content,
+                            products: msg.metadata?.parts || [],
+                            sources: msg.metadata?.sources || [],
+                            timestamp: new Date(msg.created_at)
+                        }))
+                        setChatMessages(convertedMessages)
+                    } else {
+                        console.log('📝 No message history, showing welcome message')
+                        // No message history, show welcome message
+                        setChatMessages([{
+                            id: '1',
+                            role: 'mia',
+                            content: "Hi! I'm Mia, your AI parts advisor. I can help you find the right parts for your vehicle. Just describe what you need!",
+                            timestamp: new Date()
+                        }])
+                    }
+                } else {
+                    console.log('⏭️ Skipping history load, showing fresh welcome message')
+                    // Skip history and show fresh welcome message
+                    setChatMessages([{
+                        id: '1',
+                        role: 'mia',
+                        content: "Hi! I'm Mia, your AI parts advisor. I can help you find the right parts for your vehicle. Just describe what you need!",
+                        timestamp: new Date()
+                    }])
+                }
+                
+                // Update session with current vehicle context if any
+                if (selection.year || selection.make || selection.model) {
+                    await updateSessionContext({
+                        year: parseInt(selection.year) || undefined,
+                        make: selection.make || undefined,
+                        model: selection.model || undefined,
+                        manufacturer_id: selection.manufacturerId || undefined,
+                        vehicle_id: selectedEngine?.vehicleId || undefined,
+                        engine: selectedEngine?.engineName || undefined
+                    })
+                }
+            }
+            setSessionInitialized(true)
+        } catch (error) {
+            console.error('Failed to initialize session:', error)
+            // Fallback to local welcome message
             setChatMessages([{
                 id: '1',
                 role: 'mia',
                 content: "Hi! I'm Mia, your AI parts advisor. I can help you find the right parts for your vehicle. Just describe what you need!",
                 timestamp: new Date()
             }])
+            setSessionInitialized(true)
         }
-    }, [])
+    }
+
+    const updateSessionContext = async (vehicleContext: any) => {
+        if (!sessionId) return
+        
+        try {
+            await fetch('/api/mia/session', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, vehicleContext })
+            })
+        } catch (error) {
+            console.error('Failed to update session context:', error)
+        }
+    }
+
+    const handleVinDecode = async () => {
+        if (!vinInput.trim()) {
+            setVinDecodeError('Please enter a VIN number')
+            return
+        }
+
+        setVinDecoding(true)
+        setVinDecodeError(null)
+        setVinDecodeSuccess(null)
+
+        try {
+            const decodedVehicle = await decodeVin(vinInput.trim())
+            
+            if (decodedVehicle) {
+                // Auto-populate the vehicle selection with decoded information
+                setSelection({
+                    make: decodedVehicle.make || '',
+                    manufacturerId: null, // Will be resolved by MakeModelSelector
+                    model: decodedVehicle.model || '',
+                    modelId: null, // Will be resolved by MakeModelSelector
+                    year: decodedVehicle.year || ''
+                })
+
+                // Reset downstream selections since we're changing the vehicle
+                setSelectedEngine(null)
+                setSelectedCategory(null)
+                setParts([])
+                setEngines([])
+                setCategories([])
+
+                setVinDecodeSuccess(`Successfully decoded VIN: ${decodedVehicle.year} ${decodedVehicle.make} ${decodedVehicle.model}${decodedVehicle.engine ? ` (${decodedVehicle.engine})` : ''}`)
+                
+                // Clear VIN input and hide VIN section
+                setVinInput('')
+                setShowVinInput(false)
+
+                // Update session context with VIN decode information
+                if (sessionInitialized) {
+                    await updateSessionContext({
+                        year: parseInt(decodedVehicle.year) || undefined,
+                        make: decodedVehicle.make || undefined,
+                        model: decodedVehicle.model || undefined,
+                        vin: vinInput.trim(),
+                        vin_engine: decodedVehicle.engine || undefined,
+                        vin_trim: decodedVehicle.trim || undefined,
+                        vin_drivetrain: decodedVehicle.drivetrain || undefined
+                    })
+                }
+            }
+        } catch (error) {
+            console.error('VIN decode error:', error)
+            setVinDecodeError(error instanceof Error ? error.message : 'Failed to decode VIN. Please check the VIN and try again.')
+        } finally {
+            setVinDecoding(false)
+        }
+    }
 
     // Auto-scroll chat to bottom
     useEffect(() => {
@@ -266,7 +435,7 @@ export default function PartsOrdering() {
 
     // Chat functions
     const sendChatMessage = async () => {
-        if (!chatInput.trim() || chatLoading) return
+        if (!chatInput.trim() || chatLoading || !sessionId) return
 
         const userMessage: ChatMessage = {
             id: Date.now().toString(),
@@ -280,10 +449,15 @@ export default function PartsOrdering() {
         setChatLoading(true)
 
         try {
-            // Create vehicle context string
-            const vehicleContext = selection.year && selection.make && selection.model 
-                ? `${selection.year} ${selection.make} ${selection.model}${selectedEngine ? ` (${selectedEngine.engineName})` : ''}`
-                : 'No vehicle selected'
+            // Create vehicle context object
+            const vehicleContext = {
+                year: parseInt(selection.year) || undefined,
+                make: selection.make || undefined,
+                model: selection.model || undefined,
+                manufacturer_id: selection.manufacturerId || undefined,
+                vehicle_id: selectedEngine?.vehicleId || undefined,
+                engine: selectedEngine?.engineName || undefined
+            }
 
             const response = await fetch('/api/mia', {
                 method: 'POST',
@@ -292,7 +466,8 @@ export default function PartsOrdering() {
                 },
                 body: JSON.stringify({
                     message: userMessage.content,
-                    vehicleContext
+                    vehicleContext,
+                    sessionId
                 })
             })
 
@@ -323,6 +498,41 @@ export default function PartsOrdering() {
             setChatMessages(prev => [...prev, errorMessage])
         } finally {
             setChatLoading(false)
+        }
+    }
+
+    // Clear session function
+    const clearChatSession = async () => {
+        console.log('🔧 Clear button clicked!')
+        console.log('Current sessionId:', sessionId)
+        console.log('Current chatLoading:', chatLoading)
+        
+        if (!sessionId) {
+            console.log('❌ No sessionId, returning early')
+            return
+        }
+        
+        try {
+            console.log('🗑️ Calling DELETE /api/mia/session')
+            const response = await fetch(`/api/mia/session?sessionId=${sessionId}`, {
+                method: 'DELETE'
+            })
+            
+            const result = await response.json()
+            console.log('✅ Session delete response:', result)
+            
+            // Reset local state
+            console.log('🔄 Resetting local state...')
+            setSessionId(null)
+            setSessionInitialized(false)
+            setChatMessages([])
+            
+            // Reinitialize session (skip loading old history)
+            console.log('🆕 Reinitializing session...')
+            await initializeSession(true) // Skip history loading
+            console.log('✅ Session cleared and reinitialized!')
+        } catch (error) {
+            console.error('❌ Failed to clear session:', error)
         }
     }
 
@@ -442,6 +652,70 @@ export default function PartsOrdering() {
                                 <div className="text-center mb-8">
                                     <h1 className="text-3xl font-bold text-[#b22222] mb-2">Auto Parts Catalog</h1>
                                     <p className="text-[#979797]">Find the right parts for your vehicle</p>
+                            </div>
+
+                                {/* VIN Decode Section */}
+                                <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 mb-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-xl font-semibold text-[#b22222]">
+                                            Quick Start with VIN
+                                        </h2>
+                                        <button
+                                            onClick={() => setShowVinInput(!showVinInput)}
+                                            className="px-3 py-1 bg-[#b22222] hover:bg-[#a01e1e] text-white text-sm rounded transition-colors"
+                                        >
+                                            {showVinInput ? 'Hide VIN' : 'Use VIN'}
+                                        </button>
+                                    </div>
+                                    
+                                    <p className="text-[#979797] text-sm mb-4">
+                                        Have your vehicle's VIN? We can automatically fill in your vehicle details.
+                                    </p>
+
+                                    {showVinInput && (
+                                        <div className="space-y-4">
+                                            <div className="flex gap-3">
+                                                <input
+                                                    type="text"
+                                                    value={vinInput}
+                                                    onChange={(e) => {
+                                                        setVinInput(e.target.value.toUpperCase())
+                                                        setVinDecodeError(null)
+                                                        setVinDecodeSuccess(null)
+                                                    }}
+                                                    onKeyPress={(e) => e.key === 'Enter' && handleVinDecode()}
+                                                    placeholder="Enter VIN (17 characters)"
+                                                    maxLength={17}
+                                                    disabled={vinDecoding}
+                                                    className="flex-1 px-3 py-2 bg-[#3a3a3a] border border-[#4a4a4a] rounded text-white placeholder-[#979797] focus:outline-none focus:border-[#b22222] transition-colors disabled:opacity-50"
+                                                />
+                                                <button
+                                                    onClick={handleVinDecode}
+                                                    disabled={vinDecoding || !vinInput.trim()}
+                                                    className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded transition-colors"
+                                                >
+                                                    {vinDecoding ? 'Decoding...' : 'Decode VIN'}
+                                                </button>
+                                            </div>
+
+                                            {vinDecodeError && (
+                                                <div className="p-3 bg-red-900/20 border border-red-700 rounded text-red-300 text-sm">
+                                                    {vinDecodeError}
+                                                </div>
+                                            )}
+
+                                            {vinDecodeSuccess && (
+                                                <div className="p-3 bg-green-900/20 border border-green-700 rounded text-green-300 text-sm">
+                                                    {vinDecodeSuccess}
+                                                </div>
+                                            )}
+
+                                            <div className="text-xs text-[#979797]">
+                                                <p>VIN should be 17 characters and contain both letters and numbers.</p>
+                                                <p>VIN Decoding is only available for vehicles made in the North American region. If there is no match, please manually select your vehicle.</p>
+                                            </div>
+                                        </div>
+                                    )}
                             </div>
 
                                 {/* Step 1: Vehicle Selection */}
@@ -859,6 +1133,14 @@ export default function PartsOrdering() {
                                         className="flex-1 px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#979797] focus:outline-none focus:border-[#b22222] transition-colors disabled:opacity-50"
                                     />
                                     <button
+                                        onClick={clearChatSession}
+                                        disabled={chatLoading}
+                                        className="px-3 py-2 bg-[#4a4a4a] hover:bg-[#5a5a5a] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+                                        title="Clear chat and start over"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
                                         onClick={sendChatMessage}
                                         disabled={!chatInput.trim() || chatLoading}
                                         className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
@@ -871,6 +1153,9 @@ export default function PartsOrdering() {
                                 {(selection.year || selection.make || selection.model) && (
                                     <div className="mt-2 text-xs text-[#979797]">
                                         Current vehicle: {selection.year && `${selection.year} `}{selection.make && `${selection.make} `}{selection.model && selection.model}{selectedEngine && ` (${selectedEngine.engineName})`}
+                                        {vinDecodeSuccess && (
+                                            <span className="text-green-400 ml-2">✓ VIN Decoded</span>
+                                        )}
                                     </div>
                                 )}
                             </div>
