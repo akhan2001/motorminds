@@ -97,6 +97,8 @@ export default function PartsOrdering() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
     const [chatInput, setChatInput] = useState('')
     const [chatLoading, setChatLoading] = useState(false)
+    const [sessionId, setSessionId] = useState<string | null>(null)
+    const [sessionInitialized, setSessionInitialized] = useState(false)
     const chatScrollRef = useRef<HTMLDivElement>(null)
 
     // Cart state (shared between catalog and AI)
@@ -134,17 +136,98 @@ export default function PartsOrdering() {
         }
     }, [selectedEngine, selectedCategory])
 
-    // Initialize chat with welcome message (client-side only to avoid hydration issues)
+    // Update session context when vehicle selection changes
     useEffect(() => {
-        if (chatMessages.length === 0) {
+        if (sessionInitialized && (selection.year || selection.make || selection.model || selectedEngine)) {
+            updateSessionContext({
+                year: parseInt(selection.year) || undefined,
+                make: selection.make || undefined,
+                model: selection.model || undefined,
+                manufacturer_id: selection.manufacturerId || undefined,
+                vehicle_id: selectedEngine?.vehicleId || undefined,
+                engine: selectedEngine?.engineName || undefined
+            })
+        }
+    }, [sessionInitialized, selection.year, selection.make, selection.model, selectedEngine])
+
+    // Initialize chat session and load message history
+    useEffect(() => {
+        initializeSession()
+    }, [])
+
+    const initializeSession = async () => {
+        try {
+            // Get or create session
+            const response = await fetch('/api/mia/session')
+            const data = await response.json()
+            
+            if (data.session) {
+                setSessionId(data.session.session_id)
+                
+                // Load message history
+                const messagesResponse = await fetch(`/api/mia/messages?sessionId=${data.session.session_id}`)
+                const messagesData = await messagesResponse.json()
+                
+                if (messagesData.messages && messagesData.messages.length > 0) {
+                    // Convert stored messages to chat messages format
+                    const convertedMessages = messagesData.messages.map((msg: any) => ({
+                        id: msg.id,
+                        role: msg.role === 'assistant' ? 'mia' : msg.role,
+                        content: msg.content,
+                        products: msg.metadata?.parts || [],
+                        sources: msg.metadata?.sources || [],
+                        timestamp: new Date(msg.created_at)
+                    }))
+                    setChatMessages(convertedMessages)
+                } else {
+                    // No message history, show welcome message
+                    setChatMessages([{
+                        id: '1',
+                        role: 'mia',
+                        content: "Hi! I'm Mia, your AI parts advisor. I can help you find the right parts for your vehicle. Just describe what you need!",
+                        timestamp: new Date()
+                    }])
+                }
+                
+                // Update session with current vehicle context if any
+                if (selection.year || selection.make || selection.model) {
+                    await updateSessionContext({
+                        year: parseInt(selection.year) || undefined,
+                        make: selection.make || undefined,
+                        model: selection.model || undefined,
+                        manufacturer_id: selection.manufacturerId || undefined,
+                        vehicle_id: selectedEngine?.vehicleId || undefined,
+                        engine: selectedEngine?.engineName || undefined
+                    })
+                }
+            }
+            setSessionInitialized(true)
+        } catch (error) {
+            console.error('Failed to initialize session:', error)
+            // Fallback to local welcome message
             setChatMessages([{
                 id: '1',
                 role: 'mia',
                 content: "Hi! I'm Mia, your AI parts advisor. I can help you find the right parts for your vehicle. Just describe what you need!",
                 timestamp: new Date()
             }])
+            setSessionInitialized(true)
         }
-    }, [])
+    }
+
+    const updateSessionContext = async (vehicleContext: any) => {
+        if (!sessionId) return
+        
+        try {
+            await fetch('/api/mia/session', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, vehicleContext })
+            })
+        } catch (error) {
+            console.error('Failed to update session context:', error)
+        }
+    }
 
     // Auto-scroll chat to bottom
     useEffect(() => {
@@ -266,7 +349,7 @@ export default function PartsOrdering() {
 
     // Chat functions
     const sendChatMessage = async () => {
-        if (!chatInput.trim() || chatLoading) return
+        if (!chatInput.trim() || chatLoading || !sessionId) return
 
         const userMessage: ChatMessage = {
             id: Date.now().toString(),
@@ -280,10 +363,15 @@ export default function PartsOrdering() {
         setChatLoading(true)
 
         try {
-            // Create vehicle context string
-            const vehicleContext = selection.year && selection.make && selection.model 
-                ? `${selection.year} ${selection.make} ${selection.model}${selectedEngine ? ` (${selectedEngine.engineName})` : ''}`
-                : 'No vehicle selected'
+            // Create vehicle context object
+            const vehicleContext = {
+                year: parseInt(selection.year) || undefined,
+                make: selection.make || undefined,
+                model: selection.model || undefined,
+                manufacturer_id: selection.manufacturerId || undefined,
+                vehicle_id: selectedEngine?.vehicleId || undefined,
+                engine: selectedEngine?.engineName || undefined
+            }
 
             const response = await fetch('/api/mia', {
                 method: 'POST',
@@ -292,7 +380,8 @@ export default function PartsOrdering() {
                 },
                 body: JSON.stringify({
                     message: userMessage.content,
-                    vehicleContext
+                    vehicleContext,
+                    sessionId
                 })
             })
 
@@ -323,6 +412,27 @@ export default function PartsOrdering() {
             setChatMessages(prev => [...prev, errorMessage])
         } finally {
             setChatLoading(false)
+        }
+    }
+
+    // Clear session function
+    const clearChatSession = async () => {
+        if (!sessionId) return
+        
+        try {
+            await fetch(`/api/mia/session?sessionId=${sessionId}`, {
+                method: 'DELETE'
+            })
+            
+            // Reset local state
+            setSessionId(null)
+            setSessionInitialized(false)
+            setChatMessages([])
+            
+            // Reinitialize session
+            await initializeSession()
+        } catch (error) {
+            console.error('Failed to clear session:', error)
         }
     }
 
@@ -858,6 +968,14 @@ export default function PartsOrdering() {
                                         disabled={chatLoading}
                                         className="flex-1 px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#979797] focus:outline-none focus:border-[#b22222] transition-colors disabled:opacity-50"
                                     />
+                                    <button
+                                        onClick={clearChatSession}
+                                        disabled={chatLoading}
+                                        className="px-3 py-2 bg-[#4a4a4a] hover:bg-[#5a5a5a] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+                                        title="Clear chat and start over"
+                                    >
+                                        Clear
+                                    </button>
                                     <button
                                         onClick={sendChatMessage}
                                         disabled={!chatInput.trim() || chatLoading}

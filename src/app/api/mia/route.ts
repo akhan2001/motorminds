@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
+import { getShopIdForUser } from '@/utils/get-shop-id'
 
 // Perplexity API configuration
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
@@ -48,21 +50,69 @@ Search for real parts now and provide accurate supplier information with current
 
 export async function POST(request: NextRequest) {
     try {
-        const { message, vehicleContext } = await request.json()
+        const shopId = await getShopIdForUser()
+        if (!shopId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
 
-        if (!message) {
+        const supabase = await createClient()
+        const { message, vehicleContext, sessionId } = await request.json()
+
+        if (!message || !sessionId) {
             return NextResponse.json(
-                { error: 'Message is required' },
+                { error: 'Message and sessionId are required' },
                 { status: 400 }
             )
         }
 
+        // Verify session belongs to shop and get session data
+        const { data: session, error: sessionError } = await supabase
+            .from('mia_sessions')
+            .select('*')
+            .eq('session_id', sessionId)
+            .eq('shop_id', shopId)
+            .eq('status', 'active')
+            .single()
+
+        if (sessionError || !session) {
+            return NextResponse.json({ error: 'Session not found or inactive' }, { status: 404 })
+        }
+
+        // Use vehicle context from session if not provided in request
+        const contextToUse = vehicleContext || session.vehicle_context
+
+        // Store user message
+        const { error: userMessageError } = await supabase
+            .from('mia_messages')
+            .insert({
+                session_id: sessionId,
+                role: 'user',
+                content: message,
+                metadata: { vehicleContext: contextToUse }
+            })
+
+        if (userMessageError) {
+            console.error('Error storing user message:', userMessageError)
+            return NextResponse.json({ error: 'Failed to store message' }, { status: 500 })
+        }
+
         // Check if Perplexity API key is configured
         if (!process.env.PERPLEXITY_API_KEY) {
-            // Fallback response if Perplexity is not configured
+            // Store fallback AI response
+            const fallbackMessage = "I'd be happy to help you find parts! However, my real-time search capabilities are currently being configured. Please use the catalog search above to browse available parts."
+            
+            await supabase
+                .from('mia_messages')
+                .insert({
+                    session_id: sessionId,
+                    role: 'assistant',
+                    content: fallbackMessage,
+                    metadata: { products: [], sources: [], type: 'fallback' }
+                })
+
             return NextResponse.json({
                 success: true,
-                message: "I'd be happy to help you find parts! However, my real-time search capabilities are currently being configured. Please use the catalog search above to browse available parts.",
+                message: fallbackMessage,
                 products: [],
                 sources: []
             })
@@ -70,8 +120,12 @@ export async function POST(request: NextRequest) {
 
         try {
             // Create enhanced system prompt with vehicle context
+            const vehicleContextString = contextToUse && Object.keys(contextToUse).length > 0 
+                ? `${contextToUse.year || ''} ${contextToUse.make || ''} ${contextToUse.model || ''} ${contextToUse.engine || ''}`.trim()
+                : "No specific vehicle selected"
+            
             const enhancedSystemPrompt = PARTS_ADVISOR_SYSTEM_PROMPT
-                .replace("{vehicleContext}", vehicleContext || "No specific vehicle selected")
+                .replace("{vehicleContext}", vehicleContextString)
                 .replace("{query}", message)
 
             // Prepare Perplexity API request
@@ -84,7 +138,7 @@ export async function POST(request: NextRequest) {
                     },
                     {
                         role: 'user',
-                        content: `Find real automotive parts for: ${message}${vehicleContext ? ` for ${vehicleContext}` : ''}`
+                        content: `Find real automotive parts for: ${message}${vehicleContextString !== "No specific vehicle selected" ? ` for ${vehicleContextString}` : ''}`
                     }
                 ],
                 stream: false,
@@ -93,7 +147,7 @@ export async function POST(request: NextRequest) {
                 top_p: 0.9
             }
 
-            console.log('Mia Parts Search Request:', { message, vehicleContext })
+            console.log('Mia Parts Search Request:', { message, vehicleContext: vehicleContextString })
 
             // Call Perplexity API
             const response = await fetch(PERPLEXITY_API_URL, {
@@ -130,16 +184,32 @@ export async function POST(request: NextRequest) {
             try {
                 parsedResponse = JSON.parse(aiResponse)
             } catch (parseError) {
-                // If JSON parsing fails, create a fallback response
+                // If JSON parsing fails, store and return fallback response
+                const fallbackSources = citations.map((citation: any) => ({
+                    title: citation.title || 'Reference',
+                    url: citation.url || '',
+                    description: citation.text || ''
+                }))
+
+                await supabase
+                    .from('mia_messages')
+                    .insert({
+                        session_id: sessionId,
+                        role: 'assistant',
+                        content: aiResponse,
+                        metadata: { 
+                            products: [],
+                            sources: fallbackSources,
+                            type: 'text_response',
+                            parseError: true
+                        }
+                    })
+
                 return NextResponse.json({
                     success: true,
                     message: aiResponse,
                     products: [],
-                    sources: citations.map((citation: any) => ({
-                        title: citation.title || 'Reference',
-                        url: citation.url || '',
-                        description: citation.text || ''
-                    }))
+                    sources: fallbackSources
                 })
             }
 
@@ -162,20 +232,54 @@ export async function POST(request: NextRequest) {
                 }))
             ]
 
+            const responseMessage = parsedResponse.message || `Found ${parts.length} real parts from suppliers:`
+            const limitedSources = sources.slice(0, 5)
+
+            // Store AI response
+            await supabase
+                .from('mia_messages')
+                .insert({
+                    session_id: sessionId,
+                    role: 'assistant',
+                    content: responseMessage,
+                    metadata: { 
+                        parts: parts,
+                        sources: limitedSources,
+                        type: 'search_results',
+                        vehicleContext: contextToUse
+                    }
+                })
+
             return NextResponse.json({
                 success: true,
-                message: parsedResponse.message || `Found ${parts.length} real parts from suppliers:`,
+                message: responseMessage,
                 products: parts,
-                sources: sources.slice(0, 5) // Limit to 5 sources
+                sources: limitedSources
             })
 
         } catch (aiError) {
             console.error('Perplexity API error:', aiError)
             
-            // Fallback response for AI errors
+            // Store fallback AI error response
+            const errorMessage = "I'm having trouble searching for parts right now. Please try the catalog search above or rephrase your question."
+            
+            await supabase
+                .from('mia_messages')
+                .insert({
+                    session_id: sessionId,
+                    role: 'assistant',
+                    content: errorMessage,
+                    metadata: { 
+                        products: [],
+                        sources: [],
+                        type: 'error_response',
+                        error: aiError instanceof Error ? aiError.message : 'Unknown error'
+                    }
+                })
+
             return NextResponse.json({
                 success: true,
-                message: "I'm having trouble searching for parts right now. Please try the catalog search above or rephrase your question.",
+                message: errorMessage,
                 products: [],
                 sources: []
             })
