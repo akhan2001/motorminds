@@ -711,8 +711,8 @@ export default function PartsOrdering() {
                                             )}
 
                                             <div className="text-xs text-[#979797]">
-                                                <p>Example: 1HGBH41JXMN109186</p>
                                                 <p>VIN should be 17 characters and contain both letters and numbers.</p>
+                                                <p>VIN Decoding is only available for vehicles made in the North American region. If there is no match, please manually select your vehicle.</p>
                                             </div>
                                         </div>
                                     )}
