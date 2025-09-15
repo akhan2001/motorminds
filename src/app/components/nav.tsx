@@ -48,14 +48,8 @@ export function Nav() {
 		fetchShopInfo()
 	}, [])
 
-	// Render the icon based on mounted state to avoid hydration mismatch
-	const themeIcon = mounted && theme === "light" ? (
-		<Moon className="w-4 h-4 mr-2" />
-	) : (
-		<Sun className="w-4 h-4 mr-2" />
-	)
-
-	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
+	// Get theme text for tooltip
+	const themeText = mounted && theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"
 
 	// Define mechanic hub subitems
 	const mechanicHubSubItems = [
@@ -159,31 +153,31 @@ export function Nav() {
 	}
 
 	return (
-		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+		<header className="bg-white dark:bg-[#0d0d0d] px-4 pt-2 border-b border-gray-200 dark:border-[#1f1f1f] z-50 sticky top-0">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}
 					<div className="flex items-center gap-4 py-3">
 						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
+						className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
 						onClick={() => router.push("/")}
 						>
 							<Image
-							src="/motorminds-logo-white (1).svg"
+							src={mounted && theme === "light" ? "/motorminds-logo-white.png" : "/motorminds-logo-black.png"}
 							alt="Motorminds Logo"
 							width={35}
 							height={35}
 							className="w-8 h-8"
 							/>
-							<span className="text-white font-medium">Motorminds</span>
+							<span className="text-gray-900 dark:text-white font-bold dark:font-medium">Motorminds</span>
 						</div>
 						<div className="hidden lg:block">
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-white border-[#979797]">Premium</Badge>
+									<Badge variant="outline" className="cursor-default text-gray-900 dark:text-white border-gray-500 dark:border-[#979797]">Premium</Badge>
 								</TooltipTrigger>
-								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
+								<TooltipContent className="bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-white border-none">
 									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
 								</TooltipContent>
 							</Tooltip>
@@ -201,19 +195,19 @@ export function Nav() {
 												className={`py-2 border-b-2 flex items-center gap-1 ${
 													activeLink === item.name
 													? "text-[#b22222] border-[#b22222]"
-													: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+													: "text-gray-500 dark:text-[#979797] border-transparent hover:text-gray-900 dark:hover:text-white hover:border-gray-500 dark:hover:border-[#979797] transition-colors"
 												}`}
 											>
 												{item.name}
 												<ChevronDown className="h-4 w-4" />
 											</button>
 										</DropdownMenuTrigger>
-										<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f] min-w-[180px]">
+										<DropdownMenuContent className="bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-white border-gray-200 dark:border-[#1f1f1f] min-w-[180px]">
 											{item.subItems?.map((subItem) => (
 												<DropdownMenuItem 
 													key={subItem.name}
 													onClick={() => handleSubItemClick(item.name, subItem.href)}
-													className="cursor-pointer hover:bg-[#1f1f1f] hover:text-white"
+													className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1f1f1f] hover:text-gray-900 dark:hover:text-white"
 												>
 													{subItem.name}
 												</DropdownMenuItem>
@@ -229,12 +223,12 @@ export function Nav() {
 									className={`py-2 border-b-2 ${
 										activeLink === item.name
 										? "text-[#b22222] border-[#b22222]"
-										: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+										: "text-gray-500 dark:text-[#979797] border-transparent hover:text-gray-900 dark:hover:text-white hover:border-gray-500 dark:hover:border-[#979797] transition-colors"
 									}`}
 								>
 									{item.name}
 									{item.name === "Mia AI" &&
-									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
+									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-gray-500 dark:text-[#979797] border-gray-500 dark:border-[#979797]">Beta</Badge>
 									}
 								</a>
 							)
@@ -245,19 +239,30 @@ export function Nav() {
 				<div className="hidden lg:flex items-center gap-4">
 					<button 
 						className={`${
-							activeLink === "Messages" ? "text-white" : "text-[#979797]"
-						} hover:text-white transition-colors`} 
+							activeLink === "Messages" ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-[#979797]"
+						} hover:text-gray-900 dark:hover:text-white transition-colors`} 
 						onClick={() => router.push("/messages")}
 					>
 						<MessageCircle className="inline-block w-5 h-5" />
 					</button>
-					<button className="text-[#979797] hover:text-white transition-colors">
+					<button
+						onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+						className="text-gray-500 dark:text-[#979797] hover:text-gray-900 dark:hover:text-white transition-colors"
+						title={themeText}
+					>
+						{mounted && theme === "light" ? (
+							<Moon className="inline-block w-5 h-5" />
+						) : (
+							<Sun className="inline-block w-5 h-5" />
+						)}
+					</button>
+					<button className="text-gray-500 dark:text-[#979797] hover:text-gray-900 dark:hover:text-white transition-colors">
 						{/* <span className="hidden md:inline mr-2">Help</span> */}
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
 								<HelpCircle className="inline-block w-5 h-5" />
 							</AlertDialogTrigger>
-							<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+							<AlertDialogContent className="bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-white border-gray-200 dark:border-[#1f1f1f]">
 								<AlertDialogHeader>
 									<AlertDialogTitle>You Are About to Leave the App</AlertDialogTitle>
 									<AlertDialogDescription>
@@ -273,7 +278,7 @@ export function Nav() {
 							</AlertDialogContent>
 						</AlertDialog>
 					</button>
-					<button className="text-[#979797] hover:text-white transition-colors">
+					<button className="text-gray-500 dark:text-[#979797] hover:text-gray-900 dark:hover:text-white transition-colors">
 						<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
 					</button>
 					{/* <button className="text-[#979797] hover:text-white transition-colors relative">
@@ -287,7 +292,7 @@ export function Nav() {
 									<AvatarFallback>AK</AvatarFallback>
 								</Avatar>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+						<DropdownMenuContent className="bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-white border-gray-200 dark:border-[#1f1f1f]">
 							<AlertDialog>
 							<AlertDialogTrigger asChild>
 									<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -295,7 +300,7 @@ export function Nav() {
 										Logout
 									</DropdownMenuItem>
 								</AlertDialogTrigger>
-								<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+								<AlertDialogContent className="bg-white dark:bg-[#0d0d0d] text-gray-900 dark:text-white border-gray-200 dark:border-[#1f1f1f]">
 									<AlertDialogHeader>
 										<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
 										<AlertDialogDescription>
@@ -313,15 +318,6 @@ export function Nav() {
 									</AlertDialogFooter>
 								</AlertDialogContent>
 							</AlertDialog>
-							{/* <DropdownMenuItem
-								onSelect={(e) => {
-									e.preventDefault();
-									setTheme(theme === "light" ? "dark" : "light");
-								}}
-							>
-								{themeIcon}
-								{themeText}
-							</DropdownMenuItem> */}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
