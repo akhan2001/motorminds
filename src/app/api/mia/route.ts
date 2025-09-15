@@ -5,11 +5,17 @@ const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 const PARTS_ADVISOR_SYSTEM_PROMPT = `You are Mia, the MotorMinds AI parts advisor for Canadian customers. You help customers find real automotive parts from actual Canadian suppliers with current CAD pricing and availability.
 
+CRITICAL RESPONSE FORMAT INSTRUCTIONS:
+- MUST respond with ONLY a valid JSON object
+- NO markdown code blocks (no triple backticks)
+- NO text before or after the JSON
+- NO additional formatting or explanations
+- Start directly with { and end with }
+
 Your Task:
 Search the internet for REAL AUTOMOTIVE PARTS from CANADIAN SUPPLIERS ONLY that match the user's request. Find actual Canadian retailers, current CAD prices, part numbers, and availability from major Canadian auto parts stores.
 
-Required Response Format:
-Always respond with a valid JSON object containing:
+Required JSON Response Format (respond with this exact structure):
 {
   "message": "Brief helpful message about the search results",
   "parts": [
@@ -44,7 +50,7 @@ Search Guidelines:
 Vehicle Context: {vehicleContext}
 User Query: {query}
 
-Search for real parts now and provide accurate supplier information with current pricing.`
+IMPORTANT: Respond with ONLY the JSON object. No other text, no markdown formatting, no code blocks.`
 
 export async function POST(request: NextRequest) {
     try {
@@ -84,12 +90,14 @@ export async function POST(request: NextRequest) {
                     },
                     {
                         role: 'user',
-                        content: `Find real automotive parts for: ${message}${vehicleContext ? ` for ${vehicleContext}` : ''}`
+                        content: `Find real automotive parts for: ${message}${vehicleContext ? ` for ${vehicleContext}` : ''}
+
+IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no code blocks, no additional text. Start with { and end with }.`
                     }
                 ],
                 stream: false,
                 max_tokens: 4000,
-                temperature: 0.2,
+                temperature: 0.1, // Lower temperature for more consistent formatting
                 top_p: 0.9
             }
 
@@ -125,18 +133,62 @@ export async function POST(request: NextRequest) {
 
             console.log('Perplexity Response:', { aiResponse, citations })
 
-            // Try to parse as JSON
+            // Try to parse as JSON with robust cleaning
             let parsedResponse
             try {
-                parsedResponse = JSON.parse(aiResponse)
+                // Clean the response to handle various formatting issues
+                let cleanedResponse = aiResponse.trim()
+                
+                // Remove markdown code blocks if present
+                if (cleanedResponse.startsWith('```json') && cleanedResponse.endsWith('```')) {
+                    cleanedResponse = cleanedResponse
+                        .replace(/^```json\s*/, '')
+                        .replace(/\s*```$/, '')
+                        .trim()
+                } else if (cleanedResponse.startsWith('```') && cleanedResponse.endsWith('```')) {
+                    cleanedResponse = cleanedResponse
+                        .replace(/^```\s*/, '')
+                        .replace(/\s*```$/, '')
+                        .trim()
+                }
+                
+                // Remove any leading/trailing text that isn't JSON
+                const jsonStart = cleanedResponse.indexOf('{')
+                const jsonEnd = cleanedResponse.lastIndexOf('}')
+                if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                    cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+                }
+                
+                parsedResponse = JSON.parse(cleanedResponse)
+                
+                // Validate required fields
+                if (!parsedResponse.message || !Array.isArray(parsedResponse.parts) || !Array.isArray(parsedResponse.sources)) {
+                    throw new Error('Invalid JSON structure')
+                }
+                
             } catch (parseError) {
-                // If JSON parsing fails, create a fallback response
+                console.error('JSON parsing failed:', parseError)
+                console.log('Raw AI response:', aiResponse.substring(0, 500) + '...')
+                
+                // If JSON parsing fails, try to extract meaningful information
+                let fallbackMessage = "I found some automotive parts information, but I'm having trouble formatting the response properly. Please try rephrasing your request."
+                
+                // Try to extract the message from the raw response if it looks like JSON
+                try {
+                    const messageMatch = aiResponse.match(/"message":\s*"([^"]+)"/);
+                    if (messageMatch && messageMatch[1]) {
+                        fallbackMessage = messageMatch[1];
+                    }
+                } catch (e) {
+                    console.error('Failed to extract message:', e)
+                }
+                
                 return NextResponse.json({
                     success: true,
-                    message: aiResponse,
+                    message: fallbackMessage,
                     products: [],
                     sources: citations.map((citation: any) => ({
-                        title: citation.title || 'Reference',
+                        title: citation.title || 'Search Result',
                         url: citation.url || '',
                         description: citation.text || ''
                     }))
