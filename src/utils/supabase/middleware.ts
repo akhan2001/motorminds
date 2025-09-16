@@ -50,7 +50,8 @@ export async function updateSession(request: NextRequest) {
     '/appointments',    // Appointment management
     '/settings',        // Settings pages
     '/loyalty',         // Loyalty program
-    '/mechanic-hub'     // Mechanic hub
+    '/mechanic-hub',     // Mechanic hub
+    '/mia'
   ]
   const isProtectedPath = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
