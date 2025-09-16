@@ -16,6 +16,7 @@ import FacebookConnect from "./components/FacebookConnect"
 import TwilioMessaging from "./components/TwilioMessaging"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MessageSquare, Phone } from "lucide-react"
+import FacebookSdk from "@/app/components/FacebookSdk"
 
 export default function Messages() {
     const router = useRouter();
@@ -140,6 +141,7 @@ export default function Messages() {
                     </div>
                 </div>
             </div>
+            <FacebookSdk />
         </div>
     )
 }

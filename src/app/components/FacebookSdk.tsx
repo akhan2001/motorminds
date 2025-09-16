@@ -38,7 +38,7 @@ export default function FacebookSdk() {
     return (
         <Script 
             src="https://connect.facebook.net/en_US/sdk.js"
-            strategy="afterInteractive"
+            strategy="lazyOnload"
         />
     );
 }
