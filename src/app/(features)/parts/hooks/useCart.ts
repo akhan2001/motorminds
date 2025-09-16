@@ -13,37 +13,74 @@ export const useCart = () => {
     const [customerNotes, setCustomerNotes] = useState('')
 
     const addToCartFromMia = useCallback((product: MiaProduct, onAddMessage?: (message: ChatMessage) => void) => {
-        const cartItem: Part = {
-            id: `mia-${Date.now()}`,
-            articleId: product.partNumber,
-            articleNo: product.partNumber,
-            name: product.partName,
-            description: `${product.supplier ? `From ${product.supplier} - ` : ''}${product.compatible}`,
-            supplier: product.supplier || 'Online Supplier',
-            supplierId: 0,
-            price: parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0,
-            availability: product.availability || 'Available',
-            partNumber: product.partNumber,
-            brandName: product.supplier || 'Various',
-            fullInfo: product
-        }
+        setCart(prev => {
+            // Check if this part number already exists in cart
+            const existingItem = prev.find(item => 
+                item.partNumber === product.partNumber && 
+                item.supplier === (product.supplier || 'Online Supplier')
+            )
 
-        setCart(prev => [...prev, cartItem])
-
-        // Add confirmation message to chat if callback provided
-        if (onAddMessage) {
-            const confirmationMessage: ChatMessage = {
-                id: (Date.now() + 2).toString(),
-                role: 'mia',
-                content: `✅ Added "${product.partName}" (${product.partNumber}) from ${product.supplier || 'supplier'} to your cart!${product.link ? ` View details at supplier website.` : ''}`,
-                timestamp: new Date()
+            if (existingItem) {
+                // Add message indicating item already exists
+                if (onAddMessage) {
+                    const alreadyExistsMessage: ChatMessage = {
+                        id: (Date.now() + 2).toString(),
+                        role: 'mia',
+                        content: `ℹ️ "${product.partName}" (${product.partNumber}) is already in your cart!`,
+                        timestamp: new Date()
+                    }
+                    onAddMessage(alreadyExistsMessage)
+                }
+                return prev // Don't add duplicate
             }
-            onAddMessage(confirmationMessage)
-        }
+
+            const cartItem: Part = {
+                id: `mia-${Date.now()}`,
+                articleId: product.partNumber,
+                articleNo: product.partNumber,
+                name: product.partName,
+                description: `${product.supplier ? `From ${product.supplier} - ` : ''}${product.compatible}`,
+                supplier: product.supplier || 'Online Supplier',
+                supplierId: 0,
+                price: parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0,
+                availability: product.availability || 'Available',
+                partNumber: product.partNumber,
+                brandName: product.supplier || 'Various',
+                fullInfo: product
+            }
+
+            // Add confirmation message to chat if callback provided
+            if (onAddMessage) {
+                const confirmationMessage: ChatMessage = {
+                    id: (Date.now() + 2).toString(),
+                    role: 'mia',
+                    content: `✅ Added "${product.partName}" (${product.partNumber}) from ${product.supplier || 'supplier'} to your cart!${product.link ? ` View details at supplier website.` : ''}`,
+                    timestamp: new Date()
+                }
+                onAddMessage(confirmationMessage)
+            }
+
+            return [...prev, cartItem]
+        })
     }, [])
 
     const addToCartFromCatalog = useCallback((part: Part) => {
-        setCart(prev => [...prev, part])
+        setCart(prev => {
+            // Check if this part number already exists in cart
+            const existingItem = prev.find(item => 
+                item.partNumber === part.partNumber && 
+                item.supplier === part.supplier
+            )
+
+            if (existingItem) {
+                // Part already exists, don't add duplicate
+                // You could add a toast notification here if needed
+                console.log(`Part ${part.partNumber} from ${part.supplier} is already in cart`)
+                return prev
+            }
+
+            return [...prev, part]
+        })
     }, [])
 
     const removeFromCart = useCallback((itemId: string) => {

@@ -104,7 +104,11 @@ export default function MakeModelSelector({
             // No additional filtering needed here
         }
         
-        setFilteredModels(filtered)
+        // Sort models alphabetically by modelName
+        const sortedFiltered = filtered.sort((a, b) => 
+            a.modelName.localeCompare(b.modelName, undefined, { numeric: true, sensitivity: 'base' })
+        )
+        setFilteredModels(sortedFiltered)
         
         // Update available makes based on filtered models
         if (selectedYear && !selectedMake) {
@@ -310,11 +314,13 @@ export default function MakeModelSelector({
                     <option value="">
                         {!value.year ? 'Select a year first' : placeholder.make}
                     </option>
-                    {availableMakes.map((manufacturer) => (
-                        <option key={manufacturer.manufacturerId} value={manufacturer.brand}>
-                            {manufacturer.brand}
-                        </option>
-                    ))}
+                    {availableMakes
+                        .sort((a, b) => a.brand.localeCompare(b.brand, undefined, { numeric: true, sensitivity: 'base' }))
+                        .map((manufacturer) => (
+                            <option key={manufacturer.manufacturerId} value={manufacturer.brand}>
+                                {manufacturer.brand}
+                            </option>
+                        ))}
                 </select>
             </div>
 
