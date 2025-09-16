@@ -38,7 +38,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                         <p className="text-[#979797] text-xs">No items in cart</p>
                     ) : (
                         <div className="space-y-2">
-                            {cart.map(item => (
+                            {cart.map((item) => (
                                 <div key={item.id} className="flex justify-between items-start bg-[#2a2a2a] p-2 rounded text-xs">
                                     <div className="flex-1">
                                         <div className="text-white font-medium">{item.name}</div>

@@ -1,0 +1,409 @@
+motorminds/
+├── src/
+│   ├── app/                                    # Next.js App Router
+│   │   ├── (features)/                         # Grouped routes
+│   │   │   ├── parts/                          # Parts & Inventory Domain
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── parts-catalog.tsx
+│   │   │   │   │   ├── parts-search.tsx
+│   │   │   │   │   ├── inventory-tracker.tsx
+│   │   │   │   │   └── parts-request-form.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── use-parts-catalog.ts
+│   │   │   │   │   ├── use-inventory.ts
+│   │   │   │   │   └── use-parts-requests.ts
+│   │   │   │   ├── lib/
+│   │   │   │   │   ├── parts-service.ts
+│   │   │   │   │   ├── inventory-service.ts
+│   │   │   │   │   └── parts-validation.ts
+│   │   │   │   ├── types/
+│   │   │   │   │   └── parts.ts
+│   │   │   │   ├── ordering/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── requests/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── inventory/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   ├── customers/                      # Customer Management Domain
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── customer-list.tsx
+│   │   │   │   │   ├── customer-profile.tsx
+│   │   │   │   │   ├── vehicle-manager.tsx
+│   │   │   │   │   ├── intake-form.tsx
+│   │   │   │   │   └── contract-manager.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── use-customers.ts
+│   │   │   │   │   ├── use-vehicles.ts
+│   │   │   │   │   └── use-contracts.ts
+│   │   │   │   ├── lib/
+│   │   │   │   │   ├── customer-service.ts
+│   │   │   │   │   ├── vehicle-service.ts
+│   │   │   │   │   └── contract-service.ts
+│   │   │   │   ├── types/
+│   │   │   │   │   ├── customer.ts
+│   │   │   │   │   ├── vehicle.ts
+│   │   │   │   │   └── contract.ts
+│   │   │   │   ├── overview/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── vehicles/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── contracts/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── intake/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── [customerId]/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   ├── operations/                     # Work Orders & Shop Operations
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── work-order-list.tsx
+│   │   │   │   │   ├── task-board.tsx
+│   │   │   │   │   ├── appointment-scheduler.tsx
+│   │   │   │   │   ├── service-manager.tsx
+│   │   │   │   │   └── mechanic-dashboard.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── use-work-orders.ts
+│   │   │   │   │   ├── use-tasks.ts
+│   │   │   │   │   └── use-appointments.ts
+│   │   │   │   ├── lib/
+│   │   │   │   │   ├── work-order-service.ts
+│   │   │   │   │   ├── task-service.ts
+│   │   │   │   │   └── appointment-service.ts
+│   │   │   │   ├── types/
+│   │   │   │   │   ├── work-order.ts
+│   │   │   │   │   ├── task.ts
+│   │   │   │   │   └── appointment.ts
+│   │   │   │   ├── work-orders/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── tasks/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── appointments/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── services/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   ├── ai/                             # AI & Chat Features
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── chat-interface.tsx
+│   │   │   │   │   ├── mia-assistant.tsx
+│   │   │   │   │   ├── diagnostics-panel.tsx
+│   │   │   │   │   └── ai-insights.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── use-chat.ts
+│   │   │   │   │   ├── use-mia.ts
+│   │   │   │   │   └── use-diagnostics.ts
+│   │   │   │   ├── lib/
+│   │   │   │   │   ├── chat-service.ts
+│   │   │   │   │   ├── mia-service.ts
+│   │   │   │   │   └── ai-prompts.ts
+│   │   │   │   ├── types/
+│   │   │   │   │   ├── chat.ts
+│   │   │   │   │   └── ai.ts
+│   │   │   │   ├── chat/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── mia/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── diagnostics/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   ├── financials/                     # Financial Management
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── revenue-dashboard.tsx
+│   │   │   │   │   ├── expense-tracker.tsx
+│   │   │   │   │   ├── invoice-manager.tsx
+│   │   │   │   │   ├── payroll-system.tsx
+│   │   │   │   │   └── financial-reports.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── use-financials.ts
+│   │   │   │   │   ├── use-invoices.ts
+│   │   │   │   │   └── use-reports.ts
+│   │   │   │   ├── lib/
+│   │   │   │   │   ├── financial-service.ts
+│   │   │   │   │   ├── invoice-service.ts
+│   │   │   │   │   └── reporting-service.ts
+│   │   │   │   ├── types/
+│   │   │   │   │   ├── financial.ts
+│   │   │   │   │   └── invoice.ts
+│   │   │   │   ├── overview/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── invoices/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── payroll/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── reports/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── efficiency/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   ├── marketing/                      # Lead Generation & Marketing
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── lead-tracker.tsx
+│   │   │   │   │   ├── campaign-manager.tsx
+│   │   │   │   │   ├── message-center.tsx
+│   │   │   │   │   └── loyalty-program.tsx
+│   │   │   │   ├── hooks/
+│   │   │   │   │   ├── use-leads.ts
+│   │   │   │   │   ├── use-campaigns.ts
+│   │   │   │   │   └── use-messages.ts
+│   │   │   │   ├── lib/
+│   │   │   │   │   ├── lead-service.ts
+│   │   │   │   │   ├── campaign-service.ts
+│   │   │   │   │   └── message-service.ts
+│   │   │   │   ├── types/
+│   │   │   │   │   ├── lead.ts
+│   │   │   │   │   └── campaign.ts
+│   │   │   │   ├── leads/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── messages/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── loyalty/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   └── admin/                          # Admin Features
+│   │   │       ├── components/
+│   │   │       │   ├── admin-dashboard.tsx
+│   │   │       │   ├── user-management.tsx
+│   │   │       │   ├── shop-settings.tsx
+│   │   │       │   └── system-monitoring.tsx
+│   │   │       ├── hooks/
+│   │   │       │   ├── use-admin.ts
+│   │   │       │   └── use-system-health.ts
+│   │   │       ├── lib/
+│   │   │       │   ├── admin-service.ts
+│   │   │       │   └── monitoring-service.ts
+│   │   │       ├── types/
+│   │   │       │   └── admin.ts
+│   │   │       ├── dashboard/
+│   │   │       │   └── page.tsx
+│   │   │       ├── parts-requests/
+│   │   │       │   └── page.tsx
+│   │   │       └── settings/
+│   │   │           └── page.tsx
+│   │   │
+│   │   ├── (auth)/                             # Authentication Routes
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   ├── signup/
+│   │   │   │   └── page.tsx
+│   │   │   ├── reset-password/
+│   │   │   │   └── page.tsx
+│   │   │   └── callback/
+│   │   │       └── page.tsx
+│   │   │
+│   │   ├── (public)/                           # Public/Marketing Routes
+│   │   │   ├── widget/
+│   │   │   │   └── page.tsx
+│   │   │   ├── embedding/
+│   │   │   │   └── page.tsx
+│   │   │   └── customer/
+│   │   │       └── [shopName]/
+│   │   │           └── page.tsx
+│   │   │
+│   │   ├── api/                                # API Routes (Mirror Domain Structure)
+│   │   │   ├── parts/
+│   │   │   │   ├── route.ts
+│   │   │   │   ├── requests/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── inventory/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── catalog/
+│   │   │   │       └── route.ts
+│   │   │   ├── customers/
+│   │   │   │   ├── route.ts
+│   │   │   │   ├── [id]/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── vehicles/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── contracts/
+│   │   │   │       └── route.ts
+│   │   │   ├── operations/
+│   │   │   │   ├── work-orders/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── tasks/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── appointments/
+│   │   │   │       └── route.ts
+│   │   │   ├── ai/
+│   │   │   │   ├── chat/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── mia/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── diagnostics/
+│   │   │   │       └── route.ts
+│   │   │   ├── financials/
+│   │   │   │   ├── route.ts
+│   │   │   │   ├── invoices/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── payroll/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── reports/
+│   │   │   │       └── route.ts
+│   │   │   ├── marketing/
+│   │   │   │   ├── leads/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── messages/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── campaigns/
+│   │   │   │       └── route.ts
+│   │   │   ├── auth/
+│   │   │   │   └── [provider]/
+│   │   │   │       └── route.ts
+│   │   │   └── webhooks/
+│   │   │       ├── docuseal/
+│   │   │       │   └── route.ts
+│   │   │       └── twilio/
+│   │   │           └── route.ts
+│   │   │
+│   │   ├── dashboard/                           # Main Dashboard
+│   │   │   └── page.tsx
+│   │   ├── page.tsx                            # Home page
+│   │   ├── layout.tsx                          # Root layout
+│   │   ├── globals.css                         # Global styles
+│   │   └── providers.tsx                       # App providers
+│   │
+│   ├── components/                             # Shared UI Components
+│   │   ├── ui/                                 # Base UI Components (shadcn/ui)
+│   │   │   ├── button.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── table.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   └── ... (other shadcn components)
+│   │   ├── common/                             # Common Business Components
+│   │   │   ├── data-table/
+│   │   │   │   ├── data-table.tsx
+│   │   │   │   ├── data-table-toolbar.tsx
+│   │   │   │   └── data-table-pagination.tsx
+│   │   │   ├── forms/
+│   │   │   │   ├── form-wrapper.tsx
+│   │   │   │   ├── field-components.tsx
+│   │   │   │   └── validation-components.tsx
+│   │   │   ├── modals/
+│   │   │   │   ├── confirmation-modal.tsx
+│   │   │   │   ├── form-modal.tsx
+│   │   │   │   └── info-modal.tsx
+│   │   │   ├── charts/
+│   │   │   │   ├── revenue-chart.tsx
+│   │   │   │   ├── performance-chart.tsx
+│   │   │   │   └── analytics-chart.tsx
+│   │   │   └── feedback/
+│   │   │       ├── loading-states.tsx
+│   │   │       ├── empty-states.tsx
+│   │   │       └── error-states.tsx
+│   │   └── layout/                             # Layout Components
+│   │       ├── nav/
+│   │       │   ├── main-nav.tsx
+│   │       │   ├── mobile-nav.tsx
+│   │       │   ├── breadcrumbs.tsx
+│   │       │   └── user-nav.tsx
+│   │       ├── sidebar/
+│   │       │   ├── sidebar.tsx
+│   │       │   ├── sidebar-nav.tsx
+│   │       │   └── sidebar-footer.tsx
+│   │       └── header/
+│   │           ├── header.tsx
+│   │           ├── search-bar.tsx
+│   │           └── notifications.tsx
+│   │
+│   ├── lib/                                    # Core Libraries & Utilities
+│   │   ├── core/                               # Core functionality
+│   │   │   ├── supabase.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── config.ts
+│   │   │   └── constants.ts
+│   │   ├── integrations/                       # External integrations
+│   │   │   ├── docuseal/
+│   │   │   │   ├── client.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── twilio/
+│   │   │   │   ├── client.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── email/
+│   │   │   │   ├── resend.ts
+│   │   │   │   └── templates.ts
+│   │   │   └── ai/
+│   │   │       ├── openai.ts
+│   │   │       ├── perplexity.ts
+│   │   │       └── prompts.ts
+│   │   ├── utils/                              # Utility functions
+│   │   │   ├── formatting.ts
+│   │   │   ├── validation.ts
+│   │   │   ├── date-utils.ts
+│   │   │   ├── currency-utils.ts
+│   │   │   └── phone-utils.ts
+│   │   ├── database/                           # Database utilities
+│   │   │   ├── queries.ts
+│   │   │   ├── mutations.ts
+│   │   │   └── types.ts
+│   │   └── security/                           # Security utilities
+│   │       ├── encryption.ts
+│   │       ├── rate-limiter.ts
+│   │       └── middleware.ts
+│   │
+│   ├── hooks/                                  # Global Custom Hooks
+│   │   ├── core/
+│   │   │   ├── use-auth.ts
+│   │   │   ├── use-shop.ts
+│   │   │   └── use-user.ts
+│   │   ├── data/
+│   │   │   ├── use-query.ts
+│   │   │   ├── use-mutation.ts
+│   │   │   └── use-pagination.ts
+│   │   ├── ui/
+│   │   │   ├── use-toast.ts
+│   │   │   ├── use-modal.ts
+│   │   │   ├── use-mobile.ts
+│   │   │   └── use-theme.ts
+│   │   └── business/
+│   │       ├── use-shop-settings.ts
+│   │       ├── use-notifications.ts
+│   │       └── use-analytics.ts
+│   │
+│   ├── contexts/                               # React Contexts
+│   │   ├── auth-context.tsx
+│   │   ├── shop-context.tsx
+│   │   ├── theme-context.tsx
+│   │   └── notification-context.tsx
+│   │
+│   ├── types/                                  # Global TypeScript Types
+│   │   ├── core/
+│   │   │   ├── auth.ts
+│   │   │   ├── shop.ts
+│   │   │   └── user.ts
+│   │   ├── database/
+│   │   │   ├── schema.ts
+│   │   │   └── relations.ts
+│   │   ├── api/
+│   │   │   ├── requests.ts
+│   │   │   ├── responses.ts
+│   │   │   └── errors.ts
+│   │   └── ui/
+│   │       ├── components.ts
+│   │       └── forms.ts
+│   │
+│   ├── data/                                   # Static Data & Configurations
+│   │   ├── constants/
+│   │   │   ├── app-constants.ts
+│   │   │   ├── business-constants.ts
+│   │   │   └── ui-constants.ts
+│   │   ├── configs/
+│   │   │   ├── navigation.ts
+│   │   │   ├── permissions.ts
+│   │   │   └── feature-flags.ts
+│   │   └── mock/
+│   │       ├── test-data.ts
+│   │       └── demo-data.ts
+│   │
+│   └── middleware.ts                           # Next.js middleware
+│
+├── public/                                     # Static Assets
+│   ├── icons/
+│   ├── images/
+│   ├── logos/
+│   └── documents/
+│
+├── docs/                                       # Documentation
+├── tests/                                      # Test files
+├── supabase/                                   # Supabase config
+└── ... (config files)
