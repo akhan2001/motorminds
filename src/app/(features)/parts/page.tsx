@@ -16,7 +16,7 @@ export default function PartsOrdering() {
                 <PartsOrderingProvider>
                     <ResizablePanelGroup direction="horizontal" className="h-full">
                         <ResizablePanel defaultSize={60} minSize={55} maxSize={65}>
-                            <div className="h-full bg-[#1a1a1a] border-r border-[#2a2a2a] overflow-y-auto">
+                            <div className="h-full bg-black border-r border-gray-800 overflow-y-auto">
                                 <div className="p-6">
                                     <VehicleSelection />
                                     <PartsSelection />
