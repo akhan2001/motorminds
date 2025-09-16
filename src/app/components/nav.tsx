@@ -16,6 +16,8 @@ import { getShopInfo } from "@/utils/shopinfo/getShopInfo"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
+import { MiaButton } from "@/components/layout/nav/mia-button"
+import { NavIcon } from "@/components/layout/nav/nav-icon"
 
 export function Nav() {
 	const router = useRouter()
@@ -242,20 +244,20 @@ export function Nav() {
 					</div>
 				</div>
 				{/* Right: Actions */}
-				<div className="hidden lg:flex items-center gap-4">
-					<button 
-						className={`${
-							activeLink === "Messages" ? "text-white" : "text-[#979797]"
-						} hover:text-white transition-colors`} 
-						onClick={() => router.push("/messages")}
-					>
-						<MessageCircle className="inline-block w-5 h-5" />
-					</button>
-					<button className="text-[#979797] hover:text-white transition-colors">
-						{/* <span className="hidden md:inline mr-2">Help</span> */}
+				<div className="hidden lg:flex items-center">
+					<div className="flex items-center gap-2 bg-transparent border border-[#2a2a2a] rounded-full mr-4">
+						{/* Mia AI Button */}
+						<MiaButton />
+						
+						<NavIcon label="Messages" variant="squareGrey" onClick={() => router.push("/messages")}>
+							<MessageCircle className="w-5 h-5 text-white" />
+						</NavIcon>
+						
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
-								<HelpCircle className="inline-block w-5 h-5" />
+								<NavIcon label="Help" variant="squareGrey">
+									<HelpCircle className="w-5 h-5 text-white" />
+								</NavIcon>
 							</AlertDialogTrigger>
 							<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 								<AlertDialogHeader>
@@ -272,29 +274,27 @@ export function Nav() {
 								</AlertDialogFooter>
 							</AlertDialogContent>
 						</AlertDialog>
-					</button>
-					<button className="text-[#979797] hover:text-white transition-colors">
-						<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
-					</button>
-					{/* <button className="text-[#979797] hover:text-white transition-colors relative">
-						<Bell className="w-5 h-5" />
-						<span className="absolute -top-1 -right-1 w-2 h-2 bg-[#b22222] rounded-full" />
-					</button> */}
+
+						<NavIcon label="Settings" variant="squareGrey" className="rounded-r-full" onClick={() => router.push("/settings")}>
+							<Settings className="w-5 h-5 text-white" />
+						</NavIcon>
+					</div>
+					
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-								<Avatar className="w-7 h-7 cursor-pointer">
-									<AvatarImage src={avatar} />
-									<AvatarFallback>AK</AvatarFallback>
-								</Avatar>
+							<Avatar className="w-7 h-7 cursor-pointer">
+								<AvatarImage src={avatar} />
+								<AvatarFallback>AK</AvatarFallback>
+							</Avatar>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 							<AlertDialog>
 							<AlertDialogTrigger asChild>
-									<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-										<LogOut className="w-4 h-4 mr-2" />
-										Logout
-									</DropdownMenuItem>
-								</AlertDialogTrigger>
+								<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+									<LogOut className="w-4 h-4 mr-2" />
+									Logout
+								</DropdownMenuItem>
+							</AlertDialogTrigger>
 								<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 									<AlertDialogHeader>
 										<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
@@ -313,15 +313,7 @@ export function Nav() {
 									</AlertDialogFooter>
 								</AlertDialogContent>
 							</AlertDialog>
-							{/* <DropdownMenuItem
-								onSelect={(e) => {
-									e.preventDefault();
-									setTheme(theme === "light" ? "dark" : "light");
-								}}
-							>
-								{themeIcon}
-								{themeText}
-							</DropdownMenuItem> */}
+							{/* Theme switch omitted */}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
