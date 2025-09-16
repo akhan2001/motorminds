@@ -70,9 +70,9 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+        <div className="fixed top-20 left-0 right-0 bottom-0 z-40 flex items-center justify-center">
+            {/* Backdrop - only covers area below navbar */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-xs" />
             
             {/* Modal */}
             <div className="relative bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg p-8 w-full max-w-md mx-4 shadow-2xl">

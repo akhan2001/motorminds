@@ -18,7 +18,7 @@ export const ChatPanel: React.FC = () => {
     }
 
     return (
-        <div className="h-full bg-[#1a1a1a] flex flex-col">
+        <div className="h-full bg-black flex flex-col">
             {/* Chat Header */}
             <ChatHeader
                 cartCount={cartData.cart.length}

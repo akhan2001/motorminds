@@ -5,6 +5,7 @@ import { FinancialsAuthProvider, useFinancialsAuth } from '@/contexts/Financials
 import { FinancialsPasswordModal } from '@/components/financials/FinancialsPasswordModal';
 import { FinancialsSetupPassword } from '@/components/financials/FinancialsSetupPassword';
 import { createClient } from '@/utils/supabase/client';
+import { Nav } from '@/app/components/nav';
 
 interface FinancialsLayoutContentProps {
     children: React.ReactNode;
@@ -78,12 +79,17 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     // First-time setup
     if (needsPasswordSetup) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <FinancialsSetupPassword
-                    onComplete={() => {
-                        setNeedsPasswordSetup(false);
-                    }}
-                />
+            <div className="min-h-screen bg-black">
+                {/* Navigation */}
+                <Nav />
+                
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <FinancialsSetupPassword
+                        onComplete={() => {
+                            setNeedsPasswordSetup(false);
+                        }}
+                    />
+                </div>
             </div>
         );
     }
@@ -92,15 +98,22 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     if (!isUnlocked) {
         return (
             <div className="min-h-screen bg-black">
-                {/* Blurred background content */}
-                <div className="absolute inset-0 filter blur-sm pointer-events-none">
-                    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-8">
-                        <div className="max-w-7xl mx-auto">
-                            <h1 className="text-3xl font-bold text-white mb-8">Financial Dashboard</h1>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="bg-gray-800 rounded-lg p-6 h-40" />
-                                ))}
+                {/* Navigation - NOT blurred so users can navigate away */}
+                <div className="relative z-50 pointer-events-auto">
+                    <Nav />
+                </div>
+                
+                {/* Blurred background content - completely separate from navbar */}
+                <div className="relative">
+                    <div className="filter blur-[2px] pointer-events-none">
+                        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-8">
+                            <div className="max-w-7xl mx-auto">
+                                <h1 className="text-3xl font-bold text-white mb-8">Financial Dashboard</h1>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                                        <div key={i} className="bg-zinc-800 rounded-lg p-6 h-40" />
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
