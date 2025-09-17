@@ -71,3 +71,21 @@ export function isStatusHealthy(status?: UserStatus | string): boolean {
 export function isPaidPlan(plan?: UserPlan | string): boolean {
     return plan === 'PREMIUM' || plan === 'ENTERPRISE'
 }
+
+/**
+ * Get CSS classes for priority indicators
+ */
+export function getPriorityColor(priority?: 'low' | 'medium' | 'high' | 'urgent'): string {
+    switch (priority) {
+        case 'low':
+            return 'bg-green-500'
+        case 'medium':
+            return 'bg-yellow-500'
+        case 'high':
+            return 'bg-orange-500'
+        case 'urgent':
+            return 'bg-red-500'
+        default:
+            return 'bg-gray-500'
+    }
+}

@@ -58,4 +58,7 @@ next-env.d.ts
 *.local.*
 local-*
 
+# Mock data files (development only)
+src/app/(features)/operations/mock-work-orders.json
+
 /docs/
