@@ -1,3 +1,4 @@
+import { adminGuard } from '@/lib/auth/admin-guard';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -53,6 +54,24 @@ export async function updateSession(request: NextRequest) {
     '/mechanic-hub',     // Mechanic hub
     '/mia'
   ]
+
+  const adminPaths = [
+    '/admin',
+    'api/admin',
+  ]
+
+  const isAdminPath = adminPaths.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  )
+
+  // Check admin access BEFORE the existing protected path logic
+  if (isAdminPath) {
+    const adminCheckResult = await adminGuard(request)
+    if (adminCheckResult) {
+      return adminCheckResult
+    }
+  }
+
   const isProtectedPath = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   )
