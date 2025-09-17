@@ -5,7 +5,7 @@ import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
-import { useWorkOrdersWithDetails, useCreateWorkOrder } from "../hooks/use-work-orders";
+import { useWorkOrdersWithDetails, useCreateWorkOrder, useUpdateWorkOrder } from "../hooks/use-work-orders";
 import { useAuth } from "../hooks/use-auth";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +48,7 @@ export default function WorkOrdersPage() {
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
     const createWorkOrderMutation = useCreateWorkOrder()
+    const updateWorkOrderMutation = useUpdateWorkOrder()
     
     // Combined loading state
     const isLoading = authLoading || (shopId && workOrdersLoading)
@@ -154,10 +155,44 @@ export default function WorkOrdersPage() {
     }
 
     // Handle work order save
-    const handleWorkOrderSave = (updatedWorkOrder: WorkOrderKanbanItem) => {
-        console.log('Work order updated:', updatedWorkOrder)
-        // TODO: Update the work order in the data source
-        setIsModalOpen(false)
+    const handleWorkOrderSave = async (updatedWorkOrder: WorkOrderKanbanItem, formData?: any) => {
+        try {
+            // Use the work order ID from the updated work order (which should have the correct database ID)
+            const workOrderId = updatedWorkOrder.id
+            
+            // Prepare the update data
+            const updateData: Partial<WorkOrder> = {
+                title: updatedWorkOrder.title,
+                description: updatedWorkOrder.description,
+                priority: updatedWorkOrder.priority,
+                tags: updatedWorkOrder.tags,
+            }
+
+            // Include notes if provided in formData
+            if (formData?.notes !== undefined) {
+                updateData.notes = formData.notes
+            }
+
+            // Include other form fields if provided
+            if (formData) {
+                // Map assignee back to assigned_technician_id if it's a UUID
+                if (formData.assigneeId) {
+                    updateData.assigned_technician_id = formData.assigneeId
+                }
+            }
+
+            console.log('Updating work order with ID:', workOrderId, 'Data:', updateData)
+
+            await updateWorkOrderMutation.mutateAsync({
+                id: workOrderId,
+                data: updateData
+            })
+
+            setIsModalOpen(false)
+        } catch (error) {
+            console.error('Failed to update work order:', error)
+            // Error handling is done in the mutation hook
+        }
     }
 
     // Handle work order delete

@@ -19,6 +19,7 @@ export interface WorkOrder {
     // Metadata
     tags?: string[]
     attachments?: any[]
+    notes?: string
     
     // Timestamps
     created_at: string

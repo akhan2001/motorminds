@@ -18,7 +18,7 @@ import { WorkOrderRightPanel } from "./work-order-right-panel"
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
     onClose: () => void
-    onSave?: (updated: WorkOrderKanbanItem) => void
+    onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     onDelete?: (workOrderId: string) => void
     className?: string
 }
@@ -95,6 +95,9 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                 vehicleMileage: workOrderDetails.vehicle?.mileage?.toString() || "",
                 vehicleVin: workOrderDetails.vehicle?.vin || "",
                 vehicleLicensePlate: workOrderDetails.vehicle?.license_plate || "",
+                
+                // Work order notes
+                notes: workOrderDetails.notes || "",
             }))
         }
     }, [workOrderDetails])
@@ -135,7 +138,12 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
             tags: formData.tags,
         }
 
-        onSave?.(updatedWorkOrder)
+        // Use the actual work order ID from the fetched details if available
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        updatedWorkOrder.id = workOrderId
+
+        // Pass both the updated work order and the full form data (including notes)
+        onSave?.(updatedWorkOrder, formData)
         setIsEditing(false)
         toast.success("Work order updated successfully")
     }
