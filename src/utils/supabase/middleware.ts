@@ -49,6 +49,7 @@ export async function updateSession(request: NextRequest) {
     '/customers',       // Customer management
     '/invoices',        // Invoice management
     '/appointments',    // Appointment management
+    '/operations',      // Work orders and operations
     '/settings',        // Settings pages
     '/loyalty',         // Loyalty program
     '/mechanic-hub',     // Mechanic hub

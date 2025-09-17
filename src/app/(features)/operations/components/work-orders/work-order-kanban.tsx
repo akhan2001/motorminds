@@ -2,14 +2,17 @@
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Clock } from 'lucide-react'
 import { formatNumber } from '@/lib/utils/currency'
 import { WorkOrderKanbanColumn, WorkOrderKanbanItem } from '../../types/work-order'
 import { WorkOrderCard } from './work-order-card'
+import { WorkOrderCardSmall } from './work-order-card-small'
 
 export interface WorkOrderKanbanProps {
     columns: WorkOrderKanbanColumn[]
     onCardClick?: (item: WorkOrderKanbanItem) => void
+    isCompactView?: boolean
     className?: string
 }
 
@@ -18,7 +21,8 @@ export interface WorkOrderKanbanProps {
 const KanbanColumn: React.FC<{ 
     column: WorkOrderKanbanColumn
     onCardClick?: (item: WorkOrderKanbanItem) => void
-}> = ({ column, onCardClick }) => {
+    isCompactView?: boolean
+}> = ({ column, onCardClick, isCompactView = false }) => {
     return (
         <div className="h-full flex flex-col min-h-0">
             {/* Column Header - Fixed height */}
@@ -33,16 +37,24 @@ const KanbanColumn: React.FC<{
             </div>
             
             {/* Column Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-                <div className="p-3 space-y-3">
+            <ScrollArea className="flex-1 min-h-0">
+                <div className={`p-3 ${isCompactView ? 'space-y-2' : 'space-y-3'}`}>
                     {column.items.length > 0 ? (
-                        column.items.map((item) => (
-                            <WorkOrderCard 
-                                key={item.id} 
-                                item={item}
-                                onClick={onCardClick}
-                            />
-                        ))
+                        column.items.map((item) => 
+                            isCompactView ? (
+                                <WorkOrderCardSmall 
+                                    key={item.id} 
+                                    item={item}
+                                    onClick={onCardClick}
+                                />
+                            ) : (
+                                <WorkOrderCard 
+                                    key={item.id} 
+                                    item={item}
+                                    onClick={onCardClick}
+                                />
+                            )
+                        )
                     ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                             <Clock className="h-8 w-8 mb-2 opacity-50" />
@@ -50,7 +62,7 @@ const KanbanColumn: React.FC<{
                         </div>
                     )}
                 </div>
-            </div>
+            </ScrollArea>
         </div>
     )
 }
@@ -58,6 +70,7 @@ const KanbanColumn: React.FC<{
 export const WorkOrderKanban: React.FC<WorkOrderKanbanProps> = ({ 
     columns, 
     onCardClick,
+    isCompactView = false,
     className = ""
 }) => {
     return (
@@ -65,7 +78,7 @@ export const WorkOrderKanban: React.FC<WorkOrderKanbanProps> = ({
             <div className="h-full grid grid-cols-3 gap-0 min-h-0">
                 {columns.map((column) => (
                     <div key={column.id} className="h-full bg-[#111111] border-r border-[#2a2a2a] last:border-r-0 min-h-0">
-                        <KanbanColumn column={column} onCardClick={onCardClick} />
+                        <KanbanColumn column={column} onCardClick={onCardClick} isCompactView={isCompactView} />
                     </div>
                 ))}
             </div>

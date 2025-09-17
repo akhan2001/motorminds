@@ -1,4 +1,6 @@
 export { default as CustomerSelection } from './CustomerSelection'
+export { default as CustomerDropdown } from './CustomerDropdown'
+export { default as VehicleDropdown } from './VehicleDropdown'
 
 // Export the Customer type for convenience
 export type Customer = {
@@ -28,3 +30,21 @@ export type CustomerSelectionProps = {
     onCreateNew?: () => void
     compact?: boolean
 }
+
+export type CustomerDropdownProps = {
+    shopId: string
+    selectedCustomerId: string
+    onCustomerSelect: (customerId: string, customerData?: any) => void
+    placeholder?: string
+    disabled?: boolean
+    className?: string
+    isLoading?: boolean
+}
+
+// Re-export vehicle types
+export type { 
+    VehicleDropdownProps, 
+    VehicleOption, 
+    CustomerVehicle, 
+    VehicleFormData 
+} from '../../types/vehicle'

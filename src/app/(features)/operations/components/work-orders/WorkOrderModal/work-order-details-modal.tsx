@@ -170,9 +170,11 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     description={formData.description}
                                     priority={formData.priority}
                                     assignee={formData.assignee}
+                                    assigneeId={""} // Not used in details view
                                     date={formData.date}
                                     tags={formData.tags}
                                     isEditing={isEditing}
+                                    isCreating={false} // Disable technician dropdown for editing
                                     onFieldChange={handleFieldChange}
                                     onAddTag={handleAddTag}
                                     onRemoveTag={handleRemoveTag}
@@ -180,6 +182,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
 
                                 {/* Customer Information */}
                                 <CustomerInformation 
+                                    customerId={""} // Not used in details view
                                     customerName={formData.customer}
                                     customerEmail={formData.customerEmail}
                                     customerPhone={formData.customerPhone}

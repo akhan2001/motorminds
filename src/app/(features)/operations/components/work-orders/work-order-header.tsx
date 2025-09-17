@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, MessageSquare, Filter, SortAsc } from 'lucide-react'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatNumber } from '@/lib/utils/currency'
 
@@ -14,6 +14,9 @@ interface WorkOrderHeaderProps {
     pendingCount?: number
     inProgressCount?: number
     completedCount?: number
+    isCompactView?: boolean
+    onToggleView?: () => void
+    onNewWorkOrder?: () => void
 }
 
 export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
@@ -21,7 +24,10 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     totalCount = 0,
     pendingCount = 0,
     inProgressCount = 0,
-    completedCount = 0
+    completedCount = 0,
+    isCompactView = false,
+    onToggleView,
+    onNewWorkOrder
 }) => {
     return (
         <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
@@ -82,6 +88,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                         <Button
                             size="sm"
                             className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={onNewWorkOrder}
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             New Work Order
@@ -117,9 +124,19 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                             variant="outline"
                             size="sm"
                             className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            onClick={onToggleView}
                         >
-                            <SortAsc className="h-4 w-4 mr-2" />
-                            Sort
+                            {isCompactView ? (
+                                <>
+                                    <Maximize2 className="h-4 w-4 mr-2" />
+                                    Enlarge
+                                </>
+                            ) : (
+                                <>
+                                    <Minimize2 className="h-4 w-4 mr-2" />
+                                    Compact
+                                </>
+                            )}
                         </Button>
                     </div>
                 </div>

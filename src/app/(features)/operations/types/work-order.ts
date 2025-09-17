@@ -51,6 +51,8 @@ export interface WorkOrder {
     updated_at: string
     started_at?: string
     completed_at?: string
+    due_date?: string
+    scheduled_date?: string
 }
 
 export type WorkOrderStatus = 

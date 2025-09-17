@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 
 export interface WorkOrderModalFooterProps {
     isEditing: boolean
+    isCreating?: boolean
+    isSubmitting?: boolean
     onEdit: () => void
     onSave: () => void
     onCancel: () => void
@@ -15,6 +17,8 @@ export interface WorkOrderModalFooterProps {
 
 export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     isEditing,
+    isCreating = false,
+    isSubmitting = false,
     onEdit,
     onSave,
     onCancel,
@@ -50,8 +54,12 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         <Button
                             className="px-8 bg-[#22C55E] hover:bg-[#22C55E]/80 text-white"
                             onClick={onSave}
+                            disabled={isSubmitting}
                         >
-                            Save Changes
+                            {isSubmitting 
+                                ? (isCreating ? 'Creating...' : 'Saving...') 
+                                : (isCreating ? 'Create Work Order' : 'Save Changes')
+                            }
                         </Button>
                     </>
                 ) : (

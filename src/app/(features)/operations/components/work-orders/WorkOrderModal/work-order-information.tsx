@@ -7,16 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { getPriorityColor } from "@/lib/utils/status"
 import { WorkOrderPriority } from "../../../types/work-order"
+import { TechnicianDropdown } from "@/app/(features)/technician"
+import { useAuth } from "../../../hooks/use-auth"
 
 export interface WorkOrderInformationProps {
     title: string
     description: string
     priority: WorkOrderPriority
     assignee: string
+    assigneeId?: string
     date: string
     tags: string[]
     isEditing: boolean
+    isCreating?: boolean
     onFieldChange: (field: string, value: any) => void
+    onTechnicianSelect?: (technicianId: string, technicianData?: any) => void
     onAddTag: (tag: string) => void
     onRemoveTag: (tag: string) => void
     className?: string
@@ -27,14 +32,29 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
     description,
     priority,
     assignee,
+    assigneeId,
     date,
     tags,
     isEditing,
+    isCreating = false,
     onFieldChange,
+    onTechnicianSelect,
     onAddTag,
     onRemoveTag,
     className = ""
 }) => {
+    const { shopId } = useAuth()
+
+    // Handle technician selection
+    const handleTechnicianSelect = (technicianId: string, technicianData?: any) => {
+        if (technicianId === "none") {
+            onFieldChange('assignee', '')
+            onTechnicianSelect?.("none")
+        } else if (technicianData) {
+            onFieldChange('assignee', technicianData.fullName)
+            onTechnicianSelect?.(technicianId, technicianData)
+        }
+    }
     const priorityOptions = [
         { value: 'low' as WorkOrderPriority, label: 'Low', color: 'bg-green-500' },
         { value: 'medium' as WorkOrderPriority, label: 'Medium', color: 'bg-yellow-500' },
@@ -100,13 +120,24 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Assigned To</Label>
-                            <Input
-                                value={assignee}
-                                onChange={(e) => isEditing && onFieldChange('assignee', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-                                readOnly={!isEditing}
-                                placeholder="Assign technician"
-                            />
+                            {isCreating && isEditing && shopId ? (
+                                <TechnicianDropdown
+                                    shopId={shopId}
+                                    selectedTechnicianId={assigneeId || "none"}
+                                    onTechnicianSelect={handleTechnicianSelect}
+                                    placeholder="Select technician"
+                                    className="w-full"
+                                    showNoneOption={true}
+                                />
+                            ) : (
+                                <Input
+                                    value={assignee}
+                                    onChange={(e) => isEditing && onFieldChange('assignee', e.target.value)}
+                                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                    readOnly={!isEditing}
+                                    placeholder="Assign technician"
+                                />
+                            )}
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Due Date</Label>
