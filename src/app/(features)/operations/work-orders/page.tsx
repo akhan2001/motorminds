@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from "react";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
+import { WorkOrderDetailsModal } from "../components/work-orders/WorkOrderModal";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import type { WorkOrderKanbanColumn, WorkOrderKanbanItem } from "../types/work-order";
 import mockWorkOrdersData from "../mock-work-orders.json";
@@ -12,11 +14,35 @@ const mockKanbanData = mockWorkOrdersData as WorkOrderKanbanColumn[];
 export default function WorkOrdersPage() {
     // Calculate stats using custom hook
     const stats = useWorkOrderStats(mockKanbanData)
+    
+    // Modal state
+    const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrderKanbanItem | null>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
 
     // Handle work order card clicks
     const handleCardClick = (item: WorkOrderKanbanItem) => {
-        console.log('Work order clicked:', item)
-        // TODO: Navigate to work order details page or open modal
+        setSelectedWorkOrder(item)
+        setIsModalOpen(true)
+    }
+
+    // Handle modal close
+    const handleModalClose = () => {
+        setIsModalOpen(false)
+        setSelectedWorkOrder(null)
+    }
+
+    // Handle work order save
+    const handleWorkOrderSave = (updatedWorkOrder: WorkOrderKanbanItem) => {
+        console.log('Work order updated:', updatedWorkOrder)
+        // TODO: Update the work order in the data source
+        setIsModalOpen(false)
+    }
+
+    // Handle work order delete
+    const handleWorkOrderDelete = (workOrderId: string) => {
+        console.log('Work order deleted:', workOrderId)
+        // TODO: Remove the work order from the data source
+        setIsModalOpen(false)
     }
 
     return (
@@ -36,6 +62,16 @@ export default function WorkOrdersPage() {
                     />
                 </div>
             </div>
+
+            {/* Work Order Details Modal */}
+            {isModalOpen && selectedWorkOrder && (
+                <WorkOrderDetailsModal
+                    workOrder={selectedWorkOrder}
+                    onClose={handleModalClose}
+                    onSave={handleWorkOrderSave}
+                    onDelete={handleWorkOrderDelete}
+                />
+            )}
         </div>
     )
 }

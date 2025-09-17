@@ -1,0 +1,46 @@
+'use client'
+
+import { Calendar, User } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { getPriorityColor } from "@/lib/utils/status"
+import { WorkOrderPriority } from "../../../types/work-order"
+
+export interface WorkOrderStatusBarProps {
+    priority: WorkOrderPriority
+    date: string
+    assignee?: string
+    status?: string
+    className?: string
+}
+
+export const WorkOrderStatusBar: React.FC<WorkOrderStatusBarProps> = ({
+    priority,
+    date,
+    assignee,
+    status = "pending",
+    className = ""
+}) => {
+    return (
+        <div className={`flex items-center justify-between p-4 bg-[#1A1A1A] border-b border-[#222222] ${className}`}>
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${getPriorityColor(priority)}`} />
+                    <span className="text-sm font-medium text-white capitalize">{priority} Priority</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-300">{date}</span>
+                </div>
+                {assignee && (
+                    <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm text-gray-300">{assignee}</span>
+                    </div>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+                <Badge className="bg-yellow-500 text-black capitalize">{status}</Badge>
+            </div>
+        </div>
+    )
+}
