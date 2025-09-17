@@ -5,24 +5,38 @@ import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
-import { useWorkOrders, useCreateWorkOrder } from "../hooks/use-work-orders";
+import { useWorkOrdersWithDetails, useCreateWorkOrder } from "../hooks/use-work-orders";
 import { useAuth } from "../hooks/use-auth";
-import type { WorkOrderKanbanColumn, WorkOrderKanbanItem } from "../types/work-order";
+import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
-import type { WorkOrder } from "../types/work-order";
 
-// Helper function to transform WorkOrder to WorkOrderKanbanItem
-function transformWorkOrderToKanbanItem(workOrder: WorkOrder): WorkOrderKanbanItem {
+// Helper function to transform WorkOrderWithDetails to WorkOrderKanbanItem
+function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOrderKanbanItem {
+    // Format customer display
+    const customerDisplay = workOrder.customer 
+        ? workOrder.customer.customer_name 
+        : 'Unknown Customer'
+    
+    // Format vehicle display  
+    const vehicleDisplay = workOrder.vehicle 
+        ? `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}${workOrder.vehicle.license_plate ? ` (${workOrder.vehicle.license_plate})` : ''}`
+        : 'Unknown Vehicle'
+    
+    // Format technician display
+    const technicianDisplay = workOrder.technician 
+        ? `${workOrder.technician.first_name} ${workOrder.technician.last_name}`
+        : workOrder.assigned_technician_id || 'Unassigned'
+        
     return {
         id: workOrder.id,
         title: workOrder.title,
         description: workOrder.description,
         priority: workOrder.priority,
-        assignee: workOrder.assigned_technician_id, // TODO: Map to actual technician name
-        date: workOrder.due_date || workOrder.created_at.split('T')[0],
-        customer: "Loading...", // TODO: Fetch customer name from customer_id
-        vehicle: "Loading...", // TODO: Fetch vehicle info from vehicle_id  
+        assignee: technicianDisplay,
+        date: workOrder.created_at.split('T')[0],
+        customer: customerDisplay,
+        vehicle: vehicleDisplay,
         tags: workOrder.tags || []
     }
 }
@@ -32,7 +46,7 @@ export default function WorkOrdersPage() {
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
     // Data fetching - only fetch if we have a valid shopId
-    const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrders(shopId || '')
+    const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
     const createWorkOrderMutation = useCreateWorkOrder()
     
     // Combined loading state
@@ -118,18 +132,11 @@ export default function WorkOrdersPage() {
                 status: 'pending',
                 priority: workOrderData.priority,
                 shop_id: shopId,
-                customer_id: 'temp-customer-id', // TODO: Use selected customer ID
-                vehicle_id: 'temp-vehicle-id', // TODO: Use selected vehicle ID
-                created_by_user_id: user.id,
-                is_warranty_work: false,
-                is_insurance_claim: false,
-                customer_waiting: false,
-                requires_estimate: true,
-                estimate_approved: false,
-                tags: workOrderData.tags,
-                due_date: workOrderData.date,
-                internal_notes: workOrderData.notes,
-                vehicle_mileage: parseFloat(workOrderData.vehicleMileage) || undefined,
+                customer_id: workOrderData.customerId && workOrderData.customerId !== "new" ? workOrderData.customerId : '00000000-0000-0000-0000-000000000001',
+                vehicle_id: workOrderData.vehicleId && workOrderData.vehicleId !== "new" ? workOrderData.vehicleId : '00000000-0000-0000-0000-000000000001',
+                assigned_technician_id: workOrderData.assigneeId || undefined,
+                tags: workOrderData.tags || [],
+                attachments: [],
             }
             
             await createWorkOrderMutation.mutateAsync(workOrderPayload)

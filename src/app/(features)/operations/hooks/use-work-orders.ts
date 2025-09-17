@@ -53,6 +53,15 @@ export function useWorkOrdersWithDetails(shopId: string) {
     })
 }
 
+export function useWorkOrderWithDetails(workOrderId: string) {
+    return useQuery({
+        queryKey: [...workOrderKeys.detail(workOrderId), 'with-details'],
+        queryFn: () => workOrderService.getWorkOrderWithDetailsById(workOrderId),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!workOrderId,
+    })
+}
+
 // Mutation hooks for creating, updating, and deleting work orders
 export function useCreateWorkOrder() {
     const queryClient = useQueryClient()
@@ -71,6 +80,7 @@ export function useCreateWorkOrder() {
             // Invalidate and refetch work orders
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             queryClient.invalidateQueries({ queryKey: workOrderKeys.list(newWorkOrder.shop_id) })
+            queryClient.invalidateQueries({ queryKey: [...workOrderKeys.list(newWorkOrder.shop_id), 'with-details'] })
             
             toast.success('Work order created successfully')
         },

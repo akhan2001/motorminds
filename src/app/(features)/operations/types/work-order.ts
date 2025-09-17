@@ -1,13 +1,10 @@
-// Work order type definitions
+// Work order type definitions - matches actual database schema
 
 export interface WorkOrder {
     id: string
     work_order_number: string
     title: string
     description?: string
-    customer_complaint?: string
-    diagnosis?: string
-    work_performed?: string
     status: WorkOrderStatus
     priority: WorkOrderPriority
     
@@ -18,29 +15,6 @@ export interface WorkOrder {
     appointment_id?: string
     invoice_id?: string
     assigned_technician_id?: string
-    created_by_user_id: string
-    primary_service_id?: string
-    primary_insight_id?: string
-    
-    // Vehicle info
-    vehicle_mileage?: number
-    vehicle_notes?: string
-    
-    // Financial
-    tax_rate?: number
-    
-    // Notes
-    internal_notes?: string
-    customer_notes?: string
-    special_instructions?: string
-    
-    // Flags
-    is_warranty_work: boolean
-    is_insurance_claim: boolean
-    customer_waiting: boolean
-    requires_estimate: boolean
-    estimate_approved: boolean
-    estimate_approved_at?: string
     
     // Metadata
     tags?: string[]
@@ -51,8 +25,32 @@ export interface WorkOrder {
     updated_at: string
     started_at?: string
     completed_at?: string
-    due_date?: string
-    scheduled_date?: string
+}
+
+// Work order with joined customer and vehicle details
+export interface WorkOrderWithDetails extends WorkOrder {
+    customer?: {
+        id: string
+        customer_name: string
+        customer_phone?: string
+        customer_email?: string
+        customer_address?: string
+    }
+    vehicle?: {
+        id: string
+        year: number
+        make: string
+        model: string
+        license_plate?: string
+        color?: string
+        vin?: string
+        mileage?: number
+    }
+    technician?: {
+        id: string
+        first_name: string
+        last_name: string
+    }
 }
 
 export type WorkOrderStatus = 

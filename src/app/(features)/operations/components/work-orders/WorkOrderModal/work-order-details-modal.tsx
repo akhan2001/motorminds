@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
-import { WorkOrderKanbanItem, WorkOrderPriority } from "../../../types/work-order"
+import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "../../../types/work-order"
+import { useWorkOrderWithDetails } from "../../../hooks/use-work-orders"
+import { Loader2 } from "lucide-react"
 import { WorkOrderModalHeader } from "./work-order-modal-header"
 import { WorkOrderStatusBar } from "./work-order-status-bar"
 import { WorkOrderInformation } from "./work-order-information"
 import { CustomerInformation } from "./customer-information"
 import { VehicleInformation } from "./vehicle-information"
-import { FinancialInformation } from "./financial-information"
 import { WorkOrderNotes } from "./work-order-notes"
 import { WorkOrderModalFooter } from "./work-order-modal-footer"
 import { WorkOrderRightPanel } from "./work-order-right-panel"
@@ -31,6 +32,9 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
 }) => {
     const [isEditing, setIsEditing] = useState(false)
     
+    // Fetch full work order details
+    const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
+    
     // Form state for editing
     const [formData, setFormData] = useState({
         title: initialWorkOrder.title || "",
@@ -43,52 +47,57 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         tags: initialWorkOrder.tags || [],
         
         // Additional fields for comprehensive display
-        customerEmail: "customer@example.com", // Mock data
-        customerPhone: "+1 (555) 123-4567", // Mock data
-        customerAddress: "123 Main St, City, State 12345", // Mock data
+        customerEmail: "",
+        customerPhone: "",
+        customerAddress: "",
         
         // Vehicle details (expanded from vehicle string)
-        vehicleYear: "2015",
-        vehicleMake: "Honda",
-        vehicleModel: "Civic",
-        vehicleColor: "Blue",
-        vehicleMileage: "85,432",
-        vehicleVin: "1HGBH41JXMN109186",
-        vehicleLicensePlate: "ABC123",
+        vehicleYear: "",
+        vehicleMake: "",
+        vehicleModel: "",
+        vehicleColor: "",
+        vehicleMileage: "",
+        vehicleVin: "",
+        vehicleLicensePlate: "",
         
         // Work order specifics
-        estimatedHours: "3.5",
-        laborCost: "245.00",
-        partsCost: "125.50",
-        totalCost: "370.50",
-        notes: "Customer reported strange noise when braking. Initial inspection suggests brake pad replacement needed.",
+        notes: "",
     })
 
-    // Update form when work order changes
+    // Update form when work order details are fetched
     useEffect(() => {
-        setFormData(prev => ({
-            ...prev,
-            title: initialWorkOrder.title || "",
-            description: initialWorkOrder.description || "",
-            priority: (initialWorkOrder.priority || "medium") as WorkOrderPriority,
-            assignee: initialWorkOrder.assignee || "",
-            date: initialWorkOrder.date || "",
-            customer: initialWorkOrder.customer || "",
-            vehicle: initialWorkOrder.vehicle || "",
-            tags: initialWorkOrder.tags || [],
-        }))
-    }, [initialWorkOrder])
-
-    // Calculate total cost when labor or parts change
-    useEffect(() => {
-        const labor = parseFloat(formData.laborCost) || 0
-        const parts = parseFloat(formData.partsCost) || 0
-        const total = labor + parts
-        setFormData(prev => ({
-            ...prev,
-            totalCost: total.toFixed(2)
-        }))
-    }, [formData.laborCost, formData.partsCost])
+        if (workOrderDetails) {
+            setFormData(prev => ({
+                ...prev,
+                title: workOrderDetails.title || "",
+                description: workOrderDetails.description || "",
+                priority: (workOrderDetails.priority || "medium") as WorkOrderPriority,
+                assignee: workOrderDetails.technician 
+                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name}`
+                    : workOrderDetails.assigned_technician_id || "",
+                date: workOrderDetails.created_at.split('T')[0] || "",
+                customer: workOrderDetails.customer?.customer_name || "",
+                vehicle: workOrderDetails.vehicle 
+                    ? `${workOrderDetails.vehicle.year} ${workOrderDetails.vehicle.make} ${workOrderDetails.vehicle.model}${workOrderDetails.vehicle.license_plate ? ` (${workOrderDetails.vehicle.license_plate})` : ''}`
+                    : "",
+                tags: workOrderDetails.tags || [],
+                
+                // Customer details
+                customerEmail: workOrderDetails.customer?.customer_email || "",
+                customerPhone: workOrderDetails.customer?.customer_phone || "",
+                customerAddress: workOrderDetails.customer?.customer_address || "",
+                
+                // Vehicle details
+                vehicleYear: workOrderDetails.vehicle?.year?.toString() || "",
+                vehicleMake: workOrderDetails.vehicle?.make || "",
+                vehicleModel: workOrderDetails.vehicle?.model || "",
+                vehicleColor: workOrderDetails.vehicle?.color || "",
+                vehicleMileage: workOrderDetails.vehicle?.mileage?.toString() || "",
+                vehicleVin: workOrderDetails.vehicle?.vin || "",
+                vehicleLicensePlate: workOrderDetails.vehicle?.license_plate || "",
+            }))
+        }
+    }, [workOrderDetails])
 
     const handleFieldChange = (field: string, value: any) => {
         setFormData(prev => ({
@@ -140,6 +149,40 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     const handleEdit = () => setIsEditing(true)
     const handleCancel = () => setIsEditing(false)
 
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+                <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-8 flex items-center gap-3">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Loading work order details...</span>
+                </div>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+                <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-8 text-center">
+                    <p className="text-red-400 mb-4">Failed to load work order details</p>
+                    <button 
+                        onClick={onClose}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    // Don't render if no data yet
+    if (!workOrderDetails) {
+        return null
+    }
+
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden">
             <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
@@ -150,6 +193,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                             {/* Header */}
                             <WorkOrderModalHeader 
                                 workOrder={initialWorkOrder}
+                                workOrderDetails={workOrderDetails}
                                 onClose={onClose}
                             />
 
@@ -158,7 +202,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                 priority={formData.priority}
                                 date={formData.date}
                                 assignee={formData.assignee}
-                                status="pending"
+                                status={workOrderDetails.status}
                             />
 
                             {/* Main Content - Scrollable */}
@@ -200,16 +244,6 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     vehicleVin={formData.vehicleVin}
                                     vehicleLicensePlate={formData.vehicleLicensePlate}
                                     vehicleMileage={formData.vehicleMileage}
-                                    isEditing={isEditing}
-                                    onFieldChange={handleFieldChange}
-                                />
-
-                                {/* Financial Information */}
-                                <FinancialInformation 
-                                    estimatedHours={formData.estimatedHours}
-                                    laborCost={formData.laborCost}
-                                    partsCost={formData.partsCost}
-                                    totalCost={formData.totalCost}
                                     isEditing={isEditing}
                                     onFieldChange={handleFieldChange}
                                 />

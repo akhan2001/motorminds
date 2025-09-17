@@ -2,10 +2,11 @@
 
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { WorkOrderKanbanItem } from "../../../types/work-order"
+import { WorkOrderKanbanItem, WorkOrderWithDetails } from "../../../types/work-order"
 
 export interface WorkOrderModalHeaderProps {
     workOrder: WorkOrderKanbanItem
+    workOrderDetails?: WorkOrderWithDetails
     onClose: () => void
     isCreating?: boolean
     className?: string
@@ -13,15 +14,18 @@ export interface WorkOrderModalHeaderProps {
 
 export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
     workOrder,
+    workOrderDetails,
     onClose,
     isCreating = false,
     className = ""
 }) => {
+    const displayNumber = workOrderDetails?.work_order_number || workOrder.id
+    
     return (
         <div className={`flex items-center justify-between p-6 border-b border-[#222222] shrink-0 ${className}`}>
             <div className="space-y-1">
                 <h2 className="text-white text-xl sm:text-2xl">
-                    {isCreating ? 'Create New Work Order' : `Work Order #${workOrder.id}`}
+                    {isCreating ? 'Create New Work Order' : `Work Order ${displayNumber}`}
                 </h2>
                 <p className="text-gray-400 text-xs sm:text-sm">
                     {isCreating 

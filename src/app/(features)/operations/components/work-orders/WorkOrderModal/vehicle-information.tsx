@@ -64,16 +64,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     }
     return (
         <div className={`space-y-4 ${className}`}>
-            <div className="flex items-center gap-2 mb-4">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    vehicleMake && vehicleModel && vehicleYear ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
-                }`}>
-                    {vehicleMake && vehicleModel && vehicleYear ? '✓' : '2'}
-                </div>
-                <h3 className={`text-lg font-semibold ${vehicleMake && vehicleModel && vehicleYear ? 'text-green-400' : 'text-white'}`}>
-                    Vehicle Information
-                </h3>
-            </div>
+        <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
             <div className="bg-[#1A1A1A] rounded-xl p-6">
                 {/* Vehicle Selection Dropdown (only for creation mode) */}
                 {isCreating && isEditing && customerId && customerId !== "new" && (
@@ -165,7 +156,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
                                 readOnly={!isEditing}
                                 placeholder="Current mileage"
-                                type="number"
+                                type="text"
                             />
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 // Main service for work order CRUD operations
 import { createClient } from '@/lib/supabase'
-import type { WorkOrder, WorkOrderItem, WorkOrderStatus } from '../types/work-order'
+import type { WorkOrder, WorkOrderWithDetails, WorkOrderItem, WorkOrderStatus } from '../types/work-order'
 
 export class WorkOrderService {
     private supabase = createClient()
@@ -21,6 +21,27 @@ export class WorkOrderService {
         return data || []
     }
 
+    // GET work orders with customer and vehicle details for display
+    async getWorkOrdersWithDetails(shopId: string): Promise<WorkOrderWithDetails[]> {
+        const { data, error } = await this.supabase
+            .from('work_orders')
+            .select(`
+                *,
+                customer:customers(id, customer_name, customer_phone, customer_email),
+                vehicle:customer_vehicles(id, year, make, model, license_plate, color),
+                technician:employees(id, first_name, last_name)
+            `)
+            .eq('shop_id', shopId)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error('Error fetching work orders with details:', error)
+            throw new Error(`Failed to fetch work orders: ${error.message}`)
+        }
+
+        return data || []
+    }
+
     async getWorkOrderById(id: string): Promise<WorkOrder | null> {
         const { data, error } = await this.supabase
             .from('work_orders')
@@ -30,6 +51,27 @@ export class WorkOrderService {
 
         if (error) {
             console.error('Error fetching work order:', error)
+            return null
+        }
+
+        return data
+    }
+
+    // GET single work order with customer and vehicle details
+    async getWorkOrderWithDetailsById(id: string): Promise<WorkOrderWithDetails | null> {
+        const { data, error } = await this.supabase
+            .from('work_orders')
+            .select(`
+                *,
+                customer:customers(id, customer_name, customer_phone, customer_email, customer_address),
+                vehicle:customer_vehicles(id, year, make, model, license_plate, color, vin, mileage),
+                technician:employees(id, first_name, last_name)
+            `)
+            .eq('id', id)
+            .single()
+
+        if (error) {
+            console.error('Error fetching work order with details:', error)
             return null
         }
 
@@ -140,41 +182,6 @@ export class WorkOrderService {
             console.error('Error deleting work order item:', error)
             throw new Error(`Failed to delete work order item: ${error.message}`)
         }
-    }
-    
-    // COMPLEX queries
-    async getWorkOrdersWithDetails(shopId: string): Promise<any[]> {
-        const { data, error } = await this.supabase
-            .from('work_orders')
-            .select(`
-                *,
-                customers (
-                    id,
-                    name,
-                    email,
-                    phone,
-                    address
-                ),
-                customer_vehicles (
-                    id,
-                    year,
-                    make,
-                    model,
-                    color,
-                    vin,
-                    license_plate,
-                    mileage
-                )
-            `)
-            .eq('shop_id', shopId)
-            .order('created_at', { ascending: false })
-
-        if (error) {
-            console.error('Error fetching work orders with details:', error)
-            throw new Error(`Failed to fetch work orders with details: ${error.message}`)
-        }
-
-        return data || []
     }
 
     async searchWorkOrders(shopId: string, query: string): Promise<WorkOrder[]> {

@@ -192,16 +192,19 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 description: formData.description,
                 priority: formData.priority,
                 assignee: formData.assignee,
-                date: formData.date,
+                assigneeId: formData.assigneeId,
+                customerId: formData.customerId,
+                vehicleId: formData.vehicleId,
                 customer: formData.customer,
                 vehicle: formData.vehicle,
+                vehicleMileage: formData.vehicleMileage,
                 tags: formData.tags,
+                date: formData.date,
                 estimatedHours: parseFloat(formData.estimatedHours) || 0,
                 laborCost: parseFloat(formData.laborCost) || 0,
                 partsCost: parseFloat(formData.partsCost) || 0,
                 totalCost: parseFloat(formData.totalCost) || 0,
                 notes: formData.notes,
-                // Add other fields as needed
             }
 
             await onSave?.(workOrderData)
