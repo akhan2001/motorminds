@@ -18,6 +18,7 @@ import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
 import { MiaButton } from "@/components/layout/nav/mia-button"
 import { NavIcon } from "@/components/layout/nav/nav-icon"
+import { getCurrentUserIsAdmin } from "@/lib/auth/admin-guard-client"
 
 export function Nav() {
 	const router = useRouter()
@@ -26,6 +27,7 @@ export function Nav() {
 	const [mounted, setMounted] = useState(false)
 	const [avatar, setAvatar] = useState("")
 	const [open, setOpen] = useState(false)
+	const [isAdmin, setIsAdmin] = useState(false)
 
 	if (!pathname) {
 		return null
@@ -37,9 +39,14 @@ export function Nav() {
 	}, [])
 
 	useEffect(() => {
-		const fetchShopInfo = async () => {
+		const fetchUserInfo = async () => {
 			const user = await checkUser()
 			if (user) {
+				// Check if user is admin (client-side)
+				const adminStatus = await getCurrentUserIsAdmin()
+				setIsAdmin(adminStatus)
+				
+				// Get shop info for avatar
 				const shopId = await getShopId(user.id)
 				if (shopId) {
 					const shopInfo = await getShopInfo(shopId)
@@ -47,7 +54,7 @@ export function Nav() {
 				}
 			}
 		}
-		fetchShopInfo()
+		fetchUserInfo()
 	}, [])
 
 	// Render the icon based on mounted state to avoid hydration mismatch
@@ -80,7 +87,7 @@ export function Nav() {
 		{ name: "Customer Contracts", href: "/customer-contracts" },
 	]
 
-	const navItems = [
+	const baseNavItems = [
 		{ name: "Dashboard", href: "/" },
 		{ 
 			name: "Mechanic Hub", 
@@ -107,6 +114,11 @@ export function Nav() {
 		},
 		// { name: "Customer Intake", href: "/customer-intake" },
 	]
+
+	// Add Admin link only for admin users
+	const navItems = isAdmin 
+		? [...baseNavItems, { name: "Admin", href: "/admin/dashboard" }]
+		: baseNavItems
 
 	let activeLink = ""
 	let longestMatch = 0

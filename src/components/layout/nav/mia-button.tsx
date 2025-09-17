@@ -4,12 +4,14 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useRouter } from 'next/navigation'
 
 interface MiaButtonProps {
 	className?: string
 }
 
 export function MiaButton({ className }: MiaButtonProps) {
+	const router = useRouter()
 	// TODO: Integrate with useMiaSidebar hook when implementing full Mia sidebar
 	const isOpen = false
 	const toggleSidebar = () => {
@@ -22,7 +24,8 @@ export function MiaButton({ className }: MiaButtonProps) {
 				<TooltipTrigger asChild>
 					<Button
 						aria-pressed={isOpen}
-						onClick={toggleSidebar}
+						// onClick={toggleSidebar}
+                        onClick={() => router.push("/mia")} 
 						className={cn(
 							// Background highlight only; persistent when open
 							isOpen ? "bg-[#b22222]/30" : "bg-transparent hover:bg-[#b22222]/30 active:bg-[#b22222]/40",
