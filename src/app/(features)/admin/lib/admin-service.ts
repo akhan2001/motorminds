@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase'
 import type { Shop, AdminStats, UsersByShop, User, ShopWithUsers } from '../types/admin'
+import { findPrimaryUser, groupUsersByShop, countUsersByStatus, countUsersByPlan } from '@/lib/utils/users'
 
 export class AdminService {
     private supabase = createClient()
@@ -62,14 +63,8 @@ export class AdminService {
                 // Don't throw here, just continue without user data
             }
 
-            // Group users by shop_id and calculate metrics
-            const usersByShop = (users || []).reduce((acc, user) => {
-                if (!acc[user.shop_id]) {
-                    acc[user.shop_id] = []
-                }
-                acc[user.shop_id].push(user)
-                return acc
-            }, {} as Record<string, User[]>)
+            // Group users by shop_id using utility function
+            const usersByShop = groupUsersByShop(users || [])
 
             // Get revenue data (placeholder for future implementation)
             const revenueMap: Record<string, number> = {}
@@ -78,10 +73,8 @@ export class AdminService {
             return (shops || []).map(shop => {
                 const shopUsers = usersByShop[shop.id] || []
                 
-                // Find primary user (shop owner or admin role)
-                const primaryUser = shopUsers.find(u => u.role === 'admin') || 
-                                  shopUsers.find(u => u.role === 'owner') ||
-                                  shopUsers[0] // fallback to first user
+                // Find primary user using utility function
+                const primaryUser = findPrimaryUser(shopUsers)
 
                 return {
                     ...shop,
@@ -119,16 +112,9 @@ export class AdminService {
                 throw usersError
             }
 
-            // Calculate user statistics
-            const statusCounts = (users || []).reduce((acc, user) => {
-                acc[user.status] = (acc[user.status] || 0) + 1
-                return acc
-            }, {} as Record<string, number>)
-
-            const planCounts = (users || []).reduce((acc, user) => {
-                acc[user.plan] = (acc[user.plan] || 0) + 1
-                return acc
-            }, {} as Record<string, number>)
+            // Calculate user statistics using utility functions
+            const statusCounts = countUsersByStatus(users || [])
+            const planCounts = countUsersByPlan(users || [])
 
             return {
                 totalShops: totalShops || 0,

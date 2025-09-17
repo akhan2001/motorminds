@@ -28,8 +28,8 @@ export interface Shop {
     // Computed fields from users
     total_users?: number
     total_revenue?: number
-    primary_user_plan?: 'DEFAULT' | 'PREMIUM' | 'ENTERPRISE'
-    primary_user_status?: 'active' | 'inactive' | 'suspended'
+    primary_user_plan?: string
+    primary_user_status?: string
 }
 
 export interface User {
@@ -37,8 +37,8 @@ export interface User {
     created_at: string
     role: string
     shop_id?: string
-    plan: 'DEFAULT' | 'PREMIUM' | 'ENTERPRISE'
-    status: 'active' | 'inactive' | 'suspended'
+    plan: string
+    status: string
 }
 
 export interface AdminStats {

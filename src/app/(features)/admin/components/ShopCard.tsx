@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getStatusColor, getPlanColor, formatStatus } from "@/lib/utils/status"
+import { formatDate } from "@/lib/utils/date"
+import { getInitials } from "@/lib/utils/text"
 
 interface Shop {
     id: string
@@ -10,8 +13,8 @@ interface Shop {
     shop_phone?: string
     logo_image_url?: string
     created_at: string
-    primary_user_plan?: 'DEFAULT' | 'PREMIUM' | 'ENTERPRISE'
-    primary_user_status?: 'active' | 'inactive' | 'suspended'
+    primary_user_plan?: string
+    primary_user_status?: string
 }
 
 interface ShopCardProps {
@@ -19,46 +22,6 @@ interface ShopCardProps {
 }
 
 export function ShopCard({ shop }: ShopCardProps) {
-    const getStatusColor = (status?: string) => {
-        switch (status) {
-            case 'active':
-                return 'bg-green-500 text-white'
-            case 'inactive':
-                return 'bg-gray-500 text-white'
-            case 'suspended':
-                return 'bg-red-500 text-white'
-            default:
-                return 'bg-gray-500 text-white'
-        }
-    }
-
-    const getPlanColor = (plan?: string) => {
-        switch (plan) {
-            case 'PREMIUM':
-                return 'bg-blue-500 text-white'
-            case 'ENTERPRISE':
-                return 'bg-purple-500 text-white'
-            default:
-                return 'bg-gray-600 text-white'
-        }
-    }
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        })
-    }
-
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map(word => word[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2)
-    }
 
     return (
         <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
@@ -85,7 +48,7 @@ export function ShopCard({ shop }: ShopCardProps) {
                     <div className="flex items-center space-x-2 mt-3">
                         {shop.primary_user_status && (
                             <Badge className={getStatusColor(shop.primary_user_status)}>
-                                {shop.primary_user_status.charAt(0).toUpperCase() + shop.primary_user_status.slice(1)}
+                                {formatStatus(shop.primary_user_status)}
                             </Badge>
                         )}
                         
