@@ -73,14 +73,14 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
 
                     {/* Filter Buttons */}
                     <div className="flex items-center gap-2">
-                        <Button
+                        {/* <Button
                             variant="outline"
                             size="sm"
                             className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
                         >
                             <Filter className="h-4 w-4 mr-2" />
                             Filters
-                        </Button>
+                        </Button> */}
                         
                         <Button
                             variant="outline"
