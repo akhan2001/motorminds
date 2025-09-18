@@ -99,6 +99,7 @@ export interface WorkOrderKanbanItem {
     id: string
     title: string
     description?: string
+    status: WorkOrderStatus
     priority: WorkOrderPriority
     assignee?: string
     date: string

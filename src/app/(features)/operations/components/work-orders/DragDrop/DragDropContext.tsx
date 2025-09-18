@@ -13,6 +13,8 @@ export interface DragDropActions {
     endDrag: () => void
     setDragOver: (columnId: string | null, index?: number) => void
     handleDrop: (item: WorkOrderKanbanItem, targetColumn: string, targetIndex: number) => Promise<void>
+    canDragItem: (item: WorkOrderKanbanItem) => boolean
+    onWorkOrderCompletionAttempt?: (item: WorkOrderKanbanItem) => void
 }
 
 export interface DragDropContextType extends DragDropState, DragDropActions {}

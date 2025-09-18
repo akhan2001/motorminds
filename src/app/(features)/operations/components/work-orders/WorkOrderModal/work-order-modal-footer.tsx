@@ -1,13 +1,13 @@
 'use client'
 
-import { Edit2, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export interface WorkOrderModalFooterProps {
     isEditing: boolean
     isCreating?: boolean
     isSubmitting?: boolean
-    onEdit: () => void
+    onEdit?: () => void
     onSave: () => void
     onCancel: () => void
     onClose: () => void
@@ -63,23 +63,13 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         </Button>
                     </>
                 ) : (
-                    <>
-                        <Button
-                            variant="outline"
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
-                            onClick={onClose}
-                        >
-                            Close
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
-                            onClick={onEdit}
-                        >
-                            <Edit2 className="h-4 w-4 mr-2" />
-                            Edit
-                        </Button>
-                    </>
+                    <Button
+                        variant="outline"
+                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                        onClick={onClose}
+                    >
+                        Close
+                    </Button>
                 )}
             </div>
         </div>

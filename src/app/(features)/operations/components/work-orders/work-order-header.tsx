@@ -3,8 +3,10 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useMessagingAvailability } from '../../hooks/use-work-order-messaging'
 
 interface WorkOrderHeaderProps {
     className?: string
@@ -19,6 +21,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     onToggleView,
     onNewWorkOrder
 }) => {
+    const messagingAvailability = useMessagingAvailability()
     return (
         <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
             {/* Main Header */}
@@ -37,14 +40,37 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
                         {/* Messages Button */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
-                        >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Messages
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={!messagingAvailability.isAvailable}
+                                        className={cn(
+                                            "bg-transparent border-[#3a3a3a] text-gray-300",
+                                            messagingAvailability.isAvailable
+                                                ? "hover:bg-[#2a2a2a] hover:text-white"
+                                                : "opacity-50 cursor-not-allowed"
+                                        )}
+                                    >
+                                        {messagingAvailability.isLoading ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : !messagingAvailability.isAvailable ? (
+                                            <Lock className="h-4 w-4 mr-2" />
+                                        ) : (
+                                            <MessageSquare className="h-4 w-4 mr-2" />
+                                        )}
+                                        Messages
+                                    </Button>
+                                </TooltipTrigger>
+                                {!messagingAvailability.isAvailable && !messagingAvailability.isLoading && (
+                                    <TooltipContent>
+                                        <p>Contact admin to set up messaging</p>
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
 
                         {/* Create Work Order Button */}
                         <Button

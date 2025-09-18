@@ -38,8 +38,9 @@ export const DraggableWorkOrderCard: React.FC<DraggableWorkOrderCardProps> = ({
     index,
     columnId
 }) => {
-    const { startDrag, endDrag, isDragging, draggedItem } = useDragDrop()
+    const { startDrag, endDrag, isDragging, draggedItem, canDragItem } = useDragDrop()
     const [isBeingDragged, setIsBeingDragged] = useState(false)
+    const isDragDisabled = !canDragItem(item)
 
     const handleDragStart = (e: React.DragEvent) => {
         setIsBeingDragged(true)
@@ -80,14 +81,16 @@ export const DraggableWorkOrderCard: React.FC<DraggableWorkOrderCardProps> = ({
             className="w-full"
         >
             <div
-                draggable
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
+                draggable={!isDragDisabled}
+                onDragStart={!isDragDisabled ? handleDragStart : undefined}
+                onDragEnd={!isDragDisabled ? handleDragEnd : undefined}
                 onClick={handleClick}
                 className={`
-                cursor-grab active:cursor-grabbing select-none w-full
+                ${!isDragDisabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} 
+                select-none w-full
                 ${isDraggedCard ? 'opacity-30' : 'opacity-100'}
                 ${isBeingDragged ? 'scale-105 rotate-1' : 'scale-100'}
+                ${isDragDisabled ? 'opacity-60' : ''}
                 transition-all duration-200
                 `}
                 style={{

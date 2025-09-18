@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { WorkOrderKanbanColumn, WorkOrderKanbanItem } from '../../types/work-order'
-import { DroppableColumn, DragOverlay } from './DragDrop'
+import { DroppableColumn } from './DragDrop'
 
 export interface WorkOrderKanbanProps {
     columns: WorkOrderKanbanColumn[]
@@ -30,7 +30,6 @@ export const WorkOrderKanban: React.FC<WorkOrderKanbanProps> = ({
                     />
                 ))}
             </div>
-            <DragOverlay />
         </div>
     )
 }

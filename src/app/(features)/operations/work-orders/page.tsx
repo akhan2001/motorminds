@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
+import { WorkOrderCompletionModal } from "../components/work-orders/WorkOrderCompletionModal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrder, useUpdateWorkOrder } from "../hooks/use-work-orders";
@@ -33,6 +34,7 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         id: workOrder.id,
         title: workOrder.title,
         description: workOrder.description,
+        status: workOrder.status,
         priority: workOrder.priority,
         assignee: technicianDisplay,
         date: workOrder.created_at.split('T')[0],
@@ -96,6 +98,10 @@ export default function WorkOrdersPage() {
     
     // View state
     const [isCompactView, setIsCompactView] = useState(false)
+    
+    // Completion modal state
+    const [completionWorkOrder, setCompletionWorkOrder] = useState<WorkOrderWithDetails | null>(null)
+    const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
 
     // Handle work order card clicks
     const handleCardClick = (item: WorkOrderKanbanItem) => {
@@ -116,6 +122,49 @@ export default function WorkOrdersPage() {
     // Handle create modal close
     const handleCreateModalClose = () => {
         setIsCreateModalOpen(false)
+    }
+
+    // Handle work order completion attempt
+    const handleWorkOrderCompletionAttempt = async (item: WorkOrderKanbanItem) => {
+        // Find the full work order details from the workOrders array
+        const fullWorkOrder = workOrders?.find(wo => wo.id === item.id)
+        if (fullWorkOrder) {
+            setCompletionWorkOrder(fullWorkOrder)
+            setIsCompletionModalOpen(true)
+        }
+    }
+
+    // Handle completion modal close
+    const handleCompletionModalClose = () => {
+        setIsCompletionModalOpen(false)
+        setCompletionWorkOrder(null)
+    }
+
+    // Handle completion modal confirm
+    const handleCompletionModalConfirm = async (sendMessage: boolean, customMessage?: string) => {
+        if (completionWorkOrder) {
+            try {
+                // Update work order status to completed
+                const updateData: Partial<WorkOrder> = { 
+                    status: 'completed',
+                    updated_at: new Date().toISOString(),
+                    completed_at: new Date().toISOString()
+                }
+
+                await updateWorkOrderMutation.mutateAsync({
+                    id: completionWorkOrder.id,
+                    data: updateData
+                })
+
+                // Refetch work orders
+                refetch()
+                
+                // Close modal
+                handleCompletionModalClose()
+            } catch (error) {
+                console.error('Failed to complete work order:', error)
+            }
+        }
     }
 
     // Handle work order creation
@@ -274,10 +323,13 @@ export default function WorkOrdersPage() {
     }
 
     return (
-        <DragDropProvider onWorkOrderUpdate={(workOrderId, newStatus) => {
-            // Refetch work orders when status is updated via drag and drop
-            refetch()
-        }}>
+        <DragDropProvider 
+            onWorkOrderUpdate={(workOrderId, newStatus) => {
+                // Refetch work orders when status is updated via drag and drop
+                refetch()
+            }}
+            onWorkOrderCompletionAttempt={handleWorkOrderCompletionAttempt}
+        >
             <div className="h-screen flex flex-col bg-[#0d0d0d]">
                 <Nav />
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -310,6 +362,16 @@ export default function WorkOrdersPage() {
                     <WorkOrderCreateModal 
                         onClose={handleCreateModalClose}
                         onSave={handleWorkOrderCreate}
+                    />
+                )}
+
+                {/* Work Order Completion Modal */}
+                {isCompletionModalOpen && completionWorkOrder && (
+                    <WorkOrderCompletionModal
+                        workOrder={completionWorkOrder}
+                        isOpen={isCompletionModalOpen}
+                        onClose={handleCompletionModalClose}
+                        onConfirm={handleCompletionModalConfirm}
                     />
                 )}
             </div>
