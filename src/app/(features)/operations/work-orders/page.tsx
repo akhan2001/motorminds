@@ -277,10 +277,6 @@ export default function WorkOrdersPage() {
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <WorkOrderHeader 
-                    totalCount={stats.totalCount}
-                    pendingCount={stats.pendingCount}
-                    inProgressCount={stats.inProgressCount}
-                    completedCount={stats.completedCount}
                     isCompactView={isCompactView}
                     onToggleView={handleToggleView}
                     onNewWorkOrder={handleNewWorkOrder}

@@ -3,17 +3,11 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatNumber } from '@/lib/utils/currency'
 
 interface WorkOrderHeaderProps {
     className?: string
-    totalCount?: number
-    pendingCount?: number
-    inProgressCount?: number
-    completedCount?: number
     isCompactView?: boolean
     onToggleView?: () => void
     onNewWorkOrder?: () => void
@@ -21,10 +15,6 @@ interface WorkOrderHeaderProps {
 
 export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     className,
-    totalCount = 0,
-    pendingCount = 0,
-    inProgressCount = 0,
-    completedCount = 0,
     isCompactView = false,
     onToggleView,
     onNewWorkOrder
@@ -34,41 +24,13 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
             {/* Main Header */}
             <div className="px-6 py-3">
                 <div className="flex items-center justify-between">
-                    {/* Left Section - Title & Stats */}
+                    {/* Left Section - Title */}
                     <div className="flex items-center gap-6">
                         <div>
                             <h1 className="text-2xl font-bold text-white">Work Orders</h1>
                             <p className="text-sm text-gray-400 mt-1">
                                 Manage and track all work orders
                             </p>
-                        </div>
-                        
-                        {/* Quick Stats */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1">
-                                <span className="text-sm text-gray-400">Total:</span>
-                                <Badge variant="secondary" className="bg-[#2a2a2a] text-white">
-                                    {formatNumber(totalCount)}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-sm text-gray-400">Estimates:</span>
-                                <Badge className="bg-yellow-500 text-black">
-                                    {formatNumber(pendingCount)}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-sm text-gray-400">In Progress:</span>
-                                <Badge className="bg-blue-500 text-white">
-                                    {formatNumber(inProgressCount)}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="text-sm text-gray-400">Completed:</span>
-                                <Badge className="bg-green-500 text-white">
-                                    {formatNumber(completedCount)}
-                                </Badge>
-                            </div>
                         </div>
                     </div>
 
