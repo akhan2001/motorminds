@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
+import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrder, useUpdateWorkOrder } from "../hooks/use-work-orders";
 import { useAuth } from "../hooks/use-auth";
@@ -273,40 +274,45 @@ export default function WorkOrdersPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
-            <Nav />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <WorkOrderHeader 
-                    isCompactView={isCompactView}
-                    onToggleView={handleToggleView}
-                    onNewWorkOrder={handleNewWorkOrder}
-                />
-                <div className="flex-1 overflow-hidden">
-                    <WorkOrderKanban 
-                        columns={kanbanData}
-                        onCardClick={handleCardClick}
+        <DragDropProvider onWorkOrderUpdate={(workOrderId, newStatus) => {
+            // Refetch work orders when status is updated via drag and drop
+            refetch()
+        }}>
+            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+                <Nav />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <WorkOrderHeader 
                         isCompactView={isCompactView}
+                        onToggleView={handleToggleView}
+                        onNewWorkOrder={handleNewWorkOrder}
                     />
+                    <div className="flex-1 overflow-hidden">
+                        <WorkOrderKanban 
+                            columns={kanbanData}
+                            onCardClick={handleCardClick}
+                            isCompactView={isCompactView}
+                        />
+                    </div>
                 </div>
+
+                {/* Work Order Details Modal */}
+                {isModalOpen && selectedWorkOrder && (
+                    <WorkOrderDetailsModal
+                        workOrder={selectedWorkOrder}
+                        onClose={handleModalClose}
+                        onSave={handleWorkOrderSave}
+                        onDelete={handleWorkOrderDelete}
+                    />
+                )}
+
+                {/* Work Order Create Modal */}
+                {isCreateModalOpen && (
+                    <WorkOrderCreateModal 
+                        onClose={handleCreateModalClose}
+                        onSave={handleWorkOrderCreate}
+                    />
+                )}
             </div>
-
-            {/* Work Order Details Modal */}
-            {isModalOpen && selectedWorkOrder && (
-                <WorkOrderDetailsModal
-                    workOrder={selectedWorkOrder}
-                    onClose={handleModalClose}
-                    onSave={handleWorkOrderSave}
-                    onDelete={handleWorkOrderDelete}
-                />
-            )}
-
-            {/* Work Order Create Modal */}
-            {isCreateModalOpen && (
-                <WorkOrderCreateModal 
-                    onClose={handleCreateModalClose}
-                    onSave={handleWorkOrderCreate}
-                />
-            )}
-        </div>
+        </DragDropProvider>
     )
 }

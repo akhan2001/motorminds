@@ -108,7 +108,7 @@ export function useUpdateWorkOrder() {
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             queryClient.invalidateQueries({ queryKey: workOrderKeys.list(updatedWorkOrder.shop_id) })
             
-            toast.success('Work order updated successfully')
+            // toast.success('Work order updated successfully')
         },
         onError: (error: any) => {
             console.error('Failed to update work order:', error)
