@@ -91,6 +91,54 @@ export function useCreateWorkOrder() {
     })
 }
 
+// New mutation hook for creating work orders with customer/vehicle dependencies
+export function useCreateWorkOrderWithDependencies() {
+    const queryClient = useQueryClient()
+    
+    return useMutation({
+        mutationFn: async (data: {
+            workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id'>
+            customer: {
+                id?: string
+                name: string
+                email?: string
+                phone?: string
+                address?: string
+            }
+            vehicle: {
+                id?: string
+                year: string
+                make: string
+                model: string
+                color?: string
+                vin?: string
+                license_plate?: string
+                mileage?: string
+            }
+        }) => {
+            // Generate work order number if not provided
+            if (!data.workOrder.work_order_number) {
+                const workOrderNumber = await workOrderService.generateWorkOrderNumber(data.workOrder.shop_id)
+                data.workOrder.work_order_number = workOrderNumber
+            }
+            
+            return workOrderService.createWorkOrderWithDependencies(data)
+        },
+        onSuccess: (newWorkOrder) => {
+            // Invalidate and refetch work orders
+            queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
+            queryClient.invalidateQueries({ queryKey: workOrderKeys.list(newWorkOrder.shop_id) })
+            queryClient.invalidateQueries({ queryKey: [...workOrderKeys.list(newWorkOrder.shop_id), 'with-details'] })
+            
+            toast.success('Work order created successfully')
+        },
+        onError: (error: any) => {
+            console.error('Failed to create work order:', error)
+            toast.error(error.message || 'Failed to create work order')
+        },
+    })
+}
+
 export function useUpdateWorkOrder() {
     const queryClient = useQueryClient()
     

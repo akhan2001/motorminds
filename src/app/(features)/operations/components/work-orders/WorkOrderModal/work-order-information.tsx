@@ -151,7 +151,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     </div>
 
                     {/* Tags */}
-                    <div className="space-y-1.5">
+                    {/* <div className="space-y-1.5">
                         <Label className="text-gray-400">Tags</Label>
                         <div className="flex flex-wrap gap-2">
                             {tags.map((tag, index) => (
@@ -183,7 +183,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                 </Badge>
                             )}
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

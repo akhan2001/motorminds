@@ -69,7 +69,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl bg-[#111111] border-[#2a2a2a]">
-                <DialogHeader className="text-white">
+                <DialogHeader>
                     <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
                         <Car className="h-5 w-5 text-green-500" />
                         Work Order Completed

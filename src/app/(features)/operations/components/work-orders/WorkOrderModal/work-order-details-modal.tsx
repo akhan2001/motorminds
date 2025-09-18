@@ -14,6 +14,7 @@ import { VehicleInformation } from "./vehicle-information"
 import { WorkOrderNotes } from "./work-order-notes"
 import { WorkOrderModalFooter } from "./work-order-modal-footer"
 import { WorkOrderRightPanel } from "./work-order-right-panel"
+import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
 
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
@@ -31,6 +32,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     className = ""
 }) => {
     const [isEditing, setIsEditing] = useState(false)
+    const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
     
     // Fetch full work order details
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
@@ -149,12 +151,56 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     }
 
     const handleDelete = () => {
+        if (canDelete()) {
+            setIsDeleteConfirmationOpen(true)
+        } else {
+            const status = workOrderDetails?.status || initialWorkOrder.status
+            toast.error(`Invoiced work orders cannot be deleted due to financial record requirements`)
+        }
+    }
+
+    const handleDeleteConfirm = () => {
         onDelete?.(initialWorkOrder.id)
-        toast.success("Work order deleted successfully")
+        setIsDeleteConfirmationOpen(false)
         onClose()
     }
 
-    const handleEdit = () => setIsEditing(true)
+    const handleDeleteCancel = () => {
+        setIsDeleteConfirmationOpen(false)
+    }
+
+    // Check if work order can be edited based on status
+    const canEdit = () => {
+        const status = workOrderDetails?.status || initialWorkOrder.status
+        // Allow editing for: pending, approved, in_progress, waiting_parts, waiting_customer, on_hold
+        // Disable editing for: completed, invoiced, cancelled
+        return status !== 'completed' && status !== 'invoiced' && status !== 'cancelled'
+    }
+
+    // Check if work order can be deleted based on status
+    const canDelete = () => {
+        const status = workOrderDetails?.status || initialWorkOrder.status
+        // Allow deletion for all statuses except invoiced (due to financial/legal reasons)
+        // This gives maximum flexibility for work order management
+        if (!status) return true // Default to allowing deletion if status is unclear
+        
+        const canDeleteResult = status !== 'invoiced'
+        console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult)
+        
+        return canDeleteResult
+    }
+
+    const handleEdit = () => {
+        if (canEdit()) {
+            setIsEditing(true)
+        } else {
+            const status = workOrderDetails?.status || initialWorkOrder.status
+            const statusName = status === 'completed' ? 'completed' : 
+                              status === 'invoiced' ? 'invoiced' : 'cancelled'
+            toast.error(`${statusName.charAt(0).toUpperCase() + statusName.slice(1)} work orders cannot be edited`)
+        }
+    }
+    
     const handleCancel = () => setIsEditing(false)
 
     // Loading state
@@ -213,9 +259,29 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                 status={workOrderDetails.status}
                             />
 
+                            {/* Edit Restriction Notice */}
+                            {!canEdit() && (
+                                <div className="mx-6 my-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                                    <p className="text-yellow-400 text-sm flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.464 0L4.35 16.5c-.77.833-.192 2.5 1.348 2.5z" />
+                                        </svg>
+                                        This work order cannot be edited because it has been {workOrderDetails?.status || initialWorkOrder.status}.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Main Content - Scrollable */}
                             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                                <div className="p-6 space-y-6">
+                                <div 
+                                    className={`p-6 space-y-6 ${!canEdit() ? 'pointer-events-none opacity-90' : ''}`}
+                                    onClick={() => {
+                                        if (!canEdit() && !isEditing) {
+                                            const status = workOrderDetails?.status || initialWorkOrder.status
+                                            toast.error(`This work order cannot be edited because it has been ${status}`)
+                                        }
+                                    }}
+                                >
                                 {/* Work Order Information */}
                                 <WorkOrderInformation 
                                     title={formData.title}
@@ -268,6 +334,8 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                             {/* Footer */}
                             <WorkOrderModalFooter 
                                 isEditing={isEditing}
+                                canEdit={canEdit()}
+                                canDelete={canDelete()}
                                 onEdit={handleEdit}
                                 onSave={handleSave}
                                 onCancel={handleCancel}
@@ -286,6 +354,14 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>
+            
+            {/* Delete Confirmation Dialog */}
+            <WorkOrderDeleteConfirmation
+                workOrder={initialWorkOrder}
+                isOpen={isDeleteConfirmationOpen}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeleteConfirm}
+            />
         </div>
     )
 }

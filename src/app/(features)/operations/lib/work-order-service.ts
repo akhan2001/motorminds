@@ -200,6 +200,108 @@ export class WorkOrderService {
         return data || []
     }
 
+    // CREATE work order with customer and vehicle creation if needed
+    async createWorkOrderWithDependencies(data: {
+        workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id'>
+        customer: {
+            id?: string
+            name: string
+            email?: string
+            phone?: string
+            address?: string
+        }
+        vehicle: {
+            id?: string
+            year: string
+            make: string
+            model: string
+            color?: string
+            vin?: string
+            license_plate?: string
+            mileage?: string
+        }
+    }): Promise<WorkOrder> {
+        let customerId = data.customer.id
+        let vehicleId = data.vehicle.id
+
+        // 1. Create customer if needed
+        if (!customerId || customerId === 'new') {
+            console.log('Creating new customer:', data.customer.name)
+            
+            // Validate required customer fields
+            if (!data.customer.name?.trim()) {
+                throw new Error('Customer name is required')
+            }
+            
+            const { data: newCustomer, error: customerError } = await this.supabase
+                .from('customers')
+                .insert([{
+                    shop_id: data.workOrder.shop_id,
+                    customer_name: data.customer.name,
+                    customer_email: data.customer.email || null,
+                    customer_phone: data.customer.phone || '',
+                    customer_address: data.customer.address || null,
+                }])
+                .select()
+                .single()
+
+            if (customerError) {
+                console.error('Error creating customer:', customerError)
+                throw new Error(`Failed to create customer: ${customerError.message}`)
+            }
+
+            customerId = newCustomer.id
+            console.log('Customer created successfully with ID:', customerId)
+        }
+
+        // 2. Create vehicle if needed
+        if (!vehicleId || vehicleId === 'new') {
+            console.log('Creating new vehicle for customer:', customerId)
+            
+            // Validate required vehicle fields
+            if (!data.vehicle.year || !data.vehicle.make?.trim() || !data.vehicle.model?.trim()) {
+                throw new Error('Vehicle year, make, and model are required')
+            }
+            
+            const { data: newVehicle, error: vehicleError } = await this.supabase
+                .from('customer_vehicles')
+                .insert([{
+                    customer_id: customerId,
+                    year: parseInt(data.vehicle.year) || new Date().getFullYear(),
+                    make: data.vehicle.make?.trim() || 'Unknown',
+                    model: data.vehicle.model?.trim() || 'Unknown',
+                    color: data.vehicle.color?.trim() || null,
+                    vin: data.vehicle.vin?.trim() || null,
+                    license_plate: data.vehicle.license_plate?.trim() || null,
+                    mileage: data.vehicle.mileage ? parseInt(data.vehicle.mileage) : null,
+                }])
+                .select()
+                .single()
+
+            if (vehicleError) {
+                console.error('Error creating vehicle:', vehicleError)
+                throw new Error(`Failed to create vehicle: ${vehicleError.message}`)
+            }
+
+            vehicleId = newVehicle.id
+            console.log('Vehicle created successfully with ID:', vehicleId)
+        }
+
+        // 3. Create work order with valid customer_id and vehicle_id
+        if (!customerId || !vehicleId) {
+            throw new Error('Failed to create customer or vehicle - missing IDs')
+        }
+
+        const workOrderData: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'> = {
+            ...data.workOrder,
+            customer_id: customerId,
+            vehicle_id: vehicleId,
+        }
+
+        console.log('Creating work order with customer_id:', customerId, 'vehicle_id:', vehicleId)
+        return this.createWorkOrder(workOrderData)
+    }
+
     // Utility method to generate work order number
     async generateWorkOrderNumber(shopId: string): Promise<string> {
         const { data, error } = await this.supabase

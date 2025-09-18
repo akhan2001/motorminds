@@ -7,6 +7,8 @@ export interface WorkOrderModalFooterProps {
     isEditing: boolean
     isCreating?: boolean
     isSubmitting?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
     onEdit?: () => void
     onSave: () => void
     onCancel: () => void
@@ -19,6 +21,8 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     isEditing,
     isCreating = false,
     isSubmitting = false,
+    canEdit = true,
+    canDelete = true,
     onEdit,
     onSave,
     onCancel,
@@ -32,8 +36,13 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                 {onDelete && (
                     <Button
                         variant="destructive"
-                        className="bg-[#e23232] text-white hover:bg-[#e23232]/80"
+                        className={
+                            canDelete 
+                                ? 'bg-[#e23232] text-white hover:bg-[#e23232]/80' 
+                                : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+                        }
                         onClick={onDelete}
+                        disabled={!canDelete}
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
@@ -63,13 +72,29 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         </Button>
                     </>
                 ) : (
-                    <Button
-                        variant="outline"
-                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
-                        onClick={onClose}
-                    >
-                        Close
-                    </Button>
+                    <>
+                        {onEdit && (
+                            <Button
+                                variant="outline"
+                                className={`border px-8 ${
+                                    canEdit 
+                                        ? 'border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white' 
+                                        : 'border-gray-600 text-gray-500 cursor-not-allowed opacity-50'
+                                }`}
+                                onClick={onEdit}
+                                disabled={!canEdit}
+                            >
+                                Edit
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                            onClick={onClose}
+                        >
+                            Close
+                        </Button>
+                    </>
                 )}
             </div>
         </div>
