@@ -104,6 +104,7 @@ export function Nav() {
 			subItems: customerSubItems
 		},
 		// { name: "Customer Intake", href: "/customer-intake" },
+		{ name: "Voice Calling", href: "/voice-calling" },
 	]
 
 	let activeLink = ""
