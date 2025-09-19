@@ -101,13 +101,13 @@ export default function VoiceOrderingPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="min-h-screen flex flex-col bg-[#0d0d0d]">
             <Nav />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="p-6 max-w-4xl mx-auto">
-                    <div className="max-w-2xl mx-auto space-y-6">
+            <div className="flex-1">
+                <div className="p-4 max-w-4xl mx-auto">
+                    <div className="max-w-2xl mx-auto space-y-4">
                         {/* Breadcrumb Navigation */}
-                        <Breadcrumb className="mb-6">
+                        <Breadcrumb className="mb-4">
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
@@ -129,7 +129,7 @@ export default function VoiceOrderingPage() {
 
                         {/* Header */}
                         <div className="text-center">
-                            <h1 className="text-3xl font-bold text-white mb-2">
+                            <h1 className="text-2xl font-bold text-white mb-2">
                                 AI Parts Ordering System
                             </h1>
                             <p className="text-gray-400">
@@ -178,8 +178,8 @@ export default function VoiceOrderingPage() {
                                 <Button
                                     onClick={handleStartCall}
                                     disabled={isLoading || !phoneNumber.trim()}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
-                                    size="lg"
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                    size="default"
                                 >
                                     {isLoading ? (
                                         <>
@@ -207,13 +207,13 @@ export default function VoiceOrderingPage() {
 
                         {/* Status Card */}
                         <Card className="bg-[#111111] border-[#2a2a2a]">
-                            <CardHeader>
-                                <CardTitle className="text-white text-lg">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-white text-base">
                                     System Status
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <div className="flex justify-between items-center">
                                         <span className="text-gray-400">Vapi Connection</span>
                                         <span className="text-green-400 text-sm">Connected</span>
@@ -232,13 +232,13 @@ export default function VoiceOrderingPage() {
 
                         {/* Instructions */}
                         <Card className="bg-[#111111] border-[#2a2a2a]">
-                            <CardHeader>
-                                <CardTitle className="text-white text-lg">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-white text-base">
                                     How it Works
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ol className="list-decimal list-inside space-y-2 text-gray-300 text-sm">
+                                <ol className="list-decimal list-inside space-y-1 text-gray-300 text-sm">
                                     <li>Enter supplier's phone number above</li>
                                     <li>Click "Call Supplier to Order Parts"</li>
                                     <li>Alex introduces MotorMinds (10 seconds)</li>
