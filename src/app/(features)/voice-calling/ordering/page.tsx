@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,7 @@ import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import Link from 'next/link'
 
-export default function VoiceOrderingPage() {
+function VoiceOrderingContent() {
     const searchParams = useSearchParams()
     const [phoneNumber, setPhoneNumber] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -252,5 +252,23 @@ export default function VoiceOrderingPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function VoiceOrderingPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex flex-col bg-[#0d0d0d]">
+                <Nav />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500 mx-auto mb-4"></div>
+                        <p className="text-gray-400">Loading voice ordering...</p>
+                    </div>
+                </div>
+            </div>
+        }>
+            <VoiceOrderingContent />
+        </Suspense>
     )
 }
