@@ -27,6 +27,25 @@ export class WorkOrderItemsService {
         return data || []
     }
 
+    static async getWorkOrderItemsByShopId(shopId: string): Promise<WorkOrderItem[]> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        const { data, error } = await this.supabase
+            .from('work_order_items')
+            .select('*')
+            .eq('shop_id', shopId)
+            .order('created_at', { ascending: true })
+
+        if (error) {
+            console.error('Error fetching work order items:', error)
+            throw new Error(`Failed to fetch work order items: ${error.message}`)
+        }
+
+        return data || []
+    }
+
     /**
      * Get a single work order item by ID
      */

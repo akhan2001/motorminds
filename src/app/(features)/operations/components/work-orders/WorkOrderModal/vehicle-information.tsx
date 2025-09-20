@@ -1,13 +1,19 @@
 'use client'
 
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { VehicleDropdown } from "@/app/(features)/customers/components/Selection"
+import { VehicleService } from "@/app/(features)/customers/lib/vehicle-service"
+import { toast } from "sonner"
+import { Save, Loader2 } from "lucide-react"
 import type { VehicleOption } from "@/app/(features)/customers/types/vehicle"
 
 export interface VehicleInformationProps {
     customerId?: string // Added to enable vehicle dropdown
     selectedVehicleId?: string // Added to track selected vehicle
+    vehicleId?: string // Added to identify which vehicle to update
     vehicleYear: string
     vehicleMake: string
     vehicleModel: string
@@ -25,6 +31,7 @@ export interface VehicleInformationProps {
 export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     customerId,
     selectedVehicleId,
+    vehicleId,
     vehicleYear,
     vehicleMake,
     vehicleModel,
@@ -38,6 +45,31 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     onVehicleSelect,
     className = ""
 }) => {
+    const [isSaving, setIsSaving] = useState(false)
+
+    // Handle saving vehicle updates
+    const handleSaveVehicle = async () => {
+        if (!vehicleId) {
+            toast.error("No vehicle selected to update")
+            return
+        }
+
+        setIsSaving(true)
+        try {
+            await VehicleService.updateVehicle(vehicleId, {
+                color: vehicleColor,
+                licensePlate: vehicleLicensePlate,
+                mileage: vehicleMileage
+            })
+            toast.success("Vehicle information updated successfully")
+        } catch (error) {
+            console.error('Error updating vehicle:', error)
+            toast.error("Failed to update vehicle information")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     // Handle vehicle selection from dropdown
     const handleVehicleSelect = (vehicleId: string, vehicleData?: VehicleOption) => {
         if (vehicleId === "new") {
@@ -62,6 +94,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             onVehicleSelect?.(vehicleId, vehicleData)
         }
     }
+
     return (
         <div className={`space-y-4 ${className}`}>
         <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
@@ -161,6 +194,30 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {/* Save Button - Only show in edit mode when not creating */}
+                {isEditing && !isCreating && vehicleId && (
+                    <div className="mt-4 flex justify-end">
+                        <Button
+                            onClick={handleSaveVehicle}
+                            disabled={isSaving}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            size="sm"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save Vehicle Info
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     )

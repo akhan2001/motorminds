@@ -27,6 +27,11 @@ const bricolageGrotesque = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "MotorMinds",
   description: "AI-Powered Auto Repair Shop Management",
+  icons: {
+    icon: '/motorminds-logo-black.png',
+    shortcut: '/motorminds-logo-black.png',
+    apple: '/motorminds-logo-black.png',
+  },
 };
 
 export default function RootLayout({

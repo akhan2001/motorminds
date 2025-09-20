@@ -5,13 +5,41 @@ import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
 import { WorkOrderCompletionModal } from "../components/work-orders/WorkOrderCompletionModal";
+import { WorkOrderItemTemplatesModal } from "../components/work-order-items/templates/work-order-item-templates-modal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useUpdateWorkOrder, useDeleteWorkOrder } from "../hooks/use-work-orders";
 import { useAuth } from "../hooks/use-auth";
+import { WorkOrderItemsService } from "../lib/work-order-items-service";
+import type { WorkOrderItemCreateData } from "../types/work-order-items";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
+
+// Helper function to create work order items from selected templates
+async function createWorkOrderItemsFromTemplates(workOrderId: string, selectedTemplates: any[]) {
+    const itemPromises = selectedTemplates.map(async (template) => {
+        const itemData: WorkOrderItemCreateData = {
+            work_order_id: workOrderId,
+            item_type: template.item_type,
+            description: template.name, // Use template name as description
+            part_number: template.part_number,
+            quantity: template.selectedQuantity || template.quantity,
+            unit_price: template.selectedUnitPrice || template.unit_price,
+            unit_cost: template.unit_cost,
+            supplier: template.supplier,
+            category: template.category,
+            warranty_period: template.warranty_period,
+            notes: template.description, // Use template description as notes
+            labor_hours: template.selectedLaborHours || template.labor_hours,
+            technician_id: template.selectedTechnicianId,
+        }
+        
+        return WorkOrderItemsService.createWorkOrderItem(itemData)
+    })
+    
+    return Promise.all(itemPromises)
+}
 
 // Helper function to transform WorkOrderWithDetails to WorkOrderKanbanItem
 function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOrderKanbanItem {
@@ -104,6 +132,9 @@ export default function WorkOrdersPage() {
     // Completion modal state
     const [completionWorkOrder, setCompletionWorkOrder] = useState<WorkOrderWithDetails | null>(null)
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
+    
+    // Templates modal state
+    const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
 
     // Handle work order card clicks
     const handleCardClick = (item: WorkOrderKanbanItem) => {
@@ -119,6 +150,15 @@ export default function WorkOrdersPage() {
     // Handle new work order
     const handleNewWorkOrder = () => {
         setIsCreateModalOpen(true)
+    }
+
+    // Handle templates modal
+    const handleTemplatesClick = () => {
+        setIsTemplatesModalOpen(true)
+    }
+
+    const handleTemplatesModalClose = () => {
+        setIsTemplatesModalOpen(false)
     }
 
     // Handle create modal close
@@ -211,7 +251,18 @@ export default function WorkOrdersPage() {
             }
             
             console.log('Creating work order with payload:', payload)
-            await createWorkOrderMutation.mutateAsync(payload)
+            const newWorkOrder = await createWorkOrderMutation.mutateAsync(payload)
+            
+            // Create work order items from selected templates
+            if (workOrderData.selectedTemplates && workOrderData.selectedTemplates.length > 0) {
+                try {
+                    await createWorkOrderItemsFromTemplates(newWorkOrder.id, workOrderData.selectedTemplates)
+                } catch (error) {
+                    console.error('Failed to create work order items from templates:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+            
             setIsCreateModalOpen(false)
         } catch (error) {
             console.error('Failed to create work order:', error)
@@ -363,6 +414,7 @@ export default function WorkOrdersPage() {
                         isCompactView={isCompactView}
                         onToggleView={handleToggleView}
                         onNewWorkOrder={handleNewWorkOrder}
+                        onTemplatesClick={handleTemplatesClick}
                     />
                     <div className="flex-1 overflow-hidden">
                         <WorkOrderKanban 
@@ -388,6 +440,7 @@ export default function WorkOrdersPage() {
                     <WorkOrderCreateModal 
                         onClose={handleCreateModalClose}
                         onSave={handleWorkOrderCreate}
+                        shopId={shopId}
                     />
                 )}
 
@@ -398,6 +451,15 @@ export default function WorkOrdersPage() {
                         isOpen={isCompletionModalOpen}
                         onClose={handleCompletionModalClose}
                         onConfirm={handleCompletionModalConfirm}
+                    />
+                )}
+
+                {/* Work Order Item Templates Modal */}
+                {isTemplatesModalOpen && shopId && (
+                    <WorkOrderItemTemplatesModal
+                        isOpen={isTemplatesModalOpen}
+                        onClose={handleTemplatesModalClose}
+                        shopId={shopId}
                     />
                 )}
             </div>

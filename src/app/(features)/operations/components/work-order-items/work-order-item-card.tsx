@@ -167,7 +167,7 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                             </p>
                         </div>
 
-                        {/* Actions Menu */}
+                        {/* Actions Menu
                         {isEditable && (
                             <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                                 <DropdownMenuTrigger asChild>
@@ -210,7 +210,7 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        )}
+                        )} */}
                     </div>
                 </div>
             </CardContent>

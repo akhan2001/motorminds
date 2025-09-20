@@ -311,6 +311,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
 
                                 {/* Vehicle Information */}
                                 <VehicleInformation 
+                                    vehicleId={workOrderDetails.vehicle_id}
                                     vehicleYear={formData.vehicleYear}
                                     vehicleMake={formData.vehicleMake}
                                     vehicleModel={formData.vehicleModel}
