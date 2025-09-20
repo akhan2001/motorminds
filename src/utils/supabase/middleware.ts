@@ -42,19 +42,17 @@ export async function updateSession(request: NextRequest) {
 		'/api/financials',
 		'/parts',           // New refactored parts ordering
 		'/parts-ordering',  // Original parts ordering  
-		'/suppliers',       // Supplier management
-		'/api/suppliers',   // Supplier API
-		'/api/parts',       // Parts API
 		'/app',             // All app routes (appointments, invoices, etc.)
 		'/mia-ai',          // Mia AI routes
+		'/mia',             // MIA diagnostic interface
+		'/api/mia',         // MIA API routes
 		'/dashboard',       // Dashboard routes
 		'/customers',       // Customer management
 		'/invoices',        // Invoice management
 		'/appointments',    // Appointment management
 		'/settings',        // Settings pages
 		'/loyalty',         // Loyalty program
-		'/mechanic-hub',     // Mechanic hub
-		'/mia'
+		'/mechanic-hub'     // Mechanic hub
 	]
 	const isProtectedPath = protectedPaths.some(path =>
 		request.nextUrl.pathname.startsWith(path)
@@ -68,17 +66,10 @@ export async function updateSession(request: NextRequest) {
 
 	// Shop ID verification for authenticated users on protected paths
 	if (isProtectedPath && user) {
-		// TEMPORARY: Allow parts ordering without shop_id for testing
-		const partsOnlyPaths = ['/parts', '/parts-ordering', '/suppliers', '/api/suppliers', '/api/parts']
-		const isPartsPath = partsOnlyPaths.some(path =>
-			request.nextUrl.pathname.startsWith(path)
-		)
-
-		// Get shop_id for all protected routes
 		let shopId = user.user_metadata?.shop_id;
 
 		if (!shopId) {
-			// Try to get shop_id from users table
+			// Query the users table to get shop_id
 			try {
 				const { data: userData, error } = await supabase
 					.from('users')
@@ -94,24 +85,15 @@ export async function updateSession(request: NextRequest) {
 			}
 		}
 
-		if (isPartsPath) {
-			// Set headers for parts functionality
-			supabaseResponse.headers.set('x-user-id', user.id)
-			if (shopId) {
-				supabaseResponse.headers.set('x-shop-id', shopId)
-			}
-		} else {
-			// Normal shop_id validation for other protected routes
-			if (!shopId) {
-				// User is authenticated but has no shop - redirect to dashboard instead
-				const redirectUrl = new URL('/dashboard', request.url)
-				return NextResponse.redirect(redirectUrl)
-			}
-
-			// Add shop context to request headers for downstream use
-			supabaseResponse.headers.set('x-user-id', user.id)
-			supabaseResponse.headers.set('x-shop-id', shopId)
+		if (!shopId) {
+			// User is authenticated but has no shop - redirect to dashboard instead
+			const redirectUrl = new URL('/dashboard', request.url)
+			return NextResponse.redirect(redirectUrl)
 		}
+
+		// Add shop context to request headers for downstream use
+		supabaseResponse.headers.set('x-user-id', user.id)
+		supabaseResponse.headers.set('x-shop-id', shopId)
 	}
 
 	// IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
