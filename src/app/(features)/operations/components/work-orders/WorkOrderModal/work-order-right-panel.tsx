@@ -7,11 +7,13 @@ import { WorkOrderItemsList } from '../../work-order-items'
 
 export interface WorkOrderRightPanelProps {
     workOrderId: string
+    shopId?: string
     className?: string
 }
 
 export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     workOrderId,
+    shopId,
     className = ""
 }) => {
     const [activeTab, setActiveTab] = useState<'insights' | 'items' | 'chat'>('items')
@@ -94,6 +96,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                     <div className="p-4">
                         <WorkOrderItemsList 
                             workOrderId={workOrderId}
+                            shopId={shopId}
                             isEditable={true}
                         />
                     </div>

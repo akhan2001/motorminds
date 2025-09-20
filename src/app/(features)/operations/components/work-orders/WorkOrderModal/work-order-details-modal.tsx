@@ -185,7 +185,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         if (!status) return true // Default to allowing deletion if status is unclear
         
         const canDeleteResult = status !== 'invoiced'
-        console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult)
+        // console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult)
         
         return canDeleteResult
     }
@@ -350,7 +350,10 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
 
                     {/* Right Panel */}
                     <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
-                        <WorkOrderRightPanel workOrderId={initialWorkOrder.id} />
+                        <WorkOrderRightPanel 
+                            workOrderId={initialWorkOrder.id} 
+                            shopId={initialWorkOrder.shop_id}
+                        />
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>

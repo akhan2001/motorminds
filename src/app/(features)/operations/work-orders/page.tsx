@@ -40,7 +40,8 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         date: workOrder.created_at.split('T')[0],
         customer: customerDisplay,
         vehicle: vehicleDisplay,
-        tags: workOrder.tags || []
+        tags: workOrder.tags || [],
+        shop_id: workOrder.shop_id
     }
 }
 

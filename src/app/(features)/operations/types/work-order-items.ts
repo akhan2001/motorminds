@@ -35,6 +35,7 @@ export interface WorkOrderItemFormData {
     part_number?: string
     quantity: number
     unit_price: number
+    unit_cost?: number
     supplier?: string
     category?: string
     warranty_period?: string

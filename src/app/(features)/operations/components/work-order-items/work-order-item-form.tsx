@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Package, Wrench, Star, DollarSign } from 'lucide-react'
+import { TechnicianDropdown } from '@/app/(features)/technician/components/TechnicianDropdown'
 import type { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemType } from '../../types/work-order-items'
 
 interface WorkOrderItemFormProps {
@@ -22,6 +23,7 @@ interface WorkOrderItemFormProps {
     onCancel: () => void
     isSubmitting?: boolean
     className?: string
+    shopId?: string
 }
 
 const itemTypeOptions = [
@@ -36,7 +38,8 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
     onSubmit,
     onCancel,
     isSubmitting = false,
-    className = ""
+    className = "",
+    shopId
 }) => {
     const [formData, setFormData] = useState<WorkOrderItemFormData>({
         item_type: 'part',
@@ -73,7 +76,14 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        onSubmit(formData)
+        
+        // For labor items, set quantity to 1 since we don't use it for calculations
+        const submitData = {
+            ...formData,
+            quantity: isLabor ? 1 : formData.quantity
+        }
+        
+        onSubmit(submitData)
     }
 
     const handleFieldChange = (field: keyof WorkOrderItemFormData, value: any) => {
@@ -84,7 +94,13 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
     }
 
     const calculateTotal = () => {
-        return formData.quantity * formData.unit_price
+        if (isLabor) {
+            // For labor items: labor_hours * hourly_rate
+            return (formData.labor_hours || 0) * formData.unit_price
+        } else {
+            // For other items: quantity * unit_price
+            return formData.quantity * formData.unit_price
+        }
     }
 
     const isLabor = formData.item_type === 'labor'
@@ -100,8 +116,9 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
                 <Select
                     value={formData.item_type}
                     onValueChange={(value: WorkOrderItemType) => handleFieldChange('item_type', value)}
+                    disabled={!!item} // Disable when editing existing item
                 >
-                    <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectTrigger className={`bg-[#1a1a1a] border-[#2a2a2a] text-white ${item ? 'opacity-60 cursor-not-allowed' : ''}`}>
                         <SelectValue placeholder="Select item type" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
@@ -122,6 +139,11 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
                         })}
                     </SelectContent>
                 </Select>
+                {item && (
+                    <p className="text-xs text-gray-500">
+                        Item type cannot be changed after creation
+                    </p>
+                )}
             </div>
 
             {/* Description */}
@@ -157,28 +179,31 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-                {/* Quantity */}
-                <div className="space-y-2">
-                    <Label htmlFor="quantity" className="text-sm font-medium text-gray-300">
-                        Quantity *
-                    </Label>
-                    <Input
-                        id="quantity"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        value={formData.quantity}
-                        onChange={(e) => handleFieldChange('quantity', parseFloat(e.target.value) || 0)}
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
-                        required
-                    />
-                </div>
+            <div className={`grid gap-4 ${isLabor ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {/* Quantity - Hidden for labor items */}
+                {!isLabor && (
+                    <div className="space-y-2">
+                        <Label htmlFor="quantity" className="text-sm font-medium text-gray-300">
+                            Quantity *
+                        </Label>
+                        <Input
+                            id="quantity"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={formData.quantity}
+                            onChange={(e) => handleFieldChange('quantity', parseFloat(e.target.value) || 0)}
+                            placeholder="Enter quantity..."
+                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                            required
+                        />
+                    </div>
+                )}
 
                 {/* Unit Price */}
                 <div className="space-y-2">
                     <Label htmlFor="unit_price" className="text-sm font-medium text-gray-300">
-                        Unit Price *
+                        {isLabor ? 'Hourly Rate' : 'Unit Price'} *
                     </Label>
                     <Input
                         id="unit_price"
@@ -187,6 +212,7 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
                         step="0.01"
                         value={formData.unit_price}
                         onChange={(e) => handleFieldChange('unit_price', parseFloat(e.target.value) || 0)}
+                        placeholder={isLabor ? "Enter hourly rate..." : "Enter unit price..."}
                         className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
                         required
                     />
@@ -212,8 +238,24 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-                {/* Supplier */}
+            {/* Technician (for labor items) */}
+            {isLabor && shopId && (
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">
+                        Technician
+                    </Label>
+                    <TechnicianDropdown
+                        shopId={shopId}
+                        selectedTechnicianId={formData.technician_id || ''}
+                        onTechnicianSelect={(technicianId) => handleFieldChange('technician_id', technicianId === 'none' ? '' : technicianId)}
+                        placeholder="Select technician..."
+                        className="w-full"
+                    />
+                </div>
+            )}
+
+            {/* Supplier (for parts and services only) */}
+            {(isPart || formData.item_type === 'service') && (
                 <div className="space-y-2">
                     <Label htmlFor="supplier" className="text-sm font-medium text-gray-300">
                         Supplier
@@ -226,20 +268,20 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
                         className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
                     />
                 </div>
+            )}
 
-                {/* Category */}
-                <div className="space-y-2">
-                    <Label htmlFor="category" className="text-sm font-medium text-gray-300">
-                        Category
-                    </Label>
-                    <Input
-                        id="category"
-                        value={formData.category || ''}
-                        onChange={(e) => handleFieldChange('category', e.target.value)}
-                        placeholder="Enter category..."
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
-                    />
-                </div>
+            {/* Category (for all types) */}
+            <div className="space-y-2">
+                <Label htmlFor="category" className="text-sm font-medium text-gray-300">
+                    Category
+                </Label>
+                <Input
+                    id="category"
+                    value={formData.category || ''}
+                    onChange={(e) => handleFieldChange('category', e.target.value)}
+                    placeholder="Enter category..."
+                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                />
             </div>
 
             {/* Warranty Period (for parts) */}
@@ -279,7 +321,10 @@ export const WorkOrderItemForm: React.FC<WorkOrderItemFormProps> = ({
             <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
                 <div className="flex justify-between items-center">
                     <span className="text-gray-300 text-sm">
-                        {formData.quantity} × ${formData.unit_price.toFixed(2)}
+                        {isLabor 
+                            ? `${formData.labor_hours || 0} hours × $${formData.unit_price.toFixed(2)}/hr`
+                            : `${formData.quantity} × $${formData.unit_price.toFixed(2)}`
+                        }
                     </span>
                     <span className="text-white font-semibold text-lg">
                         Total: ${calculateTotal().toFixed(2)}

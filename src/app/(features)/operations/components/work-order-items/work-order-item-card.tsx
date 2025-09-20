@@ -112,23 +112,34 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                             </p>
                         )}
 
-                        {/* Quantity and Pricing */}
-                        <div className="flex items-center justify-between text-xs mb-2">
-                            <div className="flex items-center gap-4">
-                                <span className="text-gray-400">
-                                    Qty: <span className="text-white font-medium">{item.quantity}</span>
-                                </span>
-                                <span className="text-gray-400">
-                                    @ {formatCurrency(item.unit_price)}
-                                </span>
+                        {/* Quantity/Pricing for non-labor items */}
+                        {item.item_type !== 'labor' && (
+                            <div className="flex items-center justify-between text-xs mb-2">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-gray-400">
+                                        Qty: <span className="text-white font-medium">{item.quantity}</span>
+                                    </span>
+                                    <span className="text-gray-400">
+                                        @ {formatCurrency(item.unit_price)}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Labor Hours */}
-                        {item.labor_hours && (
-                            <div className="flex items-center gap-1 text-xs text-gray-400 mb-2">
-                                <Clock className="h-3 w-3" />
-                                {item.labor_hours} hours
+                        {/* Labor Hours and Hourly Rate for labor items */}
+                        {item.item_type === 'labor' && (
+                            <div className="flex items-center justify-between text-xs mb-2">
+                                <div className="flex items-center gap-4">
+                                    {item.labor_hours && (
+                                        <span className="text-gray-400">
+                                            <Clock className="h-3 w-3 inline mr-1" />
+                                            {item.labor_hours} hours
+                                        </span>
+                                    )}
+                                    <span className="text-gray-400">
+                                        @ {formatCurrency(item.unit_price)}/hr
+                                    </span>
+                                </div>
                             </div>
                         )}
 

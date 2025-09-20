@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Package } from 'lucide-react'
 import { WorkOrderItemCard } from './work-order-item-card'
 import { WorkOrderItemForm } from './work-order-item-form'
@@ -18,12 +18,14 @@ import type { WorkOrderItem, WorkOrderItemFormData } from '../../types/work-orde
 
 interface WorkOrderItemsListProps {
     workOrderId: string
+    shopId?: string
     isEditable?: boolean
     className?: string
 }
 
 export const WorkOrderItemsList: React.FC<WorkOrderItemsListProps> = ({
     workOrderId,
+    shopId,
     isEditable = true,
     className = ""
 }) => {
@@ -186,6 +188,9 @@ export const WorkOrderItemsList: React.FC<WorkOrderItemsListProps> = ({
                         <DialogTitle className="text-white">
                             {editingItem ? 'Edit Work Order Item' : 'Add Work Order Item'}
                         </DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                            Add a new work order item to save repetive tasks.
+                        </DialogDescription>
                     </DialogHeader>
                     
                     <WorkOrderItemForm
@@ -193,6 +198,7 @@ export const WorkOrderItemsList: React.FC<WorkOrderItemsListProps> = ({
                         onSubmit={handleFormSubmit}
                         onCancel={handleFormCancel}
                         isSubmitting={createItemMutation.isPending || updateItemMutation.isPending}
+                        shopId={shopId}
                     />
                 </DialogContent>
             </Dialog>
