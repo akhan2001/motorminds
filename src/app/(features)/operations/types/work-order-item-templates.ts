@@ -1,7 +1,7 @@
 export interface WorkOrderItemTemplate {
     id: string
     shop_id: string
-    item_type: 'labor' | 'part' | 'service' | 'fee' | 'package'
+    item_type: 'labor' | 'part' | 'service' | 'fee'
     name: string
     description?: string
     quantity: number
@@ -17,7 +17,7 @@ export interface WorkOrderItemTemplate {
 
 export interface WorkOrderItemTemplateCreateData {
     shop_id: string
-    item_type: 'labor' | 'part' | 'service' | 'fee' | 'package'
+    item_type: 'labor' | 'part' | 'service' | 'fee'
     name: string
     description?: string
     quantity: number
@@ -56,7 +56,7 @@ export interface CloneTemplateToWorkOrderData {
 }
 
 export interface WorkOrderItemTemplateFormData {
-    item_type: 'labor' | 'part' | 'service' | 'fee' | 'package'
+    item_type: 'labor' | 'part' | 'service' | 'fee'
     name: string
     description: string
     quantity: number

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Save, X } from 'lucide-react'
 import { useCreateWorkOrderItemTemplate, useUpdateWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
+import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate, WorkOrderItemTemplateFormData } from '../../../types/work-order-item-templates'
 
 interface WorkOrderItemTemplateFormProps {
@@ -49,11 +50,11 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
     useEffect(() => {
         if (template) {
             setFormData({
-                item_type: template.item_type,
-                name: template.name,
+                item_type: template.item_type || 'labor', // Fallback to 'labor' if empty
+                name: template.name || '',
                 description: template.description || '',
-                quantity: template.quantity,
-                unit_price: template.unit_price,
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
                 unit_cost: template.unit_cost || 0,
                 part_number: template.part_number || '',
                 supplier: template.supplier || '',
@@ -64,11 +65,30 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
         }
     }, [template])
 
+    // Ensure form always has a valid item_type
+    useEffect(() => {
+        if (!formData.item_type || !['labor', 'part', 'service', 'fee'].includes(formData.item_type)) {
+            setFormData(prev => ({
+                ...prev,
+                item_type: 'labor'
+            }))
+        }
+    }, [formData.item_type])
+
     const handleFieldChange = (field: keyof WorkOrderItemTemplateFormData, value: any) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }))
+        setFormData(prev => {
+            const newData = {
+                ...prev,
+                [field]: value
+            }
+            
+            // Ensure item_type is always valid
+            if (field === 'item_type' && (!value || !['labor', 'part', 'service', 'fee'].includes(value))) {
+                newData.item_type = 'labor' // Default fallback
+            }
+            
+            return newData
+        })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +96,13 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
         setIsSubmitting(true)
 
         try {
+            // Validate item_type before submitting
+            const validItemTypes = ['labor', 'part', 'service', 'fee']
+            
+            if (!formData.item_type || !validItemTypes.includes(formData.item_type)) {
+                throw new Error(`Invalid item type: "${formData.item_type}". Must be one of: ${validItemTypes.join(', ')}`)
+            }
+
             if (template) {
                 // Update existing template
                 await updateTemplateMutation.mutateAsync({
@@ -124,7 +151,6 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
     const isPart = formData.item_type === 'part'
     const isService = formData.item_type === 'service'
     const isFee = formData.item_type === 'fee'
-    const isPackage = formData.item_type === 'package'
 
     return (
         <Card className={`bg-[#1a1a1a] border-[#2a2a2a] ${className}`}>
@@ -160,7 +186,6 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                                 <SelectItem value="part">Part</SelectItem>
                                 <SelectItem value="service">Service</SelectItem>
                                 <SelectItem value="fee">Fee</SelectItem>
-                                <SelectItem value="package">Package</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -192,12 +217,21 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     {/* Category */}
                     <div className="space-y-2">
                         <Label className="text-gray-300">Category</Label>
-                        <Input
+                        <Select
                             value={formData.category}
-                            onChange={(e) => handleFieldChange('category', e.target.value)}
-                            placeholder="e.g., Brakes, Engine, Maintenance"
-                            className="bg-[#292929] text-white border-[#626262]"
-                        />
+                            onValueChange={(value) => handleFieldChange('category', value)}
+                        >
+                            <SelectTrigger className="bg-[#292929] text-white border-[#626262]">
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#292929] text-white border-[#626262] max-h-60">
+                                {getTemplateCategories().map((category) => (
+                                    <SelectItem key={category.value} value={category.value}>
+                                        {category.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Quantity and Unit Price */}

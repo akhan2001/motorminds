@@ -420,7 +420,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                     <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
                         <WorkOrderItemTemplatesPanel 
                             shopId={shopId || ""}
-                            // Don't pass workOrderId for new work orders to disable template selection
+                            workOrderId="new" // Enable template selection for new work orders
                             onTemplateSelected={handleTemplateSelect}
                             selectedTemplateIds={selectedTemplates.map(t => t.id)}
                             className="h-full"

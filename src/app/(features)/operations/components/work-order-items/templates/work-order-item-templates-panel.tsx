@@ -4,13 +4,13 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Search, Filter, Package } from 'lucide-react'
 import { WorkOrderItemTemplateCard } from './work-order-item-template-card'
 import { WorkOrderItemTemplateForm } from './work-order-item-template-form'
-import { useWorkOrderItemTemplates, useWorkOrderItemTemplateCategories, useDeleteWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
+import { useWorkOrderItemTemplates, useDeleteWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { useCloneTemplateToWorkOrder } from '../../../hooks/use-work-order-item-templates'
+import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templates'
 
 interface WorkOrderItemTemplatesPanelProps {
@@ -37,9 +37,11 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
 
     // Hooks
     const { data: templates = [], isLoading, error } = useWorkOrderItemTemplates(shopId)
-    const { data: categories = [] } = useWorkOrderItemTemplateCategories(shopId)
     const deleteTemplateMutation = useDeleteWorkOrderItemTemplate()
     const cloneTemplateMutation = useCloneTemplateToWorkOrder()
+    
+    // Get predefined categories
+    const categories = getTemplateCategories().map(cat => cat.value)
 
     // Filter templates based on search and category
     const filteredTemplates = templates.filter(template => {
@@ -53,8 +55,8 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
     })
 
     const handleTemplateSelect = async (template: WorkOrderItemTemplate) => {
-        if (workOrderId) {
-            // Clone template to work order
+        if (workOrderId && workOrderId !== "new") {
+            // Clone template to existing work order
             try {
                 await cloneTemplateMutation.mutateAsync({
                     template_id: template.id,
@@ -64,10 +66,10 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
             } catch (error) {
                 console.error('Failed to clone template:', error)
             }
+        } else {
+            // For new work orders, call the callback to add to selected templates
+            onTemplateSelected?.(template)
         }
-        
-        // Always call the callback for template selection
-        onTemplateSelected?.(template)
     }
 
     const handleEditTemplate = (template: WorkOrderItemTemplate) => {
@@ -192,17 +194,17 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
             </div>
 
             {/* Content Area - Scrollable */}
-            <ScrollArea className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                 <div className="p-4 space-y-3">
                     {filteredTemplates.length > 0 ? (
                         filteredTemplates.map((template) => (
                             <WorkOrderItemTemplateCard
                                 key={template.id}
                                 template={template}
-                                onSelect={handleTemplateSelect}
+                                onSelect={workOrderId ? handleTemplateSelect : undefined}
                                 onEdit={handleEditTemplate}
                                 onDelete={handleDeleteTemplate}
-                                isSelectable={true}
+                                isSelectable={!!workOrderId}
                                 isSelected={selectedTemplateIds.includes(template.id)}
                             />
                         ))
@@ -224,7 +226,7 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                         </div>
                     )}
                 </div>
-            </ScrollArea>
+            </div>
 
             {/* Template Form Dialog */}
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

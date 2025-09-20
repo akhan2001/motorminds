@@ -65,7 +65,6 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
                     ) : (
                         <WorkOrderItemTemplatesPanel
                             shopId={shopId}
-                            onTemplateSelected={() => {}} // No work order context in this modal
                             className="h-full"
                         />
                     )}

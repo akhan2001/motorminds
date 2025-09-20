@@ -10,7 +10,6 @@ import {
     Star, 
     DollarSign, 
     Layers,
-    Plus,
     Clock,
     Pencil,
     Trash2
@@ -90,7 +89,6 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
 }) => {
     const isLabor = template.item_type === 'labor'
     const isPart = template.item_type === 'part'
-    const isPackage = template.item_type === 'package'
 
     const handleSelect = () => {
         if (isSelectable && onSelect) {
@@ -114,8 +112,14 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
 
     return (
         <Card 
-            className={`bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors cursor-pointer group ${className}`}
-            onClick={handleSelect}
+            className={`bg-[#1a1a1a] border-[#2a2a2a] transition-colors group ${
+                isSelectable && onSelect 
+                    ? isSelected 
+                        ? 'border-green-500 bg-green-500/5 cursor-pointer' 
+                        : 'hover:border-[#3a3a3a] cursor-pointer'
+                    : 'hover:border-[#3a3a3a]'
+            } ${className}`}
+            onClick={isSelectable && onSelect ? handleSelect : undefined}
         >
             <CardContent className="p-4">
                 <div className="space-y-3">
@@ -134,6 +138,11 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                             {template.category && (
                                 <Badge variant="secondary" className="text-sm bg-[#2a2a2a] text-gray-400">
                                     {template.category}
+                                </Badge>
+                            )}
+                            {isSelectable && onSelect && isSelected && (
+                                <Badge variant="outline" className="text-sm bg-green-500/10 text-green-400 border-green-500/20">
+                                    ✓ Selected
                                 </Badge>
                             )}
                         </div>
@@ -223,31 +232,6 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                         </p>
                     )}
 
-                    {/* Select button */}
-                    {isSelectable && onSelect && (
-                        <Button
-                            size="sm"
-                            onClick={handleSelect}
-                            disabled={isSelected}
-                            className={`w-full text-white text-sm ${
-                                isSelected 
-                                    ? 'bg-green-600 hover:bg-green-700 cursor-not-allowed' 
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
-                        >
-                            {isSelected ? (
-                                <>
-                                    <span className="mr-1">✓</span>
-                                    Selected
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className="h-3 w-3 mr-1" />
-                                    Add to Work Order
-                                </>
-                            )}
-                        </Button>
-                    )}
                 </div>
             </CardContent>
         </Card>
