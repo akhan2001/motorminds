@@ -1,113 +1,127 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
-import { getShopIdForUser } from '@/utils/get-shop-id'
 
-// GET - Retrieve message history for a session
+// GET - Retrieve messages for a session
 export async function GET(request: NextRequest) {
-  try {
-    const shopId = await getShopIdForUser()
-    if (!shopId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+	try {
+		const supabase = await createClient()
+		const shopId = request.headers.get('x-shop-id')
 
-    const supabase = await createClient()
-    const { searchParams } = new URL(request.url)
-    const sessionId = searchParams.get('sessionId')
+		const { searchParams } = new URL(request.url)
+		const sessionId = searchParams.get('sessionId')
 
-    if (!sessionId) {
-      return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
-    }
+		if (!sessionId) {
+			return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
+		}
 
-    // Verify session belongs to shop
-    const { data: session, error: sessionError } = await supabase
-      .from('mia_sessions')
-      .select('id')
-      .eq('session_id', sessionId)
-      .eq('shop_id', shopId)
-      .single()
+		// Handle fallback sessions (for debugging when no shop_id)
+		if (sessionId.startsWith('fallback_session_')) {
+			console.log('Handling fallback session - returning empty messages')
+			return NextResponse.json({ messages: [] })
+		}
 
-    if (sessionError || !session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
-    }
+		if (!shopId) {
+			return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
+		}
 
-    // Get messages for this session
-    const { data: messages, error: messagesError } = await supabase
-      .from('mia_messages')
-      .select('*')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
+		// Verify session belongs to shop
+		const { data: session, error: sessionError } = await supabase
+			.from('mia_sessions')
+			.select('id')
+			.eq('session_id', sessionId)
+			.eq('shop_id', shopId)
+			.single()
 
-    if (messagesError) {
-      console.error('Error fetching messages:', messagesError)
-      return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
-    }
+		if (sessionError) {
+			console.error('Error verifying session:', sessionError)
+			return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+		}
 
-    return NextResponse.json({ messages: messages || [] })
-  } catch (error) {
-    console.error('Messages GET error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+		// Get messages for the session
+		const { data: messages, error } = await supabase
+			.from('mia_messages')
+			.select('*')
+			.eq('session_id', sessionId)
+			.order('created_at', { ascending: true })
+
+		if (error) {
+			console.error('Error fetching messages:', error)
+			return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
+		}
+
+		return NextResponse.json({ messages })
+	} catch (error) {
+		console.error('Messages GET API error:', error)
+		return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+	}
 }
 
 // POST - Store a new message
 export async function POST(request: NextRequest) {
-  try {
-    const shopId = await getShopIdForUser()
-    if (!shopId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+	try {
+		const supabase = await createClient()
+		const shopId = request.headers.get('x-shop-id')
 
-    const supabase = await createClient()
-    const { sessionId, role, content, metadata = {} } = await request.json()
+		const { sessionId, role, content, metadata = {} } = await request.json()
 
-    if (!sessionId || !role || !content) {
-      return NextResponse.json({ 
-        error: 'Session ID, role, and content are required' 
-      }, { status: 400 })
-    }
+		if (!sessionId || !role || !content) {
+			return NextResponse.json({
+				error: 'Session ID, role, and content are required'
+			}, { status: 400 })
+		}
 
-    // Verify session belongs to shop and is active
-    const { data: session, error: sessionError } = await supabase
-      .from('mia_sessions')
-      .select('id, status')
-      .eq('session_id', sessionId)
-      .eq('shop_id', shopId)
-      .single()
+		// Handle fallback sessions (for debugging when no shop_id)
+		if (sessionId.startsWith('fallback_session_')) {
+			console.log('Handling fallback session - skipping message storage')
+			return NextResponse.json({
+				message: {
+					id: `fallback_${Date.now()}`,
+					session_id: sessionId,
+					role,
+					content,
+					metadata,
+					created_at: new Date().toISOString()
+				}
+			})
+		}
 
-    if (sessionError || !session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
-    }
+		if (!shopId) {
+			return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
+		}
 
-    if (session.status !== 'active') {
-      return NextResponse.json({ error: 'Session is not active' }, { status: 400 })
-    }
+		// Verify session belongs to shop
+		const { data: session, error: sessionError } = await supabase
+			.from('mia_sessions')
+			.select('id')
+			.eq('session_id', sessionId)
+			.eq('shop_id', shopId)
+			.single()
 
-    // Store the message
-    const { data: message, error: messageError } = await supabase
-      .from('mia_messages')
-      .insert({
-        session_id: sessionId,
-        role,
-        content,
-        metadata
-      })
-      .select()
-      .single()
+		if (sessionError) {
+			console.error('Error verifying session:', sessionError)
+			return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+		}
 
-    if (messageError) {
-      console.error('Error storing message:', messageError)
-      return NextResponse.json({ error: 'Failed to store message' }, { status: 500 })
-    }
+		// Insert the message
+		const { data: message, error } = await supabase
+			.from('mia_messages')
+			.insert({
+				session_id: sessionId,
+				role,
+				content,
+				metadata
+			})
+			.select()
+			.single()
 
-    // Update session timestamp
-    await supabase
-      .from('mia_sessions')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('session_id', sessionId)
+		if (error) {
+			console.error('Error storing message:', error)
+			return NextResponse.json({ error: 'Failed to store message' }, { status: 500 })
+		}
 
-    return NextResponse.json({ message })
-  } catch (error) {
-    console.error('Messages POST error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+		return NextResponse.json({ message })
+	} catch (error) {
+		console.error('Messages POST API error:', error)
+		return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+	}
 }

@@ -2,27 +2,131 @@
 
 import { useChat } from 'ai/react'
 import type { Message } from 'ai'
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent, useState, useEffect } from 'react'
 
 import { Nav } from "../components/nav"
 import { MiaOnboarding } from "../components/ui/MiaDiagnosticChat/MiaOnboarding"
 import { MiaDiagnosticsHeader } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsHeader"
 import { DiagnosticChatForm } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsChatForm"
-import { MemoizedDiagnosticMessage } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsMessage"
 import { DiagnosticMessage } from "../components/ui/MiaDiagnosticChat/MiaDiagnostics.types"
 import { Conversation, ConversationContent, ConversationScrollButton } from "../components/ui/MiaDiagnosticChat/elements/Conversations"
+import DiagnosticMessageCard from "./components/DiagnosticMessageCard"
+import ThinkingIndicator from "./components/ThinkingIndicator"
+import { AlertTriangle } from "lucide-react"
 
 export default function MiaPage() {
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+    const [sessionLoading, setSessionLoading] = useState(true)
 
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<Error | undefined>()
 
-    // Temporary manual chat handling for debugging
+    // Initialize session on component mount
+    useEffect(() => {
+        // Check if there's an existing session in localStorage
+        const existingSessionId = localStorage.getItem('mia-session-id')
+        if (existingSessionId) {
+            loadExistingSession(existingSessionId)
+        } else {
+            initializeSession()
+        }
+    }, [])
+
+    const loadExistingSession = async (sessionId: string) => {
+        try {
+            setSessionLoading(true)
+            
+            // Try to get the existing session from the API
+            const sessionResponse = await fetch(`/api/mia/session?sessionId=${sessionId}`, {
+                method: 'GET'
+            })
+            
+            if (!sessionResponse.ok) {
+                throw new Error('Session not found')
+            }
+            
+            const { session } = await sessionResponse.json()
+            setCurrentSessionId(session.session_id)
+            
+            // Update localStorage with the actual session ID (in case it was replaced)
+            localStorage.setItem('mia-session-id', session.session_id)
+            
+            // Load existing messages for this session
+            await loadSessionMessages(session.session_id)
+            
+        } catch (err) {
+            console.error('Failed to load existing session:', err)
+            // If loading existing session fails, create a new one
+            await initializeSession()
+        } finally {
+            setSessionLoading(false)
+        }
+    }
+
+    const initializeSession = async () => {
+        try {
+            setSessionLoading(true)
+            
+            // Create new session
+            const sessionResponse = await fetch('/api/mia/session', {
+                method: 'GET'
+            })
+            
+            if (!sessionResponse.ok) {
+                const errorText = await sessionResponse.text()
+                console.error('Session creation failed:', {
+                    status: sessionResponse.status,
+                    statusText: sessionResponse.statusText,
+                    error: errorText
+                })
+                throw new Error(`Failed to create session: ${sessionResponse.status} - ${errorText}`)
+            }
+            
+            const { session } = await sessionResponse.json()
+            setCurrentSessionId(session.session_id)
+            
+            // Store session ID in localStorage for persistence
+            localStorage.setItem('mia-session-id', session.session_id)
+            
+            // Load existing messages for this session
+            await loadSessionMessages(session.session_id)
+            
+        } catch (err) {
+            console.error('Failed to initialize session:', err)
+            setError(err as Error)
+        } finally {
+            setSessionLoading(false)
+        }
+    }
+
+    const loadSessionMessages = async (sessionId: string) => {
+        try {
+            const messagesResponse = await fetch(`/api/mia/messages?sessionId=${sessionId}`)
+            
+            if (messagesResponse.ok) {
+                const { messages: dbMessages } = await messagesResponse.json()
+                
+                // Convert database messages to UI message format
+                const uiMessages: Message[] = dbMessages.map((msg: any) => ({
+                    id: msg.id,
+                    role: msg.role,
+                    content: msg.content,
+                    metadata: msg.metadata
+                }))
+                
+                setMessages(uiMessages)
+            }
+        } catch (err) {
+            console.error('Failed to load session messages:', err)
+        }
+    }
+
+    // Handle message submission with session persistence
     const handleSubmit = async (message: string) => {
-        if (!message.trim()) return
+        if (!message.trim() || !currentSessionId) return
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -41,10 +145,11 @@ export default function MiaPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                            body: JSON.stringify({
-                                messages: [...messages, userMessage],
-                                vehicleInfo: {}
-                            })
+                body: JSON.stringify({
+                    messages: [...messages, userMessage],
+                    vehicleInfo: {},
+                    sessionId: currentSessionId
+                })
             })
 
             if (!response.ok) {
@@ -59,14 +164,12 @@ export default function MiaPage() {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
                 content: data.content || data.fullResponse?.choices?.[0]?.message?.content || 'No response received',
-                // Add Perplexity data to the message for display
-                diagnosticData: {
-                    perplexityData: {
-                        citations: data.citations,
-                        searchResults: data.searchResults
-                    }
+                metadata: {
+                    citations: data.citations,
+                    searchResults: data.searchResults,
+                    diagnosticMode: 'basic'
                 }
-            } as any
+            }
 
             setMessages(prev => [...prev, assistantMessage])
 
@@ -108,14 +211,23 @@ export default function MiaPage() {
         }, 100)
     }
 
-    const handleClearMessages = () => {
+    const handleClearMessages = async () => {
         setMessages([])
         setEditingMessageId(null)
+        
+        // Clear the stored session ID
+        localStorage.removeItem('mia-session-id')
+        
+        // Create a new session
+        await initializeSession()
     }
 
     const handleCloseAssistant = () => {
-        // Could navigate back or close modal - for now just clear
-        handleClearMessages()
+        // Just clear the current session without creating a new one
+        setMessages([])
+        setEditingMessageId(null)
+        setCurrentSessionId(null)
+        localStorage.removeItem('mia-session-id')
     }
 
 
@@ -125,6 +237,50 @@ export default function MiaPage() {
     }
 
     const hasMessages = messages.length > 0
+
+    // Show loading screen while session is initializing
+    if (sessionLoading) {
+        return (
+            <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+                <Nav />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500 mx-auto mb-4"></div>
+                        <p className="text-gray-400">Initializing MIA session...</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Show error screen if session failed to initialize
+    if (error && !currentSessionId) {
+        return (
+            <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+                <Nav />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md">
+                        <div className="text-red-400 mb-4">
+                            <AlertTriangle className="h-12 w-12 mx-auto mb-2" />
+                            <h2 className="text-lg font-semibold">Session Error</h2>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-4">
+                            {error.message}
+                        </p>
+                        <button 
+                            onClick={() => {
+                                setError(undefined)
+                                initializeSession()
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
@@ -146,22 +302,20 @@ export default function MiaPage() {
                                 {hasMessages ? (
                                     <Conversation className="h-full">
                                         <ConversationContent className="max-w-4xl mx-auto p-4">
-                                            {messages.map((message: Message, index: number) => {
-                                                const isAfterEdited = editingMessageId !== null && 
-                                                    messages.findIndex((msg: Message) => msg.id === editingMessageId) < index
-                                                
-                                                return (
-                                                    <MemoizedDiagnosticMessage
-                                                        key={message.id}
-                                                        id={message.id}
-                                                        message={message as unknown as DiagnosticMessage}
-                                                        isLoading={isLoading && index === messages.length - 1}
-                                                        isAfterEditedMessage={isAfterEdited}
-                                                        isBeingEdited={editingMessageId === message.id}
-                                                        onCancelEdit={handleCancelEdit}
-                                                    />
-                                                )
-                                            })}
+                                            {messages.map((message: Message, index: number) => (
+                                                <DiagnosticMessageCard
+                                                    key={message.id}
+                                                    message={message}
+                                                    isLoading={isLoading && index === messages.length - 1}
+                                                />
+                                            ))}
+                                            
+                                            {/* Show thinking indicator when loading */}
+                                            {isLoading && (
+                                                <ThinkingIndicator 
+                                                    message="MIA is analyzing your diagnostic request and searching for relevant information..."
+                                                />
+                                            )}
                                             
                                             {error && (
                                                 <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
