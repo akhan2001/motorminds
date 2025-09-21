@@ -17,6 +17,7 @@ import { WorkOrderRightPanel } from "./work-order-right-panel"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
 import { getWorkOrderItems } from "../../../lib/work-order-items-service"
 import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-service"
+import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
@@ -211,14 +212,17 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
             // Get work order items for calculations
             const workOrderItems = await getWorkOrderItems(workOrderDetails?.id || initialWorkOrder.id)
             
-            // Calculate totals from work order items
-            const subtotal = workOrderItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0)
-            const labourTotal = workOrderItems
-                .filter((item: any) => item.item_type === 'labor')
-                .reduce((sum: number, item: any) => sum + (item.total_price || 0), 0)
-            const partsTotal = workOrderItems
-                .filter((item: any) => item.item_type === 'part')
-                .reduce((sum: number, item: any) => sum + (item.total_price || 0), 0)
+            // Calculate totals excluding rejected items
+            const calculations = calculateInvoiceTotals(workOrderItems)
+            
+            console.log('Invoice calculations:', {
+                totalItems: workOrderItems.length,
+                approvedItems: calculations.approvedItems.length,
+                rejectedItems: calculations.rejectedItems.length,
+                subtotal: calculations.subtotal,
+                labourTotal: calculations.labourTotal,
+                partsTotal: calculations.partsTotal
+            })
 
             // Prepare invoice data - only essential columns needed
             const invoiceData = {
@@ -226,9 +230,9 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                 customer_id: workOrderDetails?.customer_id || '',
                 vehicle_id: workOrderDetails?.vehicle_id || '',
                 shop_id: workOrderDetails?.shop_id || '',
-                amount: subtotal,
-                labour_total_price: labourTotal,
-                parts_total_price: partsTotal,
+                amount: calculations.subtotal,
+                labour_total_price: calculations.labourTotal,
+                parts_total_price: calculations.partsTotal,
                 status: 'UNPAID' as const,
                 source: 'shop_generated' as const,
                 workOrderItems: workOrderItems

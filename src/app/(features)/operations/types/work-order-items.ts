@@ -25,6 +25,7 @@ export interface WorkOrderItem {
     
     created_at: string
     completed_at?: string
+    active?: boolean
 }
 
 export type WorkOrderItemType = 'labor' | 'part' | 'service' | 'fee'

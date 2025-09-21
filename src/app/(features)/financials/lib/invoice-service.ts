@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { Invoice, InvoiceFormData } from '../types/invoice'
 import { WorkOrderItem } from '../../operations/types/work-order-items'
+import { calculateInvoiceTotals, getInvoiceItems } from './invoice-calculations'
 
 export interface WorkOrderInvoiceData {
 	work_order_id: string
@@ -17,9 +18,11 @@ export interface WorkOrderInvoiceData {
 
 export async function createInvoiceFromWorkOrder(invoiceData: WorkOrderInvoiceData): Promise<Invoice> {
 	try {
-		// Separate work order items by type
-		const labourItems = invoiceData.workOrderItems.filter(item => item.item_type === 'labor')
-		const partsItems = invoiceData.workOrderItems.filter(item => item.item_type === 'part')
+		// Calculate totals excluding rejected items
+		const calculations = calculateInvoiceTotals(invoiceData.workOrderItems)
+		
+		// Get items for invoice display (approved items only)
+		const invoiceItems = getInvoiceItems(invoiceData.workOrderItems)
 		
 		// Create the invoice - only essential columns needed
 		const { data: invoice, error: invoiceError } = await supabase
@@ -29,13 +32,13 @@ export async function createInvoiceFromWorkOrder(invoiceData: WorkOrderInvoiceDa
 				customer_id: invoiceData.customer_id,
 				vehicle_id: invoiceData.vehicle_id,
 				shop_id: invoiceData.shop_id,
-				amount: invoiceData.amount,
-				labour_total_price: invoiceData.labour_total_price,
-				parts_total_price: invoiceData.parts_total_price,
+				amount: calculations.subtotal, // Use calculated subtotal
+				labour_total_price: calculations.labourTotal,
+				parts_total_price: calculations.partsTotal,
 				status: invoiceData.status,
 				source: invoiceData.source,
-				labour_items: labourItems,
-				parts_items: partsItems
+				labour_items: invoiceItems.labourItems,
+				parts_items: invoiceItems.partsItems
 			})
 			.select()
 			.single()

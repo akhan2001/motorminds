@@ -220,12 +220,15 @@ export class WorkOrderItemsService {
     }
 
     /**
-     * Get summary of work order items (totals by type)
+     * Get summary of work order items (totals by type) - excludes rejected items
      */
     static async getWorkOrderItemsSummary(workOrderId: string): Promise<WorkOrderItemSummary> {
         const items = await this.getWorkOrderItems(workOrderId)
 
-        const summary = items.reduce((acc, item) => {
+        // Filter out rejected items (active = false)
+        const approvedItems = items.filter(item => item.active !== false)
+
+        const summary = approvedItems.reduce((acc, item) => {
             // Calculate total based on item type
             let total = 0
             if (item.item_type === 'labor') {

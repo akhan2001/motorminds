@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Package, Wrench, Star, DollarSign, Calculator } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/currency'
-import { useWorkOrderItemsSummary } from '../../hooks/use-work-order-items'
+import { useWorkOrderItemsSummary, useWorkOrderItems } from '../../hooks/use-work-order-items'
 
 interface WorkOrderItemsSummaryProps {
     workOrderId: string
@@ -17,6 +17,11 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
     className = ""
 }) => {
     const { data: summary, isLoading, error } = useWorkOrderItemsSummary(workOrderId)
+    const { data: allItems } = useWorkOrderItems(workOrderId)
+    
+    // Calculate rejected items count
+    const rejectedItemsCount = allItems?.filter(item => item.active === false).length || 0
+    const totalItemsCount = allItems?.length || 0
 
     if (isLoading) {
         return (
@@ -75,9 +80,16 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
                 <CardTitle className="text-sm font-medium text-white flex items-center gap-2">
                     <Calculator className="h-4 w-4" />
                     Cost Summary
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 ml-auto">
-                        {summary.itemCount} items
-                    </Badge>
+                    <div className="ml-auto flex gap-2">
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                            {summary.itemCount} approved
+                        </Badge>
+                        {rejectedItemsCount > 0 && (
+                            <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20">
+                                {rejectedItemsCount} rejected
+                            </Badge>
+                        )}
+                    </div>
                 </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -107,11 +119,18 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
 
                     {/* Grand Total */}
                     <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-white">Total</span>
+                        <span className="text-sm font-medium text-white">Total (Approved Items Only)</span>
                         <span className="text-sm font-semibold text-green-400">
                             {formatCurrency(summary.grandTotal)}
                         </span>
                     </div>
+                    
+                    {/* Rejected items notice */}
+                    {rejectedItemsCount > 0 && (
+                        <div className="text-xs text-red-400 pt-1">
+                            {rejectedItemsCount} rejected item(s) excluded from total
+                        </div>
+                    )}
 
                     {/* Empty state */}
                     {summary.itemCount === 0 && (
