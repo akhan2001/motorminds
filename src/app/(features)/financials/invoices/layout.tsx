@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Work Orders - MotorMinds",
-  description: "Manage and track work orders for your auto shop",
+  title: "Invoices - MotorMinds",
+  description: "Manage and track invoices for your auto shop",
   icons: {
     icon: '/motorminds-logo-black.png',
     shortcut: '/motorminds-logo-black.png',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function WorkOrdersLayout({
+export default function InvoicesLayout({
   children,
 }: {
   children: React.ReactNode;

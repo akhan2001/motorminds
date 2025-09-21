@@ -2,8 +2,9 @@
 import { createClient } from '@/utils/supabase/client'
 import type { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData, WorkOrderItemSummary } from '../types/work-order-items'
 
+const supabase = createClient()
+
 export class WorkOrderItemsService {
-    private static supabase = createClient()
 
     /**
      * Get all items for a specific work order
@@ -13,7 +14,7 @@ export class WorkOrderItemsService {
             throw new Error('Work Order ID is required')
         }
 
-        const { data, error } = await this.supabase
+        const { data, error } = await supabase
             .from('work_order_items')
             .select('*')
             .eq('work_order_id', workOrderId)
@@ -32,7 +33,7 @@ export class WorkOrderItemsService {
             throw new Error('Shop ID is required')
         }
 
-        const { data, error } = await this.supabase
+        const { data, error } = await supabase
             .from('work_order_items')
             .select('*')
             .eq('shop_id', shopId)
@@ -54,7 +55,7 @@ export class WorkOrderItemsService {
             throw new Error('Item ID is required')
         }
 
-        const { data, error } = await this.supabase
+        const { data, error } = await supabase
             .from('work_order_items')
             .select('*')
             .eq('id', itemId)
@@ -93,7 +94,7 @@ export class WorkOrderItemsService {
         const totalCost = itemData.unit_cost ? itemData.quantity * itemData.unit_cost : undefined
 
         // Get shop_id from the work order (required for RLS)
-        const { data: workOrder, error: workOrderError } = await this.supabase
+        const { data: workOrder, error: workOrderError } = await supabase
             .from('work_orders')
             .select('shop_id')
             .eq('id', itemData.work_order_id)
@@ -122,7 +123,7 @@ export class WorkOrderItemsService {
             technician_id: itemData.technician_id || null,
         }
 
-        const { data, error } = await this.supabase
+        const { data, error } = await supabase
             .from('work_order_items')
             .insert([itemPayload])
             .select()
@@ -184,7 +185,7 @@ export class WorkOrderItemsService {
         if (itemData.technician_id !== undefined) updatePayload.technician_id = itemData.technician_id || null
         if (itemData.active !== undefined) updatePayload.active = itemData.active
 
-        const { data, error } = await this.supabase
+        const { data, error } = await supabase
             .from('work_order_items')
             .update(updatePayload)
             .eq('id', itemId)
@@ -207,7 +208,7 @@ export class WorkOrderItemsService {
             throw new Error('Item ID is required')
         }
 
-        const { error } = await this.supabase
+        const { error } = await supabase
             .from('work_order_items')
             .delete()
             .eq('id', itemId)
@@ -301,7 +302,7 @@ export class WorkOrderItemsService {
      * Mark work order item as completed
      */
     static async completeWorkOrderItem(itemId: string): Promise<WorkOrderItem> {
-        const { data, error } = await this.supabase
+        const { data, error } = await supabase
             .from('work_order_items')
             .update({
                 completed_at: new Date().toISOString()
@@ -320,3 +321,11 @@ export class WorkOrderItemsService {
 }
 
 export const workOrderItemsService = new WorkOrderItemsService()
+
+// Export individual functions for easier importing
+export const getWorkOrderItems = WorkOrderItemsService.getWorkOrderItems
+export const getWorkOrderItem = WorkOrderItemsService.getWorkOrderItem
+export const createWorkOrderItem = WorkOrderItemsService.createWorkOrderItem
+export const updateWorkOrderItem = WorkOrderItemsService.updateWorkOrderItem
+export const deleteWorkOrderItem = WorkOrderItemsService.deleteWorkOrderItem
+export const getWorkOrderItemsSummary = WorkOrderItemsService.getWorkOrderItemsSummary

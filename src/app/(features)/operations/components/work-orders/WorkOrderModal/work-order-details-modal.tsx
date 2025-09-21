@@ -15,6 +15,8 @@ import { WorkOrderNotes } from "./work-order-notes"
 import { WorkOrderModalFooter } from "./work-order-modal-footer"
 import { WorkOrderRightPanel } from "./work-order-right-panel"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
+import { getWorkOrderItems } from "../../../lib/work-order-items-service"
+import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-service"
 
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
@@ -192,6 +194,66 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         setIsDeleteConfirmationOpen(false)
     }
 
+    const handleGenerateInvoice = async () => {
+        try {
+            console.log('Generating invoice for work order:', {
+                workOrderId: initialWorkOrder.id,
+                customerId: workOrderDetails?.customer_id,
+                vehicleId: workOrderDetails?.vehicle_id,
+                shopId: workOrderDetails?.shop_id,
+                title: workOrderDetails?.title,
+                description: workOrderDetails?.description,
+                status: workOrderDetails?.status,
+                customer: workOrderDetails?.customer,
+                vehicle: workOrderDetails?.vehicle
+            })
+
+            // Get work order items for calculations
+            const workOrderItems = await getWorkOrderItems(workOrderDetails?.id || initialWorkOrder.id)
+            
+            // Calculate totals from work order items
+            const subtotal = workOrderItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0)
+            const labourTotal = workOrderItems
+                .filter((item: any) => item.item_type === 'labor')
+                .reduce((sum: number, item: any) => sum + (item.total_price || 0), 0)
+            const partsTotal = workOrderItems
+                .filter((item: any) => item.item_type === 'part')
+                .reduce((sum: number, item: any) => sum + (item.total_price || 0), 0)
+
+            // Prepare invoice data - only essential columns needed
+            const invoiceData = {
+                work_order_id: workOrderDetails?.id || initialWorkOrder.id,
+                customer_id: workOrderDetails?.customer_id || '',
+                vehicle_id: workOrderDetails?.vehicle_id || '',
+                shop_id: workOrderDetails?.shop_id || '',
+                amount: subtotal,
+                labour_total_price: labourTotal,
+                parts_total_price: partsTotal,
+                status: 'UNPAID' as const,
+                source: 'shop_generated' as const,
+                workOrderItems: workOrderItems
+            }
+
+            // Create invoice using existing invoice system
+            const newInvoice = await createInvoiceFromWorkOrder(invoiceData)
+            
+            if (newInvoice) {
+                // Navigate to existing invoice page
+                window.open(`/invoices?invoiceId=${newInvoice.invoice_number}`, '_blank')
+                
+                // Show success message
+                toast.success('Invoice generated successfully!')
+                
+                // Close work order modal
+                onClose()
+            }
+            
+        } catch (error) {
+            console.error('Error generating invoice:', error)
+            toast.error('Failed to generate invoice. Please try again.')
+        }
+    }
+
     // Check if work order can be edited based on status
     const canEdit = () => {
         const status = workOrderDetails?.status || initialWorkOrder.status
@@ -360,11 +422,14 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                 isEditing={isEditing}
                                 canEdit={canEdit()}
                                 canDelete={canDelete()}
+                                canGenerateInvoice={true}
+                                workOrderStatus={workOrderDetails?.status || initialWorkOrder.status}
                                 onEdit={handleEdit}
                                 onSave={handleSave}
                                 onCancel={handleCancel}
                                 onClose={onClose}
                                 onDelete={onDelete ? handleDelete : undefined}
+                                onGenerateInvoice={handleGenerateInvoice}
                             />
                         </div>
                     </ResizablePanel>
