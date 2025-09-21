@@ -108,15 +108,14 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                 )}
 
                 {activeTab === 'chat' && (
-                    <div className="p-4 space-y-4">
-                        {/* Chat Placeholder */}
+                    <div className="p-4 space-y-4 font-medium">
                         <div className="bg-[#1a1a1a] rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-2">
                                 <MessageSquare className="h-4 w-4 text-blue-500" />
-                                <span className="text-sm font-medium text-white">Communication</span>
+                                <span className="text-md font-medium text-white">Communication</span>
                             </div>
-                            <p className="text-xs text-gray-400">
-                                Chat functionality will be integrated here for team communication about this work order.
+                            <p className="text-sm text-gray-400">
+                                Messaging on work orders coming soon...
                             </p>
                         </div>
                     </div>
