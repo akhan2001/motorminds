@@ -63,7 +63,7 @@ export const InsightFlags: React.FC<InsightFlagsProps> = ({ flags }) => {
                         className={`border rounded-lg p-3 ${getFlagStyles(flag.type)}`}
                     >
                         <div className="flex items-start space-x-2">
-                            {getFlagIcon(flag.type)}
+                            {/* {getFlagIcon(flag.type)} */}
                             <div className="flex-1">
                                 <div className="flex items-center space-x-2 mb-1">
                                     {getCategoryIcon(flag.category)}

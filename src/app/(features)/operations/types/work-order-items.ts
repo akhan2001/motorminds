@@ -42,6 +42,7 @@ export interface WorkOrderItemFormData {
     notes?: string
     labor_hours?: number
     technician_id?: string
+    active?: boolean
 }
 
 export interface WorkOrderItemCreateData extends WorkOrderItemFormData {

@@ -101,7 +101,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                             ) : (
                                 <div className="flex items-center gap-2 h-10 px-3 bg-[#292929] border border-[#626262] rounded-md">
                                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(priority)}`}></div>
-                                    <span className="text-white capitalize">{priority}</span>
+                                    <span className="text-white capitalize text-sm">{priority}</span>
                                 </div>
                             )}
                         </div>
@@ -112,7 +112,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                         <textarea
                             value={description}
                             onChange={(e) => isEditing && onFieldChange('description', e.target.value)}
-                            className="w-full bg-[#292929] text-white border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[80px]"
+                            className="w-full bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto"
                             readOnly={!isEditing}
                         />
                     </div>
@@ -142,6 +142,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Due Date</Label>
                             <Input
+                                type="date"
                                 value={date}
                                 onChange={(e) => isEditing && onFieldChange('date', e.target.value)}
                                 className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"

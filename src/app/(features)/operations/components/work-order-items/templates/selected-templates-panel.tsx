@@ -97,7 +97,17 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
     const totals = selectedTemplates.reduce((acc, template) => {
         const quantity = template.selectedQuantity || template.quantity
         const unitPrice = template.selectedUnitPrice || template.unit_price
-        const total = quantity * unitPrice
+        const laborHours = template.selectedLaborHours || template.labor_hours || 0
+        
+        // Calculate total based on item type
+        let total = 0
+        if (template.item_type === 'labor') {
+            // For labor: labor_hours * unit_price
+            total = laborHours * unitPrice
+        } else {
+            // For parts, services, fees: quantity * unit_price
+            total = quantity * unitPrice
+        }
         
         if (!acc[template.item_type]) {
             acc[template.item_type] = 0
@@ -159,8 +169,13 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                             {selectedTemplates.map((template) => {
                                 const quantity = template.selectedQuantity || template.quantity
                                 const unitPrice = template.selectedUnitPrice || template.unit_price
-                                const total = quantity * unitPrice
+                                const laborHours = template.selectedLaborHours || template.labor_hours || 0
                                 const isLabor = template.item_type === 'labor'
+                                
+                                // Calculate total based on item type
+                                const total = isLabor 
+                                    ? laborHours * unitPrice  // For labor: labor_hours * unit_price
+                                    : quantity * unitPrice    // For parts, services, fees: quantity * unit_price
 
                                 return (
                                     <Card key={template.id} className="bg-[#1a1a1a] border-[#2a2a2a]">

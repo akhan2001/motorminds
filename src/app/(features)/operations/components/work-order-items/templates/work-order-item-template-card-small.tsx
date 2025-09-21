@@ -18,7 +18,7 @@ import { formatCurrency } from '@/lib/utils/currency'
 import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templates'
 import { useTemplateActions, useTemplateSelection } from '../../../contexts'
 
-interface WorkOrderItemTemplateCardProps {
+interface WorkOrderItemTemplateCardSmallProps {
     template: WorkOrderItemTemplate
     onSelect?: (template: WorkOrderItemTemplate) => void
     onEdit?: (template: WorkOrderItemTemplate) => void
@@ -31,17 +31,17 @@ interface WorkOrderItemTemplateCardProps {
 const getItemTypeIcon = (type: string) => {
     switch (type) {
         case 'labor':
-            return <Wrench className="h-4 w-4" />
+            return <Wrench className="h-3 w-3" />
         case 'part':
-            return <Package className="h-4 w-4" />
+            return <Package className="h-3 w-3" />
         case 'service':
-            return <Star className="h-4 w-4" />
+            return <Star className="h-3 w-3" />
         case 'fee':
-            return <DollarSign className="h-4 w-4" />
+            return <DollarSign className="h-3 w-3" />
         case 'package':
-            return <Layers className="h-4 w-4" />
+            return <Layers className="h-3 w-3" />
         default:
-            return <Package className="h-4 w-4" />
+            return <Package className="h-3 w-3" />
     }
 }
 
@@ -79,7 +79,7 @@ const getItemTypeLabel = (type: string) => {
     }
 }
 
-export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps> = ({
+export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardSmallProps> = ({
     template,
     onSelect,
     onEdit,
@@ -131,42 +131,37 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
             } ${className}`}
             onClick={canSelect ? handleSelect : undefined}
         >
-            <CardContent className="p-4">
-                <div className="space-y-3">
+            <CardContent className="p-3">
+                <div className="space-y-2">
                     {/* Header with type badge and actions */}
                     <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                             <Badge 
                                 variant="outline" 
-                                className={`${getItemTypeColor(template.item_type)} text-sm font-medium`}
+                                className={`${getItemTypeColor(template.item_type)} text-xs font-medium px-1.5 py-0.5`}
                             >
                                 <span className="mr-1">
                                     {getItemTypeIcon(template.item_type)}
                                 </span>
                                 {getItemTypeLabel(template.item_type)}
                             </Badge>
-                            {template.category && (
-                                <Badge variant="secondary" className="text-sm bg-[#2a2a2a] text-gray-400">
-                                    {template.category}
-                                </Badge>
-                            )}
                             {canSelect && isSelected && (
-                                <Badge variant="outline" className="text-sm bg-green-500/10 text-green-400 border-green-500/20">
-                                    ✓ Selected
+                                <Badge variant="outline" className="text-xs bg-green-500/10 text-green-400 border-green-500/20 px-1.5 py-0.5">
+                                    ✓
                                 </Badge>
                             )}
                         </div>
                         
                         {/* Action buttons */}
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             {canEdit && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleEdit}
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                                    className="h-5 w-5 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
                                 >
-                                    <Pencil className="h-3 w-3" />
+                                    <Pencil className="h-2.5 w-2.5" />
                                 </Button>
                             )}
                             {canDelete && (
@@ -174,50 +169,44 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleDelete}
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                                    className="h-5 w-5 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
                                 >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-2.5 w-2.5" />
                                 </Button>
                             )}
                         </div>
                     </div>
 
                     {/* Template name */}
-                    <h3 className="text-white font-medium text-base line-clamp-2">
+                    <h3 className="text-white font-medium text-sm line-clamp-1">
                         {template.name}
                     </h3>
 
-                    {/* Description */}
-                    {template.description && (
-                        <p className="text-gray-400 text-sm line-clamp-2">
+                    {/* Description - only show if short */}
+                    {template.description && template.description.length <= 50 && (
+                        <p className="text-gray-400 text-xs line-clamp-1">
                             {template.description}
                         </p>
                     )}
 
-                    {/* Part-specific info */}
+                    {/* Part-specific info - compact */}
                     {isPart && template.part_number && (
-                        <p className="text-gray-500 text-sm">
-                            Part #: {template.part_number}
+                        <p className="text-gray-500 text-xs">
+                            #{template.part_number}
                         </p>
                     )}
 
-                    {isPart && template.supplier && (
-                        <p className="text-gray-500 text-sm">
-                            Supplier: {template.supplier}
-                        </p>
-                    )}
-
-                    {/* Labor hours */}
+                    {/* Labor hours - compact */}
                     {isLabor && template.labor_hours && (
-                        <div className="flex items-center gap-1 text-sm text-gray-400">
-                            <Clock className="h-3 w-3" />
-                            {template.labor_hours} hours
+                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <Clock className="h-2.5 w-2.5" />
+                            {template.labor_hours}h
                         </div>
                     )}
 
-                    {/* Pricing information */}
+                    {/* Pricing information - compact */}
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <div className="text-xs text-gray-400">
                             {isLabor ? (
                                 <span>
                                     {template.quantity} × {formatCurrency(template.unit_price)}/hr
@@ -229,19 +218,11 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                             )}
                         </div>
                         <div className="text-right">
-                            <p className="text-white font-semibold text-base">
+                            <p className="text-white font-semibold text-sm">
                                 {formatCurrency(template.quantity * template.unit_price)}
                             </p>
                         </div>
                     </div>
-
-                    {/* Warranty period */}
-                    {template.warranty_period && (
-                        <p className="text-gray-500 text-sm">
-                            Warranty: {template.warranty_period}
-                        </p>
-                    )}
-
                 </div>
             </CardContent>
         </Card>

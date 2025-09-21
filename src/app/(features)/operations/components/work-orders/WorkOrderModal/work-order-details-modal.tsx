@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "../../../types/work-order"
-import { useWorkOrderWithDetails } from "../../../hooks/use-work-orders"
+import { useWorkOrderWithDetails, useUpdateWorkOrder } from "../../../hooks/use-work-orders"
 import { Loader2 } from "lucide-react"
 import { WorkOrderModalHeader } from "./work-order-modal-header"
 import { WorkOrderStatusBar } from "./work-order-status-bar"
@@ -36,6 +36,9 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     
     // Fetch full work order details
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
+    
+    // Update work order mutation
+    const updateWorkOrderMutation = useUpdateWorkOrder()
     
     // Form state for editing
     const [formData, setFormData] = useState({
@@ -127,27 +130,47 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         }))
     }
 
-    const handleSave = () => {
-        const updatedWorkOrder: WorkOrderKanbanItem = {
-            ...initialWorkOrder,
+    const handleSave = async () => {
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        
+        // Prepare the update data for the mutation
+        const updateData = {
             title: formData.title,
             description: formData.description,
             priority: formData.priority,
-            assignee: formData.assignee,
-            date: formData.date,
-            customer: formData.customer,
-            vehicle: formData.vehicle,
+            notes: formData.notes,
             tags: formData.tags,
         }
 
-        // Use the actual work order ID from the fetched details if available
-        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
-        updatedWorkOrder.id = workOrderId
-
-        // Pass both the updated work order and the full form data (including notes)
-        onSave?.(updatedWorkOrder, formData)
-        setIsEditing(false)
-        toast.success("Work order updated successfully")
+        try {
+            // Use the mutation hook to update the work order
+            await updateWorkOrderMutation.mutateAsync({
+                id: workOrderId,
+                data: updateData
+            })
+            
+            // Also call the parent onSave callback if provided (for any additional logic)
+            const updatedWorkOrder: WorkOrderKanbanItem = {
+                ...initialWorkOrder,
+                title: formData.title,
+                description: formData.description,
+                priority: formData.priority,
+                assignee: formData.assignee,
+                date: formData.date,
+                customer: formData.customer,
+                vehicle: formData.vehicle,
+                tags: formData.tags,
+            }
+            updatedWorkOrder.id = workOrderId
+            
+            await onSave?.(updatedWorkOrder, formData)
+            
+            setIsEditing(false)
+            toast.success("Work order updated successfully")
+        } catch (error) {
+            console.error('Error saving work order:', error)
+            toast.error("Failed to update work order")
+        }
     }
 
     const handleDelete = () => {
@@ -242,7 +265,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
             <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
                 <ResizablePanelGroup direction="horizontal" className="w-full h-full">
                     {/* Main Content Panel */}
-                    <ResizablePanel defaultSize={70} minSize={60} maxSize={75}>
+                    <ResizablePanel defaultSize={60} minSize={50} maxSize={70}>
                         <div className="flex flex-col h-full min-h-0">
                             {/* Header */}
                             <WorkOrderModalHeader 
@@ -350,7 +373,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                     <ResizableHandle withHandle />
 
                     {/* Right Panel */}
-                    <ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
+                    <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
                         <WorkOrderRightPanel 
                             workOrderId={initialWorkOrder.id} 
                             shopId={initialWorkOrder.shop_id}

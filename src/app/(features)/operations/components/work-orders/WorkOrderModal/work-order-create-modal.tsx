@@ -17,6 +17,7 @@ import { SelectedTemplatesPanel } from "../../work-order-items/templates/selecte
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import type { WorkOrderItemCreateData } from "../../../types/work-order-items"
+import { PanelProvider } from "../../../contexts"
 
 export interface WorkOrderCreateModalProps {
     onClose: () => void
@@ -369,7 +370,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     {isStep3Complete() && (
                                         <>
                                             {/* Financial Information */}
-                                            <div className="transition-opacity duration-200">
+                                            {/* <div className="transition-opacity duration-200">
                                                 <h3 className="text-lg font-semibold text-white mb-4">
                                                     Financial Information <span className="text-xs text-gray-400 font-normal">(Optional)</span>
                                                 </h3>
@@ -381,7 +382,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                     isEditing={true}
                                                     onFieldChange={handleFieldChange}
                                                 />
-                                            </div>
+                                            </div> */}
 
                                             {/* Notes */}
                                             <div className="transition-opacity duration-200">
@@ -418,13 +419,19 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                     {/* Right Panel - Work Order Item Templates */}
                     <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                        <WorkOrderItemTemplatesPanel 
-                            shopId={shopId || ""}
-                            workOrderId="new" // Enable template selection for new work orders
-                            onTemplateSelected={handleTemplateSelect}
-                            selectedTemplateIds={selectedTemplates.map(t => t.id)}
-                            className="h-full"
-                        />
+                        <PanelProvider 
+                            allowTemplateActions={false} 
+                            allowTemplateSelection={true}
+                            context="work-order-modal"
+                        >
+                            <WorkOrderItemTemplatesPanel 
+                                shopId={shopId || ""}
+                                workOrderId="new" // Enable template selection for new work orders
+                                onTemplateSelected={handleTemplateSelect}
+                                selectedTemplateIds={selectedTemplates.map(t => t.id)}
+                                className="h-full"
+                            />
+                        </PanelProvider>
                     </ResizablePanel>
 
                     {/* Resizable Handle */}

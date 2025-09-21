@@ -156,6 +156,11 @@ export function useUpdateWorkOrder() {
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             queryClient.invalidateQueries({ queryKey: workOrderKeys.list(updatedWorkOrder.shop_id) })
             
+            // Invalidate the with-details query for this specific work order
+            queryClient.invalidateQueries({ 
+                queryKey: [...workOrderKeys.detail(updatedWorkOrder.id), 'with-details'] 
+            })
+            
             // toast.success('Work order updated successfully')
         },
         onError: (error: any) => {

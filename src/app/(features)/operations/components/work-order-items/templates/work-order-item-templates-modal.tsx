@@ -6,6 +6,7 @@ import { WorkOrderItemTemplatesPanel } from './work-order-item-templates-panel'
 import { WorkOrderItemTemplateForm } from './work-order-item-template-form'
 import { useWorkOrderItemTemplates } from '../../../hooks/use-work-order-item-templates'
 import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templates'
+import { PanelProvider } from '../../../contexts'
 
 interface WorkOrderItemTemplatesModalProps {
     isOpen: boolean
@@ -65,10 +66,16 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
                             />
                         </div>
                     ) : (
-                        <WorkOrderItemTemplatesPanel
-                            shopId={shopId}
-                            className="h-full"
-                        />
+                        <PanelProvider 
+                            allowTemplateActions={true} 
+                            allowTemplateSelection={false}
+                            context="templates-page"
+                        >
+                            <WorkOrderItemTemplatesPanel
+                                shopId={shopId}
+                                className="h-full"
+                            />
+                        </PanelProvider>
                     )}
                 </div>
             </DialogContent>

@@ -182,6 +182,7 @@ export class WorkOrderItemsService {
         if (itemData.notes !== undefined) updatePayload.notes = itemData.notes?.trim() || null
         if (itemData.labor_hours !== undefined) updatePayload.labor_hours = itemData.labor_hours || null
         if (itemData.technician_id !== undefined) updatePayload.technician_id = itemData.technician_id || null
+        if (itemData.active !== undefined) updatePayload.active = itemData.active
 
         const { data, error } = await this.supabase
             .from('work_order_items')
@@ -224,7 +225,15 @@ export class WorkOrderItemsService {
         const items = await this.getWorkOrderItems(workOrderId)
 
         const summary = items.reduce((acc, item) => {
-            const total = item.total_price || 0
+            // Calculate total based on item type
+            let total = 0
+            if (item.item_type === 'labor') {
+                // For labor: labor_hours * unit_price
+                total = (item.labor_hours || 0) * (item.unit_price || 0)
+            } else {
+                // For parts, services, fees: quantity * unit_price
+                total = (item.quantity || 0) * (item.unit_price || 0)
+            }
             
             switch (item.item_type) {
                 case 'labor':

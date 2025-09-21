@@ -247,7 +247,7 @@ export async function POST(req: Request) {
         - VIN: ${vin}
         - License Plate: ${vehicle.license_plate || 'Not provided'}
         - Color: ${vehicle.color || 'Not specified'}
-        - Mileage: ${mileage}
+        - Mileage (kms): ${mileage}
 
         WORK DETAILS:
         - Description: ${workOrderDescription}

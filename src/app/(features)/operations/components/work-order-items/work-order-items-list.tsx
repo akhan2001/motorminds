@@ -92,6 +92,30 @@ export const WorkOrderItemsList: React.FC<WorkOrderItemsListProps> = ({
         }
     }
 
+    const handleApproveItem = async (itemId: string) => {
+        try {
+            await updateItemMutation.mutateAsync({
+                id: itemId,
+                data: { active: true }
+            })
+        } catch (error) {
+            // Error handled by mutation hooks
+            console.error('Failed to approve item:', error)
+        }
+    }
+
+    const handleRejectItem = async (itemId: string) => {
+        try {
+            await updateItemMutation.mutateAsync({
+                id: itemId,
+                data: { active: false }
+            })
+        } catch (error) {
+            // Error handled by mutation hooks
+            console.error('Failed to reject item:', error)
+        }
+    }
+
     const handleFormCancel = () => {
         setIsFormOpen(false)
         setEditingItem(null)
@@ -175,6 +199,8 @@ export const WorkOrderItemsList: React.FC<WorkOrderItemsListProps> = ({
                             onEdit={isEditable ? handleEditItem : undefined}
                             onDelete={isEditable ? handleDeleteItem : undefined}
                             onComplete={isEditable ? handleCompleteItem : undefined}
+                            onApprove={isEditable ? handleApproveItem : undefined}
+                            onReject={isEditable ? handleRejectItem : undefined}
                             isEditable={isEditable}
                         />
                     ))

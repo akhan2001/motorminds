@@ -13,7 +13,9 @@ import {
     Edit, 
     Trash2, 
     Check,
-    Clock
+    Clock,
+    CheckCircle,
+    XCircle
 } from 'lucide-react'
 import {
     DropdownMenu,
@@ -30,6 +32,8 @@ interface WorkOrderItemCardProps {
     onEdit?: (item: WorkOrderItem) => void
     onDelete?: (itemId: string) => void
     onComplete?: (itemId: string) => void
+    onApprove?: (itemId: string) => void
+    onReject?: (itemId: string) => void
     isEditable?: boolean
     className?: string
 }
@@ -69,11 +73,15 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
     onEdit,
     onDelete,
     onComplete,
+    onApprove,
+    onReject,
     isEditable = true,
     className = ""
 }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const isCompleted = !!item.completed_at
+    const isApproved = item.active === true
+    const isRejected = item.active === false
 
     return (
         <Card className={`bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors ${className}`}>
@@ -96,6 +104,18 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                                 <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20">
                                     <Check className="h-3 w-3 mr-1" />
                                     COMPLETED
+                                </Badge>
+                            )}
+                            {isApproved && !isCompleted && (
+                                <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    APPROVED
+                                </Badge>
+                            )}
+                            {isRejected && (
+                                <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20">
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    REJECTED
                                 </Badge>
                             )}
                         </div>
@@ -160,10 +180,64 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
 
                     {/* Right Content - Price and Actions */}
                     <div className="flex flex-col items-end gap-2">
+                        {/* Approve/Reject Buttons */}
+                        {isEditable && !isCompleted && (
+                            <div className="flex gap-1">
+                                {!isApproved && !isRejected && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => onApprove?.(item.id)}
+                                            className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                                            title="Approve item"
+                                        >
+                                            <CheckCircle className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => onReject?.(item.id)}
+                                            className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                            title="Reject item"
+                                        >
+                                            <XCircle className="h-3 w-3" />
+                                        </Button>
+                                    </>
+                                )}
+                                {isApproved && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => onReject?.(item.id)}
+                                        className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                        title="Reject item"
+                                    >
+                                        <XCircle className="h-3 w-3" />
+                                    </Button>
+                                )}
+                                {isRejected && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => onApprove?.(item.id)}
+                                        className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                                        title="Approve item"
+                                    >
+                                        <CheckCircle className="h-3 w-3" />
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+
                         {/* Total Price */}
                         <div className="text-right">
                             <p className="text-white font-semibold">
-                                {formatCurrency(item.total_price)}
+                                {formatCurrency(
+                                    item.item_type === 'labor' 
+                                        ? (item.labor_hours || 0) * (item.unit_price || 0)
+                                        : (item.quantity || 0) * (item.unit_price || 0)
+                                )}
                             </p>
                         </div>
 

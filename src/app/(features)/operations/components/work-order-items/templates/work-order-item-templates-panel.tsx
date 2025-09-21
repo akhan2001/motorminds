@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Search, Filter, Package } from 'lucide-react'
 import { WorkOrderItemTemplateCard } from './work-order-item-template-card'
+import { WorkOrderItemTemplateCardSmall } from './work-order-item-template-card-small'
 import { WorkOrderItemTemplateForm } from './work-order-item-template-form'
 import { useWorkOrderItemTemplates, useDeleteWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { useCloneTemplateToWorkOrder } from '../../../hooks/use-work-order-item-templates'
 import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templates'
+import { usePanelContext } from '../../../contexts'
 
 interface WorkOrderItemTemplatesPanelProps {
     shopId: string
@@ -34,6 +36,10 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [editingTemplate, setEditingTemplate] = useState<WorkOrderItemTemplate | null>(null)
+    
+    // Get panel context to determine card size
+    const { context } = usePanelContext()
+    const useSmallCard = context === 'work-order-modal' || context === 'work-order-edit'
 
     // Hooks
     const { data: templates = [], isLoading, error } = useWorkOrderItemTemplates(shopId)
@@ -195,19 +201,22 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
 
             {/* Content Area - Scrollable */}
             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                <div className="p-4 space-y-3 overflow-y-auto">
+                <div className={`p-4 ${useSmallCard ? 'space-y-2' : 'space-y-3'} overflow-y-auto`}>
                     {filteredTemplates.length > 0 ? (
-                        filteredTemplates.map((template) => (
-                            <WorkOrderItemTemplateCard
-                                key={template.id}
-                                template={template}
-                                onSelect={workOrderId ? handleTemplateSelect : undefined}
-                                onEdit={handleEditTemplate}
-                                onDelete={handleDeleteTemplate}
-                                isSelectable={!!workOrderId}
-                                isSelected={selectedTemplateIds.includes(template.id)}
-                            />
-                        ))
+                        filteredTemplates.map((template) => {
+                            const CardComponent = useSmallCard ? WorkOrderItemTemplateCardSmall : WorkOrderItemTemplateCard
+                            return (
+                                <CardComponent
+                                    key={template.id}
+                                    template={template}
+                                    onSelect={workOrderId ? handleTemplateSelect : undefined}
+                                    onEdit={handleEditTemplate}
+                                    onDelete={handleDeleteTemplate}
+                                    isSelectable={!!workOrderId}
+                                    isSelected={selectedTemplateIds.includes(template.id)}
+                                />
+                            )
+                        })
                     ) : (
                         <div className="text-center py-8">
                             <Package className="h-8 w-8 text-gray-500 mx-auto mb-2" />

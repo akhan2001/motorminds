@@ -20,13 +20,19 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     className = ""
 }) => {
     const [activeTab, setActiveTab] = useState<'insights' | 'items' | 'chat'>('items')
+    
+    // Determine if work order is completed (read-only mode)
+    const isCompleted = workOrderStatus && 
+        ['completed', 'invoiced', 'cancelled'].includes(workOrderStatus.toLowerCase())
 
     return (
         <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
             <div className="p-4 border-b border-[#222222] flex-shrink-0">
                 <h3 className="text-white font-medium text-lg">Mia Insights & Items</h3>
-                <p className="text-gray-400 text-sm mt-1">AI insights and work order items</p>
+                <p className="text-gray-400 text-sm mt-1">
+                    {isCompleted ? 'View-only mode (work order completed)' : 'AI insights and work order items'}
+                </p>
             </div>
 
             {/* Content Tabs */}
@@ -102,7 +108,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                         <WorkOrderItemsList 
                             workOrderId={workOrderId}
                             shopId={shopId}
-                            isEditable={true}
+                            isEditable={!isCompleted}
                         />
                     </div>
                 )}

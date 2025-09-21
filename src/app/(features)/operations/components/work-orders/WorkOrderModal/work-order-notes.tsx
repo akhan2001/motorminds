@@ -17,7 +17,6 @@ export const WorkOrderNotes: React.FC<WorkOrderNotesProps> = ({
 }) => {
     return (
         <div className={`space-y-4 ${className}`}>
-            <h3 className="text-lg font-medium text-white">Notes</h3>
             <div className="bg-[#1A1A1A] rounded-xl p-6">
                 <textarea
                     value={notes}
