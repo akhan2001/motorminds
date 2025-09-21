@@ -9,6 +9,7 @@ export const workOrderItemKeys = {
     all: ['work-order-items'] as const,
     lists: () => [...workOrderItemKeys.all, 'list'] as const,
     list: (workOrderId: string) => [...workOrderItemKeys.lists(), workOrderId] as const,
+    byShop: (shopId: string) => [...workOrderItemKeys.all, 'by-shop', shopId] as const,
     details: () => [...workOrderItemKeys.all, 'detail'] as const,
     detail: (id: string) => [...workOrderItemKeys.details(), id] as const,
     summary: (workOrderId: string) => [...workOrderItemKeys.all, 'summary', workOrderId] as const,
@@ -22,6 +23,18 @@ export function useWorkOrderItems(workOrderId: string) {
         queryKey: workOrderItemKeys.list(workOrderId),
         queryFn: () => WorkOrderItemsService.getWorkOrderItems(workOrderId),
         enabled: !!workOrderId,
+        staleTime: 30 * 1000, // 30 seconds
+    })
+}
+
+/**
+ * Hook to fetch all work order items by shop ID
+ */
+export function useWorkOrderItemsByShop(shopId: string) {
+    return useQuery({
+        queryKey: workOrderItemKeys.byShop(shopId),
+        queryFn: () => WorkOrderItemsService.getWorkOrderItemsByShopId(shopId),
+        enabled: !!shopId,
         staleTime: 30 * 1000, // 30 seconds
     })
 }

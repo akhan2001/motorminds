@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2 } from 'lucide-react'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMessagingAvailability } from '../../hooks/use-work-order-messaging'
 
@@ -13,13 +13,15 @@ interface WorkOrderHeaderProps {
     isCompactView?: boolean
     onToggleView?: () => void
     onNewWorkOrder?: () => void
+    onTemplatesClick?: () => void
 }
 
 export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     className,
     isCompactView = false,
     onToggleView,
-    onNewWorkOrder
+    onNewWorkOrder,
+    onTemplatesClick
 }) => {
     const messagingAvailability = useMessagingAvailability()
     return (
@@ -71,6 +73,17 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                 )}
                             </Tooltip>
                         </TooltipProvider>
+
+                        {/* Items Templates Button */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onTemplatesClick}
+                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        >
+                            <Layers className="h-4 w-4 mr-2" />
+                            Items Templates
+                        </Button>
 
                         {/* Create Work Order Button */}
                         <Button

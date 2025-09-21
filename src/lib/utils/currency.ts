@@ -1,20 +1,20 @@
 // Currency and number formatting utility functions
 
 /**
- * Format number as currency (USD by default)
+ * Format number as currency (CAD by default)
  */
 export function formatCurrency(
     amount?: number, 
-    currency: string = 'USD',
-    locale: string = 'en-US'
+    currency: string = 'CAD',
+    locale: string = 'en-CA'
 ): string {
-    if (!amount && amount !== 0) return '$0'
+    if (!amount && amount !== 0) return '$0.00'
     
     return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     }).format(amount)
 }
 
@@ -23,8 +23,8 @@ export function formatCurrency(
  */
 export function formatCurrencyDetailed(
     amount?: number, 
-    currency: string = 'USD',
-    locale: string = 'en-US'
+    currency: string = 'CAD',
+    locale: string = 'en-CA'
 ): string {
     if (!amount && amount !== 0) return '$0.00'
     

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { DEFAULT_TIME_SLOTS, DEFAULT_TIME_SLOTS_MESSAGE } from "../types/default-time-slots";
 
 interface Customer {
     id: string;
@@ -131,10 +132,16 @@ export function CreateAppointmentDialog({
             const response = await fetch(`/api/appointments/availability?date=${date}`);
             if (response.ok) {
                 const data = await response.json();
-                setAvailableSlots(data.availableSlots || []);
+                // Use default time slots if no slots are received
+                setAvailableSlots(data.availableSlots && data.availableSlots.length > 0 ? data.availableSlots : DEFAULT_TIME_SLOTS);
+            } else {
+                // Fallback to default time slots on API error
+                setAvailableSlots(DEFAULT_TIME_SLOTS);
             }
         } catch (error) {
             console.error('Failed to fetch available slots:', error);
+            // Fallback to default time slots on network error
+            setAvailableSlots(DEFAULT_TIME_SLOTS);
         } finally {
             setLoadingSlots(false);
         }
@@ -278,7 +285,14 @@ export function CreateAppointmentDialog({
                     {/* Available Time Slots */}
                     {formData.appointment_date && (
                         <div className="space-y-2">
-                            <Label>Available Time Slots</Label>
+                            <div className="flex items-center justify-between">
+                                <Label>Available Time Slots</Label>
+                                {availableSlots.length === DEFAULT_TIME_SLOTS.length && availableSlots.every((slot, index) => slot.start_time === DEFAULT_TIME_SLOTS[index].start_time) && (
+                                    <span className="text-xs text-zinc-500 italic">
+                                        {DEFAULT_TIME_SLOTS_MESSAGE}
+                                    </span>
+                                )}
+                            </div>
                             {loadingSlots ? (
                                 <div className="text-zinc-400">Loading available slots...</div>
                             ) : (

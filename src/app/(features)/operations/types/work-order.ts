@@ -106,6 +106,7 @@ export interface WorkOrderKanbanItem {
     customer?: string
     vehicle?: string
     tags?: string[]
+    shop_id?: string
 }
 
 export interface WorkOrderKanbanColumn {

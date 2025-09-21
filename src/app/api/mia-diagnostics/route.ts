@@ -1,5 +1,6 @@
 import { StreamingTextResponse } from 'ai'
 import { NextRequest } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
 
 // Perplexity API configuration
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
@@ -10,12 +11,56 @@ export async function POST(req: NextRequest) {
             return new Response('Perplexity API key not configured', { status: 500 })
         }
 
-        const { messages, vehicleInfo, diagnosticMode = 'basic' } = await req.json()
+        const supabase = await createClient()
+        const shopId = req.headers.get('x-shop-id')
+
+        if (!shopId) {
+            return new Response('Shop ID required', { status: 400 })
+        }
+
+        const { messages, vehicleInfo, diagnosticMode = 'basic', sessionId } = await req.json()
 
         // Validate request data
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             console.error('Invalid messages in request:', messages)
             return new Response('Invalid messages in request', { status: 400 })
+        }
+
+        if (!sessionId) {
+            return new Response('Session ID required', { status: 400 })
+        }
+
+        // Handle fallback sessions (for debugging when no shop_id)
+        let isValidSession = true
+        
+        if (!sessionId.startsWith('fallback_session_')) {
+            // Verify session belongs to shop for normal sessions
+            const { data: session, error: sessionError } = await supabase
+                .from('mia_sessions')
+                .select('*')
+                .eq('session_id', sessionId)
+                .eq('shop_id', shopId)
+                .single()
+
+            if (sessionError) {
+                console.error('Error verifying session:', sessionError)
+                return new Response('Session not found', { status: 404 })
+            }
+
+            // Save the latest user message to database (last message should be from user)
+            const lastMessage = messages[messages.length - 1]
+            if (lastMessage.role === 'user') {
+                await supabase
+                    .from('mia_messages')
+                    .insert({
+                        session_id: sessionId,
+                        role: 'user',
+                        content: lastMessage.content,
+                        metadata: { vehicleInfo, diagnosticMode }
+                    })
+            }
+        } else {
+            console.log('Using fallback session - skipping database operations')
         }
 
         console.log('MIA Diagnostics Request:', { 
@@ -77,13 +122,42 @@ export async function POST(req: NextRequest) {
         const citations = data.citations || []
         const searchResults = data.search_results || []
         
-        // Images functionality removed
+        // Save assistant response to database (only for real sessions)
+        if (!sessionId.startsWith('fallback_session_')) {
+            await supabase
+                .from('mia_messages')
+                .insert({
+                    session_id: sessionId,
+                    role: 'assistant',
+                    content: content,
+                    metadata: { 
+                        citations, 
+                        searchResults, 
+                        diagnosticMode,
+                        vehicleInfo 
+                    }
+                })
+
+            // Update session with latest vehicle context
+            if (vehicleInfo && Object.keys(vehicleInfo).length > 0) {
+                await supabase
+                    .from('mia_sessions')
+                    .update({ 
+                        vehicle_context: vehicleInfo,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('session_id', sessionId)
+            }
+        } else {
+            console.log('Fallback session - skipping assistant message storage')
+        }
         
         return Response.json({
             success: true,
             content: content,
             citations: citations,
             searchResults: searchResults,
+            sessionId: sessionId,
             fullResponse: data
         })
         
