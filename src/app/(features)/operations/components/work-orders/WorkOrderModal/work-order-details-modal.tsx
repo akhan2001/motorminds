@@ -354,6 +354,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                         <WorkOrderRightPanel 
                             workOrderId={initialWorkOrder.id} 
                             shopId={initialWorkOrder.shop_id}
+                            workOrderStatus={initialWorkOrder.status}
                         />
                     </ResizablePanel>
                 </ResizablePanelGroup>
