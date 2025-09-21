@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { WorkOrderItemTemplatesPanel } from './work-order-item-templates-panel'
 import { WorkOrderItemTemplateForm } from './work-order-item-template-form'
 import { useWorkOrderItemTemplates } from '../../../hooks/use-work-order-item-templates'
@@ -51,7 +51,10 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
                         Work Order Item Templates
                     </DialogTitle>
                 </DialogHeader>
-                
+                <DialogDescription className="text-gray-400">
+                    Templates help you save time and improve accuracy by providing pre-defined items for your work orders.
+                </DialogDescription>
+
                 <div className="flex-1 overflow-hidden">
                     {isFormOpen ? (
                         <div className="h-full overflow-y-auto">

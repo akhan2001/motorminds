@@ -5,12 +5,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Save, X } from 'lucide-react'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Package, Wrench, Star, DollarSign, Loader2, Save, X } from 'lucide-react'
 import { useCreateWorkOrderItemTemplate, useUpdateWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate, WorkOrderItemTemplateFormData } from '../../../types/work-order-item-templates'
+import type { WorkOrderItemType } from '../../../types/work-order-items'
+
+const itemTypeOptions = [
+    { value: 'labor' as WorkOrderItemType, label: 'Labor', icon: Wrench },
+    { value: 'part' as WorkOrderItemType, label: 'Part', icon: Package },
+    { value: 'service' as WorkOrderItemType, label: 'Service', icon: Star },
+    { value: 'fee' as WorkOrderItemType, label: 'Fee', icon: DollarSign },
+]
 
 interface WorkOrderItemTemplateFormProps {
     template?: WorkOrderItemTemplate
@@ -147,218 +161,288 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
         }
     }
 
+    const calculateTotal = () => {
+        if (isLabor) {
+            // For labor items: labor_hours * hourly_rate
+            return (formData.labor_hours || 0) * formData.unit_price
+        } else {
+            // For other items: quantity * unit_price
+            return formData.quantity * formData.unit_price
+        }
+    }
+
     const isLabor = formData.item_type === 'labor'
     const isPart = formData.item_type === 'part'
     const isService = formData.item_type === 'service'
     const isFee = formData.item_type === 'fee'
 
     return (
-        <Card className={`bg-[#1a1a1a] border-[#2a2a2a] ${className}`}>
-            <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
-                    {template ? 'Edit Template' : 'Create Template'}
-                    {onCancel && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onCancel}
-                            className="text-gray-400 hover:text-white"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
+        <div className={`space-y-6 ${className}`}>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Item Type Selection */}
+                <div className="space-y-2">
+                    <Label htmlFor="item_type" className="text-sm font-medium text-gray-300">
+                        Item Type *
+                    </Label>
+                    <Select
+                        value={formData.item_type}
+                        onValueChange={(value: WorkOrderItemType) => handleFieldChange('item_type', value)}
+                        disabled={!!template} // Disable when editing existing template
+                    >
+                        <SelectTrigger className={`bg-[#1a1a1a] border-[#2a2a2a] text-white ${template ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                            <SelectValue placeholder="Select item type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            {itemTypeOptions.map((option) => {
+                                const IconComponent = option.icon
+                                return (
+                                    <SelectItem 
+                                        key={option.value} 
+                                        value={option.value}
+                                        className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <IconComponent className="h-4 w-4" />
+                                            {option.label}
+                                        </div>
+                                    </SelectItem>
+                                )
+                            })}
+                        </SelectContent>
+                    </Select>
+                    {template && (
+                        <p className="text-xs text-gray-500">
+                            Item type cannot be changed after creation
+                        </p>
                     )}
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Item Type */}
-                    <div className="space-y-2">
-                        <Label className="text-gray-300">Item Type</Label>
-                        <Select 
-                            value={formData.item_type} 
-                            onValueChange={(value: any) => handleFieldChange('item_type', value)}
-                        >
-                            <SelectTrigger className="bg-[#292929] text-white border-[#626262]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                                <SelectItem value="labor">Labor</SelectItem>
-                                <SelectItem value="part">Part</SelectItem>
-                                <SelectItem value="service">Service</SelectItem>
-                                <SelectItem value="fee">Fee</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                </div>
 
-                    {/* Name */}
+                {/* Name */}
+                <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-300">
+                        Name *
+                    </Label>
+                    <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => handleFieldChange('name', e.target.value)}
+                        placeholder="Enter template name..."
+                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        required
+                    />
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                    <Label htmlFor="description" className="text-sm font-medium text-gray-300">
+                        Description
+                    </Label>
+                    <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => handleFieldChange('description', e.target.value)}
+                        placeholder="Enter template description..."
+                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        rows={3}
+                    />
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-medium text-gray-300">
+                        Category
+                    </Label>
+                    <Select
+                        value={formData.category}
+                        onValueChange={(value) => handleFieldChange('category', value)}
+                    >
+                        <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a] max-h-60">
+                            {getTemplateCategories().map((category) => (
+                                <SelectItem key={category.value} value={category.value} className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]">
+                                    {category.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className={`grid gap-4 ${isLabor ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    {/* Quantity - Hidden for labor items */}
+                    {!isLabor && (
+                        <div className="space-y-2">
+                            <Label htmlFor="quantity" className="text-sm font-medium text-gray-300">
+                                Quantity *
+                            </Label>
+                            <Input
+                                id="quantity"
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={formData.quantity}
+                                onChange={(e) => handleFieldChange('quantity', parseFloat(e.target.value) || 0)}
+                                placeholder="Enter quantity..."
+                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                                required
+                            />
+                        </div>
+                    )}
+
+                    {/* Unit Price */}
                     <div className="space-y-2">
-                        <Label className="text-gray-300">Name *</Label>
+                        <Label htmlFor="unit_price" className="text-sm font-medium text-gray-300">
+                            {isLabor ? 'Hourly Rate' : 'Unit Price'} *
+                        </Label>
                         <Input
-                            value={formData.name}
-                            onChange={(e) => handleFieldChange('name', e.target.value)}
-                            placeholder="Template name"
-                            className="bg-[#292929] text-white border-[#626262]"
+                            id="unit_price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.unit_price}
+                            onChange={(e) => handleFieldChange('unit_price', parseFloat(e.target.value) || 0)}
+                            placeholder={isLabor ? "Enter hourly rate..." : "Enter unit price..."}
+                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
                             required
                         />
                     </div>
+                </div>
 
-                    {/* Description */}
+                {/* Labor Hours (for labor items) */}
+                {isLabor && (
                     <div className="space-y-2">
-                        <Label className="text-gray-300">Description</Label>
-                        <Textarea
-                            value={formData.description}
-                            onChange={(e) => handleFieldChange('description', e.target.value)}
-                            placeholder="Template description"
-                            className="bg-[#292929] text-white border-[#626262]"
-                            rows={3}
-                        />
-                    </div>
-
-                    {/* Category */}
-                    <div className="space-y-2">
-                        <Label className="text-gray-300">Category</Label>
-                        <Select
-                            value={formData.category}
-                            onValueChange={(value) => handleFieldChange('category', value)}
-                        >
-                            <SelectTrigger className="bg-[#292929] text-white border-[#626262]">
-                                <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#292929] text-white border-[#626262] max-h-60">
-                                {getTemplateCategories().map((category) => (
-                                    <SelectItem key={category.value} value={category.value}>
-                                        {category.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Quantity and Unit Price */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label className="text-gray-300">
-                                {isLabor ? 'Default Quantity' : 'Quantity'}
-                            </Label>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                value={formData.quantity}
-                                onChange={(e) => handleFieldChange('quantity', parseFloat(e.target.value) || 0)}
-                                className="bg-[#292929] text-white border-[#626262]"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-gray-300">
-                                {isLabor ? 'Hourly Rate' : 'Unit Price'}
-                            </Label>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                value={formData.unit_price}
-                                onChange={(e) => handleFieldChange('unit_price', parseFloat(e.target.value) || 0)}
-                                className="bg-[#292929] text-white border-[#626262]"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {/* Labor Hours (for labor items) */}
-                    {isLabor && (
-                        <div className="space-y-2">
-                            <Label className="text-gray-300">Labor Hours</Label>
-                            <Input
-                                type="number"
-                                step="0.1"
-                                value={formData.labor_hours}
-                                onChange={(e) => handleFieldChange('labor_hours', parseFloat(e.target.value) || 0)}
-                                placeholder="Hours"
-                                className="bg-[#292929] text-white border-[#626262]"
-                            />
-                        </div>
-                    )}
-
-                    {/* Part Number and Supplier (for parts) */}
-                    {isPart && (
-                        <>
-                            <div className="space-y-2">
-                                <Label className="text-gray-300">Part Number</Label>
-                                <Input
-                                    value={formData.part_number}
-                                    onChange={(e) => handleFieldChange('part_number', e.target.value)}
-                                    placeholder="Part number"
-                                    className="bg-[#292929] text-white border-[#626262]"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-gray-300">Supplier</Label>
-                                <Input
-                                    value={formData.supplier}
-                                    onChange={(e) => handleFieldChange('supplier', e.target.value)}
-                                    placeholder="Supplier name"
-                                    className="bg-[#292929] text-white border-[#626262]"
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    {/* Unit Cost */}
-                    <div className="space-y-2">
-                        <Label className="text-gray-300">Unit Cost</Label>
+                        <Label htmlFor="labor_hours" className="text-sm font-medium text-gray-300">
+                            Labor Hours
+                        </Label>
                         <Input
+                            id="labor_hours"
                             type="number"
-                            step="0.01"
-                            value={formData.unit_cost}
-                            onChange={(e) => handleFieldChange('unit_cost', parseFloat(e.target.value) || 0)}
-                            placeholder="Cost price"
-                            className="bg-[#292929] text-white border-[#626262]"
+                            min="0"
+                            step="0.1"
+                            value={formData.labor_hours || ''}
+                            onChange={(e) => handleFieldChange('labor_hours', parseFloat(e.target.value) || undefined)}
+                            placeholder="Enter hours..."
+                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
                         />
                     </div>
+                )}
 
-                    {/* Warranty Period */}
+                {/* Part Number (for parts and some services) */}
+                {(isPart || formData.item_type === 'service') && (
                     <div className="space-y-2">
-                        <Label className="text-gray-300">Warranty Period</Label>
+                        <Label htmlFor="part_number" className="text-sm font-medium text-gray-300">
+                            Part Number {isPart ? '*' : ''}
+                        </Label>
                         <Input
-                            value={formData.warranty_period}
-                            onChange={(e) => handleFieldChange('warranty_period', e.target.value)}
-                            placeholder="e.g., 12 months, 2 years"
-                            className="bg-[#292929] text-white border-[#626262]"
+                            id="part_number"
+                            value={formData.part_number || ''}
+                            onChange={(e) => handleFieldChange('part_number', e.target.value)}
+                            placeholder="Enter part number..."
+                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                            required={isPart}
                         />
                     </div>
+                )}
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 pt-4">
-                        <Button
-                            type="submit"
-                            disabled={isSubmitting || !formData.name.trim()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="h-4 w-4 mr-2" />
-                                    {template ? 'Update Template' : 'Create Template'}
-                                </>
-                            )}
-                        </Button>
-                        {onCancel && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={onCancel}
-                                className="border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a]"
-                            >
-                                Cancel
-                            </Button>
-                        )}
+                {/* Supplier (for parts and services only) */}
+                {(isPart || formData.item_type === 'service') && (
+                    <div className="space-y-2">
+                        <Label htmlFor="supplier" className="text-sm font-medium text-gray-300">
+                            Supplier
+                        </Label>
+                        <Input
+                            id="supplier"
+                            value={formData.supplier || ''}
+                            onChange={(e) => handleFieldChange('supplier', e.target.value)}
+                            placeholder="Enter supplier..."
+                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        />
                     </div>
-                </form>
-            </CardContent>
-        </Card>
+                )}
+
+                {/* Unit Cost */}
+                <div className="space-y-2">
+                    <Label htmlFor="unit_cost" className="text-sm font-medium text-gray-300">
+                        Unit Cost
+                    </Label>
+                    <Input
+                        id="unit_cost"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.unit_cost || ''}
+                        onChange={(e) => handleFieldChange('unit_cost', parseFloat(e.target.value) || undefined)}
+                        placeholder="Enter cost price..."
+                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                    />
+                </div>
+
+                {/* Warranty Period (for parts) */}
+                {isPart && (
+                    <div className="space-y-2">
+                        <Label htmlFor="warranty_period" className="text-sm font-medium text-gray-300">
+                            Warranty Period
+                        </Label>
+                        <Input
+                            id="warranty_period"
+                            value={formData.warranty_period || ''}
+                            onChange={(e) => handleFieldChange('warranty_period', e.target.value)}
+                            placeholder="e.g., 1 year, 12 months..."
+                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        />
+                    </div>
+                )}
+
+                <Separator className="bg-[#2a2a2a]" />
+
+                {/* Calculation Display */}
+                <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-300 text-sm">
+                            {isLabor 
+                                ? `${formData.labor_hours || 0} hours × $${formData.unit_price.toFixed(2)}/hr`
+                                : `${formData.quantity} × $${formData.unit_price.toFixed(2)}`
+                            }
+                        </span>
+                        <span className="text-white font-semibold text-lg">
+                            Total: ${calculateTotal().toFixed(2)}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex justify-end gap-3 pt-4">
+                    {onCancel && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
+                            disabled={isSubmitting}
+                            className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        >
+                            Cancel
+                        </Button>
+                    )}
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting || !formData.name.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                {template ? 'Update Template' : 'Create Template'}
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </form>
+        </div>
     )
 }

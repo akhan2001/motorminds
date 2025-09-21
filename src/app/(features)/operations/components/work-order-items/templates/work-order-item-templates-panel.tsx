@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Search, Filter, Package } from 'lucide-react'
 import { WorkOrderItemTemplateCard } from './work-order-item-template-card'
 import { WorkOrderItemTemplateForm } from './work-order-item-template-form'
@@ -231,11 +231,14 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
             {/* Template Form Dialog */}
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogContent className="max-w-2xl bg-[#111111] border-[#2a2a2a] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
+                    <DialogHeader className="text-white">
                         <DialogTitle className="text-white">
                             {editingTemplate ? 'Edit Template' : 'Create New Template'}
                         </DialogTitle>
                     </DialogHeader>
+                    <DialogDescription className="text-gray-400">
+                        {editingTemplate ? 'Edit template details' : 'You can create predefined items such as labor, parts, services, and fees for your work orders.'}
+                    </DialogDescription>
                     
                     <WorkOrderItemTemplateForm
                         template={editingTemplate || undefined}
