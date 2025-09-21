@@ -45,16 +45,15 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-6xl bg-[#111111] border-[#2a2a2a] max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-w-6xl bg-[#111111] text-white border-[#2a2a2a] max-h-[90vh] overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="text-white">
                         Work Order Item Templates
                     </DialogTitle>
+                    <DialogDescription className="text-gray-400">
+                        Work Order Item Templates help you save time by creating reusable templates for your work orders.
+                    </DialogDescription>
                 </DialogHeader>
-                <DialogDescription className="text-gray-400">
-                    Templates help you save time and improve accuracy by providing pre-defined items for your work orders.
-                </DialogDescription>
-
                 <div className="flex-1 overflow-hidden">
                     {isFormOpen ? (
                         <div className="h-full overflow-y-auto">
