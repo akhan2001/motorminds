@@ -26,7 +26,7 @@ import {
 import { format, addDays } from 'date-fns'
 import { useAvailableSlots } from '../../hooks/appointments/useAvailbility'
 import { useCreateAppointment } from '../../hooks/appointments/useAppointments'
-import CustomerSelection from '../../../customers/components/Selection/CustomerSelection'
+import CustomerDropdown from '../../../customers/components/Selection/CustomerDropdown'
 import { VehicleDropdown } from '../../../customers/components/Selection/VehicleDropdown'
 import type { AppointmentCreateData } from '../../types/appointment'
 import { createClient } from '@/utils/supabase/client'
@@ -94,6 +94,7 @@ export function AppointmentForm({
 
     // Customer and vehicle selection state
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
     const [selectedVehicleId, setSelectedVehicleId] = useState<string>('')
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null)
     
@@ -181,11 +182,29 @@ export function AppointmentForm({
     }
 
     // Handle customer selection
-    const handleCustomerSelect = (customer: Customer | null) => {
-        setSelectedCustomer(customer)
+    const handleCustomerSelect = (customerId: string, customerData?: any) => {
+        if (customerId === "new") {
+            setShowNewCustomerForm(true)
+            setSelectedCustomer(null)
+            setSelectedCustomerId('')
+        } else {
+            setSelectedCustomerId(customerId)
+            if (customerData) {
+                const customer: Customer = {
+                    id: customerData.id,
+                    customer_name: customerData.name,
+                    customer_phone: customerData.phone,
+                    customer_email: customerData.email,
+                    customer_address: customerData.address
+                }
+                setSelectedCustomer(customer)
+            }
+            setShowNewCustomerForm(false)
+        }
+        
         setSelectedVehicleId('') // Reset vehicle selection
         setSelectedVehicle(null)
-        setShowNewCustomerForm(false)
+        setShowNewVehicleForm(false)
         
         // Clear customer-related errors
         setErrors(prev => ({ ...prev, customer: '' }))
@@ -202,10 +221,7 @@ export function AppointmentForm({
     }
 
     // Handle new customer creation
-    const handleCreateNewCustomer = () => {
-        setShowNewCustomerForm(true)
-        setSelectedCustomer(null)
-    }
+    // Removed handleCreateNewCustomer - now handled by CustomerDropdown
 
     // Handle new customer data changes
     const handleNewCustomerChange = (field: string, value: string) => {
@@ -237,7 +253,7 @@ export function AppointmentForm({
         if (!formData.serviceType) newErrors.serviceType = 'Service type is required'
         
         // Customer validation
-        if (!selectedCustomer && !showNewCustomerForm) {
+        if (!selectedCustomerId && !showNewCustomerForm) {
             newErrors.customer = 'Customer is required'
         }
         
@@ -267,8 +283,8 @@ export function AppointmentForm({
 
     // Create customer if needed
     const createCustomerIfNeeded = async (): Promise<string> => {
-        if (selectedCustomer) {
-            return selectedCustomer.id
+        if (selectedCustomerId) {
+            return selectedCustomerId
         }
         
         if (showNewCustomerForm) {
@@ -362,6 +378,7 @@ export function AppointmentForm({
                 notes: '',
             })
             setSelectedCustomer(null)
+            setSelectedCustomerId('')
             setSelectedVehicleId('')
             setSelectedVehicle(null)
             setShowNewCustomerForm(false)
@@ -395,8 +412,8 @@ export function AppointmentForm({
     }, [])
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full">
-            <CardHeader className="pb-4">
+        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+            <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-white flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
@@ -415,8 +432,9 @@ export function AppointmentForm({
                 </div>
             </CardHeader>
 
-            <CardContent>
-                <ScrollArea className="h-[calc(100vh-180px)]">
+            <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                    <CardContent className="pt-2 pb-12 px-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Submit Error */}
                         {errors.submit && (
@@ -578,13 +596,13 @@ export function AppointmentForm({
                             {/* Customer Selection */}
                             <div className="space-y-2">
                                 <Label htmlFor="customer-select" className="text-gray-300 text-xs">Customer *</Label>
-                                <CustomerSelection
-                                    selectedCustomer={selectedCustomer}
+                                <CustomerDropdown
+                                    shopId={shopId}
+                                    selectedCustomerId={selectedCustomerId}
                                     onCustomerSelect={handleCustomerSelect}
-                                    placeholder="Search or select customer"
+                                    placeholder="Select Customer"
                                     disabled={false}
-                                    showCreateOption
-                                    onCreateNew={handleCreateNewCustomer}
+                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a]"
                                 />
                                 {errors.customer && (
                                     <p className="text-red-400 text-xs mt-1">{errors.customer}</p>
@@ -666,11 +684,11 @@ export function AppointmentForm({
                             <div className="space-y-2">
                                 <Label htmlFor="vehicle-select" className="text-gray-300 text-xs">Vehicle *</Label>
                                 <VehicleDropdown
-                                    customerId={selectedCustomer?.id || (showNewCustomerForm ? 'new' : '')}
+                                    customerId={selectedCustomerId || (showNewCustomerForm ? 'new' : '')}
                                     selectedVehicleId={selectedVehicleId}
                                     onVehicleSelect={handleVehicleSelect}
                                     placeholder="Select or add vehicle"
-                                    disabled={!selectedCustomer && !showNewCustomerForm}
+                                    disabled={!selectedCustomerId && !showNewCustomerForm}
                                 />
                                 {errors.vehicle && (
                                     <p className="text-red-400 text-xs mt-1">{errors.vehicle}</p>
@@ -790,8 +808,9 @@ export function AppointmentForm({
                             </Button>
                         </div>
                     </form>
+                    </CardContent>
                 </ScrollArea>
-            </CardContent>
+            </div>
         </Card>
     )
 }

@@ -300,31 +300,6 @@ export function MonthCard({
                 <div className="grid grid-cols-7 gap-1 group">
                     {calendarDays.map(renderDayCell)}
                 </div>
-
-                {/* Legend */}
-                {appointments && appointments.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
-                        <div className="flex items-center gap-4 text-xs">
-                            <span className="text-gray-400">Status:</span>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                <span className="text-gray-300">Scheduled</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <span className="text-gray-300">Confirmed</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <span className="text-gray-300">In Progress</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                                <span className="text-gray-300">Completed</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </CardContent>
         </Card>
     )

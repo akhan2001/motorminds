@@ -65,8 +65,8 @@ export function AppointmentDetailsCard({
     const canCreateWorkOrder = appointment.status !== 'cancelled' && !appointment.work_order
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full">
-            <CardHeader className="pb-4">
+        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+            <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-white flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
@@ -83,8 +83,9 @@ export function AppointmentDetailsCard({
                 </div>
             </CardHeader>
 
-            <ScrollArea className="h-[calc(100vh-140px)] overflow-y-auto">
-                <CardContent className="space-y-6 pb-6">
+            <div className="flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                    <CardContent className="space-y-6 pt-2 pb-12 px-6">
                     {/* Status and Service Info */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -304,8 +305,9 @@ export function AppointmentDetailsCard({
                             </Button>
                         )}
                     </div>
-                </CardContent>
-            </ScrollArea>
+                    </CardContent>
+                </ScrollArea>
+            </div>
         </Card>
     )
 }

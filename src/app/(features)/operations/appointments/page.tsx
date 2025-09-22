@@ -372,34 +372,6 @@ export default function AppointmentsPage() {
                                             <Plus className="h-5 w-5 mr-2" />
                                             Add New Appointment
                                         </Button>
-
-                                        {/* Quick Stats */}
-                                        {stats && (
-                                            <div className="w-full space-y-4 border-t border-[#2a2a2a] pt-6">
-                                                <h4 className="text-sm font-medium text-white">Today's Overview</h4>
-                                                <div className="grid grid-cols-1 gap-3">
-                                                    <div className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg p-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
-                                                                <CalendarDays className="h-4 w-4 text-blue-400" />
-                                                                <span className="text-sm text-gray-300">Today</span>
-                                                            </div>
-                                                            <span className="text-lg font-bold text-blue-400">{stats.todayCount}</span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg p-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
-                                                                <FileText className="h-4 w-4 text-yellow-400" />
-                                                                <span className="text-sm text-gray-300">Pending</span>
-                                                            </div>
-                                                            <span className="text-lg font-bold text-yellow-400">{stats.pendingWorkOrders}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 </Card>
                             )}
