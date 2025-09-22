@@ -66,16 +66,18 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
                             />
                         </div>
                     ) : (
-                        <PanelProvider 
-                            allowTemplateActions={true} 
-                            allowTemplateSelection={false}
-                            context="templates-page"
-                        >
-                            <WorkOrderItemTemplatesPanel
-                                shopId={shopId}
-                                className="h-full"
-                            />
-                        </PanelProvider>
+                        <div className="h-full overflow-y-auto">
+                            <PanelProvider 
+                                allowTemplateActions={true} 
+                                allowTemplateSelection={false}
+                                context="templates-page"
+                            >
+                                <WorkOrderItemTemplatesPanel
+                                    shopId={shopId}
+                                    className="h-full"
+                                />
+                            </PanelProvider>
+                        </div>
                     )}
                 </div>
             </DialogContent>

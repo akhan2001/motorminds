@@ -5,6 +5,8 @@ import { TrendingUp } from 'lucide-react'
 import { UpsellSuggestion } from '../types/mia-insights'
 import { toast } from 'sonner'
 import { UpsellSuggestionCard } from './upsellSuggestionCard'
+import { useWorkOrderItems } from '../../../operations/hooks/use-work-order-items'
+import { UpsellToWorkItemService } from '../../../operations/lib/upsell-to-work-item-service'
 
 interface UpsellSuggestionsProps {
     suggestions: UpsellSuggestion[]
@@ -21,6 +23,9 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
 }) => {
     const [addingItems, setAddingItems] = React.useState<Set<number>>(new Set())
     const [addedItems, setAddedItems] = React.useState<Set<string>>(new Set())
+    
+    // Get existing work order items to check for duplicates
+    const { data: existingItems = [] } = useWorkOrderItems(workOrderId || '')
 
     if (!suggestions || suggestions.length === 0) return null
 
@@ -28,6 +33,40 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
     const getSuggestionId = (suggestion: UpsellSuggestion) => {
         return `${suggestion.title}-${suggestion.estimatedValue}`
     }
+
+    // Check if a suggestion has already been added as a work order item
+    const isSuggestionAlreadyAdded = React.useCallback((suggestion: UpsellSuggestion) => {
+        if (!workOrderId || !existingItems.length) return false
+        
+        try {
+            // Convert suggestion to work order item format to compare
+            const convertedItem = UpsellToWorkItemService.convertUpsellToWorkOrderItem(suggestion, workOrderId)
+            
+            // Check if any existing item matches this suggestion
+            return existingItems.some(item => 
+                item.description.toLowerCase().trim() === convertedItem.description.toLowerCase().trim() &&
+                Math.abs(item.unit_price - convertedItem.unit_price) < 0.01 // Allow small floating point differences
+            )
+        } catch (error) {
+            console.error('Error checking if suggestion already added:', error)
+            return false
+        }
+    }, [workOrderId, existingItems])
+
+    // Initialize added items based on existing work order items
+    React.useEffect(() => {
+        if (!workOrderId || !existingItems.length || !suggestions.length) return
+        
+        const alreadyAddedIds = new Set<string>()
+        
+        suggestions.forEach(suggestion => {
+            if (isSuggestionAlreadyAdded(suggestion)) {
+                alreadyAddedIds.add(getSuggestionId(suggestion))
+            }
+        })
+        
+        setAddedItems(alreadyAddedIds)
+    }, [workOrderId, existingItems, suggestions, isSuggestionAlreadyAdded])
 
     const handleAddToWorkOrder = async (suggestion: UpsellSuggestion, index: number) => {
         if (!onAddToWorkOrder) {
