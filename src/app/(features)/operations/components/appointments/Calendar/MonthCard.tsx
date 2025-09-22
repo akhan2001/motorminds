@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react'
 import { 
     format, 
@@ -225,24 +226,26 @@ export function MonthCard({
 
     if (isLoading) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-                <CardHeader>
+            <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+                <CardHeader className="flex-shrink-0">
                     <Skeleton className="h-6 w-32 bg-[#2a2a2a]" />
                 </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-7 gap-1">
-                        {Array.from({ length: 42 }).map((_, i) => (
-                            <Skeleton key={i} className="h-20 bg-[#2a2a2a]" />
-                        ))}
-                    </div>
+                <CardContent className="flex-1 min-h-0">
+                    <ScrollArea className="h-full">
+                        <div className="grid grid-cols-7 gap-1">
+                            {Array.from({ length: 42 }).map((_, i) => (
+                                <Skeleton key={i} className="h-20 bg-[#2a2a2a]" />
+                            ))}
+                        </div>
+                    </ScrollArea>
                 </CardContent>
             </Card>
         )
     }
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader className="pb-4">
+        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+            <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-white flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
@@ -286,20 +289,22 @@ export function MonthCard({
                 </div>
             </CardHeader>
 
-            <CardContent>
-                {/* Week Headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                        <div key={day} className="text-center text-xs font-medium text-gray-400 py-2">
-                            {day}
-                        </div>
-                    ))}
-                </div>
+            <CardContent className="flex-1 min-h-0">
+                <ScrollArea className="h-full">
+                    {/* Week Headers */}
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                            <div key={day} className="text-center text-xs font-medium text-gray-400 py-2">
+                                {day}
+                            </div>
+                        ))}
+                    </div>
 
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1 group">
-                    {calendarDays.map(renderDayCell)}
-                </div>
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-1 group">
+                        {calendarDays.map(renderDayCell)}
+                    </div>
+                </ScrollArea>
             </CardContent>
         </Card>
     )
