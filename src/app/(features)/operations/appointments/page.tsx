@@ -20,11 +20,12 @@ import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
-import { useAppointments, useCreateWorkOrderFromAppointment } from '../hooks/appointments/useAppointments'
+import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointment } from '../hooks/appointments/useAppointments'
 import { MonthCard } from '../components/appointments/Calendar/MonthCard'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
 import { AppointmentHeader } from '../components/appointments/appointment-header'
 import { AppointmentDetailsCard } from '../components/appointments/appointmentDetailsCard'
+import { AppointmentsList } from '../components/appointments/AppointmentsList'
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
@@ -48,11 +49,11 @@ export default function AppointmentsPage() {
     const dashboardData = null
     const dashboardLoading = false
     
-    // Work order creation with navigation
-    const handleNavigateToWorkOrder = (workOrderId: string) => {
-        router.push(`/operations/work-orders/${workOrderId}`)
-    }
-    const createWorkOrder = useCreateWorkOrderFromAppointment(handleNavigateToWorkOrder)
+    // Work order creation
+    const createWorkOrder = useCreateWorkOrderFromAppointment()
+    
+    // Cancel appointment
+    const cancelAppointment = useCancelAppointment()
     
     // Fetch appointments for the selected date
     const selectedDateString = useMemo(() => {
@@ -146,6 +147,15 @@ export default function AppointmentsPage() {
         // The queries will automatically refetch due to cache invalidation
     }
 
+    const handleCancelAppointment = (appointmentId: string) => {
+        cancelAppointment.mutate(appointmentId)
+        // Close appointment details if this appointment is being viewed
+        if (selectedAppointment?.id === appointmentId) {
+            setSelectedAppointment(null)
+            setShowAppointmentDetails(false)
+        }
+    }
+
     const handleCloseAppointmentDetails = () => {
         setShowAppointmentDetails(false)
         setSelectedAppointment(null)
@@ -156,11 +166,6 @@ export default function AppointmentsPage() {
         console.log('Edit appointment:', appointment)
         // For now, close details and could open form in edit mode
         setShowAppointmentDetails(false)
-    }
-
-    const handleCancelAppointment = (appointmentId: string) => {
-        // TODO: Implement cancel appointment functionality
-        console.log('Cancel appointment:', appointmentId)
     }
 
     const handleMessageCustomer = (customer: AppointmentWithDetails['customer']) => {
@@ -312,61 +317,14 @@ export default function AppointmentsPage() {
                                 />
                             ) : sortedSelectedDateAppointments.length > 0 ? (
                                 // State 2: Appointments List for Selected Date
-                                <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full">
-                                    <div className="p-4">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-lg font-medium text-white">
-                                                {format(selectedDate, 'EEEE, MMMM d')}
-                                            </h3>
-                                            <Button 
-                                                onClick={handleShowNewAppointmentForm}
-                                                size="sm"
-                                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                            >
-                                                <Plus className="h-4 w-4 mr-2" />
-                                                Add
-                                            </Button>
-                                        </div>
-                                        
-                                        <div className="space-y-2">
-                                            {sortedSelectedDateAppointments.map((appointment) => (
-                                                <div
-                                                    key={appointment.id}
-                                                    onClick={() => handleAppointmentClick(appointment)}
-                                                    className="p-3 rounded-lg border border-[#2a2a2a] bg-[#0d0d0d] hover:bg-[#1a1a1a] cursor-pointer transition-colors"
-                                                >
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <div className="text-sm font-medium text-white">
-                                                            {appointment.start_time} - {appointment.end_time}
-                                                        </div>
-                                                        <div className={`
-                                                            w-2 h-2 rounded-full
-                                                            ${appointment.status === 'confirmed' ? 'bg-green-500' :
-                                                              appointment.status === 'in_progress' ? 'bg-blue-500' :
-                                                              appointment.status === 'completed' ? 'bg-emerald-500' :
-                                                              appointment.status === 'cancelled' ? 'bg-red-500' :
-                                                              'bg-yellow-500'}
-                                                        `} />
-                                                    </div>
-                                                    <div className="text-sm text-white mb-1">
-                                                        {appointment.customer.customer_name}
-                                                    </div>
-                                                    <div className="text-xs text-gray-400 mb-1">
-                                                        {appointment.vehicle.year} {appointment.vehicle.make} {appointment.vehicle.model}
-                                                    </div>
-                                                    <div className="text-xs text-gray-300">
-                                                        {appointment.service_type}
-                                                    </div>
-                                                    {appointment.notes && (
-                                                        <div className="text-xs text-gray-400 mt-2 italic">
-                                                            {appointment.notes}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </Card>
+                                <AppointmentsList
+                                    selectedDate={selectedDate}
+                                    appointments={sortedSelectedDateAppointments}
+                                    onAddAppointment={handleShowNewAppointmentForm}
+                                    onAppointmentClick={handleAppointmentClick}
+                                    onCancelAppointment={handleCancelAppointment}
+                                    cancellingAppointmentId={cancelAppointment.isPending ? cancelAppointment.variables : undefined}
+                                />
                             ) : (
                                 // State 1: Empty Panel - No Appointments
                                 <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full">

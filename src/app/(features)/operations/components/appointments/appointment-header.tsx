@@ -49,21 +49,10 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
-                        {/* Customers Button */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onCustomersClick}
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
-                        >
-                            <Users className="h-4 w-4 mr-2" />
-                            Customers
-                        </Button>
-
                         {/* Create Appointment Button */}
                         <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                             onClick={onNewAppointment}
                         >
                             <Plus className="h-4 w-4 mr-2" />

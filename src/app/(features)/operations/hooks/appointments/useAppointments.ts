@@ -215,6 +215,36 @@ export const useDeleteAppointment = () => {
 }
 
 /**
+ * Hook to cancel an appointment
+ */
+export const useCancelAppointment = () => {
+    const queryClient = useQueryClient()
+    
+    return useMutation({
+        mutationFn: AppointmentService.cancelAppointment,
+        onSuccess: (cancelledAppointment) => {
+            // Invalidate relevant queries
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.lists()
+            })
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.detail(cancelledAppointment.id)
+            })
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.stats(cancelledAppointment.shop_id)
+            })
+            
+            // Show success message
+            toast.success('Appointment cancelled successfully')
+        },
+        onError: (error: Error) => {
+            console.error('Failed to cancel appointment:', error)
+            toast.error(error.message || 'Failed to cancel appointment')
+        }
+    })
+}
+
+/**
  * Hook to create a work order from an appointment
  */
 export const useCreateWorkOrderFromAppointment = () => {
@@ -231,8 +261,13 @@ export const useCreateWorkOrderFromAppointment = () => {
                 queryKey: appointmentKeys.detail(appointmentId)
             })
             
-            // Show success message
-            toast.success('Work order created successfully!')
+            // Show success message with navigation action
+            toast.success('Work order created successfully!', {
+                action: {
+                    label: 'View Work Order',
+                    onClick: () => window.location.href = `/operations/work-orders/${workOrderId}`
+                }
+            })
         },
         onError: (error: Error) => {
             console.error('Failed to create work order:', error)

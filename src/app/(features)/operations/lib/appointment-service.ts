@@ -171,6 +171,24 @@ export class AppointmentService {
     }
 
     /**
+     * Cancel an appointment by setting status to 'cancelled'
+     */
+    static async cancelAppointment(appointmentId: string): Promise<Appointment> {
+        const { data, error } = await supabase
+            .from('appointments')
+            .update({
+                status: 'cancelled',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', appointmentId)
+            .select()
+            .single()
+
+        if (error) throw new Error(`Failed to cancel appointment: ${error.message}`)
+        return data
+    }
+
+    /**
      * Delete an appointment
      */
     static async deleteAppointment(appointmentId: string): Promise<void> {
