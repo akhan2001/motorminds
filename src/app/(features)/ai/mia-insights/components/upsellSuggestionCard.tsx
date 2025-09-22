@@ -11,6 +11,7 @@ interface UpsellSuggestionCardProps {
     isAdding: boolean
     canAddToWorkOrder: boolean
     onAddToWorkOrder: (suggestion: UpsellSuggestion, index: number) => void
+    isWorkOrderCompleted?: boolean
 }
 
 const getCategoryIcon = (category: string) => {
@@ -60,7 +61,8 @@ export const UpsellSuggestionCard: React.FC<UpsellSuggestionCardProps> = ({
     isAdded,
     isAdding,
     canAddToWorkOrder,
-    onAddToWorkOrder
+    onAddToWorkOrder,
+    isWorkOrderCompleted = false
 }) => {
     const canClick = canAddToWorkOrder && !isAdded && !isAdding
 
@@ -70,28 +72,34 @@ export const UpsellSuggestionCard: React.FC<UpsellSuggestionCardProps> = ({
             className={`
                 border rounded-lg p-4 
                 ${getPriorityStyles(suggestion.priority)}
-                ${canAddToWorkOrder 
-                    ? `transition-colors duration-200 ${
-                        isAdded 
-                            ? 'opacity-60 cursor-default bg-gray-900/20' 
-                            : isAdding 
-                                ? 'opacity-70 cursor-not-allowed' 
-                                : 'cursor-pointer hover:border-blue-500/60'
-                    }` 
-                    : ''
+                ${isWorkOrderCompleted
+                    ? 'opacity-60 cursor-default bg-gray-900/20'
+                    : canAddToWorkOrder 
+                        ? `transition-colors duration-200 ${
+                            isAdded 
+                                ? 'opacity-60 cursor-default bg-gray-900/20' 
+                                : isAdding 
+                                    ? 'opacity-70 cursor-not-allowed' 
+                                    : 'cursor-pointer hover:border-blue-500/60'
+                        }` 
+                        : ''
                 }
             `}
             style={{
-                background: canAddToWorkOrder && !isAdded
+                background: canAddToWorkOrder && !isAdded && !isWorkOrderCompleted
                     ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)'
                     : undefined
             }}
         >
             {/* Add to Work Order Indicator */}
-            {canAddToWorkOrder && (
+            {(canAddToWorkOrder || isWorkOrderCompleted) && (
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
-                        {isAdded ? (
+                        {isWorkOrderCompleted ? (
+                            <>
+                                <span className="text-xs font-medium text-orange-400">Work Order Completed - View Only</span>
+                            </>
+                        ) : isAdded ? (
                             <>
                                 <Check className="h-4 w-4 text-green-400" />
                                 <span className="text-xs font-medium text-green-400">Added to Work Order</span>

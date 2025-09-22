@@ -13,13 +13,15 @@ interface UpsellSuggestionsProps {
     workOrderId?: string
     shopId?: string
     onAddToWorkOrder?: (suggestion: UpsellSuggestion) => Promise<void>
+    isWorkOrderCompleted?: boolean
 }
 
 export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({ 
     suggestions, 
     workOrderId, 
     shopId, 
-    onAddToWorkOrder 
+    onAddToWorkOrder,
+    isWorkOrderCompleted = false
 }) => {
     const [addingItems, setAddingItems] = React.useState<Set<number>>(new Set())
     const [addedItems, setAddedItems] = React.useState<Set<string>>(new Set())
@@ -74,6 +76,12 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
             return
         }
 
+        // Check if work order is completed
+        if (isWorkOrderCompleted) {
+            toast.info('Cannot add items to a completed work order')
+            return
+        }
+
         const suggestionId = getSuggestionId(suggestion)
         
         // Check if item has already been added
@@ -101,16 +109,13 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
         }
     }
 
-    const canAddToWorkOrder = !!(workOrderId && shopId && onAddToWorkOrder)
+    const canAddToWorkOrder = !!(workOrderId && shopId && onAddToWorkOrder && !isWorkOrderCompleted)
 
     return (
         <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-300 flex items-center space-x-2">
                 <TrendingUp className="h-4 w-4 text-green-400" />
                 <span>Upsell Opportunities</span>
-                {canAddToWorkOrder && (
-                    <span className="text-xs text-gray-500">(click to add to work order)</span>
-                )}
             </h4>
             <div className="space-y-3">
                 {suggestions.map((suggestion, index) => {
@@ -127,6 +132,7 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
                             isAdding={isAdding}
                             canAddToWorkOrder={canAddToWorkOrder}
                             onAddToWorkOrder={handleAddToWorkOrder}
+                            isWorkOrderCompleted={isWorkOrderCompleted}
                         />
                     )
                 })}

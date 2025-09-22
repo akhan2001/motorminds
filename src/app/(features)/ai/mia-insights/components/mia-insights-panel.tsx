@@ -39,6 +39,10 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
         ['pending', 'in_progress', 'in progress', 'in-progress'].includes(workOrderStatus.toLowerCase()) &&
         !workOrderStatus.toLowerCase().includes('completed')
 
+    // Check if work order is completed (disable adding upsell items)
+    const isWorkOrderCompleted = !!(workOrderStatus && 
+        workOrderStatus.toLowerCase().includes('completed'))
+
 
     const handleGenerateInsights = () => {
         if (workOrderId && shopId && !hasGeneratedInsights) {
@@ -47,6 +51,11 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     }
 
     const handleAddUpsellToWorkOrder = async (suggestion: UpsellSuggestion) => {
+        // Prevent adding items to completed work orders
+        if (isWorkOrderCompleted) {
+            return // UpsellSuggestions component will handle the UI state
+        }
+        
         try {
             const workOrderItemData = await UpsellToWorkItemService.addUpsellAsWorkOrderItem(suggestion, workOrderId)
             await createWorkOrderItem.mutateAsync(workOrderItemData)
@@ -179,6 +188,7 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
                     workOrderId={workOrderId}
                     shopId={shopId}
                     onAddToWorkOrder={handleAddUpsellToWorkOrder}
+                    isWorkOrderCompleted={isWorkOrderCompleted}
                 />
             )}
         </div>
