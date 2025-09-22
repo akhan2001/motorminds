@@ -42,6 +42,11 @@ export async function updateSession(request: NextRequest) {
 		'/api/financials',
 		'/parts',           // New refactored parts ordering
 		'/parts-ordering',  // Original parts ordering  
+		'/suppliers',       // Supplier management
+		'/api/suppliers',   // Supplier API
+		'/api/parts',       // Parts API
+		'/voice-calling',   // Voice calling interface
+		'/api/voice',       // Voice calling API
 		'/app',             // All app routes (appointments, invoices, etc.)
 		'/mia-ai',          // Mia AI routes
 		'/mia',             // MIA diagnostic interface
