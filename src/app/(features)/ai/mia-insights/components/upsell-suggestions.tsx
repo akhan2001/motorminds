@@ -1,93 +1,96 @@
 'use client'
 
 import React from 'react'
-import { TrendingUp, DollarSign, Clock, Shield, Wrench, Star } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { UpsellSuggestion } from '../types/mia-insights'
+import { toast } from 'sonner'
+import { UpsellSuggestionCard } from './upsellSuggestionCard'
 
 interface UpsellSuggestionsProps {
     suggestions: UpsellSuggestion[]
+    workOrderId?: string
+    shopId?: string
+    onAddToWorkOrder?: (suggestion: UpsellSuggestion) => Promise<void>
 }
 
-const getCategoryIcon = (category: string) => {
-    switch (category) {
-        case 'immediate':
-            return <Clock className="h-4 w-4 text-red-400" />
-        case 'preventive':
-            return <Shield className="h-4 w-4 text-blue-400" />
-        case 'safety':
-            return <Shield className="h-4 w-4 text-red-400" />
-        case 'seasonal':
-            return <Star className="h-4 w-4 text-yellow-400" />
-        default:
-            return <Wrench className="h-4 w-4 text-gray-400" />
-    }
-}
+export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({ 
+    suggestions, 
+    workOrderId, 
+    shopId, 
+    onAddToWorkOrder 
+}) => {
+    const [addingItems, setAddingItems] = React.useState<Set<number>>(new Set())
+    const [addedItems, setAddedItems] = React.useState<Set<string>>(new Set())
 
-const getPriorityStyles = (priority: string) => {
-    switch (priority) {
-        case 'high':
-            return 'bg-red-900/20 border-red-500/30'
-        case 'medium':
-            return 'bg-yellow-900/20 border-yellow-500/30'
-        case 'low':
-            return 'bg-green-900/20 border-green-500/30'
-        default:
-            return 'bg-gray-900/20 border-gray-500/30'
-    }
-}
-
-const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-        case 'high':
-            return 'bg-red-900 text-red-300'
-        case 'medium':
-            return 'bg-yellow-900 text-yellow-300'
-        case 'low':
-            return 'bg-green-900 text-green-300'
-        default:
-            return 'bg-gray-900 text-gray-300'
-    }
-}
-
-export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({ suggestions }) => {
     if (!suggestions || suggestions.length === 0) return null
+
+    // Create unique identifier for each suggestion
+    const getSuggestionId = (suggestion: UpsellSuggestion) => {
+        return `${suggestion.title}-${suggestion.estimatedValue}`
+    }
+
+    const handleAddToWorkOrder = async (suggestion: UpsellSuggestion, index: number) => {
+        if (!onAddToWorkOrder) {
+            toast.error('Unable to add item to work order')
+            return
+        }
+
+        const suggestionId = getSuggestionId(suggestion)
+        
+        // Check if item has already been added
+        if (addedItems.has(suggestionId)) {
+            toast.info(`${suggestion.title} has already been added to the work order`)
+            return
+        }
+
+        setAddingItems(prev => new Set(prev).add(index))
+        
+        try {
+            await onAddToWorkOrder(suggestion)
+            // Mark as added after successful addition
+            setAddedItems(prev => new Set(prev).add(suggestionId))
+            toast.success(`${suggestion.title} added to work order`)
+        } catch (error) {
+            console.error('Failed to add to work order:', error)
+            toast.error('Failed to add item to work order')
+        } finally {
+            setAddingItems(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(index)
+                return newSet
+            })
+        }
+    }
+
+    const canAddToWorkOrder = !!(workOrderId && shopId && onAddToWorkOrder)
 
     return (
         <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-300 flex items-center space-x-2">
                 <TrendingUp className="h-4 w-4 text-green-400" />
                 <span>Upsell Opportunities</span>
+                {canAddToWorkOrder && (
+                    <span className="text-xs text-gray-500">(click to add to work order)</span>
+                )}
             </h4>
             <div className="space-y-3">
-                {suggestions.map((suggestion, index) => (
-                    <div 
-                        key={index} 
-                        className={`border rounded-lg p-4 ${getPriorityStyles(suggestion.priority)}`}
-                    >
-                        <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                                {getCategoryIcon(suggestion.category)}
-                                <h5 className="text-sm font-medium text-white">
-                                    {suggestion.title}
-                                </h5>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityBadge(suggestion.priority)}`}>
-                                    {suggestion.priority}
-                                </span>
-                                <div className="flex items-center space-x-1 text-green-400">
-                                    <DollarSign className="h-3 w-3" />
-                                    <span className="text-sm font-medium">
-                                        ${suggestion.estimatedValue}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <p className="text-sm text-gray-400 leading-relaxed">
-                            {suggestion.description}
-                        </p>
-                    </div>
-                ))}
+                {suggestions.map((suggestion, index) => {
+                    const suggestionId = getSuggestionId(suggestion)
+                    const isAdded = addedItems.has(suggestionId)
+                    const isAdding = addingItems.has(index)
+                    
+                    return (
+                        <UpsellSuggestionCard
+                            key={index}
+                            suggestion={suggestion}
+                            index={index}
+                            isAdded={isAdded}
+                            isAdding={isAdding}
+                            canAddToWorkOrder={canAddToWorkOrder}
+                            onAddToWorkOrder={handleAddToWorkOrder}
+                        />
+                    )
+                })}
             </div>
         </div>
     )

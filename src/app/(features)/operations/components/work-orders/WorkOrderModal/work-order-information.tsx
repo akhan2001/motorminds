@@ -69,13 +69,29 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Title</Label>
+                            <Label className="text-gray-400">Title *</Label>
                             <Input
                                 value={title}
-                                onChange={(e) => isEditing && onFieldChange('title', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                onChange={(e) => {
+                                    if (isEditing) {
+                                        // Convert to title case and limit to 30 characters
+                                        const value = e.target.value
+                                            .slice(0, 30)
+                                            .toLowerCase()
+                                            .replace(/\b\w/g, (char) => char.toUpperCase())
+                                        onFieldChange('title', value)
+                                    }
+                                }}
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
+                                maxLength={30}
+                                placeholder={isEditing ? "Brief Title for Work Order" : ""}
                             />
+                            {isEditing && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {title.length}/30 characters
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Priority</Label>
@@ -84,10 +100,10 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     value={priority} 
                                     onValueChange={(value) => onFieldChange('priority', value as WorkOrderPriority)}
                                 >
-                                    <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500">
+                                    <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500">
                                         <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                                    <SelectContent className="bg-[#1a1a1a] text-white border-[#2a2a2a]">
                                         {priorityOptions.map((option) => (
                                             <SelectItem key={option.value} value={option.value}>
                                                 <div className="flex items-center">
@@ -99,7 +115,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     </SelectContent>
                                 </Select>
                             ) : (
-                                <div className="flex items-center gap-2 h-10 px-3 bg-[#292929] border border-[#626262] rounded-md">
+                                <div className="flex items-center gap-2 h-10 px-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-md">
                                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(priority)}`}></div>
                                     <span className="text-white capitalize text-sm">{priority}</span>
                                 </div>
@@ -112,9 +128,15 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                         <textarea
                             value={description}
                             onChange={(e) => isEditing && onFieldChange('description', e.target.value)}
-                            className="w-full bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto"
+                            className="w-full bg-[#1a1a1a] text-white text-sm border border-[#2a2a2a] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto"
                             readOnly={!isEditing}
+                            placeholder={isEditing ? "Describe the work to be performed..." : ""}
                         />
+                        {isEditing && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                💡 Adding a detailed description helps the AI better understand and assist with this work order
+                            </p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -133,7 +155,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                 <Input
                                     value={assignee}
                                     onChange={(e) => isEditing && onFieldChange('assignee', e.target.value)}
-                                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                     readOnly={!isEditing}
                                     placeholder="Assign technician"
                                 />
@@ -145,7 +167,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                 type="date"
                                 value={date}
                                 onChange={(e) => isEditing && onFieldChange('date', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
                             />
                         </div>

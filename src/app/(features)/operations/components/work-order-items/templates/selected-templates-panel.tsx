@@ -147,7 +147,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
     ].filter(item => item.value > 0)
 
     return (
-        <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
+        <div className={`w-full bg-[#131313] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
             <div className="p-4 border-b border-[#222222] flex-shrink-0">
                 <div className="flex items-center justify-between">
@@ -161,7 +161,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
             </div>
 
             {/* Content Area - Scrollable */}
-            <ScrollArea className="flex-1 min-h-0">
+            <ScrollArea className="max-h-96 min-h-0">
                 <div className="p-4 space-y-4">
                     {/* Selected Templates List */}
                     {selectedTemplates.length > 0 ? (

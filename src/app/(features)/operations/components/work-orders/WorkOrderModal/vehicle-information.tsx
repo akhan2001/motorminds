@@ -113,14 +113,14 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     </div>
                 )}
                 {/* Vehicle Information Fields */}
-                <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+                <div className="space-y-2 mt-2 p-3 border border-[#2a2a2a] rounded-md">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Year</Label>
                             <Input
                                 value={vehicleYear}
                                 onChange={(e) => isEditing && onFieldChange('vehicleYear', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. 2020"
@@ -131,7 +131,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleMake}
                                 onChange={(e) => isEditing && onFieldChange('vehicleMake', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Honda"
@@ -142,7 +142,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleModel}
                                 onChange={(e) => isEditing && onFieldChange('vehicleModel', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Civic"
@@ -153,7 +153,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleColor}
                                 onChange={(e) => isEditing && onFieldChange('vehicleColor', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="e.g. Blue"
                             />
@@ -165,7 +165,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleVin}
                                 onChange={(e) => isEditing && onFieldChange('vehicleVin', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="17-character VIN"
                                 maxLength={17}
@@ -176,7 +176,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleLicensePlate}
                                 onChange={(e) => isEditing && onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="ABC123"
                             />
@@ -186,7 +186,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleMileage}
                                 onChange={(e) => isEditing && onFieldChange('vehicleMileage', e.target.value)}
-                                className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
                                 placeholder="Current mileage"
                                 type="text"

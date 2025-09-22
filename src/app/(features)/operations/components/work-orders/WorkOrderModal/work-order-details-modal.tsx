@@ -13,11 +13,17 @@ import { CustomerInformation } from "./customer-information"
 import { VehicleInformation } from "./vehicle-information"
 import { WorkOrderNotes } from "./work-order-notes"
 import { WorkOrderModalFooter } from "./work-order-modal-footer"
+import { WorkOrderItemsList } from "../../work-order-items"
 import { WorkOrderRightPanel } from "./work-order-right-panel"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
+import { SelectedTemplatesPanel } from "../../work-order-items/templates/selected-templates-panel"
+import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
+import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
+import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import { getWorkOrderItems } from "../../../lib/work-order-items-service"
 import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-service"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
+import { PanelProvider } from "../../../contexts"
 
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
@@ -25,6 +31,13 @@ export interface WorkOrderDetailsModalProps {
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     onDelete?: (workOrderId: string) => void
     className?: string
+}
+
+interface SelectedTemplate extends WorkOrderItemTemplate {
+    selectedQuantity?: number
+    selectedUnitPrice?: number
+    selectedLaborHours?: number
+    selectedTechnicianId?: string
 }
 
 export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({ 
@@ -36,6 +49,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
 }) => {
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
+    const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
     
     // Fetch full work order details
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
@@ -131,6 +145,79 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
             ...prev,
             tags: prev.tags.filter(tag => tag !== tagToRemove)
         }))
+    }
+
+    // Template selection handlers
+    const handleTemplateSelect = (template: WorkOrderItemTemplate) => {
+        // Check if template is already selected
+        const isAlreadySelected = selectedTemplates.some(selected => selected.id === template.id)
+        
+        if (isAlreadySelected) {
+            // Template already selected, don't add it again
+            return
+        }
+        
+        const selectedTemplate: SelectedTemplate = {
+            ...template,
+            selectedQuantity: template.quantity,
+            selectedUnitPrice: template.unit_price,
+            selectedLaborHours: template.labor_hours
+        }
+        setSelectedTemplates(prev => [...prev, selectedTemplate])
+    }
+
+    const handleRemoveTemplate = (templateId: string) => {
+        setSelectedTemplates(prev => prev.filter(template => template.id !== templateId))
+    }
+
+    const handleUpdateTemplate = (templateId: string, updates: Partial<SelectedTemplate>) => {
+        setSelectedTemplates(prev => 
+            prev.map(template => 
+                template.id === templateId 
+                    ? { ...template, ...updates }
+                    : template
+            )
+        )
+    }
+
+    // Function to add selected templates as work order items
+    const handleAddTemplatesAsItems = async () => {
+        if (selectedTemplates.length === 0) return
+
+        try {
+            const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+            
+            // Create work order items from selected templates
+            const itemPromises = selectedTemplates.map(async (template) => {
+                const itemData = {
+                    work_order_id: workOrderId,
+                    item_type: template.item_type,
+                    description: template.name,
+                    part_number: template.part_number,
+                    quantity: template.selectedQuantity || template.quantity,
+                    unit_price: template.selectedUnitPrice || template.unit_price,
+                    unit_cost: template.unit_cost,
+                    supplier: template.supplier,
+                    category: template.category,
+                    warranty_period: template.warranty_period,
+                    notes: template.description,
+                    labor_hours: template.selectedLaborHours || template.labor_hours,
+                    technician_id: template.selectedTechnicianId,
+                }
+                
+                return WorkOrderItemsService.createWorkOrderItem(itemData)
+            })
+            
+            await Promise.all(itemPromises)
+            
+            // Clear selected templates after adding them
+            setSelectedTemplates([])
+            
+            toast.success(`${selectedTemplates.length} items added to work order`)
+        } catch (error) {
+            console.error('Failed to add templates as items:', error)
+            toast.error('Failed to add items to work order')
+        }
     }
 
     const handleSave = async () => {
@@ -371,21 +458,6 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                         }
                                     }}
                                 >
-                                {/* Work Order Information */}
-                                <WorkOrderInformation 
-                                    title={formData.title}
-                                    description={formData.description}
-                                    priority={formData.priority}
-                                    assignee={formData.assignee}
-                                    assigneeId={""} // Not used in details view
-                                    date={formData.date}
-                                    tags={formData.tags}
-                                    isEditing={isEditing}
-                                    isCreating={false} // Disable technician dropdown for editing
-                                    onFieldChange={handleFieldChange}
-                                    onAddTag={handleAddTag}
-                                    onRemoveTag={handleRemoveTag}
-                                />
 
                                 {/* Customer Information */}
                                 <CustomerInformation 
@@ -410,6 +482,28 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     vehicleMileage={formData.vehicleMileage}
                                     isEditing={isEditing}
                                     onFieldChange={handleFieldChange}
+                                />
+                                {/* Work Order Information */}
+                                <WorkOrderInformation 
+                                    title={formData.title}
+                                    description={formData.description}
+                                    priority={formData.priority}
+                                    assignee={formData.assignee}
+                                    assigneeId={""} // Not used in details view
+                                    date={formData.date}
+                                    tags={formData.tags}
+                                    isEditing={isEditing}
+                                    isCreating={false} // Disable technician dropdown for editing
+                                    onFieldChange={handleFieldChange}
+                                    onAddTag={handleAddTag}
+                                    onRemoveTag={handleRemoveTag}
+                                />
+
+                                {/* Work Order Items */}
+                                <WorkOrderItemsList 
+                                    workOrderId={initialWorkOrder.id}
+                                    shopId={initialWorkOrder.shop_id}
+                                    isEditable={canEdit()}
                                 />
 
                                 {/* Notes */}

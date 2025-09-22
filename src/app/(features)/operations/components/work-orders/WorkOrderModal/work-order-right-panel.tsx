@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { MessageSquare, Lightbulb, Package } from "lucide-react"
+import { MessageSquare, Lightbulb } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { WorkOrderItemsList } from '../../work-order-items'
 import { MiaInsightsIntegration } from '@/app/(features)/ai/mia-insights'
 
 export interface WorkOrderRightPanelProps {
@@ -19,7 +18,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     workOrderStatus,
     className = ""
 }) => {
-    const [activeTab, setActiveTab] = useState<'insights' | 'items' | 'chat'>('items')
+    const [activeTab, setActiveTab] = useState<'insights' | 'chat'>('insights')
     
     // Determine if work order is completed (read-only mode)
     const isCompleted = workOrderStatus && 
@@ -29,9 +28,9 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
         <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
             <div className="p-4 border-b border-[#222222] flex-shrink-0">
-                <h3 className="text-white font-medium text-lg">Mia Insights & Items</h3>
+                <h3 className="text-white font-medium text-lg">Mia Insights & Chat</h3>
                 <p className="text-gray-400 text-sm mt-1">
-                    {isCompleted ? 'View-only mode (work order completed)' : 'AI insights and work order items'}
+                    AI insights and communication tools
                 </p>
             </div>
 
@@ -48,19 +47,6 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                     <div className="flex items-center justify-center gap-1 text-sm font-medium">
                         <Lightbulb className="h-3 w-3" />
                         <span>Insights</span>
-                    </div>
-                </button>
-                <button 
-                    onClick={() => setActiveTab('items')}
-                    className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
-                        activeTab === 'items' 
-                            ? 'text-white bg-[#1a1a1a] border-blue-500' 
-                            : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a] border-transparent hover:border-gray-600'
-                    }`}
-                >
-                    <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                        <Package className="h-3 w-3" />
-                        <span>Items</span>
                     </div>
                 </button>
                 <button 
@@ -100,16 +86,6 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                                 </p>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {activeTab === 'items' && (
-                    <div className="p-4">
-                        <WorkOrderItemsList 
-                            workOrderId={workOrderId}
-                            shopId={shopId}
-                            isEditable={!isCompleted}
-                        />
                     </div>
                 )}
 

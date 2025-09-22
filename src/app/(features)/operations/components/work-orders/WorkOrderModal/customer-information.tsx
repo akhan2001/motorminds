@@ -82,12 +82,12 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                         )}
 
                         {/* Customer Information Fields */}
-                        <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
+                        <div className="space-y-2 mt-2 p-3 border border-[#2a2a2a] rounded-md">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {/* First row */}
                                 <div>
                                     <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Customer Name"
                                         value={customerName}
                                         onChange={(e) => isEditing && onFieldChange('customer', e.target.value)}
@@ -97,7 +97,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                 </div>
                                 <div>
                                     <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Phone Number"
                                         value={formatPhoneNumber(customerPhone)}
                                         onChange={(e) => isEditing && onFieldChange('customerPhone', e.target.value)}
@@ -109,7 +109,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                 {/* Second row */}
                                 <div>
                                     <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Email Address"
                                         type="email"
                                         value={customerEmail}
@@ -119,7 +119,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                 </div>
                                 <div>
                                     <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Address"
                                         value={customerAddress}
                                         onChange={(e) => isEditing && onFieldChange('customerAddress', e.target.value)}

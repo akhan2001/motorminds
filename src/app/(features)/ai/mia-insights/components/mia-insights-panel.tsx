@@ -7,6 +7,9 @@ import { InsightFlags } from './insight-flags'
 import { WorkOrderAnalysis } from './work-order-analysis'
 import { Loader2, Brain, AlertTriangle, TrendingUp, FileText, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { UpsellToWorkItemService } from '../../../operations/lib/upsell-to-work-item-service'
+import { useCreateWorkOrderItem } from '../../../operations/hooks/use-work-order-items'
+import { UpsellSuggestion } from '../types/mia-insights'
 
 interface MiaInsightsPanelProps {
     workOrderId: string
@@ -21,6 +24,7 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
 }) => {
     const { data: insights, isLoading, error } = useMiaInsights(workOrderId, shopId)
     const generateInsights = useGenerateMiaInsights()
+    const createWorkOrderItem = useCreateWorkOrderItem()
     const [hasGeneratedInsights, setHasGeneratedInsights] = useState(false)
 
     // Handle successful insight generation
@@ -39,6 +43,16 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     const handleGenerateInsights = () => {
         if (workOrderId && shopId && !hasGeneratedInsights) {
             generateInsights.mutate({ workOrderId, shopId })
+        }
+    }
+
+    const handleAddUpsellToWorkOrder = async (suggestion: UpsellSuggestion) => {
+        try {
+            const workOrderItemData = await UpsellToWorkItemService.addUpsellAsWorkOrderItem(suggestion, workOrderId)
+            await createWorkOrderItem.mutateAsync(workOrderItemData)
+        } catch (error) {
+            console.error('Failed to add upsell to work order:', error)
+            throw error
         }
     }
 
@@ -160,7 +174,12 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
 
             {/* Upsell Suggestions */}
             {analysis.upsell_suggestions && analysis.upsell_suggestions.length > 0 && (
-                <UpsellSuggestions suggestions={analysis.upsell_suggestions} />
+                <UpsellSuggestions 
+                    suggestions={analysis.upsell_suggestions}
+                    workOrderId={workOrderId}
+                    shopId={shopId}
+                    onAddToWorkOrder={handleAddUpsellToWorkOrder}
+                />
             )}
         </div>
     )

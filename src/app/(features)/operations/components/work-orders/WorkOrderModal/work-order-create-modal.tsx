@@ -142,8 +142,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
     const isStep3Complete = () => {
         return isStep2Complete() && 
-               formData.title.trim() && 
-               formData.description.trim()
+               formData.title.trim()
     }
 
     // Auto-advance to next step when current step is completed
@@ -153,7 +152,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         } else if (currentStep === 2 && isStep2Complete()) {
             setCurrentStep(3)
         }
-    }, [currentStep, formData.customerId, formData.customer, formData.vehicleId, formData.vehicleMake, formData.vehicleModel, formData.vehicleYear, formData.title, formData.description])
+    }, [currentStep, formData.customerId, formData.customer, formData.vehicleId, formData.vehicleMake, formData.vehicleModel, formData.vehicleYear, formData.title])
 
     const handleFieldChange = (field: string, value: any) => {
         setFormData(prev => ({
@@ -229,7 +228,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             }
             
             if (!isStep3Complete()) {
-                toast.error("Please complete work order details")
+                toast.error("Please enter a work order title")
                 setCurrentStep(3)
                 return
             }
@@ -276,7 +275,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
                 <ResizablePanelGroup direction="horizontal" className="w-full h-full">
                     {/* Main Content Panel */}
-                    <ResizablePanel defaultSize={50} minSize={40} maxSize={60}>
+                    <ResizablePanel defaultSize={65} minSize={50} maxSize={75}>
                         <div className="flex flex-col h-full min-h-0">
                             {/* Header */}
                             <WorkOrderModalHeader 
@@ -364,6 +363,19 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                             onAddTag={handleAddTag}
                                             onRemoveTag={handleRemoveTag}
                                         />
+
+                                        {/* Selected Templates Panel - Moved underneath Work Order Information */}
+                                        {isStep3Complete() && (
+                                            <div className="mt-6">
+                                                <SelectedTemplatesPanel
+                                                    selectedTemplates={selectedTemplates}
+                                                    onRemoveTemplate={handleRemoveTemplate}
+                                                    onUpdateTemplate={handleUpdateTemplate}
+                                                    shopId={shopId}
+                                                    className="border border-[#2a2a2a] rounded-lg"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Optional Sections - Available after Step 3 is complete */}
@@ -418,7 +430,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                     <ResizableHandle withHandle />
 
                     {/* Right Panel - Work Order Item Templates */}
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+                    <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
                         <PanelProvider 
                             allowTemplateActions={false} 
                             allowTemplateSelection={true}
@@ -432,20 +444,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                 className="h-full"
                             />
                         </PanelProvider>
-                    </ResizablePanel>
-
-                    {/* Resizable Handle */}
-                    <ResizableHandle withHandle />
-
-                    {/* Rightmost Panel - Selected Templates */}
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
-                        <SelectedTemplatesPanel
-                            selectedTemplates={selectedTemplates}
-                            onRemoveTemplate={handleRemoveTemplate}
-                            onUpdateTemplate={handleUpdateTemplate}
-                            shopId={shopId}
-                            className="h-full"
-                        />
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>
