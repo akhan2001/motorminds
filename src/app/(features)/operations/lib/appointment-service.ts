@@ -52,6 +52,11 @@ export class AppointmentService {
                     color,
                     vin,
                     mileage
+                ),
+                work_order:work_orders!work_orders_appointment_id_fkey(
+                    id,
+                    work_order_number,
+                    status
                 )
             `)
             .eq('shop_id', shopId)
@@ -106,6 +111,11 @@ export class AppointmentService {
                     color,
                     vin,
                     mileage
+                ),
+                work_order:work_orders!work_orders_appointment_id_fkey(
+                    id,
+                    work_order_number,
+                    status
                 )
             `)
             .eq('id', appointmentId)
@@ -173,7 +183,7 @@ export class AppointmentService {
     }
 
     /**
-     * Check time slot availability - optimized for time fields
+     * Check time slot availability - simplified to match availability service
      */
     static async checkTimeSlotAvailability(
         shopId: string,
@@ -184,11 +194,11 @@ export class AppointmentService {
     ): Promise<boolean> {
         let query = supabase
             .from('appointments')
-            .select('id, start_time, end_time')
+            .select('id, start_time')
             .eq('shop_id', shopId)
             .eq('appointment_date', appointmentDate)
+            .eq('start_time', startTime) // Simple check: exact start time match
             .neq('status', 'cancelled')
-            .or(`start_time.lt.${endTime},end_time.gt.${startTime}`) // Overlap check
 
         if (excludeAppointmentId) {
             query = query.neq('id', excludeAppointmentId)
@@ -197,7 +207,7 @@ export class AppointmentService {
         const { data, error } = await query
 
         if (error) throw new Error(`Failed to check availability: ${error.message}`)
-        return data?.length === 0
+        return data?.length === 0 // Available if no appointments found at this exact time
     }
 
     /**

@@ -20,6 +20,7 @@ import {
     Loader2
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 import { AppointmentMessageModal } from './AppointmentMessageModal'
 import type { AppointmentWithDetails } from '../../types/appointment'
 
@@ -43,6 +44,7 @@ export function AppointmentDetailsCard({
     isCreatingWorkOrder = false
 }: AppointmentDetailsCardProps) {
     const [showMessageModal, setShowMessageModal] = useState(false)
+    const router = useRouter()
     
     // Handle message modal
     const handleShowMessageModal = () => {
@@ -58,6 +60,13 @@ export function AppointmentDetailsCard({
         if (sendMessage && customMessage) {
             // Message was sent successfully
             console.log('Message sent:', customMessage)
+        }
+    }
+
+    // Handle navigation to work order
+    const handleViewWorkOrder = () => {
+        if (appointment.work_order?.id) {
+            router.push(`/operations/work-orders/${appointment.work_order.id}`)
         }
     }
 
@@ -85,10 +94,18 @@ export function AppointmentDetailsCard({
 
     const canEdit = appointment.status !== 'completed' && appointment.status !== 'cancelled' && appointment.status !== 'in_progress'
     const canCancel = appointment.status !== 'completed' && appointment.status !== 'cancelled' && appointment.status !== 'in_progress'
+    
+    // Check if work order actually exists (not just an empty object)
+    const workOrderExists = appointment.work_order && appointment.work_order.id
+    
     const canCreateWorkOrder = appointment.status !== 'cancelled' && 
                                appointment.status !== 'in_progress' && 
                                appointment.status !== 'completed' && 
-                               !appointment.work_order
+                               !workOrderExists
+                               
+    const hasWorkOrder = workOrderExists || 
+                        appointment.status === 'in_progress' || 
+                        appointment.status === 'completed'
 
     return (
         <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
@@ -272,6 +289,7 @@ export function AppointmentDetailsCard({
                                     <Button 
                                         size="sm" 
                                         variant="ghost"
+                                        onClick={handleViewWorkOrder}
                                         className="text-blue-400 hover:text-blue-300 hover:bg-[#2a2a2a]"
                                     >
                                         View
@@ -308,7 +326,7 @@ export function AppointmentDetailsCard({
                             </Button>
                         </div>
 
-                        {canCreateWorkOrder && (
+                        {canCreateWorkOrder ? (
                             <Button
                                 size="sm"
                                 onClick={() => onCreateWorkOrder?.(appointment.id)}
@@ -326,6 +344,15 @@ export function AppointmentDetailsCard({
                                         Create Work Order
                                     </>
                                 )}
+                            </Button>
+                        ) : hasWorkOrder && (
+                            <Button
+                                size="sm"
+                                onClick={handleViewWorkOrder}
+                                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                <Settings className="h-4 w-4 mr-2" />
+                                View Work Order
                             </Button>
                         )}
 

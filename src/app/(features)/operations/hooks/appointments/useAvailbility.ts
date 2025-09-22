@@ -12,8 +12,8 @@ import type {
 export const availabilityKeys = {
     all: ['availability'] as const,
     slots: () => [...availabilityKeys.all, 'slots'] as const,
-    slot: (shopId: string, date: string, serviceType?: string) => 
-        [...availabilityKeys.slots(), shopId, date, serviceType] as const,
+    slot: (shopId: string, date: string) => 
+        [...availabilityKeys.slots(), shopId, date] as const,
     checks: () => [...availabilityKeys.all, 'checks'] as const,
     check: (query: AvailabilityQuery) => 
         [...availabilityKeys.checks(), query] as const,
@@ -30,12 +30,11 @@ export const availabilityKeys = {
  */
 export const useAvailableSlots = (
     shopId: string,
-    date: string,
-    serviceType?: string
+    date: string
 ) => {
     return useQuery({
-        queryKey: availabilityKeys.slot(shopId, date, serviceType),
-        queryFn: () => AvailabilityService.getAvailableSlots(shopId, date, serviceType),
+        queryKey: availabilityKeys.slot(shopId, date),
+        queryFn: () => AvailabilityService.getAvailableSlots(shopId, date),
         enabled: !!shopId && !!date && !AvailabilityService.isDateInPast(date),
         staleTime: 60 * 1000, // 1 minute
         refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
@@ -45,11 +44,11 @@ export const useAvailableSlots = (
 /**
  * Hook to check if a specific time slot is available
  */
-export const useSlotAvailabilityCheck = (query: AvailabilityQuery) => {
+export const useSlotAvailabilityCheck = (shopId: string, date: string, time: string) => {
     return useQuery({
-        queryKey: availabilityKeys.check(query),
-        queryFn: () => AvailabilityService.checkSlotAvailability(query),
-        enabled: !!query.shopId && !!query.date,
+        queryKey: ['slotCheck', shopId, date, time],
+        queryFn: () => AvailabilityService.checkSlotAvailability(shopId, date, time),
+        enabled: !!shopId && !!date && !!time,
         staleTime: 30 * 1000, // 30 seconds
     })
 }
@@ -83,10 +82,7 @@ export const useWeekAvailability = (shopId: string, weekStart: string) => {
 /**
  * Hook to get available slots for the next 7 days
  */
-export const useUpcomingAvailability = (
-    shopId: string,
-    serviceType?: string
-) => {
+export const useUpcomingAvailability = (shopId: string) => {
     const today = new Date()
     const dates = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(today)
@@ -97,7 +93,7 @@ export const useUpcomingAvailability = (
     // Create multiple queries for each date
     const results = dates.map(date => 
         // eslint-disable-next-line react-hooks/rules-of-hooks
-        useAvailableSlots(shopId, date, serviceType)
+        useAvailableSlots(shopId, date)
     )
 
     // Combine results
@@ -159,34 +155,46 @@ export const useBookingValidation = () => {
             time: string, 
             duration: number = 60
         ): { isValid: boolean; error?: string } => {
-            const dateValidation = this.validateDate(date)
-            if (!dateValidation.isValid) {
-                return dateValidation
+            // Check if date is in the past
+            if (AvailabilityService.isDateInPast(date)) {
+                return {
+                    isValid: false,
+                    error: 'Cannot book appointments in the past'
+                }
             }
 
-            const timeValidation = this.validateTime(date, time)
-            if (!timeValidation.isValid) {
-                return timeValidation
+            // Check if date is too far in the future
+            if (AvailabilityService.isDateTooFar(date)) {
+                return {
+                    isValid: false,
+                    error: 'Cannot book appointments more than 90 days in advance'
+                }
             }
 
-            // Additional slot-specific validations could go here
+            // Check if time is too soon
+            if (AvailabilityService.isTimeTooSoon(date, time)) {
+                return {
+                    isValid: false,
+                    error: 'This time has already passed'
+                }
+            }
+
             return { isValid: true }
         }
     }
 }
 
 /**
- * Hook to find the next available slot for a service type
+ * Hook to find the next available slot
  */
 export const useNextAvailableSlot = (
     shopId: string,
-    serviceType?: string,
     preferredDate?: string
 ) => {
     const startDate = preferredDate || new Date().toISOString().split('T')[0]
     
     return useQuery({
-        queryKey: ['nextAvailableSlot', shopId, serviceType, startDate],
+        queryKey: ['nextAvailableSlot', shopId, startDate],
         queryFn: async (): Promise<AvailableSlot | null> => {
             // Check the next 14 days for availability
             for (let i = 0; i < 14; i++) {
@@ -197,8 +205,7 @@ export const useNextAvailableSlot = (
                 try {
                     const slots = await AvailabilityService.getAvailableSlots(
                         shopId, 
-                        dateStr, 
-                        serviceType
+                        dateStr
                     )
                     
                     const availableSlot = slots.find(slot => slot.isAvailable)
@@ -223,26 +230,24 @@ export const useNextAvailableSlot = (
 }
 
 /**
- * Hook to get recommended time slots based on service type and shop patterns
+ * Hook to get recommended time slots based on shop patterns
  */
 export const useRecommendedSlots = (
     shopId: string,
-    serviceType: string,
     date: string
 ) => {
     return useQuery({
-        queryKey: ['recommendedSlots', shopId, serviceType, date],
+        queryKey: ['recommendedSlots', shopId, date],
         queryFn: async (): Promise<AvailableSlot[]> => {
             const allSlots = await AvailabilityService.getAvailableSlots(
                 shopId, 
-                date, 
-                serviceType
+                date
             )
 
             // Filter only available slots
             const availableSlots = allSlots.filter(slot => slot.isAvailable)
 
-            // Apply service-specific recommendations
+            // Apply general recommendations
             const recommendations = availableSlots.map(slot => {
                 const hour = parseInt(slot.time.split(':')[0])
                 let priority = 1
@@ -252,8 +257,8 @@ export const useRecommendedSlots = (
                     priority += 0.3
                 }
 
-                // Early afternoon slots (1-3 PM) are good for longer services
-                if (hour >= 13 && hour <= 15 && serviceType.includes('Diagnostic')) {
+                // Early afternoon slots (1-3 PM) are good
+                if (hour >= 13 && hour <= 15) {
                     priority += 0.2
                 }
 
@@ -273,7 +278,7 @@ export const useRecommendedSlots = (
                 .sort((a, b) => (b as any).priority - (a as any).priority)
                 .slice(0, 6) // Return top 6 recommendations
         },
-        enabled: !!shopId && !!serviceType && !!date && !AvailabilityService.isDateInPast(date),
+        enabled: !!shopId && !!date && !AvailabilityService.isDateInPast(date),
         staleTime: 2 * 60 * 1000, // 2 minutes
     })
 }

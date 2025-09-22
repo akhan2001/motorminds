@@ -125,33 +125,18 @@ export function AppointmentForm({
     const { 
         data: availableSlots, 
         isLoading: slotsLoading 
-    } = useAvailableSlots(shopId, formData.appointmentDate, formData.serviceType)
+    } = useAvailableSlots(shopId, formData.appointmentDate)
 
     // Create appointment mutation
     const createAppointment = useCreateAppointment()
 
-    // Calculate end time based on service type
-    const calculateEndTime = (startTime: string, serviceType: string) => {
+    // Calculate end time (standard 60 minutes)
+    const calculateEndTime = (startTime: string) => {
         if (!startTime) return ''
         
-        const serviceDurations: Record<string, number> = {
-            'Oil Change': 30,
-            'Brake Service': 90,
-            'Tire Service': 60,
-            'Engine Diagnostic': 120,
-            'Transmission Service': 180,
-            'A/C Service': 75,
-            'Battery Service': 30,
-            'Inspection': 45,
-            'General Repair': 120,
-            'Maintenance': 90,
-            'Other': 60
-        }
-        
-        const duration = serviceDurations[serviceType] || 60
         const [hours, minutes] = startTime.split(':').map(Number)
         const startMinutes = hours * 60 + minutes
-        const endMinutes = startMinutes + duration
+        const endMinutes = startMinutes + 60 // Standard 60-minute appointment
         
         const endHours = Math.floor(endMinutes / 60)
         const endMins = endMinutes % 60
@@ -164,12 +149,9 @@ export function AppointmentForm({
         setFormData(prev => {
             const updated = { ...prev, [field]: value }
             
-            // Auto-calculate end time when start time or service type changes
-            if (field === 'startTime' || field === 'serviceType') {
-                updated.endTime = calculateEndTime(
-                    field === 'startTime' ? value : updated.startTime,
-                    field === 'serviceType' ? value : updated.serviceType
-                )
+            // Auto-calculate end time when start time changes
+            if (field === 'startTime') {
+                updated.endTime = calculateEndTime(value)
             }
             
             return updated

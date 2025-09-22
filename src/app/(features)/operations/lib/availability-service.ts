@@ -16,45 +16,35 @@ const supabase = createClient()
 
 export class AvailabilityService {
     
-    // Default shop configuration
-    private static readonly DEFAULT_SHOP_HOURS: ShopHours = {
+    // Simplified shop configuration
+    private static readonly DEFAULT_SHOP_HOURS = {
         start: '08:00',
-        end: '17:00',
-        breakStart: '12:00',
-        breakEnd: '13:00'
+        end: '17:00'
     }
 
-    private static readonly DEFAULT_SLOT_CONFIG: SlotConfig = {
-        duration: 60,        // 1 hour default
-        buffer: 15,          // 15 minutes between appointments
-        maxAdvanceBooking: 90, // 90 days
-        minAdvanceBooking: 2   // 2 hours
-    }
+    private static readonly STANDARD_APPOINTMENT_DURATION = 60 // All appointments are 60 minutes
+    private static readonly SLOT_INTERVAL = 30 // 30-minute intervals
 
     /**
      * Get available time slots for a specific date
      */
     static async getAvailableSlots(
         shopId: string,
-        date: string,
-        serviceType?: string
+        date: string
     ): Promise<AvailableSlot[]> {
         try {
-            // Get shop operating hours for the date
-            const shopHours = await this.getShopHours(shopId, date)
-            
-            if (!shopHours) {
+            // Check if shop is open on this date
+            if (!this.isShopOpen(date)) {
                 return [] // Shop closed on this date
             }
 
             // Get existing appointments for the date
             const existingAppointments = await AppointmentService.getAppointmentsByDate(shopId, date)
             
-            // Get service duration
-            const serviceDuration = this.getServiceDuration(serviceType)
-            
             // Generate available slots
-            return this.generateAvailableSlots(shopHours, existingAppointments, serviceDuration)
+            const slots = this.generateAvailableSlots(existingAppointments, date)
+            
+            return slots
             
         } catch (error) {
             console.error('Error getting available slots:', error)
@@ -65,21 +55,18 @@ export class AvailabilityService {
     /**
      * Check if a specific time slot is available
      */
-    static async checkSlotAvailability(query: AvailabilityQuery): Promise<AvailabilityCheck> {
+    static async checkSlotAvailability(shopId: string, date: string, time: string): Promise<AvailabilityCheck> {
         try {
-            const { shopId, date, serviceType, duration } = query
-            
             // Get available slots for the date
-            const availableSlots = await this.getAvailableSlots(shopId, date, serviceType)
+            const availableSlots = await this.getAvailableSlots(shopId, date)
             
-            // Check if any slot matches our requirements
-            const requestedDuration = duration || this.getServiceDuration(serviceType)
-            const isAvailable = availableSlots.some(slot => slot.duration >= requestedDuration)
+            // Check if the specific time slot is available
+            const isAvailable = availableSlots.some(slot => slot.time === time && slot.isAvailable)
             
             return {
                 isAvailable,
-                suggestedAlternatives: isAvailable ? [] : availableSlots.slice(0, 3),
-                reason: isAvailable ? undefined : 'No available slots for the requested duration'
+                suggestedAlternatives: isAvailable ? [] : availableSlots.filter(s => s.isAvailable).slice(0, 3),
+                reason: isAvailable ? undefined : 'This time slot is not available'
             }
             
         } catch (error) {
@@ -119,8 +106,7 @@ export class AvailabilityService {
         shopId: string, 
         date: string
     ): Promise<DayAvailability> {
-        const shopHours = await this.getShopHours(shopId, date)
-        const isOpen = shopHours !== null
+        const isOpen = this.isShopOpen(date)
         
         if (!isOpen) {
             return {
@@ -140,10 +126,13 @@ export class AvailabilityService {
             appointments.map(async (apt) => {
                 // Get appointment details for customer name
                 const details = await AppointmentService.getAppointmentById(apt.id)
+                const startTime = apt.start_time || '09:00'
+                const endTime = this.calculateEndTime(startTime)
+                
                 return {
                     appointmentId: apt.id,
-                    start: apt.start_time || '09:00',
-                    end: apt.end_time || '10:00',
+                    start: startTime,
+                    end: endTime,
                     serviceType: apt.service_type,
                     customerName: details?.customer.customer_name || 'Unknown'
                 }
@@ -151,111 +140,84 @@ export class AvailabilityService {
         )
 
         // Generate available slots
-        const availableSlots = this.generateAvailableSlots(shopHours, appointments)
+        const availableSlots = this.generateAvailableSlots(appointments, date)
 
         return {
             date,
             isOpen: true,
-            shopHours,
+            shopHours: this.DEFAULT_SHOP_HOURS,
             availableSlots,
             bookedSlots
         }
     }
 
     /**
-     * Generate available time slots
+     * Generate available time slots - simplified version
      */
     private static generateAvailableSlots(
-        shopHours: ShopHours,
         existingAppointments: Array<{ start_time?: string; end_time?: string }>,
-        slotDuration: number = this.DEFAULT_SLOT_CONFIG.duration
+        date: string
     ): AvailableSlot[] {
         const slots: AvailableSlot[] = []
-        const config = this.DEFAULT_SLOT_CONFIG
         
-        // Convert times to minutes
-        const shopStart = this.timeToMinutes(shopHours.start)
-        const shopEnd = this.timeToMinutes(shopHours.end)
-        const breakStart = shopHours.breakStart ? this.timeToMinutes(shopHours.breakStart) : null
-        const breakEnd = shopHours.breakEnd ? this.timeToMinutes(shopHours.breakEnd) : null
-
-        // Generate slots from shop start to shop end
-        for (let minutes = shopStart; minutes < shopEnd; minutes += slotDuration + config.buffer) {
+        // Convert shop hours to minutes
+        const shopStart = this.timeToMinutes(this.DEFAULT_SHOP_HOURS.start) // 8:00 AM = 480 minutes
+        const shopEnd = this.timeToMinutes(this.DEFAULT_SHOP_HOURS.end)     // 5:00 PM = 1020 minutes
+        
+        // Generate slots every 30 minutes from 8:00 AM to 5:00 PM
+        for (let minutes = shopStart; minutes < shopEnd; minutes += this.SLOT_INTERVAL) {
             const slotStart = minutes
-            const slotEnd = minutes + slotDuration
-
-            // Skip if slot extends beyond shop hours
+            const slotEnd = minutes + this.STANDARD_APPOINTMENT_DURATION
+            
+            // Skip if appointment would extend past shop closing time
             if (slotEnd > shopEnd) break
-
-            // Skip if slot conflicts with break time
-            if (breakStart && breakEnd) {
-                if (!(slotEnd <= breakStart || slotStart >= breakEnd)) {
-                    continue
-                }
-            }
-
-            // Check for conflicts with existing appointments
+            
+            // Check if this time slot conflicts with existing appointments
             const hasConflict = existingAppointments.some(apt => {
-                if (!apt.start_time || !apt.end_time) return false
+                if (!apt.start_time) return false
                 
                 const aptStart = this.timeToMinutes(apt.start_time)
-                const aptEnd = this.timeToMinutes(apt.end_time)
                 
-                // Check for overlap
-                return !(slotEnd <= aptStart || slotStart >= aptEnd)
+                // Simple check: if appointment starts at this exact time, it's taken
+                return aptStart === slotStart
             })
-
+            
+            // Check if time is in the past (only for today)
+            const isToday = date === new Date().toISOString().split('T')[0]
+            const now = new Date()
+            const currentMinutes = now.getHours() * 60 + now.getMinutes()
+            const isPast = isToday && slotStart <= currentMinutes
+            
             slots.push({
                 time: this.minutesToTime(slotStart),
                 endTime: this.minutesToTime(slotEnd),
-                duration: slotDuration,
-                isAvailable: !hasConflict
+                duration: this.STANDARD_APPOINTMENT_DURATION,
+                isAvailable: !hasConflict && !isPast
             })
         }
-
+        
         return slots
     }
 
     /**
-     * Get shop hours for a specific date
-     * This is a simplified version - in production you might have a shop_hours table
+     * Check if shop is open on a specific date
      */
-    private static async getShopHours(shopId: string, date: string): Promise<ShopHours | null> {
-        // For now, return default hours - in production, you'd query a shop_hours table
+    private static isShopOpen(date: string): boolean {
         const dayOfWeek = new Date(date).getDay()
         
-        // Check if it's Sunday (0) - shop might be closed
-        if (dayOfWeek === 0) {
-            return null // Closed on Sundays
-        }
-        
-        // Return default hours for other days
-        return this.DEFAULT_SHOP_HOURS
+        // Closed on Sundays (0)
+        return dayOfWeek !== 0
     }
 
     /**
-     * Get service duration in minutes
+     * Calculate end time for an appointment (start time + 60 minutes)
      */
-    private static getServiceDuration(serviceType?: string): number {
-        if (!serviceType) return this.DEFAULT_SLOT_CONFIG.duration
-        
-        // Map service types to durations
-        const durations: Record<string, number> = {
-            'Oil Change': 30,
-            'Brake Service': 90,
-            'Tire Service': 60,
-            'Engine Diagnostic': 120,
-            'Transmission Service': 180,
-            'A/C Service': 75,
-            'Battery Service': 30,
-            'Inspection': 45,
-            'General Repair': 120,
-            'Maintenance': 90,
-            'Other': 60
-        }
-        
-        return durations[serviceType] || this.DEFAULT_SLOT_CONFIG.duration
+    private static calculateEndTime(startTime: string): string {
+        const startMinutes = this.timeToMinutes(startTime)
+        const endMinutes = startMinutes + this.STANDARD_APPOINTMENT_DURATION
+        return this.minutesToTime(endMinutes)
     }
+
 
     /**
      * Convert time string (HH:MM) to minutes since midnight
@@ -295,24 +257,24 @@ export class AvailabilityService {
     }
 
     /**
-     * Check if a time is too soon (within minimum advance booking)
+     * Check if a time is in the past
      */
     static isTimeTooSoon(date: string, time: string): boolean {
         const now = new Date()
         const appointmentTime = new Date(`${date}T${time}`)
         
-        const minAdvanceMs = this.DEFAULT_SLOT_CONFIG.minAdvanceBooking * 60 * 60 * 1000
-        return (appointmentTime.getTime() - now.getTime()) < minAdvanceMs
+        // Only check if it's in the past
+        return appointmentTime.getTime() <= now.getTime()
     }
 
     /**
-     * Check if a date is too far in the future
+     * Check if a date is too far in the future (90 days max)
      */
     static isDateTooFar(date: string): boolean {
         const now = new Date()
         const appointmentDate = new Date(date)
         
-        const maxAdvanceMs = this.DEFAULT_SLOT_CONFIG.maxAdvanceBooking * 24 * 60 * 60 * 1000
+        const maxAdvanceMs = 90 * 24 * 60 * 60 * 1000 // 90 days
         return (appointmentDate.getTime() - now.getTime()) > maxAdvanceMs
     }
 }
