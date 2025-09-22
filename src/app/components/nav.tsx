@@ -83,7 +83,7 @@ export function Nav() {
 	]
 
 	const baseNavItems = [
-		{ name: "Dashboard", href: "/operations/appointments" },
+		{ name: "Appointments", href: "/operations/appointments" },
 		{ name: "Work Orders", href: "/operations/work-orders" },
 		{ name: "Invoices", href: "/invoices" },
 		{ 
