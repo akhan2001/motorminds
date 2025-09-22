@@ -25,6 +25,12 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
         name: 'Ready with Service Details',
         template: "Hi [Customer Name], your [Vehicle] service is complete! We've finished the [Service Description] and your vehicle is ready for pickup. Please give us a call when you're ready to collect it.",
         description: 'Includes basic service details in the message'
+    },
+    {
+        id: 'appointed_confirmation_text',
+        name: 'Appointment Confirmation Text',
+        template: "Hi [Customer Name], your appointment for [Service Description] on [Date] at [Time] has been confirmed. We'll see you there!",
+        description: 'Includes basic service details in the message'
     }
 ]
 
