@@ -83,17 +83,16 @@ export function Nav() {
 	]
 
 	const baseNavItems = [
-		{ name: "Dashboard", href: "/" },
+		{ name: "Dashboard", href: "/operations/appointments" },
+		{ name: "Work Orders", href: "/operations/work-orders" },
+		{ name: "Invoices", href: "/invoices" },
 		{ 
 			name: "Mechanic Hub", 
 			href: "/mechanic-hub",
 			hasDropdown: true,
 			subItems: mechanicHubSubItems
 		},
-		// { name: "Tasks", href: "/tasks" },
-		{ name: "Mia AI", href: "/chat" },
-		{ name: "Analytics", href: "/financials" },
-		{ name: "Invoices", href: "/invoices" },
+		{ name: "Mia Diagnostics", href: "/mia" },
 		{ 
 			name: "Customers", 
 			href: "/customers",
@@ -101,7 +100,6 @@ export function Nav() {
 			subItems: customerSubItems
 		},
 		{ name: "Suppliers", href: "/suppliers" },
-		// { name: "Customer Intake", href: "/customer-intake" },
 		{ name: "Voice Calling", href: "/voice-calling" },
 	]
 
@@ -237,9 +235,6 @@ export function Nav() {
 									}`}
 								>
 									{item.name}
-									{item.name === "Mia AI" &&
-									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
-									}
 								</a>
 							)
 						))}
