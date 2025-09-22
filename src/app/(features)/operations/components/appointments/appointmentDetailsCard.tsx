@@ -1,0 +1,311 @@
+'use client'
+
+import React from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { 
+    Calendar, 
+    Clock, 
+    User, 
+    Car, 
+    MessageSquare,
+    Edit,
+    X,
+    FileText,
+    AlertTriangle,
+    Settings
+} from 'lucide-react'
+import { format } from 'date-fns'
+import type { AppointmentWithDetails } from '../../types/appointment'
+
+interface AppointmentDetailsCardProps {
+    appointment: AppointmentWithDetails
+    onClose: () => void
+    onEdit?: (appointment: AppointmentWithDetails) => void
+    onCancel?: (appointmentId: string) => void
+    onMessageCustomer?: (customer: AppointmentWithDetails['customer']) => void
+    onCreateWorkOrder?: (appointmentId: string) => void
+}
+
+export function AppointmentDetailsCard({
+    appointment,
+    onClose,
+    onEdit,
+    onCancel,
+    onMessageCustomer,
+    onCreateWorkOrder
+}: AppointmentDetailsCardProps) {
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'confirmed': return 'bg-green-500'
+            case 'in_progress': return 'bg-blue-500'
+            case 'completed': return 'bg-emerald-500'
+            case 'cancelled': return 'bg-red-500'
+            case 'no_show': return 'bg-orange-500'
+            default: return 'bg-yellow-500' // scheduled
+        }
+    }
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'confirmed': return 'confirmed'
+            case 'in_progress': return 'created into workorder'
+            case 'completed': return 'created into workorder'
+            case 'cancelled': return 'cancelled'
+            case 'no_show': return 'cancelled'
+            default: return 'schedule'
+        }
+    }
+
+    const canEdit = appointment.status !== 'completed' && appointment.status !== 'cancelled'
+    const canCancel = appointment.status !== 'completed' && appointment.status !== 'cancelled'
+    const canCreateWorkOrder = appointment.status !== 'cancelled' && !appointment.work_order
+
+    return (
+        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full">
+            <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-white flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Appointment Details
+                    </CardTitle>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClose}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            </CardHeader>
+
+            <ScrollArea className="h-[calc(100vh-140px)] overflow-y-auto">
+                <CardContent className="space-y-6 pb-6">
+                    {/* Status and Service Info */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${getStatusColor(appointment.status || 'scheduled')}`} />
+                                <Badge variant="secondary" className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
+                                    {getStatusLabel(appointment.status || 'scheduled')}
+                                </Badge>
+                            </div>
+                            {appointment.confirmation_code && (
+                                <div className="text-xs text-gray-400">
+                                    Code: {appointment.confirmation_code}
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-lg font-medium text-white">
+                            {appointment.service_type}
+                        </div>
+                    </div>
+
+                    <Separator className="bg-[#2a2a2a]" />
+
+                    {/* Date and Time */}
+                    <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Schedule
+                        </h4>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400 text-sm">Date:</span>
+                                <span className="text-white text-sm">
+                                    {format(new Date(appointment.appointment_date), 'EEEE, MMMM d, yyyy')}
+                                </span>
+                            </div>
+                            {appointment.start_time && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-400 text-sm">Time:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.start_time}
+                                        {appointment.end_time && ` - ${appointment.end_time}`}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <Separator className="bg-[#2a2a2a]" />
+
+                    {/* Customer Information */}
+                    <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Customer
+                        </h4>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400 text-sm">Name:</span>
+                                <span className="text-white text-sm font-medium">
+                                    {appointment.customer.customer_name}
+                                </span>
+                            </div>
+                            {appointment.customer.customer_phone && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-400 text-sm">Phone:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.customer.customer_phone}
+                                    </span>
+                                </div>
+                            )}
+                            {appointment.customer.customer_email && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-400 text-sm">Email:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.customer.customer_email}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <Separator className="bg-[#2a2a2a]" />
+
+                    {/* Vehicle Information */}
+                    <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                            <Car className="h-4 w-4" />
+                            Vehicle
+                        </h4>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-400 text-sm">Vehicle:</span>
+                                <span className="text-white text-sm">
+                                    {appointment.vehicle.year} {appointment.vehicle.make} {appointment.vehicle.model}
+                                </span>
+                            </div>
+                            {appointment.vehicle.color && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-400 text-sm">Color:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.vehicle.color}
+                                    </span>
+                                </div>
+                            )}
+                            {appointment.vehicle.license_plate && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-400 text-sm">License Plate:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.vehicle.license_plate}
+                                    </span>
+                                </div>
+                            )}
+                            {appointment.vehicle.mileage && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-400 text-sm">Mileage:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.vehicle.mileage?.toLocaleString()} miles
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Notes */}
+                    {appointment.notes && (
+                        <>
+                            <Separator className="bg-[#2a2a2a]" />
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                                    <FileText className="h-4 w-4" />
+                                    Notes
+                                </h4>
+                                <div className="text-sm text-gray-300 bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg p-3">
+                                    {appointment.notes}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Work Order Link */}
+                    {appointment.work_order && (
+                        <>
+                            <Separator className="bg-[#2a2a2a]" />
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                                    <Settings className="h-4 w-4" />
+                                    Work Order
+                                </h4>
+                                <div className="flex items-center justify-between bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg p-3">
+                                    <div>
+                                        <div className="text-sm font-medium text-white">
+                                            {appointment.work_order.work_order_number}
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            Status: {appointment.work_order.status}
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        className="text-blue-400 hover:text-blue-300 hover:bg-[#2a2a2a]"
+                                    >
+                                        View
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    <Separator className="bg-[#2a2a2a]" />
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onMessageCustomer?.(appointment.customer)}
+                                className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            >
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Message
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onEdit?.(appointment)}
+                                disabled={!canEdit}
+                                className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                            </Button>
+                        </div>
+
+                        {canCreateWorkOrder && (
+                            <Button
+                                size="sm"
+                                onClick={() => onCreateWorkOrder?.(appointment.id)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                <Settings className="h-4 w-4 mr-2" />
+                                Create Work Order
+                            </Button>
+                        )}
+
+                        {canCancel && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onCancel?.(appointment.id)}
+                                className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                            >
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                Cancel Appointment
+                            </Button>
+                        )}
+                    </div>
+                </CardContent>
+            </ScrollArea>
+        </Card>
+    )
+}

@@ -93,6 +93,28 @@ export class WorkOrderService {
 
         return data || []
     }
+
+    // GET active work orders (pending, in_progress, waiting_parts, waiting_customer) with details
+    async getActiveWorkOrders(shopId: string): Promise<WorkOrderWithDetails[]> {
+        const { data, error } = await this.supabase
+            .from('work_orders')
+            .select(`
+                *,
+                customer:customers(id, customer_name, customer_phone, customer_email),
+                vehicle:customer_vehicles(id, year, make, model, license_plate, color),
+                technician:employees(id, first_name, last_name)
+            `)
+            .eq('shop_id', shopId)
+            .in('status', ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer'])
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error('Error fetching active work orders:', error)
+            throw new Error(`Failed to fetch active work orders: ${error.message}`)
+        }
+
+        return data || []
+    }
     
     // CREATE operations  
     async createWorkOrder(data: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'>): Promise<WorkOrder> {

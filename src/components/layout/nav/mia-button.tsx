@@ -49,7 +49,7 @@ export function MiaButton({ className }: MiaButtonProps) {
 				</TooltipTrigger>
 				<TooltipContent side="bottom" align="start" className="bg-[#0d0d0d] border-[#1f1f1f] text-white">
 					<div className="flex items-center gap-2">
-						<span className="text-sm">Mia AI Assistant (BETA)</span>
+						<span className="text-sm">Mia Diagnostics</span>
 					</div>
 				</TooltipContent>
 			</Tooltip>
