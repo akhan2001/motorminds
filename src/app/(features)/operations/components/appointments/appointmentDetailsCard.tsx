@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,9 +16,11 @@ import {
     X,
     FileText,
     AlertTriangle,
-    Settings
+    Settings,
+    Loader2
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { AppointmentMessageModal } from './AppointmentMessageModal'
 import type { AppointmentWithDetails } from '../../types/appointment'
 
 interface AppointmentDetailsCardProps {
@@ -28,6 +30,7 @@ interface AppointmentDetailsCardProps {
     onCancel?: (appointmentId: string) => void
     onMessageCustomer?: (customer: AppointmentWithDetails['customer']) => void
     onCreateWorkOrder?: (appointmentId: string) => void
+    isCreatingWorkOrder?: boolean
 }
 
 export function AppointmentDetailsCard({
@@ -36,8 +39,28 @@ export function AppointmentDetailsCard({
     onEdit,
     onCancel,
     onMessageCustomer,
-    onCreateWorkOrder
+    onCreateWorkOrder,
+    isCreatingWorkOrder = false
 }: AppointmentDetailsCardProps) {
+    const [showMessageModal, setShowMessageModal] = useState(false)
+    
+    // Handle message modal
+    const handleShowMessageModal = () => {
+        setShowMessageModal(true)
+    }
+
+    const handleCloseMessageModal = () => {
+        setShowMessageModal(false)
+    }
+
+    const handleMessageConfirm = (sendMessage: boolean, customMessage?: string) => {
+        setShowMessageModal(false)
+        if (sendMessage && customMessage) {
+            // Message was sent successfully
+            console.log('Message sent:', customMessage)
+        }
+    }
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'confirmed': return 'bg-green-500'
@@ -60,9 +83,12 @@ export function AppointmentDetailsCard({
         }
     }
 
-    const canEdit = appointment.status !== 'completed' && appointment.status !== 'cancelled'
-    const canCancel = appointment.status !== 'completed' && appointment.status !== 'cancelled'
-    const canCreateWorkOrder = appointment.status !== 'cancelled' && !appointment.work_order
+    const canEdit = appointment.status !== 'completed' && appointment.status !== 'cancelled' && appointment.status !== 'in_progress'
+    const canCancel = appointment.status !== 'completed' && appointment.status !== 'cancelled' && appointment.status !== 'in_progress'
+    const canCreateWorkOrder = appointment.status !== 'cancelled' && 
+                               appointment.status !== 'in_progress' && 
+                               appointment.status !== 'completed' && 
+                               !appointment.work_order
 
     return (
         <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
@@ -111,8 +137,8 @@ export function AppointmentDetailsCard({
                     {/* Date and Time */}
                     <div className="space-y-3">
                         <h4 className="text-sm font-medium text-white flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Schedule
+                            <Clock className="h-4 w-4 text-blue-400" />
+                            <span className="text-blue-300">Schedule</span>
                         </h4>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -138,8 +164,8 @@ export function AppointmentDetailsCard({
                     {/* Customer Information */}
                     <div className="space-y-3">
                         <h4 className="text-sm font-medium text-white flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            Customer
+                            <User className="h-4 w-4 text-green-400" />
+                            <span className="text-green-300">Customer</span>
                         </h4>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -172,8 +198,8 @@ export function AppointmentDetailsCard({
                     {/* Vehicle Information */}
                     <div className="space-y-3">
                         <h4 className="text-sm font-medium text-white flex items-center gap-2">
-                            <Car className="h-4 w-4" />
-                            Vehicle
+                            <Car className="h-4 w-4 text-amber-400" />
+                            <span className="text-amber-300">Vehicle</span>
                         </h4>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -263,7 +289,7 @@ export function AppointmentDetailsCard({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => onMessageCustomer?.(appointment.customer)}
+                                onClick={handleShowMessageModal}
                                 className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
                             >
                                 <MessageSquare className="h-4 w-4 mr-2" />
@@ -286,10 +312,20 @@ export function AppointmentDetailsCard({
                             <Button
                                 size="sm"
                                 onClick={() => onCreateWorkOrder?.(appointment.id)}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                disabled={isCreatingWorkOrder}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Settings className="h-4 w-4 mr-2" />
-                                Create Work Order
+                                {isCreatingWorkOrder ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Creating Work Order...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Settings className="h-4 w-4 mr-2" />
+                                        Create Work Order
+                                    </>
+                                )}
                             </Button>
                         )}
 
@@ -308,6 +344,15 @@ export function AppointmentDetailsCard({
                     </CardContent>
                 </ScrollArea>
             </div>
+
+            {/* Message Modal */}
+            <AppointmentMessageModal
+                appointment={appointment}
+                isOpen={showMessageModal}
+                onClose={handleCloseMessageModal}
+                onConfirm={handleMessageConfirm}
+                messageType="custom"
+            />
         </Card>
     )
 }

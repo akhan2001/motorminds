@@ -142,24 +142,15 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Assigned To</Label>
-                            {isCreating && isEditing && shopId ? (
-                                <TechnicianDropdown
-                                    shopId={shopId}
-                                    selectedTechnicianId={assigneeId || "none"}
-                                    onTechnicianSelect={handleTechnicianSelect}
-                                    placeholder="Select technician"
-                                    className="w-full"
-                                    showNoneOption={true}
-                                />
-                            ) : (
-                                <Input
-                                    value={assignee}
-                                    onChange={(e) => isEditing && onFieldChange('assignee', e.target.value)}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
-                                    readOnly={!isEditing}
-                                    placeholder="Assign technician"
-                                />
-                            )}
+                            <TechnicianDropdown
+                                shopId={shopId || ""}
+                                selectedTechnicianId={assigneeId || "none"}
+                                onTechnicianSelect={handleTechnicianSelect}
+                                placeholder="Select technician"
+                                className="w-full"
+                                showNoneOption={true}
+                                disabled={!isEditing}
+                            />
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Due Date</Label>

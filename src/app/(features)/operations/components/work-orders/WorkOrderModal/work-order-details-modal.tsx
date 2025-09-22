@@ -131,6 +131,45 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         }))
     }
 
+    // Handle technician assignment with immediate save
+    const handleTechnicianSelect = async (technicianId: string, technicianData?: any) => {
+        try {
+            // Update local form state
+            if (technicianId === "none") {
+                setFormData(prev => ({
+                    ...prev,
+                    assignee: "",
+                }))
+            } else if (technicianData) {
+                setFormData(prev => ({
+                    ...prev,
+                    assignee: technicianData.fullName,
+                }))
+            }
+
+            // Immediately save to database
+            await updateWorkOrderMutation.mutateAsync({
+                id: initialWorkOrder.id,
+                data: {
+                    assigned_technician_id: technicianId === "none" ? undefined : technicianId
+                }
+            })
+
+            toast.success('Technician assignment updated successfully')
+        } catch (error) {
+            console.error('Failed to update technician assignment:', error)
+            toast.error('Failed to update technician assignment')
+            
+            // Revert local state on error
+            setFormData(prev => ({
+                ...prev,
+                assignee: workOrderDetails?.technician 
+                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name}`
+                    : workOrderDetails?.assigned_technician_id || "",
+            }))
+        }
+    }
+
     const handleAddTag = (newTag: string) => {
         if (newTag && !formData.tags.includes(newTag)) {
             setFormData(prev => ({
@@ -489,12 +528,13 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     description={formData.description}
                                     priority={formData.priority}
                                     assignee={formData.assignee}
-                                    assigneeId={""} // Not used in details view
+                                    assigneeId={workOrderDetails?.assigned_technician_id || ""}
                                     date={formData.date}
                                     tags={formData.tags}
                                     isEditing={isEditing}
-                                    isCreating={false} // Disable technician dropdown for editing
+                                    isCreating={false}
                                     onFieldChange={handleFieldChange}
+                                    onTechnicianSelect={handleTechnicianSelect}
                                     onAddTag={handleAddTag}
                                     onRemoveTag={handleRemoveTag}
                                 />

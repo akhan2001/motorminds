@@ -17,9 +17,10 @@ import {
     FileText
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
-import { useAppointments } from '../hooks/appointments/useAppointments'
+import { useAppointments, useCreateWorkOrderFromAppointment } from '../hooks/appointments/useAppointments'
 import { MonthCard } from '../components/appointments/Calendar/MonthCard'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
 import { AppointmentHeader } from '../components/appointments/appointment-header'
@@ -27,6 +28,9 @@ import { AppointmentDetailsCard } from '../components/appointments/appointmentDe
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
+    // Navigation
+    const router = useRouter()
+    
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
@@ -43,6 +47,12 @@ export default function AppointmentsPage() {
     // const { data: dashboardData, isLoading: dashboardLoading } = useOperationsDashboard(shopId || '')
     const dashboardData = null
     const dashboardLoading = false
+    
+    // Work order creation with navigation
+    const handleNavigateToWorkOrder = (workOrderId: string) => {
+        router.push(`/operations/work-orders/${workOrderId}`)
+    }
+    const createWorkOrder = useCreateWorkOrderFromAppointment(handleNavigateToWorkOrder)
     
     // Fetch appointments for the selected date
     const selectedDateString = useMemo(() => {
@@ -158,9 +168,16 @@ export default function AppointmentsPage() {
         console.log('Message customer:', customer)
     }
 
-    const handleCreateWorkOrder = (appointmentId: string) => {
-        // TODO: Implement create work order from appointment
-        console.log('Create work order for appointment:', appointmentId)
+    const handleCreateWorkOrder = async (appointmentId: string) => {
+        try {
+            await createWorkOrder.mutateAsync(appointmentId)
+            // Close appointment details after successful creation
+            setShowAppointmentDetails(false)
+            setSelectedAppointment(null)
+        } catch (error) {
+            console.error('Failed to create work order:', error)
+            // Error is already handled by the mutation hook
+        }
     }
 
     const handleSearchChange = (value: string) => {
@@ -282,6 +299,7 @@ export default function AppointmentsPage() {
                                     onCancel={handleCancelAppointment}
                                     onMessageCustomer={handleMessageCustomer}
                                     onCreateWorkOrder={handleCreateWorkOrder}
+                                    isCreatingWorkOrder={createWorkOrder.isPending}
                                 />
                             ) : showForm ? (
                                 // State 3: New Appointment Form

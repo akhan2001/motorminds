@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AppointmentService } from '../../lib/appointment-service'
+import { AppointmentService, createWorkOrderFromAppointmentDirect } from '../../lib/appointment-service'
 import { toast } from 'sonner'
 import type { 
     AppointmentWithDetails,
@@ -210,6 +210,33 @@ export const useDeleteAppointment = () => {
         onError: (error: Error) => {
             console.error('Failed to delete appointment:', error)
             toast.error(error.message || 'Failed to delete appointment')
+        }
+    })
+}
+
+/**
+ * Hook to create a work order from an appointment
+ */
+export const useCreateWorkOrderFromAppointment = () => {
+    const queryClient = useQueryClient()
+    
+    return useMutation({
+        mutationFn: createWorkOrderFromAppointmentDirect,
+        onSuccess: (workOrderId, appointmentId) => {
+            // Invalidate appointments to refresh status
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.lists()
+            })
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.detail(appointmentId)
+            })
+            
+            // Show success message
+            toast.success('Work order created successfully!')
+        },
+        onError: (error: Error) => {
+            console.error('Failed to create work order:', error)
+            toast.error(error.message || 'Failed to create work order')
         }
     })
 }
