@@ -74,11 +74,6 @@ export function Nav() {
 		{ name: "Services & Parts", href: "/mechanic-hub/service-parts" },
 	]
 
-	const leadGenerationSubItems = [
-		{ name: "Lead Generation", href: "/lead-generation" },
-		{ name: "Opportunity Management", href: "/lead-generation/customer-retention" },
-	]
-	
 	const customerSubItems = [
 		{ name: "All Customers", href: "/customers" },
 		{ name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
@@ -100,19 +95,14 @@ export function Nav() {
 		{ name: "Analytics", href: "/financials" },
 		{ name: "Invoices", href: "/invoices" },
 		{ 
-			name: "Lead Generation", href: "/lead-generation",
-			// href: "/lead-generation",
-			// hasDropdown: true,
-			// subItems: leadGenerationSubItems
-		},
-		{ name: "Loyalty", href: "/loyalty" },
-		{ 
 			name: "Customers", 
 			href: "/customers",
 			hasDropdown: true,
 			subItems: customerSubItems
 		},
+		{ name: "Suppliers", href: "/suppliers" },
 		// { name: "Customer Intake", href: "/customer-intake" },
+		{ name: "Voice Calling", href: "/voice-calling" },
 	]
 
 	// Add Admin link only for admin users
