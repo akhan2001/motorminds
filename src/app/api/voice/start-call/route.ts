@@ -1,103 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { VapiClient } from '@vapi-ai/server-sdk'
-
-// Initialize Vapi client
-const vapi = new VapiClient({
-    token: process.env.VAPI_API_KEY!
-})
+import { vapi, MIA_ASSISTANT_ID } from '@/lib/integrations/vapi/vapi-client'
+import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 
 export async function POST(request: NextRequest) {
     try {
-        const { phoneNumber } = await request.json()
+        const body = await request.json().catch(() => ({}))
 
-        // Validate input
-        if (!phoneNumber) {
-            return NextResponse.json(
-                { error: 'Phone number is required' },
-                { status: 400 }
-            )
+        const {
+            supplier_phone_number,
+            supplier_name,
+            supplier_contact_person,
+            vehicle_info,
+            parts_info,
+            // Optional: a direct message to be spoken by the assistant
+            message
+        } = body || {}
+
+        if (!supplier_phone_number) {
+            return NextResponse.json({ error: 'supplier_phone_number is required' }, { status: 400 })
         }
 
-        // Validate environment variables
-        if (!process.env.VAPI_API_KEY) {
-            console.error('VAPI_API_KEY is not configured')
-            return NextResponse.json(
-                { error: 'Voice service not configured' },
-                { status: 500 }
-            )
+        const phone = formatPhoneNumberE164(String(supplier_phone_number))
+        if (!isValidE164(phone)) {
+            return NextResponse.json({ error: 'supplier_phone_number must be a valid E.164 number' }, { status: 400 })
         }
 
         if (!process.env.VAPI_PHONE_NUMBER_ID) {
-            console.error('VAPI_PHONE_NUMBER_ID is not configured')
-            return NextResponse.json(
-                { error: 'Voice phone number not configured' },
-                { status: 500 }
-            )
+            return NextResponse.json({ error: 'Server misconfiguration: VAPI_PHONE_NUMBER_ID is not set' }, { status: 500 })
         }
 
-        if (!process.env.VAPI_ASSISTANT_ID) {
-            console.error('VAPI_ASSISTANT_ID is not configured')
-            return NextResponse.json(
-                { error: 'Voice assistant not configured' },
-                { status: 500 }
-            )
-        }
+        // Keep it simple: pass a concise script for the assistant to say
+        // If a custom message is provided, use it; otherwise compose a short one
+        const spokenMessage =
+            typeof message === 'string' && message.trim().length > 0
+                ? message.trim()
+                : [
+                    `Hello${supplier_name ? ` ${supplier_name}` : ''}, this is MotorMinds calling`,
+                    supplier_contact_person ? `for ${supplier_contact_person}` : undefined,
+                    parts_info?.partName || parts_info?.part_name
+                        ? `about ${parts_info?.quantity ?? 1} ${parts_info?.partName || parts_info?.part_name}`
+                        : undefined,
+                    vehicle_info?.year || vehicle_info?.make || vehicle_info?.model
+                        ? `for a ${[vehicle_info?.year, vehicle_info?.make, vehicle_info?.model].filter(Boolean).join(' ')}`
+                        : undefined,
+                    'Could you please provide price and availability?'
+                ]
+                .filter(Boolean)
+                .join('. ') + '.'
 
-        // Clean and format phone number
-        const cleanPhoneNumber = phoneNumber.replace(/\D/g, '')
-        const formattedPhoneNumber = cleanPhoneNumber.startsWith('1') 
-            ? `+${cleanPhoneNumber}` 
-            : `+1${cleanPhoneNumber}`
-
-        console.log('Starting call to:', formattedPhoneNumber)
-
-        // Create the call using Vapi
-        const call = await vapi.calls.create({
-            phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
-            customer: { 
-                number: formattedPhoneNumber 
+        // Build metadata in the shape your assistant prompt expects
+        const metadata = {
+            source: 'motorminds',
+            timestamp: new Date().toISOString(),
+            call_context: {
+                shop_info: {
+                    name: 'MotorMinds Auto Shop',
+                    account_numbers: {}
+                },
+                supplier_info: {
+                    name: supplier_name || '',
+                    contact_person: supplier_contact_person || '',
+                    phone_number: phone
+                },
+                vehicle_info: vehicle_info || {},
+                parts_info: parts_info || {},
+                parts_request_id: body?.parts_request_id || undefined
             },
-            assistantId: process.env.VAPI_ASSISTANT_ID
-        })
+            // Optional helper for a minimal call script if your assistant uses it
+            speak: spokenMessage,
+            simple_call: true
+        }
 
-        console.log('Call created successfully:', call.id)
+
+		// Create a simple inline assistant that just reads the message and ends the call
+		const call = await vapi.calls.create({
+			phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
+			customer: { number: phone },
+			assistant: {
+				firstMessage: spokenMessage
+			},
+			metadata
+		} as any)
 
         return NextResponse.json({
             success: true,
-            callId: call.id,
-            status: call.status,
-            message: 'Call initiated successfully'
+            callId: (call as any).id || (call as any).call?.id || (call as any).callId,
+            phone_number: phone,
+            message_spoken: spokenMessage
         })
-
     } catch (error: any) {
-        console.error('Error starting call:', error)
-        
-        // Handle specific Vapi errors
-        if (error.name === 'VapiError') {
-            return NextResponse.json(
-                { 
-                    error: 'Voice service error',
-                    details: error.message 
-                },
-                { status: 400 }
-            )
-        }
-
-        // Handle network errors
-        if (error.code === 'NETWORK_ERROR') {
-            return NextResponse.json(
-                { error: 'Unable to connect to voice service' },
-                { status: 503 }
-            )
-        }
-
-        // Generic error
-        return NextResponse.json(
-            { 
-                error: 'Failed to start call',
-                details: process.env.NODE_ENV === 'development' ? error.message : undefined
-            },
-            { status: 500 }
-        )
+        console.error('❌ simple start-call error:', error)
+        const message = error?.message || 'Failed to start call'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
+
+

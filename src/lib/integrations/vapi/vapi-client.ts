@@ -5,35 +5,46 @@ export const vapi = new VapiClient({
     token: process.env.VAPI_API_KEY!
 });
 
-// Interface for call creation parameters
-export interface CreateCallParams {
-    phoneNumber: string;
-    assistantId?: string;
-    phoneNumberId?: string;
-    metadata?: Record<string, any>;
-}
+// Your pre-configured assistant ID
+export const MIA_ASSISTANT_ID = '8f1236c2-aba3-4741-8a12-3227c72de173';
 
-// Create an outbound call
-export async function createVoiceCall(params: CreateCallParams) {
-    const { phoneNumber, assistantId, phoneNumberId } = params;
+/**
+ * Create a call with your pre-configured assistant and rich context
+ */
+export async function createMiaCall(phoneNumber: string, callContext?: any) {
+    console.log('🤖 Creating call with Mia assistant:', MIA_ASSISTANT_ID);
+    
+    // Structure the context data for the assistant
+    const contextData = {
+        source: 'motorminds',
+        timestamp: new Date().toISOString(),
+        call_context: {
+            shop_info: callContext?.shop_info || {},
+            supplier_info: callContext?.supplier_info || {},
+            vehicle_info: callContext?.vehicle_info || {},
+            parts_info: callContext?.parts_info || {},
+            parts_request_id: callContext?.parts_request_id
+        }
+    };
+
+    console.log('📋 Call context being sent:', JSON.stringify(contextData, null, 2));
     
     const call = await vapi.calls.create({
-        phoneNumberId: phoneNumberId || process.env.VAPI_PHONE_NUMBER_ID!,
-        customer: { number: phoneNumber },
-        assistantId: assistantId || process.env.VAPI_ASSISTANT_ID!
+        phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
+        customer: { 
+            number: phoneNumber 
+        },
+        assistantId: MIA_ASSISTANT_ID,
+        metadata: contextData
     });
-
+    
     return call;
 }
 
-// Get call status
+/**
+ * Get call status
+ */
 export async function getCallStatus(callId: string) {
     const call = await vapi.calls.get(callId);
     return call;
-}
-
-// List recent calls
-export async function getRecentCalls(limit: number = 10) {
-    const calls = await vapi.calls.list({ limit });
-    return calls;
 }

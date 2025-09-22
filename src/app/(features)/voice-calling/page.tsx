@@ -1,12 +1,8 @@
 // Main voice ordering page component
 'use client'
 
-import VoiceOrderingCard from './ordering/components/VoiceOrderingCard'
-import VoiceSchedulingCard from './scheduling/components/VoiceSchedulingCard'
 import { Nav } from '@/app/components/nav'
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
-import { Slash } from "lucide-react"
-import Link from 'next/link'
+import VoiceOrderingCard from './components/VoiceOrderingCard'
 
 export default function VoiceCallingPage() {
     return (
@@ -14,18 +10,7 @@ export default function VoiceCallingPage() {
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Content container */}
-                <div className="p-6 max-w-4xl mx-auto"> 
-                    {/* Breadcrumb Navigation */}
-                    <Breadcrumb className="mb-6">
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="text-white">
-                                    Voice Calling
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-
+                <div className="p-6 max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="text-center mb-6">
                         <h1 className="text-4xl font-bold text-white mb-2">
@@ -37,9 +22,8 @@ export default function VoiceCallingPage() {
                     </div>
 
                     {/* Voice Services Grid */}
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
                         <VoiceOrderingCard />
-                        <VoiceSchedulingCard />
                     </div>
                 </div>
             </div>

@@ -11,9 +11,15 @@ export interface VehicleInfo {
   year?: number;
   make?: string;
   model?: string;
+  trim?: string;
   engine?: string;
   vin?: string;
-  customer_name?: string;
+  mileage?: number;
+  color?: string;
+  transmission?: string;
+  drivetrain?: string;
+  fuel_type?: string;
+  body_style?: string;
 }
 
 export interface SupplierInfo {
@@ -27,6 +33,8 @@ export interface SupplierInfo {
 
 export interface PartsRequest {
   id: string;
+  created_at: string;
+  updated_at: string;
   shop_id: string;
   user_id?: string;
   vehicle_info: VehicleInfo;
@@ -36,22 +44,19 @@ export interface PartsRequest {
   priority: 'low' | 'normal' | 'high' | 'urgent';
   notes?: string;
   customer_notes?: string;
-  admin_notes?: string;
   assigned_to?: string;
+  admin_notes?: string;
   quote_provided?: any;
   actual_cost?: number;
   supplier_info?: SupplierInfo;
   order_placed_at?: string;
   estimated_delivery?: string;
   fulfilled_at?: string;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface CreatePartsRequestRequest {
   vehicle_info: VehicleInfo;
   parts_requested: PartItem[];
-  supplier_info: SupplierInfo;
   priority?: PartsRequest['priority'];
   notes?: string;
   customer_notes?: string;

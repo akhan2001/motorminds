@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import SupplierModal from './components/supplier-modal'
 import SuppliersList from './components/suppliers-list'
+import SupplierDropdownSelector from './components/supplier-dropdown-selector'
 import { useSuppliers } from './hooks/use-suppliers'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
 
-export default function SuppliersPage() {
+export default function SuppliersPage() {   
     const { suppliers, loading, addSupplier, handleCallSupplier } = useSuppliers()
     const [showAddForm, setShowAddForm] = useState(false)
+    const [selectedSupplierDemo, setSelectedSupplierDemo] = useState('')
 
     const handleSupplierAdded = (newSupplier: Supplier) => {
         addSupplier(newSupplier)

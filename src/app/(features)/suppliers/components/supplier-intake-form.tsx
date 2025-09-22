@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, User, Phone, Mail, MapPin, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { CreateSupplierRequest } from '@/app/(features)/suppliers/types/supplier'
+import { formatPhoneNumber, cleanPhoneNumber } from '@/utils/format-phone'
 
 interface SupplierIntakeFormProps {
 	onSuccess?: (supplier: any) => void
@@ -41,6 +42,14 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 		}))
 	}
 
+	const handlePhoneNumberChange = (value: string) => {
+		const formatted = formatPhoneNumber(value)
+		setFormData(prev => ({
+			...prev,
+			phone_number: formatted
+		}))
+	}
+
 	const handleAddressChange = (field: keyof NonNullable<CreateSupplierRequest['address']>, value: string) => {
 		setFormData(prev => ({
 			...prev,
@@ -62,12 +71,18 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 		setIsLoading(true)
 
 		try {
+			// Clean the phone number before sending
+			const cleanedFormData = {
+				...formData,
+				phone_number: cleanPhoneNumber(formData.phone_number || '')
+			}
+
 			const response = await fetch('/api/suppliers', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(formData),
+				body: JSON.stringify(cleanedFormData),
 			})
 
 			const data = await response.json()
@@ -153,8 +168,8 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 									id="phone_number"
 									type="tel"
 									value={formData.phone_number}
-									onChange={(e) => handleInputChange('phone_number', e.target.value)}
-									placeholder="+1 (555) 123-4567"
+									onChange={(e) => handlePhoneNumberChange(e.target.value)}
+									placeholder="(555) 123-4567"
 									className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
 								/>
 							</div>
@@ -269,7 +284,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 								value={formData.notes}
 								onChange={(e) => handleInputChange('notes', e.target.value)}
 								placeholder="Any additional notes about this supplier..."
-								className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px]"
+								className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px] max-h-[200px]"
 							/>
 						</div>
 					</div>
@@ -358,8 +373,8 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 											id="phone_number"
 											type="tel"
 											value={formData.phone_number}
-											onChange={(e) => handleInputChange('phone_number', e.target.value)}
-											placeholder="+1 (555) 123-4567"
+											onChange={(e) => handlePhoneNumberChange(e.target.value)}
+											placeholder="(555) 123-4567"
 											className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
 										/>
 									</div>
@@ -474,7 +489,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 										value={formData.notes}
 										onChange={(e) => handleInputChange('notes', e.target.value)}
 										placeholder="Any additional notes about this supplier..."
-										className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px]"
+										className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px] max-h-[200px]"
 									/>
 								</div>
 							</div>
