@@ -23,6 +23,9 @@ interface UseVapiEventsOptions {
     onQuoteSaved?: (quoteData: any) => void
     onCallEnd?: (data: any) => void
     onError?: (error: any) => void
+    onAnalysis?: (analysis: any) => void
+    onSummary?: (summary: any) => void
+    onTranscriptUpdate?: (transcript: any) => void
 }
 
 export function useVapiEvents({
@@ -30,11 +33,16 @@ export function useVapiEvents({
     customerNumber,
     onQuoteSaved,
     onCallEnd,
-    onError
+    onError,
+    onAnalysis,
+    onSummary,
+    onTranscriptUpdate
 }: UseVapiEventsOptions) {
     const [isConnected, setIsConnected] = useState(false)
     const [isCallActive, setIsCallActive] = useState(false)
     const [callTranscript, setCallTranscript] = useState<string[]>([])
+    const [callAnalysis, setCallAnalysis] = useState<any>(null)
+    const [callSummary, setCallSummary] = useState<string>('')
     const vapiRef = useRef<VapiWebSDK | null>(null)
 
     useEffect(() => {
@@ -94,7 +102,31 @@ export function useVapiEvents({
         vapiRef.current.on('message', (data: any) => {
             if (data.type === 'transcript') {
                 setCallTranscript(prev => [...prev, data.transcript])
+                onTranscriptUpdate?.(data)
             }
+        })
+
+        // Analysis event - Vapi's built-in call analysis
+        vapiRef.current.on('analysis', (data: any) => {
+            console.log('📊 Vapi Analysis:', data)
+            setCallAnalysis(data)
+            onAnalysis?.(data)
+        })
+
+        // Summary event - Call summary from Vapi
+        vapiRef.current.on('summary', (data: any) => {
+            console.log('📋 Call Summary:', data)
+            setCallSummary(data.summary || data)
+            onSummary?.(data)
+        })
+
+        // Enhanced transcript event with analysis
+        vapiRef.current.on('transcript', (data: any) => {
+            console.log('📝 Enhanced Transcript:', data)
+            if (data.analysis) {
+                console.log('Real-time analysis:', data.analysis)
+            }
+            onTranscriptUpdate?.(data)
         })
 
         // Error handling
@@ -111,6 +143,9 @@ export function useVapiEvents({
         vapiRef.current.off('call-end', () => {})
         vapiRef.current.off('function-call', () => {})
         vapiRef.current.off('message', () => {})
+        vapiRef.current.off('analysis', () => {})
+        vapiRef.current.off('summary', () => {})
+        vapiRef.current.off('transcript', () => {})
         vapiRef.current.off('error', () => {})
     }
 
@@ -145,6 +180,8 @@ export function useVapiEvents({
         isConnected,
         isCallActive,
         callTranscript,
+        callAnalysis,
+        callSummary,
         startCall,
         endCall,
         sendMessage

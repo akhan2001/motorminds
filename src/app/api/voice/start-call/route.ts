@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { vapi, MIA_ASSISTANT_ID } from '@/lib/integrations/vapi/vapi-client'
+import { vapi } from '@/lib/integrations/vapi/vapi-client'
+import { buildTransientMiaAssistant } from '@/lib/integrations/vapi/transient-assistant'
 import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 
 export async function POST(request: NextRequest) {
@@ -29,24 +30,11 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Server misconfiguration: VAPI_PHONE_NUMBER_ID is not set' }, { status: 500 })
         }
 
-        // Keep it simple: pass a concise script for the assistant to say
-        // If a custom message is provided, use it; otherwise compose a short one
+        // Keep it simple: optional concise opener for the assistant
         const spokenMessage =
             typeof message === 'string' && message.trim().length > 0
                 ? message.trim()
-                : [
-                    `Hello${supplier_name ? ` ${supplier_name}` : ''}, this is MotorMinds calling`,
-                    supplier_contact_person ? `for ${supplier_contact_person}` : undefined,
-                    parts_info?.partName || parts_info?.part_name
-                        ? `about ${parts_info?.quantity ?? 1} ${parts_info?.partName || parts_info?.part_name}`
-                        : undefined,
-                    vehicle_info?.year || vehicle_info?.make || vehicle_info?.model
-                        ? `for a ${[vehicle_info?.year, vehicle_info?.make, vehicle_info?.model].filter(Boolean).join(' ')}`
-                        : undefined,
-                    'Could you please provide price and availability?'
-                ]
-                .filter(Boolean)
-                .join('. ') + '.'
+                : "Hey! I'm looking for parts!"
 
         // Build metadata in the shape your assistant prompt expects
         const metadata = {
@@ -55,7 +43,16 @@ export async function POST(request: NextRequest) {
             call_context: {
                 shop_info: {
                     name: 'MotorMinds Auto Shop',
-                    account_numbers: {}
+                    business_type: 'Automotive Repair Shop',
+                    contact_person: 'Mia',
+                    account_numbers: {
+                        // Common suppliers - can be expanded
+                        general: 'MM-2024',
+                        parts_plus: 'MOTO-001',
+                        napa: 'MIND-789'
+                    },
+                    phone: '(555) 123-4567',
+                    address: 'Professional automotive repair facility'
                 },
                 supplier_info: {
                     name: supplier_name || '',
@@ -72,19 +69,21 @@ export async function POST(request: NextRequest) {
         }
 
 
-		// Create a simple inline assistant that just reads the message and ends the call
-		const call = await vapi.calls.create({
-			phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
-			customer: { number: phone },
-			assistant: {
-				firstMessage: spokenMessage
-			},
-			metadata
-		} as any)
+        // Use a transient assistant config (no external URLs)
+        const assistant = buildTransientMiaAssistant(metadata.call_context, spokenMessage)
 
+        const call = await vapi.calls.create({
+            phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
+            customer: { number: phone },
+            assistant,
+            metadata
+        } as any)
+
+        const returnedCallId = (call as any).id || (call as any).call?.id || (call as any).callId
         return NextResponse.json({
             success: true,
-            callId: (call as any).id || (call as any).call?.id || (call as any).callId,
+            callId: returnedCallId,
+            call_id: returnedCallId,
             phone_number: phone,
             message_spoken: spokenMessage
         })
