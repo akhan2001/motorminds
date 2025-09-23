@@ -1,10 +1,5 @@
-import { Nav } from "./components/nav";
-import DashboardPage from "./dashboard/page";
+import { redirect } from 'next/navigation'
 
 export default function Page() {
-	return (
-		<div className="h-screen bg-black">
-			<DashboardPage />
-		</div>
-	);
+	redirect('/operations/appointments')
 }

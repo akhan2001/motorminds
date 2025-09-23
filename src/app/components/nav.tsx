@@ -276,19 +276,19 @@ export function Nav() {
 					{/* Avatar with logout - shown for all users */}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-								<Avatar className="w-7 h-7 cursor-pointer">
-									<AvatarImage src={avatar} />
-									<AvatarFallback>AK</AvatarFallback>
-								</Avatar>
+							<Avatar className="w-7 h-7 cursor-pointer">
+								<AvatarImage src={avatar} />
+								<AvatarFallback>AK</AvatarFallback>
+							</Avatar>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 							<AlertDialog>
 							<AlertDialogTrigger asChild>
-									<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-										<LogOut className="w-4 h-4 mr-2" />
-										Logout
-									</DropdownMenuItem>
-								</AlertDialogTrigger>
+								<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+									<LogOut className="w-4 h-4 mr-2" />
+									Logout
+								</DropdownMenuItem>
+							</AlertDialogTrigger>
 								<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
 									<AlertDialogHeader>
 										<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>

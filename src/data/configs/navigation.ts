@@ -26,40 +26,28 @@ const customerSubItems = [
 
 export const navigationConfig: NavItem[] = [
     {
-        name: "Dashboard",
-        href: "/",
+        name: "Appointments",
+        href: "/operations/appointments",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
-        name: "Mechanic Hub",
-        href: "/mechanic-hub",
-        hasDropdown: true,
-        subItems: mechanicHubSubItems,
-        requiredRoles: ['admin', 'super', 'user']
-    },
-    {
-        name: "Mia AI",
-        href: "/chat",
-        requiredRoles: ['admin', 'super', 'user']
-    },
-    {
-        name: "Mia Diagnostics",
-        href: "/mia",
-        requiredRoles: ['admin', 'super', 'demo', 'user']
-    },
-    {
-        name: "Mia Parts",
-        href: "/parts-ordering",
-        requiredRoles: ['admin', 'super', 'demo', 'user']
-    },
-    {
-        name: "Analytics",
-        href: "/financials",
+        name: "Work Orders",
+        href: "/operations/work-orders",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
         name: "Invoices",
         href: "/invoices",
+        requiredRoles: ['admin', 'super', 'user']
+    },
+    {
+        name: "Mia AI",
+        href: "/mia-ai",
+        requiredRoles: ['admin', 'super', 'demo', 'user']
+    },
+    {
+        name: "Financials",
+        href: "/financials",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
@@ -70,14 +58,16 @@ export const navigationConfig: NavItem[] = [
         requiredRoles: ['admin', 'super', 'user']
     },
     {
-        name: "Voice Calling",
-        href: "/voice-calling",
-        requiredRoles: ['user', 'admin', 'super', 'demo']
-    },
-    {
         name: "Suppliers",
         href: "/suppliers",
         requiredRoles: ['user', 'admin', 'super', 'demo']
+    },
+    {
+        name: "Mechanics Hub",
+        href: "/mechanic-hub",
+        hasDropdown: true,
+        subItems: mechanicHubSubItems,
+        requiredRoles: ['admin', 'super', 'user']
     },
 ];
 
