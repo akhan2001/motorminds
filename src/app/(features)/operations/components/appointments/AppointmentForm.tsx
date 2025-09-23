@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { TimeSelect } from '@/components/ui/time-select'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -27,6 +28,7 @@ import { format, addDays } from 'date-fns'
 import { useAvailableSlots } from '../../hooks/appointments/useAvailbility'
 import { useCreateAppointment } from '../../hooks/appointments/useAppointments'
 import CustomerDropdown from '../../../customers/components/Selection/CustomerDropdown'
+import { CustomerForm } from '../../../customers/components/Selection/CustomerForm'
 import { VehicleDropdown } from '../../../customers/components/Selection/VehicleDropdown'
 import type { AppointmentCreateData } from '../../types/appointment'
 import { createClient } from '@/utils/supabase/client'
@@ -102,13 +104,6 @@ export function AppointmentForm({
     const [showNewCustomerForm, setShowNewCustomerForm] = useState(false)
     const [showNewVehicleForm, setShowNewVehicleForm] = useState(false)
     
-    // New customer form state
-    const [newCustomerData, setNewCustomerData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
-    })
     
     // New vehicle form state  
     const [newVehicleData, setNewVehicleData] = useState({
@@ -205,15 +200,6 @@ export function AppointmentForm({
     // Handle new customer creation
     // Removed handleCreateNewCustomer - now handled by CustomerDropdown
 
-    // Handle new customer data changes
-    const handleNewCustomerChange = (field: string, value: string) => {
-        setNewCustomerData(prev => ({ ...prev, [field]: value }))
-        
-        // Clear field error when user starts typing
-        if (errors[`newCustomer.${field}`]) {
-            setErrors(prev => ({ ...prev, [`newCustomer.${field}`]: '' }))
-        }
-    }
 
     // Handle new vehicle data changes  
     const handleNewVehicleChange = (field: string, value: string) => {
@@ -239,14 +225,7 @@ export function AppointmentForm({
             newErrors.customer = 'Customer is required'
         }
         
-        // New customer validation if creating new customer
-        if (showNewCustomerForm) {
-            if (!newCustomerData.name.trim()) newErrors['newCustomer.name'] = 'Customer name is required'
-            if (!newCustomerData.phone.trim()) newErrors['newCustomer.phone'] = 'Customer phone is required'
-            if (newCustomerData.email && !/\S+@\S+\.\S+/.test(newCustomerData.email)) {
-                newErrors['newCustomer.email'] = 'Invalid email format'
-            }
-        }
+        // New customer validation is now handled by CustomerForm component
         
         // Vehicle validation
         if (!selectedVehicle && !showNewVehicleForm) {
@@ -269,24 +248,9 @@ export function AppointmentForm({
             return selectedCustomerId
         }
         
+        // Customer creation is now handled by CustomerForm component
         if (showNewCustomerForm) {
-            const { data: newCustomer, error } = await supabase
-                .from('customers')
-                .insert([{
-                    shop_id: shopId,
-                    customer_name: newCustomerData.name.trim(),
-                    customer_email: newCustomerData.email.trim() || null,
-                    customer_phone: newCustomerData.phone.trim(),
-                    customer_address: newCustomerData.address.trim() || null,
-                }])
-                .select()
-                .single()
-
-            if (error) {
-                throw new Error(`Failed to create customer: ${error.message}`)
-            }
-
-            return newCustomer.id
+            throw new Error('Customer should have been created by CustomerForm component')
         }
         
         throw new Error('No customer selected or created')
@@ -365,7 +329,6 @@ export function AppointmentForm({
             setSelectedVehicle(null)
             setShowNewCustomerForm(false)
             setShowNewVehicleForm(false)
-            setNewCustomerData({ name: '', email: '', phone: '', address: '' })
             setNewVehicleData({
                 year: new Date().getFullYear().toString(),
                 make: '',
@@ -435,7 +398,7 @@ export function AppointmentForm({
 
                             {/* Quick Date Selection */}
                             <div>
-                                <Label className="text-gray-300 text-xs">Quick Date Select</Label>
+                                <h3 className="text-gray-300 text-xs mb-1">Quick Date Select</h3>
                                 <div className="flex flex-wrap gap-1 mt-1">
                                     {quickDates.map((date) => (
                                         <Button
@@ -461,7 +424,7 @@ export function AppointmentForm({
 
                             {/* Date Input */}
                             <div>
-                                <Label className="text-gray-300 text-xs">Date</Label>
+                                <h3 className="text-gray-300 text-xs mb-1">Date</h3>
                                 <Input
                                     type="date"
                                     value={formData.appointmentDate}
@@ -475,7 +438,7 @@ export function AppointmentForm({
 
                             {/* Service Type */}
                             <div>
-                                <Label className="text-gray-300 text-xs">Service Type</Label>
+                                <h3 className="text-gray-300 text-xs mb-1">Service Type</h3>
                                 <Select 
                                     value={formData.serviceType} 
                                     onValueChange={(value) => handleInputChange('serviceType', value)}
@@ -496,62 +459,24 @@ export function AppointmentForm({
                                 )}
                             </div>
 
-                            {/* Available Time Slots */}
-                            {formData.serviceType && (
-                                <div>
-                                    <Label className="text-gray-300 text-xs">Available Times</Label>
-                                    {slotsLoading ? (
-                                        <div className="grid grid-cols-3 gap-2 mt-1">
-                                            {Array.from({ length: 6 }).map((_, i) => (
-                                                <Skeleton key={i} className="h-8 bg-[#2a2a2a]" />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-3 gap-2 mt-1">
-                                            {availableSlots?.filter(slot => slot.isAvailable).slice(0, 12).map((slot, index) => (
-                                                <Button
-                                                    key={index}
-                                                    type="button"
-                                                    variant={formData.startTime === slot.time ? "default" : "ghost"}
-                                                    size="sm"
-                                                    onClick={() => handleInputChange('startTime', slot.time)}
-                                                    className={`
-                                                        text-xs h-8
-                                                        ${formData.startTime === slot.time 
-                                                            ? 'bg-blue-600 text-white' 
-                                                            : 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
-                                                        }
-                                                    `}
-                                                >
-                                                    {slot.time}
-                                                </Button>
-                                            )) || []}
-                                        </div>
-                                    )}
-                                    {errors.startTime && (
-                                        <p className="text-red-400 text-xs mt-1">{errors.startTime}</p>
-                                    )}
-                                </div>
-                            )}
-
                             {/* Custom Time Input */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <Label className="text-gray-300 text-xs">Start Time</Label>
-                                    <Input
-                                        type="time"
+                                    <h3 className="text-gray-300 text-xs mb-1">Start Time</h3>
+                                    <TimeSelect
                                         value={formData.startTime}
-                                        onChange={(e) => handleInputChange('startTime', e.target.value)}
+                                        onChange={(value) => handleInputChange('startTime', value)}
                                         className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                                        placeholder="Select start time"
                                     />
                                 </div>
                                 <div>
-                                    <Label className="text-gray-300 text-xs">End Time</Label>
-                                    <Input
-                                        type="time"
+                                    <h3 className="text-gray-300 text-xs mb-1">End Time</h3>
+                                    <TimeSelect
                                         value={formData.endTime}
-                                        onChange={(e) => handleInputChange('endTime', e.target.value)}
+                                        onChange={(value) => handleInputChange('endTime', value)}
                                         className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                                        placeholder="Select end time"
                                     />
                                 </div>
                             </div>
@@ -592,67 +517,25 @@ export function AppointmentForm({
                             </div>
 
                             {/* New Customer Form */}
-                            {showNewCustomerForm && (
-                                <Card className="bg-[#0d0d0d] border-[#2a2a2a] p-4 mt-4">
-                                    <CardTitle className="text-md font-medium text-white mb-3 flex items-center justify-between">
-                                        New Customer Details
-                                        <Button variant="ghost" size="sm" onClick={() => setShowNewCustomerForm(false)} className="text-gray-400 hover:text-white">
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </CardTitle>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <Label className="text-gray-300 text-xs">Name *</Label>
-                                            <Input
-                                                value={newCustomerData.name}
-                                                onChange={(e) => handleNewCustomerChange('name', e.target.value)}
-                                                placeholder="John Doe"
-                                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                            />
-                                            {errors['newCustomer.name'] && (
-                                                <p className="text-red-400 text-xs mt-1">{errors['newCustomer.name']}</p>
-                                            )}
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">Email</Label>
-                                                <Input
-                                                    type="email"
-                                                    value={newCustomerData.email}
-                                                    onChange={(e) => handleNewCustomerChange('email', e.target.value)}
-                                                    placeholder="john@example.com"
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                                {errors['newCustomer.email'] && (
-                                                    <p className="text-red-400 text-xs mt-1">{errors['newCustomer.email']}</p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">Phone *</Label>
-                                                <Input
-                                                    type="tel"
-                                                    value={newCustomerData.phone}
-                                                    onChange={(e) => handleNewCustomerChange('phone', e.target.value)}
-                                                    placeholder="555-123-4567"
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                                {errors['newCustomer.phone'] && (
-                                                    <p className="text-red-400 text-xs mt-1">{errors['newCustomer.phone']}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <Label className="text-gray-300 text-xs">Address</Label>
-                                            <Input
-                                                value={newCustomerData.address}
-                                                onChange={(e) => handleNewCustomerChange('address', e.target.value)}
-                                                placeholder="123 Main St"
-                                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </Card>
-                            )}
+                            <CustomerForm
+                                showNewCustomerForm={showNewCustomerForm}
+                                setShowNewCustomerForm={setShowNewCustomerForm}
+                                shopId={shopId}
+                                onCustomerCreated={(customer) => {
+                                    // Set the created customer as selected
+                                    setSelectedCustomerId(customer.id)
+                                    setSelectedCustomer({
+                                        id: customer.id,
+                                        customer_name: customer.customer_name,
+                                        customer_phone: customer.customer_phone,
+                                        customer_email: customer.customer_email,
+                                        customer_address: customer.customer_address
+                                    })
+                                    setShowNewCustomerForm(false)
+                                    // Clear any customer errors
+                                    setErrors(prev => ({ ...prev, customer: '' }))
+                                }}
+                            />
                         </div>
 
                         {/* Vehicle Details */}
