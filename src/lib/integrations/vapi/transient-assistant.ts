@@ -1,6 +1,6 @@
 /**
  * Build a transient assistant configuration for parts ordering calls.
- * No server hooks or external tool URLs are used to avoid invalid localhost URLs.
+ * Optimized system prompt for Mia AI Parts Requesting Agent.
  */
 export function buildTransientMiaAssistant(callContext: any, firstMessage: string) {
     const shopName = callContext?.shop_info?.name || 'MotorMinds Auto Shop'
@@ -10,36 +10,93 @@ export function buildTransientMiaAssistant(callContext: any, firstMessage: strin
     const vehicle = callContext?.vehicle_info || {}
     const parts = callContext?.parts_info || {}
 
-    const systemPrompt = `You are Mia, calling automotive parts suppliers on behalf of ${shopName}.
+    const systemPrompt = `You are Mia, an AI service advisor for ${shopName}, calling ${supplierName}'s parts department.
+Your role is to request a quote and capture clear details on price, availability, and delivery for automotive parts.
 
-GOAL: Efficiently obtain a quote for the requested part(s) and clearly capture:
-- Price (unit and total), availability/stock, and delivery ETA/days.
+## OBJECTIVE
+Get a reliable quote for the requested part(s) including:
+- Unit price and total cost
+- Stock/availability
+- Delivery ETA (in days)
 
-CONTEXT:
+## CONTEXT
+- Shop: ${shopName}
+- Account #: ${accountGeneral}
 - Supplier: ${supplierName}
-- Shop account: ${accountGeneral}
 - Vehicle: ${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.engine ? '(' + vehicle.engine + ')' : ''}
 - VIN: ${vehicle.vin || ''}
 - Part: ${parts.partName || parts.part_name || 'parts'} ${parts.partNumber ? '(PN: ' + parts.partNumber + ')' : ''}
 - Quantity: ${parts.quantity || 1}
 - Notes: ${parts.description || ''}
 
-CALL FLOW:
-1) Greet casually and state you’re calling from ${shopName}.
-2) Provide account if asked: ${accountGeneral}.
-3) Give vehicle/part details. Ask for price, availability, and delivery.
-4) Confirm and restate the quote succinctly: part, unit price, total, stock/ETA.
-5) Close politely and end the call.`
+## CALL FLOW
+1. Start the call without introducing your name. Say: "I'm calling from ${shopName} looking for ${parts.partName || parts.part_name || 'parts'} for a ${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}."
+2. If asked, provide the account number: ${accountGeneral}.
+3. Give clear vehicle + part details (name, number, year/make/model, quantity).
+4. Ask directly: “Can you confirm price, availability, and delivery time?”
+5. Confirm aloud: restate part name/number, unit price, total, stock/ETA.
+6. Close politely: thank them, confirm order/quote is noted, and end the call.
+
+## STYLE
+- Professional, concise, confident
+- Use clear automotive terminology
+- Repeat part numbers, prices, and ETA clearly for accuracy
+- Avoid chit-chat: stay focused on getting the quote
+- Do not repeat the vehicle year/make/model more than once unless specifically asked
+- Do not introduce yourself by name; start directly with the shop and request
+
+## IMPORTANT
+- Always summarize the quote before ending
+- After summary, call the **end_call_tool** to hang up`
+
+    // Build tools list with end_call_tool if a public HTTPS webhook is configured
+    const tools: any[] = []
+    const baseWebhook = process.env.NEXT_PUBLIC_SITE_URL || process.env.VAPI_PUBLIC_WEBHOOK_URL || ''
+    const endCallUrl = baseWebhook ? `${baseWebhook.replace(/\/$/, '')}/api/vapi/end-call` : ''
+    if (endCallUrl.startsWith('https://')) {
+        tools.push({
+            type: 'function',
+            function: {
+                name: 'end_call_tool',
+                description: 'Ends the current phone call immediately after the quote summary.',
+                parameters: { type: 'object', properties: { callId: { type: 'string', description: 'Vapi call ID (optional; usually passed via header)' } }, required: [] }
+            },
+            server: { url: endCallUrl, timeoutSeconds: 15 }
+        })
+    }
+
+    // Add user-provided example tool
+    tools.push({
+        type: 'function',
+        function: {
+            name: 'check_inventory',
+            description: "Check product inventory for the customer's specific region",
+            parameters: {
+                type: 'object',
+                properties: {
+                    productId: { type: 'string', description: 'The product ID to check' },
+                    region: { type: 'string', description: "Customer's region code" }
+                },
+                required: ['productId', 'region']
+            }
+        },
+        server: { url: 'https://api.customer-integration.com/inventory', timeoutSeconds: 30 }
+    })
+
+    // Optional webhook for call lifecycle events (requires public HTTPS base URL)
+    const webhookBase = process.env.NEXT_PUBLIC_SITE_URL || process.env.VAPI_PUBLIC_WEBHOOK_URL || ''
+    const webhookUrl = webhookBase ? `${webhookBase.replace(/\/$/, '')}/api/vapi/webhook` : ''
 
     return {
         model: {
             provider: 'openai',
             model: 'gpt-4o-mini',
-            temperature: 0.5,
+            temperature: 0.4,
             maxTokens: 300,
             messages: [
                 { role: 'system', content: systemPrompt }
-            ]
+            ],
+            tools
         },
         analysisPlan: {
             minMessagesThreshold: 2,
@@ -108,8 +165,7 @@ CALL FLOW:
         },
         firstMessage: firstMessage,
         firstMessageMode: 'assistant-speaks-first',
-        endCallMessage: 'Thanks for your help. Goodbye.'
+        endCallMessage: 'Thanks for your help. Goodbye.',
+        ...(webhookUrl.startsWith('https://') ? { server: { url: webhookUrl } } : {})
     }
 }
-
-

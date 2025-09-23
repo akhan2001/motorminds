@@ -26,13 +26,13 @@ function computeTotal(analysis: any): number | null {
     }
 }
 
-export async function POST(request: NextRequest, context: { params: { callId?: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ callId?: string }> }) {
     try {
         if (!supabaseAdmin) {
             return NextResponse.json({ error: 'Server not configured: SUPABASE_SERVICE_ROLE_KEY missing' }, { status: 500 })
         }
 
-        const callId = context?.params?.callId
+        const { callId } = await context.params
         if (!callId) {
             return NextResponse.json({ error: 'callId is required' }, { status: 400 })
         }
