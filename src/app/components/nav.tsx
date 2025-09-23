@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/client"
 import { Settings, HelpCircle, ChevronDown, MessageCircle } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,8 @@ import { getShopInfo } from "@/utils/shopinfo/getShopInfo"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
+import { useUserRole } from "@/hooks/core/useUserRole"
+import { getFilteredNavItems } from "@/lib/utils/navigation"
 
 export function Nav() {
 	const router = useRouter()
@@ -24,6 +26,7 @@ export function Nav() {
 	const [mounted, setMounted] = useState(false)
 	const [avatar, setAvatar] = useState("")
 	const [open, setOpen] = useState(false)
+	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
 
 	if (!pathname) {
 		return null
@@ -57,44 +60,10 @@ export function Nav() {
 
 	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
-	// Define mechanic hub subitems
-	const mechanicHubSubItems = [
-		{ name: "Work Orders", href: "/mechanic-hub" },
-		{ name: "Parts & Ordering", href: "/parts-ordering" },
-		{ name: "Appointments", href: "/appointments" },
-		{ name: "Services & Parts", href: "/mechanic-hub/service-parts" },
-	]
-
-	const customerSubItems = [
-		{ name: "All Customers", href: "/customers" },
-		{ name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
-		{ name: "Customer Intake Form", href: "/customer-intake" },
-        { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
-		{ name: "Customer Contracts", href: "/customer-contracts" },
-	]
-
-	const navItems = [
-		{ name: "Dashboard", href: "/" },
-		{ 
-			name: "Mechanic Hub", 
-			href: "/mechanic-hub",
-			hasDropdown: true,
-			subItems: mechanicHubSubItems
-		},
-		// { name: "Tasks", href: "/tasks" },
-		{ name: "Mia AI", href: "/chat" },
-		{ name: "Analytics", href: "/financials" },
-		{ name: "Invoices", href: "/invoices" },
-		{ 
-			name: "Customers", 
-			href: "/customers",
-			hasDropdown: true,
-			subItems: customerSubItems
-		},
-		{ name: "Suppliers", href: "/suppliers" },
-		// { name: "Customer Intake", href: "/customer-intake" },
-		{ name: "Voice Calling", href: "/voice-calling" },
-	]
+	// Get filtered navigation items based on user role
+	const navItems = useMemo(() => {
+		return getFilteredNavItems(userRole ?? null);
+	}, [userRole]);
 
 	let activeLink = ""
 	let longestMatch = 0
@@ -123,7 +92,12 @@ export function Nav() {
 	}
 
 	const handleNavClick = (name: string, href: string) => {
-		router.push(href)
+		// For demo users, redirect dashboard clicks to diagnostics page
+		if (userRole === 'demo' && (href === '/' || href === '/dashboard' || name === 'Dashboard')) {
+			router.push('/mia')
+		} else {
+			router.push(href)
+		}
 		setOpen(false) // Close sheet when navigation occurs
 	}
 
@@ -148,6 +122,29 @@ export function Nav() {
 		}
 	}
 
+	// Show loading state while fetching role
+	if (isLoadingRole) {
+		return (
+			<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
+					<div className="flex items-center gap-4 py-3">
+						<div className="flex items-center gap-2">
+							<Image
+								src="/motorminds-logo-white (1).svg"
+								alt="Motorminds Logo"
+								width={35}
+								height={35}
+								className="w-8 h-8"
+							/>
+							<span className="text-white font-medium">Motorminds</span>
+						</div>
+						<div className="text-[#979797] text-sm">Loading...</div>
+					</div>
+				</nav>
+			</header>
+		);
+	}
+
 	return (
 		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
@@ -156,7 +153,7 @@ export function Nav() {
 					<div className="flex items-center gap-4 py-3">
 						<div 
 						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
-						onClick={() => router.push("/")}
+						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
 						>
 							<Image
 							src="/motorminds-logo-white (1).svg"
@@ -171,10 +168,18 @@ export function Nav() {
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-white border-[#979797]">Premium</Badge>
+									<Badge variant="outline" className="cursor-default text-white border-[#979797]">
+										{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
+									</Badge>
 								</TooltipTrigger>
 								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
-									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
+									<p className="text-xs text-[#FBBC05]">
+										{userRole === 'demo' && 'Demo Access - Limited Features'}
+										{userRole === 'admin' && 'Administrator - Full Access'}
+										{userRole === 'super' && 'Super User - Full Access'}
+										{userRole === 'user' && 'Premium User - Standard Access'}
+										{!userRole && 'Loading user role...'}
+									</p>
 								</TooltipContent>
 							</Tooltip>
 						</TooltipProvider>
@@ -223,15 +228,13 @@ export function Nav() {
 									}`}
 								>
 									{item.name}
-									{item.name === "Mia AI" &&
-									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
-									}
 								</a>
 							)
 						))}
 					</div>
 				</div>
-				{/* Right: Actions */}
+				{/* Right: Actions - Hidden for demo users */}
+				{userRole !== 'demo' && (
 				<div className="hidden lg:flex items-center gap-4">
 					<button 
 						className={`${
@@ -315,7 +318,9 @@ export function Nav() {
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
-				{/* Right: Mobile Menu (only visible on mobile) */}
+				)}
+				{/* Right: Mobile Menu (only visible on mobile) - Hidden for demo users */}
+				{userRole !== 'demo' && (
 				<div className="lg:hidden">
 					<MobileNav 
 						navItems={navItems}
@@ -327,6 +332,7 @@ export function Nav() {
 						handleLogout={handleLogout}
 					/>
 				</div>
+				)}
 			</nav>
 		</header>
 	)
