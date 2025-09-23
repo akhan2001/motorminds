@@ -276,7 +276,8 @@ export class OperationsService {
                 workOrder: {
                     work_order_number: '', // Will be auto-generated
                     title: workOrderData?.title || `${appointment.service_type} - ${appointment.customer.customer_name}`,
-                    description: workOrderData?.description || appointment.notes || `${appointment.service_type} appointment`,
+                    description: workOrderData?.description || `${appointment.service_type} appointment`,
+                    notes: appointment.notes,
                     status: 'pending' as const,
                     priority: workOrderData?.priority || 'medium' as const,
                     shop_id: appointment.shop_id,

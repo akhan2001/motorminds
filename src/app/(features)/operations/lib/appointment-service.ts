@@ -407,7 +407,8 @@ export class AppointmentService {
                 vehicle_id: appointment.vehicle_id,
                 appointment_id: appointmentId,
                 title: `${appointment.service_type} - ${(appointment as any).customer.customer_name}`,
-                description: appointment.notes || `Work order created from appointment scheduled for ${appointment.appointment_date}`,
+                description: `Work order created from appointment scheduled for ${appointment.appointment_date}`,
+                notes: appointment.notes,
                 status: 'pending',
                 priority: 'medium'
             }])
@@ -490,13 +491,13 @@ export async function createWorkOrderFromAppointmentDirect(appointmentId: string
             customer_id: appointment.customer_id,
             vehicle_id: appointment.vehicle_id,
             appointment_id: appointmentId,
-            title: `${appointment.service_type} - ${(appointment as any).customer.customer_name}`,
-            description: appointment.notes || `Work order created from appointment scheduled for ${appointment.appointment_date}`,
+            title: `${appointment.service_type}`,
+            notes: appointment.notes,
             status: 'pending',
             priority: 'medium'
         }])
-        .select()
-        .single()
+    .select()
+    .single()
 
     if (error) {
         throw new Error(`Failed to create work order: ${error.message}`)

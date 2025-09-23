@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
@@ -74,6 +75,10 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
 }
 
 export default function WorkOrdersPage() {
+    // Navigation
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
@@ -136,10 +141,34 @@ export default function WorkOrdersPage() {
     // Templates modal state
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
 
+    // Handle URL parameter changes to open/close modal
+    useEffect(() => {
+        const workOrderId = searchParams?.get('id')
+        
+        if (workOrderId && workOrders) {
+            // Find the work order in the current data
+            const foundWorkOrder = workOrders.find(wo => wo.id === workOrderId)
+            
+            if (foundWorkOrder) {
+                // Convert to kanban item format
+                const kanbanItem = transformWorkOrderToKanbanItem(foundWorkOrder)
+                setSelectedWorkOrder(kanbanItem)
+                setIsModalOpen(true)
+            } else {
+                // Work order not found, remove from URL
+                router.replace('/operations/work-orders')
+            }
+        } else {
+            // No work order ID in URL, close modal
+            setIsModalOpen(false)
+            setSelectedWorkOrder(null)
+        }
+    }, [searchParams, workOrders, router])
+
     // Handle work order card clicks
     const handleCardClick = (item: WorkOrderKanbanItem) => {
-        setSelectedWorkOrder(item)
-        setIsModalOpen(true)
+        // Update URL without navigation
+        router.push(`/operations/work-orders?id=${item.id}`)
     }
 
     // Handle view toggle
@@ -272,14 +301,14 @@ export default function WorkOrdersPage() {
 
     // Handle modal close
     const handleModalClose = () => {
-        setIsModalOpen(false)
-        setSelectedWorkOrder(null)
+        // Remove work order ID from URL without navigation
+        router.replace('/operations/work-orders')
     }
 
     // Handle work order save
     const handleWorkOrderSave = async (updatedWorkOrder: WorkOrderKanbanItem, formData?: any) => {
         try {
-            // Use the work order ID from the updated work order (which should have the correct database ID)
+            // Use the work order ID from the updated work order
             const workOrderId = updatedWorkOrder.id
             
             // Prepare the update data
@@ -303,14 +332,16 @@ export default function WorkOrdersPage() {
                 }
             }
 
-            console.log('Updating work order with ID:', workOrderId, 'Data:', updateData)
-
             await updateWorkOrderMutation.mutateAsync({
                 id: workOrderId,
                 data: updateData
             })
 
-            setIsModalOpen(false)
+            // Refetch to get updated data
+            refetch()
+            
+            // Update local state
+            setSelectedWorkOrder(updatedWorkOrder)
         } catch (error) {
             console.error('Failed to update work order:', error)
             // Error handling is done in the mutation hook
@@ -322,7 +353,8 @@ export default function WorkOrdersPage() {
         try {
             await deleteWorkOrderMutation.mutateAsync(workOrderId)
             refetch() // Refetch work orders to update the list
-            setIsModalOpen(false)
+            // Close modal by removing ID from URL
+            router.replace('/operations/work-orders')
         } catch (error) {
             console.error('Failed to delete work order:', error)
             // Error handling is done in the mutation hook
