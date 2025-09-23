@@ -55,7 +55,7 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
     
     // Format technician display
     const technicianDisplay = workOrder.technician 
-        ? `${workOrder.technician.first_name} ${workOrder.technician.last_name}`
+        ? `${workOrder.technician.first_name} ${workOrder.technician.last_name || ''}`
         : workOrder.assigned_technician_id || 'Unassigned'
         
     return {

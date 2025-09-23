@@ -21,7 +21,7 @@ import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/wo
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import { getWorkOrderItems } from "../../../lib/work-order-items-service"
-import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-service"
+import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-temp-service"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 import { PanelProvider } from "../../../contexts"
 
@@ -95,7 +95,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                 description: workOrderDetails.description || "",
                 priority: (workOrderDetails.priority || "medium") as WorkOrderPriority,
                 assignee: workOrderDetails.technician 
-                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name}`
+                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
                     : workOrderDetails.assigned_technician_id || "",
                 date: workOrderDetails.created_at.split('T')[0] || "",
                 customer: workOrderDetails.customer?.customer_name || "",
@@ -164,7 +164,7 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
             setFormData(prev => ({
                 ...prev,
                 assignee: workOrderDetails?.technician 
-                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name}`
+                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
                     : workOrderDetails?.assigned_technician_id || "",
             }))
         }
@@ -350,29 +350,62 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                 partsTotal: calculations.partsTotal
             })
 
-            // Prepare invoice data - only essential columns needed
+            // Prepare invoice data using temporary service structure
             const invoiceData = {
                 work_order_id: workOrderDetails?.id || initialWorkOrder.id,
                 customer_id: workOrderDetails?.customer_id || '',
-                vehicle_id: workOrderDetails?.vehicle_id || '',
+                vehicle_id: workOrderDetails?.vehicle_id,
                 shop_id: workOrderDetails?.shop_id || '',
-                amount: calculations.subtotal,
-                labour_total_price: calculations.labourTotal,
-                parts_total_price: calculations.partsTotal,
                 status: 'UNPAID' as const,
                 source: 'shop_generated' as const,
-                workOrderItems: workOrderItems
+                workOrderItems: workOrderItems,
+                
+                // Customer details from work order
+                client_name: workOrderDetails?.customer?.customer_name || formData.customer,
+                client_email: workOrderDetails?.customer?.customer_email || formData.customerEmail,
+                client_phone: workOrderDetails?.customer?.customer_phone || formData.customerPhone,
+                client_address: workOrderDetails?.customer?.customer_address || formData.customerAddress,
+                
+                // Shop details (you may want to fetch these from shop settings)
+                shop_name: 'MotorMinds Auto Shop', // TODO: Get from shop settings
+                shop_email: 'info@motorminds.com', // TODO: Get from shop settings
+                shop_phone: '(555) 123-4567', // TODO: Get from shop settings
+                shop_address: '123 Auto Street, City, State 12345', // TODO: Get from shop settings
+                
+                // Vehicle information
+                vehicle_information: workOrderDetails?.vehicle ? {
+                    year: workOrderDetails.vehicle.year,
+                    make: workOrderDetails.vehicle.make,
+                    model: workOrderDetails.vehicle.model,
+                    color: workOrderDetails.vehicle.color,
+                    vin: workOrderDetails.vehicle.vin,
+                    license_plate: workOrderDetails.vehicle.license_plate,
+                    mileage: workOrderDetails.vehicle.mileage
+                } : undefined,
+                
+                // Work order details
+                description: workOrderDetails?.title || formData.title,
+                notes: workOrderDetails?.description || formData.description,
+                customer_notes: workOrderDetails?.notes || formData.notes,
+                mileage: workOrderDetails?.vehicle?.mileage?.toString() || formData.vehicleMileage,
+                assigned_to: workOrderDetails?.technician 
+                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
+                    : formData.assignee
             }
 
-            // Create invoice using existing invoice system
+            // Create invoice using temporary service
             const newInvoice = await createInvoiceFromWorkOrder(invoiceData)
             
             if (newInvoice) {
-                // Navigate to existing invoice page
-                window.open(`/invoices?invoiceId=${newInvoice.invoice_number}`, '_blank')
+                // Navigate to existing invoice page (you'll need to create this route)
+                // For now, just show the invoice ID in console and toast
+                console.log('Invoice created:', newInvoice)
                 
-                // Show success message
-                toast.success('Invoice generated successfully!')
+                // Show success message with invoice number
+                toast.success(`Invoice ${newInvoice.display_id || newInvoice.invoice_number} generated successfully!`)
+                
+                // Optionally refresh the work order to show it's now invoiced
+                // The temp service should have updated the work order with invoice_id
                 
                 // Close work order modal
                 onClose()
