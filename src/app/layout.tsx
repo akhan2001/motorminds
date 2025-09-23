@@ -25,6 +25,9 @@ const bricolageGrotesque = Bricolage_Grotesque({
 // });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: "/favicon.ico",
+  },
   title: "MotorMinds",
   description: "AI-Powered Auto Repair Shop Management",
   icons: {

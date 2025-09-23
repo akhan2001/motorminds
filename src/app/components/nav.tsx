@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/client"
 import { Settings, HelpCircle, ChevronDown, MessageCircle } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
@@ -16,9 +16,8 @@ import { getShopInfo } from "@/utils/shopinfo/getShopInfo"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
-import { MiaButton } from "@/components/layout/nav/mia-button"
-import { NavIcon } from "@/components/layout/nav/nav-icon"
-import { getCurrentUserIsAdmin } from "@/lib/auth/admin-guard-client"
+import { useUserRole } from "@/hooks/core/useUserRole"
+import { getFilteredNavItems } from "@/lib/utils/navigation"
 
 export function Nav() {
 	const router = useRouter()
@@ -27,7 +26,7 @@ export function Nav() {
 	const [mounted, setMounted] = useState(false)
 	const [avatar, setAvatar] = useState("")
 	const [open, setOpen] = useState(false)
-	const [isAdmin, setIsAdmin] = useState(false)
+	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
 
 	if (!pathname) {
 		return null
@@ -39,14 +38,9 @@ export function Nav() {
 	}, [])
 
 	useEffect(() => {
-		const fetchUserInfo = async () => {
+		const fetchShopInfo = async () => {
 			const user = await checkUser()
 			if (user) {
-				// Check if user is admin (client-side)
-				const adminStatus = await getCurrentUserIsAdmin()
-				setIsAdmin(adminStatus)
-				
-				// Get shop info for avatar
 				const shopId = await getShopId(user.id)
 				if (shopId) {
 					const shopInfo = await getShopInfo(shopId)
@@ -54,7 +48,7 @@ export function Nav() {
 				}
 			}
 		}
-		fetchUserInfo()
+		fetchShopInfo()
 	}, [])
 
 	// Render the icon based on mounted state to avoid hydration mismatch
@@ -66,47 +60,10 @@ export function Nav() {
 
 	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
-	// Define mechanic hub subitems
-	const mechanicHubSubItems = [
-		{ name: "Work Orders", href: "/mechanic-hub" },
-		{ name: "Parts & Ordering", href: "/parts-ordering" },
-		{ name: "Appointments", href: "/appointments" },
-		{ name: "Services & Parts", href: "/mechanic-hub/service-parts" },
-	]
-
-	const customerSubItems = [
-		{ name: "All Customers", href: "/customers" },
-		{ name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
-		{ name: "Customer Intake Form", href: "/customer-intake" },
-        { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
-		{ name: "Customer Contracts", href: "/customer-contracts" },
-	]
-
-	const baseNavItems = [
-		{ name: "Appointments", href: "/operations/appointments" },
-		{ name: "Work Orders", href: "/operations/work-orders" },
-		{ name: "Invoices", href: "/invoices" },
-		{ 
-			name: "Mechanic Hub", 
-			href: "/mechanic-hub",
-			hasDropdown: true,
-			subItems: mechanicHubSubItems
-		},
-		{ name: "Mia Diagnostics", href: "/mia" },
-		{ 
-			name: "Customers", 
-			href: "/customers",
-			hasDropdown: true,
-			subItems: customerSubItems
-		},
-		{ name: "Suppliers", href: "/suppliers" },
-		{ name: "Voice Calling", href: "/voice-calling" },
-	]
-
-	// Add Admin link only for admin users
-	const navItems = isAdmin 
-		? [...baseNavItems, { name: "Admin", href: "/admin/dashboard" }]
-		: baseNavItems
+	// Get filtered navigation items based on user role
+	const navItems = useMemo(() => {
+		return getFilteredNavItems(userRole ?? null);
+	}, [userRole]);
 
 	let activeLink = ""
 	let longestMatch = 0
@@ -135,7 +92,12 @@ export function Nav() {
 	}
 
 	const handleNavClick = (name: string, href: string) => {
-		router.push(href)
+		// For demo users, redirect dashboard clicks to diagnostics page
+		if (userRole === 'demo' && (href === '/' || href === '/dashboard' || name === 'Dashboard')) {
+			router.push('/mia')
+		} else {
+			router.push(href)
+		}
 		setOpen(false) // Close sheet when navigation occurs
 	}
 
@@ -160,6 +122,29 @@ export function Nav() {
 		}
 	}
 
+	// Show loading state while fetching role
+	if (isLoadingRole) {
+		return (
+			<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
+					<div className="flex items-center gap-4 py-3">
+						<div className="flex items-center gap-2">
+							<Image
+								src="/motorminds-logo-white (1).svg"
+								alt="Motorminds Logo"
+								width={35}
+								height={35}
+								className="w-8 h-8"
+							/>
+							<span className="text-white font-medium">Motorminds</span>
+						</div>
+						<div className="text-[#979797] text-sm">Loading...</div>
+					</div>
+				</nav>
+			</header>
+		);
+	}
+
 	return (
 		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
@@ -168,7 +153,7 @@ export function Nav() {
 					<div className="flex items-center gap-4 py-3">
 						<div 
 						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
-						onClick={() => router.push("/")}
+						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
 						>
 							<Image
 							src="/motorminds-logo-white (1).svg"
@@ -183,10 +168,18 @@ export function Nav() {
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-white border-[#979797]">Premium</Badge>
+									<Badge variant="outline" className="cursor-default text-white border-[#979797]">
+										{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
+									</Badge>
 								</TooltipTrigger>
 								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
-									<p className="text-xs text-[#FBBC05]">You are a premium user</p>
+									<p className="text-xs text-[#FBBC05]">
+										{userRole === 'demo' && 'Demo Access - Limited Features'}
+										{userRole === 'admin' && 'Administrator - Full Access'}
+										{userRole === 'super' && 'Super User - Full Access'}
+										{userRole === 'user' && 'Premium User - Standard Access'}
+										{!userRole && 'Loading user role...'}
+									</p>
 								</TooltipContent>
 							</Tooltip>
 						</TooltipProvider>
@@ -235,48 +228,55 @@ export function Nav() {
 									}`}
 								>
 									{item.name}
+									{item.name === "Mia AI" &&
+									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
+									}
 								</a>
 							)
 						))}
 					</div>
 				</div>
 				{/* Right: Actions */}
-				<div className="hidden lg:flex items-center">
-					<div className="flex items-center gap-2 bg-transparent border border-[#2a2a2a] rounded-full mr-4">
-						{/* Mia AI Button */}
-						<MiaButton />
-						
-						<NavIcon label="Messages" variant="squareGrey" onClick={() => router.push("/messages")}>
-							<MessageCircle className="w-5 h-5 text-white" />
-						</NavIcon>
-						
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<NavIcon label="Help" variant="squareGrey">
-									<HelpCircle className="w-5 h-5 text-white" />
-								</NavIcon>
-							</AlertDialogTrigger>
-							<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-								<AlertDialogHeader>
-									<AlertDialogTitle>You Are About to Leave the App</AlertDialogTitle>
-									<AlertDialogDescription>
-										You are about to open an external contact page. Do you want to continue?
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-								<AlertDialogFooter>
-									<AlertDialogCancel className="">Cancel</AlertDialogCancel>
-									<AlertDialogAction className="border-none bg-red-600 text-white hover:bg-red-700" onClick={() => window.open("https://www.motorminds.ca/contact-us", "_blank")}>
-										Yes, Continue
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
-
-						<NavIcon label="Settings" variant="squareGrey" className="rounded-r-full" onClick={() => router.push("/settings")}>
-							<Settings className="w-5 h-5 text-white" />
-						</NavIcon>
-					</div>
+				<div className="hidden lg:flex items-center gap-4">
+					{/* Full navigation for non-demo users */}
+					{userRole !== 'demo' && (
+						<>
+							<button 
+								className={`${
+									activeLink === "Messages" ? "text-white" : "text-[#979797]"
+								} hover:text-white transition-colors`} 
+								onClick={() => router.push("/messages")}
+							>
+								<MessageCircle className="inline-block w-5 h-5" />
+							</button>
+							<button className="text-[#979797] hover:text-white transition-colors">
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<HelpCircle className="inline-block w-5 h-5" />
+									</AlertDialogTrigger>
+									<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+										<AlertDialogHeader>
+											<AlertDialogTitle>You Are About to Leave the App</AlertDialogTitle>
+											<AlertDialogDescription>
+												You are about to open an external contact page. Do you want to continue?
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel className="">Cancel</AlertDialogCancel>
+											<AlertDialogAction className="border-none bg-red-600 text-white hover:bg-red-700" onClick={() => window.open("https://www.motorminds.ca/contact-us", "_blank")}>
+												Yes, Continue
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
+							</button>
+							<button className="text-[#979797] hover:text-white transition-colors">
+								<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
+							</button>
+						</>
+					)}
 					
+					{/* Avatar with logout - shown for all users */}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Avatar className="w-7 h-7 cursor-pointer">
@@ -310,21 +310,60 @@ export function Nav() {
 									</AlertDialogFooter>
 								</AlertDialogContent>
 							</AlertDialog>
-							{/* Theme switch omitted */}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
 				{/* Right: Mobile Menu (only visible on mobile) */}
 				<div className="lg:hidden">
-					<MobileNav 
-						navItems={navItems}
-						activeLink={activeLink}
-						avatar={avatar}
-						open={open}
-						setOpen={setOpen}
-						handleNavClick={handleNavClick}
-						handleLogout={handleLogout}
-					/>
+					{userRole === 'demo' ? (
+						/* Simplified mobile menu for demo users - just avatar with logout */
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Avatar className="w-8 h-8 cursor-pointer">
+									<AvatarImage src={avatar} />
+									<AvatarFallback>AK</AvatarFallback>
+								</Avatar>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+											<LogOut className="w-4 h-4 mr-2" />
+											Logout
+										</DropdownMenuItem>
+									</AlertDialogTrigger>
+									<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
+										<AlertDialogHeader>
+											<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+											<AlertDialogDescription>
+												You are about to logout. Do you want to continue?
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel className="">Cancel</AlertDialogCancel>
+											<AlertDialogAction
+												className="border-none bg-red-600 text-white hover:bg-red-700"
+												onClick={() => { handleLogout() }}
+											>
+												Yes, Continue
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						/* Full mobile navigation for non-demo users */
+						<MobileNav 
+							navItems={navItems}
+							activeLink={activeLink}
+							avatar={avatar}
+							open={open}
+							setOpen={setOpen}
+							handleNavClick={handleNavClick}
+							handleLogout={handleLogout}
+						/>
+					)}
 				</div>
 			</nav>
 		</header>
