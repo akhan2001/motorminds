@@ -136,7 +136,7 @@ export class MiaCallingService {
      * This gives the call time to complete naturally without aggressive polling
      */
     static async waitForCallCompletion(
-        callDurationEstimate: number = 90000 // 90 seconds default
+        callDurationEstimate: number = 300000 // 5 minutes default
     ): Promise<void> {
         return new Promise((resolve) => {
             console.log(`⏳ Waiting ${callDurationEstimate/1000} seconds for call to complete naturally...`)
