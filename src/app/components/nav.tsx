@@ -228,9 +228,6 @@ export function Nav() {
 									}`}
 								>
 									{item.name}
-									{item.name === "Mia AI" &&
-									<Badge variant="outline" className="text-xs mx-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
-									}
 								</a>
 							)
 						))}

@@ -27,8 +27,7 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
     searchValue = '',
     onSearchChange
 }) => {
-    const messagingAvailability = useMessagingAvailability()
-    
+
     return (
         <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
             {/* Main Header */}
@@ -38,34 +37,20 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
                     <div className="flex items-center gap-6">
                         <div>
                             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                                <Calendar className="h-6 w-6" />
                                 Appointments
                             </h1>
                             <p className="text-sm text-gray-400 mt-1">
-                                Schedule and manage customer appointments
+                                Schedule and manage customer appointments, create them into work orders as well.
                             </p>
                         </div>
-                    </div>
-
-                    {/* Right Section - Actions */}
-                    <div className="flex items-center gap-3">
-                        {/* Create Appointment Button */}
-                        <Button
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                            onClick={onNewAppointment}
-                        >
-                            <Plus className="h-4 w-4 mr-2" />
-                            New Appointment
-                        </Button>
                     </div>
                 </div>
             </div>
 
-            {/* Search & Filters Bar */}
+            {/* Search & Filters Bar
             <div className="px-6 pb-3">
                 <div className="flex items-center gap-3">
-                    {/* Search Bar */}
+                    {/* Search Bar 
                     <div className="relative flex-1 max-w-lg">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
@@ -76,7 +61,7 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
                         />
                     </div>
 
-                    {/* Filter Buttons */}
+                    {/* Filter Buttons 
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
@@ -86,30 +71,9 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
                             <Filter className="h-4 w-4 mr-2" />
                             Filters
                         </Button>
-                        
-                        {onToggleView && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
-                                onClick={onToggleView}
-                            >
-                                {isCompactView ? (
-                                    <>
-                                        <Maximize2 className="h-4 w-4 mr-2" />
-                                        Enlarge
-                                    </>
-                                ) : (
-                                    <>
-                                        <Minimize2 className="h-4 w-4 mr-2" />
-                                        Compact
-                                    </>
-                                )}
-                            </Button>
-                        )}
                     </div>
                 </div>
-            </div>
+            </div> */}
         </div>
     )
 }
