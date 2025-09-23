@@ -23,6 +23,7 @@ import {
     PartsRequestPriority 
 } from '@/app/(features)/voice-calling/types'
 import PartsRequestsList from '@/app/(features)/parts/components/parts-requests-list'
+import CallHistory from '@/app/(features)/voice-calling/components/CallHistory'
 
 export default function VoiceOrderingPage() {
     const [selectedSuppliers, setSelectedSuppliers] = useState<SelectedSupplier[]>([])
@@ -55,6 +56,45 @@ export default function VoiceOrderingPage() {
     const [callResults, setCallResults] = useState<any[]>([])
     const [quotesReceived, setQuotesReceived] = useState<any[]>([])
     const [isCallingInProgress, setIsCallingInProgress] = useState(false)
+    const [lastCallId, setLastCallId] = useState<string | null>(null)
+    const [lastCallTranscript, setLastCallTranscript] = useState<string[]>([])
+    const [showCallHistory, setShowCallHistory] = useState(false)
+
+    const mapAnalysisToQuoteDisplay = (analysis: any, supplierFallback?: string) => {
+        const parts = analysis?.parts_info || {}
+        const quote = analysis?.quote_details || {}
+        const supplier = analysis?.supplier_info || {}
+
+        const availabilityRaw = String(quote.availability || '').toLowerCase()
+        let availability: 'in_stock' | 'backorder' | 'discontinued' | 'unknown' = 'unknown'
+        if (availabilityRaw.includes('stock')) availability = 'in_stock'
+        else if (availabilityRaw.includes('backorder')) availability = 'backorder'
+        else if (availabilityRaw.includes('discontinu')) availability = 'discontinued'
+
+        const quantity = parts.quantity || 1
+        const unitPrice = typeof quote.unit_price === 'number' ? quote.unit_price : undefined
+        const totalCost = typeof quote.total_cost === 'number' ? quote.total_cost : (unitPrice ? unitPrice * quantity : 0)
+
+        return {
+            supplier_name: supplier.supplier_name || supplierFallback || 'Supplier',
+            contact_person: supplier.contact_person,
+            quote_date: new Date().toISOString(),
+            parts: [
+                {
+                    part_name: parts.part_name || parts.partName || 'Part',
+                    part_number: parts.part_number || parts.partNumber,
+                    quantity,
+                    availability,
+                    cost_price: unitPrice,
+                    delivery_days: typeof quote.delivery_days === 'number' ? quote.delivery_days : undefined,
+                    eta: quote.delivery_eta,
+                    notes: analysis?.call_outcome?.notes
+                }
+            ],
+            total_quote: totalCost,
+            call_notes: analysis?.call_outcome?.notes
+        }
+    }
 
     const handleRecallRequest = (request: any) => {
         try {
@@ -222,6 +262,11 @@ export default function VoiceOrderingPage() {
 
                     console.log(`📞 Call initiated for ${supplier.name}:`, callResult)
 
+                    // Store call details for history
+                    if (callResult.call_id) {
+                        setLastCallId(callResult.call_id)
+                    }
+
                     // Wait for call to complete naturally (no polling needed!)
                     toast.info(`Mia is calling ${supplier.name}... Call will end automatically when quote is received`)
                     
@@ -229,16 +274,37 @@ export default function VoiceOrderingPage() {
                         // Give the call time to complete naturally (90 seconds)
                         await MiaCallingService.waitForCallCompletion(90000)
                         
-                        // Check if quote was saved
+                        // Fetch analysis from Vapi and save into parts_requests.quote_provided
+                        if (callResult.call_id) {
+                            try {
+                                const resp = await fetch(`/api/voice/calls/${callResult.call_id}/save-quote`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ parts_request_id: createdPartsRequestId })
+                                })
+                                if (!resp.ok) {
+                                    const errj = await resp.json().catch(() => ({}))
+                                    throw new Error(errj.error || `HTTP ${resp.status}`)
+                                }
+                                const saved = await resp.json()
+                                if (saved?.quote) {
+                                    const mapped = mapAnalysisToQuoteDisplay(saved.quote, supplier.name)
+                                    results.push({ supplier, callResult, quote: mapped, success: true })
+                                    toast.success(`Quote received from ${supplier.name}!`)
+                                    continue
+                                }
+                            } catch (saveErr: any) {
+                                console.warn('Save-quote failed, will fall back to DB check:', saveErr)
+                            }
+                        }
+
+                        // Fallback: Check if quote was saved by other means
                         const completedRequest = await MiaCallingService.checkForQuote(createdPartsRequestId)
                         
                         if (completedRequest && completedRequest.quote_provided) {
-                            results.push({
-                                supplier,
-                                callResult,
-                                quote: completedRequest.quote_provided,
-                                success: true
-                            })
+                            const mapped = mapAnalysisToQuoteDisplay(completedRequest.quote_provided, supplier.name)
+                            results.push({ supplier, callResult, quote: mapped, success: true })
+                            
                             toast.success(`Quote received from ${supplier.name}!`)
                         } else {
                             results.push({
@@ -248,6 +314,7 @@ export default function VoiceOrderingPage() {
                                 success: false,
                                 canRetry: true
                             })
+                            
                             toast.warning(`Call to ${supplier.name} completed but no quote found yet. You can check again later.`)
                         }
                     } catch (waitError: any) {
@@ -259,6 +326,7 @@ export default function VoiceOrderingPage() {
                             success: false,
                             canRetry: true
                         })
+                        
                         toast.error(`Issue with call to ${supplier.name}: ${waitError.message}`)
                     }
 
@@ -269,6 +337,7 @@ export default function VoiceOrderingPage() {
                         error: callError.message,
                         success: false
                     })
+                    
                     toast.error(`Failed to call ${supplier.name}: ${callError.message}`)
                 }
 
@@ -690,6 +759,14 @@ export default function VoiceOrderingPage() {
                                                 Approve & Place Order
                                             </Button>
                                             <Button
+                                                onClick={() => setShowCallHistory(!showCallHistory)}
+                                                variant="outline"
+                                                className="border-blue-600 text-blue-400 hover:bg-blue-900 px-6 py-2"
+                                            >
+                                                {showCallHistory ? 'Hide' : 'View'} Call Details
+                                            </Button>
+                                            
+                                            <Button
                                                 onClick={() => {
                                                     // Reset form and start over
                                                     setCurrentPhase('preparation')
@@ -716,6 +793,9 @@ export default function VoiceOrderingPage() {
                                                     setQuotesReceived([])
                                                     setCurrentCallIndex(-1)
                                                     setIsCallingInProgress(false)
+                                                    setLastCallId(null)
+                                                    setLastCallTranscript([])
+                                                    setShowCallHistory(false)
                                                     toast.info('Starting new parts request')
                                                 }}
                                                 variant="outline"
@@ -727,6 +807,16 @@ export default function VoiceOrderingPage() {
                                     </div>
                                 </CardContent>
                             </Card>
+                        )}
+
+                        {/* CALL HISTORY - Show call logs and transcripts after calls complete */}
+                        {(currentPhase === 'completed' || currentPhase === 'review') && showCallHistory && lastCallId && (
+                            <CallHistory 
+                                showAfterCall={true}
+                                lastCallId={lastCallId}
+                                lastCallTranscript={lastCallTranscript}
+                                className="mt-6"
+                            />
                         )}
                     </div>
                 </div>
