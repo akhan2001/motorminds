@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
@@ -74,7 +74,8 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
     }
 }
 
-export default function WorkOrdersPage() {
+// Component that uses useSearchParams - needs to be wrapped in Suspense
+function WorkOrdersContent() {
     // Navigation
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -496,5 +497,26 @@ export default function WorkOrdersPage() {
                 )}
             </div>
         </DragDropProvider>
+    )
+}
+
+// Loading component for Suspense fallback
+function WorkOrdersLoading() {
+    return (
+        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <Nav />
+            <div className="flex-1 flex items-center justify-center">
+                <div className="text-white">Loading...</div>
+            </div>
+        </div>
+    )
+}
+
+// Main component with Suspense wrapper
+export default function WorkOrdersPage() {
+    return (
+        <Suspense fallback={<WorkOrdersLoading />}>
+            <WorkOrdersContent />
+        </Suspense>
     )
 }
