@@ -101,6 +101,24 @@ export async function updateSession(request: NextRequest) {
 		supabaseResponse.headers.set('x-shop-id', shopId)
 	}
 
+	// Demo user redirects - redirect from / and /dashboard to /mia
+	if (user && (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard')) {
+		try {
+			const { data: userData, error } = await supabase
+				.from('users')
+				.select('role')
+				.eq('id', user.id)
+				.single();
+
+			if (!error && userData?.role === 'demo') {
+				const redirectUrl = new URL('/mia', request.url)
+				return NextResponse.redirect(redirectUrl)
+			}
+		} catch (error) {
+			console.error('Error checking user role for demo redirect:', error);
+		}
+	}
+
 	// IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
 	// creating a new response object with NextResponse.next() make sure to:
 	// 1. Pass the request in it, like so:
