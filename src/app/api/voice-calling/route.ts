@@ -45,12 +45,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Fetch shop information if shop_id provided
-        let shopInfo = {
-            name: 'MotorMinds Auto Shop',
-            account_numbers: { general: 'MM-2024' }
-        }
-
+        // Fetch shop information if shop_id provided   
+        let shopInfo = null
         if (shop_id) {
             const { data: shop } = await supabase
                 .from('shops')
@@ -60,7 +56,7 @@ export async function POST(request: NextRequest) {
             
             if (shop) {
                 shopInfo = {
-                    name: shop.name || 'MotorMinds Auto Shop',
+                    name: shop.name || 'AutoPro Mechanics',
                     account_numbers: shop.account_numbers || { general: 'MM-2024' }
                 }
             }
@@ -113,7 +109,7 @@ export async function POST(request: NextRequest) {
             context: {
                 supplier: supplier_name,
                 phone: formattedPhone,
-                shop: shopInfo.name
+                shop: shopInfo?.name || 'AutoPro Mechanics'
             }
         })
 

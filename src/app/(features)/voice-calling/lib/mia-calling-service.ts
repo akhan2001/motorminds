@@ -1,5 +1,5 @@
-import { createMiaCall } from '@/lib/integrations/vapi/vapi-client'
 import { formatPhoneNumberE164, isValidPhoneNumber } from '@/utils/format-phone'
+import { createClient } from '@/utils/supabase/server'
 
 /**
  * Simplified Mia AI Calling Service
@@ -165,5 +165,41 @@ export class MiaCallingService {
             console.error('❌ Error checking for quote:', error)
             throw error
         }
+    }
+
+    /**
+     * Create voice call log entry
+     */
+    static async createVoiceCallLog(callData: {
+        shop_id: string;
+        phone_number: string;
+        vapi_call_id: string;
+        parts_request_id?: string;
+        supplier_id?: string;
+        user_id?: string;
+    }) {
+        const supabase = await createClient();
+        
+        const { data, error } = await supabase
+            .from('voice_calls')
+            .insert([{
+                shop_id: callData.shop_id,
+                phone_number: callData.phone_number,
+                vapi_call_id: callData.vapi_call_id,
+                parts_request_id: callData.parts_request_id,
+                supplier_id: callData.supplier_id,
+                user_id: callData.user_id,
+                status: 'pending',
+                purpose: 'parts_ordering'
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating voice call log:', error);
+            throw error;
+        }
+
+        return data;
     }
 }
