@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, Building2, Hash, Type, DollarSign, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { CreatePartsRequestRequest, PartItem, VehicleInfo, SupplierInfo } from '@/app/(features)/parts/types/parts'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
+import VehicleInformationForm from './VehicleInformationForm'
+import SupplierSelect from './SupplierSelect'
+import PartInformationForm from './PartInformationForm'
+import OrderDetailsForm from './OrderDetailsForm'
+import AdditionalInformationForm from './AdditionalInformationForm'
 
 interface PartsIntakeFormProps {
     supplierId?: string
@@ -60,16 +59,13 @@ export default function PartsIntakeForm({ supplierId, onSuccess, onCancel }: Par
         if (supplierId && suppliers.length > 0) {
             const selectedSupplier = suppliers.find(s => s.id === supplierId)
             if (selectedSupplier) {
-                setFormData(prev => ({
-                    ...prev,
-                    supplier_info: {
-                        supplier_id: selectedSupplier.id,
-                        supplier_name: selectedSupplier.name,
-                        contact_person: selectedSupplier.contact_person || '',
-                        phone_number: selectedSupplier.phone_number || '',
-                        account_number: selectedSupplier.account_number || ''
-                    }
-                }))
+                handleSupplierChange({
+                    supplier_id: selectedSupplier.id,
+                    supplier_name: selectedSupplier.name,
+                    contact_person: selectedSupplier.contact_person || '',
+                    phone_number: selectedSupplier.phone_number || '',
+                    account_number: selectedSupplier.account_number || ''
+                })
             }
         }
     }, [supplierId, suppliers])
@@ -90,45 +86,63 @@ export default function PartsIntakeForm({ supplierId, onSuccess, onCancel }: Par
         }
     }
 
-    const handleInputChange = (field: string, value: string | number | undefined) => {
-        setFormData(prev => {
-            const newData = { ...prev }
-            
-            // Handle nested object updates
-            if (field.includes('.')) {
-                const [parentKey, childKey] = field.split('.')
-                if (parentKey === 'vehicle_info') {
-                    newData.vehicle_info = { ...prev.vehicle_info, [childKey]: value }
-                } else if (parentKey === 'supplier_info') {
-                    newData.supplier_info = { ...prev.supplier_info, [childKey]: value }
-                } else if (parentKey === 'parts_requested') {
-                    const newParts = [...prev.parts_requested]
-                    newParts[0] = { ...newParts[0], [childKey]: value }
-                    newData.parts_requested = newParts
-                }
-            } else {
-                // Handle direct field updates
-                (newData as any)[field] = value
-            }
-            
-            return newData
-        })
+    // Vehicle info handlers
+    const handleVehicleInfoChange = (field: keyof VehicleInfo, value: string | number | undefined) => {
+        setFormData(prev => ({
+            ...prev,
+            vehicle_info: { ...prev.vehicle_info, [field]: value }
+        }))
     }
 
-    const handleSupplierChange = (supplierId: string) => {
-        const selectedSupplier = suppliers.find(s => s.id === supplierId)
-        if (selectedSupplier) {
-            setFormData(prev => ({
-                ...prev,
-                supplier_info: {
-                    supplier_id: selectedSupplier.id,
-                    supplier_name: selectedSupplier.name,
-                    contact_person: selectedSupplier.contact_person || '',
-                    phone_number: selectedSupplier.phone_number || '',
-                    account_number: selectedSupplier.account_number || ''
-                }
-            }))
-        }
+    // Supplier handlers
+    const handleSupplierChange = (supplierInfo: SupplierInfo) => {
+        setFormData(prev => ({
+            ...prev,
+            supplier_info: supplierInfo
+        }))
+    }
+
+    // Part info handlers
+    const handlePartInfoChange = (field: keyof PartItem, value: string | number | undefined) => {
+        setFormData(prev => ({
+            ...prev,
+            parts_requested: [{ ...prev.parts_requested[0], [field]: value }]
+        }))
+    }
+
+    // Order details handlers
+    const handleQuantityChange = (quantity: number) => {
+        setFormData(prev => ({
+            ...prev,
+            parts_requested: [{ ...prev.parts_requested[0], quantity }]
+        }))
+    }
+
+    const handleEstimatedPriceChange = (estimatedPrice: number | undefined) => {
+        setFormData(prev => ({
+            ...prev,
+            parts_requested: [{ ...prev.parts_requested[0], estimated_price: estimatedPrice }]
+        }))
+    }
+
+    const handleUrgencyChange = (urgency: string) => {
+        setFormData(prev => ({
+            ...prev,
+            parts_requested: [{ ...prev.parts_requested[0], urgency: urgency as PartItem['urgency'] }]
+        }))
+    }
+
+    // Additional info handlers
+    const handlePriorityChange = (priority: string) => {
+        setFormData(prev => ({ ...prev, priority: priority as CreatePartsRequestRequest['priority'] }))
+    }
+
+    const handleNotesChange = (notes: string) => {
+        setFormData(prev => ({ ...prev, notes }))
+    }
+
+    const handleCustomerNotesChange = (customerNotes: string) => {
+        setFormData(prev => ({ ...prev, customer_notes: customerNotes }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -207,292 +221,47 @@ export default function PartsIntakeForm({ supplierId, onSuccess, onCancel }: Par
     }
 
     return (
-        <Card className="bg-[#111111] border-[#2a2a2a] max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Request Parts from Supplier
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Vehicle Information */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="customer_name" className="text-gray-300">
-                                    Customer Name
-                                </Label>
-                                <Input
-                                    id="customer_name"
-                                    value={formData.vehicle_info?.customer_name || ''}
-                                    onChange={(e) => handleInputChange('vehicle_info.customer_name', e.target.value)}
-                                    placeholder="John Doe"
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                />
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label htmlFor="year" className="text-gray-300">
-                                    Year
-                                </Label>
-                                <Input
-                                    id="year"
-                                    type="number"
-                                    min="1900"
-                                    max="2030"
-                                    value={formData.vehicle_info?.year || ''}
-                                    onChange={(e) => handleInputChange('vehicle_info.year', parseInt(e.target.value))}
-                                    placeholder="2020"
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="make" className="text-gray-300">
-                                    Make
-                                </Label>
-                                <Input
-                                    id="make"
-                                    value={formData.vehicle_info?.make || ''}
-                                    onChange={(e) => handleInputChange('vehicle_info.make', e.target.value)}
-                                    placeholder="Honda"
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                />
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label htmlFor="model" className="text-gray-300">
-                                    Model
-                                </Label>
-                                <Input
-                                    id="model"
-                                    value={formData.vehicle_info?.model || ''}
-                                    onChange={(e) => handleInputChange('vehicle_info.model', e.target.value)}
-                                    placeholder="Civic"
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                />
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label htmlFor="engine" className="text-gray-300">
-                                    Engine
-                                </Label>
-                                <Input
-                                    id="engine"
-                                    value={formData.vehicle_info?.engine || ''}
-                                    onChange={(e) => handleInputChange('vehicle_info.engine', e.target.value)}
-                                    placeholder="1.5L Turbo"
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    <VehicleInformationForm
+                        vehicleInfo={formData.vehicle_info}
+                        onChange={handleVehicleInfoChange}
+                    />
 
                     {/* Supplier Selection */}
-                    <div className="space-y-2">
-                        <Label htmlFor="supplier" className="text-gray-300">
-                            Supplier *
-                        </Label>
-                        <div className="relative">
-                            <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                            <Select
-                                value={formData.supplier_info?.supplier_id}
-                                onValueChange={handleSupplierChange}
-                                disabled={!!supplierId || loadingSuppliers}
-                            >
-                                <SelectTrigger className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                                    <SelectValue placeholder={loadingSuppliers ? "Loading suppliers..." : "Select a supplier"} />
-                                </SelectTrigger>
-                                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                                    {suppliers.map((supplier) => (
-                                        <SelectItem key={supplier.id} value={supplier.id} className="text-white">
-                                            {supplier.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                    <SupplierSelect
+                        suppliers={suppliers}
+                        selectedSupplier={formData.supplier_info}
+                        onSupplierChange={handleSupplierChange}
+                        loading={loadingSuppliers}
+                        disabled={!!supplierId}
+                    />
 
                     {/* Part Information */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Part Information</h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="part_number" className="text-gray-300">
-                                    Part Number *
-                                </Label>
-                                <div className="relative">
-                                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        id="part_number"
-                                        value={formData.parts_requested[0]?.part_number || ''}
-                                        onChange={(e) => handleInputChange('parts_requested.part_number', e.target.value)}
-                                        placeholder="ABC123-456"
-                                        className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="part_name" className="text-gray-300">
-                                    Part Name *
-                                </Label>
-                                <div className="relative">
-                                    <Type className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        id="part_name"
-                                        value={formData.parts_requested[0]?.part_name || ''}
-                                        onChange={(e) => handleInputChange('parts_requested.part_name', e.target.value)}
-                                        placeholder="Brake Pad Set"
-                                        className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="description" className="text-gray-300">
-                                Description
-                            </Label>
-                            <Textarea
-                                id="description"
-                                value={formData.parts_requested[0]?.description || ''}
-                                onChange={(e) => handleInputChange('parts_requested.description', e.target.value)}
-                                placeholder="Front brake pads for 2018 Honda Civic..."
-                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px]"
-                            />
-                        </div>
-                    </div>
+                    <PartInformationForm
+                        partInfo={formData.parts_requested[0]}
+                        onChange={handlePartInfoChange}
+                    />
 
                     {/* Order Details */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Order Details</h3>
+                    <OrderDetailsForm
+                        quantity={formData.parts_requested[0]?.quantity || 1}
+                        estimatedPrice={formData.parts_requested[0]?.estimated_price}
+                        urgency={formData.parts_requested[0]?.urgency || 'normal'}
+                        onQuantityChange={handleQuantityChange}
+                        onEstimatedPriceChange={handleEstimatedPriceChange}
+                        onUrgencyChange={handleUrgencyChange}
+                    />
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="quantity" className="text-gray-300">
-                                    Quantity *
-                                </Label>
-                                <Input
-                                    id="quantity"
-                                    type="number"
-                                    min="1"
-                                    value={formData.parts_requested[0]?.quantity || 1}
-                                    onChange={(e) => handleInputChange('parts_requested.quantity', parseInt(e.target.value))}
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="estimated_price" className="text-gray-300">
-                                    Estimated Price (CAD)
-                                </Label>
-                                <div className="relative">
-                                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        id="estimated_price"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={formData.parts_requested[0]?.estimated_price || ''}
-                                        onChange={(e) => {
-                                            const value = e.target.value
-                                            handleInputChange('parts_requested.estimated_price', value ? parseFloat(value) : undefined)
-                                        }}
-                                        placeholder="0.00"
-                                        className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="urgency" className="text-gray-300">
-                                    Urgency
-                                </Label>
-                                <Select
-                                    value={formData.parts_requested[0]?.urgency || 'normal'}
-                                    onValueChange={(value) => handleInputChange('parts_requested.urgency', value)}
-                                >
-                                    <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                                        <SelectItem value="low" className="text-white">Low</SelectItem>
-                                        <SelectItem value="normal" className="text-white">Normal</SelectItem>
-                                        <SelectItem value="high" className="text-white">High</SelectItem>
-                                        <SelectItem value="urgent" className="text-white">Urgent</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Priority and Notes */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Additional Information</h3>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="priority" className="text-gray-300">
-                                Priority
-                            </Label>
-                            <Select
-                                value={formData.priority || 'normal'}
-                                onValueChange={(value) => handleInputChange('priority', value)}
-                            >
-                                <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                                    <SelectItem value="low" className="text-white">Low Priority</SelectItem>
-                                    <SelectItem value="normal" className="text-white">Normal Priority</SelectItem>
-                                    <SelectItem value="high" className="text-white">High Priority</SelectItem>
-                                    <SelectItem value="urgent" className="text-white">Urgent</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="notes" className="text-gray-300">
-                                Internal Notes
-                            </Label>
-                            <div className="relative">
-                                <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                <Textarea
-                                    id="notes"
-                                    value={formData.notes || ''}
-                                    onChange={(e) => handleInputChange('notes', e.target.value)}
-                                    placeholder="Internal notes for shop staff..."
-                                    className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px]"
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="customer_notes" className="text-gray-300">
-                                Customer Notes
-                            </Label>
-                            <div className="relative">
-                                <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                <Textarea
-                                    id="customer_notes"
-                                    value={formData.customer_notes || ''}
-                                    onChange={(e) => handleInputChange('customer_notes', e.target.value)}
-                                    placeholder="Customer-specific requirements or notes..."
-                                    className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px]"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    {/* Additional Information */}
+                    <AdditionalInformationForm
+                        priority={formData.priority || 'normal'}
+                        notes={formData.notes || ''}
+                        customerNotes={formData.customer_notes || ''}
+                        onPriorityChange={handlePriorityChange}
+                        onNotesChange={handleNotesChange}
+                        onCustomerNotesChange={handleCustomerNotesChange}
+                    />
 
                     {/* Form Actions */}
                     <div className="flex gap-3 pt-4">
@@ -515,7 +284,5 @@ export default function PartsIntakeForm({ supplierId, onSuccess, onCancel }: Par
                         </Button>
                     </div>
                 </form>
-            </CardContent>
-        </Card>
     )
 }

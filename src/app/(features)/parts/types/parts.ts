@@ -20,6 +20,7 @@ export interface VehicleInfo {
   drivetrain?: string;
   fuel_type?: string;
   body_style?: string;
+  customer_name?: string;
 }
 
 export interface SupplierInfo {
@@ -57,6 +58,7 @@ export interface PartsRequest {
 export interface CreatePartsRequestRequest {
   vehicle_info: VehicleInfo;
   parts_requested: PartItem[];
+  supplier_info: SupplierInfo;
   priority?: PartsRequest['priority'];
   notes?: string;
   customer_notes?: string;
