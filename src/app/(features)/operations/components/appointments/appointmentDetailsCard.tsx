@@ -65,9 +65,7 @@ export function AppointmentDetailsCard({
 
     // Handle navigation to work order
     const handleViewWorkOrder = () => {
-        if (appointment.work_order?.id) {
-            router.push(`/operations/work-orders/${appointment.work_order.id}`)
-        }
+        router.push(`/operations/work-orders?id=${appointment.work_order?.id}`)
     }
 
     const getStatusColor = (status: string) => {

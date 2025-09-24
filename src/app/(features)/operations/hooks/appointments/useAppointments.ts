@@ -265,7 +265,7 @@ export const useCreateWorkOrderFromAppointment = () => {
             toast.success('Work order created successfully!', {
                 action: {
                     label: 'View Work Order',
-                    onClick: () => window.location.href = `/operations/work-orders/${workOrderId}`
+                    onClick: () => window.location.href = `/operations/work-orders?id=${workOrderId}`
                 }
             })
         },

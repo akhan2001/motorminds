@@ -175,10 +175,21 @@ export default function AppointmentsPage() {
 
     const handleCreateWorkOrder = async (appointmentId: string) => {
         try {
-            await createWorkOrder.mutateAsync(appointmentId)
-            // Close appointment details after successful creation
-            setShowAppointmentDetails(false)
-            setSelectedAppointment(null)
+            const workOrderId = await createWorkOrder.mutateAsync(appointmentId)
+            
+            // Refetch the appointment to get the updated data with work order
+            if (selectedAppointment) {
+                // Update the local state with work order info
+                setSelectedAppointment(prev => prev ? {
+                    ...prev,
+                    status: 'in_progress',
+                    work_order: {
+                        id: workOrderId,
+                        work_order_number: `WO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${workOrderId.slice(-4)}`,
+                        status: 'pending'
+                    }
+                } : null)
+            }
         } catch (error) {
             console.error('Failed to create work order:', error)
             // Error is already handled by the mutation hook
