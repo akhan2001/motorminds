@@ -76,7 +76,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     if (isEditing) {
                                         // Convert to title case and limit to 30 characters
                                         const value = e.target.value
-                                            .slice(0, 30)
+                                            .slice(0, 100)
                                             .toLowerCase()
                                             .replace(/\b\w/g, (char) => char.toUpperCase())
                                         onFieldChange('title', value)

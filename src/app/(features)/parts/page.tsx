@@ -9,7 +9,7 @@ import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Slash } from "lucide-react"
 import Link from 'next/link'
-import PartsIntakeForm from './components/PartsOrdering/PartsIntakeForm'
+import PartsRequestModal from './components/PartsOrdering/PartsRequestModal'
 import { PartsRequest } from '@/app/(features)/parts/types/parts'
 import { toast } from 'sonner'
 
@@ -42,7 +42,6 @@ export default function PartsPage() {
 
     const handlePartsRequestAdded = (newRequest: PartsRequest) => {
         setPartsRequests(prev => [newRequest, ...prev])
-        setShowAddForm(false)
     }
 
     const getStatusColor = (status: PartsRequest['status']) => {
@@ -80,7 +79,8 @@ export default function PartsPage() {
         <div className="h-screen flex flex-col bg-[#0d0d0d]">
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="p-6 max-w-6xl mx-auto w-full">
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-6 max-w-6xl mx-auto w-full">
                     {/* Breadcrumb Navigation */}
                     <Breadcrumb className="mb-6">
                         <BreadcrumbList>
@@ -116,7 +116,17 @@ export default function PartsPage() {
                             <Button
                                 asChild
                                 variant="outline"
-                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                            >
+                                <Link href="/parts/parts-quote">
+                                    <Package className="h-4 w-4 mr-2" />
+                                    View Quotes
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
                             >
                                 <Link href="/suppliers">
                                     <Building2 className="h-4 w-4 mr-2" />
@@ -124,7 +134,7 @@ export default function PartsPage() {
                                 </Link>
                             </Button>
                             <Button
-                                onClick={() => setShowAddForm(!showAddForm)}
+                                onClick={() => setShowAddForm(true)}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                             >
                                 <Plus className="h-4 w-4 mr-2" />
@@ -133,15 +143,12 @@ export default function PartsPage() {
                         </div>
                     </div>
 
-                    {/* Add Parts Request Form */}
-                    {showAddForm && (
-                        <div className="mb-6">
-                            <PartsIntakeForm
-                                onSuccess={handlePartsRequestAdded}
-                                onCancel={() => setShowAddForm(false)}
-                            />
-                        </div>
-                    )}
+                    {/* Parts Request Modal */}
+                    <PartsRequestModal
+                        open={showAddForm}
+                        onOpenChange={setShowAddForm}
+                        onSuccess={handlePartsRequestAdded}
+                    />
 
                     {/* Parts Requests List */}
                     {loading ? (
@@ -253,6 +260,7 @@ export default function PartsPage() {
                             ))}
                         </div>
                     )}
+                    </div>
                 </div>
             </div>
         </div>

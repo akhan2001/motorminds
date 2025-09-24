@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, Building2, Hash, Type, DollarSign, FileText } from 'lucide-react'
+import { Building2, Hash, Type, DollarSign, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { CreatePartsRequestRequest, PartItem, VehicleInfo, SupplierInfo } from '@/app/(features)/parts/types/parts'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
@@ -207,15 +206,7 @@ export default function PartsIntakeForm({ supplierId, onSuccess, onCancel }: Par
     }
 
     return (
-        <Card className="bg-[#111111] border-[#2a2a2a] max-w-2xl mx-auto">
-            <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Request Parts from Supplier
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Vehicle Information */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
@@ -515,7 +506,5 @@ export default function PartsIntakeForm({ supplierId, onSuccess, onCancel }: Par
                         </Button>
                     </div>
                 </form>
-            </CardContent>
-        </Card>
     )
 }

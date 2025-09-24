@@ -51,17 +51,22 @@ export const navigationConfig: NavItem[] = [
         requiredRoles: ['admin', 'super', 'user']
     },
     {
+        name: "Parts",
+        href: "/parts",
+        requiredRoles: ['user', 'admin', 'super', 'demo']
+    },
+    {
         name: "Customers",
         href: "/customers",
         hasDropdown: true,
         subItems: customerSubItems,
         requiredRoles: ['admin', 'super', 'user']
     },
-    {
-        name: "Suppliers",
-        href: "/suppliers",
-        requiredRoles: ['user', 'admin', 'super', 'demo']
-    },
+    // {
+    //     name: "Suppliers",
+    //     href: "/suppliers",
+    //     requiredRoles: ['user', 'admin', 'super', 'demo']
+    // },
     {
         name: "Mechanics Hub",
         href: "/mechanic-hub",
@@ -69,6 +74,11 @@ export const navigationConfig: NavItem[] = [
         subItems: mechanicHubSubItems,
         requiredRoles: ['admin', 'super', 'user']
     },
+    {
+        name: "Admin",
+        href: "/admin",
+        requiredRoles: ['admin', 'super']
+    }
 ];
 
 // Demo user specific navigation (what they should see)
