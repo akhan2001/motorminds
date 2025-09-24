@@ -14,6 +14,7 @@ import { PartsRequestService } from '@/app/(features)/voice-calling/lib/parts-re
 import { MiaCallingService } from '@/app/(features)/voice-calling/lib/mia-calling-service'
 import QuoteDisplay from '@/app/(features)/voice-calling/components/QuoteDisplay'
 import VapiWebClient from '@/app/(features)/voice-calling/components/VapiWebClient'
+import VapiWidget from '@/app/(features)/voice-calling/components/VapiWidget'
 import { toast } from 'sonner'
 import { 
     VehicleInfo, 

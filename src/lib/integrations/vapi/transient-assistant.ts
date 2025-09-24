@@ -165,6 +165,7 @@ Get a reliable quote for the requested part(s) including:
         },
         firstMessage: firstMessage,
         firstMessageMode: 'assistant-speaks-first',
+        endCallFunctionEnabled: true,
         endCallMessage: 'Thanks for your help. Goodbye.',
         ...(webhookUrl.startsWith('https://') ? { server: { url: webhookUrl } } : {})
     }
