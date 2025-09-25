@@ -1,14 +1,18 @@
 'use client'
 
 import React, { useState } from 'react'
-import { MessageSquare, Lightbulb } from "lucide-react"
+import { Package, Lightbulb, MessageSquare } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { MiaInsightsIntegration } from '@/app/(features)/ai/mia-insights'
+import { WorkOrderItemTemplatesPanel } from '../../work-order-items/templates/work-order-item-templates-panel'
+import { PanelProvider } from '../../../contexts/PanelContext'
+import { ChatPanel } from './chat-panel'
 
 export interface WorkOrderRightPanelProps {
     workOrderId: string
     shopId?: string
     workOrderStatus?: string
+    technicianId?: string
     className?: string
 }
 
@@ -16,21 +20,27 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     workOrderId,
     shopId,
     workOrderStatus,
+    technicianId,
     className = ""
 }) => {
-    const [activeTab, setActiveTab] = useState<'insights' | 'chat'>('insights')
-    
     // Determine if work order is completed (read-only mode)
     const isCompleted = workOrderStatus && 
         ['completed', 'invoiced', 'cancelled'].includes(workOrderStatus.toLowerCase())
+    
+    const [activeTab, setActiveTab] = useState<'insights' | 'templates' | 'chat'>('insights')
 
     return (
         <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
             <div className="p-4 border-b border-[#222222] flex-shrink-0">
-                <h3 className="text-white font-medium text-lg">Mia Insights & Chat</h3>
+                <h3 className="text-white font-medium text-lg">
+                    {isCompleted ? 'Insights & Chat' : 'Insights & Templates'}
+                </h3>
                 <p className="text-gray-400 text-sm mt-1">
-                    AI insights and communication tools
+                    {isCompleted 
+                        ? 'AI insights and team communication' 
+                        : 'AI insights and reusable work order items'
+                    }
                 </p>
             </div>
 
@@ -49,19 +59,35 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                         <span>Insights</span>
                     </div>
                 </button>
-                <button 
-                    onClick={() => setActiveTab('chat')}
-                    className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
-                        activeTab === 'chat' 
-                            ? 'text-white bg-[#1a1a1a] border-blue-500' 
-                            : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a] border-transparent hover:border-gray-600'
-                    }`}
-                >
-                    <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                        <MessageSquare className="h-3 w-3" />
-                        <span>Chat</span>
-                    </div>
-                </button>
+                {!isCompleted ? (
+                    <button 
+                        onClick={() => setActiveTab('templates')}
+                        className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
+                            activeTab === 'templates' 
+                                ? 'text-white bg-[#1a1a1a] border-blue-500' 
+                                : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a] border-transparent hover:border-gray-600'
+                        }`}
+                    >
+                        <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                            <Package className="h-3 w-3" />
+                            <span>Templates</span>
+                        </div>
+                    </button>
+                ) : (
+                    <button 
+                        onClick={() => setActiveTab('chat')}
+                        className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
+                            activeTab === 'chat' 
+                                ? 'text-white bg-[#1a1a1a] border-blue-500' 
+                                : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a] border-transparent hover:border-gray-600'
+                        }`}
+                    >
+                        <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                            <MessageSquare className="h-3 w-3" />
+                            <span>Chat</span>
+                        </div>
+                    </button>
+                )}
             </div>
 
             {/* Content Area - Scrollable */}
@@ -89,17 +115,45 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                     </div>
                 )}
 
-                {activeTab === 'chat' && (
-                    <div className="p-4 space-y-4 font-medium">
-                        <div className="bg-[#1a1a1a] rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <MessageSquare className="h-4 w-4 text-blue-500" />
-                                <span className="text-md font-medium text-white">Communication</span>
+                {activeTab === 'templates' && (
+                    <div className="h-full">
+                        {shopId ? (
+                            <PanelProvider
+                                context="work-order-modal"
+                                allowTemplateActions={true}
+                                allowTemplateSelection={true}
+                            >
+                                <WorkOrderItemTemplatesPanel
+                                    shopId={shopId}
+                                    workOrderId={workOrderId}
+                                    technicianId={technicianId}
+                                    className="h-full"
+                                />
+                            </PanelProvider>
+                        ) : (
+                            <div className="p-4">
+                                <div className="bg-[#1a1a1a] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Package className="h-4 w-4 text-orange-500" />
+                                        <span className="text-md font-medium text-white">Templates</span>
+                                    </div>
+                                    <p className="text-sm text-gray-400">
+                                        Shop ID is required to load templates.
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-400">
-                                Messaging on work orders coming soon...
-                            </p>
-                        </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'chat' && (
+                    <div className="h-full">
+                        <ChatPanel
+                            workOrderId={workOrderId}
+                            shopId={shopId}
+                            workOrderStatus={workOrderStatus}
+                            className="h-full border-none"
+                        />
                     </div>
                 )}
             </div>

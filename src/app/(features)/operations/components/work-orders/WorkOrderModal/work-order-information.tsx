@@ -76,7 +76,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     if (isEditing) {
                                         // Convert to title case and limit to 30 characters
                                         const value = e.target.value
-                                            .slice(0, 30)
+                                            .slice(0, 100)
                                             .toLowerCase()
                                             .replace(/\b\w/g, (char) => char.toUpperCase())
                                         onFieldChange('title', value)
@@ -153,12 +153,12 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Due Date</Label>
+                            <Label className="text-gray-400">Date</Label>
                             <Input
                                 type="date"
                                 value={date}
                                 onChange={(e) => isEditing && onFieldChange('date', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 readOnly={!isEditing}
                             />
                         </div>

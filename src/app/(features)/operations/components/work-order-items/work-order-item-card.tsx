@@ -241,7 +241,7 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                             </p>
                         </div>
 
-                        {/* Actions Menu
+                        {/* Actions Menu */}
                         {isEditable && (
                             <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                                 <DropdownMenuTrigger asChild>
@@ -256,7 +256,12 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                                 <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
                                     {onEdit && (
                                         <DropdownMenuItem 
-                                            onClick={() => onEdit(item)}
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                setIsMenuOpen(false)
+                                                onEdit(item)
+                                            }}
                                             className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
                                         >
                                             <Edit className="h-4 w-4 mr-2" />
@@ -265,7 +270,12 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                                     )}
                                     {onComplete && !isCompleted && (
                                         <DropdownMenuItem 
-                                            onClick={() => onComplete(item.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                setIsMenuOpen(false)
+                                                onComplete(item.id)
+                                            }}
                                             className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
                                         >
                                             <Check className="h-4 w-4 mr-2" />
@@ -275,7 +285,12 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                                     <DropdownMenuSeparator className="bg-[#2a2a2a]" />
                                     {onDelete && (
                                         <DropdownMenuItem 
-                                            onClick={() => onDelete(item.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                setIsMenuOpen(false)
+                                                onDelete(item.id)
+                                            }}
                                             className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                                         >
                                             <Trash2 className="h-4 w-4 mr-2" />
@@ -284,7 +299,7 @@ export const WorkOrderItemCard: React.FC<WorkOrderItemCardProps> = ({
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        )} */}
+                        )}
                     </div>
                 </div>
             </CardContent>

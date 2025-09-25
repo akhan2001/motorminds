@@ -9,7 +9,7 @@ import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Slash } from "lucide-react"
 import Link from 'next/link'
-import PartsIntakeModal from './components/PartsOrdering/PartsIntakeModal'
+import PartsRequestModal from './components/PartsOrdering/PartsRequestModal'
 import { PartsRequest } from '@/app/(features)/parts/types/parts'
 import { toast } from 'sonner'
 
@@ -116,7 +116,17 @@ export default function PartsPage() {
                             <Button
                                 asChild
                                 variant="outline"
-                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                            >
+                                <Link href="/parts/parts-quote">
+                                    <Package className="h-4 w-4 mr-2" />
+                                    View Quotes
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
                             >
                                 <Link href="/suppliers">
                                     <Building2 className="h-4 w-4 mr-2" />
@@ -134,7 +144,7 @@ export default function PartsPage() {
                     </div>
 
                     {/* Parts Request Modal */}
-                    <PartsIntakeModal
+                    <PartsRequestModal
                         open={showAddForm}
                         onOpenChange={setShowAddForm}
                         onSuccess={handlePartsRequestAdded}
