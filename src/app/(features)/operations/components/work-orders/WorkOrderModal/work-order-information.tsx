@@ -84,12 +84,12 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                 }}
                                 className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
-                                maxLength={30}
+                                maxLength={100}
                                 placeholder={isEditing ? "Brief Title for Work Order" : ""}
                             />
                             {isEditing && (
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {title.length}/30 characters
+                                    {title.length}/100 characters
                                 </p>
                             )}
                         </div>

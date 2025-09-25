@@ -18,6 +18,34 @@ import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templ
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import type { WorkOrderItemCreateData } from "../../../types/work-order-items"
 import { PanelProvider } from "../../../contexts"
+import { Input } from "@/components/ui/input"
+import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
+import { WorkOrderPartsItems } from "../WorkOrderPartsItems"
+
+// Define the LaborFormItem interface locally to match the component
+interface LaborFormItem {
+    id: string;
+    description: string;
+    labor_hours: number;
+    unit_price: number;
+    total_price: number;
+    notes?: string;
+    technician_id?: string;
+}
+
+// Define the PartFormItem interface locally to match the component
+interface PartFormItem {
+    id: string;
+    description: string;
+    part_number?: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    supplier?: string;
+    category?: string;
+    warranty_period?: string;
+    notes?: string;
+}
 
 export interface WorkOrderCreateModalProps {
     onClose: () => void
@@ -59,6 +87,12 @@ interface NewWorkOrderFormData {
     partsCost: string
     totalCost: string
     notes: string
+    
+    // Labor items
+    laborItems: LaborFormItem[]
+    
+    // Parts items
+    partsItems: PartFormItem[]
 }
 
 interface SelectedTemplate extends WorkOrderItemTemplate {
@@ -77,6 +111,13 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [currentStep, setCurrentStep] = useState(1) // Track current step (1, 2, 3)
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
+    
+    // Mock technician options (replace with actual data fetching if needed)
+    const technicianOptions = [
+        { id: 'tech-1', name: 'John Smith' },
+        { id: 'tech-2', name: 'Jane Doe' },
+        { id: 'tech-3', name: 'Mike Johnson' },
+    ]
     
     // Form state for new work order
     const [formData, setFormData] = useState<NewWorkOrderFormData>({
@@ -112,6 +153,12 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         partsCost: "0.00",
         totalCost: "0.00",
         notes: "",
+        
+        // Labor items
+        laborItems: [],
+        
+        // Parts items
+        partsItems: [],
     })
 
     // Calculate total cost when labor or parts change
@@ -175,6 +222,32 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             ...prev,
             tags: prev.tags.filter(tag => tag !== tagToRemove)
         }))
+    }
+
+    // Labor items handlers
+    const handleLaborItemsChange = (items: LaborFormItem[]) => {
+        setFormData(prev => ({
+            ...prev,
+            laborItems: items
+        }))
+    }
+
+    const handleLaborItemSaved = (item: any) => {
+        // Handle successful save of individual labor item
+        toast.success(`Labor item "${item.description}" saved successfully`)
+    }
+
+    // Parts items handlers
+    const handlePartsItemsChange = (items: PartFormItem[]) => {
+        setFormData(prev => ({
+            ...prev,
+            partsItems: items
+        }))
+    }
+
+    const handlePartItemSaved = (item: any) => {
+        // Handle successful save of individual part item
+        toast.success(`Part item "${item.description}" saved successfully`)
     }
 
     // Template selection handlers
@@ -253,6 +326,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 totalCost: parseFloat(formData.totalCost) || 0,
                 notes: formData.notes,
                 selectedTemplates: selectedTemplates, // Include selected templates
+                laborItems: formData.laborItems, // Include labor items
+                partsItems: formData.partsItems, // Include parts items
             }
 
             await onSave?.(workOrderData)
@@ -376,6 +451,27 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 />
                                             </div>
                                         )}
+
+                                        {/* Labor Items */}
+                                        <div className="transition-opacity duration-200">
+                                            <WorkOrderLaborItems
+                                                items={formData.laborItems}
+                                                onItemsChange={handleLaborItemsChange}
+                                                workOrderId={undefined} // No workOrderId for creation - save buttons won't show
+                                                technicianOptions={technicianOptions}
+                                                onItemSaved={handleLaborItemSaved}
+                                            />
+                                        </div>
+
+                                        {/* Parts Items */}
+                                        <div className="transition-opacity duration-200 mt-6">
+                                            <WorkOrderPartsItems
+                                                items={formData.partsItems}
+                                                onItemsChange={handlePartsItemsChange}
+                                                workOrderId={undefined} // No workOrderId for creation - save buttons won't show
+                                                onItemSaved={handlePartItemSaved}
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Optional Sections - Available after Step 3 is complete */}
