@@ -83,16 +83,28 @@ export default function CustomerPage() {
                 
                 // Get work orders
                 const { data: workOrderData } = await supabase
-                    .from('repair_orders')
+                    .from('work_orders')
                     .select(`
                         *,
-                        repair_order_details(*),
-                        customer_vehicles(year, make, model)
+                        customer_vehicles(year, make, model),
+                        employees(first_name, last_name)
                     `)
                     .eq('customer_id', params?.customerId || '')
                     .order('created_at', { ascending: false })
                 
                 setWorkOrders(workOrderData || [])
+                
+                // Get invoices
+                const { data: invoiceData } = await supabase
+                    .from('invoices')
+                    .select(`
+                        *,
+                        customers(customer_name)
+                    `)
+                    .eq('customer_id', params?.customerId || '')
+                    .order('created_at', { ascending: false })
+                
+                setInvoices(invoiceData || [])
                 
             } catch (error) {
                 console.error('Error fetching customer data:', error)
@@ -132,7 +144,7 @@ export default function CustomerPage() {
     if (isLoading || !customer) {
         return (
             <div className="flex flex-col min-h-screen bg-black text-white">
-                <Nav activeLink="Customers" />
+                <Nav />
                 <main className="flex items-center justify-center flex-grow">
                     <div className="animate-pulse">Loading customer profile...</div>
                 </main>
@@ -142,7 +154,7 @@ export default function CustomerPage() {
     
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
-            <Nav activeLink="Customers" />
+            <Nav />
             {/* Main Content */}
             <main className="flex-grow container mx-auto px-4 py-6 mb-16 md:mb-0 max-w-[1300px]">
 
@@ -259,7 +271,7 @@ export default function CustomerPage() {
 
                     {/* Work Order History Tab */}
                     <TabsContent value="history" className="mt-6" id="history">
-                        <CustomerHistoryCard workOrders={workOrders} />
+                        <CustomerHistoryCard workOrders={workOrders} shopId={shopId || ''} />
                     </TabsContent>
 
                     {/* Messages Tab */}
