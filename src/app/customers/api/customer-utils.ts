@@ -240,8 +240,7 @@ export async function createCustomerVehicle(customerId: string, vehicleData: any
                 model: vehicleData.model,
                 color: vehicleData.color || null,
                 vin: vehicleData.vin || null,
-                engine_type: vehicleData.engine || null,
-                created_at: new Date().toISOString()
+                engine_type: vehicleData.engine || null
             })
             .select()
             .single();
@@ -261,7 +260,7 @@ export async function createCustomerVehicle(customerId: string, vehicleData: any
 export async function deleteCustomerVehicle(vehicleId: string) {
     const isInUse = await checkVehicleInUse(vehicleId);
     if (isInUse) {
-        throw new Error('Vehicle is in use');
+        throw new Error('Vehicle is currently in an open work order. Please close the work order before deleting the vehicle.');
     }
 
     const { error } = await supabase
@@ -275,7 +274,7 @@ export async function deleteCustomerVehicle(vehicleId: string) {
 
 export async function checkVehicleInUse(vehicleId: string) {
     const { data, error } = await supabase
-        .from('repair_orders')
+        .from('work_orders')
         .select('*')
         .eq('vehicle_id', vehicleId);
     
