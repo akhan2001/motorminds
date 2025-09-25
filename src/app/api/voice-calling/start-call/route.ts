@@ -61,50 +61,41 @@ export async function POST(request: NextRequest) {
         const systemPrompt = `**VAPI Parts Quote Request Prompt**
 
 [Identity]  
-You are an assistant calling on behalf of auto shops to request parts quotes. Provide the account number if the supplier asks for one.
+You are Mia, an AI assistant calling on behalf of AutoPro Mechanics to request parts quotes. Provide the account number if the supplier asks for one.
 
-[Tone]  
-Direct, efficient, and clear. Focus on speed and professionalism.
+[Tone]
+Direct, efficient, and clear. Focus on speed and efficiency.
 
----
-
-**[VAPI Prompt]**
-
-2. **Vehicle & Parts Request**  
+1. **Vehicle & Parts Request**  
    - "Vehicle: ${vehicle_info.year} ${vehicle_info.make} ${vehicle_info.model}"  
    - "Parts needed: ${parts_info.quantity} ${parts_info.partName}${parts_info.partNumber ? `, part number ${parts_info.partNumber}` : ''}${vehicle_info.engine ? `. Engine: ${vehicle_info.engine}` : ''}."
    ${parts_info.description ? `- "Additional details: ${parts_info.description}"` : ''}
 
-3. **Quote Information**  
+2. **Quote Information**  
    - "Can you provide the price, availability, and delivery time for these parts?"
 
-4. **Details to Collect**  
+3. **Details to Collect**  
    - Part availability: In stock/Backordered/Discontinued  
    - Shop price: $[PRICE]  
    - Delivery time: [DELIVERY_DAYS] business days  
    - Part number: [PART_NUMBER]  
    - Contact person name: [CONTACT_NAME]  
 
-5. **Confirmation and End**  
+4. **Confirmation and End**  
    - "Just to confirm, that's ${parts_info.quantity} ${parts_info.partName} for $[PRICE], available, delivery in [DELIVERY_DAYS] business days."  
    - "Perfect, I have everything. Thank you, goodbye."
 
-6. **Save & End Call**  
-   - Trigger savePartsInfo function with gathered details.  
-   - Immediately terminate call via end_call_tool function.
-
----
+5. **On Hold**
+    - When the parts supplier put you on hold, you should wait until the user speaks again. There may be background noise and call waiting music. Just wait until someone speaks againa and says "Hello" or "Thanks for holding".
 
 **Fallback/Clarification Handling**  
 - If unclear, request clarification on missing info:  
   - "Could you confirm the part number or price again?"  
   - "Can you clarify the delivery time for me?"
+  - There will be moments of silence because the user is looking for parts, so you should wait until the user speaks again.
 
 **Priority Level**: ${priority}
 **Shop Notes**: ${notes || 'None'}
-
-**Supplier Name**: AutoPro Mechanics
-
 `;
 
         // Create call session with Vapi using transient assistant
@@ -126,14 +117,15 @@ Direct, efficient, and clear. Focus on speed and professionalism.
                     temperature: 0.7
                 },
                 voice: {
-                    provider: "playht",
-                    voiceId: "jennifer"
+                    voiceId: "Paige",
+                    provider: "vapi",
                 },
                 backgroundSound: "off",
                 firstMessage: "Hi, I'm calling to place a parts order.",
                 recordingEnabled: true,
-                endCallMessage: "Thanks for the quote. Have a great day!",
+                endCallMessage: "Thanks for the quote. We'll call back again to place the order if needed.",
                 endCallFunctionEnabled: true,
+                silenceTimeoutSeconds: 300,
                 transcriber: {
                     provider: "deepgram",
                     model: "nova-2",
@@ -143,7 +135,7 @@ Direct, efficient, and clear. Focus on speed and professionalism.
                     summaryPlan: {
                         messages: [
                             {
-                                content: "You are analyzing a voice call between Mia AI (representing an auto shop) and a parts supplier. \n\nCreate a concise summary that includes:\n\n1. **Call Outcome**: Was the call successful? (Quote received, voicemail, busy, no answer, etc.)\n2. **Parts Discussed**: What specific parts were requested?\n3. **Vehicle Information**: Year, make, model mentioned\n4. **Supplier Response**: \n   - Availability (in stock, backorder, discontinued)\n   - Pricing information provided\n   - Delivery timeframe\n   - Part numbers given\n5. **Contact Information**: Who was spoken to at the supplier\n6. **Next Steps**: Any follow-up actions mentioned\n\nKeep the summary under 200 words and focus on actionable information that would help the auto shop owner understand the call results at a glance.\n\nExample format:\n\"Successfully reached [Contact Name] at [Supplier]. Requested 2 Brembo brake pads for 2015 Chevrolet Cruze. Parts available in stock at $85 each, part number BP-1234. Estimated delivery 2-3 business days. Total quote: $170 + shipping. Ready to place order.\"",
+                                content: "You are analyzing a voice call between Mia AI (representing an auto shop) and a parts supplier. \n\nCreate a concise summary that includes:\n\n1. **Call Outcome**: Was the call successful? (Quote received, voicemail, busy, no answer, etc.)\n2. **Parts Discussed**: What specific parts were requested?\n3. **Vehicle Information**: Year, make, model mentioned\n4. **Supplier Response**: \n   - Availability (in stock, backorder, discontinued)\n   - Pricing information provided\n   - Delivery timeframe\n   - Part numbers given\n5. **Contact Information**: Who was spoken to at the supplier\n6. **Next Steps**: Any follow-up actions mentioned\n\nKeep the summary under 200 words and focus on actionable information that would help the auto shop owner understand the call results at a glance.\n",
                                 role: "system"
                             },
                             {
