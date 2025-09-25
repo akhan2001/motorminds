@@ -84,12 +84,12 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                 }}
                                 className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
-                                maxLength={30}
+                                maxLength={100}
                                 placeholder={isEditing ? "Brief Title for Work Order" : ""}
                             />
                             {isEditing && (
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {title.length}/30 characters
+                                    {title.length}/100 characters
                                 </p>
                             )}
                         </div>
@@ -153,12 +153,12 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Due Date</Label>
+                            <Label className="text-gray-400">Date</Label>
                             <Input
                                 type="date"
                                 value={date}
                                 onChange={(e) => isEditing && onFieldChange('date', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 readOnly={!isEditing}
                             />
                         </div>

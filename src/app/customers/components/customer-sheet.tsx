@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
 import { updateCustomer, deleteCustomer, deleteCustomerVehicle, sendEmail } from "../api/customer-utils"
+import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
@@ -51,6 +52,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     });
     const [isAddingVehicle, setIsAddingVehicle] = useState(false);
     const [isDeletingVehicle, setIsDeletingVehicle] = useState<string | null>(null);
+    const [editingVehicle, setEditingVehicle] = useState<any>(null);
     const [newVehicle, setNewVehicle] = useState({
         year: "",
         make: "",
@@ -92,6 +94,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
             setIsEditing(false);
             setIsDeleting(false);
             setIsDeletingVehicle(null);
+            setEditingVehicle(null);
         }
         onOpenChange(open);
     };
@@ -99,7 +102,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     const handleAddVehicle = async (vehicle: Vehicle) => {
         try {
             const addedVehicle = await createCustomerVehicle(customer.id, {
-                year: vehicle.year,
+                year: parseInt(vehicle.year),
                 make: vehicle.make,
                 model: vehicle.model,
                 color: vehicle.color || null,
@@ -123,6 +126,50 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 toast.error("Error adding vehicle");
             }
             console.error("Error adding vehicle:", error);
+        }
+    };
+
+    const handleEditVehicle = async (vehicleData: Vehicle) => {
+        try {
+            console.log("Updating vehicle:", editingVehicle.id, vehicleData);
+            
+            const { data, error } = await supabase
+                .from('customer_vehicles')
+                .update({
+                    year: parseInt(vehicleData.year),
+                    make: vehicleData.make,
+                    model: vehicleData.model,
+                    color: vehicleData.color || null,
+                    vin: vehicleData.vin || null,
+                    engine_type: vehicleData.engine || null
+                })
+                .eq('id', editingVehicle.id)
+                .select()
+                .single();
+
+            console.log("Update result:", { data, error });
+
+            if (error) {
+                console.error("Supabase error:", error);
+                throw new Error(error.message || 'Failed to update vehicle');
+            }
+
+            if (data) {
+                toast.success("Vehicle updated successfully");
+                setEditingVehicle(null);
+                // Refresh vehicles list
+                const vehicles = await getCustomerVehicles(customer.id);
+                setCustomerVehicles(vehicles);
+            } else {
+                toast.error("No data returned from update");
+            }
+        } catch (error) {
+            console.error("Error updating vehicle:", error);
+            if (error instanceof Error) {
+                toast.error(`Error updating vehicle: ${error.message}`);
+            } else {
+                toast.error("An unexpected error occurred while updating the vehicle");
+            }
         }
     };
 
@@ -212,14 +259,19 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 toast.error("Failed to delete vehicle");
             }
         } catch (error) {
-            if (error instanceof Error && error.message === 'Vehicle is in use') {
-                toast.error("Vehicle is currently in an open work order. Please close the work order before deleting the vehicle.");
-            } else {
-                toast.error("Error deleting vehicle");
-            }
             console.error("Error deleting vehicle:", error);
+            if (error instanceof Error) {
+                if (error.message.includes('Vehicle is currently in an open work order')) {
+                    toast.error(error.message);
+                } else {
+                    toast.error(`Error deleting vehicle: ${error.message}`);
+                }
+            } else {
+                toast.error("An unexpected error occurred while deleting the vehicle");
+            }
+        } finally {
+            setIsDeletingVehicle(null);
         }
-        setIsDeletingVehicle(null);
     };
 
     const openSendEmailDialog = (email: string) => {
@@ -326,28 +378,84 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
                         <Separator className="bg-[#666]"/>
 
-                        <h2 className="text-lg font-semibold text-gray-300">Customer Vehicles</h2>                        
-                        {customerVehicles.map((vehicle) => (
-                            <Card 
-                                key={vehicle.id} 
-                                className="bg-[#292929] border-[#626262] text-white mb-1"
-                            >
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-                                    <CardTitle className="text-md font-semibold flex items-center gap-2">
-                                        <Car className="w-4 h-4" />
-                                        {vehicle.year} {vehicle.make} {vehicle.model}
-                                    </CardTitle>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-500/10"
-                                        onClick={() => setIsDeletingVehicle(vehicle.id)}
-                                    >
-                                        <Minus className="h-4 w-4" />
-                                    </Button>
-                                </CardHeader>
-                            </Card>
-                        ))}
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-300">Customer Vehicles</h2>
+                            <span className="text-sm text-gray-400">{customerVehicles.length} vehicle{customerVehicles.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        
+                        {customerVehicles.length === 0 ? (
+                            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 text-center">
+                                <Car className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                                <h3 className="text-lg font-medium text-gray-300 mb-2">No Vehicles Added</h3>
+                                <p className="text-gray-400 text-sm mb-4">Add a vehicle to get started with work orders and service history.</p>
+                            </div>
+                        ) : (
+                            customerVehicles.map((vehicle) => (
+                                <Card 
+                                    key={vehicle.id} 
+                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white mb-3 hover:border-[#3a3a3a] transition-colors"
+                                >
+                                    <CardHeader className="pb-4">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <CardTitle className="text-lg font-semibold flex items-center gap-2 mb-2">
+                                                    <Car className="w-5 h-5 text-blue-400" />
+                                                    {vehicle.year} {vehicle.make} {vehicle.model}
+                                                </CardTitle>
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    {vehicle.color && (
+                                                        <div className="flex items-center gap-2">
+                                                            <div 
+                                                                className="w-3 h-3 rounded-full border border-gray-500"
+                                                                style={{ backgroundColor: vehicle.color.toLowerCase() }}
+                                                            />
+                                                            <span className="text-gray-300">{vehicle.color}</span>
+                                                        </div>
+                                                    )}
+                                                    {vehicle.vin && (
+                                                        <div className="text-gray-400">
+                                                            <span className="text-gray-500">VIN:</span> {vehicle.vin.slice(-6)}
+                                                        </div>
+                                                    )}
+                                                    {vehicle.engine_type && (
+                                                        <div className="text-gray-400">
+                                                            <span className="text-gray-500">Engine:</span> {vehicle.engine_type}
+                                                        </div>
+                                                    )}
+                                                    <div className="text-gray-400">
+                                                        <span className="text-gray-500">Added:</span> {new Date(vehicle.created_at).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 ml-4">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
+                                                    onClick={() => setEditingVehicle(vehicle)}
+                                                    title="Edit vehicle"
+                                                >
+                                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+                                                    onClick={() => setIsDeletingVehicle(vehicle.id)}
+                                                    title="Delete vehicle"
+                                                >
+                                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                </Card>
+                            ))
+                        )}
 
                         <Button
                             variant="outline"
@@ -403,6 +511,23 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                 onOpenChange={setIsAddingVehicle}
                 onAddVehicle={handleAddVehicle}
             />
+
+            {editingVehicle && (
+                <CustomerVehicleDialog
+                    isOpen={!!editingVehicle}
+                    onOpenChange={(open) => !open && setEditingVehicle(null)}
+                    onAddVehicle={handleEditVehicle}
+                    initialData={{
+                        year: editingVehicle.year || "",
+                        make: editingVehicle.make || "",
+                        model: editingVehicle.model || "",
+                        color: editingVehicle.color || "",
+                        vin: editingVehicle.vin || "",
+                        engine: editingVehicle.engine_type || ""
+                    }}
+                    isEditing={true}
+                />
+            )}
 
             <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
                 <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">

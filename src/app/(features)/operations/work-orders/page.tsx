@@ -16,6 +16,7 @@ import type { WorkOrderItemCreateData } from "../types/work-order-items";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 // Helper function to create work order items from selected templates
 async function createWorkOrderItemsFromTemplates(workOrderId: string, selectedTemplates: any[]) {
@@ -34,6 +35,48 @@ async function createWorkOrderItemsFromTemplates(workOrderId: string, selectedTe
             notes: template.description, // Use template description as notes
             labor_hours: template.selectedLaborHours || template.labor_hours,
             technician_id: template.selectedTechnicianId,
+        }
+        
+        return WorkOrderItemsService.createWorkOrderItem(itemData)
+    })
+    
+    return Promise.all(itemPromises)
+}
+
+// Helper function to create work order items from labor items
+async function createWorkOrderItemsFromLaborItems(workOrderId: string, laborItems: any[]) {
+    const itemPromises = laborItems.map(async (item) => {
+        const itemData: WorkOrderItemCreateData = {
+            work_order_id: workOrderId,
+            item_type: 'labor' as const,
+            description: item.description,
+            quantity: 1, // Labor items typically have quantity of 1
+            unit_price: item.unit_price,
+            labor_hours: item.labor_hours,
+            notes: item.notes,
+            technician_id: item.technician_id,
+        }
+        
+        return WorkOrderItemsService.createWorkOrderItem(itemData)
+    })
+    
+    return Promise.all(itemPromises)
+}
+
+// Helper function to create work order items from parts items
+async function createWorkOrderItemsFromPartsItems(workOrderId: string, partsItems: any[]) {
+    const itemPromises = partsItems.map(async (item) => {
+        const itemData: WorkOrderItemCreateData = {
+            work_order_id: workOrderId,
+            item_type: 'part' as const,
+            description: item.description,
+            part_number: item.part_number,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            supplier: item.supplier,
+            category: item.category,
+            warranty_period: item.warranty_period,
+            notes: item.notes,
         }
         
         return WorkOrderItemsService.createWorkOrderItem(itemData)
@@ -283,17 +326,48 @@ function WorkOrdersContent() {
             console.log('Creating work order with payload:', payload)
             const newWorkOrder = await createWorkOrderMutation.mutateAsync(payload)
             
+            // Track total items created for user feedback
+            let totalItemsCreated = 0
+
             // Create work order items from selected templates
             if (workOrderData.selectedTemplates && workOrderData.selectedTemplates.length > 0) {
                 try {
                     await createWorkOrderItemsFromTemplates(newWorkOrder.id, workOrderData.selectedTemplates)
+                    totalItemsCreated += workOrderData.selectedTemplates.length
                 } catch (error) {
                     console.error('Failed to create work order items from templates:', error)
                     // Don't fail the entire operation if items creation fails
                 }
             }
-            
+
+            // Create work order items from labor items
+            if (workOrderData.laborItems && workOrderData.laborItems.length > 0) {
+                try {
+                    await createWorkOrderItemsFromLaborItems(newWorkOrder.id, workOrderData.laborItems)
+                    totalItemsCreated += workOrderData.laborItems.length
+                } catch (error) {
+                    console.error('Failed to create work order items from labor items:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+
+            // Create work order items from parts items
+            if (workOrderData.partsItems && workOrderData.partsItems.length > 0) {
+                try {
+                    await createWorkOrderItemsFromPartsItems(newWorkOrder.id, workOrderData.partsItems)
+                    totalItemsCreated += workOrderData.partsItems.length
+                } catch (error) {
+                    console.error('Failed to create work order items from parts items:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+
             setIsCreateModalOpen(false)
+            
+            // Show success message with items count
+            if (totalItemsCreated > 0) {
+                toast.success(`Work order created with ${totalItemsCreated} items`)
+            }
         } catch (error) {
             console.error('Failed to create work order:', error)
             // Error handling is done in the mutation hook

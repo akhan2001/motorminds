@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { SearchIcon } from "lucide-react";
 import { decodeVin } from '@/app/utils/vin-decode';
@@ -13,6 +13,8 @@ interface CustomerVehicleDialogProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     onAddVehicle: (vehicle: Vehicle) => void;
+    initialData?: Vehicle;
+    isEditing?: boolean;
 }
 
 interface Vehicle {
@@ -24,16 +26,34 @@ interface Vehicle {
     engine: string;
 }
 
-export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: CustomerVehicleDialogProps) {
-    const [newVehicle, setNewVehicle] = useState<Vehicle>({
-        year: "",
-        make: "",
-        model: "",
-        color: "",
-        vin: "",
-        engine: "",
-    });
+export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle, initialData, isEditing = false }: CustomerVehicleDialogProps) {
+    const [newVehicle, setNewVehicle] = useState<Vehicle>(
+        initialData || {
+            year: "",
+            make: "",
+            model: "",
+            color: "",
+            vin: "",
+            engine: "",
+        }
+    );
     const YEARS = Array.from({ length: new Date().getFullYear() - 1960 }, (_, i) => new Date().getFullYear() - i);
+
+    // Reset form when dialog opens/closes or when initialData changes
+    useEffect(() => {
+        if (isOpen && initialData) {
+            setNewVehicle(initialData);
+        } else if (!isOpen && !isEditing) {
+            setNewVehicle({
+                year: "",
+                make: "",
+                model: "",
+                color: "",
+                vin: "",
+                engine: "",
+            });
+        }
+    }, [isOpen, initialData, isEditing]);
 
     const handleAddVehicle = () => {
         // Validate required fields
@@ -51,14 +71,16 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
         }
 
         onAddVehicle(newVehicle);
-        setNewVehicle({
-            year: "",
-            make: "",
-            model: "",
-            color: "",
-            vin: "",
-            engine: "",
-        });
+        if (!isEditing) {
+            setNewVehicle({
+                year: "",
+                make: "",
+                model: "",
+                color: "",
+                vin: "",
+                engine: "",
+            });
+        }
         onOpenChange(false);
     };
 
@@ -83,9 +105,9 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="bg-[#131313] text-white border border-[#222]">
                     <DialogHeader>
-                        <DialogTitle>Add New Vehicle</DialogTitle>
+                        <DialogTitle>{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
                         <DialogDescription className="text-gray-400">
-                            Add a new vehicle to the customer's profile
+                            {isEditing ? 'Update vehicle information' : 'Add a new vehicle to the customer\'s profile'}
                         </DialogDescription>
                     </DialogHeader>
                     
@@ -203,7 +225,7 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle }: Cu
                             className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
                             onClick={handleAddVehicle}
                         >
-                            Add Vehicle
+                            {isEditing ? 'Save Changes' : 'Add Vehicle'}
                         </Button>
                     </DialogFooter>
             </DialogContent>

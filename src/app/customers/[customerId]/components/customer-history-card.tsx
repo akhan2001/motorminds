@@ -5,7 +5,6 @@ import { History, Wrench, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/app/invoices/utils/invoice-utils";
-import { openRepairOrder } from "@/app/mechanic-hub/util/mechanics-hub-utils";
 import { useState } from "react";
 import { TaskDetailsModal } from "@/components/task-details-modal";
 import { supabase } from "@/lib/supabase";
@@ -20,39 +19,40 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
     const [selectedTask, setSelectedTask] = useState<any>(null);
 
     const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'In Progress':
+        switch (status?.toLowerCase()) {
+            case 'in_progress':
+            case 'in progress':
                 return 'bg-yellow-500';
-            case 'Completed':
+            case 'completed':
                 return 'bg-green-500';
-            case 'Pending':
+            case 'pending':
                 return 'bg-red-500';
-            default:
+            case 'cancelled':
                 return 'bg-gray-500';
+            default:
+                return 'bg-blue-500';
         }
     }
 
     async function handleViewDetails(orderId: string) {
         try {
-            // First update the status to "open" (keeping the existing functionality)
-            await openRepairOrder(orderId);
-            
-            // Then fetch the full task details
+            // Fetch the full work order details
             const { data, error } = await supabase
-                .from("repair_orders")
+                .from("work_orders")
                 .select(`
                     *,
-                    repair_order_details(*),
                     customers(
                         *,
                         customer_vehicles(*)
-                    )
+                    ),
+                    customer_vehicles(*),
+                    employees(first_name, last_name)
                 `)
                 .eq("id", orderId)
                 .single();
 
             if (error) {
-                console.error("Error fetching task details:", error);
+                console.error("Error fetching work order details:", error);
                 return;
             }
             
@@ -66,37 +66,25 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
 
     async function handleSaveTask(updated: any) {
         try {
-            // 1) update status in "repair_orders"
+            // Update work order
             const { error: mainErr } = await supabase
-                .from("repair_orders")
-                .update({ status: updated.status })
+                .from("work_orders")
+                .update({ 
+                    status: updated.status,
+                    title: updated.title,
+                    description: updated.description,
+                    notes: updated.notes,
+                    priority: updated.priority,
+                    updated_at: new Date().toISOString()
+                })
                 .eq("id", updated.id);
             
             if (mainErr) throw mainErr;
 
-            // 2) update first detail
-            const detail = updated.repair_order_details?.[0];
-            if (detail?.id) {
-                const { error: detailErr } = await supabase
-                    .from("repair_order_details")
-                    .update({
-                        labour: detail.labour,
-                        parts: detail.parts,
-                        notes: detail.notes,
-                        cost: detail.cost,
-                        mileage: detail.mileage,
-                        description: detail.description,
-                        task_priority: detail.task_priority,
-                    })
-                    .eq("id", detail.id);
-                
-                if (detailErr) throw detailErr;
-            }
-
             // Close the modal
             setSelectedTask(null);
         } catch (err) {
-            console.error("Error saving task:", err);
+            console.error("Error saving work order:", err);
         }
     }
 
@@ -108,42 +96,108 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
         <div className="space-y-4">
             {workOrders.length > 0 ? (
                 workOrders.map((order) => (
-                    <Card key={order.id} className="bg-[#1A1A1A] border-[#333] text-white overflow-hidden">
+                    <Card key={order.id} className="bg-[#1A1A1A] border-[#333] text-white overflow-hidden hover:border-[#444] transition-colors">
                         <div className={`h-1 ${getStatusColor(order.status)}`}></div>
-                        <CardHeader className="pb-3">
+                        <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg flex items-center">
-                                        <Wrench className="h-4 w-4 mr-2" />
-                                        {order.repair_order_details?.[0]?.description || 'Work Order'}
+                                <div className="flex-1">
+                                    <CardTitle className="text-lg flex items-center mb-2">
+                                        <Wrench className="h-5 w-5 mr-2 text-blue-400" />
+                                        {order.title || 'Work Order'}
                                     </CardTitle>
-                                    <CardDescription className="mt-1 text-gray-400">
-                                        {order.customer_vehicles?.[0]?.year} {order.customer_vehicles?.[0]?.make} {order.customer_vehicles?.[0]?.model}
+                                    <CardDescription className="text-gray-300 mb-2">
+                                        {order.customer_vehicles?.year} {order.customer_vehicles?.make} {order.customer_vehicles?.model}
                                     </CardDescription>
+                                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-gray-500">Created:</span>
+                                            <span>{formatDate(order.created_at)}</span>
+                                        </div>
+                                        {order.completed_at && (
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-gray-500">Completed:</span>
+                                                <span>{formatDate(order.completed_at)}</span>
+                                            </div>
+                                        )}
+                                        {order.work_order_number && (
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-gray-500">Order #:</span>
+                                                <span>{order.work_order_number}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <Badge className={getStatusColor(order.status).replace('bg-', 'bg-opacity-20 text-').replace('500', '400')}>
-                                    {order.status}
-                                </Badge>
+                                <div className="flex flex-col items-end gap-2">
+                                    <Badge className={`${getStatusColor(order.status).replace('bg-', 'bg-opacity-20 text-').replace('500', '400')} border-0 px-3 py-1`}>
+                                        {order.status}
+                                    </Badge>
+                                    {order.priority && (
+                                        <div className="text-right">
+                                            <div className="text-xs text-gray-500">Priority</div>
+                                            <div className="text-sm font-semibold text-orange-400 capitalize">
+                                                {order.priority}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent className="py-0">
-                            <div className="text-sm text-gray-400">
-                                <div className="flex justify-between mb-1">
-                                    <span>Created:</span>
-                                    <span>{formatDate(order.created_at)}</span>
+                            {order.description && (
+                                <div className="bg-[#0f0f0f] rounded-md p-3 mb-3">
+                                    <div className="text-xs text-gray-500 mb-1">Description:</div>
+                                    <div className="text-sm text-gray-300 line-clamp-2">
+                                        {order.description}
+                                    </div>
                                 </div>
-                                {order.completed_at && (
-                                    <div className="flex justify-between">
-                                        <span>Completed:</span>
-                                        <span>{formatDate(order.completed_at)}</span>
+                            )}
+                            {order.notes && (
+                                <div className="bg-[#0f0f0f] rounded-md p-3 mb-3">
+                                    <div className="text-xs text-gray-500 mb-1">Notes:</div>
+                                    <div className="text-sm text-gray-300 line-clamp-2">
+                                        {order.notes}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                {order.assigned_technician_id && order.employees && (
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Technician</div>
+                                        <div className="text-gray-300">
+                                            {order.employees.first_name} {order.employees.last_name}
+                                        </div>
+                                    </div>
+                                )}
+                                {order.started_at && (
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Started</div>
+                                        <div className="text-gray-300">{formatDate(order.started_at)}</div>
+                                    </div>
+                                )}
+                                {order.tags && order.tags.length > 0 && (
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Tags</div>
+                                        <div className="text-gray-300">
+                                            {order.tags.map((tag: string, index: number) => (
+                                                <span key={index} className="inline-block bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs mr-1 mb-1">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {order.attachments && order.attachments.length > 0 && (
+                                    <div>
+                                        <div className="text-gray-500 text-xs">Attachments</div>
+                                        <div className="text-gray-300">{order.attachments.length} file(s)</div>
                                     </div>
                                 )}
                             </div>
                         </CardContent>
-                        <CardFooter className="border-t border-[#333] mt-3 pt-3">
+                        <CardFooter className="border-t border-[#333] pt-4">
                             <Button 
-                                variant="ghost" 
-                                className="text-gray-300 hover:text-white hover:bg-[#292929] w-full"
+                                variant="outline" 
+                                className="border border-[#444] text-gray-300 hover:bg-[#333] hover:text-white w-full"
                                 onClick={() => handleViewDetails(order.id)}
                             >
                                 View Details

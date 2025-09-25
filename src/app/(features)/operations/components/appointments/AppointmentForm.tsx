@@ -90,7 +90,7 @@ export function AppointmentForm({
         appointmentDate: selectedDate || format(new Date(), 'yyyy-MM-dd'),
         startTime: selectedTime || '',
         endTime: '',
-        serviceType: '',
+        serviceType: [] as string[],
         notes: '',
     })
 
@@ -158,6 +158,25 @@ export function AppointmentForm({
         }
     }
 
+    // Handle service type multi-select
+    const handleServiceTypeToggle = (serviceType: string) => {
+        setFormData(prev => {
+            const currentServices = prev.serviceType as string[]
+            const isSelected = currentServices.includes(serviceType)
+            
+            const updatedServices = isSelected
+                ? currentServices.filter(service => service !== serviceType)
+                : [...currentServices, serviceType]
+            
+            return { ...prev, serviceType: updatedServices }
+        })
+        
+        // Clear field error when user makes selection
+        if (errors.serviceType) {
+            setErrors(prev => ({ ...prev, serviceType: '' }))
+        }
+    }
+
     // Handle customer selection
     const handleCustomerSelect = (customerId: string, customerData?: any) => {
         if (customerId === "new") {
@@ -218,7 +237,7 @@ export function AppointmentForm({
         // Required appointment fields
         if (!formData.appointmentDate) newErrors.appointmentDate = 'Date is required'
         if (!formData.startTime) newErrors.startTime = 'Start time is required'
-        if (!formData.serviceType) newErrors.serviceType = 'Service type is required'
+        if (!formData.serviceType || formData.serviceType.length === 0) newErrors.serviceType = 'At least one service type is required'
         
         // Customer validation
         if (!selectedCustomerId && !showNewCustomerForm) {
@@ -306,7 +325,7 @@ export function AppointmentForm({
                 appointment_date: formData.appointmentDate,
                 start_time: formData.startTime,
                 end_time: formData.endTime,
-                service_type: formData.serviceType,
+                service_type: formData.serviceType.join(', '),
                 notes: formData.notes || undefined,
                 status: 'scheduled',
                 created_by_customer: false,
@@ -429,7 +448,7 @@ export function AppointmentForm({
                                     type="date"
                                     value={formData.appointmentDate}
                                     onChange={(e) => handleInputChange('appointmentDate', e.target.value)}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 />
                                 {errors.appointmentDate && (
                                     <p className="text-red-400 text-xs mt-1">{errors.appointmentDate}</p>
@@ -439,15 +458,33 @@ export function AppointmentForm({
                             {/* Service Type */}
                             <div>
                                 <h3 className="text-gray-300 text-xs mb-1">Service Type</h3>
-                                <Select 
-                                    value={formData.serviceType} 
-                                    onValueChange={(value) => handleInputChange('serviceType', value)}
-                                >
+                                
+                                {/* Selected Services Display */}
+                                {formData.serviceType.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                        {formData.serviceType.map((service) => (
+                                            <Badge 
+                                                key={service} 
+                                                variant="secondary" 
+                                                className="bg-blue-600 text-white text-xs px-2 py-1 flex items-center gap-1"
+                                            >
+                                                {service}
+                                                <X 
+                                                    className="h-3 w-3 cursor-pointer hover:text-red-300" 
+                                                    onClick={() => handleServiceTypeToggle(service)}
+                                                />
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Service Type Selection */}
+                                <Select onValueChange={handleServiceTypeToggle}>
                                     <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm">
-                                        <SelectValue placeholder="Select service type" />
+                                        <SelectValue placeholder="Add service type" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                                        {SERVICE_TYPES.map((service) => (
+                                        {SERVICE_TYPES.filter(service => !formData.serviceType.includes(service)).map((service) => (
                                             <SelectItem key={service} value={service} className="text-white hover:bg-[#2a2a2a]">
                                                 {service}
                                             </SelectItem>

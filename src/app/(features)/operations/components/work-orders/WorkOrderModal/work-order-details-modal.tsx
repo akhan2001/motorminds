@@ -24,6 +24,8 @@ import { getWorkOrderItems } from "../../../lib/work-order-items-service"
 import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-temp-service"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 import { PanelProvider } from "../../../contexts"
+import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
+import { WorkOrderPartsItems } from "../WorkOrderPartsItems"
 
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
@@ -40,6 +42,30 @@ interface SelectedTemplate extends WorkOrderItemTemplate {
     selectedTechnicianId?: string
 }
 
+// Define labor and parts form item interfaces
+interface LaborFormItem {
+    id: string;
+    description: string;
+    labor_hours: number;
+    unit_price: number;
+    total_price: number;
+    notes?: string;
+    technician_id?: string;
+}
+
+interface PartFormItem {
+    id: string;
+    description: string;
+    part_number?: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    supplier?: string;
+    category?: string;
+    warranty_period?: string;
+    notes?: string;
+}
+
 export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({ 
     workOrder: initialWorkOrder,
     onClose,
@@ -50,6 +76,15 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
+    const [laborItems, setLaborItems] = useState<LaborFormItem[]>([])
+    const [partsItems, setPartsItems] = useState<PartFormItem[]>([])
+    
+    // Mock technician options (replace with actual data fetching if needed)
+    const technicianOptions = [
+        { id: 'tech-1', name: 'John Smith' },
+        { id: 'tech-2', name: 'Jane Doe' },
+        { id: 'tech-3', name: 'Mike Johnson' },
+    ]
     
     // Fetch full work order details
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
@@ -217,6 +252,28 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                     : template
             )
         )
+    }
+
+    // Labor items handlers
+    const handleLaborItemsChange = (items: LaborFormItem[]) => {
+        setLaborItems(items)
+    }
+
+    const handleLaborItemSaved = (item: any) => {
+        // Handle successful save of individual labor item
+        toast.success(`Labor item "${item.description}" saved successfully`)
+        // Optionally refresh work order items list
+    }
+
+    // Parts items handlers
+    const handlePartsItemsChange = (items: PartFormItem[]) => {
+        setPartsItems(items)
+    }
+
+    const handlePartItemSaved = (item: any) => {
+        // Handle successful save of individual part item
+        toast.success(`Part item "${item.description}" saved successfully`)
+        // Optionally refresh work order items list
     }
 
     // Function to add selected templates as work order items
@@ -578,6 +635,31 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     shopId={initialWorkOrder.shop_id}
                                     isEditable={canEdit()}
                                 />
+
+                                {/* Labor Items - Only show when editing */}
+                                {isEditing && canEdit() && (
+                                    <div className="transition-opacity duration-200">
+                                        <WorkOrderLaborItems
+                                            items={laborItems}
+                                            onItemsChange={handleLaborItemsChange}
+                                            workOrderId={initialWorkOrder.id}
+                                            technicianOptions={technicianOptions}
+                                            onItemSaved={handleLaborItemSaved}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Parts Items - Only show when editing */}
+                                {isEditing && canEdit() && (
+                                    <div className="transition-opacity duration-200 mt-6">
+                                        <WorkOrderPartsItems
+                                            items={partsItems}
+                                            onItemsChange={handlePartsItemsChange}
+                                            workOrderId={initialWorkOrder.id}
+                                            onItemSaved={handlePartItemSaved}
+                                        />
+                                    </div>
+                                )}
 
                                 {/* Notes */}
                                 <WorkOrderNotes 

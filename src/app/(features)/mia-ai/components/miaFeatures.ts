@@ -28,7 +28,7 @@ export const miaFeatures = [
         icon: Package,
         color: "bg-purple-500",
         hoverColor: "hover:bg-purple-600",
-        href: "/parts",
+        href: "/parts-ordering",
         badge: "Parts",
         features: ["Smart Sourcing", "Price Comparison", "Compatibility Check"]
     },
