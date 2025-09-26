@@ -29,7 +29,13 @@ export default function VoiceOrderingPage() {
         model: '',
         vin: '',
         mileage: '',
-        engine: ''
+        engine: '',
+        trim: '',
+        color: '',
+        transmission: '',
+        drivetrain: '',
+        fuel_type: '',
+        body_style: ''
     })
 
     const [partInfo, setPartInfo] = useState<PartItem>({
