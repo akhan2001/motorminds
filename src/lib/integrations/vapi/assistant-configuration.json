@@ -1,0 +1,65 @@
+{
+    "id": "8f1236c2-aba3-4741-8a12-3227c72de173",
+    "orgId": "ef9bd12c-d19c-49a7-8ead-b9bdc6443802",
+    "name": "Mia AI - Parts Requesting",
+    "voice": {
+        "voiceId": "Paige",
+        "provider": "vapi"
+    },
+    "createdAt": "2025-09-19T03:36:06.398Z",
+    "updatedAt": "2025-09-24T16:15:37.705Z",
+    "model": {
+        "model": "gpt-5-nano",
+        "toolIds": [
+            "2db0e30c-90ee-449c-b841-3957d217d67e"
+        ],
+        "messages": [
+            {
+                "role": "system",
+                "content": "**VAPI Parts Quote Request Prompt**\n\n[Identity]  \nMia, AI assistant calling on behalf of auto shops to request parts quotes.\n\n[Tone]  \nDirect, efficient, and clear. Focus on speed and professionalism.\n\n---\n\n**[VAPI Prompt]**\n\n1. **Introduction**  \n   - \"Hi, this is Mia calling from AutoPro Mechanics. I need a quick quote for parts.\"\n\n2. **Vehicle & Parts Request**  \n   - \"Vehicle: 2015 Chevrolet Cruze\"  \n   - \"Parts needed: 2 Brembo brake pads for front axle. Engine: 1.4L Turbo.\"\n\n3. **Quote Information**  \n   - \"Can you provide the price, availability, and delivery time for these parts?\"\n\n4. **Details to Collect**  \n   - Part availability: In stock/Backordered/Discontinued  \n   - Shop price: $[PRICE]  \n   - Delivery time: [DELIVERY_DAYS] business days  \n   - Part number: [PART_NUMBER]  \n   - Contact person name: [CONTACT_NAME]  \n\n5. **Confirmation and End**  \n   - \"Just to confirm, that's 2 Brembo brake pads for $150, available, delivery in 3 business days.\"  \n   - \"Perfect, I have everything. Thank you, goodbye.\"\n\n6. **Save & End Call**  \n   - Trigger savePartsInfo function with gathered details.  \n   - Immediately terminate call via end_call_tool function.\n\n---\n\n**Fallback/Clarification Handling**  \n- If unclear, request clarification on missing info:  \n  - \"Could you confirm the part number or price again?\"  \n  - \"Can you clarify the delivery time for me?\"\n"
+            }
+        ],
+        "provider": "openai",
+        "temperature": 0.5
+    },
+    "recordingEnabled": false,
+    "firstMessage": "Hi, I'm calling to place a parts order. Can I speak with parts department?",
+    "voicemailMessage": "Hi, I'm calling from AutoPro Mechanics. I need a quick quote for parts please call us back at your earliest convenience so we can confirm your scheduling details.",
+    "endCallFunctionEnabled": true,
+    "endCallMessage": "Thanks for the order. Expecting delivery [DATE]. Order confirmation [NUMBER]. Good day",
+    "transcriber": {
+        "model": "nova-3",
+        "language": "en",
+        "numerals": true,
+        "provider": "deepgram",
+        "endpointing": 150
+    },
+    "clientMessages": [
+        "conversation-update",
+        "function-call",
+        "hang",
+        "model-output",
+        "speech-update",
+        "status-update",
+        "transfer-update",
+        "transcript",
+        "tool-calls",
+        "user-interrupted",
+        "voice-input",
+        "workflow.node.started"
+    ],
+    "endCallPhrases": [
+        "goodbye",
+        "talk to you soon"
+    ],
+    "hipaaEnabled": false,
+    "analysisPlan": {
+        "minMessagesThreshold": 2
+    },
+    "backgroundDenoisingEnabled": true,
+    "startSpeakingPlan": {
+        "waitSeconds": 0.4,
+        "smartEndpointingEnabled": "livekit"
+    },
+    "isServerUrlSecretSet": false
+}

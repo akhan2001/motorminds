@@ -28,11 +28,11 @@ export default function VoiceCallingPage() {
                     </div>
 
                     {/* Voice Services Grid */}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-6">
                         <VoiceOrderingCard />
                         
                         {/* Call History Card */}
-                        <Card className="bg-[#111111] border-[#2a2a2a] hover:border-blue-500 transition-colors cursor-pointer"
+                        {/* <Card className="bg-[#111111] border-[#2a2a2a] hover:border-blue-500 transition-colors cursor-pointer"
                               onClick={() => router.push('/voice-calling/history')}>
                             <CardHeader>
                                 <CardTitle className="text-white flex items-center gap-2">
@@ -68,10 +68,10 @@ export default function VoiceCallingPage() {
                                     View History
                                 </Button>
                             </CardContent>
-                        </Card>
+                        </Card> */}
 
                         {/* Analytics Card */}
-                        <Card className="bg-[#111111] border-[#2a2a2a] hover:border-purple-500 transition-colors cursor-pointer">
+                        {/* <Card className="bg-[#111111] border-[#2a2a2a] hover:border-purple-500 transition-colors cursor-pointer">
                             <CardHeader>
                                 <CardTitle className="text-white flex items-center gap-2">
                                     <BarChart3 className="h-6 w-6 text-purple-400" />
@@ -103,7 +103,7 @@ export default function VoiceCallingPage() {
                                     Coming Soon
                                 </Button>
                             </CardContent>
-                        </Card>
+                        </Card> */}
                     </div>
                 </div>
             </div>
