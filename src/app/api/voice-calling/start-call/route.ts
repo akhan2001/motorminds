@@ -99,11 +99,46 @@ Have a natural and casual tone while being efficient, and clear. Don't keep repe
 **Shop Notes**: ${notes || 'None'}
 `;
 
-        // Vapi Call Sessions
+        // Check required environment variables
+        if (!process.env.VAPI_PHONE_NUMBER_ID) {
+            console.error('❌ VAPI_PHONE_NUMBER_ID environment variable is missing')
+            return NextResponse.json(
+                { error: 'VAPI phone number ID not configured' },
+                { status: 500 }
+            )
+        }
+
+        if (!process.env.VAPI_API_KEY) {
+            console.error('❌ VAPI_API_KEY environment variable is missing')
+            return NextResponse.json(
+                { error: 'VAPI API key not configured' },
+                { status: 500 }
+            )
+        }
+
+        console.log('📞 Creating VAPI call with:', {
+            phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
+            customerNumber: phone_number,
+            supplierName: supplier_name
+        })
+
+        // Vapi Call Sessions with metadata for multi-shop support
         const call = await vapi.calls.create({
             phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
             customer: { 
                 number: phone_number 
+            },
+            metadata: {
+                shop_id: userShopId,
+                parts_request_id: parts_request_id,
+                supplier_name: supplier_name,
+                supplier_id: supplier_id,
+                call_context: {
+                    vehicle_info,
+                    parts_info,
+                    priority,
+                    notes
+                }
             },
             assistant: {
                 model: {
@@ -202,9 +237,20 @@ Have a natural and casual tone while being efficient, and clear. Don't keep repe
         })
 
     } catch (error: any) {
-        console.error('Error starting call:', error)
+        console.error('❌ Error starting call:', error)
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        })
+        
+        // Return more specific error information
         return NextResponse.json(
-            { error: error.message || 'Failed to start call' },
+            { 
+                error: 'Failed to start call',
+                details: error.message,
+                type: error.name || 'UnknownError'
+            },
             { status: 500 }
         )
     }
