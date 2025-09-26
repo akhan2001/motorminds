@@ -18,28 +18,34 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing call ID' }, { status: 400 })
         }
 
+        // Extract shop context from call metadata
+        const shopId = call.metadata?.shop_id
+        if (!shopId) {
+            console.warn('⚠️ No shop_id in call metadata')
+        }
+
         const supabase = await createClient()
 
-        // Handle different webhook event types
+        // Handle different webhook event types with shop context
         switch (type) {
             case 'call-start':
-                await handleCallStart(supabase, call)
+                await handleCallStart(supabase, call, shopId)
                 break
 
             case 'call-end':
-                await handleCallEnd(supabase, call)
+                await handleCallEnd(supabase, call, shopId)
                 break
 
             case 'function-call':
-                await handleFunctionCall(supabase, call, message)
+                await handleFunctionCall(supabase, call, message, shopId)
                 break
 
             case 'transcript':
-                await handleTranscriptUpdate(supabase, call, message)
+                await handleTranscriptUpdate(supabase, call, message, shopId)
                 break
 
             case 'hang':
-                await handleCallHang(supabase, call)
+                await handleCallHang(supabase, call, shopId)
                 break
 
             default:
@@ -61,8 +67,8 @@ export async function POST(request: NextRequest) {
 /**
  * Handle call start event
  */
-async function handleCallStart(supabase: any, call: any) {
-    console.log('📞 Call started:', call.id)
+async function handleCallStart(supabase: any, call: any, shopId?: string) {
+    console.log('📞 Call started:', call.id, shopId ? `for shop: ${shopId}` : '')
 
     const { error } = await supabase
         .from('voice_calls')
@@ -81,8 +87,8 @@ async function handleCallStart(supabase: any, call: any) {
 /**
  * Handle call end event - This is the main event you need!
  */
-async function handleCallEnd(supabase: any, call: any) {
-    console.log('🏁 Call ended:', call.id)
+async function handleCallEnd(supabase: any, call: any, shopId?: string) {
+    console.log('🏁 Call ended:', call.id, shopId ? `for shop: ${shopId}` : '')
 
     try {
         // Calculate duration
@@ -137,12 +143,13 @@ async function handleCallEnd(supabase: any, call: any) {
                     ...call.metadata,
                     end_reason: call.endedReason,
                     cost: call.cost,
-                    analysis: analysisData
+                    analysis: analysisData,
+                    shop_id: shopId
                 },
                 updated_at: new Date().toISOString()
             })
             .eq('vapi_call_id', call.id)
-            .select('parts_request_id')
+            .select('parts_request_id, shop_id')
             .single()
 
         if (updateError) {
@@ -156,10 +163,12 @@ async function handleCallEnd(supabase: any, call: any) {
         if (quoteReceived && voiceCall?.parts_request_id) {
             console.log('💰 Saving quote to parts request:', voiceCall.parts_request_id)
 
+            // Store both quote_provided and call_analysis for comprehensive data
             const { error: quoteError } = await supabase
                 .from('parts_requests')
                 .update({
                     quote_provided: quoteReceived,
+                    call_analysis: analysisData?.structuredData || null,
                     status: 'quoted',
                     updated_at: new Date().toISOString()
                 })
@@ -168,7 +177,7 @@ async function handleCallEnd(supabase: any, call: any) {
             if (quoteError) {
                 console.error('Failed to update parts request with quote:', quoteError)
             } else {
-                console.log('✅ Parts request updated with quote')
+                console.log('✅ Parts request updated with quote and analysis')
             }
         }
 
@@ -183,8 +192,8 @@ async function handleCallEnd(supabase: any, call: any) {
 /**
  * Handle function call events (like savePartsInfo)
  */
-async function handleFunctionCall(supabase: any, call: any, message: any) {
-    console.log('🔧 Function called:', message?.functionCall?.name)
+async function handleFunctionCall(supabase: any, call: any, message: any, shopId?: string) {
+    console.log('🔧 Function called:', message?.functionCall?.name, shopId ? `for shop: ${shopId}` : '')
 
     if (message?.functionCall?.name === 'savePartsInfo') {
         const partsInfo = message.functionCall.parameters
@@ -216,17 +225,17 @@ async function handleFunctionCall(supabase: any, call: any, message: any) {
 /**
  * Handle transcript updates
  */
-async function handleTranscriptUpdate(supabase: any, call: any, message: any) {
+async function handleTranscriptUpdate(supabase: any, call: any, message: any, shopId?: string) {
     // Optional: Store real-time transcript updates
     // You might want to batch these to avoid too many database writes
-    console.log('📝 Transcript update for call:', call.id)
+    console.log('📝 Transcript update for call:', call.id, shopId ? `for shop: ${shopId}` : '')
 }
 
 /**
  * Handle call hang/disconnect
  */
-async function handleCallHang(supabase: any, call: any) {
-    console.log('📴 Call disconnected:', call.id)
+async function handleCallHang(supabase: any, call: any, shopId?: string) {
+    console.log('📴 Call disconnected:', call.id, shopId ? `for shop: ${shopId}` : '')
 
     const { error } = await supabase
         .from('voice_calls')
@@ -248,6 +257,8 @@ async function handleCallHang(supabase: any, call: any) {
 export async function GET(request: NextRequest) {
     return NextResponse.json({ 
         message: 'Vapi webhook endpoint active',
-        assistant: MiaAssistantHelper.getAssistantId()
+        assistant: MiaAssistantHelper.getAssistantId(),
+        timestamp: new Date().toISOString(),
+        version: '2.0.0'
     })
 }

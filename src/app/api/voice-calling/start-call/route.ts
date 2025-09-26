@@ -57,14 +57,14 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Create dynamic system prompt with form context
+        // Dyanmic System Prompt
         const systemPrompt = `**VAPI Parts Quote Request Prompt**
 
 [Identity]
 You are Mia, an AI assistant calling on behalf of AutoPro Mechanics to request parts quotes. Provide the account number if the supplier asks for one.
 
 [Tone]
-Direct, efficient, and clear. Focus on speed and efficiency. Don't keep repeating your sentences. Only mention the information, if they ask for it.
+Have a natural and casual tone while being efficient, and clear. Don't keep repeating your sentences (ex. "yes, i want the part for the [year] [make] [model]"). Only mention any additional information, if they ask for it.
 
 1. **Vehicle & Parts Request**  
    - "Vehicle: ${vehicle_info.year} ${vehicle_info.make} ${vehicle_info.model}"  
@@ -99,7 +99,7 @@ Direct, efficient, and clear. Focus on speed and efficiency. Don't keep repeatin
 **Shop Notes**: ${notes || 'None'}
 `;
 
-        // Create call session with Vapi using transient assistant
+        // Vapi Call Sessions
         const call = await vapi.calls.create({
             phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
             customer: { 
