@@ -12,23 +12,22 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { LogOut, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { getShopInfo } from "@/utils/shopinfo/getShopInfo"
-import { getShopId } from "@/utils/supabase/supabase-shop"
-import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
 import { useQueryClient } from '@tanstack/react-query'
 import { useUserRole } from "@/hooks/core/useUserRole"
+import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
+import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 
 export function Nav() {
 	const router = useRouter()
 	const pathname = usePathname()
 	const { theme, setTheme } = useTheme()
 	const [mounted, setMounted] = useState(false)
-	const [avatar, setAvatar] = useState("")
 	const [open, setOpen] = useState(false)
 	const queryClient = useQueryClient()
 	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
+	const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
 
 	if (!pathname) {
 		return null
@@ -39,19 +38,7 @@ export function Nav() {
 		setMounted(true)
 	}, [])
 
-	useEffect(() => {
-		const fetchShopInfo = async () => {
-			const user = await checkUser()
-			if (user) {
-				const shopId = await getShopId(user.id)
-				if (shopId) {
-					const shopInfo = await getShopInfo(shopId)
-					setAvatar(shopInfo[0].logo_image_url)
-				}
-			}
-		}
-		fetchShopInfo()
-	}, [])
+	// Avatar is now handled by the ProfileDropdown component
 
 	// Render the icon based on mounted state to avoid hydration mismatch
 	const themeIcon = mounted && theme === "light" ? (
@@ -126,8 +113,8 @@ export function Nav() {
 		}
 	}
 
-	// Show loading state while fetching role
-	if (isLoadingRole) {
+	// Show loading state while fetching role and shop info
+	if (isLoadingRole || isLoadingShop) {
 		return (
 			<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
@@ -277,88 +264,30 @@ export function Nav() {
 						</>
 					)}
 					
-					{/* Avatar with logout - shown for all users */}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Avatar className="w-7 h-7 cursor-pointer">
-								<AvatarImage src={avatar} />
-								<AvatarFallback>AK</AvatarFallback>
-							</Avatar>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-							<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-									<LogOut className="w-4 h-4 mr-2" />
-									Logout
-								</DropdownMenuItem>
-							</AlertDialogTrigger>
-								<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-									<AlertDialogHeader>
-										<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-										<AlertDialogDescription>
-											You are about to logout. Do you want to continue?
-										</AlertDialogDescription>
-									</AlertDialogHeader>
-									<AlertDialogFooter>
-										<AlertDialogCancel className="">Cancel</AlertDialogCancel>
-										<AlertDialogAction
-											className="border-none bg-red-600 text-white hover:bg-red-700"
-											onClick={() => { handleLogout() }}
-										>
-											Yes, Continue
-										</AlertDialogAction>
-									</AlertDialogFooter>
-								</AlertDialogContent>
-							</AlertDialog>
-						</DropdownMenuContent>
-					</DropdownMenu>
+					{/* Profile Dropdown - shown for all users */}
+					<ProfileDropdown 
+						avatar={shopInfo?.logo_image_url || ""}
+						shopOwnerName={shopInfo?.shop_owner}
+						shopName={shopInfo?.shop_name}
+						userRole={userRole || undefined}
+					/>
 				</div>
 				{/* Right: Mobile Menu (only visible on mobile) */}
 				<div className="lg:hidden">
 					{userRole === 'demo' ? (
-						/* Simplified mobile menu for demo users - just avatar with logout */
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Avatar className="w-8 h-8 cursor-pointer">
-									<AvatarImage src={avatar} />
-									<AvatarFallback>AK</AvatarFallback>
-								</Avatar>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-								<AlertDialog>
-									<AlertDialogTrigger asChild>
-										<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-											<LogOut className="w-4 h-4 mr-2" />
-											Logout
-										</DropdownMenuItem>
-									</AlertDialogTrigger>
-									<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-										<AlertDialogHeader>
-											<AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-											<AlertDialogDescription>
-												You are about to logout. Do you want to continue?
-											</AlertDialogDescription>
-										</AlertDialogHeader>
-										<AlertDialogFooter>
-											<AlertDialogCancel className="">Cancel</AlertDialogCancel>
-											<AlertDialogAction
-												className="border-none bg-red-600 text-white hover:bg-red-700"
-												onClick={() => { handleLogout() }}
-											>
-												Yes, Continue
-											</AlertDialogAction>
-										</AlertDialogFooter>
-									</AlertDialogContent>
-								</AlertDialog>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						/* Simplified mobile menu for demo users - just profile dropdown */
+						<ProfileDropdown 
+							avatar={shopInfo?.logo_image_url || ""}
+							shopOwnerName={shopInfo?.shop_owner}
+							shopName={shopInfo?.shop_name}
+							userRole={userRole || undefined}
+						/>
 					) : (
 						/* Full mobile navigation for non-demo users */
 						<MobileNav 
 							navItems={navItems}
 							activeLink={activeLink}
-							avatar={avatar}
+							avatar={shopInfo?.logo_image_url || ""}
 							open={open}
 							setOpen={setOpen}
 							handleNavClick={handleNavClick}
