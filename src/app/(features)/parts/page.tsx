@@ -81,26 +81,6 @@ export default function PartsPage() {
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-6xl mx-auto w-full">
-                    {/* Breadcrumb Navigation */}
-                    <Breadcrumb className="mb-6">
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbLink asChild>
-                                    <Link href="/dashboard" className="text-gray-400 hover:text-gray-300">
-                                        Home
-                                    </Link>
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator>
-                                <Slash className="h-4 w-4" />
-                            </BreadcrumbSeparator>
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="text-white">
-                                    Parts Requests
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
 
                     {/* Header */}
                     <div className="flex justify-between items-center mb-6">
