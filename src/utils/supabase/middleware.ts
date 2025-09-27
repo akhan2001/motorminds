@@ -28,6 +28,19 @@ export async function updateSession(request: NextRequest) {
 		}
 	);
 
+	// Public routes that should not trigger authentication checks
+	const publicPaths = [
+		'/signup',
+		'/login', 
+		'/auth',
+		'/api/auth'
+	]
+	
+	// Skip authentication checks for public routes
+	if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+		return supabaseResponse;
+	}
+
 	// IMPORTANT: Avoid writing any logic between createServerClient and
 	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
 	// issues with users being randomly logged out.

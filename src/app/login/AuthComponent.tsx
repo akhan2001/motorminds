@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { login, signup } from "./actions"
 
@@ -15,6 +15,7 @@ export default function AuthComponent() {
     const [error, setError] = useState<string | null>(null)
     const [message, setMessage] = useState<string | null>(null)
     const searchParams = useSearchParams()
+    const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         const errorParam = searchParams?.get('error')
@@ -28,13 +29,21 @@ export default function AuthComponent() {
         }
     }, [searchParams])
 
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setIsLoading(true)
+        const formData = new FormData(e.currentTarget)
+        await login(formData)
+        setIsLoading(false)
+    }
+
     return (
         <div className="flex flex-col items-center justify-center w-full h-full px-4 sm:px-6 md:px-8">
             <div className="mx-auto w-full max-w-[400px]">
                 <h2 className="mb-6 md:mb-8 text-xl sm:text-2xl font-medium text-white text-center">Sign In</h2>
 
                 {/* Social Login Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
+                {/* <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
                     <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#222222] px-3 py-2 text-sm font-medium text-white hover:bg-[#222222] hover:border-[#444444]">
                         <Image src="/icons8-google-48.png" alt="Google" width={20} height={20} />
                         <span className="sm:inline">Google</span>
@@ -43,20 +52,20 @@ export default function AuthComponent() {
                         <Image src="/icons8-facebook-50.png" alt="Facebook" width={20} height={20} />
                         <span className="sm:inline">Facebook</span>
                     </button>
-                </div>
+                </div> */}
 
                 {/* Divider */}
-                <div className="relative mb-6 md:mb-8">
+                {/* <div className="relative mb-6 md:mb-8">
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-700"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
                         <span className="bg-[#000000] px-4 text-gray-400">OR</span>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Login Form */}
-                <form action={login} className="space-y-4 md:space-y-6">
+                <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
                     {error && <p className="text-red-500 text-sm">{error}</p>}
                     {message && <p className="text-green-500 text-sm">{message}</p>}
 
@@ -102,7 +111,7 @@ export default function AuthComponent() {
                         className="w-full rounded-lg bg-white px-4 py-2.5 sm:py-3 text-sm font-medium 
                                    text-black transition hover:bg-gray-100"
                     >
-                        Sign In
+                        {isLoading ? <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : "Sign In"}
                     </Button>
                 </form>
 
