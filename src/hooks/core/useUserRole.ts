@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from "@/utils/supabase/client";
 import type { UserRole } from '@/types/core/user';
+import { useEffect } from 'react';
 
 export function useUserRole() {
-    return useQuery({
+    const supabase = createClient();
+    
+    const query = useQuery({
         queryKey: ['user-role'],
         queryFn: async (): Promise<UserRole | null> => {
-            const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return null;
 
@@ -19,6 +21,21 @@ export function useUserRole() {
             if (error) throw error;
             return data?.role || null;
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 0, // No caching - always fetch fresh data
+        refetchOnWindowFocus: true, // Refetch when window regains focus
     });
+
+    // Listen to auth state changes and refetch when user changes
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+                // Refetch user role when auth state changes
+                query.refetch();
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [query]);
+
+    return query;
 }

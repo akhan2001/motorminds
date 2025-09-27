@@ -16,6 +16,7 @@ import { getShopInfo } from "@/utils/shopinfo/getShopInfo"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { MobileNav } from "./mobile-nav"
+import { useQueryClient } from '@tanstack/react-query'
 import { useUserRole } from "@/hooks/core/useUserRole"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 
@@ -26,6 +27,7 @@ export function Nav() {
 	const [mounted, setMounted] = useState(false)
 	const [avatar, setAvatar] = useState("")
 	const [open, setOpen] = useState(false)
+	const queryClient = useQueryClient()
 	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
 
 	if (!pathname) {
@@ -114,8 +116,10 @@ export function Nav() {
 			if (error) {
 				console.error("Logout error:", error)
 			} else {
-				router.push("/login")
-				router.refresh()
+				// Clear all React Query cache to ensure fresh data on next login
+				queryClient.clear()
+				// Force a full page reload to clear all cached data
+				window.location.href = "/login"
 			}
 		} catch (error) {
 			console.error("Logout error:", error)
