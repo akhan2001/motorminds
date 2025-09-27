@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/client'
 import { PartsRequest, CreatePartsRequestRequest, UpdatePartsRequestRequest } from '@/app/(features)/parts/types/parts'
-import { Json } from 'twilio/lib/interfaces'
 
 export interface PartsRequestFilters {
     status?: PartsRequest['status']
@@ -182,39 +181,69 @@ export class PartsService {
     }
 
 
-    /**
-     * Create a new parts request
-     */
-    static async createPartsRequest(
-        shopId: string,
-        data: CreatePartsRequestRequest
-    ) {
-        const supabase = await createClient();
+     /**
+      * Create a new parts request
+      */
+     static async createPartsRequest(
+         shopId: string,
+         data: CreatePartsRequestRequest
+     ): Promise<PartsRequest> {
+         try {
+             // Validate required fields
+             if (!data.supplier_info?.supplier_name?.trim()) {
+                 throw new Error('Supplier name is required')
+             }
+             if (!data.parts_requested || data.parts_requested.length === 0) {
+                 throw new Error('At least one part is required')
+             }
 
-        const { data: partsRequest, error } = await supabase
-          .from('parts_requests')
-          .insert([{
-            shop_id: shopId,
-            // user_id: userId,
-            vehicle_info: data.vehicle_info,
-            parts_requested: data.parts_requested,
-            supplier_info: data.supplier_info,
-            priority: data.priority,
-            notes: data.notes,
-            customer_notes: data.customer_notes,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }])
-          .select()
-          .single();
-        
-        if (error) {
-            console.error('Error creating parts request:', error)
-            throw error;
-        }
+             // Validate each part
+             for (const part of data.parts_requested) {
+                 if (!part.part_number?.trim()) {
+                     throw new Error('Part number is required for all parts')
+                 }
+                 if (!part.part_name?.trim()) {
+                     throw new Error('Part name is required for all parts')
+                 }
+                 if (!part.quantity || part.quantity <= 0) {
+                     throw new Error('Valid quantity is required for all parts')
+                 }
+             }
 
-        return data;
-    }
+             // Calculate total estimated price
+             const totalEstimatedPrice = data.parts_requested.reduce((total, part) => {
+                 return total + ((part.estimated_price || 0) * part.quantity)
+             }, 0)
+
+             const supabase = await createClient();
+
+             const { data: partsRequest, error } = await supabase
+               .from('parts_requests')
+               .insert([{
+                 shop_id: shopId,
+                 vehicle_info: data.vehicle_info || {},
+                 parts_requested: data.parts_requested,
+                 supplier_info: data.supplier_info,
+                 total_estimated_price: totalEstimatedPrice,
+                 priority: data.priority || 'normal',
+                 notes: data.notes?.trim() || null,
+                 customer_notes: data.customer_notes?.trim() || null,
+                 status: 'pending' as const
+               }])
+               .select()
+               .single();
+             
+             if (error) {
+                 console.error('Error creating parts request:', error)
+                 throw new Error(`Failed to create parts request: ${error.message}`)
+             }
+
+             return partsRequest;
+         } catch (error) {
+             console.error('PartsService.createPartsRequest error:', error)
+             throw error
+         }
+     }
 
     /**
      * Update a parts request

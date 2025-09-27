@@ -17,12 +17,13 @@ import {
     SelectedSupplier, 
     PartsRequestPriority 
 } from '@/app/(features)/voice-calling/types'
-import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 import { PartsService } from '@/app/(features)/parts/lib/partsService'
 import { createClient } from '@/utils/supabase/client'
+import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 
 export default function VoiceOrderingPage() {
     const [selectedSuppliers, setSelectedSuppliers] = useState<SelectedSupplier[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [isCalling, setIsCalling] = useState(false)
     const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'completed' | 'failed'>('idle')
     const [callId, setCallId] = useState<string | null>(null)
@@ -83,14 +84,7 @@ export default function VoiceOrderingPage() {
         }))
     }
 
-    const handleStartCall = async () => {
-
-        // console.log("selectedSuppliers", selectedSuppliers)
-        // console.log("vehicleInfo", vehicleInfo)
-        // console.log("partInfo", partInfo)
-        // console.log("notes", notes)
-
-        
+    const handleSubmit = async () => {
         // Validation
         if (selectedSuppliers.length === 0) {
             toast.error('Please select at least one supplier')
@@ -107,20 +101,111 @@ export default function VoiceOrderingPage() {
             return
         }
 
-        // Format and validate phone number
-        const formattedPhone = formatPhoneNumberE164(selectedSuppliers[0].phone_number || '')
-        console.log('📱 Formatted phone:', formattedPhone)
-        if (!isValidE164(formattedPhone)) {
-            toast.error('Invalid phone number format. Must be a valid E.164 number')
-            return
-        }
+        try {
+            setIsSubmitting(true)
+            toast.info('Creating parts request...')
+            
+            // Get shop ID from authenticated user
+            const supabase = createClient()
+            const { data: { user }, error: userError } = await supabase.auth.getUser()
+            
+            if (userError || !user) {
+                throw new Error('User not authenticated')
+            }
 
+            // Get user's shop ID
+            const { data: userData, error: shopError } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+
+            if (shopError || !userData?.shop_id) {
+                throw new Error('Shop ID not found for user')
+            }
+
+            const shopId = userData.shop_id
+
+            // Convert form data to parts request format
+            const partsRequested = [{
+                part_name: partInfo.partName,
+                part_number: partInfo.partNumber || `REQ-${Date.now()}`,
+                quantity: partInfo.quantity || 1,
+                estimated_price: 0,
+                description: partInfo.description || '',
+                supplier_part_number: '',
+                brand: '',
+                availability: 'unknown'
+            }]
+
+            // Create supplier info from selected supplier
+            const supplierInfo = {
+                supplier_name: selectedSuppliers[0]?.name || 'Unknown Supplier',
+                supplier_id: selectedSuppliers[0]?.id || undefined,
+                contact_person: selectedSuppliers[0]?.contact_person || '',
+                phone_number: selectedSuppliers[0]?.phone_number || '',
+                email: selectedSuppliers[0]?.email || '',
+                account_number: selectedSuppliers[0]?.account_number || ''
+            }
+
+            // Create vehicle info
+            const vehicleData = {
+                year: vehicleInfo.year ? parseInt(vehicleInfo.year) : undefined,
+                make: vehicleInfo.make,
+                model: vehicleInfo.model,
+                vin: vehicleInfo.vin || '',
+                engine: vehicleInfo.engine || '',
+                mileage: vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/,/g, '')) : undefined,
+                trim: vehicleInfo.trim || '',
+                color: vehicleInfo.color || '',
+                transmission: vehicleInfo.transmission || '',
+                drivetrain: vehicleInfo.drivetrain || '',
+                fuel_type: vehicleInfo.fuel_type || '',
+                body_style: vehicleInfo.body_style || ''
+            }
+
+            // Create parts request using PartsService
+            const newPartsRequest = await PartsService.createPartsRequest(
+                shopId,
+                {
+                    vehicle_info: vehicleData,
+                    parts_requested: partsRequested,
+                    supplier_info: supplierInfo,
+                    priority: priority,
+                    notes: notes.trim() || undefined,
+                    customer_notes: ''
+                }
+            )
+
+            toast.success('Parts request created successfully!')
+            setPartsRequestId(newPartsRequest.id)
+            
+            // Start AI call after parts request is created
+            await startAICall(newPartsRequest.id, shopId)
+            
+        } catch (error) {
+            console.error('Error creating parts request:', error)
+            toast.error(`Failed to create parts request: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    // Start AI call after parts request is created
+    const startAICall = async (partsRequestId: string, shopId: string) => {
         try {
             setIsCalling(true)
             setCallStatus('calling')
             setIsPolling(true)
             
-            // Call API to handle the entire process
+            // Format and validate phone number
+            const formattedPhone = formatPhoneNumberE164(selectedSuppliers[0].phone_number || '')
+            console.log('📱 Formatted phone:', formattedPhone)
+            if (!isValidE164(formattedPhone)) {
+                throw new Error('Invalid phone number format. Must be a valid E.164 number')
+            }
+
+            // Start the AI call
             const response = await fetch('/api/voice-calling/start-call', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -129,7 +214,8 @@ export default function VoiceOrderingPage() {
                     parts_info: partInfo,
                     suppliers: selectedSuppliers,
                     priority,
-                    notes
+                    notes,
+                    parts_request_id: partsRequestId
                 })
             })
 
@@ -139,21 +225,19 @@ export default function VoiceOrderingPage() {
 
             const result = await response.json()
             setCallId(result.callId)
-            setPartsRequestId(result.parts_request_id)
             toast.success(`Mia AI is calling ${selectedSuppliers[0].name}...`)
             
             // Start listening for real-time call completion
             listenForCallCompletion(result.callId)
 
         } catch (error: any) {
-            console.error('Error starting call:', error)
-            toast.error(error.message || 'Failed to start call')
+            console.error('Error starting AI call:', error)
+            toast.error(error.message || 'Failed to start AI call')
             setCallStatus('failed')
             setIsPolling(false)
         } finally {
             setIsCalling(false)
         }
-
     }
 
     // Listen for real-time call completion via Server-Sent Events
@@ -175,25 +259,6 @@ export default function VoiceOrderingPage() {
                         
                         // Show success message
                         toast.success('Call completed! Quote received.')
-                        
-                        // Reset form after successful call (delay for user to see quote)
-                        setTimeout(() => {
-                            if (callStatus !== 'completed') return // Don't reset if user is viewing quote
-                            
-                            setSelectedSuppliers([])
-                            setVehicleInfo({ 
-                                year: '', make: '', model: '', vin: '', mileage: '', engine: '',
-                                trim: '', color: '', transmission: '', drivetrain: '', fuel_type: '', body_style: ''
-                            })
-                            setPartInfo({ partName: '', partNumber: '', quantity: 1, description: '' })
-                            setPriority('normal')
-                            setNotes('')
-                            setCallStatus('idle')
-                            setCallId(null)
-                            setPartsRequestId(null)
-                            setQuoteData(null)
-                            toast.info('Form reset for next request')
-                        }, 30000) // 30 seconds to review quote
                         
                     } else if (data.status === 'failed') {
                         setCallStatus('failed')
@@ -222,7 +287,7 @@ export default function VoiceOrderingPage() {
                     setCallStatus('failed')
                     toast.error('Call timeout. Please try again.')
                 }
-            }, 600000) // 10 minutes
+            }, 300000) // 5 minutes
             
         } catch (error) {
             console.error('Error setting up real-time connection:', error)
@@ -264,10 +329,10 @@ export default function VoiceOrderingPage() {
                 setCallStatus('failed')
                 toast.error('Call timeout. Please try again.')
             }
-        }, 600000)
+        }, 300000)
     }
 
-    // Handle place order
+    // Handle place order - Update existing parts request with quote and mark as ordered
     const handlePlaceOrder = async () => {
         if (!quoteData || !partsRequestId) {
             toast.error('No quote data available')
@@ -275,7 +340,7 @@ export default function VoiceOrderingPage() {
         }
 
         try {
-            toast.info('Creating parts order...')
+            toast.info('Processing parts order...')
             
             // Get shop ID from authenticated user
             const supabase = createClient()
@@ -298,87 +363,16 @@ export default function VoiceOrderingPage() {
 
             const shopId = userData.shop_id
 
-            // Convert quote data to parts request format
-            const partsRequested = quoteData.parts_info?.map((part: any) => ({
-                part_name: part.part_name || partInfo.partName,
-                part_number: part.part_number || partInfo.partNumber || `QUOTE-${Date.now()}`,
-                quantity: part.quantity || partInfo.quantity || 1,
-                estimated_price: part.unit_price || 0,
-                description: part.notes || partInfo.description || '',
-                supplier_part_number: part.part_number || '',
-                brand: part.brand || '',
-                availability: part.availability || 'unknown'
-            })) || [{
-                part_name: partInfo.partName,
-                part_number: partInfo.partNumber || `QUOTE-${Date.now()}`,
-                quantity: partInfo.quantity || 1,
-                estimated_price: quoteData.quote_details?.total_cost || 0,
-                description: partInfo.description || '',
-                supplier_part_number: '',
-                brand: '',
-                availability: 'unknown'
-            }]
-
-            // Create supplier info from selected supplier and quote data
-            const supplierInfo = {
-                supplier_name: selectedSuppliers[0]?.name || quoteData.supplier_info?.supplier_name || 'Unknown Supplier',
-                supplier_id: selectedSuppliers[0]?.id || undefined,
-                contact_person: selectedSuppliers[0]?.contact_person || quoteData.supplier_info?.contact_person || '',
-                phone_number: selectedSuppliers[0]?.phone_number || quoteData.supplier_info?.phone_number || '',
-                email: selectedSuppliers[0]?.email || quoteData.supplier_info?.email || '',
-                account_number: selectedSuppliers[0]?.account_number || quoteData.supplier_info?.account_number || ''
-            }
-
-            // Create vehicle info
-            const vehicleData = {
-                year: vehicleInfo.year ? parseInt(vehicleInfo.year) : undefined,
-                make: vehicleInfo.make,
-                model: vehicleInfo.model,
-                vin: vehicleInfo.vin || '',
-                engine: vehicleInfo.engine || '',
-                mileage: vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/,/g, '')) : undefined,
-                trim: vehicleInfo.trim || '',
-                color: vehicleInfo.color || '',
-                transmission: vehicleInfo.transmission || '',
-                drivetrain: vehicleInfo.drivetrain || '',
-                fuel_type: vehicleInfo.fuel_type || '',
-                body_style: vehicleInfo.body_style || ''
-            }
-
-            // Create parts request using PartsService
-            console.log('🔧 Creating parts request with data:', {
-                shopId,
-                supplier_info: supplierInfo,
-                parts_requested: partsRequested,
-                vehicle_info: vehicleData,
-                priority,
-                notes: `Created from AI call quote. Original parts request ID: ${partsRequestId}. ${notes}`.trim(),
-                customer_notes: quoteData.call_outcome?.notes || ''
-            })
-            
-            const newPartsRequest = await PartsService.createPartsRequest(
-                shopId,
-                {
-                    vehicle_info: vehicleData,
-                    parts_requested: partsRequested,
-                    supplier_info: supplierInfo,
-                    priority: priority,
-                    notes: `Created from AI call quote. Original parts request ID: ${partsRequestId}. ${notes}`.trim(),
-                    customer_notes: quoteData.call_outcome?.notes || ''
-                }
-            )
-                
-            console.log('✅ Parts request created:', newPartsRequest)
-            // Update the new parts request with quote data and mark as quoted
-            console.log('🔧 Adding quote to parts request:', {
-                id: newPartsRequest.id,
+            console.log('🔧 Adding quote to existing parts request:', {
+                id: partsRequestId,
                 shopId,
                 quoteData,
                 actualCost: quoteData.quote_details?.total_cost
             })
             
+            // Add quote to the existing parts request
             await PartsService.addQuoteToPartsRequest(
-                newPartsRequest.id,
+                partsRequestId,
                 shopId,
                 quoteData,
                 quoteData.quote_details?.total_cost
@@ -386,20 +380,20 @@ export default function VoiceOrderingPage() {
 
             // Update status to ordered
             console.log('🔧 Updating parts request status to ordered:', {
-                id: newPartsRequest.id,
+                id: partsRequestId,
                 shopId,
                 status: 'ordered',
                 notes: `Order placed via AI Parts Sourcing. Call ID: ${callId}`
             })
             
             await PartsService.updatePartsRequestStatus(
-                newPartsRequest.id,
+                partsRequestId,
                 shopId,
                 'ordered',
                 `Order placed via AI Parts Sourcing. Call ID: ${callId}`
             )
 
-            toast.success('Parts order created successfully!')
+            toast.success('Parts order processed successfully!')
             
             // Reset form after order
             setSelectedSuppliers([])
@@ -751,12 +745,12 @@ export default function VoiceOrderingPage() {
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <Button
-                                onClick={handleStartCall}
-                                disabled={isCalling || selectedSuppliers.length === 0}
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || isCalling || selectedSuppliers.length === 0}
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
                             >
                                 <Phone className="h-5 w-5 mr-2" />
-                                {isCalling ? 'Mia is calling...' : 'Start AI Call'}
+                                {isSubmitting ? 'Creating Request...' : isCalling ? 'Mia is calling...' : 'Start AI Call'}
                             </Button>
                         </div>
                     </div>
