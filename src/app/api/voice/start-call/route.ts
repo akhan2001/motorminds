@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { vapi } from '@/lib/integrations/vapi/vapi-client'
-import { buildTransientMiaAssistant } from '@/lib/integrations/vapi/transient-assistant'
+import { createDynamicAssistant, CallContext } from '@/app/api/voice-calling/dynamic-assistant'
 import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 
 export async function POST(request: NextRequest) {
@@ -69,8 +69,28 @@ export async function POST(request: NextRequest) {
         }
 
 
-        // Use a transient assistant config (no external URLs)
-        const assistant = buildTransientMiaAssistant(metadata.call_context, spokenMessage)
+        // Use a dynamic assistant config
+        const callContext: CallContext = {
+            vehicle_info: metadata.call_context.vehicle_info || {
+                year: '',
+                make: '',
+                model: '',
+                engine: '',
+                vin: '',
+                mileage: ''
+            },
+            parts_info: metadata.call_context.parts_info || {
+                partName: '',
+                partNumber: '',
+                quantity: 1,
+                description: ''
+            },
+            priority: 'normal',
+            notes: spokenMessage,
+            shop_name: 'MotorMinds Auto Shop'
+        }
+        
+        const assistant = createDynamicAssistant(callContext)
 
         const call = await vapi.calls.create({
             phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID!,
