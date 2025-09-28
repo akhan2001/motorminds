@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { PageLayout } from '@/components/layout/page-layout'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { ErrorCard } from '@/components/ui/error-card'
-import { Package, Building2, DollarSign, Calendar, CheckCircle, FileText, Car, User } from 'lucide-react'
+import { Package, Building2, DollarSign, Calendar, CheckCircle, FileText, Car, User, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils/formatting'
@@ -60,6 +60,7 @@ export default function PartsRequestPage() {
     const [partsRequest, setPartsRequest] = useState<PartsRequest | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [refreshing, setRefreshing] = useState(false)
     
     // Authentication
     const { shopId, isLoading: authLoading, error: authError } = useAuth()
@@ -106,6 +107,42 @@ export default function PartsRequestPage() {
         } catch (error) {
             console.error('Error placing order:', error)
             toast.error('Failed to place order')
+        }
+    }
+
+    const handleRefreshQuote = async () => {
+        if (!partsRequest || !shopId) return
+
+        try {
+            setRefreshing(true)
+            toast.info('Refreshing quote details...')
+            
+            // Call the refresh-analysis API to get latest quote details
+            const response = await fetch('/api/voice-calling/refresh-analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    parts_request_id: partsRequest.id,
+                    shop_id: shopId
+                })
+            })
+
+            if (response.ok) {
+                const result = await response.json()
+                console.log('Analysis data received:', result.analysis)
+                toast.success('Quote details refreshed successfully!')
+                
+                // Refresh the parts request data
+                await fetchPartsRequest()
+            } else {
+                const errorData = await response.json()
+                toast.error(errorData.error || 'Failed to refresh quote details')
+            }
+        } catch (error) {
+            console.error('Error refreshing quote:', error)
+            toast.error('Failed to refresh quote details')
+        } finally {
+            setRefreshing(false)
         }
     }
 
@@ -468,8 +505,18 @@ export default function PartsRequestPage() {
                         )}
 
                         {/* Actions */}
-                        {partsRequest.status === 'quoted' && partsRequest.quote_provided && (
-                            <div className="flex gap-3 pt-4 border-t border-[#2a2a2a]">
+                        <div className="flex gap-3 pt-4 border-t border-[#2a2a2a]">
+                            <Button
+                                onClick={handleRefreshQuote}
+                                disabled={refreshing}
+                                variant="outline"
+                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                            >
+                                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                                {refreshing ? 'Refreshing...' : 'Refresh Quote'}
+                            </Button>
+                            
+                            {partsRequest.status === 'quoted' && partsRequest.quote_provided && (
                                 <Button
                                     onClick={handleOrderParts}
                                     className="bg-green-600 hover:bg-green-700 text-white"
@@ -477,18 +524,19 @@ export default function PartsRequestPage() {
                                     <CheckCircle className="h-4 w-4 mr-2" />
                                     Place Order
                                 </Button>
-                                <Button
-                                    asChild
-                                    variant="outline"
-                                    className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
-                                >
-                                    <Link href="/voice-calling/requests">
-                                        <Package className="h-4 w-4 mr-2" />
-                                        Back to Call Logs
-                                    </Link>
-                                </Button>
-                            </div>
-                        )}
+                            )}
+                            
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                            >
+                                <Link href="/voice-calling/requests">
+                                    <Package className="h-4 w-4 mr-2" />
+                                    Back to Call Logs
+                                </Link>
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

@@ -16,6 +16,7 @@ import { Phone, CheckCircle, Eye, Clock, Package, PhoneCall } from 'lucide-react
 import Link from 'next/link'
 import type { VoiceCall, VoiceCallStatus, VoiceCallPurpose } from '../types/voice-call'
 import { getStatusColor, getPurposeColor, formatStatusLabel } from '@/lib/utils/formatting'
+import { formatPhoneNumber } from '@/utils/format-phone'
 import CallForm from './CallForm'
 
 interface VoiceCallTableProps {
@@ -32,8 +33,6 @@ interface PartsRequest {
 }
 
 export default function VoiceCallTable({ calls, loading = false }: VoiceCallTableProps) {
-
-
 
     const formatPartsRequested = (call: VoiceCall) => {
         // First check if we have parts_request data from the call
@@ -140,8 +139,8 @@ export default function VoiceCallTable({ calls, loading = false }: VoiceCallTabl
                                 <TableRow key={call.id} className="border-[#2a2a2a] hover:bg-[#1a1a1a]">
                                     <TableCell className="text-white">
                                         <div className="flex items-center gap-2">
-                                            <Phone className="h-4 w-4 text-gray-400" />
-                                            {call.phone_number}
+                                            {/* <Phone className="h-4 w-4 text-gray-400" /> */}
+                                            {formatPhoneNumber(call.phone_number)}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -186,7 +185,11 @@ export default function VoiceCallTable({ calls, loading = false }: VoiceCallTabl
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                                                        className={
+                                                            call.status === 'ready_to_order'
+                                                                ? "bg-green-600 hover:bg-green-700 text-white hover:text-white border-green-600"
+                                                                : "border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                                                        }
                                                     >
                                                         <PhoneCall className="h-3 w-3 mr-1" />
                                                         Call
@@ -209,7 +212,7 @@ export default function VoiceCallTable({ calls, loading = false }: VoiceCallTabl
                                                     </Link>
                                                 </Button>
                                             )}
-                                            <Button
+                                            {/* <Button
                                                 asChild
                                                 variant="outline"
                                                 size="sm"
@@ -219,7 +222,7 @@ export default function VoiceCallTable({ calls, loading = false }: VoiceCallTabl
                                                     <Eye className="h-3 w-3 mr-1" />
                                                     Details
                                                 </Link>
-                                            </Button>
+                                            </Button> */}
                                         </div>
                                     </TableCell>
                                 </TableRow>

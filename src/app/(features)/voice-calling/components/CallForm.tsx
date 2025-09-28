@@ -518,8 +518,10 @@ export default function CallForm({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                                <SelectItem className="hover:bg-[#2a2a2a]" value="parts_request">Parts Request</SelectItem>
                                 <SelectItem className="hover:bg-[#2a2a2a]" value="parts_ordering">Parts Ordering</SelectItem>
+                                <SelectItem className="hover:bg-[#2a2a2a]" value="general_inquiry">General Inquiry</SelectItem>
+                                <SelectItem className="hover:bg-[#2a2a2a]" value="quote_request">Quote Request</SelectItem>
+                                <SelectItem className="hover:bg-[#2a2a2a]" value="order_followup">Order Follow-up</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

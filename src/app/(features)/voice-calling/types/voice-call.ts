@@ -36,9 +36,9 @@ export interface VoiceCall {
     }
 }
 
-export type VoiceCallPurpose = 'parts_request' | 'parts_ordering' | 'customer_service' | 'follow_up'
+export type VoiceCallPurpose = 'parts_ordering' | 'general_inquiry' | 'quote_request' | 'order_followup'
 
-export type VoiceCallStatus = 'pending' | 'calling' | 'completed' | 'failed' | 'cancelled' | 'ready_to_order' | 'recall_needed'
+export type VoiceCallStatus = 'pending' | 'connecting' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'ready_to_order'
 
 export interface VoiceCallAnalysis {
     parts_info?: Array<{

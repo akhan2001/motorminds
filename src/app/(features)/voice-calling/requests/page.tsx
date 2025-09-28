@@ -136,7 +136,7 @@ export default function VoiceCallRequestsPage() {
                                             className="border-[#2a2a2a] bg-green-600 hover:bg-green-700 text-gray-300 hover:text-white"
                                         >
                                             <Phone className="h-4 w-4 mr-2" />
-                                            New Parts Call
+                                            Start New Call
                                         </Button>
                                     }
                                 />
@@ -145,7 +145,7 @@ export default function VoiceCallRequestsPage() {
 
                         {/* Status Filter */}
                         <div className="flex gap-2 mb-6">
-                            {(['all', 'pending', 'calling', 'completed', 'failed', 'cancelled', 'ready_to_order', 'recall_needed'] as const).map((status) => (
+                            {(['all', 'pending', 'connecting', 'in_progress', 'completed', 'failed', 'cancelled', 'ready_to_order'] as const).map((status) => (
                                 <Button
                                     key={status}
                                     onClick={() => setFilter(status)}
@@ -158,7 +158,6 @@ export default function VoiceCallRequestsPage() {
                                     size="sm"
                                 >
                                     {status === 'ready_to_order' ? 'Ready to Order' :
-                                     status === 'recall_needed' ? 'Recall Needed' :
                                      status.charAt(0).toUpperCase() + status.slice(1)}
                                 </Button>
                             ))}
