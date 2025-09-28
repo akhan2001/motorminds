@@ -131,6 +131,17 @@ export async function GET(request: NextRequest) {
                 const callAnalysis = vapiCallData.analysis || vapiCallData.callAnalysis
                 updateData.quote_received = callAnalysis
                 console.log('Updated quote_received with call analysis from Vapi:', callAnalysis)
+                
+                // Handle successEvaluation to set appropriate status
+                if (callAnalysis.successEvaluation !== undefined) {
+                    if (callAnalysis.successEvaluation === true || callAnalysis.successEvaluation === 'true') {
+                        updateData.status = 'ready_to_order'
+                        console.log('Call marked as ready to order based on successEvaluation')
+                    } else {
+                        updateData.status = 'recall_needed'
+                        console.log('Call marked as recall needed based on successEvaluation')
+                    }
+                }
             }
 
             // Update call metadata with fresh Vapi data
