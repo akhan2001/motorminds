@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
                 const vapiResponse = await fetch(`https://api.vapi.ai/call/${voiceCall.vapi_call_id}`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${process.env.VAPI_API_TOKEN}`,
+                        'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
                         'Content-Type': 'application/json'
                     }
                 })
@@ -155,117 +155,36 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // Update parts_requests table if we have a parts_request_id and call analysis
+            // Extract and save structured data to parts_request
             if (voiceCall.parts_request_id && (vapiCallData.analysis || vapiCallData.callAnalysis)) {
                 try {
                     const callAnalysis = vapiCallData.analysis || vapiCallData.callAnalysis
                     
-                    // Prepare parts request update data
-                    const partsRequestUpdate: any = {
-                        updated_at: new Date().toISOString()
-                    }
-
-                    // Update status to 'quoted' if we have analysis
-                    if (callAnalysis) {
-                        partsRequestUpdate.status = 'quoted'
-                        partsRequestUpdate.quote_received_at = new Date().toISOString()
+                    if (callAnalysis.structuredData) {
+                        console.log('Structured data extracted:', callAnalysis.structuredData)
                         
-                        // Extract quote details if available
-                        if (callAnalysis.quote_details) {
-                            partsRequestUpdate.total_quote_amount = callAnalysis.quote_details.total_cost || callAnalysis.quote_details.subtotal
-                            partsRequestUpdate.quote_currency = callAnalysis.quote_details.currency || 'USD'
-                            partsRequestUpdate.availability = callAnalysis.quote_details.availability
-                            partsRequestUpdate.delivery_eta = callAnalysis.quote_details.delivery_eta
-                        }
+                        // Update parts_request with structured data in quote_provided field
+                        const { data: updatedPartsRequest, error: partsRequestError } = await supabase
+                            .from('parts_requests')
+                            .update({
+                                quote_provided: callAnalysis.structuredData,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', voiceCall.parts_request_id)
+                            .eq('shop_id', userData.shop_id)
+                            .select()
+                            .single()
 
-                        // Update parts with quote information
-                        if (callAnalysis.parts_info && Array.isArray(callAnalysis.parts_info)) {
-                            const updatedParts = callAnalysis.parts_info.map((part: any) => ({
-                                partName: part.part_name || 'Unknown Part',
-                                partNumber: part.part_number || '',
-                                quantity: part.quantity || 1,
-                                description: part.description || '',
-                                estimated_price: part.unit_price || 0,
-                                supplier_part_number: part.supplier_part_number || '',
-                                availability: part.availability || 'unknown',
-                                delivery_days: part.delivery_days || null,
-                                cost_price: part.unit_price || 0,
-                                retail_price: part.unit_price || 0,
-                                notes: part.notes || '',
-                                vehicle_application: part.vehicle_application || '',
-                                delivery_method: part.delivery_method || 'standard'
-                            }))
-                            
-                            partsRequestUpdate.parts_requested = updatedParts
+                        if (!partsRequestError && updatedPartsRequest) {
+                            console.log('Updated parts request with structured data:', {
+                                partsRequestId: voiceCall.parts_request_id,
+                                partsCount: callAnalysis.structuredData.parts_info?.length || 0,
+                                totalCost: callAnalysis.structuredData.quote_details?.total_cost || 0
+                            })
+                        } else {
+                            console.error('Error updating parts request:', partsRequestError)
                         }
-
-                        // Update vehicle info if available
-                        if (callAnalysis.vehicle_info) {
-                            partsRequestUpdate.vehicle_info = {
-                                year: callAnalysis.vehicle_info.year,
-                                make: callAnalysis.vehicle_info.make,
-                                model: callAnalysis.vehicle_info.model,
-                                engine: callAnalysis.vehicle_info.engine,
-                                vin: callAnalysis.vehicle_info.vin,
-                                mileage: callAnalysis.vehicle_info.mileage
-                            }
-                        }
-
-                        // Update supplier info if available
-                        if (callAnalysis.supplier_info && Object.keys(callAnalysis.supplier_info).length > 0) {
-                            partsRequestUpdate.selected_supplier = {
-                                name: callAnalysis.supplier_info.supplier_name || 'Unknown Supplier',
-                                contact_person: callAnalysis.supplier_info.contact_person,
-                                phone_number: callAnalysis.supplier_info.phone_number,
-                                email: callAnalysis.supplier_info.email,
-                                account_number: callAnalysis.supplier_info.account_number
-                            }
-                        }
-
-                        // Handle next steps information
-                        if (callAnalysis.next_steps) {
-                            const nextSteps = callAnalysis.next_steps
-                            if (nextSteps.order_ready) {
-                                partsRequestUpdate.status = 'quoted' // Already set above, but ensure it's correct
-                            }
-                            if (nextSteps.requires_approval) {
-                                partsRequestUpdate.status = 'pending' // Override if approval needed
-                            }
-                            if (nextSteps.follow_up_needed) {
-                                partsRequestUpdate.notes = `Follow-up needed: ${nextSteps.follow_up_date || 'TBD'}`
-                            }
-                        }
-
-                        // Add call analysis to notes
-                        const callOutcome = callAnalysis.call_outcome
-                        const outcomeNotes = callOutcome?.notes || 'Quote provided via voice call'
-                        const department = callOutcome?.department ? ` (${callOutcome.department} department)` : ''
-                        const status = callOutcome?.status ? ` - Status: ${callOutcome.status}` : ''
-                        
-                        const existingNotes = partsRequestUpdate.notes || ''
-                        partsRequestUpdate.notes = `${existingNotes}\nCall analysis: ${outcomeNotes}${department}${status}`.trim()
                     }
-
-                    // Update the parts request
-                    const { data: updatedPartsRequest, error: partsRequestError } = await supabase
-                        .from('parts_requests')
-                        .update(partsRequestUpdate)
-                        .eq('id', voiceCall.parts_request_id)
-                        .eq('shop_id', userData.shop_id)
-                        .select()
-                        .single()
-
-                    if (!partsRequestError && updatedPartsRequest) {
-                        console.log('Updated parts request with call analysis:', {
-                            partsRequestId: voiceCall.parts_request_id,
-                            status: partsRequestUpdate.status,
-                            totalAmount: partsRequestUpdate.total_quote_amount,
-                            partsCount: partsRequestUpdate.parts_requested?.length || 0
-                        })
-                    } else {
-                        console.error('Error updating parts request:', partsRequestError)
-                    }
-
                 } catch (partsRequestError) {
                     console.error('Error updating parts request:', partsRequestError)
                 }
