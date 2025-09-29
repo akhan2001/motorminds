@@ -1,6 +1,8 @@
 import { pdf } from "@react-pdf/renderer";
 import { InvoiceTemplate } from "../components/InvoiceTemplate";
 import { InvoiceLandscape } from "../components/invoiceLandscape";
+import { ModernInvoiceTemplate } from "../components/ModernInvoiceTemplate";
+import { ModernInvoiceLandscape } from "../components/ModernInvoiceLandscape";
 
 export async function generateInvoicePDF(invoice: any, isLandscape: boolean = false) {
     try {
@@ -41,8 +43,8 @@ export async function generateInvoicePDF(invoice: any, isLandscape: boolean = fa
         // Now create the PDF after image loading is complete
         const blob = await pdf(
             isLandscape 
-                ? <InvoiceLandscape invoice={invoice} /> 
-                : <InvoiceTemplate invoice={invoice} />
+                ? <ModernInvoiceLandscape invoice={invoice} /> 
+                : <ModernInvoiceTemplate invoice={invoice} />
         ).toBlob();
 
         // Create a download link
