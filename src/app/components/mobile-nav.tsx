@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from "@/components/ui/button"
-import { Menu, Settings, HelpCircle, LogOut, ChevronRight } from "lucide-react"
+import { Menu, Settings, HelpCircle, LogOut, ChevronRight, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
@@ -140,12 +140,14 @@ export function MobileNav({
                                         activeLink === item.name
                                         ? "bg-[#222] text-[#b22222]"
                                         : "text-[#979797] hover:bg-[#1A1A1A] hover:text-white"
-                                    }`}
+                                    } ${item.name === 'Mia AI' ? 'text-red-500 hover:text-red-400' : ''}`}
                                 >
-                                    {item.name}
-                                    {item.name === "Mia AI" &&
-                                        <Badge variant="outline" className="text-xs ml-2 px-2 py-0.5 text-[#979797] border-[#979797]">Beta</Badge>
-                                    }
+                                    <span className="flex items-center gap-2">
+                                        {item.name}
+                                        {item.name === "Mia AI" && (
+                                            <Sparkles className="h-3 w-3 text-red-400 animate-pulse" />
+                                        )}
+                                    </span>
                                 </a>
                             )}
                         </div>
