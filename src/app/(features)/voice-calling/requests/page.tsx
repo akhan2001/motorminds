@@ -84,16 +84,6 @@ export default function VoiceCallRequestsPage() {
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/dashboard" className="text-gray-400 hover:text-gray-300">
-                                            Home
-                                        </Link>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator>
-                                    <Slash className="h-4 w-4" />
-                                </BreadcrumbSeparator>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink asChild>
                                         <Link href="/voice-calling" className="text-gray-400 hover:text-gray-300">
                                             Voice Calling
                                         </Link>
