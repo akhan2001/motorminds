@@ -390,38 +390,10 @@ async function handleEndOfCallReport(call: any, message: any, shopId?: string) {
             timestamp: new Date().toISOString()
         })
 
-        // Update parts_request if we have a parts_request_id and analysis data
+        // Update parts_request based on call outcome
         const partsRequestId = call.metadata?.parts_request_id
-        if (partsRequestId && analysisData?.structuredData) {
-            const structuredData = analysisData.structuredData
-            
-            const { error: partsError } = await supabase
-                .from('parts_requests')
-                .update({
-                    status: 'quote_received',
-                    quote_provided: structuredData,
-                    call_analysis: analysisData,
-                    actual_cost: structuredData.quote_details?.total_cost || null,
-                    supplier_info: structuredData.supplier_info || {},
-                    admin_notes: `Call completed. Analysis: ${analysisData.summary || 'No summary'}`,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', partsRequestId)
-
-            if (partsError) {
-                console.error('❌ Failed to update parts request:', partsError)
-            } else {
-                console.log('✅ Parts request updated with quote data')
-                
-                // Broadcast real-time update to connected clients
-                broadcastCallUpdate(call.id, {
-                    type: 'call_completed',
-                    status: 'completed',
-                    callId: call.id,
-                    quote_data: structuredData,
-                    timestamp: new Date().toISOString()
-                })
-            }
+        if (partsRequestId && analysisData) {
+            await updatePartsRequestFromCallOutcome(partsRequestId, analysisData, call)
         }
 
     } catch (error) {
@@ -467,6 +439,75 @@ async function handleStatusUpdate(call: any, message: any, shopId?: string) {
             success: false, 
             error: 'Failed to process status update' 
         }, { status: 500 })
+    }
+}
+
+/**
+ * Update parts request based on call outcome analysis
+ */
+async function updatePartsRequestFromCallOutcome(partsRequestId: string, analysisData: any, call: any) {
+    try {
+        const callOutcome = analysisData.call_outcome?.status || 'unknown'
+        const successEvaluation = analysisData.successEvaluation
+        const structuredData = analysisData.structuredData
+        
+        console.log('🎯 Evaluating call outcome:', { callOutcome, successEvaluation, partsRequestId })
+
+        let newStatus = 'processing' // default fallback
+        let adminNotes = `Call completed at ${new Date().toISOString()}`
+
+        // Determine new status based on call outcome
+        if (callOutcome === 'voicemail' || callOutcome === 'no_answer' || callOutcome === 'busy') {
+            newStatus = 'pending' // Reset to allow retry
+            adminNotes = `Call failed: ${callOutcome}. Ready for retry.`
+        } else if (successEvaluation === true || callOutcome === 'successful') {
+            if (structuredData?.quote_details || structuredData?.parts_info) {
+                newStatus = 'quoted' // Quote received, ready to order
+                adminNotes = `Quote received successfully. Ready to place order.`
+            } else {
+                newStatus = 'processing' // Call connected but incomplete info
+                adminNotes = `Call connected but incomplete quote information.`
+            }
+        } else if (successEvaluation === false || callOutcome === 'failed') {
+            newStatus = 'pending' // Allow retry
+            adminNotes = `Call unsuccessful: ${callOutcome}. May need different approach.`
+        }
+
+        // Update parts request
+        const updateData: any = {
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+            admin_notes: adminNotes
+        }
+
+        // Add quote data if successful
+        if (newStatus === 'quoted' && structuredData) {
+            updateData.quote_provided = structuredData
+            updateData.actual_cost = structuredData.quote_details?.total_cost || null
+        }
+
+        const { error: partsError } = await supabase
+            .from('parts_requests')
+            .update(updateData)
+            .eq('id', partsRequestId)
+
+        if (partsError) {
+            console.error('❌ Failed to update parts request:', partsError)
+        } else {
+            console.log('✅ Parts request updated:', { partsRequestId, newStatus, callOutcome })
+            
+            // Update voice call status based on outcome
+            await supabase
+                .from('voice_calls')
+                .update({
+                    status: successEvaluation === true ? 'ready_to_order' : 
+                           callOutcome === 'voicemail' ? 'failed' : 'completed'
+                })
+                .eq('vapi_call_id', call.id)
+        }
+
+    } catch (error) {
+        console.error('❌ Error updating parts request from call outcome:', error)
     }
 }
 

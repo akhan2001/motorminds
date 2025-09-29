@@ -110,6 +110,21 @@ export default function VoiceCallingPage() {
             const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
             if (!partsRequest) return
 
+            // Handle "complete_order" action differently - just update status
+            if (action.action === 'complete_order') {
+                await PartsService.updatePartsRequestStatus(
+                    partsRequestId,
+                    shopId,
+                    'received', // Database status for completed
+                    'Order marked as completed from voice calling dashboard'
+                )
+
+                toast.success('Order marked as completed successfully')
+                await fetchPartsRequests()
+                return
+            }
+
+            // For all other actions, proceed with call initiation
             // Get supplier info for the call
             const supplierId = partsRequest.supplier_info?.supplier_id
             const phoneNumber = partsRequest.supplier_info?.phone_number
@@ -135,6 +150,8 @@ export default function VoiceCallingPage() {
                 toast.success(`${action.label} initiated successfully`)
                 // Refresh the data to show updated status
                 await fetchPartsRequests()
+            } else {
+                toast.error(`Failed to ${action.label.toLowerCase()}`)
             }
 
         } catch (error) {

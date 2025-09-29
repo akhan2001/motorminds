@@ -101,6 +101,13 @@ export const STATUS_ACTIONS: Record<PartsRequestStatus, StatusAction[]> = {
             purpose: 'order_followup',
             description: 'Call to check order status or delivery time',
             variant: 'outline'
+        },
+        {
+            action: 'complete_order',
+            label: 'Mark Complete',
+            purpose: 'general_inquiry',
+            description: 'Mark this order as completed and received',
+            variant: 'default'
         }
     ],
     'completed': [],

@@ -199,11 +199,33 @@ export async function GET(request: NextRequest) {
                     if (callAnalysis.structuredData) {
                         console.log('Structured data extracted:', callAnalysis.structuredData)
                         
-                        // Update parts_request with structured data in quote_provided field
+                        // Determine parts request status based on call outcome
+                        let partsRequestStatus = 'processing' // default
+                        let adminNotes = `Call analysis refreshed at ${new Date().toISOString()}`
+                        
+                        const callOutcome = callAnalysis.call_outcome?.status || 'unknown'
+                        const successEvaluation = callAnalysis.successEvaluation
+                        
+                        if (callOutcome === 'voicemail' || callOutcome === 'no_answer' || callOutcome === 'busy') {
+                            partsRequestStatus = 'pending' // Allow retry
+                            adminNotes = `Call failed: ${callOutcome}. Ready for retry.`
+                        } else if (successEvaluation === true || callOutcome === 'successful') {
+                            if (callAnalysis.structuredData?.quote_details || callAnalysis.structuredData?.parts_info) {
+                                partsRequestStatus = 'quoted' // Quote received, ready to order
+                                adminNotes = `Quote received successfully. Ready to place order.`
+                            }
+                        } else if (successEvaluation === false || callOutcome === 'failed') {
+                            partsRequestStatus = 'pending' // Allow retry
+                            adminNotes = `Call unsuccessful. May need different approach.`
+                        }
+
+                        // Update parts_request with structured data and status
                         const { data: updatedPartsRequest, error: partsRequestError } = await supabase
                             .from('parts_requests')
                             .update({
                                 quote_provided: callAnalysis.structuredData,
+                                status: partsRequestStatus,
+                                admin_notes: adminNotes,
                                 updated_at: new Date().toISOString()
                             })
                             .eq('id', voiceCall.parts_request_id)
@@ -421,11 +443,33 @@ export async function POST(request: NextRequest) {
                     if (callAnalysis.structuredData) {
                         console.log('Structured data extracted:', callAnalysis.structuredData)
                         
-                        // Update parts_request with structured data in quote_provided field
+                        // Determine parts request status based on call outcome
+                        let partsRequestStatus = 'processing' // default
+                        let adminNotes = `Call analysis refreshed at ${new Date().toISOString()}`
+                        
+                        const callOutcome = callAnalysis.call_outcome?.status || 'unknown'
+                        const successEvaluation = callAnalysis.successEvaluation
+                        
+                        if (callOutcome === 'voicemail' || callOutcome === 'no_answer' || callOutcome === 'busy') {
+                            partsRequestStatus = 'pending' // Allow retry
+                            adminNotes = `Call failed: ${callOutcome}. Ready for retry.`
+                        } else if (successEvaluation === true || callOutcome === 'successful') {
+                            if (callAnalysis.structuredData?.quote_details || callAnalysis.structuredData?.parts_info) {
+                                partsRequestStatus = 'quoted' // Quote received, ready to order
+                                adminNotes = `Quote received successfully. Ready to place order.`
+                            }
+                        } else if (successEvaluation === false || callOutcome === 'failed') {
+                            partsRequestStatus = 'pending' // Allow retry
+                            adminNotes = `Call unsuccessful. May need different approach.`
+                        }
+
+                        // Update parts_request with structured data and status
                         const { data: updatedPartsRequest, error: partsRequestError } = await supabase
                             .from('parts_requests')
                             .update({
                                 quote_provided: callAnalysis.structuredData,
+                                status: partsRequestStatus,
+                                admin_notes: adminNotes,
                                 updated_at: new Date().toISOString()
                             })
                             .eq('id', voiceCall.parts_request_id)

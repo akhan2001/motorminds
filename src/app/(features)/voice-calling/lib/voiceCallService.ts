@@ -44,13 +44,19 @@ export class VoiceCallService {
             // Update parts request status based on call purpose
             await this.updatePartsRequestStatus(request.partsRequestId, request.purpose)
 
+            // Transform parts array into format expected by dynamic assistant
+            const transformedPartsInfo = this.transformPartsForAI(request.partsInfo)
+            
+            console.log('Original parts info:', request.partsInfo)
+            console.log('Transformed parts info:', transformedPartsInfo)
+
             // Start the AI call
             const response = await fetch('/api/voice-calling/start-call', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     vehicle_info: request.vehicleInfo,
-                    parts_info: request.partsInfo,
+                    parts_info: transformedPartsInfo,
                     suppliers: [{ 
                         id: request.supplierId,
                         phone_number: request.phoneNumber 
@@ -90,6 +96,43 @@ export class VoiceCallService {
     }
 
     /**
+     * Transform parts array into format expected by dynamic assistant
+     */
+    private static transformPartsForAI(partsArray: any): any {
+        if (!partsArray || !Array.isArray(partsArray) || partsArray.length === 0) {
+            return {
+                partName: 'Unknown Part',
+                partNumber: '',
+                quantity: 1,
+                description: 'No parts specified'
+            }
+        }
+
+        // If single part, use it directly
+        if (partsArray.length === 1) {
+            const part = partsArray[0]
+            return {
+                partName: part.part_name || 'Unknown Part',
+                partNumber: part.part_number || '',
+                quantity: part.quantity || 1,
+                description: part.description || ''
+            }
+        }
+
+        // If multiple parts, create a combined description
+        const totalQuantity = partsArray.reduce((sum, part) => sum + (part.quantity || 0), 0)
+        const partNames = partsArray.map(part => `${part.quantity || 1} ${part.part_name || 'Unknown Part'}`).join(', ')
+        const partNumbers = partsArray.map(part => part.part_number).filter(Boolean).join(', ')
+        
+        return {
+            partName: partNames,
+            partNumber: partNumbers,
+            quantity: totalQuantity,
+            description: `Multiple parts: ${partNames}`
+        }
+    }
+
+    /**
      * Get the next sequence number for calls related to a parts request
      */
     private static async getNextSequenceNumber(partsRequestId: string): Promise<number> {
@@ -113,25 +156,42 @@ export class VoiceCallService {
      */
     private static async updatePartsRequestStatus(partsRequestId: string, purpose: VoiceCallPurpose): Promise<void> {
         const statusMap: Record<VoiceCallPurpose, string> = {
-            'quote_request': 'quote_requested',
-            'order_followup': 'quote_received', // Keep current status
-            'parts_ordering': 'order_placed',
+            'quote_request': 'processing', // Use correct database status
+            'order_followup': 'quoted', // Keep current status  
+            'parts_ordering': 'ordered', // Use correct database status
             'general_inquiry': 'pending' // Keep current status
         }
 
         const newStatus = statusMap[purpose]
-        if (!newStatus) return
+        if (!newStatus) {
+            console.log(`No status mapping for purpose: ${purpose}`)
+            return
+        }
 
-        const { error } = await this.supabase
+        console.log(`Updating parts request ${partsRequestId} from purpose ${purpose} to status ${newStatus}`)
+
+        const { data, error } = await this.supabase
             .from('parts_requests')
             .update({ 
                 status: newStatus,
                 updated_at: new Date().toISOString()
             })
             .eq('id', partsRequestId)
+            .select()
 
         if (error) {
-            console.error('Error updating parts request status:', error)
+            console.error('Error updating parts request status:', {
+                partsRequestId,
+                purpose,
+                newStatus,
+                error: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            })
+            throw new Error(`Failed to update parts request status: ${error.message}`)
+        } else {
+            console.log('Successfully updated parts request status:', data)
         }
     }
 
