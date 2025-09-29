@@ -142,6 +142,31 @@ export async function GET(request: NextRequest) {
                         console.log('Call marked as recall needed based on successEvaluation')
                     }
                 }
+                
+                // Handle call outcome status for failed calls
+                if (callAnalysis.call_outcome && callAnalysis.call_outcome.status) {
+                    const outcomeStatus = callAnalysis.call_outcome.status.toLowerCase()
+                    console.log('Call outcome status:', outcomeStatus)
+                    
+                    if (outcomeStatus === 'voicemail' || outcomeStatus === 'no_answer' || outcomeStatus === 'busy') {
+                        updateData.status = 'failed'
+                        console.log('Call marked as failed due to:', outcomeStatus)
+                    } else if (outcomeStatus === 'success' || outcomeStatus === 'completed') {
+                        // Only update to completed if we don't already have a more specific status
+                        if (!updateData.status || updateData.status === 'pending' || updateData.status === 'connecting' || updateData.status === 'in_progress') {
+                            updateData.status = 'completed'
+                            console.log('Call marked as completed based on outcome status')
+                        }
+                    }
+                }
+                
+                // Handle next_steps for follow-up needed
+                if (callAnalysis.next_steps && callAnalysis.next_steps.follow_up_needed === true) {
+                    if (updateData.status === 'completed') {
+                        updateData.status = 'recall_needed'
+                        console.log('Call marked as recall needed due to follow_up_needed')
+                    }
+                }
             }
 
             // Update call metadata with fresh Vapi data
@@ -337,6 +362,31 @@ export async function POST(request: NextRequest) {
                     } else {
                         updateData.status = 'recall_needed'
                         console.log('Call marked as recall needed based on successEvaluation')
+                    }
+                }
+                
+                // Handle call outcome status for failed calls
+                if (callAnalysis.call_outcome && callAnalysis.call_outcome.status) {
+                    const outcomeStatus = callAnalysis.call_outcome.status.toLowerCase()
+                    console.log('Call outcome status:', outcomeStatus)
+                    
+                    if (outcomeStatus === 'voicemail' || outcomeStatus === 'no_answer' || outcomeStatus === 'busy') {
+                        updateData.status = 'failed'
+                        console.log('Call marked as failed due to:', outcomeStatus)
+                    } else if (outcomeStatus === 'success' || outcomeStatus === 'completed') {
+                        // Only update to completed if we don't already have a more specific status
+                        if (!updateData.status || updateData.status === 'pending' || updateData.status === 'connecting' || updateData.status === 'in_progress') {
+                            updateData.status = 'completed'
+                            console.log('Call marked as completed based on outcome status')
+                        }
+                    }
+                }
+                
+                // Handle next_steps for follow-up needed
+                if (callAnalysis.next_steps && callAnalysis.next_steps.follow_up_needed === true) {
+                    if (updateData.status === 'completed') {
+                        updateData.status = 'recall_needed'
+                        console.log('Call marked as recall needed due to follow_up_needed')
                     }
                 }
             }
