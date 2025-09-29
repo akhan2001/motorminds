@@ -20,11 +20,11 @@ const styles = StyleSheet.create({
         paddingBottom: 10
     },
     headerLeft: {
-        width: '60%',
+        width: '70%',
         flexDirection: 'column'
     },
     headerRight: {
-        width: '35%',
+        width: '25%',
         flexDirection: 'column',
         alignItems: 'flex-end'
     },
@@ -71,16 +71,22 @@ const styles = StyleSheet.create({
     customerVehicleRow: {
         flexDirection: 'row',
         marginBottom: 15,
-        gap: 15
+        gap: 10
     },
     customerSection: {
-        width: '48%',
+        width: '35%',
         backgroundColor: '#f8fafc',
         padding: 8,
         borderRadius: 4
     },
     vehicleSection: {
-        width: '48%',
+        width: '35%',
+        backgroundColor: '#f8fafc',
+        padding: 8,
+        borderRadius: 4
+    },
+    paymentSection: {
+        width: '25%',
         backgroundColor: '#f8fafc',
         padding: 8,
         borderRadius: 4
@@ -96,6 +102,23 @@ const styles = StyleSheet.create({
         fontSize: 9,
         color: '#374151',
         marginBottom: 2
+    },
+    paymentMethod: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 3
+    },
+    checkbox: {
+        width: 8,
+        height: 8,
+        borderWidth: 1,
+        borderColor: '#374151',
+        marginRight: 4,
+        backgroundColor: '#ffffff'
+    },
+    paymentLabel: {
+        fontSize: 8,
+        color: '#374151'
     },
     serviceDescription: {
         fontSize: 11,
@@ -212,6 +235,19 @@ const styles = StyleSheet.create({
         color: '#374151',
         lineHeight: 1.3
     },
+    commentsSection: {
+        marginBottom: 15,
+        backgroundColor: '#f8fafc',
+        padding: 8,
+        borderRadius: 4,
+        minHeight: 60
+    },
+    commentsTitle: {
+        fontSize: 9,
+        fontWeight: 'bold',
+        color: '#1e3a8a',
+        marginBottom: 4
+    },
     authorizationSection: {
         flexDirection: 'row',
         marginBottom: 15
@@ -296,19 +332,13 @@ const InvoiceHeader = ({ invoice }: { invoice: any }) => (
                     cache={false}
                 />
             )}
-            <Text style={styles.companyName}>{invoice.shopName}</Text>
-            {invoice.shop_tagline && (
-                <Text style={styles.companyTagline}>{invoice.shop_tagline}</Text>
-            )}
-            <Text style={styles.companyDetails}>{invoice.shopAddress}</Text>
-            <Text style={styles.companyDetails}>{formatPhoneNumber(invoice.shopPhone)}</Text>
-            <Text style={styles.companyDetails}>{invoice.shopEmail}</Text>
-            {invoice.hst_number && (
-                <Text style={styles.businessInfo}>HST#: {invoice.hst_number}</Text>
-            )}
-            {invoice.business_number && (
-                <Text style={styles.businessInfo}>Business#: {invoice.business_number}</Text>
-            )}
+            <Text style={styles.companyName}>{invoice.shopName || 'Shop Name'}</Text>
+            <Text style={styles.companyTagline}>{invoice.shop_tagline || 'Shop Tagline'}</Text>
+            <Text style={styles.companyDetails}>Address: {invoice.shopAddress || ''}</Text>
+            <Text style={styles.companyDetails}>Phone: {formatPhoneNumber(invoice.shopPhone) || ''}</Text>
+            <Text style={styles.companyDetails}>Email: {invoice.shopEmail || ''}</Text>
+            <Text style={styles.businessInfo}>HST#: {invoice.hst_number || ''}</Text>
+            <Text style={styles.businessInfo}>Business#: {invoice.business_number || ''}</Text>
         </View>
         
         <View style={styles.headerRight}>
@@ -320,30 +350,53 @@ const InvoiceHeader = ({ invoice }: { invoice: any }) => (
     </View>
 );
 
-// Customer and Vehicle Info Component
-const CustomerVehicleInfo = ({ invoice }: { invoice: any }) => (
+// Customer, Vehicle, and Payment Info Component
+const CustomerVehiclePaymentInfo = ({ invoice }: { invoice: any }) => (
     <View style={styles.customerVehicleRow}>
         <View style={styles.customerSection}>
-            <Text style={styles.sectionTitle}>Bill To</Text>
+            <Text style={styles.sectionTitle}>Customer Name</Text>
             <Text style={styles.sectionContent}>{invoice.clientName || ''}</Text>
+            <Text style={styles.sectionTitle}>Address</Text>
             <Text style={styles.sectionContent}>{invoice.clientAddress || ''}</Text>
+            <Text style={styles.sectionTitle}>City, Prov</Text>
+            <Text style={styles.sectionContent}>{invoice.clientCity || ''}</Text>
+            <Text style={styles.sectionTitle}>Postal Code</Text>
+            <Text style={styles.sectionContent}>{invoice.clientPostalCode || ''}</Text>
+            <Text style={styles.sectionTitle}>Telephone</Text>
             <Text style={styles.sectionContent}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
-            <Text style={styles.sectionContent}>{invoice.clientEmail || ''}</Text>
         </View>
         
         <View style={styles.vehicleSection}>
-            <Text style={styles.sectionTitle}>Vehicle Details</Text>
-            <Text style={styles.sectionContent}>
-                {invoice.vehicleInfo?.year || ''} {invoice.vehicleInfo?.make || ''} {invoice.vehicleInfo?.model || ''}
-            </Text>
+            <Text style={styles.sectionTitle}>Make</Text>
+            <Text style={styles.sectionContent}>{invoice.vehicleInfo?.make || ''}</Text>
+            <Text style={styles.sectionTitle}>Model</Text>
+            <Text style={styles.sectionContent}>{invoice.vehicleInfo?.model || ''}</Text>
+            <Text style={styles.sectionTitle}>Year</Text>
+            <Text style={styles.sectionContent}>{invoice.vehicleInfo?.year || ''}</Text>
+            <Text style={styles.sectionTitle}>Plate</Text>
             <Text style={styles.sectionContent}>
                 {invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" 
-                    ? 'No License Plate' 
-                    : `License: ${invoice.vehicleInfo?.license_plate}`}
+                    ? '' 
+                    : invoice.vehicleInfo?.license_plate || ''}
             </Text>
-            <Text style={styles.sectionContent}>
-                {invoice.mileage ? `Mileage: ${invoice.mileage}` : ''}
-            </Text>
+            <Text style={styles.sectionTitle}>Odometer</Text>
+            <Text style={styles.sectionContent}>{invoice.mileage || ''}</Text>
+        </View>
+        
+        <View style={styles.paymentSection}>
+            <Text style={styles.sectionTitle}>Method of Payment</Text>
+            <View style={styles.paymentMethod}>
+                <View style={styles.checkbox}></View>
+                <Text style={styles.paymentLabel}>Cash</Text>
+            </View>
+            <View style={styles.paymentMethod}>
+                <View style={styles.checkbox}></View>
+                <Text style={styles.paymentLabel}>Charge</Text>
+            </View>
+            <View style={styles.paymentMethod}>
+                <View style={styles.checkbox}></View>
+                <Text style={styles.paymentLabel}>Debit</Text>
+            </View>
         </View>
     </View>
 );
@@ -460,6 +513,16 @@ const PaymentSummary = ({ invoice }: { invoice: any }) => {
     );
 };
 
+// Comments Component
+const CommentsSection = () => (
+    <View style={styles.commentsSection}>
+        <Text style={styles.commentsTitle}>Comments</Text>
+        <Text style={styles.notesContent}>
+            {/* Empty space for manual comments */}
+        </Text>
+    </View>
+);
+
 // Notes Component
 const NotesSection = ({ invoice }: { invoice: any }) => {
     if (!invoice.notes) return null;
@@ -498,8 +561,8 @@ const AuthorizationSection = () => (
 const InvoiceFooter = ({ invoice }: { invoice: any }) => (
     <View style={styles.footer}>
         <Text style={styles.footerLeft}>
-            Thank you for choosing {invoice.shopName}!{'\n'}
-            Quality service you can trust • 100% Canadian Owned & Operated
+            🇨🇦 100% CANADIAN OWNED & OPERATED!{'\n'}
+            Thank you for choosing {invoice.shopName || 'our shop'}!
         </Text>
         <Text style={styles.footerRight}>Powered by MotorMinds</Text>
     </View>
@@ -516,9 +579,11 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                     {invoice.description || 'Automotive Service'}
                 </Text>
                 
-                <CustomerVehicleInfo invoice={invoice} />
+                <CustomerVehiclePaymentInfo invoice={invoice} />
                 
                 <ServiceItemsTable invoice={invoice} />
+                
+                <CommentsSection />
                 
                 <NotesSection invoice={invoice} />
                 

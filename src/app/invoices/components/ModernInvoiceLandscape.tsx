@@ -321,19 +321,13 @@ const InvoiceHeader = ({ invoice }: { invoice: any }) => (
                     cache={false}
                 />
             )}
-            <Text style={styles.companyName}>{invoice.shopName}</Text>
-            {invoice.shop_tagline && (
-                <Text style={styles.companyTagline}>{invoice.shop_tagline}</Text>
-            )}
-            <Text style={styles.companyDetails}>{invoice.shopAddress}</Text>
-            <Text style={styles.companyDetails}>{formatPhoneNumber(invoice.shopPhone)}</Text>
-            <Text style={styles.companyDetails}>{invoice.shopEmail}</Text>
-            {invoice.hst_number && (
-                <Text style={styles.businessInfo}>HST#: {invoice.hst_number}</Text>
-            )}
-            {invoice.business_number && (
-                <Text style={styles.businessInfo}>Business#: {invoice.business_number}</Text>
-            )}
+            <Text style={styles.companyName}>{invoice.shopName || 'Shop Name'}</Text>
+            <Text style={styles.companyTagline}>{invoice.shop_tagline || 'Shop Tagline'}</Text>
+            <Text style={styles.companyDetails}>Address: {invoice.shopAddress || ''}</Text>
+            <Text style={styles.companyDetails}>Phone: {formatPhoneNumber(invoice.shopPhone) || ''}</Text>
+            <Text style={styles.companyDetails}>Email: {invoice.shopEmail || ''}</Text>
+            <Text style={styles.businessInfo}>HST#: {invoice.hst_number || ''}</Text>
+            <Text style={styles.businessInfo}>Business#: {invoice.business_number || ''}</Text>
         </View>
         
         <View style={styles.headerRight}>
@@ -350,19 +344,30 @@ const CustomerVehiclePaymentInfo = ({ invoice }: { invoice: any }) => (
     <View style={styles.infoRow}>
         <View style={styles.billToSection}>
             <Text style={styles.sectionTitle}>Bill To</Text>
-            <Text style={styles.sectionContent}>{invoice.clientName || ''}</Text>
-            <Text style={styles.sectionContent}>{invoice.clientAddress || ''}</Text>
-            <Text style={styles.sectionContent}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
-            <Text style={styles.sectionContent}>{invoice.clientEmail || ''}</Text>
+            <Text style={styles.sectionContent}>Name: {invoice.clientName || ''}</Text>
+            <Text style={styles.sectionContent}>Address: {invoice.clientAddress || ''}</Text>
+            <Text style={styles.sectionContent}>Phone: {formatPhoneNumber(invoice.clientPhone) || ''}</Text>
+            <Text style={styles.sectionContent}>Email: {invoice.clientEmail || ''}</Text>
         </View>
         
         <View style={styles.vehicleSection}>
             <Text style={styles.sectionTitle}>Vehicle Details</Text>
             <Text style={styles.sectionContent}>
-                {invoice.vehicleInfo?.year || ''} {invoice.vehicleInfo?.make || ''} {invoice.vehicleInfo?.model || ''}
+                Year: {invoice.vehicleInfo?.year || ''}
             </Text>
             <Text style={styles.sectionContent}>
-                {invoice.mileage ? `Odometer: ${invoice.mileage}` : ''}
+                Make: {invoice.vehicleInfo?.make || ''}
+            </Text>
+            <Text style={styles.sectionContent}>
+                Model: {invoice.vehicleInfo?.model || ''}
+            </Text>
+            <Text style={styles.sectionContent}>
+                License: {invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" 
+                    ? 'N/A' 
+                    : invoice.vehicleInfo?.license_plate || 'N/A'}
+            </Text>
+            <Text style={styles.sectionContent}>
+                Mileage: {invoice.mileage || 'N/A'}
             </Text>
         </View>
         
