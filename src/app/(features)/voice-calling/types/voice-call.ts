@@ -18,6 +18,7 @@ export interface VoiceCall {
     parts_discussed: any[]
     actions_taken: any[]
     parts_request_id?: string
+    sequence_number?: number
     order_created: boolean
     quote_received?: any
     call_metadata: any
@@ -36,9 +37,9 @@ export interface VoiceCall {
     }
 }
 
-export type VoiceCallPurpose = 'parts_ordering' | 'general_inquiry' | 'quote_request' | 'order_followup'
+import { VoiceCallPurpose, VoiceCallStatus } from './status'
 
-export type VoiceCallStatus = 'pending' | 'connecting' | 'in_progress' | 'completed' | 'failed' | 'cancelled' | 'ready_to_order'
+export { VoiceCallPurpose, VoiceCallStatus }
 
 export interface VoiceCallAnalysis {
     parts_info?: Array<{

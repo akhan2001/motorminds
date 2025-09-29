@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
             priority,
             notes,
             parts_request_id,
+            call_purpose = 'quote_request',
+            sequence_number = 1,
             user_id
         } = body
 
@@ -135,7 +137,9 @@ export async function POST(request: NextRequest) {
             vapi_call_id: callId,
             parts_request_id,
             supplier_id: supplier_id && isValidUUID(supplier_id) ? supplier_id : null,
-            user_id: user_id && isValidUUID(user_id) ? user_id : null
+            user_id: user_id && isValidUUID(user_id) ? user_id : null,
+            purpose: call_purpose,
+            sequence_number: sequence_number
         })
 
         return NextResponse.json({

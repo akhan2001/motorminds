@@ -12,12 +12,13 @@ import {
     TableHeader, 
     TableRow 
 } from '@/components/ui/table'
-import { Phone, CheckCircle, Eye, Clock, Package, PhoneCall } from 'lucide-react'
+import { Phone, CheckCircle, Eye, Clock, Package, PhoneCall, ShoppingCart, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import type { VoiceCall, VoiceCallStatus, VoiceCallPurpose } from '../types/voice-call'
-import { getStatusColor, getPurposeColor, formatStatusLabel } from '@/lib/utils/formatting'
+import { getStatusColor, getPurposeColor, formatStatusLabel, formatDate } from '@/lib/utils/formatting'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import CallForm from './CallForm'
+import { toast } from 'sonner'
 
 interface VoiceCallTableProps {
     calls: VoiceCall[]
@@ -33,6 +34,60 @@ interface PartsRequest {
 }
 
 export default function VoiceCallTable({ calls, loading = false }: VoiceCallTableProps) {
+    const [orderingCall, setOrderingCall] = useState<string | null>(null)
+
+    const handlePartsOrder = async (call: VoiceCall) => {
+        if (!call.parts_request_id || !call.supplier_id) {
+            toast.error('Missing parts request or supplier information')
+            return
+        }
+
+        try {
+            setOrderingCall(call.id)
+            toast.info('Initiating parts order call...')
+
+            // Extract parts information from the call
+            const partsInfo = call.parts_request?.parts_requested || 
+                            call.quote_received?.structuredData?.parts_info || 
+                            call.parts_discussed
+
+            // Extract account information (this would come from supplier settings)
+            const accountInfo = {
+                account_number: call.supplier?.name || 'Account #12345', // This should come from supplier settings
+                contact_person: call.supplier?.contact_person || 'Parts Department',
+                special_instructions: 'Please confirm availability and delivery timeframe'
+            }
+
+            const response = await fetch('/api/voice-calling/order-parts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    callId: call.id,
+                    partsRequestId: call.parts_request_id,
+                    phoneNumber: call.phone_number,
+                    supplierId: call.supplier_id,
+                    partsInfo: partsInfo,
+                    accountInfo: accountInfo,
+                    shopId: call.shop_id
+                })
+            })
+
+            if (response.ok) {
+                const result = await response.json()
+                toast.success('Parts order call initiated successfully!')
+                console.log('Ordering call started:', result)
+            } else {
+                const errorData = await response.json()
+                toast.error(errorData.error || 'Failed to initiate parts order')
+                console.error('Order parts error:', errorData)
+            }
+        } catch (error) {
+            console.error('Error initiating parts order:', error)
+            toast.error('Failed to initiate parts order')
+        } finally {
+            setOrderingCall(null)
+        }
+    }
 
     const formatPartsRequested = (call: VoiceCall) => {
         // First check if we have parts_request data from the call
@@ -190,6 +245,54 @@ export default function VoiceCallTable({ calls, loading = false }: VoiceCallTabl
                                                                 ? "bg-green-600 hover:bg-green-700 text-white hover:text-white border-green-600"
                                                                 : "border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
                                                         }
+                                                        onClick={() => {
+                                                            if (call.status === 'ready_to_order') {
+                                                                console.log('=== READY TO ORDER CALL PARTS INFORMATION ===')
+                                                                console.log('Call ID:', call.id)
+                                                                console.log('Phone Number:', call.phone_number)
+                                                                console.log('Supplier:', call.supplier?.name || 'N/A')
+                                                                
+                                                                // Log parts request information
+                                                                if (call.parts_request) {
+                                                                    console.log('Parts Request:', call.parts_request)
+                                                                    console.log('Parts Requested:', call.parts_request.parts_requested)
+                                                                    console.log('Vehicle Info:', call.parts_request.vehicle_info)
+                                                                    console.log('Status:', call.parts_request.status)
+                                                                    if ((call.parts_request as any).quote_provided) {
+                                                                        console.log('Quote Provided:', (call.parts_request as any).quote_provided)
+                                                                    }
+                                                                }
+                                                                
+                                                                // Log quote received information
+                                                                if (call.quote_received) {
+                                                                    console.log('Quote Received:', call.quote_received)
+                                                                    if (call.quote_received.structuredData) {
+                                                                        console.log('Structured Data:', call.quote_received.structuredData)
+                                                                        if (call.quote_received.structuredData.parts_info) {
+                                                                            console.log('Parts Info:', call.quote_received.structuredData.parts_info)
+                                                                        }
+                                                                        if (call.quote_received.structuredData.quote_details) {
+                                                                            console.log('Quote Details:', call.quote_received.structuredData.quote_details)
+                                                                        }
+                                                                        if (call.quote_received.structuredData.supplier_info) {
+                                                                            console.log('Supplier Info:', call.quote_received.structuredData.supplier_info)
+                                                                        }
+                                                                    }
+                                                                }
+                                                                
+                                                                // Log parts discussed
+                                                                if (call.parts_discussed && call.parts_discussed.length > 0) {
+                                                                    console.log('Parts Discussed:', call.parts_discussed)
+                                                                }
+                                                                
+                                                                // Log call summary and transcript
+                                                                if (call.call_summary) {
+                                                                    console.log('Call Summary:', call.call_summary)
+                                                                }
+                                                                
+                                                                console.log('=== END PARTS INFORMATION ===')
+                                                            }
+                                                        }}
                                                     >
                                                         <PhoneCall className="h-3 w-3 mr-1" />
                                                         Call
@@ -200,6 +303,17 @@ export default function VoiceCallTable({ calls, loading = false }: VoiceCallTabl
                                                     supplier: call.supplier_id
                                                 }}
                                             />
+                                            {call.status === 'ready_to_order' && (
+                                                <Button
+                                                    onClick={() => handlePartsOrder(call)}
+                                                    disabled={orderingCall === call.id}
+                                                    size="sm"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                >
+                                                    <ShoppingCart className="h-3 w-3 mr-1" />
+                                                    {orderingCall === call.id ? 'Ordering...' : 'Order Parts'}
+                                                </Button>
+                                            )}
                                             {call.status === 'completed' && call.quote_received && (
                                                 <Button
                                                     asChild
