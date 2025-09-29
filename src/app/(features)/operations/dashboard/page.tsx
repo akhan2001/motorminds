@@ -3,7 +3,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, Calendar } from 'lucide-react'
+import { Calendar } from 'lucide-react'
+import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 
 export default function DashboardPage() {
     const router = useRouter()
@@ -19,7 +20,7 @@ export default function DashboardPage() {
             <div className="flex-1 flex items-center justify-center">
                 <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                     <CardContent className="flex items-center gap-4 p-6">
-                        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                        <LoadingSpinner size="md" className="text-blue-500" />
                         <Calendar className="h-6 w-6 text-blue-400" />
                         <div>
                             <p className="text-white font-medium">Loading Dashboard</p>

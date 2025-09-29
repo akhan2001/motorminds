@@ -16,6 +16,7 @@ import {
     TrendingUp,
     FileText
 } from 'lucide-react'
+import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
@@ -214,7 +215,7 @@ export default function AppointmentsPage() {
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
-                            <Clock className="h-6 w-6 animate-spin text-blue-500" />
+                            <LoadingSpinner size="md" className="text-blue-500" />
                             <div>
                                 <p className="text-white font-medium">Loading Appointments</p>
                                 <p className="text-gray-400 text-sm">Fetching calendar data...</p>

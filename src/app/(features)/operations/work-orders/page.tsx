@@ -16,6 +16,7 @@ import type { WorkOrderItemCreateData } from "../types/work-order-items";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
+import { LoadingSpinner } from "@/components/common/feedback/loading-states";
 import { toast } from "sonner";
 
 // Helper function to create work order items from selected templates
@@ -444,7 +445,7 @@ function WorkOrdersContent() {
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
-                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                            <LoadingSpinner size="md" className="text-blue-500" />
                             <div>
                                 <p className="text-white font-medium">Loading Work Orders</p>
                                 <p className="text-gray-400 text-sm">Fetching data from database...</p>
