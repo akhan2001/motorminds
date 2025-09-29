@@ -36,7 +36,7 @@ export default function VoiceOrderingCard() {
 
                 {/* Call to Action */}
                 <div className="pt-4">
-                    <Link href="/voice-calling/ordering">
+                    <Link href="/voice-calling/requests">
                         <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                             Start Parts Ordering
                             <ArrowRight className="h-4 w-4 ml-2" />

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Nav } from '@/app/components/nav'
-import { Package, Car, Building, Send, Phone } from 'lucide-react'
+import { Package, Car, Building, Send, Phone, FileText, List, Users } from 'lucide-react'
 import SupplierMultiSelect from '@/app/(features)/suppliers/components/supplier-multi-select'
 import { toast } from 'sonner'
 import { 
@@ -20,6 +20,7 @@ import {
 import { PartsService } from '@/app/(features)/parts/lib/partsService'
 import { createClient } from '@/utils/supabase/client'
 import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
+import Link from 'next/link'
 
 export default function VoiceOrderingPage() {
     const [selectedSuppliers, setSelectedSuppliers] = useState<SelectedSupplier[]>([])
@@ -420,7 +421,29 @@ export default function VoiceOrderingPage() {
             <Nav />
             <div className="flex-1 flex flex-col overflow-auto">
                 <div className="p-6 max-w-4xl mx-auto w-full">
-                    <div className="text-center mb-6">
+                    {/* Navigation Buttons */}
+                    <div className="flex gap-3 mb-6">
+                        <Link href="/voice-calling/requests">
+                            <Button variant="outline" className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white">
+                                <FileText className="h-4 w-4 mr-2" />
+                                Voice Call Logs
+                            </Button>
+                        </Link>
+                        <Link href="/parts-quote">
+                            <Button variant="outline" className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white">
+                                <List className="h-4 w-4 mr-2" />
+                                Parts Requests
+                            </Button>
+                        </Link>
+                        <Link href="/suppliers">
+                            <Button variant="outline" className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white">
+                                <Users className="h-4 w-4 mr-2" />
+                                Suppliers
+                            </Button>
+                        </Link>
+                    </div>
+
+                    <div className="text-start mb-6">
                         <h1 className="text-3xl font-bold text-white mb-2">
                             AI Parts Ordering
                         </h1>
