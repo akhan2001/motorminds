@@ -121,13 +121,23 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
 
     const handleDeleteInvoice = async () => {
         try {
-            await deleteInvoice(invoice.invoiceNumber, shopId as string);
+            console.log("Attempting to delete invoice:", invoice.invoiceNumber, "for shop:", shopId);
+            const result = await deleteInvoice(invoice.invoiceNumber, shopId as string);
+            console.log("Delete result:", result);
             toast.success(`Invoice #${invoice.displayNumber} deleted successfully`);
             setShowDeleteDialog(false);
             onClose();
+            if (onInvoiceUpdated) {
+                onInvoiceUpdated();
+            }
         } catch (error) {
             console.error("Error deleting invoice:", error);
-            toast.error("Failed to delete invoice");
+            console.error("Error details:", {
+                message: error instanceof Error ? error.message : 'Unknown error',
+                stack: error instanceof Error ? error.stack : undefined,
+                error: error
+            });
+            toast.error(`Failed to delete invoice: ${error instanceof Error ? error.message : 'Unknown error'}`);
             setShowDeleteDialog(false);
         }
     };

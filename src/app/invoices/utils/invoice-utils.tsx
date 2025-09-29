@@ -21,6 +21,7 @@ export async function fetchAllInvoices(shopId: string) {
 		...invoice,
 		hst_number: invoice.hst_number || shopDetails.hst_number,
 		business_number: invoice.business_number || shopDetails.business_number,
+		shop_tagline: shopDetails.shop_tagline,
 		source: invoice.source || 'shop_generated' // Default to shop_generated for existing invoices
 	})) || [];
 	
@@ -106,7 +107,7 @@ export async function fetchShopBusinessDetails(shopId: string) {
 	try {
 		const { data, error } = await supabase
 			.from('shops')
-			.select('hst_number, business_number')
+			.select('hst_number, business_number, shop_tagline')
 			.eq('id', shopId)
 			.single();
 		
@@ -117,11 +118,12 @@ export async function fetchShopBusinessDetails(shopId: string) {
 		
 		return {
 			hst_number: data?.hst_number || '',
-			business_number: data?.business_number || ''
+			business_number: data?.business_number || '',
+			shop_tagline: data?.shop_tagline || ''
 		};
 	} catch (err) {
 		console.error('Error in fetchShopBusinessDetails:', err);
-		return { hst_number: '', business_number: '' };
+		return { hst_number: '', business_number: '', shop_tagline: '' };
 	}
 }
 
@@ -203,17 +205,64 @@ export async function createNewInvoice(invoiceData: any, shopId: string) {
 }
 
 export async function deleteInvoice(invoiceId: string, shopId: string) {
-	const { data, error } = await supabase
-		.from('invoices')
-		.delete()
-		.eq('invoice_number', invoiceId)
-		.eq('shop_id', shopId);
+	try {
+		console.log("Deleting invoice with ID:", invoiceId, "for shop:", shopId);
+		
+		if (!invoiceId) {
+			throw new Error("Invoice ID is required");
+		}
+		
+		if (!shopId) {
+			throw new Error("Shop ID is required");
+		}
 
-	if (error) {
+		// First, check if the invoice exists
+		const { data: invoiceData, error: fetchError } = await supabase
+			.from('invoices')
+			.select('invoice_number')
+			.eq('invoice_number', invoiceId)
+			.eq('shop_id', shopId)
+			.single();
+
+		if (fetchError) {
+			console.error("Error fetching invoice:", fetchError);
+			throw new Error(`Failed to find invoice: ${fetchError.message}`);
+		}
+
+		if (!invoiceData) {
+			throw new Error("Invoice not found");
+		}
+
+		// Update work orders to remove the invoice reference
+		// Note: work_orders.invoice_id stores the invoice_number, not the database ID
+		const { error: workOrderError } = await supabase
+			.from('work_orders')
+			.update({ invoice_id: null })
+			.eq('invoice_id', invoiceId);
+
+		if (workOrderError) {
+			console.error("Error updating work orders:", workOrderError);
+			throw new Error(`Failed to update related work orders: ${workOrderError.message}`);
+		}
+
+		// Now delete the invoice
+		const { data, error } = await supabase
+			.from('invoices')
+			.delete()
+			.eq('invoice_number', invoiceId)
+			.eq('shop_id', shopId);
+
+		if (error) {
+			console.error("Supabase delete error:", error);
+			throw new Error(`Failed to delete invoice: ${error.message}`);
+		}
+
+		console.log("Invoice deleted successfully:", data);
+		return data;
+	} catch (error) {
+		console.error("Error in deleteInvoice function:", error);
 		throw error;
 	}
-
-	return data;
 }
 
 export async function updateInvoice(invoiceNumber: string, invoiceData: any, shopId: string) {
