@@ -4,102 +4,153 @@ import { formatPhoneNumber } from "../utils/invoice-utils";
 // Create styles
 const styles = StyleSheet.create({
     page: {
-        flexDirection: 'column',
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        fontFamily: 'Helvetica',
-        fontSize: 10
+        padding: '12mm', // 12-15mm margins as specified
+        fontSize: 10, // Base 10pt as per specs
+        fontFamily: "Helvetica",
+        backgroundColor: "#FFFFFF",
+        position: 'relative'
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 15,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: '4mm',
         borderBottomWidth: 2,
-        borderBottomColor: '#1e3a8a',
-        paddingBottom: 10
+        borderBottomColor: "#1e3a8a",
+        paddingBottom: '2mm',
+        height: '35mm' // Reduced header height to fit one page
     },
     headerLeft: {
-        width: '70%',
-        flexDirection: 'column'
+        width: "55%" // 55% as per specs
     },
     headerRight: {
-        width: '25%',
-        flexDirection: 'column',
-        alignItems: 'flex-end'
+        width: "45%", // 45% as per specs
+        alignItems: "flex-end"
+    },
+    logoBox: {
+        width: 100,
+        height: 40,
+        borderWidth: 2,
+        borderColor: "#1e3a8a",
+        backgroundColor: "#1e3a8a",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 4
+    },
+    logoText: {
+        color: "#FFFFFF",
+        fontSize: 14, // 14pt as specified for shop name
+        fontWeight: "bold"
     },
     logo: {
-        width: 120,
-        height: 50,
+        width: 100,
+        height: 40,
         objectFit: 'contain',
-        marginBottom: 8
+        marginBottom: 4
     },
     companyName: {
-        fontSize: 16,
+        fontSize: 14, // 14pt as specified
         fontWeight: 'bold',
         color: '#1e3a8a',
-        marginBottom: 3
+        marginBottom: 2
     },
     companyTagline: {
-        fontSize: 10,
+        fontSize: 10, // 10pt as specified for subtext
         fontStyle: 'italic',
-        color: '#6b7280',
-        marginBottom: 4,
-        textAlign: 'center'
+        color: '#1e3a8a',
+        marginBottom: 2
     },
     companyDetails: {
-        fontSize: 9,
+        fontSize: 10, // 10pt as specified for address/phone
         color: '#374151',
         marginBottom: 1
     },
     businessInfo: {
-        fontSize: 8,
-        color: '#6b7280',
-        marginTop: 2
-    },
-    invoiceTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1e3a8a',
-        marginBottom: 5
-    },
-    invoiceDetails: {
-        fontSize: 9,
+        fontSize: 10, // 10pt as specified for address/phone
         color: '#374151',
-        marginBottom: 2
+        marginBottom: 1
     },
-    customerVehicleRow: {
-        flexDirection: 'row',
-        marginBottom: 15,
-        gap: 10
+    invoiceFields: {
+        marginBottom: 6
     },
-    customerSection: {
-        width: '35%',
-        backgroundColor: '#f8fafc',
-        padding: 8,
-        borderRadius: 4
+    fieldLabel: {
+        fontSize: 11, // 10-11pt bold as specified
+        fontWeight: "bold",
+        color: "#1e3a8a",
+        marginBottom: 1
     },
-    vehicleSection: {
-        width: '35%',
-        backgroundColor: '#f8fafc',
-        padding: 8,
-        borderRadius: 4
+    fieldLine: {
+        borderBottomWidth: 1,
+        borderBottomColor: "#374151",
+        marginBottom: 4,
+        paddingBottom: 1
     },
     paymentSection: {
-        width: '25%',
-        backgroundColor: '#f8fafc',
-        padding: 8,
-        borderRadius: 4
+        marginTop: 6
+    },
+    paymentTitle: {
+        fontSize: 11, // 10-11pt for payment method labels
+        fontWeight: "bold",
+        color: "#1e3a8a",
+        marginBottom: 2
+    },
+    paymentOptions: {
+        flexDirection: "row",
+        gap: 15
+    },
+    paymentOption: {
+        flexDirection: "row",
+        alignItems: "center"
+    },
+    checkbox: {
+        width: 8,
+        height: 8,
+        borderWidth: 1,
+        borderColor: "#374151",
+        marginRight: 4,
+        backgroundColor: "#ffffff"
+    },
+    paymentLabel: {
+        fontSize: 11, // 10-11pt for checkbox labels
+        color: "#374151"
+    },
+    customerVehicleRow: {
+        flexDirection: "row",
+        marginBottom: 8,
+        gap: 15
+    },
+    customerSection: {
+        width: "45%"
+    },
+    vehicleSection: {
+        width: "45%"
     },
     sectionTitle: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#1e3a8a',
-        marginBottom: 4,
-        textTransform: 'uppercase'
+        fontSize: 10, // 10pt bold labels as specified
+        fontWeight: "bold",
+        color: "#1e3a8a",
+        marginBottom: 2,
+        textTransform: "uppercase"
+    },
+    fieldRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 3
+    },
+    fieldLabelSmall: {
+        fontSize: 10, // 10pt bold labels as specified
+        fontWeight: "bold",
+        color: "#374151",
+        width: 70
+    },
+    fieldLineSmall: {
+        flex: 1,
+        borderBottomWidth: 1,
+        borderBottomColor: "#374151",
+        marginLeft: 8,
+        paddingBottom: 2
     },
     sectionContent: {
-        fontSize: 9,
+        fontSize: 10,
         color: '#374151',
         marginBottom: 2
     },
@@ -107,18 +158,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 3
-    },
-    checkbox: {
-        width: 8,
-        height: 8,
-        borderWidth: 1,
-        borderColor: '#374151',
-        marginRight: 4,
-        backgroundColor: '#ffffff'
-    },
-    paymentLabel: {
-        fontSize: 8,
-        color: '#374151'
     },
     serviceDescription: {
         fontSize: 11,
@@ -131,44 +170,46 @@ const styles = StyleSheet.create({
         borderRadius: 4
     },
     table: {
-        marginBottom: 15,
+        marginTop: '3mm',
+        marginBottom: '3mm',
         width: '100%'
     },
     tableHeader: {
-        flexDirection: 'row',
-        backgroundColor: '#1e3a8a',
-        paddingHorizontal: 6,
+        flexDirection: "row",
+        backgroundColor: "#1e3a8a",
         paddingVertical: 6,
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4
+        paddingHorizontal: 4
     },
     tableHeaderText: {
-        color: '#ffffff',
-        fontSize: 9,
-        fontWeight: 'bold',
-        textAlign: 'center'
+        color: "#FFFFFF",
+        fontSize: 11, // 11pt bold for headers as specified
+        fontWeight: "bold",
+        textAlign: "center"
     },
+    // Column widths as specified in the breakdown
+    itemNoCol: { width: "12%", fontSize: 10, textAlign: "center" }, // 10pt regular for rows
+    qtyCol: { width: "10%", fontSize: 10, textAlign: "center" }, // Adjusted to 10% as specified
+    descCol: { width: "48%", fontSize: 10, paddingRight: 4 },
+    unitPriceCol: { width: "15%", fontSize: 10, textAlign: "right" }, // Adjusted to 15%
+    amountCol: { width: "15%", fontSize: 10, textAlign: "right" }, // Adjusted to 15%
     tableRow: {
-        flexDirection: 'row',
-        paddingHorizontal: 6,
-        paddingVertical: 4,
+        flexDirection: "row",
+        paddingVertical: 3,
+        paddingHorizontal: 4,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
-        backgroundColor: '#ffffff'
+        borderBottomColor: "#e5e7eb",
+        backgroundColor: "#ffffff",
+        minHeight: '8mm' // Reduced to fit one page
     },
     tableRowAlt: {
-        flexDirection: 'row',
-        paddingHorizontal: 6,
-        paddingVertical: 4,
+        flexDirection: "row",
+        paddingVertical: 3,
+        paddingHorizontal: 4,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
-        backgroundColor: '#f9fafb'
+        borderBottomColor: "#e5e7eb",
+        backgroundColor: "#f9fafb",
+        minHeight: '8mm' // Reduced to fit one page
     },
-    itemNumberCol: { width: '12%', fontSize: 8, textAlign: 'center' },
-    qtyCol: { width: '10%', fontSize: 8, textAlign: 'center' },
-    descCol: { width: '48%', fontSize: 8, paddingRight: 4 },
-    unitPriceCol: { width: '15%', fontSize: 8, textAlign: 'right' },
-    amountCol: { width: '15%', fontSize: 8, textAlign: 'right', fontWeight: 'bold' },
     summarySection: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
@@ -236,73 +277,84 @@ const styles = StyleSheet.create({
         lineHeight: 1.3
     },
     commentsSection: {
-        marginBottom: 15,
-        backgroundColor: '#f8fafc',
-        padding: 8,
+        position: 'absolute',
+        bottom: '25mm', // Adjusted position for one page fit
+        left: '12mm',
+        right: '12mm',
+        backgroundColor: "#f8fafc",
+        padding: 4,
         borderRadius: 4,
-        minHeight: 60
+        minHeight: '15mm' // Reduced height for one page fit
     },
     commentsTitle: {
-        fontSize: 9,
-        fontWeight: 'bold',
-        color: '#1e3a8a',
-        marginBottom: 4
+        fontSize: 9, // 9pt for comments title
+        fontWeight: "bold",
+        color: "#1e3a8a",
+        marginBottom: 2
     },
     authorizationSection: {
         flexDirection: 'row',
         marginBottom: 15
     },
-    authorizationText: {
-        width: '65%',
-        fontSize: 7,
-        color: '#6b7280',
-        lineHeight: 1.2,
-        paddingRight: 10
+    legalText: {
+        fontSize: 7, // Reduced to fit one page
+        color: "#374151",
+        lineHeight: 1.0,
+        marginTop: 2,
+        marginBottom: 2,
+        fontStyle: "italic" // Italic for disclaimers as specified
     },
     signatureSection: {
-        width: '35%',
-        flexDirection: 'column'
+        position: 'absolute',
+        bottom: '10mm', // Adjusted position for one page fit
+        left: '12mm',
+        right: '12mm',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingTop: 4,
+        borderTopWidth: 1,
+        borderTopColor: "#e5e7eb"
     },
     signatureLine: {
         borderBottomWidth: 1,
-        borderBottomColor: '#374151',
-        marginBottom: 3,
-        paddingBottom: 8
+        borderBottomColor: "#374151",
+        width: 100,
+        marginBottom: 1
     },
     signatureLabel: {
-        fontSize: 7,
-        textAlign: 'center',
-        color: '#6b7280',
-        marginBottom: 8
+        fontSize: 8,
+        color: "#6b7280"
     },
     dateLine: {
         borderBottomWidth: 1,
-        borderBottomColor: '#374151',
-        marginBottom: 3,
-        paddingBottom: 8
+        borderBottomColor: "#374151",
+        width: 60,
+        marginBottom: 1
     },
     dateLabel: {
-        fontSize: 7,
-        textAlign: 'center',
-        color: '#6b7280'
+        fontSize: 8,
+        color: "#6b7280"
     },
     footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        position: 'absolute',
+        bottom: '5mm', // Very bottom with 5mm margin
+        left: '12mm',
+        right: '12mm',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingTop: 4,
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
-        paddingTop: 8,
-        marginTop: 10
+        borderTopColor: "#e5e7eb"
     },
     footerLeft: {
         fontSize: 8,
-        color: '#6b7280'
+        color: "#6b7280"
     },
     footerRight: {
         fontSize: 8,
-        color: '#6b7280',
-        fontWeight: 'bold'
+        color: "#6b7280",
+        fontWeight: "bold"
     }
 });
 
@@ -325,77 +377,106 @@ const formatCurrency = (amount: number | undefined | null) => {
 const InvoiceHeader = ({ invoice }: { invoice: any }) => (
     <View style={styles.header}>
         <View style={styles.headerLeft}>
-            {invoice.shopLogo && (
+            {invoice.shopLogo ? (
                 <Image 
                     src={invoice.shopLogo}
                     style={styles.logo}
                     cache={false}
                 />
+            ) : (
+                <View style={styles.logoBox}>
+                    <Text style={styles.logoText}>{invoice.shopName || 'SHOP NAME'}</Text>
+                </View>
             )}
-            <Text style={styles.companyName}>{invoice.shopName || 'Shop Name'}</Text>
-            <Text style={styles.companyTagline}>{invoice.shop_tagline || 'Shop Tagline'}</Text>
-            <Text style={styles.companyDetails}>Address: {invoice.shopAddress || ''}</Text>
-            <Text style={styles.companyDetails}>Phone: {formatPhoneNumber(invoice.shopPhone) || ''}</Text>
-            <Text style={styles.companyDetails}>Email: {invoice.shopEmail || ''}</Text>
-            <Text style={styles.businessInfo}>HST#: {invoice.hst_number || ''}</Text>
-            <Text style={styles.businessInfo}>Business#: {invoice.business_number || ''}</Text>
+            {invoice.shop_tagline && (
+                <Text style={styles.companyTagline}>"{invoice.shop_tagline}"</Text>
+            )}
+            <Text style={styles.businessInfo}>{invoice.shopAddress || ''}</Text>
+            <Text style={styles.businessInfo}>{formatPhoneNumber(invoice.shopPhone) || ''}</Text>
+            <Text style={styles.businessInfo}>Business #: {invoice.business_number || ''}</Text>
         </View>
         
         <View style={styles.headerRight}>
-            <Text style={styles.invoiceTitle}>INVOICE</Text>
-            <Text style={styles.invoiceDetails}>Invoice #: {invoice.displayNumber}</Text>
-            <Text style={styles.invoiceDetails}>Date: {formatDate(invoice.issueDate)}</Text>
-            <Text style={styles.invoiceDetails}>Status: {invoice.status}</Text>
+            <View style={styles.invoiceFields}>
+                <Text style={styles.fieldLabel}>Invoice No:</Text>
+                <Text style={styles.sectionContent}>{invoice.displayNumber || ''}</Text>
+                <Text style={styles.fieldLabel}>Date:</Text>
+                <Text style={styles.sectionContent}>{formatDate(invoice.issueDate) || ''}</Text>
+            </View>
+            
+            <View style={styles.paymentSection}>
+                <Text style={styles.paymentTitle}>Method of Payment:</Text>
+                <View style={styles.paymentOptions}>
+                    <View style={styles.paymentOption}>
+                        <View style={styles.checkbox}></View>
+                        <Text style={styles.paymentLabel}>Cash</Text>
+                    </View>
+                    <View style={styles.paymentOption}>
+                        <View style={styles.checkbox}></View>
+                        <Text style={styles.paymentLabel}>Charge</Text>
+                    </View>
+                    <View style={styles.paymentOption}>
+                        <View style={styles.checkbox}></View>
+                        <Text style={styles.paymentLabel}>Debit</Text>
+                    </View>
+                </View>
+            </View>
         </View>
     </View>
 );
 
-// Customer, Vehicle, and Payment Info Component
-const CustomerVehiclePaymentInfo = ({ invoice }: { invoice: any }) => (
+// Customer and Vehicle Info Component
+const CustomerVehicleInfo = ({ invoice }: { invoice: any }) => (
     <View style={styles.customerVehicleRow}>
         <View style={styles.customerSection}>
-            <Text style={styles.sectionTitle}>Customer Name</Text>
-            <Text style={styles.sectionContent}>{invoice.clientName || ''}</Text>
-            <Text style={styles.sectionTitle}>Address</Text>
-            <Text style={styles.sectionContent}>{invoice.clientAddress || ''}</Text>
-            <Text style={styles.sectionTitle}>City, Prov</Text>
-            <Text style={styles.sectionContent}>{invoice.clientCity || ''}</Text>
-            <Text style={styles.sectionTitle}>Postal Code</Text>
-            <Text style={styles.sectionContent}>{invoice.clientPostalCode || ''}</Text>
-            <Text style={styles.sectionTitle}>Telephone</Text>
-            <Text style={styles.sectionContent}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
+            <Text style={styles.sectionTitle}>Customer Information</Text>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Name:</Text>
+                <Text style={styles.sectionContent}>{invoice.clientName || ''}</Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Address:</Text>
+                <Text style={styles.sectionContent}>{invoice.clientAddress || ''}</Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>City, Prov:</Text>
+                <Text style={styles.sectionContent}>{invoice.clientCity || ''}, {invoice.clientProvince || ''}</Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Postal Code:</Text>
+                <Text style={styles.sectionContent}>{invoice.clientPostalCode || ''}</Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Telephone:</Text>
+                <Text style={styles.sectionContent}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
+            </View>
         </View>
         
         <View style={styles.vehicleSection}>
-            <Text style={styles.sectionTitle}>Make</Text>
-            <Text style={styles.sectionContent}>{invoice.vehicleInfo?.make || ''}</Text>
-            <Text style={styles.sectionTitle}>Model</Text>
-            <Text style={styles.sectionContent}>{invoice.vehicleInfo?.model || ''}</Text>
-            <Text style={styles.sectionTitle}>Year</Text>
-            <Text style={styles.sectionContent}>{invoice.vehicleInfo?.year || ''}</Text>
-            <Text style={styles.sectionTitle}>Plate</Text>
-            <Text style={styles.sectionContent}>
-                {invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" 
-                    ? '' 
-                    : invoice.vehicleInfo?.license_plate || ''}
-            </Text>
-            <Text style={styles.sectionTitle}>Odometer</Text>
-            <Text style={styles.sectionContent}>{invoice.mileage || ''}</Text>
-        </View>
-        
-        <View style={styles.paymentSection}>
-            <Text style={styles.sectionTitle}>Method of Payment</Text>
-            <View style={styles.paymentMethod}>
-                <View style={styles.checkbox}></View>
-                <Text style={styles.paymentLabel}>Cash</Text>
+            <Text style={styles.sectionTitle}>Vehicle Information</Text>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Make:</Text>
+                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.make || ''}</Text>
             </View>
-            <View style={styles.paymentMethod}>
-                <View style={styles.checkbox}></View>
-                <Text style={styles.paymentLabel}>Charge</Text>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Model:</Text>
+                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.model || ''}</Text>
             </View>
-            <View style={styles.paymentMethod}>
-                <View style={styles.checkbox}></View>
-                <Text style={styles.paymentLabel}>Debit</Text>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Year:</Text>
+                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.year || ''}</Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Plate:</Text>
+                <Text style={styles.sectionContent}>
+                    {invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" 
+                        ? '' 
+                        : invoice.vehicleInfo?.license_plate || ''}
+                </Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>Odometer:</Text>
+                <Text style={styles.sectionContent}>{invoice.mileage || ''}</Text>
             </View>
         </View>
     </View>
@@ -452,19 +533,23 @@ const ServiceItemsTable = ({ invoice }: { invoice: any }) => {
         });
     }
 
+    // Fill remaining rows with empty lines to total 10 rows
+    const emptyRows = Math.max(0, 10 - allItems.length);
+
     return (
         <View style={styles.table}>
             <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, styles.itemNumberCol]}>Item #</Text>
-                <Text style={[styles.tableHeaderText, styles.qtyCol]}>Qty</Text>
+                <Text style={[styles.tableHeaderText, styles.itemNoCol]}>Item No.</Text>
+                <Text style={[styles.tableHeaderText, styles.qtyCol]}>Quantity</Text>
                 <Text style={[styles.tableHeaderText, styles.descCol]}>Description</Text>
                 <Text style={[styles.tableHeaderText, styles.unitPriceCol]}>Unit Price</Text>
                 <Text style={[styles.tableHeaderText, styles.amountCol]}>Amount</Text>
             </View>
             
+            {/* Actual invoice items */}
             {allItems.map((item, index) => (
-                <View key={index} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
-                    <Text style={styles.itemNumberCol}>{item.itemNumber}</Text>
+                <View key={`item-${index}`} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+                    <Text style={styles.itemNoCol}>{item.itemNumber}</Text>
                     <Text style={styles.qtyCol}>{item.quantity}</Text>
                     <Text style={styles.descCol}>{item.description}</Text>
                     <Text style={styles.unitPriceCol}>{formatCurrency(item.unitPrice)}</Text>
@@ -472,10 +557,10 @@ const ServiceItemsTable = ({ invoice }: { invoice: any }) => {
                 </View>
             ))}
             
-            {/* Add empty lines for manual filling */}
-            {Array.from({ length: 8 }, (_, index) => (
-                <View key={`empty-${index}`} style={styles.tableRow}>
-                    <Text style={styles.itemNumberCol}></Text>
+            {/* Empty lines for manual filling */}
+            {Array.from({ length: emptyRows }, (_, index) => (
+                <View key={`empty-${index}`} style={(allItems.length + index) % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+                    <Text style={styles.itemNoCol}></Text>
                     <Text style={styles.qtyCol}></Text>
                     <Text style={styles.descCol}></Text>
                     <Text style={styles.unitPriceCol}></Text>
@@ -540,17 +625,29 @@ const NotesSection = ({ invoice }: { invoice: any }) => {
     );
 };
 
-// Authorization Component
-const AuthorizationSection = () => (
-    <View style={styles.authorizationSection}>
-        <View style={styles.authorizationText}>
-            <Text>
-                I hereby authorize the repairs indicated above and grant permission for the shop to operate my vehicle for testing and inspection purposes. I acknowledge that the shop will not be responsible for loss or damage to the vehicle or articles left in the vehicle in case of fire, theft, or any other cause beyond the shop's control.
-            </Text>
-        </View>
-        <View style={styles.signatureSection}>
+// Legal Text Component
+const LegalTextSection = () => (
+    <View>
+        <Text style={styles.legalText}>
+            INVOICE COMMENTS: ALL WHEELS THAT ARE REMOVED ARE HAND TORQUED TO MANUFACTURER'S SPECIFICATIONS & SHOULD BE RE-TORQUED AFTER APPROXIMATELY 60KM.
+        </Text>
+        <Text style={styles.legalText}>
+            I hereby authorize the above work to be completed along with necessary materials as permitted by law. I acknowledge that the shop will not be responsible for loss or damage to the vehicle or articles left in the vehicle in case of fire, theft, or any other cause beyond the shop's control. I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of the shop.
+        </Text>
+        <Text style={styles.legalText}>
+            I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of the shop. The lien covers all labour, parts, taxes, and court costs until full payment is received.
+        </Text>
+    </View>
+);
+
+// Signature Section Component
+const SignatureSection = () => (
+    <View style={styles.signatureSection}>
+        <View>
             <View style={styles.signatureLine}></View>
-            <Text style={styles.signatureLabel}>Customer Signature</Text>
+            <Text style={styles.signatureLabel}>Customer Acceptance</Text>
+        </View>
+        <View>
             <View style={styles.dateLine}></View>
             <Text style={styles.dateLabel}>Date</Text>
         </View>
@@ -575,21 +672,15 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
             <Page size="A4" style={styles.page}>
                 <InvoiceHeader invoice={invoice} />
                 
-                <Text style={styles.serviceDescription}>
-                    {invoice.description || 'Automotive Service'}
-                </Text>
-                
-                <CustomerVehiclePaymentInfo invoice={invoice} />
+                <CustomerVehicleInfo invoice={invoice} />
                 
                 <ServiceItemsTable invoice={invoice} />
                 
+                <LegalTextSection />
+                
                 <CommentsSection />
                 
-                <NotesSection invoice={invoice} />
-                
-                <AuthorizationSection />
-                
-                <PaymentSummary invoice={invoice} />
+                <SignatureSection />
                 
                 <InvoiceFooter invoice={invoice} />
             </Page>
