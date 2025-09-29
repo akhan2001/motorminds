@@ -94,7 +94,7 @@ export default function VoiceCallRequestsPage() {
                                 </BreadcrumbSeparator>
                                 <BreadcrumbItem>
                                     <BreadcrumbPage className="text-white">
-                                        Call Requests
+                                        Requests
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
@@ -104,10 +104,10 @@ export default function VoiceCallRequestsPage() {
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-2">
-                                    Voice Call Requests
+                                    Call History & Requests
                                 </h1>
                                 <p className="text-gray-400">
-                                    Review voice calls made for parts requests
+                                    Detailed view of all voice calls and their analysis
                                 </p>
                             </div>
                             <div className="flex gap-3">

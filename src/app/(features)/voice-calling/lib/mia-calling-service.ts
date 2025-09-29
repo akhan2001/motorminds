@@ -177,6 +177,8 @@ export class MiaCallingService {
         parts_request_id?: string;
         supplier_id?: string;
         user_id?: string;
+        purpose?: string;
+        sequence_number?: number;
     }) {
         const supabase = await createClient();
         
@@ -190,7 +192,8 @@ export class MiaCallingService {
                 supplier_id: callData.supplier_id,
                 user_id: callData.user_id,
                 status: 'pending',
-                purpose: 'parts_ordering'
+                purpose: callData.purpose || 'quote_request',
+                sequence_number: callData.sequence_number || 1
             }])
             .select()
             .single();

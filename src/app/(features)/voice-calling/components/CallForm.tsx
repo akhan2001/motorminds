@@ -17,8 +17,8 @@ import {
     PartsRequestPriority 
 } from '@/app/(features)/voice-calling/types'
 import { PartsService } from '@/app/(features)/parts/lib/partsService'
+import { VoiceCallService } from '../lib/voiceCallService'
 import { createClient } from '@/utils/supabase/client'
-import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from '@/components/ui/select'
 import { VoiceCallPurpose } from '@/app/(features)/voice-calling/types/voice-call'
 
@@ -241,37 +241,25 @@ export default function CallForm({
             setCallStatus('calling')
             setIsPolling(true)
             
-            // Format and validate phone number
-            const formattedPhone = formatPhoneNumberE164(selectedSuppliers[0].phone_number || '')
-            console.log('📱 Formatted phone:', formattedPhone)
-            if (!isValidE164(formattedPhone)) {
-                throw new Error('Invalid phone number format. Must be a valid E.164 number')
-            }
-
-            // Start the AI call
-            const response = await fetch('/api/voice-calling/start-call', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vehicle_info: vehicleInfo,
-                    parts_info: partInfo,
-                    suppliers: selectedSuppliers,
-                    priority,
-                    notes,
-                    parts_request_id: partsRequestId
-                })
+            const result = await VoiceCallService.startCall({
+                partsRequestId,
+                supplierId: selectedSuppliers[0].id,
+                phoneNumber: selectedSuppliers[0].phone_number || '',
+                purpose: callPurpose,
+                vehicleInfo,
+                partsInfo: partInfo,
+                priority,
+                notes,
+                shopId
             })
 
-            if (!response.ok) {
-                throw new Error('Failed to start call')
+            if (result.success) {
+                setCallId(result.callId)
+                // Start listening for real-time call completion
+                listenForCallCompletion(result.callId)
+            } else {
+                throw new Error('Failed to start call via VoiceCallService')
             }
-
-            const result = await response.json()
-            setCallId(result.callId)
-            toast.success(`Mia AI is calling ${selectedSuppliers[0].name}...`)
-            
-            // Start listening for real-time call completion
-            listenForCallCompletion(result.callId)
 
         } catch (error: any) {
             console.error('Error starting AI call:', error)
