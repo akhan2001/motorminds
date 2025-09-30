@@ -1,0 +1,216 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
+import { Loader2, Plus, User, Building, ArrowLeft } from 'lucide-react'
+import { AdminUserFormData, AdminShopFormData, CreateUserRequest } from '../../types/user-creation'
+import { UserCreationService } from '../../services/user-creation'
+import UserForm from '../../components/user-creation/UserForm'
+import ShopForm from '../../components/user-creation/ShopForm'
+import Link from 'next/link'
+
+const defaultUserForm: AdminUserFormData = {
+    email: '',
+    password: '',
+    fullName: '',
+    phone: '',
+    role: 'user',
+    plan: 'DEFAULT',
+    status: 'active'
+}
+
+const defaultShopForm: AdminShopFormData = {
+    shopName: '',
+    shopEmail: '',
+    shopPhone: '',
+    shopAddress: '',
+    shopCity: '',
+    shopProvince: '',
+    website: '',
+    businessNumber: '',
+    hstNumber: '',
+    servicesOffered: [],
+    tagline: '',
+    about: '',
+    operatingHours: {
+        Monday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Tuesday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Wednesday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Thursday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Friday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Saturday: { openTime: '09:00', closeTime: '15:00', closed: false },
+        Sunday: { openTime: '10:00', closeTime: '16:00', closed: true }
+    }
+}
+
+export default function CreateUserPage() {
+    const [userForm, setUserForm] = useState<AdminUserFormData>(defaultUserForm)
+    const [shopForm, setShopForm] = useState<AdminShopFormData>(defaultShopForm)
+    const [createShop, setCreateShop] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [userErrors, setUserErrors] = useState<string[]>([])
+    const [shopErrors, setShopErrors] = useState<string[]>([])
+
+    const validateForms = async () => {
+        const userValidationErrors = await UserCreationService.validateUserData(userForm)
+        const shopValidationErrors = createShop 
+            ? await UserCreationService.validateShopData(shopForm)
+            : []
+
+        setUserErrors(userValidationErrors)
+        setShopErrors(shopValidationErrors)
+
+        return userValidationErrors.length === 0 && shopValidationErrors.length === 0
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+
+        const isValid = await validateForms()
+        if (!isValid) {
+            toast.error('Please fix the errors before submitting')
+            return
+        }
+
+        setIsLoading(true)
+
+        try {
+            const request: CreateUserRequest = {
+                user: userForm,
+                shop: createShop ? shopForm : undefined,
+                createShop
+            }
+
+            const response = await fetch('/api/admin/users/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(request)
+            })
+
+            const result = await response.json()
+
+            if (response.ok && result.success) {
+                toast.success(result.message)
+                // Reset forms
+                setUserForm(defaultUserForm)
+                setShopForm(defaultShopForm)
+                setCreateShop(false)
+                setUserErrors([])
+                setShopErrors([])
+            } else {
+                toast.error(result.error || 'Failed to create user')
+            }
+        } catch (error) {
+            console.error('Error creating user:', error)
+            toast.error('Failed to create user')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleCreateShopToggle = (checked: boolean) => {
+        setCreateShop(checked)
+        if (!checked) {
+            setShopErrors([])
+        }
+    }
+
+    return (
+        <div className="min-h-screen bg-[#0a0a0a] p-6">
+            <div className="max-w-4xl mx-auto">
+                <div className="mb-8">
+                    <div className="flex items-center gap-4 mb-4">
+                        <Button asChild variant="outline" className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]">
+                            <Link href="/admin/users">
+                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                Go Back
+                            </Link>
+                        </Button>
+                    </div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Create New User</h1>
+                    <p className="text-gray-400">Create a new user account and optionally associate them with a shop.</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* User Form */}
+                    <UserForm
+                        userForm={userForm}
+                        setUserForm={setUserForm}
+                        errors={userErrors}
+                    />
+
+                    {/* Shop Creation Toggle */}
+                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center space-x-3">
+                                <Switch
+                                    id="create-shop"
+                                    checked={createShop}
+                                    onCheckedChange={handleCreateShopToggle}
+                                />
+                                <div className="flex-1">
+                                    <Label htmlFor="create-shop" className="text-white font-medium">
+                                        Create Shop for this User
+                                    </Label>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                        Create a shop and associate it with this user. Only applicable for shop owners.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Shop Form - Only show if createShop is true */}
+                    {createShop && (
+                        <ShopForm
+                            shopForm={shopForm}
+                            setShopForm={setShopForm}
+                            errors={shopErrors}
+                        />
+                    )}
+
+                    {/* Submit Button */}
+                    <div className="flex justify-end space-x-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setUserForm(defaultUserForm)
+                                setShopForm(defaultShopForm)
+                                setCreateShop(false)
+                                setUserErrors([])
+                                setShopErrors([])
+                            }}
+                            className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        >
+                            Reset
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating User...
+                                </>
+                            ) : (
+                                <>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create User
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
