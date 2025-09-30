@@ -39,7 +39,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
     return (
         <Card 
             className={cn(
-                "bg-[#131313] border-[#2a2a2a] p-2 cursor-pointer transition-all hover:bg-[#1a1a1a] hover:shadow-lg",
+                "bg-[#131313] border-[#2a2a2a] p-2 cursor-pointer transition-all hover:bg-[#1a1a1a] hover:shadow-lg mr-2",
                 isSelected && "border-zinc-500 ring-1 ring-red-500/20"
             )}
             onClick={onClick}

@@ -65,7 +65,7 @@ function InvoicesContent() {
                     <ResizablePanelGroup direction="horizontal" className="h-full">
                         {/* Left Panel - Invoice List - 50% */}
                         <ResizablePanel defaultSize={50} minSize={40} maxSize={60}>
-                            <div className="h-full p-4">
+                            <div className="h-full p-2">
                                 <InvoiceList 
                                     searchValue={searchValue}
                                     onInvoiceClick={handleInvoiceClick}
@@ -78,7 +78,7 @@ function InvoicesContent() {
 
                         {/* Right Panel - Invoice Form/Details - 50% */}
                         <ResizablePanel defaultSize={50} minSize={40} maxSize={60}>
-                            <div className="h-full p-4">
+                            <div className="h-full">
                                 <InvoiceDashboard 
                                     selectedInvoiceId={selectedInvoice}
                                     showForm={showForm}

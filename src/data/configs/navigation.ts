@@ -42,7 +42,7 @@ export const navigationConfig: NavItem[] = [
     },
     {
         name: "Invoices",
-        href: "/invoices",
+        href: "/financials/invoices",
         requiredRoles: ['admin', 'super', 'user']
     },
     {

@@ -133,8 +133,8 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-4">
-                <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-2">
+                <div className="space-y-2">
                     {/* Customer Information Card */}
                     <Card className="bg-[#131313] border-[#333333]">
                         <div className="p-4">
@@ -187,12 +187,12 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         <div className="p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <LayoutIcon className="h-4 w-4 text-purple-400" />
-                                <h3 className="text-lg font-semibold text-white">Work Order Details</h3>
+                                <h2 className="text-lg font-semibold text-white">Work Order Details</h2>
                             </div>
                             
                             {invoice.title && (
-                                <div className="mb-4">
-                                    <p className="text-lg font-semibold text-white">{invoice.title}</p>
+                                <div className="mb-1">
+                                    <h3 className="text-md font-semibold text-white">{invoice.title}</h3>
                                 </div>
                             )}
                             
