@@ -34,14 +34,16 @@ const defaultShopForm: AdminShopFormData = {
     businessNumber: '',
     hstNumber: '',
     servicesOffered: [],
+    tagline: '',
+    about: '',
     operatingHours: {
-        monday: { open: '09:00', close: '17:00', closed: false },
-        tuesday: { open: '09:00', close: '17:00', closed: false },
-        wednesday: { open: '09:00', close: '17:00', closed: false },
-        thursday: { open: '09:00', close: '17:00', closed: false },
-        friday: { open: '09:00', close: '17:00', closed: false },
-        saturday: { open: '09:00', close: '15:00', closed: false },
-        sunday: { open: '00:00', close: '00:00', closed: true }
+        Monday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Tuesday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Wednesday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Thursday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Friday: { openTime: '09:00', closeTime: '17:00', closed: false },
+        Saturday: { openTime: '09:00', closeTime: '15:00', closed: false },
+        Sunday: { openTime: '10:00', closeTime: '16:00', closed: true }
     }
 }
 
