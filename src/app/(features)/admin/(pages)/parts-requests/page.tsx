@@ -30,7 +30,7 @@ import { Slash } from "lucide-react"
 import Link from 'next/link'
 import { PartsRequest } from '@/app/(features)/parts/types/parts'
 import { toast } from 'sonner'
-import AdminNav from '../components/AdminNav'
+import AdminNav from '../../components/AdminNav'
 
 interface QuoteFormData {
   parts_info: Array<{
@@ -97,7 +97,7 @@ export default function AdminPartsRequestsPage() {
       console.log('Fetching admin parts requests...')
       
       // Admin endpoint to get all parts requests across all shops
-      const response = await fetch('/api/admin/parts-requests')
+      const response = await fetch(`/api/admin/parts-requests?t=${Date.now()}`)
       console.log('Response status:', response.status)
       
       const data = await response.json()
