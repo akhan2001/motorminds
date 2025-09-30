@@ -216,11 +216,11 @@ export function Nav() {
 										activeLink === item.name
 										? "text-[#b22222] border-[#b22222]"
 										: "text-[#979797] border-transparent hover:border-red-500 transition-colors"
-									} ${item.name === 'Mia AI' ? 'hover:text-red-500' : 'hover:text-white'}`}
+									} ${item.name === 'Mia AI' ? 'text-white hover:text-red-500' : 'hover:text-white'}`}
 								>
 									{item.name}
 									{item.name === 'Mia AI' && (
-										<Sparkles className="h-3 w-3 text-[#979797] transition-colors group-hover:text-red-500" />
+										<Sparkles className="h-3 w-3 text-white transition-colors group-hover:text-red-500" />
 									)}
 								</a>
 							)

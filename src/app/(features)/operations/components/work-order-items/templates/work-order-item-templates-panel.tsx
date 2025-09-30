@@ -201,7 +201,7 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
 
             {/* Content Area - Scrollable */}
             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                <div className={`p-4 ${useSmallCard ? 'space-y-2' : 'space-y-3'} overflow-y-auto`}>
+                <div className={`p-4 ${useSmallCard ? 'space-y-2' : 'space-y-3'}`}>
                     {filteredTemplates.length > 0 ? (
                         filteredTemplates.map((template) => {
                             const CardComponent = useSmallCard ? WorkOrderItemTemplateCardSmall : WorkOrderItemTemplateCard

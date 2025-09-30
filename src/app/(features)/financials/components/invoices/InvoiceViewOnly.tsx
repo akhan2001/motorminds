@@ -135,40 +135,40 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-4">
                 <div className="space-y-4">
-                    {/* Client Information */}
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            {/* <User className="h-4 w-4" /> */}
-                            <h3 className="text-lg font-semibold text-white">Customer Information</h3>
+                    {/* Customer Information Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <User className="h-4 w-4 text-blue-400" />
+                                <h3 className="text-lg font-semibold text-white">Customer Information</h3>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xs text-gray-500">Name</p>
+                                    <p className="text-white font-medium">{invoice.customer?.customer_name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Phone</p>
+                                    <p className="text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Email</p>
+                                    <p className="text-gray-300">{invoice.customer?.customer_email || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Address</p>
+                                    <p className="text-gray-300">{invoice.customer?.customer_address || 'N/A'}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 pl-6">
-                            <div>
-                                <p className="text-xs text-gray-500">Name</p>
-                                <p className="text-white font-medium">{invoice.customer?.customer_name || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Phone</p>
-                                <p className="text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Email</p>
-                                <p className="text-gray-300">{invoice.customer?.customer_email || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Address</p>
-                                <p className="text-gray-300">{invoice.customer?.customer_address || 'N/A'}</p>
-                            </div>
-                        </div>
-                    </div>
+                    </Card>
                     
-                    <Separator className="bg-gray-700" />
-                    
-                    {/* Vehicle Information */}
+                    {/* Vehicle Information Card */}
                     {invoice.vehicle && (
-                        <>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    {/* <Car className="h-4 w-4" /> */}
+                        <Card className="bg-[#131313] border-[#333333]">
+                            <div className="p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Car className="h-4 w-4 text-green-400" />
                                     <h3 className="text-lg font-semibold text-white">Vehicle Information</h3>
                                 </div>
                                 <p className="text-white">
@@ -179,118 +179,137 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                     }
                                 </p>
                             </div>
-                            <Separator className="bg-gray-700" />
-                        </>
+                        </Card>
                     )}
                     
-                    {/* Work Order Details */}
-                    <div className="space-y-2">
-                        {invoice.title && (
-                            <div className="mb-2">
-                                <p className="text-lg font-semibold text-white">{invoice.title}</p>
-                            </div>
-                        )}
-                        
-                        {invoice.description && (
-                            <div className="mb-2">
-                                <p className="text-gray-400">{invoice.description}</p>
-                            </div>
-                        )}
-
-                        {/* Line Items Table */}
-                        <div className="space-y-2 mt-4">
-                            <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-400 border-b border-gray-700 pb-2">
-                                <div className="col-span-5">DESCRIPTION</div>
-                                <div className="col-span-2 text-center">TYPE</div>
-                                <div className="col-span-2 text-center">QTY</div>
-                                <div className="col-span-3 text-right">TOTAL</div>
+                    {/* Work Order Details Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <LayoutIcon className="h-4 w-4 text-purple-400" />
+                                <h3 className="text-lg font-semibold text-white">Work Order Details</h3>
                             </div>
                             
-                            {/* Invoice Items */}
-                            {invoice.invoice_items.map((item, index) => {
-                                const isActive = (item as any).active !== false // Use the 'active' field from database
-                                return (
-                                    <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-gray-800">
-                                        <div className="col-span-5 text-white">
-                                            <div className="flex items-center gap-2">
-                                                {isActive ? (
-                                                    <Check className="h-3 w-3 text-green-500" />
-                                                ) : (
-                                                    <XCircle className="h-3 w-3 text-red-500" />
-                                                )}
-                                                <span>{item.description}</span>
-                                            </div>
-                                        </div>
-                                        <div className="col-span-2 text-center">
-                                            <Badge variant="outline" className="text-xs capitalize text-white">
-                                                {item.item_type}
-                                            </Badge>
-                                        </div>
-                                        <div className="col-span-2 text-center text-white">{item.quantity}</div>
-                                        <div className="col-span-3 text-right text-white">
-                                            {item.quantity > 1 ? (
-                                                <span>
-                                                    {formatCurrency(item.total_price)}
-                                                    <span className="text-gray-400 text-xs ml-1">
-                                                        ({formatCurrency(item.unit_price)}/ea)
-                                                    </span>
-                                                </span>
-                                            ) : (
-                                                formatCurrency(item.total_price)
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                        
-                        {invoice.notes && (
-                            <div className="mt-4 pt-4 border-t border-gray-700">
-                                <p className="text-white font-medium">Notes:</p>
-                                <p className="text-gray-400 mt-1">{invoice.notes}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <Separator className="bg-gray-700" />
-                    
-                    {/* Amount and Status */}
-                    <div className="bg-[#222222] p-4 rounded-lg border border-[#333333]">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-gray-400">
-                                <span>Subtotal:</span>
-                                <span>{formatCurrency(subtotal)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-400">
-                                <span>Tax ({(invoice.tax_rate * 100).toFixed(0)}%):</span>
-                                <span>{formatCurrency(tax)}</span>
-                            </div>
-                            {invoice.discount_amount > 0 && (
-                                <div className="flex justify-between text-gray-400">
-                                    <span>Discount:</span>
-                                    <span>-{formatCurrency(invoice.discount_amount)}</span>
+                            {invoice.title && (
+                                <div className="mb-4">
+                                    <p className="text-lg font-semibold text-white">{invoice.title}</p>
                                 </div>
                             )}
-                            <Separator className="bg-gray-700" />
-                            <div className="flex justify-between items-center pt-2">
-                                <div>
-                                    <p className="text-gray-400 font-medium">Amount Due:</p>
-                                    <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
+                            
+                            {invoice.description && (
+                                <div className="mb-4">
+                                    <p className="text-gray-400">{invoice.description}</p>
                                 </div>
-                                <Badge 
-                                    variant="outline" 
-                                    className={cn(
-                                        "text-sm px-3 py-1",
-                                        invoice.status === 'paid' 
-                                            ? 'bg-green-600 text-white border-green-600' 
-                                            : 'bg-red-600 text-white border-red-600'
-                                    )}
-                                >
-                                    {invoice.status.toUpperCase()}
-                                </Badge>
+                            )}
+
+                            {/* Line Items Table */}
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-400 border-b border-gray-700 pb-2">
+                                    <div className="col-span-5">DESCRIPTION</div>
+                                    <div className="col-span-2 text-center">TYPE</div>
+                                    <div className="col-span-2 text-center">QTY / HOURS</div>
+                                    <div className="col-span-3 text-right">TOTAL</div>
+                                </div>
+                                
+                                {/* Invoice Items */}
+                                {invoice.invoice_items.map((item, index) => {
+                                    const isActive = (item as any).active !== false // Use the 'active' field from database
+                                    return (
+                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-gray-800">
+                                            <div className="col-span-5 text-white">
+                                                <div className="flex items-center gap-2">
+                                                    {isActive ? (
+                                                        <Check className="h-3 w-3 text-green-500" />
+                                                    ) : (
+                                                        <XCircle className="h-3 w-3 text-red-500" />
+                                                    )}
+                                                    <span>{item.description}</span>
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2 text-center">
+                                                <Badge variant="outline" className="text-xs capitalize text-white">
+                                                    {item.item_type}
+                                                </Badge>
+                                            </div>
+                                            <div className="col-span-2 text-center text-white">
+                                                {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
+                                            </div>
+                                            <div className="col-span-3 text-right text-white">
+                                                {item.item_type === 'labor' ? (
+                                                    <span>
+                                                        {formatCurrency(item.total_price)}
+                                                        <span className="text-gray-400 text-xs ml-1">
+                                                            ({formatCurrency(item.unit_price)}/hr)
+                                                        </span>
+                                                    </span>
+                                                ) : item.quantity > 1 ? (
+                                                    <span>
+                                                        {formatCurrency(item.total_price)}
+                                                        <span className="text-gray-400 text-xs ml-1">
+                                                            ({formatCurrency(item.unit_price)}/ea)
+                                                        </span>
+                                                    </span>
+                                                ) : (
+                                                    formatCurrency(item.total_price)
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            
+                            {invoice.notes && (
+                                <div className="mt-4 pt-4 border-t border-gray-700">
+                                    <p className="text-white font-medium">Notes:</p>
+                                    <p className="text-gray-400 mt-1">{invoice.notes}</p>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                    
+                    {/* Amount and Status Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="h-4 w-4 bg-yellow-400 rounded-full"></div>
+                                <h3 className="text-lg font-semibold text-white">Invoice Summary</h3>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Subtotal:</span>
+                                    <span>{formatCurrency(subtotal)}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Tax ({(invoice.tax_rate * 100).toFixed(0)}%):</span>
+                                    <span>{formatCurrency(tax)}</span>
+                                </div>
+                                {invoice.discount_amount > 0 && (
+                                    <div className="flex justify-between text-gray-400">
+                                        <span>Discount:</span>
+                                        <span>-{formatCurrency(invoice.discount_amount)}</span>
+                                    </div>
+                                )}
+                                <Separator className="bg-gray-700" />
+                                <div className="flex justify-between items-center pt-2">
+                                    <div>
+                                        <p className="text-gray-400 font-medium">Amount Due:</p>
+                                        <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
+                                    </div>
+                                    <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                            "text-sm px-3 py-1",
+                                            invoice.status === 'paid' 
+                                                ? 'bg-green-600 text-white border-green-600' 
+                                                : 'bg-red-600 text-white border-red-600'
+                                        )}
+                                    >
+                                        {invoice.status.toUpperCase()}
+                                    </Badge>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 </div>
             </div>
 
