@@ -91,14 +91,14 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            {/* <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-white">
                     All Invoices
                 </h2>
                 <Badge variant="secondary" className="bg-[#2a2a2a] text-gray-300">
                     {filteredInvoices.length} {filteredInvoices.length === 1 ? 'invoice' : 'invoices'}
                 </Badge>
-            </div>
+            </div> */}
 
             {/* Invoice List */}
             <div className="flex-1 overflow-y-auto space-y-3">

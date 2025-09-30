@@ -63,21 +63,7 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
     // Show view-only details when invoice is selected
     if (selectedInvoiceId) {
         return (
-            <div className="h-full flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Invoice Details
-                    </h2>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-white"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+            <div className="h-full">
                 <InvoiceViewOnly 
                     invoiceId={selectedInvoiceId}
                     onEdit={handleEdit}

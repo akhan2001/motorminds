@@ -44,17 +44,6 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
-                        {/* Bulk Actions */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onBulkDownload}
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
-                        >
-                            <Download className="h-4 w-4 mr-2" />
-                            Bulk Download
-                        </Button>
-
                         <Button
                             variant="outline"
                             size="sm"
@@ -93,7 +82,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                     </div>
 
                     {/* Filter Button */}
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
@@ -102,7 +91,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                             <Filter className="h-4 w-4 mr-2" />
                             Filters
                         </Button>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

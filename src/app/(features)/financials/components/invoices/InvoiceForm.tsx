@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Save, Send, Download, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Save, Send, Download, Plus, Trash2, User, Car, Phone } from 'lucide-react'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useInvoice, useCreateInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
@@ -40,6 +40,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
         payment_reference: null,
         notes: null,
         invoice_items: []
+    })
+
+    // Additional form state for customer and vehicle information
+    const [customerInfo, setCustomerInfo] = useState({
+        name: '',
+        phone: '',
+        email: ''
+    })
+
+    const [vehicleInfo, setVehicleInfo] = useState({
+        year: '',
+        make: '',
+        model: '',
+        licensePlate: '',
+        vin: ''
     })
 
     useEffect(() => {
@@ -216,6 +231,91 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
                                         <SelectItem value="urgent">Urgent</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Customer & Vehicle Information */}
+                    <div className="space-y-4">
+                        <h3 className="text-white font-semibold">Customer & Vehicle Information</h3>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {/* Customer Information */}
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    Customer
+                                </h4>
+                                <div className="bg-[#0d0d0d] rounded-lg p-3 border border-[#3a3a3a]">
+                                    <div className="space-y-2">
+                                        <Input
+                                            placeholder="Customer Name"
+                                            value={customerInfo.name}
+                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                                            className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Input
+                                                placeholder="Phone"
+                                                value={customerInfo.phone}
+                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                            <Input
+                                                placeholder="Email"
+                                                value={customerInfo.email}
+                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Vehicle Information */}
+                            <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                    <Car className="h-4 w-4" />
+                                    Vehicle
+                                </h4>
+                                <div className="bg-[#0d0d0d] rounded-lg p-3 border border-[#3a3a3a]">
+                                    <div className="space-y-2">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <Input
+                                                placeholder="Year"
+                                                value={vehicleInfo.year}
+                                                onChange={(e) => setVehicleInfo(prev => ({ ...prev, year: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                            <Input
+                                                placeholder="Make"
+                                                value={vehicleInfo.make}
+                                                onChange={(e) => setVehicleInfo(prev => ({ ...prev, make: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                            <Input
+                                                placeholder="Model"
+                                                value={vehicleInfo.model}
+                                                onChange={(e) => setVehicleInfo(prev => ({ ...prev, model: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Input
+                                                placeholder="License Plate"
+                                                value={vehicleInfo.licensePlate}
+                                                onChange={(e) => setVehicleInfo(prev => ({ ...prev, licensePlate: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                            <Input
+                                                placeholder="VIN"
+                                                value={vehicleInfo.vin}
+                                                onChange={(e) => setVehicleInfo(prev => ({ ...prev, vin: e.target.value }))}
+                                                className="bg-[#1a1a1a] border-[#3a3a3a] text-white"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

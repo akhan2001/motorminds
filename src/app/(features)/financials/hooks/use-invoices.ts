@@ -237,6 +237,11 @@ export function useCreateInvoiceFromWorkOrder() {
                 throw woError
             }
 
+            // Check if work order already has an invoice
+            if (workOrder.invoice_id) {
+                throw new Error('This work order has already been converted to an invoice. Each work order can only be converted once.')
+            }
+
             // Fetch ALL work order items (both active and declined)
             const { data: items, error: itemsError } = await supabase
                 .from('work_order_items')
@@ -255,19 +260,35 @@ export function useCreateInvoiceFromWorkOrder() {
             // Transform work order items to invoice items
             const invoiceItems = items.map(item => {
                 const isDeclined = item.active === false
+                
+                // Calculate total_price consistently with work order service logic
+                let calculatedTotalPrice = 0
+                if (!isDeclined) {
+                    if (item.item_type === 'labor') {
+                        // For labor: labor_hours * unit_price
+                        calculatedTotalPrice = (item.labor_hours || 0) * (item.unit_price || 0)
+                    } else {
+                        // For parts, services, fees: quantity * unit_price
+                        calculatedTotalPrice = (item.quantity || 0) * (item.unit_price || 0)
+                    }
+                }
+                
                 return {
                     id: item.id,
                     item_type: item.item_type,
-                    description: isDeclined ? `[DECLINED] ${item.description}` : item.description,
+                    description: isDeclined ? `${item.description}` : item.description,
                     quantity: Number(item.quantity),
                     unit_price: isDeclined ? 0 : Number(item.unit_price),
-                    total_price: isDeclined ? 0 : Number(item.total_price),
+                    total_price: calculatedTotalPrice,
+                    unit_cost: isDeclined ? 0 : (item.unit_cost ? Number(item.unit_cost) : undefined),
+                    total_cost: isDeclined ? 0 : (item.total_cost ? Number(item.total_cost) : undefined),
                     part_number: item.part_number,
                     supplier: item.supplier,
                     category: item.category,
                     warranty_period: item.warranty_period,
                     labor_hours: item.labor_hours ? Number(item.labor_hours) : undefined,
                     technician_id: item.technician_id || undefined,
+                    active: item.active, // Preserve the active field from work order
                     is_declined: isDeclined
                 }
             })

@@ -30,7 +30,7 @@ function InvoicesContent() {
     
     const handleInvoiceClick = (invoiceId: string) => {
         setSelectedInvoice(invoiceId)
-        setShowForm(true)
+        setShowForm(false) // Show view-only, not form
     }
     
     const handleCloseForm = () => {
