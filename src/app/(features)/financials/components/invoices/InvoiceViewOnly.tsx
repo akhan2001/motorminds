@@ -96,8 +96,10 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         )
     }
 
-    // Calculate totals
-    const subtotal = invoice.invoice_items.reduce((sum, item) => sum + item.total_price, 0)
+    // Calculate totals - only include approved items in subtotal
+    const subtotal = invoice.invoice_items
+        .filter(item => (item as any).active !== false)
+        .reduce((sum, item) => sum + item.total_price, 0)
     const tax = subtotal * invoice.tax_rate
     const total = subtotal + tax - invoice.discount_amount
 

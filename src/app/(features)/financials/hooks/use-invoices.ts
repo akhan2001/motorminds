@@ -263,14 +263,12 @@ export function useCreateInvoiceFromWorkOrder() {
                 
                 // Calculate total_price consistently with work order service logic
                 let calculatedTotalPrice = 0
-                if (!isDeclined) {
-                    if (item.item_type === 'labor') {
-                        // For labor: labor_hours * unit_price
-                        calculatedTotalPrice = (item.labor_hours || 0) * (item.unit_price || 0)
-                    } else {
-                        // For parts, services, fees: quantity * unit_price
-                        calculatedTotalPrice = (item.quantity || 0) * (item.unit_price || 0)
-                    }
+                if (item.item_type === 'labor') {
+                    // For labor: labor_hours * unit_price
+                    calculatedTotalPrice = (item.labor_hours || 0) * (item.unit_price || 0)
+                } else {
+                    // For parts, services, fees: quantity * unit_price
+                    calculatedTotalPrice = (item.quantity || 0) * (item.unit_price || 0)
                 }
                 
                 return {
@@ -278,10 +276,10 @@ export function useCreateInvoiceFromWorkOrder() {
                     item_type: item.item_type,
                     description: isDeclined ? `${item.description}` : item.description,
                     quantity: Number(item.quantity),
-                    unit_price: isDeclined ? 0 : Number(item.unit_price),
+                    unit_price: Number(item.unit_price),
                     total_price: calculatedTotalPrice,
-                    unit_cost: isDeclined ? 0 : (item.unit_cost ? Number(item.unit_cost) : undefined),
-                    total_cost: isDeclined ? 0 : (item.total_cost ? Number(item.total_cost) : undefined),
+                    unit_cost: item.unit_cost ? Number(item.unit_cost) : undefined,
+                    total_cost: item.total_cost ? Number(item.total_cost) : undefined,
                     part_number: item.part_number,
                     supplier: item.supplier,
                     category: item.category,
@@ -293,8 +291,10 @@ export function useCreateInvoiceFromWorkOrder() {
                 }
             })
 
-            // Create invoice
-            const subtotal = invoiceItems.reduce((sum, item) => sum + item.total_price, 0)
+            // Create invoice - only include approved items in subtotal
+            const subtotal = invoiceItems
+                .filter(item => item.active !== false)
+                .reduce((sum, item) => sum + item.total_price, 0)
             const tax_rate = 0.13
             const tax_amount = subtotal * tax_rate
             const total_amount = subtotal + tax_amount
