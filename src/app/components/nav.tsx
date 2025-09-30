@@ -212,15 +212,15 @@ export function Nav() {
 									key={item.name}
 									href="#"
 									onClick={() => handleNavClick(item.name, item.href)}
-									className={`py-2 border-b-2 flex items-center gap-1 ${
+									className={`py-2 border-b-2 flex items-center gap-1 group ${
 										activeLink === item.name
 										? "text-[#b22222] border-[#b22222]"
-										: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
-									} ${item.name === 'Mia AI' ? 'hover:text-red-400' : ''}`}
+										: "text-[#979797] border-transparent hover:border-red-500 transition-colors"
+									} ${item.name === 'Mia AI' ? 'text-white hover:text-red-500' : 'hover:text-white'}`}
 								>
 									{item.name}
 									{item.name === 'Mia AI' && (
-										<Sparkles className="h-3 w-3 text-[#979797] hover:text-white" />
+										<Sparkles className="h-3 w-3 text-white transition-colors group-hover:text-red-500" />
 									)}
 								</a>
 							)

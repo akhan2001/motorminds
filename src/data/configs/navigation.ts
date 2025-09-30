@@ -25,6 +25,11 @@ const customerSubItems = [
 ];
 
 export const navigationConfig: NavItem[] = [
+    // {
+    //     name: "Dashboard",
+    //     href: "/",
+    //     requiredRoles: ['admin', 'super', 'user']
+    // },
     {
         name: "Appointments",
         href: "/operations/appointments",
@@ -37,7 +42,7 @@ export const navigationConfig: NavItem[] = [
     },
     {
         name: "Invoices",
-        href: "/invoices",
+        href: "/financials/invoices",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
@@ -50,11 +55,11 @@ export const navigationConfig: NavItem[] = [
         href: "/financials",
         requiredRoles: ['admin', 'super', 'user']
     },
-    {
-        name: "Parts",
-        href: "/parts",
-        requiredRoles: ['user', 'admin', 'super', 'demo']
-    },
+    // {
+    //     name: "Parts",
+    //     href: "/parts",
+    //     requiredRoles: ['user', 'admin', 'super', 'demo']
+    // },
     {
         name: "Customers",
         href: "/customers",

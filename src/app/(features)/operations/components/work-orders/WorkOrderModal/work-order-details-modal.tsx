@@ -21,7 +21,7 @@ import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/wo
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import { getWorkOrderItems } from "../../../lib/work-order-items-service"
-import { createInvoiceFromWorkOrder } from "../../../../financials/lib/invoice-temp-service"
+import { useCreateInvoiceFromWorkOrder } from "../../../../financials/hooks/use-invoices"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 import { PanelProvider } from "../../../contexts"
 import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
@@ -378,99 +378,60 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         setIsDeleteConfirmationOpen(false)
     }
 
+    const createInvoiceMutation = useCreateInvoiceFromWorkOrder()
+
     const handleGenerateInvoice = async () => {
         try {
-            console.log('Generating invoice for work order:', {
-                workOrderId: initialWorkOrder.id,
-                customerId: workOrderDetails?.customer_id,
-                vehicleId: workOrderDetails?.vehicle_id,
-                shopId: workOrderDetails?.shop_id,
-                title: workOrderDetails?.title,
-                description: workOrderDetails?.description,
-                status: workOrderDetails?.status,
-                customer: workOrderDetails?.customer,
-                vehicle: workOrderDetails?.vehicle
-            })
+            const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+            const shopId = workOrderDetails?.shop_id || ''
 
-            // Get work order items for calculations
-            const workOrderItems = await getWorkOrderItems(workOrderDetails?.id || initialWorkOrder.id)
-            
-            // Calculate totals excluding rejected items
-            const calculations = calculateInvoiceTotals(workOrderItems)
-            
-            console.log('Invoice calculations:', {
-                totalItems: workOrderItems.length,
-                approvedItems: calculations.approvedItems.length,
-                rejectedItems: calculations.rejectedItems.length,
-                subtotal: calculations.subtotal,
-                labourTotal: calculations.labourTotal,
-                partsTotal: calculations.partsTotal
-            })
-
-            // Prepare invoice data using temporary service structure
-            const invoiceData = {
-                work_order_id: workOrderDetails?.id || initialWorkOrder.id,
-                customer_id: workOrderDetails?.customer_id || '',
-                vehicle_id: workOrderDetails?.vehicle_id,
-                shop_id: workOrderDetails?.shop_id || '',
-                status: 'UNPAID' as const,
-                source: 'shop_generated' as const,
-                workOrderItems: workOrderItems,
-                
-                // Customer details from work order
-                client_name: workOrderDetails?.customer?.customer_name || formData.customer,
-                client_email: workOrderDetails?.customer?.customer_email || formData.customerEmail,
-                client_phone: workOrderDetails?.customer?.customer_phone || formData.customerPhone,
-                client_address: workOrderDetails?.customer?.customer_address || formData.customerAddress,
-                
-                // Shop details (you may want to fetch these from shop settings)
-                shop_name: 'MotorMinds Auto Shop', // TODO: Get from shop settings
-                shop_email: 'info@motorminds.com', // TODO: Get from shop settings
-                shop_phone: '(555) 123-4567', // TODO: Get from shop settings
-                shop_address: '123 Auto Street, City, State 12345', // TODO: Get from shop settings
-                
-                // Vehicle information
-                vehicle_information: workOrderDetails?.vehicle ? {
-                    year: workOrderDetails.vehicle.year,
-                    make: workOrderDetails.vehicle.make,
-                    model: workOrderDetails.vehicle.model,
-                    color: workOrderDetails.vehicle.color,
-                    vin: workOrderDetails.vehicle.vin,
-                    license_plate: workOrderDetails.vehicle.license_plate,
-                    mileage: workOrderDetails.vehicle.mileage
-                } : undefined,
-                
-                // Work order details
-                description: workOrderDetails?.title || formData.title,
-                notes: workOrderDetails?.description || formData.description,
-                customer_notes: workOrderDetails?.notes || formData.notes,
-                mileage: workOrderDetails?.vehicle?.mileage?.toString() || formData.vehicleMileage,
-                assigned_to: workOrderDetails?.technician 
-                    ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
-                    : formData.assignee
+            if (!workOrderId) {
+                toast.error('Work order ID is missing')
+                return
             }
 
-            // Create invoice using temporary service
-            const newInvoice = await createInvoiceFromWorkOrder(invoiceData)
+            if (!shopId) {
+                toast.error('Shop ID is missing')
+                return
+            }
+
+            console.log('Generating invoice for work order:', {
+                workOrderId,
+                shopId,
+                customerId: workOrderDetails?.customer_id,
+                vehicleId: workOrderDetails?.vehicle_id
+            })
+
+            // Use the new invoice system
+            const newInvoice = await createInvoiceMutation.mutateAsync({
+                work_order_id: workOrderId,
+                shop_id: shopId
+            })
             
             if (newInvoice) {
-                // Navigate to existing invoice page (you'll need to create this route)
-                // For now, just show the invoice ID in console and toast
                 console.log('Invoice created:', newInvoice)
                 
                 // Show success message with invoice number
                 toast.success(`Invoice ${newInvoice.display_id || newInvoice.invoice_number} generated successfully!`)
                 
-                // Optionally refresh the work order to show it's now invoiced
-                // The temp service should have updated the work order with invoice_id
+                // Navigate to the new invoices page
+                window.location.href = '/financials/invoices'
                 
                 // Close work order modal
                 onClose()
             }
             
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error generating invoice:', error)
-            toast.error('Failed to generate invoice. Please try again.')
+            console.error('Error details:', {
+                message: error?.message,
+                details: error?.details,
+                hint: error?.hint,
+                code: error?.code
+            })
+            
+            const errorMessage = error?.message || 'Failed to generate invoice. Please try again.'
+            toast.error(errorMessage)
         }
     }
 

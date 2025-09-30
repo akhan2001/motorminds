@@ -1,7 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
-import { formatPhoneNumber } from "../utils/invoice-utils";
 
-// Create styles
 const styles = StyleSheet.create({
     page: {
         padding: '12mm', // 12-15mm margins as specified
@@ -38,35 +36,18 @@ const styles = StyleSheet.create({
     },
     logoText: {
         color: "#FFFFFF",
-        fontSize: 14, // 14pt as specified for shop name
+        fontSize: 14, // 14pt as specified for "GOOD GUYZ GARAGE"
         fontWeight: "bold"
     },
-    logo: {
-        width: 100,
-        height: 40,
-        objectFit: 'contain',
-        marginBottom: 4
-    },
-    companyName: {
-        fontSize: 14, // 14pt as specified
-        fontWeight: 'bold',
-        color: '#1e3a8a',
-        marginBottom: 2
-    },
-    companyTagline: {
+    slogan: {
         fontSize: 10, // 10pt as specified for subtext
-        fontStyle: 'italic',
-        color: '#1e3a8a',
+        fontStyle: "italic",
+        color: "#1e3a8a",
         marginBottom: 2
-    },
-    companyDetails: {
-        fontSize: 10, // 10pt as specified for address/phone
-        color: '#374151',
-        marginBottom: 1
     },
     businessInfo: {
         fontSize: 10, // 10pt as specified for address/phone
-        color: '#374151',
+        color: "#374151",
         marginBottom: 1
     },
     invoiceFields: {
@@ -149,26 +130,6 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         paddingBottom: 2
     },
-    sectionContent: {
-        fontSize: 10,
-        color: '#374151',
-        marginBottom: 2
-    },
-    paymentMethod: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 3
-    },
-    serviceDescription: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: '#1e3a8a',
-        marginBottom: 8,
-        textAlign: 'center',
-        backgroundColor: '#eff6ff',
-        padding: 6,
-        borderRadius: 4
-    },
     table: {
         marginTop: '3mm',
         marginBottom: '3mm',
@@ -210,72 +171,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#f9fafb",
         minHeight: '8mm' // Reduced to fit one page
     },
-    summarySection: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginBottom: 15,
-        position: 'absolute',
-        bottom: 120,
-        right: 0,
-        width: '35%'
-    },
-    summaryBox: {
-        width: '100%',
-        backgroundColor: '#f8fafc',
-        padding: 10,
-        borderRadius: 4,
-        borderWidth: 1,
-        borderColor: '#e5e7eb'
-    },
-    summaryRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 3
-    },
-    summaryLabel: {
-        fontSize: 9,
-        color: '#374151'
-    },
-    summaryValue: {
-        fontSize: 9,
-        fontWeight: 'bold',
-        color: '#374151'
-    },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        borderTopWidth: 2,
-        borderTopColor: '#1e3a8a',
-        paddingTop: 5,
-        marginTop: 5
-    },
-    totalLabel: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: '#1e3a8a'
-    },
-    totalValue: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: '#1e3a8a'
-    },
-    notesSection: {
-        marginBottom: 15,
-        backgroundColor: '#f8fafc',
-        padding: 8,
-        borderRadius: 4
-    },
-    notesTitle: {
-        fontSize: 9,
-        fontWeight: 'bold',
-        color: '#1e3a8a',
-        marginBottom: 4
-    },
-    notesContent: {
-        fontSize: 8,
-        color: '#374151',
-        lineHeight: 1.3
-    },
     commentsSection: {
         position: 'absolute',
         bottom: '25mm', // Adjusted position for one page fit
@@ -291,10 +186,6 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#1e3a8a",
         marginBottom: 2
-    },
-    authorizationSection: {
-        flexDirection: 'row',
-        marginBottom: 15
     },
     legalText: {
         fontSize: 7, // Reduced to fit one page
@@ -332,7 +223,7 @@ const styles = StyleSheet.create({
         marginBottom: 1
     },
     dateLabel: {
-        fontSize: 8,
+        fontSize: 6,
         color: "#6b7280"
     },
     footer: {
@@ -377,31 +268,21 @@ const formatCurrency = (amount: number | undefined | null) => {
 const InvoiceHeader = ({ invoice }: { invoice: any }) => (
     <View style={styles.header}>
         <View style={styles.headerLeft}>
-            {invoice.shopLogo ? (
-                <Image 
-                    src={invoice.shopLogo}
-                    style={styles.logo}
-                    cache={false}
-                />
-            ) : (
-                <View style={styles.logoBox}>
-                    <Text style={styles.logoText}>{invoice.shopName || 'SHOP NAME'}</Text>
-                </View>
-            )}
-            {invoice.shop_tagline && (
-                <Text style={styles.companyTagline}>"{invoice.shop_tagline}"</Text>
-            )}
-            <Text style={styles.businessInfo}>{invoice.shopAddress || ''}</Text>
-            <Text style={styles.businessInfo}>{formatPhoneNumber(invoice.shopPhone) || ''}</Text>
-            <Text style={styles.businessInfo}>Business #: {invoice.business_number || ''}</Text>
+            <View style={styles.logoBox}>
+                <Text style={styles.logoText}>GOOD GUYZ</Text>
+            </View>
+            <Text style={styles.slogan}>"By Name. By Reputation."</Text>
+            <Text style={styles.businessInfo}>{invoice.shopAddress || '75 Lodge St, Waterloo, ON N2J 2V5'}</Text>
+            <Text style={styles.businessInfo}>{invoice.shopPhone || '(519) 885-1321'}</Text>
+            <Text style={styles.businessInfo}>Business #: {invoice.business_number || '89491003SRT'}</Text>
         </View>
         
         <View style={styles.headerRight}>
             <View style={styles.invoiceFields}>
                 <Text style={styles.fieldLabel}>Invoice No:</Text>
-                <Text style={styles.sectionContent}>{invoice.displayNumber || ''}</Text>
+                <View style={styles.fieldLine}></View>
                 <Text style={styles.fieldLabel}>Date:</Text>
-                <Text style={styles.sectionContent}>{formatDate(invoice.issueDate) || ''}</Text>
+                <View style={styles.fieldLine}></View>
             </View>
             
             <View style={styles.paymentSection}>
@@ -432,23 +313,23 @@ const CustomerVehicleInfo = ({ invoice }: { invoice: any }) => (
             <Text style={styles.sectionTitle}>Customer Information</Text>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Name:</Text>
-                <Text style={styles.sectionContent}>{invoice.clientName || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Address:</Text>
-                <Text style={styles.sectionContent}>{invoice.clientAddress || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>City, Prov:</Text>
-                <Text style={styles.sectionContent}>{invoice.clientCity || ''}, {invoice.clientProvince || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Postal Code:</Text>
-                <Text style={styles.sectionContent}>{invoice.clientPostalCode || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Telephone:</Text>
-                <Text style={styles.sectionContent}>{formatPhoneNumber(invoice.clientPhone) || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
         </View>
         
@@ -456,86 +337,30 @@ const CustomerVehicleInfo = ({ invoice }: { invoice: any }) => (
             <Text style={styles.sectionTitle}>Vehicle Information</Text>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Make:</Text>
-                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.make || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Model:</Text>
-                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.model || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Year:</Text>
-                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.year || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Plate:</Text>
-                <Text style={styles.sectionContent}>
-                    {invoice.vehicleInfo?.license_plate === null || invoice.vehicleInfo?.license_plate === "NULL" 
-                        ? '' 
-                        : invoice.vehicleInfo?.license_plate || ''}
-                </Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Odometer:</Text>
-                <Text style={styles.sectionContent}>{invoice.mileage || ''}</Text>
+                <View style={styles.fieldLineSmall}></View>
             </View>
         </View>
     </View>
 );
 
-// Service Items Table Component
-const ServiceItemsTable = ({ invoice }: { invoice: any }) => {
-    const allItems = [];
-    let itemNumber = 1;
-
-    // Add labour items
-    if (invoice.labour_items && invoice.labour_items.length > 0) {
-        invoice.labour_items.forEach((item: any) => {
-            allItems.push({
-                itemNumber: itemNumber++,
-                description: item.description,
-                quantity: 1,
-                unitPrice: item.cost,
-                amount: item.cost,
-                type: 'Labour'
-            });
-        });
-    } else if (invoice.labour_total_price > 0) {
-        allItems.push({
-            itemNumber: itemNumber++,
-            description: invoice.labour || 'General Labour',
-            quantity: 1,
-            unitPrice: invoice.labour_total_price,
-            amount: invoice.labour_total_price,
-            type: 'Labour'
-        });
-    }
-
-    // Add parts items
-    if (invoice.parts_items && invoice.parts_items.length > 0) {
-        invoice.parts_items.forEach((item: any) => {
-            allItems.push({
-                itemNumber: itemNumber++,
-                description: item.description,
-                quantity: item.quantity || 1,
-                unitPrice: item.cost,
-                amount: item.cost * (item.quantity || 1),
-                type: 'Parts'
-            });
-        });
-    } else if (invoice.parts_total_price > 0) {
-        allItems.push({
-            itemNumber: itemNumber++,
-            description: invoice.parts || 'General Parts',
-            quantity: 1,
-            unitPrice: invoice.parts_total_price,
-            amount: invoice.parts_total_price,
-            type: 'Parts'
-        });
-    }
-
-    // Fill remaining rows with empty lines to total 10 rows
-    const emptyRows = Math.max(0, 10 - allItems.length);
-
+// Service Items Table Component - Static Template
+const ServiceItemsTable = () => {
     return (
         <View style={styles.table}>
             <View style={styles.tableHeader}>
@@ -546,20 +371,9 @@ const ServiceItemsTable = ({ invoice }: { invoice: any }) => {
                 <Text style={[styles.tableHeaderText, styles.amountCol]}>Amount</Text>
             </View>
             
-            {/* Actual invoice items */}
-            {allItems.map((item, index) => (
-                <View key={`item-${index}`} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
-                    <Text style={styles.itemNoCol}>{item.itemNumber}</Text>
-                    <Text style={styles.qtyCol}>{item.quantity}</Text>
-                    <Text style={styles.descCol}>{item.description}</Text>
-                    <Text style={styles.unitPriceCol}>{formatCurrency(item.unitPrice)}</Text>
-                    <Text style={styles.amountCol}>{formatCurrency(item.amount)}</Text>
-                </View>
-            ))}
-            
-            {/* Empty lines for manual filling */}
-            {Array.from({ length: emptyRows }, (_, index) => (
-                <View key={`empty-${index}`} style={(allItems.length + index) % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+            {/* Empty lines for manual filling - 10 rows to fit one page */}
+            {Array.from({ length: 10 }, (_, index) => (
+                <View key={`empty-${index}`} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                     <Text style={styles.itemNoCol}></Text>
                     <Text style={styles.qtyCol}></Text>
                     <Text style={styles.descCol}></Text>
@@ -571,59 +385,15 @@ const ServiceItemsTable = ({ invoice }: { invoice: any }) => {
     );
 };
 
-// Summary Component
-const PaymentSummary = ({ invoice }: { invoice: any }) => {
-    const subtotal = invoice.amount;
-    const taxRate = 0.13;
-    const taxAmount = subtotal * taxRate;
-    const total = subtotal * (1 + taxRate);
-
-    return (
-        <View style={styles.summarySection}>
-            <View style={styles.summaryBox}>
-                <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Subtotal:</Text>
-                    <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
-                </View>
-                <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>HST (13%):</Text>
-                    <Text style={styles.summaryValue}>{formatCurrency(taxAmount)}</Text>
-                </View>
-                <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>TOTAL:</Text>
-                    <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
-                </View>
-            </View>
-        </View>
-    );
-};
-
 // Comments Component
 const CommentsSection = () => (
     <View style={styles.commentsSection}>
         <Text style={styles.commentsTitle}>Comments</Text>
-        <Text style={styles.notesContent}>
+        <Text style={styles.legalText}>
             {/* Empty space for manual comments */}
         </Text>
     </View>
 );
-
-// Notes Component
-const NotesSection = ({ invoice }: { invoice: any }) => {
-    if (!invoice.notes) return null;
-
-    return (
-        <View style={styles.notesSection}>
-            <Text style={styles.notesTitle}>Notes & Terms</Text>
-            <Text style={styles.notesContent}>
-                • All work performed to manufacturer specifications{'\n'}
-                • 90-day warranty on parts and labor{'\n'}
-                • Payment due upon completion of work{'\n\n'}
-                Additional Notes: {invoice.notes}
-            </Text>
-        </View>
-    );
-};
 
 // Legal Text Component
 const LegalTextSection = () => (
@@ -632,10 +402,10 @@ const LegalTextSection = () => (
             INVOICE COMMENTS: ALL WHEELS THAT ARE REMOVED ARE HAND TORQUED TO MANUFACTURER'S SPECIFICATIONS & SHOULD BE RE-TORQUED AFTER APPROXIMATELY 60KM.
         </Text>
         <Text style={styles.legalText}>
-            I hereby authorize the above work to be completed along with necessary materials as permitted by law. I acknowledge that the shop will not be responsible for loss or damage to the vehicle or articles left in the vehicle in case of fire, theft, or any other cause beyond the shop's control. I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of the shop.
+            I hereby authorize the above work to be completed along with necessary materials as permitted by law. I acknowledge that the shop will not be responsible for loss or damage to the vehicle or articles left in the vehicle in case of fire, theft, or any other cause beyond the shop's control. I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of Good Guyz Garage Inc.
         </Text>
         <Text style={styles.legalText}>
-            I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of the shop. The lien covers all labour, parts, taxes, and court costs until full payment is received.
+            I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of Good Guyz Garage Inc. The lien covers all labour, parts, taxes, and court costs until full payment is received.
         </Text>
     </View>
 );
@@ -658,15 +428,14 @@ const SignatureSection = () => (
 const InvoiceFooter = ({ invoice }: { invoice: any }) => (
     <View style={styles.footer}>
         <Text style={styles.footerLeft}>
-            🇨🇦 100% CANADIAN OWNED & OPERATED!{'\n'}
-            Thank you for choosing {invoice.shopName || 'our shop'}!
+            🇨🇦 100% CANADIAN OWNED & OPERATED!
         </Text>
         <Text style={styles.footerRight}>Powered by MotorMinds</Text>
     </View>
 );
 
 // Main Template Component
-export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
+export const GoodGuyzInvoiceTemplate = ({ invoice }: { invoice: any }) => {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -674,7 +443,7 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 <CustomerVehicleInfo invoice={invoice} />
                 
-                <ServiceItemsTable invoice={invoice} />
+                <ServiceItemsTable />
                 
                 <LegalTextSection />
                 

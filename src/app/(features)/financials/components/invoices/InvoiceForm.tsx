@@ -1,0 +1,533 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Loader2, Save, Send, Download, Plus, Trash2, User, Car, Phone, X, LayoutIcon } from 'lucide-react'
+import { useAuth } from '../../../operations/hooks/use-auth'
+import { useInvoice, useCreateInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
+import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
+import { toast } from 'sonner'
+import { CustomerInformation } from '../../../operations/components/work-orders/WorkOrderModal/customer-information'
+import { VehicleInformation } from '../../../operations/components/work-orders/WorkOrderModal/vehicle-information'
+
+interface InvoiceFormProps {
+    invoiceId: string | null
+    onClose: () => void
+}
+
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
+    const { shopId } = useAuth()
+    const { data: invoice, isLoading } = useInvoice(invoiceId || '')
+    const createMutation = useCreateInvoice()
+    const updateMutation = useUpdateInvoice()
+
+    const [formData, setFormData] = useState<InvoiceFormData>({
+        customer_id: '',
+        vehicle_id: null,
+        work_order_id: null,
+        title: '',
+        description: null,
+        status: 'draft',
+        priority: 'medium',
+        tax_rate: 0.13,
+        discount_amount: 0,
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: null,
+        payment_method: null,
+        payment_reference: null,
+        notes: null,
+        invoice_items: []
+    })
+
+    // Additional form state for customer and vehicle information
+    const [customerInfo, setCustomerInfo] = useState({
+        name: '',
+        phone: '',
+        email: ''
+    })
+
+    const [vehicleInfo, setVehicleInfo] = useState({
+        year: '',
+        make: '',
+        model: '',
+        licensePlate: '',
+        vin: ''
+    })
+
+    useEffect(() => {
+        if (invoice) {
+            setFormData({
+                customer_id: invoice.customer_id,
+                vehicle_id: invoice.vehicle_id,
+                work_order_id: invoice.work_order_id,
+                title: invoice.title || '',
+                description: invoice.description,
+                status: invoice.status,
+                priority: invoice.priority,
+                tax_rate: Number(invoice.tax_rate),
+                discount_amount: Number(invoice.discount_amount),
+                issue_date: invoice.issue_date.split('T')[0],
+                due_date: invoice.due_date ? invoice.due_date.split('T')[0] : null,
+                payment_method: invoice.payment_method,
+                payment_reference: invoice.payment_reference,
+                notes: invoice.notes,
+                invoice_items: invoice.invoice_items
+            })
+
+            // Set customer info from invoice
+            if (invoice.customer) {
+                setCustomerInfo({
+                    name: invoice.customer.customer_name || '',
+                    phone: invoice.customer.customer_phone || '',
+                    email: invoice.customer.customer_email || ''
+                })
+            }
+
+            // Set vehicle info from invoice
+            if (invoice.vehicle) {
+                setVehicleInfo({
+                    year: invoice.vehicle.year?.toString() || '',
+                    make: invoice.vehicle.make || '',
+                    model: invoice.vehicle.model || '',
+                    licensePlate: invoice.vehicle.license_plate || '',
+                    vin: (invoice.vehicle as any).vin || ''
+                })
+            }
+        }
+    }, [invoice])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        
+        if (!shopId) {
+            toast.error('Shop ID not found')
+            return
+        }
+
+        try {
+            if (invoiceId) {
+                await updateMutation.mutateAsync({
+                    id: invoiceId,
+                    data: formData
+                })
+                toast.success('Invoice updated successfully')
+            } else {
+                await createMutation.mutateAsync({
+                    ...formData,
+                    shop_id: shopId
+                })
+                toast.success('Invoice created successfully')
+            }
+            onClose()
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to save invoice')
+        }
+    }
+
+    const addItem = () => {
+        setFormData(prev => ({
+            ...prev,
+            invoice_items: [...prev.invoice_items, {
+                id: crypto.randomUUID(),
+                item_type: 'part',
+                description: '',
+                quantity: 1,
+                unit_price: 0,
+                total_price: 0
+            }]
+        }))
+    }
+
+    const removeItem = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            invoice_items: prev.invoice_items.filter((_, i) => i !== index)
+        }))
+    }
+
+    const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
+        setFormData(prev => {
+            const items = [...prev.invoice_items]
+            items[index] = { ...items[index], [field]: value }
+            
+            // Recalculate total_price
+            if (field === 'quantity' || field === 'unit_price') {
+                items[index].total_price = items[index].quantity * items[index].unit_price
+            }
+            
+            return { ...prev, invoice_items: items }
+        })
+    }
+
+    const calculateSubtotal = () => {
+        return formData.invoice_items.reduce((sum, item) => sum + item.total_price, 0)
+    }
+
+    const calculateTax = () => {
+        return calculateSubtotal() * formData.tax_rate
+    }
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + calculateTax() - formData.discount_amount
+    }
+
+    if (isLoading && invoiceId) {
+        return (
+            <div className="h-full flex flex-col bg-[#0d0d0d]">
+                <div className="flex-1 flex items-center justify-center p-4">
+                    <Card className="bg-[#1a1a1a] border-[#2a2a2a] p-8">
+                        <div className="flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="h-full flex flex-col bg-[#0d0d0d]">
+            {/* Fixed Header */}
+            <div className="bg-[#131313] p-4 border-b border-[#333333]">
+                <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                        <h2 className="text-xl font-semibold text-white">
+                            {invoiceId ? 'Edit Invoice' : 'Create Invoice'}
+                        </h2>
+                        <p className="text-gray-500 text-sm">
+                            {invoiceId ? `Invoice #${invoice?.invoice_number || invoiceId}` : 'New Invoice'}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-white hover:bg-transparent"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Basic Information Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <LayoutIcon className="h-4 w-4 text-purple-400" />
+                                <h3 className="text-lg font-semibold text-white">Invoice Information</h3>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <Label htmlFor="title" className="text-gray-400 text-xs">Title</Label>
+                                    <Input
+                                        id="title"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                        placeholder="Invoice title"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="description" className="text-gray-400 text-xs">Description</Label>
+                                    <Textarea
+                                        id="description"
+                                        value={formData.description || ''}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                        placeholder="Invoice description"
+                                        rows={3}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="status" className="text-gray-400 text-xs">Status</Label>
+                                        <Select
+                                            value={formData.status}
+                                            onValueChange={(value: any) => setFormData(prev => ({ ...prev, status: value }))}
+                                        >
+                                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="draft">Draft</SelectItem>
+                                                <SelectItem value="sent">Sent</SelectItem>
+                                                <SelectItem value="viewed">Viewed</SelectItem>
+                                                <SelectItem value="paid">Paid</SelectItem>
+                                                <SelectItem value="overdue">Overdue</SelectItem>
+                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="priority" className="text-gray-400 text-xs">Priority</Label>
+                                        <Select
+                                            value={formData.priority}
+                                            onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}
+                                        >
+                                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="low">Low</SelectItem>
+                                                <SelectItem value="medium">Medium</SelectItem>
+                                                <SelectItem value="high">High</SelectItem>
+                                                <SelectItem value="urgent">Urgent</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Customer Information Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <User className="h-4 w-4 text-blue-400" />
+                                <h3 className="text-lg font-semibold text-white">Customer Information</h3>
+                            </div>
+                            
+                            <CustomerInformation
+                                customerId={formData.customer_id}
+                                customerName={customerInfo.name}
+                                customerEmail={customerInfo.email}
+                                customerPhone={customerInfo.phone}
+                                customerAddress=""
+                                isEditing={true}
+                                isCreating={!invoiceId}
+                                onFieldChange={(field, value) => {
+                                    if (field === 'customer') setCustomerInfo(prev => ({ ...prev, name: value }))
+                                    if (field === 'customerEmail') setCustomerInfo(prev => ({ ...prev, email: value }))
+                                    if (field === 'customerPhone') setCustomerInfo(prev => ({ ...prev, phone: value }))
+                                }}
+                                onCustomerChange={(customerId) => setFormData(prev => ({ ...prev, customer_id: customerId }))}
+                            />
+                        </div>
+                    </Card>
+
+                    {/* Vehicle Information Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Car className="h-4 w-4 text-green-400" />
+                                <h3 className="text-lg font-semibold text-white">Vehicle Information</h3>
+                            </div>
+                            
+                            <VehicleInformation
+                                customerId={formData.customer_id}
+                                selectedVehicleId={formData.vehicle_id || ""}
+                                vehicleId={formData.vehicle_id || ""}
+                                vehicleYear={vehicleInfo.year}
+                                vehicleMake={vehicleInfo.make}
+                                vehicleModel={vehicleInfo.model}
+                                vehicleColor=""
+                                vehicleVin={vehicleInfo.vin}
+                                vehicleLicensePlate={vehicleInfo.licensePlate}
+                                vehicleMileage=""
+                                isEditing={true}
+                                isCreating={!invoiceId}
+                                onFieldChange={(field, value) => {
+                                    if (field === 'vehicleYear') setVehicleInfo(prev => ({ ...prev, year: value }))
+                                    if (field === 'vehicleMake') setVehicleInfo(prev => ({ ...prev, make: value }))
+                                    if (field === 'vehicleModel') setVehicleInfo(prev => ({ ...prev, model: value }))
+                                    if (field === 'vehicleVin') setVehicleInfo(prev => ({ ...prev, vin: value }))
+                                    if (field === 'vehicleLicensePlate') setVehicleInfo(prev => ({ ...prev, licensePlate: value }))
+                                }}
+                                onVehicleSelect={(vehicleId) => setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))}
+                            />
+                        </div>
+                    </Card>
+
+                    {/* Invoice Items Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 bg-yellow-400 rounded-full"></div>
+                                    <h3 className="text-lg font-semibold text-white">Invoice Items</h3>
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={addItem}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    size="sm"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Item
+                                </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {formData.invoice_items.map((item, index) => (
+                                    <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <h4 className="text-sm font-medium text-gray-300">Item {index + 1}</h4>
+                                            <Button
+                                                type="button"
+                                                onClick={() => removeItem(index)}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor={`item_type_${index}`} className="text-gray-400 text-xs">Type</Label>
+                                                <Select
+                                                    value={item.item_type}
+                                                    onValueChange={(value: any) => updateItem(index, 'item_type', value)}
+                                                >
+                                                    <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="part">Part</SelectItem>
+                                                        <SelectItem value="labor">Labor</SelectItem>
+                                                        <SelectItem value="service">Service</SelectItem>
+                                                        <SelectItem value="fee">Fee</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor={`item_description_${index}`} className="text-gray-400 text-xs">Description</Label>
+                                                <Input
+                                                    id={`item_description_${index}`}
+                                                    value={item.description}
+                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                    placeholder="Item description"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor={`item_quantity_${index}`} className="text-gray-400 text-xs">Quantity</Label>
+                                                <Input
+                                                    id={`item_quantity_${index}`}
+                                                    type="number"
+                                                    value={item.quantity}
+                                                    onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+                                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor={`item_unit_price_${index}`} className="text-gray-400 text-xs">Unit Price</Label>
+                                                <Input
+                                                    id={`item_unit_price_${index}`}
+                                                    type="number"
+                                                    value={item.unit_price}
+                                                    onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))}
+                                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </div>
+
+                                            <div className="lg:col-span-2">
+                                                <Label htmlFor={`item_total_${index}`} className="text-gray-400 text-xs">Total Price</Label>
+                                                <Input
+                                                    id={`item_total_${index}`}
+                                                    type="number"
+                                                    value={item.total_price}
+                                                    disabled
+                                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Invoice Summary Card */}
+                    <Card className="bg-[#131313] border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="h-4 w-4 bg-yellow-400 rounded-full"></div>
+                                <h3 className="text-lg font-semibold text-white">Invoice Summary</h3>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Subtotal:</span>
+                                    <span>${calculateSubtotal().toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Tax ({(formData.tax_rate * 100).toFixed(0)}%):</span>
+                                    <span>${calculateTax().toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Discount:</span>
+                                    <Input
+                                        type="number"
+                                        value={formData.discount_amount}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, discount_amount: Number(e.target.value) }))}
+                                        className="w-24 h-6 bg-[#1a1a1a] border-[#2a2a2a] text-white text-right"
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                </div>
+                                <Separator className="bg-gray-700" />
+                                <div className="flex justify-between text-white font-bold text-lg pt-2">
+                                    <span>Total:</span>
+                                    <span>${calculateTotal().toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </form>
+            </div>
+
+            {/* Fixed Footer with Actions */}
+            <div className="bg-[#131313] border-t border-[#333333] p-4 flex flex-wrap gap-2">
+                <Button
+                    type="submit"
+                    form="invoice-form"
+                    className="bg-green-600 text-white hover:bg-green-700" 
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                    {(createMutation.isPending || updateMutation.isPending) ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Save Invoice
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-transparent border-[#2a2a2a] text-gray-300 hover:bg-[#2a2a2a]"
+                    onClick={onClose}
+                >
+                    Cancel
+                </Button>
+            </div>
+        </div>
+    )
+}
+
+export default InvoiceForm
