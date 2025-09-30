@@ -48,14 +48,13 @@ Have a natural and casual tone while being efficient, and clear. Don't keep repe
 
 3. **Details to Collect**  
    - Part availability: In stock/Backordered/Discontinued  
-   - Shop price: $[PRICE]  
-   - Delivery time: [DELIVERY_DAYS] business days  
-   - Part number: [PART_NUMBER]  
-   - Contact person name: [CONTACT_NAME]  
+   - Shop price: $[PRICE] 
+   - Part number: [PART_NUMBER] (if they provide it)
+   - Quote number: [QUOTE_NUMBER] (ask that at the end)
 
 4. **Confirmation and End**  
    - "Just to confirm, that's ${parts_info?.quantity || 1} ${parts_info?.partName || 'the requested parts'} for $[PRICE], available, delivery in [DELIVERY_DAYS] business days."  
-   - "Perfect, I have everything. Thank you, goodbye."
+   - "Perfect."
 
 5. **On Hold**
    - When the parts supplier put you on hold, you should wait until the user speaks again. There may be background noise and call waiting music. Just wait until someone speaks again and says "Hello" or "Thanks for holding".
@@ -94,15 +93,17 @@ export function createDynamicAssistant(context: CallContext) {
         backgroundSound: "off",
         firstMessage: "Hi, I'm calling to request a quote for parts.",
         // endCallMessage: "Thanks for the quote. We'll call back again to place the order if needed.",
-        voicemailMessage: "Hi,I was calling to request a quote for parts please call us back. Thank you.",
+        voicemailMessage: "Hi, I was calling to request a quote for parts please call us back. Thank you.",
         transcriber: {
             provider: "deepgram" as const,
             model: "nova-2" as const,
             language: "en" as const
         },
         endCallFunctionEnabled: true,
+        silenceTimeoutSeconds: 240,
         serverUrl: "https://app.motorminds.ca/api/voice-calling/webhook",
         serverMessages: ["end-of-call-report"],
+        endCallMessage: "Thanks for the quote. We'll call back again to place the order if needed.",
         analysisPlan: {
             summaryPlan: {
                 messages: [
