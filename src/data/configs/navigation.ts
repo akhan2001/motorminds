@@ -14,7 +14,7 @@ const mechanicHubSubItems = [
     { name: "Parts & Ordering", href: "/parts-ordering" },
     { name: "Appointments", href: "/appointments" },
     { name: "Services & Parts", href: "/mechanic-hub/service-parts" },
-    { name: "Invoices", href: "/invoices" },
+    { name: "Invoices", href: "/financials/invoices" },
 ];
 
 const customerSubItems = [
@@ -43,7 +43,7 @@ export const navigationConfig: NavItem[] = [
     },
     {
         name: "Invoices",
-        href: "/financials/invoices",
+        href: "/invoices",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
