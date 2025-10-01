@@ -14,7 +14,6 @@ const mechanicHubSubItems = [
     { name: "Parts & Ordering", href: "/parts-ordering" },
     { name: "Appointments", href: "/appointments" },
     { name: "Services & Parts", href: "/mechanic-hub/service-parts" },
-    { name: "Invoices", href: "/invoices" },
 ];
 
 const customerSubItems = [
