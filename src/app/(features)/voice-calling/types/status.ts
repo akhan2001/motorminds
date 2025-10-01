@@ -142,50 +142,50 @@ export interface StatusConfig {
 export const PARTS_STATUS_CONFIG: Record<PartsRequestStatus, StatusConfig> = {
     'pending': {
         label: 'Pending',
-        color: 'text-gray-300',
-        bgColor: 'bg-gray-800',
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-100',
         description: 'Waiting to start quote process'
     },
     'quote_requested': {
         label: 'Getting Quote',
-        color: 'text-blue-300',
-        bgColor: 'bg-blue-900',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
         description: 'AI is calling supplier for quote'
     },
     'quote_received': {
         label: 'Quote Received',
-        color: 'text-yellow-300',
-        bgColor: 'bg-yellow-900',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-100',
         description: 'Quote received, ready for review'
     },
     'ready_to_order': {
         label: 'Ready to Order',
-        color: 'text-green-300',
-        bgColor: 'bg-green-900',
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
         description: 'Ready to place order with supplier'
     },
     'order_placed': {
         label: 'Order Placed',
-        color: 'text-purple-300',
-        bgColor: 'bg-purple-900',
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100',
         description: 'Order has been placed with supplier'
     },
     'completed': {
         label: 'Completed',
-        color: 'text-green-400',
-        bgColor: 'bg-green-800',
+        color: 'text-green-700',
+        bgColor: 'bg-green-200',
         description: 'Order completed successfully'
     },
     'failed': {
         label: 'Failed',
-        color: 'text-red-300',
-        bgColor: 'bg-red-900',
+        color: 'text-red-600',
+        bgColor: 'bg-red-100',
         description: 'Process failed, needs attention'
     },
     'cancelled': {
         label: 'Cancelled',
-        color: 'text-gray-400',
-        bgColor: 'bg-gray-800',
+        color: 'text-gray-500',
+        bgColor: 'bg-gray-100',
         description: 'Request was cancelled'
     }
 }
@@ -193,38 +193,38 @@ export const PARTS_STATUS_CONFIG: Record<PartsRequestStatus, StatusConfig> = {
 export const CALL_STATUS_CONFIG: Record<VoiceCallStatus, StatusConfig> = {
     'pending': {
         label: 'Pending',
-        color: 'text-gray-300',
-        bgColor: 'bg-gray-800',
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-100',
         description: 'Call queued'
     },
     'connecting': {
         label: 'Connecting',
-        color: 'text-blue-300',
-        bgColor: 'bg-blue-900',
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
         description: 'Initiating call'
     },
     'in_progress': {
         label: 'In Progress',
-        color: 'text-yellow-300',
-        bgColor: 'bg-yellow-900',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-100',
         description: 'Call active'
     },
     'completed': {
         label: 'Completed',
-        color: 'text-green-300',
-        bgColor: 'bg-green-900',
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
         description: 'Call finished'
     },
     'failed': {
         label: 'Failed',
-        color: 'text-red-300',
-        bgColor: 'bg-red-900',
+        color: 'text-red-600',
+        bgColor: 'bg-red-100',
         description: 'Call failed'
     },
     'cancelled': {
         label: 'Cancelled',
-        color: 'text-gray-400',
-        bgColor: 'bg-gray-800',
+        color: 'text-gray-500',
+        bgColor: 'bg-gray-100',
         description: 'Call cancelled'
     }
 }
