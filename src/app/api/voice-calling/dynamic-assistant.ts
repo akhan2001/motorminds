@@ -93,7 +93,7 @@ export function createDynamicAssistant(context: CallContext) {
         },
         backgroundSound: "off",
         firstMessage: "Hi, I'm calling to request a quote for parts.",
-        // endCallMessage: "Thanks for the quote. We'll call back again to place the order if needed.",
+        endCallMessage: "Thanks for the quote. We'll call back again to place the order if needed.",
         voicemailMessage: "Hi,I was calling to request a quote for parts please call us back. Thank you.",
         transcriber: {
             provider: "deepgram" as const,
