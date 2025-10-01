@@ -54,8 +54,12 @@ const shopFormSchema = z.object({
     shop_owner: z.string().min(2, {
         message: "Owner name must be at least 2 characters.",
     }),
-    shop_about: z.string().max(500).optional().or(z.literal("")),
-    shop_tagline: z.string().max(100).optional().or(z.literal("")),
+    shop_about: z.string().max(500).min(10, {
+        message: "About section must be at least 10 characters.",
+    }),
+    shop_tagline: z.string().max(100).min(5, {
+        message: "Tagline must be at least 5 characters.",
+    }),
     operating_hours: z.string().optional().or(z.literal("")),
     services_offered: z.string().optional().or(z.literal("")),
     website: z.string().url().optional().or(z.literal("")),
@@ -255,24 +259,13 @@ export function ProfileForm({ shopId }: { shopId: string }) {
             // Update reducer state using ref to avoid dependency issues
             actionsRef.current.setOperatingHours(parsedHours)
             actionsRef.current.setServices(parsedServices)
-            
-            // Update form fields with stringified values
-            form.setValue('operating_hours', shop.operating_hours || "")
-            form.setValue('services_offered', shop.services_offered || "")
         }
     }, [shopInfo.data])
-
-    // Update form fields when state changes
-    useEffect(() => {
-        form.setValue('operating_hours', stringifyOperatingHours(state.operatingHours))
-        form.setValue('services_offered', stringifyServices(state.services))
-    }, [state.operatingHours, state.services, form])
 
     async function onSubmit(data: ShopFormValues) {
         console.log('Form submitted with data:', data);
         await updateShopProfile(data)
     }
-
 
     async function updateShopProfile(data: ShopFormValues) {
         console.log('updateShopProfile called with:', { shopId, data });
@@ -333,22 +326,10 @@ export function ProfileForm({ shopId }: { shopId: string }) {
 
             // Make sure operating hours and services are properly formatted as JSONB
             // Convert empty strings to undefined for optional fields to avoid unique constraint issues
-            console.log('Raw form data:', data);
-            console.log('State operating hours:', state.operatingHours);
-            console.log('State services:', state.services);
-            
-            // Ensure we never send objects/arrays to the database
-            const safeOperatingHours = typeof data.operating_hours === 'string' 
-                ? data.operating_hours 
-                : stringifyOperatingHours(state.operatingHours);
-            const safeServices = typeof data.services_offered === 'string' 
-                ? data.services_offered 
-                : stringifyServices(state.services);
-                
             const formattedData = {
                 ...data,
-                operating_hours: safeOperatingHours,
-                services_offered: safeServices,
+                operating_hours: stringifyOperatingHours(state.operatingHours),
+                services_offered: stringifyServices(state.services),
                 // Convert empty strings to undefined for fields that can be empty/null
                 hst_number: data.hst_number?.trim() || undefined,
                 business_number: data.business_number?.trim() || undefined,
@@ -463,29 +444,29 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                                 >
                                     Basic Info
                                 </TabsTrigger>
-                                <TabsTrigger
-                                    value="location"
+                                <TabsTrigger 
+                                    value="location" 
                                     className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
                                     onClick={() => window.location.hash = '#location'}
                                 >
                                     Location
                                 </TabsTrigger>
-                                <TabsTrigger
-                                    value="details"
+                                <TabsTrigger 
+                                    value="details" 
                                     className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
                                     onClick={() => window.location.hash = '#details'}
                                 >
                                     Shop Details
                                 </TabsTrigger>
-                                <TabsTrigger
-                                    value="images"
+                                <TabsTrigger 
+                                    value="images" 
                                     className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
                                     onClick={() => window.location.hash = '#images'}
                                 >
                                     Images
                                 </TabsTrigger>
-                                <TabsTrigger
-                                    value="social"
+                                <TabsTrigger 
+                                    value="social" 
                                     className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
                                     onClick={() => window.location.hash = '#social'}
                                 >
@@ -544,12 +525,8 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                                 onClick={(e) => {
                                     console.log('Save button clicked');
-        console.log('Form state:', form.formState);
-        console.log('Form errors:', form.formState.errors);
-        console.log('Form values:', form.getValues());
-        console.log('Operating hours value:', form.getValues('operating_hours'));
-        console.log('Services offered value:', form.getValues('services_offered'));
-        console.log('Shop owner value:', form.getValues('shop_owner'));
+                                    console.log('Form state:', form.formState);
+                                    console.log('Form errors:', form.formState.errors);
                                 }}
                             >
                                 {state.isSaving ? (

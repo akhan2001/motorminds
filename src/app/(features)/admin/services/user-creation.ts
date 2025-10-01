@@ -103,13 +103,11 @@ export class UserCreationService {
                         shop_address: request.shop.shopAddress,
                         shop_city: request.shop.shopCity,
                         shop_province: request.shop.shopProvince,
-                        website: request.shop.website || null,
-                        business_number: request.shop.businessNumber || null,
-                        hst_number: request.shop.hstNumber || null,
-                        services_offered: JSON.stringify(request.shop.servicesOffered),
-                        operating_hours: JSON.stringify(request.shop.operatingHours),
-                        tagline: request.shop.tagline || null,
-                        about: request.shop.about || null
+                        website: request.shop.website,
+                        business_number: request.shop.businessNumber,
+                        hst_number: request.shop.hstNumber,
+                        services_offered: request.shop.servicesOffered,
+                        operating_hours: request.shop.operatingHours
                     })
                     .select('id')
                     .single()
@@ -192,8 +190,6 @@ export class UserCreationService {
         if (!shop.shopProvince || shop.shopProvince.trim().length < 2) {
             errors.push('Shop province is required')
         }
-
-        // Tagline and about are optional - no validation needed
 
         return errors
     }

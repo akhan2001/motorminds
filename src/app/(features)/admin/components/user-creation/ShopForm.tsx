@@ -60,7 +60,7 @@ export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProp
         })
     }
 
-    const handleOperatingHoursChange = (day: string, field: 'openTime' | 'closeTime' | 'closed', value: string | boolean) => {
+    const handleOperatingHoursChange = (day: string, field: 'open' | 'close' | 'closed', value: string | boolean) => {
         setShopForm({
             ...shopForm,
             operatingHours: {
