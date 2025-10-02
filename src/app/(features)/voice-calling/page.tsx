@@ -325,6 +325,14 @@ export default function VoiceCallingPage() {
                                 <p className="text-gray-400 mt-1">Manage your AI-powered parts ordering calls</p>
                                     </div>
                             <div className="flex gap-3">
+                                <Button
+                                    onClick={() => window.location.href = '/suppliers'}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                >
+                                    Manage Suppliers
+                                </Button>
                                 <Button 
                                     onClick={fetchPartsRequests}
                                     variant="outline"

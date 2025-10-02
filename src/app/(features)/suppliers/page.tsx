@@ -30,16 +30,6 @@ export default function SuppliersPage() {
             <Nav />
             <div className="flex-1 flex flex-col">
                 <div className="p-6 max-w-6xl mx-auto w-full">
-                    {/* Breadcrumb Navigation */}
-                    <Breadcrumb className="mb-6">
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbPage className="text-white">
-                                    Suppliers
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
 
                     {/* Header */}
                     <div className="flex justify-between items-center mb-6">
