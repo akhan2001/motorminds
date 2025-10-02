@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/common/feedback/loading-states";
 import InvoiceHeader from "../components/invoices/InvoiceHeader";
 import InvoiceList from "../components/invoices/InvoiceList";
 import InvoiceDashboard from "../components/invoices/InvoiceDashboard";
+import NewInvoice from "../components/invoices/NewInvoice";
 
 // Component that uses useSearchParams - needs to be wrapped in Suspense
 function InvoicesContent() {
@@ -21,11 +22,11 @@ function InvoicesContent() {
     const [searchValue, setSearchValue] = useState('')
     const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null)
     const [showForm, setShowForm] = useState(false)
+    const [showNewInvoiceDialog, setShowNewInvoiceDialog] = useState(false)
     
     // Handlers
     const handleNewInvoice = () => {
-        setSelectedInvoice(null)
-        setShowForm(true)
+        setShowNewInvoiceDialog(true)
     }
     
     const handleInvoiceClick = (invoiceId: string) => {
@@ -46,6 +47,12 @@ function InvoicesContent() {
     const handleBulkSend = () => {
         // TODO: Implement bulk send
         console.log('Bulk send clicked')
+    }
+    
+    const handleNewInvoiceCreated = () => {
+        // Refresh the invoice list or handle the created invoice
+        setShowNewInvoiceDialog(false)
+        // You might want to refresh the list here
     }
 
     return (
@@ -78,7 +85,7 @@ function InvoicesContent() {
 
                         {/* Right Panel - Invoice Form/Details - 50% */}
                         <ResizablePanel defaultSize={50} minSize={40} maxSize={60}>
-                            <div className="h-full">
+                            <div className="h-full p-2">
                                 <InvoiceDashboard 
                                     selectedInvoiceId={selectedInvoice}
                                     showForm={showForm}
@@ -89,6 +96,13 @@ function InvoicesContent() {
                     </ResizablePanelGroup>
                 </div>
             </div>
+            
+            {/* New Invoice Dialog */}
+            <NewInvoice 
+                isOpen={showNewInvoiceDialog}
+                onClose={() => setShowNewInvoiceDialog(false)}
+                onInvoiceCreated={handleNewInvoiceCreated}
+            />
         </div>
     )
 }
