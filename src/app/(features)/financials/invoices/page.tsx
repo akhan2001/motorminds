@@ -21,7 +21,6 @@ function InvoicesContent() {
     // State
     const [searchValue, setSearchValue] = useState('')
     const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null)
-    const [showForm, setShowForm] = useState(false)
     const [showNewInvoiceDialog, setShowNewInvoiceDialog] = useState(false)
     
     // Handlers
@@ -31,11 +30,9 @@ function InvoicesContent() {
     
     const handleInvoiceClick = (invoiceId: string) => {
         setSelectedInvoice(invoiceId)
-        setShowForm(false) // Show view-only, not form
     }
     
     const handleCloseForm = () => {
-        setShowForm(false)
         setSelectedInvoice(null)
     }
     
@@ -88,7 +85,6 @@ function InvoicesContent() {
                             <div className="h-full p-2">
                                 <InvoiceDashboard 
                                     selectedInvoiceId={selectedInvoice}
-                                    showForm={showForm}
                                     onClose={handleCloseForm}
                                 />
                             </div>

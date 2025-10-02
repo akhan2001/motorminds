@@ -271,11 +271,11 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     <Card className="bg-[#131313] border-[#333333]">
                         <div className="p-4">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="h-4 w-4 bg-yellow-400 rounded-full"></div>
+                                {/* <div className="h-4 w-4 bg-yellow-400 rounded-full"></div> */}
                                 <h3 className="text-lg font-semibold text-white">Invoice Summary</h3>
                             </div>
                             <div className="space-y-2">
-                                <div className="flex justify-between text-gray-400">
+                                <div className="flex justify-between text-white">
                                     <span>Subtotal:</span>
                                     <span>{formatCurrency(subtotal)}</span>
                                 </div>
@@ -283,30 +283,32 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                     <span>Tax ({(invoice.tax_rate * 100).toFixed(0)}%):</span>
                                     <span>{formatCurrency(tax)}</span>
                                 </div>
-                                {invoice.discount_amount > 0 && (
+                                {/* {invoice.discount_amount > 0 && (
                                     <div className="flex justify-between text-gray-400">
                                         <span>Discount:</span>
                                         <span>-{formatCurrency(invoice.discount_amount)}</span>
                                     </div>
-                                )}
+                                )} */}
                                 <Separator className="bg-gray-700" />
                                 <div className="flex justify-between items-center pt-2">
                                     <div>
                                         <p className="text-gray-400 font-medium">Amount Due:</p>
-                                        <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
                                     </div>
-                                    <Badge 
-                                        variant="outline" 
-                                        className={cn(
-                                            "text-sm px-3 py-1",
-                                            invoice.status === 'paid' 
-                                                ? 'bg-green-600 text-white border-green-600' 
-                                                : 'bg-red-600 text-white border-red-600'
-                                        )}
-                                    >
-                                        {invoice.status.toUpperCase()}
-                                    </Badge>
+                                    <div>
+                                    <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
+                                    </div>
                                 </div>
+                                <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                        "text-sm px-3 py-1",
+                                        invoice.status === 'paid' 
+                                            ? 'bg-green-600 text-white border-green-600' 
+                                            : 'bg-red-600 text-white border-red-600'
+                                    )}
+                                >
+                                    {invoice.status.toUpperCase()}
+                                </Badge>
                             </div>
                         </div>
                     </Card>
