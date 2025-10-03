@@ -252,6 +252,7 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                             className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
                                             placeholder="Invoice description"
                                             rows={3}
+                                            maxLength={500}
                                         />
                                     </div>
 
