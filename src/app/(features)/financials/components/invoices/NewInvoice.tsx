@@ -15,6 +15,8 @@ import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
 import { toast } from 'sonner'
 import { CustomerInformation } from '../../../operations/components/work-orders/WorkOrderModal/customer-information'
 import { VehicleInformation } from '../../../operations/components/work-orders/WorkOrderModal/vehicle-information'
+import { InvoiceLaborItems } from './InvoiceLaborItems'
+import { InvoicePartsItems } from './InvoicePartsItems'
 
 interface NewInvoiceProps {
     isOpen: boolean
@@ -123,39 +125,11 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         }
     }
 
-    const addItem = () => {
+    const handleItemsChange = (items: InvoiceItem[]) => {
         setFormData(prev => ({
             ...prev,
-            invoice_items: [...prev.invoice_items, {
-                id: crypto.randomUUID(),
-                item_type: 'part',
-                description: '',
-                quantity: 1,
-                unit_price: 0,
-                total_price: 0
-            }]
+            invoice_items: items
         }))
-    }
-
-    const removeItem = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            invoice_items: prev.invoice_items.filter((_, i) => i !== index)
-        }))
-    }
-
-    const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
-        setFormData(prev => {
-            const items = [...prev.invoice_items]
-            items[index] = { ...items[index], [field]: value }
-            
-            // Recalculate total_price
-            if (field === 'quantity' || field === 'unit_price') {
-                items[index].total_price = items[index].quantity * items[index].unit_price
-            }
-            
-            return { ...prev, invoice_items: items }
-        })
     }
 
     const calculateSubtotal = () => {
@@ -327,112 +301,24 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                         {/* Invoice Items Card */}
                         <div className="bg-[#131313] border border-[#333333] rounded-lg">
                             <div className="p-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-lg font-semibold text-white">Invoice Items</h3>
-                                    </div>
-                                    <Button
-                                        type="button"
-                                        onClick={addItem}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                                        size="sm"
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Add Item
-                                    </Button>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <h3 className="text-lg font-semibold text-white">Invoice Items</h3>
                                 </div>
 
-                                <div className="space-y-3">
-                                    {formData.invoice_items.length === 0 ? (
-                                        <div className="text-center py-8 text-gray-500">
-                                            No items added yet. Click "Add Item" to get started.
-                                        </div>
-                                    ) : (
-                                        formData.invoice_items.map((item, index) => (
-                                        <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <h4 className="text-sm font-medium text-gray-300">Item {index + 1}</h4>
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => removeItem(index)}
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                {/* Labor Items */}
+                                <div className="mb-6">
+                                    <InvoiceLaborItems
+                                        items={formData.invoice_items}
+                                        onItemsChange={handleItemsChange}
+                                    />
+                                </div>
 
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                <div>
-                                                    <Label htmlFor={`item_type_${index}`} className="text-gray-400 text-xs">Type</Label>
-                                                    <Select
-                                                        value={item.item_type}
-                                                        onValueChange={(value: any) => updateItem(index, 'item_type', value)}
-                                                    >
-                                                        <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="part">Part</SelectItem>
-                                                            <SelectItem value="labor">Labor</SelectItem>
-                                                            <SelectItem value="service">Service</SelectItem>
-                                                            <SelectItem value="fee">Fee</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-
-                                                <div>
-                                                    <Label htmlFor={`item_description_${index}`} className="text-gray-400 text-xs">Description</Label>
-                                                    <Input
-                                                        id={`item_description_${index}`}
-                                                        value={item.description}
-                                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                                        placeholder="Item description"
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <Label htmlFor={`item_quantity_${index}`} className="text-gray-400 text-xs">Quantity</Label>
-                                                    <Input
-                                                        id={`item_quantity_${index}`}
-                                                        type="number"
-                                                        value={item.quantity}
-                                                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                                        min="0"
-                                                        step="0.01"
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <Label htmlFor={`item_unit_price_${index}`} className="text-gray-400 text-xs">Unit Price</Label>
-                                                    <Input
-                                                        id={`item_unit_price_${index}`}
-                                                        type="number"
-                                                        value={item.unit_price}
-                                                        onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))}
-                                                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                                        min="0"
-                                                        step="0.01"
-                                                    />
-                                                </div>
-
-                                                <div className="lg:col-span-2">
-                                                    <Label htmlFor={`item_total_${index}`} className="text-gray-400 text-xs">Total Price</Label>
-                                                    <Input
-                                                        id={`item_total_${index}`}
-                                                        type="number"
-                                                        value={item.total_price}
-                                                        disabled
-                                                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                    )}
+                                {/* Parts Items */}
+                                <div>
+                                    <InvoicePartsItems
+                                        items={formData.invoice_items}
+                                        onItemsChange={handleItemsChange}
+                                    />
                                 </div>
                             </div>
                         </div>
