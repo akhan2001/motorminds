@@ -46,6 +46,9 @@ export class VoiceCallService {
 
             // Transform parts array into format expected by dynamic assistant
             const transformedPartsInfo = this.transformPartsForAI(request.partsInfo)
+            
+            console.log('Original parts info:', request.partsInfo)
+            console.log('Transformed parts info:', transformedPartsInfo)
 
             // Start the AI call
             const response = await fetch('/api/voice-calling/start-call', {
@@ -93,12 +96,10 @@ export class VoiceCallService {
     }
 
     /**
-     * Transform parts data into format expected by dynamic assistant
-     * Handles both single part objects and arrays of parts
+     * Transform parts array into format expected by dynamic assistant
      */
-    private static transformPartsForAI(partsData: any): any {
-        // Handle null/undefined/empty cases
-        if (!partsData) {
+    private static transformPartsForAI(partsArray: any): any {
+        if (!partsArray || !Array.isArray(partsArray) || partsArray.length === 0) {
             return {
                 partName: 'Unknown Part',
                 partNumber: '',
@@ -107,78 +108,21 @@ export class VoiceCallService {
             }
         }
 
-        // Handle single part object (from CallForm)
-        if (!Array.isArray(partsData)) {
-            const part = partsData
-            
-            // Handle CallForm format (partName, partNumber)
-            if (part.partName && part.partName.trim() !== '') {
-                return {
-                    partName: part.partName || 'Unknown Part',
-                    partNumber: part.partNumber || '',
-                    quantity: part.quantity || 1,
-                    description: part.description || ''
-                }
-            }
-            
-            // Check if partNumber exists even if partName is missing
-            if (part.partNumber && part.partNumber.trim() !== '') {
-                return {
-                    partName: part.partName || 'Unknown Part',
-                    partNumber: part.partNumber || '',
-                    quantity: part.quantity || 1,
-                    description: part.description || ''
-                }
-            }
-            
-            // Handle database format (part_name, part_number)
-            if (part.part_name || part.part_number) {
-                return {
-                    partName: part.part_name || 'Unknown Part',
-                    partNumber: part.part_number || '',
-                    quantity: part.quantity || 1,
-                    description: part.description || ''
-                }
-            }
-            
+        // If single part, use it directly
+        if (partsArray.length === 1) {
+            const part = partsArray[0]
             return {
-                partName: 'Unknown Part',
-                partNumber: '',
-                quantity: 1,
-                description: 'No part name specified'
-            }
-        }
-
-        // Handle array of parts
-        if (partsData.length === 0) {
-            return {
-                partName: 'Unknown Part',
-                partNumber: '',
-                quantity: 1,
-                description: 'No parts specified'
-            }
-        }
-
-        // If single part in array, use it directly
-        if (partsData.length === 1) {
-            const part = partsData[0]
-            
-            return {
-                partName: part.part_name || part.partName || 'Unknown Part',
-                partNumber: part.part_number || part.partNumber || '',
+                partName: part.part_name || 'Unknown Part',
+                partNumber: part.part_number || '',
                 quantity: part.quantity || 1,
                 description: part.description || ''
             }
         }
 
         // If multiple parts, create a combined description
-        const totalQuantity = partsData.reduce((sum, part) => sum + (part.quantity || 0), 0)
-        const partNames = partsData.map(part => {
-            const name = part.part_name || part.partName || 'Unknown Part'
-            const qty = part.quantity || 1
-            return `${qty} ${name}`
-        }).join(', ')
-        const partNumbers = partsData.map(part => part.part_number || part.partNumber).filter(Boolean).join(', ')
+        const totalQuantity = partsArray.reduce((sum, part) => sum + (part.quantity || 0), 0)
+        const partNames = partsArray.map(part => `${part.quantity || 1} ${part.part_name || 'Unknown Part'}`).join(', ')
+        const partNumbers = partsArray.map(part => part.part_number).filter(Boolean).join(', ')
         
         return {
             partName: partNames,

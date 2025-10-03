@@ -19,16 +19,14 @@ export interface AdminShopFormData {
     businessNumber: string | null
     hstNumber: string | null
     servicesOffered: string[]
-    tagline?: string
-    about?: string
     operatingHours: {
-        Monday: { openTime: string; closeTime: string; closed: boolean }
-        Tuesday: { openTime: string; closeTime: string; closed: boolean }
-        Wednesday: { openTime: string; closeTime: string; closed: boolean }
-        Thursday: { openTime: string; closeTime: string; closed: boolean }
-        Friday: { openTime: string; closeTime: string; closed: boolean }
-        Saturday: { openTime: string; closeTime: string; closed: boolean }
-        Sunday: { openTime: string; closeTime: string; closed: boolean }
+        monday: { open: string; close: string; closed: boolean }
+        tuesday: { open: string; close: string; closed: boolean }
+        wednesday: { open: string; close: string; closed: boolean }
+        thursday: { open: string; close: string; closed: boolean }
+        friday: { open: string; close: string; closed: boolean }
+        saturday: { open: string; close: string; closed: boolean }
+        sunday: { open: string; close: string; closed: boolean }
     }
 }
 
