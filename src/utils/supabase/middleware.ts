@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
+		// '/admin',
 		'/obd',
 		'/api/simulate-obd',
 		'/financials',
@@ -110,12 +111,48 @@ export async function updateSession(request: NextRequest) {
 			return NextResponse.redirect(redirectUrl)
 		}
 
-		// Add shop context to request headers for downstream use
-		supabaseResponse.headers.set('x-user-id', user.id)
-		supabaseResponse.headers.set('x-shop-id', shopId)
-	}
+	// Add shop context to request headers for downstream use
+	supabaseResponse.headers.set('x-user-id', user.id)
+	supabaseResponse.headers.set('x-shop-id', shopId)
+}
 
-	// Demo user redirects - redirect from / and /dashboard to /mia
+// Admin access control - only admin users can access /admin routes
+if (request.nextUrl.pathname.startsWith('/admin') && user) {
+	try {
+		// console.log('Checking admin access for user:', user.id);
+		
+		// Use server-side Supabase client for database query
+		const { data: userData, error } = await supabase
+			.from('users')
+			.select('role')
+			.eq('id', user.id)
+			.single();
+
+		// console.log('Database query result:', { userData, error });
+
+		if (error || !userData) {
+			console.log('Error or no userData, redirecting to operations/appointments');
+			const redirectUrl = new URL('/operations/appointments', request.url)
+			return NextResponse.redirect(redirectUrl)
+		}
+
+		const isAdmin = userData.role?.toUpperCase() === 'ADMIN';
+		// console.log('isAdmin result:', isAdmin);
+		
+		if (!isAdmin) {
+			// User is not admin - redirect to operations/appointments
+			const redirectUrl = new URL('/operations/appointments', request.url)
+			return NextResponse.redirect(redirectUrl)
+		}
+	} catch (error) {
+		console.error('Error checking user role for admin access:', error);
+		// On error, redirect to safe page
+		const redirectUrl = new URL('/operations/appointments', request.url)
+		return NextResponse.redirect(redirectUrl)
+	}
+}
+
+// Demo user redirects - redirect from / and /dashboard to /mia
 	if (user && (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard')) {
 		try {
 			const { data: userData, error } = await supabase

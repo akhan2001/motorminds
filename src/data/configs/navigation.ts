@@ -14,6 +14,7 @@ const mechanicHubSubItems = [
     { name: "Parts & Ordering", href: "/parts-ordering" },
     { name: "Appointments", href: "/appointments" },
     { name: "Services & Parts", href: "/mechanic-hub/service-parts" },
+    { name: "Invoices", href: "/financials/invoices" },
 ];
 
 const customerSubItems = [
@@ -25,6 +26,11 @@ const customerSubItems = [
 ];
 
 export const navigationConfig: NavItem[] = [
+    // {
+    //     name: "Dashboard",
+    //     href: "/",
+    //     requiredRoles: ['admin', 'super', 'user']
+    // },
     {
         name: "Appointments",
         href: "/operations/appointments",
@@ -50,11 +56,11 @@ export const navigationConfig: NavItem[] = [
         href: "/financials",
         requiredRoles: ['admin', 'super', 'user']
     },
-    {
-        name: "Parts",
-        href: "/parts",
-        requiredRoles: ['user', 'admin', 'super', 'demo']
-    },
+    // {
+    //     name: "Parts",
+    //     href: "/parts",
+    //     requiredRoles: ['user', 'admin', 'super', 'demo']
+    // },
     {
         name: "Customers",
         href: "/customers",

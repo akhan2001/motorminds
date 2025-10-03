@@ -46,7 +46,7 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-6xl bg-[#111111] text-white border-[#2a2a2a] max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-w-4xl bg-[#111111] text-white border-[#2a2a2a] max-h-[90vh] overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="text-white">
                         Work Order Item Templates

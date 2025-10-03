@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -74,6 +74,9 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         <Car className="h-5 w-5 text-green-500" />
                         Work Order Completed
                     </DialogTitle>
+                    <DialogDescription className="text-md text-gray-400">
+                        Complete the work order and send a completion message to the customer.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Phone, Clock, CheckCircle, AlertCircle, Plus, RefreshCw, Loader2 } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
@@ -163,57 +162,6 @@ export default function VoiceCallingPage() {
         }
     }
 
-    const handleRefreshCall = async (partsRequestId: string) => {
-        if (!shopId) return
-        
-        try {
-            setProcessingAction(`refresh-${partsRequestId}`)
-            
-            // Find the most recent voice call for this parts request
-            const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
-            if (!partsRequest || !partsRequest.callHistory?.length) {
-                toast.error('No calls found for this parts request')
-                return
-            }
-
-            // Get the most recent call
-            const mostRecentCall = partsRequest.callHistory[0]
-            
-            console.log('🔄 Refreshing call analysis for:', mostRecentCall.id)
-            
-            // Call the refresh-analysis API
-            const response = await fetch('/api/voice-calling/refresh-analysis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    call_id: mostRecentCall.id,
-                    parts_request_id: partsRequestId,
-                    shop_id: shopId
-                })
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Failed to refresh call analysis')
-            }
-
-            const result = await response.json()
-            
-            console.log('✅ Call analysis refreshed:', result.analysis)
-            
-            toast.success('Call analysis refreshed successfully')
-            
-            // Refresh the parts requests to show updated data
-            await fetchPartsRequests()
-            
-        } catch (error: any) {
-            console.error('Error refreshing call analysis:', error)
-            toast.error(`Failed to refresh call analysis: ${error.message}`)
-        } finally {
-            setProcessingAction(null)
-        }
-    }
-
     const getStatusCounts = () => {
         const counts = {
             active: 0,
@@ -323,8 +271,16 @@ export default function VoiceCallingPage() {
                             <div>
                                 <h1 className="text-3xl font-bold text-white">Voice Calling Dashboard</h1>
                                 <p className="text-gray-400 mt-1">Manage your AI-powered parts ordering calls</p>
-                                    </div>
+                            </div>
                             <div className="flex gap-3">
+                                <Button
+                                    onClick={() => window.location.href = '/suppliers'}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                >
+                                    Manage Suppliers
+                                </Button>
                                 <Button 
                                     onClick={fetchPartsRequests}
                                     variant="outline"
@@ -376,8 +332,8 @@ export default function VoiceCallingPage() {
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium text-gray-300">Need Attention</CardTitle>
                                     <AlertCircle className="h-4 w-4 text-gray-400" />
-                            </CardHeader>
-                            <CardContent>
+                                </CardHeader>
+                                <CardContent>
                                     <div className="text-2xl font-bold text-white">{statusCounts.failed}</div>
                                     <p className="text-xs text-gray-400">
                                         Failed or cancelled
@@ -408,38 +364,22 @@ export default function VoiceCallingPage() {
                                             request={request}
                                             onAction={handleAction}
                                             processing={processingAction === request.id}
-                                            onRefresh={handleRefreshCall}
-                                            refreshing={processingAction === `refresh-${request.id}`}
                                         />
                                     ))}
                                     
                                     {filterRequests(activeTab).length === 0 && (
-                                        <div className="flex flex-col items-center justify-center py-12 px-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
-                                            <div className="text-center">
-                                                <h3 className="text-lg font-medium text-white mb-2">
-                                                    No {activeTab} requests
-                                                </h3>
-                                <p className="text-gray-400 mb-4">
-                                                    {activeTab === 'active' 
-                                                        ? 'Create a new parts request to get started'
-                                                        : `No ${activeTab} requests found`
-                                                    }
-                                                </p>
-                                                {activeTab === 'active' && (
-                                                    <CallForm 
-                                                        trigger={
-                                                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                                                <Plus className="h-4 w-4 mr-2" />
-                                                                New Request
-                                                            </Button>
-                                                        }
-                                                        onCallComplete={(callId, partsRequestId) => {
-                                                            fetchPartsRequests()
-                                                        }}
-                                                    />
-                                                )}
-                                    </div>
-                                    </div>
+                                        <EmptyState
+                                            title={`No ${activeTab} requests`}
+                                            description={
+                                                activeTab === 'active' 
+                                                    ? 'Create a new parts request to get started'
+                                                    : `No ${activeTab} requests found`
+                                            }
+                                            action={activeTab === 'active' ? {
+                                                label: 'New Request',
+                                                onClick: () => {} // CallForm will handle this
+                                            } : undefined}
+                                        />
                                     )}
                                 </div>
                             </TabsContent>
@@ -455,11 +395,9 @@ interface PartsRequestCardProps {
     request: PartsRequestWithActions
     onAction: (partsRequestId: string, action: StatusAction) => void
     processing: boolean
-    onRefresh?: (partsRequestId: string) => void
-    refreshing?: boolean
 }
 
-function PartsRequestCard({ request, onAction, processing, onRefresh, refreshing }: PartsRequestCardProps) {
+function PartsRequestCard({ request, onAction, processing }: PartsRequestCardProps) {
     const statusConfig = getStatusConfig(request.status as PartsRequestStatus)
     
     return (
@@ -500,33 +438,6 @@ function PartsRequestCard({ request, onAction, processing, onRefresh, refreshing
                                 {action.label}
                             </Button>
                         ))}
-                        
-                        {/* Refresh Button - only show if there are recent calls */}
-                        {request.callHistory?.length > 0 && onRefresh && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => onRefresh(request.id)}
-                                            disabled={refreshing}
-                                            className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
-                                        >
-                                            {refreshing ? (
-                                                <RefreshCw className="h-3 w-3 animate-spin" />
-                                            ) : (
-                                                <RefreshCw className="h-3 w-3" />
-                                            )}
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                                        <p>Refresh call analysis from Vapi</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
-                        
                         <Button
                             size="sm"
                             variant="ghost"

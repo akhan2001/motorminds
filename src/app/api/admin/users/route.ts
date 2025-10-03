@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
             )
         }
         
-        console.log('Fetching users from database...')
+        // console.log('Fetching users from database...')
         
         try {
             // Try to fetch users with shop information
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
                 })
             )
 
-            console.log('Users fetched:', transformedUsers.length)
+            // console.log('Users fetched:', transformedUsers.length)
 
             return NextResponse.json({
                 success: true,
