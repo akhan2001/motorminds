@@ -676,6 +676,8 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 <ServiceItemsTable invoice={invoice} />
                 
+                <PaymentSummary invoice={invoice} />
+                
                 <LegalTextSection />
                 
                 <CommentsSection />
