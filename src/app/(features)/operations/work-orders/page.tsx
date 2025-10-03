@@ -487,9 +487,9 @@ function WorkOrdersContent() {
 
     // Don't render main content if we don't have authentication data
     if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
-                <Nav />
+    return (
+        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -524,7 +524,7 @@ function WorkOrdersContent() {
                         onNewWorkOrder={handleNewWorkOrder}
                         onTemplatesClick={handleTemplatesClick}
                     />
-                    <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
                         <WorkOrderKanban 
                             columns={kanbanData}
                             onCardClick={handleCardClick}

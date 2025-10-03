@@ -27,6 +27,7 @@ interface InvoiceCardProps {
     source?: "customer_generated" | "shop_generated"
     estimatedAmount?: number
     customerNotes?: string
+    taxRate?: number
     onClick?: () => void
     onStatusChange?: () => void
 }
@@ -48,6 +49,7 @@ export function InvoiceCard({
     source,
     estimatedAmount,
     customerNotes,
+    taxRate,
     onClick,
     onStatusChange,
 }: InvoiceCardProps) {
@@ -138,7 +140,13 @@ export function InvoiceCard({
                             {status === "PAID" ? "AMOUNT PAID" : "AMOUNT DUE"}
                         </p>
                         <p className={`text-2xl font-bold ${status === "PAID" ? "text-green-500" : "text-red-500"}`}>
-                            {amount}
+                            {(() => {
+                                // Extract numeric value from amount string (remove $ and commas)
+                                const numericAmount = parseFloat(amount.replace(/[$,]/g, ''))
+                                // Add 13% tax
+                                const amountWithTax = numericAmount * 1.13
+                                return `$${amountWithTax.toFixed(2)}`
+                            })()}
                         </p>
                         <p className="text-sm text-gray-400 mt-1">Issued on: {issueDate}</p>
                     </div>

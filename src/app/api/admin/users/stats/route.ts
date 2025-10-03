@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
             )
         }
         
-        console.log('Fetching user statistics from database...')
+        // console.log('Fetching user statistics from database...')
         
         // Try to get basic counts first
         let totalUsers = 0
@@ -105,10 +105,10 @@ export async function GET(request: NextRequest) {
             // Continue with default values
         }
 
-        console.log('Stats calculated:', {
-            totalUsers, activeUsers, inactiveUsers, suspendedUsers,
-            totalShops, defaultPlan, premiumPlan, enterprisePlan
-        })
+        // console.log('Stats calculated:', {
+        //     totalUsers, activeUsers, inactiveUsers, suspendedUsers,
+        //     totalShops, defaultPlan, premiumPlan, enterprisePlan
+        // })
 
         return NextResponse.json({
             success: true,
