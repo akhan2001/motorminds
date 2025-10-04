@@ -677,13 +677,13 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 <NotesSection invoice={invoice} />
                 
-                <LegalTextSection />
+                {/* <LegalTextSection /> */}
                 
-                <CommentsSection />
+                {/* <CommentsSection /> */}
                 
                 <SignatureSection />
                 
-                <InvoiceFooter invoice={invoice} />
+                {/* <InvoiceFooter invoice={invoice} /> */}
             </Page>
         </Document>
     );
