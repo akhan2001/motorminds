@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { vapi } from '@/lib/integrations/vapi/vapi-client'
-import { buildTransientMiaAssistant } from '@/lib/integrations/vapi/transient-assistant'
+// import { buildTransientMiaAssistant } from '@/lib/integrations/vapi/transient-assistant'
 import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 
 export async function POST(request: NextRequest) {
