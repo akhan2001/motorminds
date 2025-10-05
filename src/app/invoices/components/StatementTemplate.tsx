@@ -250,99 +250,117 @@ const InfoSection = ({ statement }: { statement: StatementData }) => (
 );
 
 // Account Summary Box
-const AccountSummary = ({ totals }: { totals: any }) => (
-    <View style={styles.summaryBox}>
-        <Text style={styles.summaryTitle}>Account Summary</Text>
-        <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Previous Balance:</Text>
-            <Text style={styles.summaryValue}>{formatStatementCurrency(totals.previousBalance)}</Text>
+const AccountSummary = ({ totals }: { totals: any }) => {
+    const taxRate = 0.13; // 13% HST
+    const previousBalanceWithTax = totals.previousBalance * (1 + taxRate);
+    const newChargesWithTax = totals.newCharges * (1 + taxRate);
+    const paymentsCreditsWithTax = totals.paymentsCredits * (1 + taxRate);
+    const currentBalanceWithTax = totals.currentBalance * (1 + taxRate);
+
+    return (
+        <View style={styles.summaryBox}>
+            <Text style={styles.summaryTitle}>Account Summary</Text>
+            <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Previous Balance:</Text>
+                <Text style={styles.summaryValue}>{formatStatementCurrency(previousBalanceWithTax)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>New Charges:</Text>
+                <Text style={styles.summaryValue}>{formatStatementCurrency(newChargesWithTax)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Payments/Credits:</Text>
+                <Text style={styles.summaryValue}>-{formatStatementCurrency(paymentsCreditsWithTax)}</Text>
+            </View>
+            <View style={styles.summaryTotal}>
+                <Text style={styles.summaryTotalLabel}>CURRENT BALANCE DUE (incl. HST):</Text>
+                <Text style={styles.summaryTotalValue}>{formatStatementCurrency(currentBalanceWithTax)}</Text>
+            </View>
         </View>
-        <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>New Charges:</Text>
-            <Text style={styles.summaryValue}>{formatStatementCurrency(totals.newCharges)}</Text>
-        </View>
-        <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Payments/Credits:</Text>
-            <Text style={styles.summaryValue}>-{formatStatementCurrency(totals.paymentsCredits)}</Text>
-        </View>
-        <View style={styles.summaryTotal}>
-            <Text style={styles.summaryTotalLabel}>CURRENT BALANCE DUE:</Text>
-            <Text style={styles.summaryTotalValue}>{formatStatementCurrency(totals.currentBalance)}</Text>
-        </View>
-    </View>
-);
+    );
+};
 
 // Transaction Table
-const TransactionTable = ({ statement }: { statement: StatementData }) => (
-    <View style={styles.table}>
-        <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, styles.dateCol]}>Date</Text>
-            <Text style={[styles.tableHeaderText, styles.refCol]}>Invoice #</Text>
-            <Text style={[styles.tableHeaderText, styles.descCol]}>Description / Vehicle / Notes</Text>
-            <Text style={[styles.tableHeaderText, styles.statusCol]}>Status</Text>
-            <Text style={[styles.tableHeaderText, styles.chargesCol]}>Amount</Text>
-            <Text style={[styles.tableHeaderText, styles.balanceCol]}>Balance</Text>
-        </View>
-        
-        {/* Previous Balance Row */}
-        <View style={styles.tableRowPrevBalance}>
-            <Text style={styles.dateCol}></Text>
-            <Text style={styles.refCol}></Text>
-            <Text style={styles.descCol}>Previous Balance</Text>
-            <Text style={styles.statusCol}></Text>
-            <Text style={styles.chargesCol}></Text>
-            <Text style={styles.balanceCol}>{formatStatementCurrency(statement.totals.previousBalance)}</Text>
-        </View>
-        
-        {/* Transaction Rows */}
-        {statement.transactions.map((transaction, index) => (
-            <View key={index} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
-                <Text style={styles.dateCol}>{formatStatementDate(transaction.date)}</Text>
-                <View style={styles.refCol}>
-                    <Text style={{ fontSize: 9, fontWeight: 'bold', marginBottom: 1 }}>
-                        {transaction.reference}
-                    </Text>
-                    {transaction.invoiceId && (
-                        <Text style={{ 
-                            fontSize: 4.5, 
-                            color: '#9ca3af',
-                            lineHeight: 1.2
-                        }}>
-                            {transaction.invoiceId.substring(0, 13)}{'\n'}
-                            {transaction.invoiceId.substring(13, 26)}{'\n'}
-                            {transaction.invoiceId.substring(26)}
-                        </Text>
-                    )}
-                </View>
-                <View style={styles.descCol}>
-                    <Text style={{ fontSize: 9, fontWeight: 'bold', marginBottom: 2 }}>
-                        {transaction.description || 'Service Invoice'}
-                    </Text>
-                    {transaction.vehicle && (
-                        <Text style={{ fontSize: 7, color: '#6b7280', marginBottom: 1 }}>
-                            Vehicle: {transaction.vehicle}
-                        </Text>
-                    )}
-                    {transaction.notes && (
-                        <Text style={{ fontSize: 7, color: '#374151' }}>
-                            Notes: {transaction.notes}
-                        </Text>
-                    )}
-                </View>
-                <Text style={[styles.statusCol, { 
-                    color: transaction.status === 'PAID' ? '#16a34a' : '#dc2626',
-                    fontWeight: 'bold'
-                }]}>
-                    {transaction.status}
-                </Text>
-                <Text style={styles.chargesCol}>
-                    {formatStatementCurrency(transaction.charges)}
-                </Text>
-                <Text style={styles.balanceCol}>{formatStatementCurrency(transaction.balance)}</Text>
+const TransactionTable = ({ statement }: { statement: StatementData }) => {
+    const taxRate = 0.13; // 13% HST
+    const previousBalanceWithTax = statement.totals.previousBalance * (1 + taxRate);
+    
+    return (
+        <View style={styles.table}>
+            <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, styles.dateCol]}>Date</Text>
+                <Text style={[styles.tableHeaderText, styles.refCol]}>Invoice #</Text>
+                <Text style={[styles.tableHeaderText, styles.descCol]}>Description / Vehicle / Notes</Text>
+                <Text style={[styles.tableHeaderText, styles.statusCol]}>Status</Text>
+                <Text style={[styles.tableHeaderText, styles.chargesCol]}>Amount (incl. HST)</Text>
+                <Text style={[styles.tableHeaderText, styles.balanceCol]}>Balance</Text>
             </View>
-        ))}
-    </View>
-);
+            
+            {/* Previous Balance Row */}
+            <View style={styles.tableRowPrevBalance}>
+                <Text style={styles.dateCol}></Text>
+                <Text style={styles.refCol}></Text>
+                <Text style={styles.descCol}>Previous Balance</Text>
+                <Text style={styles.statusCol}></Text>
+                <Text style={styles.chargesCol}></Text>
+                <Text style={styles.balanceCol}>{formatStatementCurrency(previousBalanceWithTax)}</Text>
+            </View>
+            
+            {/* Transaction Rows */}
+            {statement.transactions.map((transaction, index) => {
+                const chargesWithTax = transaction.charges * (1 + taxRate);
+                const balanceWithTax = transaction.balance * (1 + taxRate);
+                
+                return (
+                    <View key={index} style={index % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+                        <Text style={styles.dateCol}>{formatStatementDate(transaction.date)}</Text>
+                        <View style={styles.refCol}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', marginBottom: 1 }}>
+                                {transaction.reference}
+                            </Text>
+                            {transaction.invoiceId && (
+                                <Text style={{ 
+                                    fontSize: 4.5, 
+                                    color: '#9ca3af',
+                                    lineHeight: 1.2
+                                }}>
+                                    {transaction.invoiceId.substring(0, 13)}{'\n'}
+                                    {transaction.invoiceId.substring(13, 26)}{'\n'}
+                                    {transaction.invoiceId.substring(26)}
+                                </Text>
+                            )}
+                        </View>
+                        <View style={styles.descCol}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', marginBottom: 2 }}>
+                                {transaction.description || 'Service Invoice'}
+                            </Text>
+                            {transaction.vehicle && (
+                                <Text style={{ fontSize: 7, color: '#6b7280', marginBottom: 1 }}>
+                                    Vehicle: {transaction.vehicle}
+                                </Text>
+                            )}
+                            {transaction.notes && (
+                                <Text style={{ fontSize: 7, color: '#374151' }}>
+                                    Notes: {transaction.notes}
+                                </Text>
+                            )}
+                        </View>
+                        <Text style={[styles.statusCol, { 
+                            color: transaction.status === 'PAID' ? '#16a34a' : '#dc2626',
+                            fontWeight: 'bold'
+                        }]}>
+                            {transaction.status}
+                        </Text>
+                        <Text style={styles.chargesCol}>
+                            {formatStatementCurrency(chargesWithTax)}
+                        </Text>
+                        <Text style={styles.balanceCol}>{formatStatementCurrency(balanceWithTax)}</Text>
+                    </View>
+                );
+            })}
+        </View>
+    );
+};
 
 // Footer Component
 const StatementFooter = ({ statement }: { statement: StatementData }) => (
