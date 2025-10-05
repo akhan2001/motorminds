@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Package, Settings, BarChart3, Users } from 'lucide-react'
+import { Package, Settings, BarChart3, Users, FileText } from 'lucide-react'
 
 const adminNavItems = [
 	{
@@ -20,6 +20,11 @@ const adminNavItems = [
 		name: 'Users',
 		href: '/admin/users',
 		icon: Users
+	},
+	{
+		name: 'Customer Statements',
+		href: '/admin/customer-statements',
+		icon: FileText
 	},
 	{
 		name: 'Settings',
