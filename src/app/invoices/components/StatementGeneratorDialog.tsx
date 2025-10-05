@@ -218,67 +218,9 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                                         {preset.label}
                                     </SelectItem>
                                 ))}
-                                <SelectItem value="custom">Custom Range</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-
-                    {/* Custom Date Range Pickers */}
-                    {datePreset === "custom" && (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-gray-300 text-sm font-medium">Start Date</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal bg-[#292929] text-white border-[#626262]",
-                                                !customStartDate && "text-gray-400"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {customStartDate ? format(customStartDate, "PPP") : "Pick a date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 bg-[#1a1a1a] border-[#333]">
-                                        <Calendar
-                                            mode="single"
-                                            selected={customStartDate}
-                                            onSelect={setCustomStartDate}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-gray-300 text-sm font-medium">End Date</label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal bg-[#292929] text-white border-[#626262]",
-                                                !customEndDate && "text-gray-400"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {customEndDate ? format(customEndDate, "PPP") : "Pick a date"}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0 bg-[#1a1a1a] border-[#333]">
-                                        <Calendar
-                                            mode="single"
-                                            selected={customEndDate}
-                                            onSelect={setCustomEndDate}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Preview Info */}
                     {selectedCustomer && (
