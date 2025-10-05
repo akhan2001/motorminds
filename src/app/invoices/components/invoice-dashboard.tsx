@@ -7,9 +7,10 @@ import EditInvoiceForm from "./EditInvoiceForm"
 import { InvoiceFilter } from "./invoice-filter"
 import { InvoiceCard } from "./invoice-card"
 import { InvoiceDialog } from "./InvoiceDialog"
+import { StatementGeneratorDialog } from "./StatementGeneratorDialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchAllInvoices, formatCurrency, formatDate, fetchShopBusinessDetails } from "../utils/invoice-utils"
-import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon, Search } from "lucide-react"
+import { PlusIcon, ArrowUpDown, Calendar as CalendarIcon, Search, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import LoadingPage from "@/components/loading"
 import { format } from "date-fns"
@@ -23,6 +24,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [isEditFormOpen, setIsEditFormOpen] = useState(false)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [isStatementDialogOpen, setIsStatementDialogOpen] = useState(false)
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -293,6 +295,13 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                         </p>
                     </div>
                     <div className="flex flex-row gap-4 w-full sm:w-auto justify-end">
+                        <Button 
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 sm:px-7 py-1.5 text-xs sm:text-sm" 
+                            onClick={() => setIsStatementDialogOpen(true)}
+                        >
+                            <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                            Generate Statement
+                        </Button>
                         <Button className="bg-red-600 hover:bg-red-700 text-white rounded-md px-4 sm:px-7 py-1.5 text-xs sm:text-sm" onClick={handleOpenForm}>
                             <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                             ADD INVOICE
@@ -494,6 +503,13 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                     // onEdit={() => handleEditInvoice(selectedInvoice)}
                 />
             )}
+
+            {/* Statement Generator Dialog */}
+            <StatementGeneratorDialog
+                isOpen={isStatementDialogOpen}
+                onClose={() => setIsStatementDialogOpen(false)}
+                shopId={shopId}
+            />
         </div>
     )
 }
