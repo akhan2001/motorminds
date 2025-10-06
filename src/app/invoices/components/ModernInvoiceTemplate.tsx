@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
         marginBottom: 4
     },
     notesContent: {
-        fontSize: 8,
+        fontSize: 10,
         color: '#374151',
         lineHeight: 1.3
     },
@@ -614,12 +614,9 @@ const NotesSection = ({ invoice }: { invoice: any }) => {
 
     return (
         <View style={styles.notesSection}>
-            <Text style={styles.notesTitle}>Notes & Terms</Text>
+            <Text style={styles.notesTitle}>Notes</Text>
             <Text style={styles.notesContent}>
-                • All work performed to manufacturer specifications{'\n'}
-                • 90-day warranty on parts and labor{'\n'}
-                • Payment due upon completion of work{'\n\n'}
-                Additional Notes: {invoice.notes}
+                {invoice.notes}
             </Text>
         </View>
     );
@@ -676,13 +673,17 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 <ServiceItemsTable invoice={invoice} />
                 
-                <LegalTextSection />
+                <PaymentSummary invoice={invoice} />
                 
-                <CommentsSection />
+                <NotesSection invoice={invoice} />
+                
+                {/* <LegalTextSection /> */}
+                
+                {/* <CommentsSection /> */}
                 
                 <SignatureSection />
                 
-                <InvoiceFooter invoice={invoice} />
+                {/* <InvoiceFooter invoice={invoice} /> */}
             </Page>
         </Document>
     );

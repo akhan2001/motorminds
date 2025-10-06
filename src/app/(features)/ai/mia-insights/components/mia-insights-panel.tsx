@@ -96,40 +96,41 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     if (!insights?.analysis) {
         return (
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6">
-                <div className="flex items-center space-x-2 text-gray-400">
+                {/* <div className="flex items-center space-x-2 text-gray-400">
                     <Brain className="h-5 w-5" />
                     <span>MIA insights not available (for now)</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
                     Insights are only generated for new work orders during creation.
-                </p>
+                </p> */}
                 
 
                 {/* Generate Insights Button for eligible work orders */}
                 {isEligibleForInsights && !hasGeneratedInsights && (
-                    <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
-                        <Button
-                            onClick={handleGenerateInsights}
-                            disabled={generateInsights.isPending}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                            size="sm"
-                        >
-                            {generateInsights.isPending ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    Generating Insights...
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="h-4 w-4 mr-2" />
-                                    Generate MIA Insights
-                                </>
-                            )}
-                        </Button>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                            Generate AI-powered insights for this work order
-                        </p>
-                    </div>
+                    // <div className="mt-4 pt-4">
+                    <>
+                    <Button
+                        onClick={handleGenerateInsights}
+                        disabled={generateInsights.isPending}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                    >
+                        {generateInsights.isPending ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Generating Insights...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Generate MIA Insights
+                            </>
+                        )}
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                        Generate AI-powered insights for this work order
+                    </p>
+                    </>
                 )}
 
             </div>

@@ -44,6 +44,7 @@ export async function generateInvoicePDF(invoice: any, isLandscape: boolean = fa
         // Now create the PDF after image loading is complete
         const blob = await pdf(
             <ModernInvoiceTemplate invoice={invoice} />
+            // <InvoiceTemplate invoice={invoice} />
         ).toBlob();
 
         // Create a download link

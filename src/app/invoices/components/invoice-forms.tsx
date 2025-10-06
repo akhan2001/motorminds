@@ -7,6 +7,7 @@ import { getShopInfo } from "@/utils/supabase/supabase-shop";
 import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
 import { createNewInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { createNewCustomer } from "@/app/customers/api/customer-utils";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -259,6 +260,7 @@ export default function InvoiceForm({
                 client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
                 client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
                 client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
+                customer_id: showNewClientForm ? null : selectedCustomerId, // Include customer_id when using existing customer
                 // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
                 notes: notes || "",

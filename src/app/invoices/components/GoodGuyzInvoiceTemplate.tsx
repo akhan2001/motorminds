@@ -171,6 +171,50 @@ const styles = StyleSheet.create({
         backgroundColor: "#f9fafb",
         minHeight: '8mm' // Reduced to fit one page
     },
+    totalsSection: {
+        position: 'absolute',
+        bottom: '55mm', // Position above comments section
+        right: '12mm',
+        width: '40%',
+        borderTopWidth: 2,
+        borderTopColor: "#1e3a8a",
+        paddingTop: 4
+    },
+    totalRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 3,
+        paddingHorizontal: 4
+    },
+    totalLabel: {
+        fontSize: 10,
+        fontWeight: "bold",
+        color: "#374151"
+    },
+    totalValue: {
+        fontSize: 10,
+        color: "#374151"
+    },
+    grandTotalRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 4,
+        paddingTop: 4,
+        paddingHorizontal: 4,
+        borderTopWidth: 2,
+        borderTopColor: "#1e3a8a",
+        backgroundColor: "#1e3a8a"
+    },
+    grandTotalLabel: {
+        fontSize: 12,
+        fontWeight: "bold",
+        color: "#FFFFFF"
+    },
+    grandTotalValue: {
+        fontSize: 12,
+        fontWeight: "bold",
+        color: "#FFFFFF"
+    },
     commentsSection: {
         position: 'absolute',
         bottom: '25mm', // Adjusted position for one page fit
@@ -385,6 +429,43 @@ const ServiceItemsTable = () => {
     );
 };
 
+// Totals Component
+const TotalsSection = ({ invoice }: { invoice: any }) => {
+    const labourTotal = invoice.labour_total_price || 0;
+    const partsTotal = invoice.parts_total_price || 0;
+    const subtotal = invoice.amount || (labourTotal + partsTotal);
+    
+    // Calculate tax (13% HST for Ontario - adjust as needed)
+    const taxRate = 0.13;
+    const taxAmount = subtotal * taxRate;
+    const grandTotal = subtotal + taxAmount;
+
+    return (
+        <View style={styles.totalsSection}>
+            <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Labour Total:</Text>
+                <Text style={styles.totalValue}>{formatCurrency(labourTotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Parts Total:</Text>
+                <Text style={styles.totalValue}>{formatCurrency(partsTotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Subtotal:</Text>
+                <Text style={styles.totalValue}>{formatCurrency(subtotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Tax (13% HST):</Text>
+                <Text style={styles.totalValue}>{formatCurrency(taxAmount)}</Text>
+            </View>
+            <View style={styles.grandTotalRow}>
+                <Text style={styles.grandTotalLabel}>TOTAL:</Text>
+                <Text style={styles.grandTotalValue}>{formatCurrency(grandTotal)}</Text>
+            </View>
+        </View>
+    );
+};
+
 // Comments Component
 const CommentsSection = () => (
     <View style={styles.commentsSection}>
@@ -444,6 +525,8 @@ export const GoodGuyzInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 <CustomerVehicleInfo invoice={invoice} />
                 
                 <ServiceItemsTable />
+                
+                <TotalsSection invoice={invoice} />
                 
                 <LegalTextSection />
                 

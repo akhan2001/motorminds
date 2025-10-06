@@ -363,10 +363,30 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                         <Separator className="my-2 bg-gray-700" />
                         
                         {/* Amount and Status */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#222222] p-4 rounded-lg border border-[#333333]">
-                            <div>
-                                <p className="text-gray-400 font-medium">Amount Due:</p>
-                                <p className="text-xl font-bold text-white">{formatAmount(invoice.amount)}</p>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 bg-[#222222] p-4 rounded-lg border border-[#333333]">
+                            <div className="space-y-2 w-full sm:w-auto">
+                                <div className="flex justify-between items-center gap-8">
+                                    <p className="text-gray-400 text-sm">Labour Total:</p>
+                                    <p className="text-white font-medium">{formatCurrency(invoice.labour_total_price || 0)}</p>
+                                </div>
+                                <div className="flex justify-between items-center gap-8">
+                                    <p className="text-gray-400 text-sm">Parts Total:</p>
+                                    <p className="text-white font-medium">{formatCurrency(invoice.parts_total_price || 0)}</p>
+                                </div>
+                                <Separator className="my-1 bg-gray-700" />
+                                <div className="flex justify-between items-center gap-8">
+                                    <p className="text-gray-400 font-medium">Subtotal:</p>
+                                    <p className="text-white font-semibold">{formatAmount(invoice.amount)}</p>
+                                </div>
+                                <div className="flex justify-between items-center gap-8">
+                                    <p className="text-gray-400 font-medium">Tax (13% HST):</p>
+                                    <p className="text-white font-semibold">{formatCurrency(parseFloat(invoice.amount) * 0.13)}</p>
+                                </div>
+                                <Separator className="my-1 bg-blue-700" />
+                                <div className="flex justify-between items-center gap-8">
+                                    <p className="text-blue-400 font-bold text-lg">Total:</p>
+                                    <p className="text-xl font-bold text-blue-400">{formatCurrency(parseFloat(invoice.amount) * 1.13)}</p>
+                                </div>
                             </div>
                             
                             <div className="flex flex-col gap-2">   

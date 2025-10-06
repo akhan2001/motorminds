@@ -230,16 +230,6 @@ async function handleCallEnd(call: any, shopId?: string) {
         }
 
         console.log('✅ Call updated successfully:', call.id)
-        
-        // Log call completion with analysis
-        console.log('🏁 CALL COMPLETED:', {
-            callId: call.id,
-            status: call.endedReason === 'hangup' ? 'completed' : 'failed',
-            analysis: analysisData,
-            endedReason: call.endedReason,
-            duration: durationSeconds,
-            timestamp: new Date().toISOString()
-        })
 
         // If quote was received and we have a parts_request_id, update the parts request
         if (quoteReceived && voiceCall?.parts_request_id) {
@@ -381,14 +371,6 @@ async function handleEndOfCallReport(call: any, message: any, shopId?: string) {
         }
 
         console.log('✅ Voice call updated successfully:', voiceCall)
-        
-        // Log call completion with analysis
-        console.log('🏁 CALL COMPLETED:', {
-            callId: call.id,
-            status: 'completed',
-            analysis: analysisData,
-            timestamp: new Date().toISOString()
-        })
 
         // Update parts_request based on call outcome
         const partsRequestId = call.metadata?.parts_request_id
