@@ -214,13 +214,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-end',
         marginBottom: 15,
-        position: 'absolute',
-        bottom: 120,
-        right: 0,
-        width: '35%'
+        marginTop: 10
     },
     summaryBox: {
-        width: '100%',
+        width: '35%',
         backgroundColor: '#f8fafc',
         padding: 10,
         borderRadius: 4,
@@ -673,9 +670,10 @@ export const ModernInvoiceTemplate = ({ invoice }: { invoice: any }) => {
                 
                 <ServiceItemsTable invoice={invoice} />
                 
+                <NotesSection invoice={invoice} />
+
                 <PaymentSummary invoice={invoice} />
                 
-                <NotesSection invoice={invoice} />
                 
                 {/* <LegalTextSection /> */}
                 
