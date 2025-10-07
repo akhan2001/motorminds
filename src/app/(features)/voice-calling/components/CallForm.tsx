@@ -15,12 +15,12 @@ import {
     PartItem, 
     SelectedSupplier, 
     PartsRequestPriority 
-} from '@/app/(features)/voice-calling/types'
-import { PartsService } from '@/app/(features)/parts/lib/partsService'
+} from '../types'
+import { PartsRequestService } from '../services/partsRequestService'
 import { VoiceCallService } from '../lib/voiceCallService'
 import { createClient } from '@/utils/supabase/client'
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from '@/components/ui/select'
-import { VoiceCallPurpose } from '@/app/(features)/voice-calling/types/voice-call'
+import { VoiceCallPurpose } from '../types/voice-call'
 
 
 interface CallFormProps {
@@ -101,7 +101,7 @@ export default function CallForm({
     }
 
     const handlePartChange = (field: keyof PartItem, value: string | number) => {
-        setPartInfo((prev: PartItem) => ({
+        setPartInfo((prev) => ({
             ...prev,
             [field]: value
         }))
@@ -134,12 +134,12 @@ export default function CallForm({
             return
         }
 
-        if (!vehicleInfo.year?.trim() || !vehicleInfo.make?.trim() || !vehicleInfo.model?.trim()) {
+        if (!vehicleInfo.year || !vehicleInfo.make || !vehicleInfo.model) {
             toast.error('Please provide vehicle year, make, and model')
             return
         }
 
-        if (!partInfo.partName?.trim() || !partInfo.description?.trim()) {
+        if (!partInfo.partName || !partInfo.description) {
             toast.error('Please provide a part name or description')
             return
         }
@@ -172,7 +172,7 @@ export default function CallForm({
             // Convert form data to parts request format
             const partsRequested = [{
                 part_name: partInfo.partName,
-                part_number: partInfo.partNumber || `REQ-${Date.now()}`,
+                part_number: partInfo.partNumber || null,
                 quantity: partInfo.quantity || 1,
                 estimated_price: 0,
                 description: partInfo.description || '',
@@ -181,24 +181,29 @@ export default function CallForm({
                 availability: 'unknown'
             }]
 
-            // Create supplier info from selected supplier
+            // Create supplier info with multi-supplier support
             const supplierInfo = {
                 supplier_name: selectedSuppliers[0]?.name || 'Unknown Supplier',
                 supplier_id: selectedSuppliers[0]?.id || undefined,
                 contact_person: selectedSuppliers[0]?.contact_person || '',
                 phone_number: selectedSuppliers[0]?.phone_number || '',
                 email: selectedSuppliers[0]?.email || '',
-                account_number: selectedSuppliers[0]?.account_number || ''
+                account_number: selectedSuppliers[0]?.account_number || '',
+                // Multi-supplier metadata
+                selected_suppliers: selectedSuppliers,
+                total_suppliers: selectedSuppliers.length,
+                completed_suppliers: 0,
+                failed_suppliers: 0
             }
 
             // Create vehicle info
-            const vehicleData = {
-                year: vehicleInfo.year ? parseInt(vehicleInfo.year) : undefined,
+            const vehicleData: VehicleInfo = {
+                year: vehicleInfo.year ? (typeof vehicleInfo.year === 'string' ? parseInt(vehicleInfo.year) : vehicleInfo.year) : '',
                 make: vehicleInfo.make,
                 model: vehicleInfo.model,
                 vin: vehicleInfo.vin || '',
                 engine: vehicleInfo.engine || '',
-                mileage: vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/,/g, '')) : undefined,
+                mileage: vehicleInfo.mileage ? (typeof vehicleInfo.mileage === 'string' ? parseInt(vehicleInfo.mileage.replace(/,/g, '')) : vehicleInfo.mileage) : '',
                 trim: vehicleInfo.trim || '',
                 color: vehicleInfo.color || '',
                 transmission: vehicleInfo.transmission || '',
@@ -207,24 +212,27 @@ export default function CallForm({
                 body_style: vehicleInfo.body_style || ''
             }
 
-            // Create parts request using PartsService
-            const newPartsRequest = await PartsService.createPartsRequest(
-                shopId,
-                {
-                    vehicle_info: vehicleData,
-                    parts_requested: partsRequested,
-                    supplier_info: supplierInfo,
-                    priority: priority,
-                    notes: notes.trim() || undefined,
-                    customer_notes: ''
-                }
-            )
+            // Create parts request using PartsRequestService
+            const newPartsRequest = await PartsRequestService.createPartsRequest({
+                vehicleInfo: vehicleData,
+                partsRequested: partsRequested,
+                selectedSuppliers: selectedSuppliers,
+                priority: priority,
+                notes: notes.trim() || '',
+                shopId: shopId,
+                userId: user.id
+            })
 
-            toast.success('Parts request created successfully!')
+            toast.success('Parts request created successfully! You can now call suppliers from the dashboard.')
             setPartsRequestId(newPartsRequest.id)
             
-            // Start AI call after parts request is created
-            await startAICall(newPartsRequest.id, shopId)
+            // Notify parent to refresh the list
+            if (onCallComplete) {
+                onCallComplete('', newPartsRequest.id)
+            }
+            
+            // Close the form
+            handleClose()
             
         } catch (error) {
             console.error('Error creating parts request:', error)
@@ -241,24 +249,61 @@ export default function CallForm({
             setCallStatus('calling')
             setIsPolling(true)
             
-            const result = await VoiceCallService.startCall({
-                partsRequestId,
-                supplierId: selectedSuppliers[0].id,
-                phoneNumber: selectedSuppliers[0].phone_number || '',
-                purpose: callPurpose,
-                vehicleInfo,
-                partsInfo: partInfo,
-                priority,
-                notes,
-                shopId
-            })
+            // Use multi-supplier call if multiple suppliers selected
+            if (selectedSuppliers.length > 1) {
+                const result = await VoiceCallService.startMultiSupplierCalls({
+                    partsRequestId,
+                    suppliers: selectedSuppliers.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        phone_number: s.phone_number || '',
+                        contact_person: s.contact_person
+                    })),
+                    purpose: callPurpose,
+                    vehicleInfo,
+                    partsInfo: [partInfo],
+                    priority,
+                    notes,
+                    shopId
+                })
 
-            if (result.success) {
-                setCallId(result.callId)
-                // Start listening for real-time call completion
-                listenForCallCompletion(result.callId)
+                // Find first successful call to monitor
+                const firstSuccessful = result.results.find((r: any) => r.success)
+                if (firstSuccessful && firstSuccessful.callId) {
+                    setCallId(firstSuccessful.callId)
+                    listenForCallCompletion(firstSuccessful.callId)
+                }
+                
+                setCallStatus('completed')
+                setIsPolling(false)
+                
+                // Notify parent after delay to allow webhook processing
+                setTimeout(() => {
+                    if (onCallComplete) {
+                        onCallComplete('', partsRequestId)
+                    }
+                }, 2000)
+                
             } else {
-                throw new Error('Failed to start call via VoiceCallService')
+                // Single supplier call
+                const result = await VoiceCallService.startCall({
+                    partsRequestId,
+                    supplierId: selectedSuppliers[0].id,
+                    phoneNumber: selectedSuppliers[0].phone_number || '',
+                    purpose: callPurpose,
+                    vehicleInfo,
+                    partsInfo: [partInfo],
+                    priority,
+                    notes,
+                    shopId
+                })
+
+                if (result.success) {
+                    setCallId(result.callId)
+                    listenForCallCompletion(result.callId)
+                } else {
+                    throw new Error('Failed to start call via VoiceCallService')
+                }
             }
 
         } catch (error: any) {
@@ -389,7 +434,7 @@ export default function CallForm({
                         AI Parts Ordering
                     </DialogTitle>
                     <DialogDescription className="text-gray-400 text-sm">
-                        Fill out the form below and Mia AI will call suppliers for quotes
+                        Fill our the form below to create a parts request and have Mia AI to call the suppliers.
                     </DialogDescription>
                 </DialogHeader>
                 
@@ -496,7 +541,7 @@ export default function CallForm({
                         </Card>
                     )}
 
-                    <div>
+                    {/* <div>
                         <h3 className="text-lg font-medium text-white">Call Purpose</h3>
                         <Select
                             value={callPurpose}
@@ -506,13 +551,13 @@ export default function CallForm({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                            <SelectItem className="hover:bg-[#2a2a2a]" value="quote_request">Quote Request</SelectItem>
                                 <SelectItem className="hover:bg-[#2a2a2a]" value="parts_ordering">Parts Ordering</SelectItem>
                                 <SelectItem className="hover:bg-[#2a2a2a]" value="general_inquiry">General Inquiry</SelectItem>
-                                <SelectItem className="hover:bg-[#2a2a2a]" value="quote_request">Quote Request</SelectItem>
                                 <SelectItem className="hover:bg-[#2a2a2a]" value="order_followup">Order Follow-up</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
                     {/* Supplier Information */}
                     <SupplierCallForm

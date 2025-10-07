@@ -11,13 +11,17 @@ interface SuppliersListProps {
     loading: boolean
     onAddSupplier: () => void
     onCallSupplier: (supplier: Supplier) => void
+    onEdit: (supplier: Supplier) => void
+    onDelete: (supplier: Supplier) => void
 }
 
 export default function SuppliersList({ 
     suppliers, 
     loading, 
     onAddSupplier, 
-    onCallSupplier 
+    onCallSupplier,
+    onEdit,
+    onDelete 
 }: SuppliersListProps) {
     if (loading) {
         return (
@@ -55,6 +59,8 @@ export default function SuppliersList({
                     key={supplier.id}
                     supplier={supplier}
                     onCallSupplier={onCallSupplier}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
                 />
             ))}
         </div>

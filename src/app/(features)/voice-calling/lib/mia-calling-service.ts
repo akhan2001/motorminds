@@ -176,6 +176,7 @@ export class MiaCallingService {
         vapi_call_id: string;
         parts_request_id?: string;
         supplier_id?: string;
+        supplier_name?: string;
         user_id?: string;
         purpose?: string;
         sequence_number?: number;
@@ -190,6 +191,7 @@ export class MiaCallingService {
                 vapi_call_id: callData.vapi_call_id,
                 parts_request_id: callData.parts_request_id,
                 supplier_id: callData.supplier_id,
+                supplier_name: callData.supplier_name,
                 user_id: callData.user_id,
                 status: 'pending',
                 purpose: callData.purpose || 'quote_request',

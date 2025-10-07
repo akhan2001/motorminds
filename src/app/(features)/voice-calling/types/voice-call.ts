@@ -1,10 +1,28 @@
+import { QuoteReceived } from './parts-request'
+
+export type VoiceCallStatus = 
+    | 'pending'
+    | 'connecting'
+    | 'in_progress'
+    | 'completed'
+    | 'failed'
+    | 'cancelled'
+
+export type VoiceCallPurpose = 
+    | 'quote_request'
+    | 'order_followup'
+    | 'parts_ordering'
+    | 'general_inquiry'
+    | 'other'
+
 export interface VoiceCall {
     id: string
     created_at: string
-    updated_at: string
+    updated_at?: string
     shop_id: string
     user_id?: string
     supplier_id?: string
+    supplier_name?: string
     phone_number: string
     purpose: VoiceCallPurpose
     status: VoiceCallStatus
@@ -13,113 +31,14 @@ export interface VoiceCall {
     started_at?: string
     ended_at?: string
     duration_seconds?: number
-    transcript: any
-    call_summary?: string
-    parts_discussed: any[]
-    actions_taken: any[]
-    parts_request_id?: string
-    sequence_number?: number
-    order_created: boolean
-    quote_received?: any
-    call_metadata: any
-    error_details?: any
-    // Relations
-    supplier?: {
-        id: string
-        name: string
-        contact_person?: string
-    }
-    parts_request?: {
-        id: string
-        status: string
-        parts_requested: any[]
-        vehicle_info: any
-    }
-}
-
-import { VoiceCallPurpose, VoiceCallStatus } from './status'
-
-export { VoiceCallPurpose, VoiceCallStatus }
-
-export interface VoiceCallAnalysis {
-    parts_info?: Array<{
-        part_name: string
-        name?: string
-        quantity: number
-        unit_price?: number
-        price?: number
-        part_number?: string
-        availability?: string
-        delivery_days?: number
-        vehicle_application?: string
-        notes?: string
-    }>
-    quote_details?: {
-        total_cost: number
-        subtotal?: number
-        shipping_cost?: number
-        currency?: string
-        availability?: string
-        delivery_eta?: string
-        delivery_days?: number
-    }
-    call_outcome?: {
-        status: string
-        notes?: string
-        quote_provided?: boolean
-        quote_accepted?: boolean
-        follow_up_needed?: boolean
-        requires_approval?: boolean
-        special_instructions?: string
-    }
-    vehicle_info?: {
-        year: string
-        make: string
-        model: string
-        engine?: string
-        vin?: string
-        mileage?: string
-    }
-    supplier_info?: {
-        supplier_name?: string
-        account_used?: string
-        contact_person?: string
-    }
-    next_steps?: {
-        order_ready?: boolean
-        follow_up_needed?: boolean
-        requires_approval?: boolean
-        special_instructions?: string
-    }
-    call_metadata?: {
-        language?: string
-        department?: string
-    }
-}
-
-export interface CreateVoiceCallData {
-    shop_id: string
-    user_id?: string
-    supplier_id?: string
-    phone_number: string
-    purpose: VoiceCallPurpose
-    vapi_call_id?: string
-    vapi_assistant_id?: string
-    parts_request_id?: string
-    call_metadata?: any
-}
-
-export interface UpdateVoiceCallData {
-    status?: VoiceCallStatus
-    started_at?: string
-    ended_at?: string
-    duration_seconds?: number
-    transcript?: any
+    transcript?: Record<string, any>
     call_summary?: string
     parts_discussed?: any[]
     actions_taken?: any[]
+    parts_request_id?: string
     order_created?: boolean
-    quote_received?: any
-    call_metadata?: any
-    error_details?: any
+    quote_received?: QuoteReceived
+    call_metadata?: Record<string, any>
+    error_details?: Record<string, any>
+    sequence_number?: number
 }
