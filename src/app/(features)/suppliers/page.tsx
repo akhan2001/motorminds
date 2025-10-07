@@ -13,16 +13,38 @@ import { useSuppliers } from './hooks/use-suppliers'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
 
 export default function SuppliersPage() {   
-    const { suppliers, loading, addSupplier, handleCallSupplier } = useSuppliers()
+    const { suppliers, loading, addSupplier, updateSupplier, deleteSupplier, handleCallSupplier } = useSuppliers()
     const [showAddForm, setShowAddForm] = useState(false)
+    const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
     const [selectedSupplierDemo, setSelectedSupplierDemo] = useState('')
 
     const handleSupplierAdded = (newSupplier: Supplier) => {
         addSupplier(newSupplier)
     }
 
+    const handleSupplierUpdated = (updatedSupplier: Supplier) => {
+        if (editingSupplier) {
+            updateSupplier(editingSupplier.id, updatedSupplier)
+            setEditingSupplier(null)
+        }
+    }
+
     const handleOpenAddForm = () => {
+        setEditingSupplier(null)
         setShowAddForm(true)
+    }
+
+    const handleEdit = (supplier: Supplier) => {
+        setEditingSupplier(supplier)
+        setShowAddForm(true)
+    }
+
+    const handleDelete = async (supplier: Supplier) => {
+        try {
+            await deleteSupplier(supplier.id)
+        } catch (error) {
+            // Error already handled in hook
+        }
     }
 
     return (
@@ -43,8 +65,12 @@ export default function SuppliersPage() {
                         </div>
                         <SupplierModal
                             open={showAddForm}
-                            onOpenChange={setShowAddForm}
-                            onSuccess={handleSupplierAdded}
+                            onOpenChange={(open) => {
+                                setShowAddForm(open)
+                                if (!open) setEditingSupplier(null)
+                            }}
+                            onSuccess={editingSupplier ? handleSupplierUpdated : handleSupplierAdded}
+                            supplier={editingSupplier}
                         />
                     </div>
 
@@ -54,6 +80,8 @@ export default function SuppliersPage() {
                         loading={loading}
                         onAddSupplier={handleOpenAddForm}
                         onCallSupplier={handleCallSupplier}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
                     />
                 </div>
             </div>

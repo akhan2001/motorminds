@@ -22,12 +22,8 @@ export type VoiceCallStatus =
     | 'failed'          // Call failed (no answer, busy, error)
     | 'cancelled'       // Call was cancelled
 
-// Voice Call Purpose - Why the call is being made
-export type VoiceCallPurpose = 
-    | 'quote_request'    // Initial call to get pricing/availability
-    | 'order_followup'   // Call to confirm details, get ETA, etc.
-    | 'parts_ordering'   // Final call to place the actual order
-    | 'general_inquiry'  // General information call
+// Voice Call Purpose - Re-export from voice-call.ts to avoid duplication
+export type { VoiceCallPurpose } from './voice-call'
 
 // Status transitions and business logic
 export const PARTS_REQUEST_TRANSITIONS: Record<PartsRequestStatus, PartsRequestStatus[]> = {

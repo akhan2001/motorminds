@@ -3,22 +3,36 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Building2, Phone, Mail, PhoneCall } from 'lucide-react'
+import { Building2, Phone, Mail, PhoneCall, Edit, Trash2 } from 'lucide-react'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
 import { toast } from 'sonner'
 
 interface SupplierCardProps {
     supplier: Supplier
     onCallSupplier?: (supplier: Supplier) => void
+    onEdit?: (supplier: Supplier) => void
+    onDelete?: (supplier: Supplier) => void
 }
 
-export default function SupplierCard({ supplier, onCallSupplier }: SupplierCardProps) {
+export default function SupplierCard({ supplier, onCallSupplier, onEdit, onDelete }: SupplierCardProps) {
     const handleCallClick = () => {
         if (!supplier.phone_number) {
             toast.error('No phone number available for this supplier')
             return
         }
         onCallSupplier?.(supplier)
+    }
+
+    const handleEditClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onEdit?.(supplier)
+    }
+
+    const handleDeleteClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (window.confirm(`Are you sure you want to delete "${supplier.name}"?`)) {
+            onDelete?.(supplier)
+        }
     }
 
     const getStatusBadgeColor = (status: string) => {
@@ -98,16 +112,36 @@ export default function SupplierCard({ supplier, onCallSupplier }: SupplierCardP
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2 pt-4">
+                <div className="flex flex-col gap-2 pt-4">
                     <Button
                         onClick={handleCallClick}
                         disabled={!supplier.phone_number}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                         size="sm"
                     >
                         <PhoneCall className="h-4 w-4 mr-2" />
                         Call for Parts
                     </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handleEditClick}
+                            variant="outline"
+                            className="flex-1 border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
+                            size="sm"
+                        >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button>
+                        <Button
+                            onClick={handleDeleteClick}
+                            variant="outline"
+                            className="flex-1 border-red-800/30 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                            size="sm"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>

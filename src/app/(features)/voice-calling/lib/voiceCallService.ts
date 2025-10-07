@@ -17,6 +17,22 @@ export interface VoiceCallRequest {
     shopId: string
 }
 
+export interface MultiSupplierCallRequest {
+    partsRequestId: string
+    suppliers: Array<{
+        id: string
+        name: string
+        phone_number: string
+        contact_person?: string
+    }>
+    purpose: VoiceCallPurpose
+    vehicleInfo?: any
+    partsInfo?: any
+    priority?: string
+    notes?: string
+    shopId: string
+}
+
 export interface CallStatusUpdate {
     callId: string
     status: VoiceCallStatus
@@ -77,11 +93,12 @@ export class VoiceCallService {
             const result = await response.json()
             
             // Show appropriate success message based on purpose
-            const purposeMessages = {
+            const purposeMessages: Record<VoiceCallPurpose, string> = {
                 'quote_request': 'Mia AI is calling for quote information...',
                 'order_followup': 'Mia AI is calling for order follow-up...',
                 'parts_ordering': 'Mia AI is placing your parts order...',
-                'general_inquiry': 'Mia AI is making a general inquiry call...'
+                'general_inquiry': 'Mia AI is making a general inquiry call...',
+                'other': 'Mia AI is making the call...'
             }
             
             toast.success(purposeMessages[request.purpose] || 'Mia AI is making the call...')
@@ -92,6 +109,127 @@ export class VoiceCallService {
             console.error('Error starting voice call:', error)
             toast.error(`Failed to start call: ${error.message}`)
             return { callId: '', success: false }
+        }
+    }
+
+    /**
+     * Start multiple voice calls for multiple suppliers
+     */
+    static async startMultiSupplierCalls(request: MultiSupplierCallRequest): Promise<{ 
+        results: Array<{ supplierId: string; success: boolean; callId?: string; error?: string }> 
+        partsRequestId: string
+    }> {
+        try {
+            // Transform parts info once
+            const transformedPartsInfo = this.transformPartsForAI(request.partsInfo)
+
+            // Get sequence number
+            const startingSequence = await this.getNextSequenceNumber(request.partsRequestId)
+
+            // Update parts request status
+            await this.updatePartsRequestStatus(request.partsRequestId, request.purpose)
+
+            // Update supplier_info with multi-supplier data
+            await this.supabase
+                .from('parts_requests')
+                .update({
+                    supplier_info: {
+                        selected_suppliers: request.suppliers,
+                        total_suppliers: request.suppliers.length,
+                        completed_suppliers: 0,
+                        failed_suppliers: 0
+                    }
+                })
+                .eq('id', request.partsRequestId)
+
+            // Call each supplier
+            const callPromises = request.suppliers.map(async (supplier, index) => {
+                try {
+                    // Validate phone number
+                    const formattedPhone = formatPhoneNumberE164(supplier.phone_number)
+                    if (!isValidE164(formattedPhone)) {
+                        return {
+                            supplierId: supplier.id,
+                            success: false,
+                            error: 'Invalid phone number'
+                        }
+                    }
+
+                    // Start the AI call
+                    const response = await fetch('/api/voice-calling/start-call', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            vehicle_info: request.vehicleInfo,
+                            parts_info: transformedPartsInfo,
+                            supplier: {
+                                id: supplier.id,
+                                name: supplier.name,
+                                phone_number: formattedPhone,
+                                contact_person: supplier.contact_person
+                            },
+                            priority: request.priority,
+                            notes: request.notes,
+                            parts_request_id: request.partsRequestId,
+                            call_purpose: request.purpose,
+                            sequence_number: startingSequence + index
+                        })
+                    })
+
+                    if (!response.ok) {
+                        const errorData = await response.json()
+                        return {
+                            supplierId: supplier.id,
+                            success: false,
+                            error: errorData.error || 'Failed to start call'
+                        }
+                    }
+
+                    const result = await response.json()
+                    return {
+                        supplierId: supplier.id,
+                        success: true,
+                        callId: result.callId
+                    }
+                } catch (error: any) {
+                    return {
+                        supplierId: supplier.id,
+                        success: false,
+                        error: error.message
+                    }
+                }
+            })
+
+            const results = await Promise.all(callPromises)
+            
+            // Show summary toast
+            const successCount = results.filter(r => r.success).length
+            const totalCount = results.length
+            
+            if (successCount === totalCount) {
+                toast.success(`Mia AI is calling all ${totalCount} suppliers...`)
+            } else if (successCount > 0) {
+                toast.warning(`Mia AI is calling ${successCount} of ${totalCount} suppliers. ${totalCount - successCount} failed.`)
+            } else {
+                toast.error('Failed to initiate any calls')
+            }
+
+            return {
+                results,
+                partsRequestId: request.partsRequestId
+            }
+
+        } catch (error: any) {
+            console.error('Error starting multi-supplier calls:', error)
+            toast.error(`Failed to start calls: ${error.message}`)
+            return {
+                results: request.suppliers.map(s => ({
+                    supplierId: s.id,
+                    success: false,
+                    error: error.message
+                })),
+                partsRequestId: request.partsRequestId
+            }
         }
     }
 
@@ -133,6 +271,51 @@ export class VoiceCallService {
     }
 
     /**
+     * Refresh all supplier calls for a parts request
+     */
+    static async refreshPartsRequest(partsRequestId: string): Promise<{
+        success: boolean
+        results?: any[]
+        aggregated_status?: any
+        error?: string
+    }> {
+        try {
+            const response = await fetch('/api/voice-calling/refresh-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    parts_request_id: partsRequestId
+                })
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Failed to refresh request')
+            }
+
+            const result = await response.json()
+            
+            if (result.success) {
+                toast.success(`Refreshed ${result.results.length} supplier call(s)`)
+            }
+            
+            return {
+                success: true,
+                results: result.results,
+                aggregated_status: result.aggregated_status
+            }
+
+        } catch (error: any) {
+            console.error('Error refreshing parts request:', error)
+            toast.error(`Failed to refresh: ${error.message}`)
+            return {
+                success: false,
+                error: error.message
+            }
+        }
+    }
+
+    /**
      * Get the next sequence number for calls related to a parts request
      */
     private static async getNextSequenceNumber(partsRequestId: string): Promise<number> {
@@ -159,7 +342,8 @@ export class VoiceCallService {
             'quote_request': 'processing', // Use correct database status
             'order_followup': 'quoted', // Keep current status  
             'parts_ordering': 'ordered', // Use correct database status
-            'general_inquiry': 'pending' // Keep current status
+            'general_inquiry': 'pending', // Keep current status
+            'other': 'pending' // Keep current status for other purposes
         }
 
         const newStatus = statusMap[purpose]

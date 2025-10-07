@@ -4,7 +4,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building } from 'lucide-react'
 import SupplierMultiSelect from '@/app/(features)/suppliers/components/supplier-multi-select'
-import { SelectedSupplier } from '@/app/(features)/voice-calling/types'
+import { SelectedSupplier } from '../../types'
 
 interface SupplierCallFormProps {
     selectedSuppliers: SelectedSupplier[]

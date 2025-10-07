@@ -5,7 +5,6 @@ import { useAuth } from '../operations/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Phone, Clock, CheckCircle, AlertCircle, Plus, RefreshCw, Loader2 } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
@@ -13,6 +12,7 @@ import { EmptyState } from '@/components/common/feedback/empty-states'
 import { PartsService } from '@/app/(features)/parts/lib/partsService'
 import { VoiceCallService } from './lib/voiceCallService'
 import CallForm from './components/CallForm'
+import PartsRequestCard from './components/PartsRequestCard'
 import { PartsRequestStatus, getStatusConfig, StatusAction } from './types/status'
 import { formatDate } from '@/lib/utils/formatting'
 import { toast } from 'sonner'
@@ -20,10 +20,12 @@ import Link from 'next/link'
 
 interface PartsRequestWithActions {
     id: string
+    shop_id: string
     status: string // Original database status
     mappedStatus?: PartsRequestStatus // Mapped status for UI logic
-    parts_requested?: any[]
-    vehicle_info?: any
+    priority: 'low' | 'normal' | 'high' | 'urgent'
+    parts_requested: any[]
+    vehicle_info: any
     supplier_info?: any
     created_at: string
     updated_at: string
@@ -50,13 +52,13 @@ const mapDatabaseStatus = (dbStatus: string): PartsRequestStatus => {
 export default function VoiceCallingPage() {
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
-    
+
     const [partsRequests, setPartsRequests] = useState<PartsRequestWithActions[]>([])
     const [loading, setLoading] = useState(true)
     const [dataError, setDataError] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState('active')
     const [processingAction, setProcessingAction] = useState<string | null>(null)
-    
+    const [refreshingRequest, setRefreshingRequest] = useState<string | null>(null)
+
     // Combined loading state
     const isLoading = authLoading || (shopId && loading)
     // Combined error state
@@ -70,19 +72,19 @@ export default function VoiceCallingPage() {
 
     const fetchPartsRequests = async () => {
         if (!shopId) return
-        
+
         try {
             setLoading(true)
             setDataError(null)
             const response = await PartsService.getPartsRequests(shopId, {}, 1, 100)
-            
+
             // Enhance each parts request with actions and call history
             const enhancedRequests = await Promise.all(
                 response.partsRequests.map(async (request) => {
                     const mappedStatus = mapDatabaseStatus(request.status)
                     const actions = await VoiceCallService.getPartsRequestActions(request.id)
                     const callHistory = await VoiceCallService.getCallsForPartsRequest(request.id)
-                    
+
                     return {
                         ...request,
                         mappedStatus, // Add mapped status for UI logic
@@ -91,13 +93,122 @@ export default function VoiceCallingPage() {
                     }
                 })
             )
-            
+
             setPartsRequests(enhancedRequests)
         } catch (error) {
             console.error('Error fetching parts requests:', error)
             setDataError(error instanceof Error ? error.message : 'Failed to load parts requests')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleRefresh = async (partsRequestId: string) => {
+        try {
+            setRefreshingRequest(partsRequestId)
+            toast.info('Refreshing supplier call statuses...')
+            
+            const result = await VoiceCallService.refreshPartsRequest(partsRequestId)
+            
+            if (result.success) {
+                // Refresh the parts requests list to show updated data
+                await fetchPartsRequests()
+            }
+        } catch (error) {
+            console.error('Error refreshing request:', error)
+            toast.error('Failed to refresh request')
+        } finally {
+            setRefreshingRequest(null)
+        }
+    }
+
+    const handleCallSuppliers = async (partsRequestId: string) => {
+        if (!shopId) return
+        
+        try {
+            setProcessingAction(partsRequestId)
+            
+            const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
+            if (!partsRequest) return
+
+            const selectedSuppliers = partsRequest.supplier_info?.selected_suppliers || []
+            
+            if (selectedSuppliers.length === 0) {
+                toast.error('No suppliers found for this request')
+                return
+            }
+
+            toast.info(`Initiating calls to ${selectedSuppliers.length} supplier(s)...`)
+
+            // Use multi-supplier call service
+            const result = await VoiceCallService.startMultiSupplierCalls({
+                partsRequestId,
+                suppliers: selectedSuppliers.map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    phone_number: s.phone_number || '',
+                    contact_person: s.contact_person
+                })),
+                purpose: 'quote_request',
+                vehicleInfo: partsRequest.vehicle_info,
+                partsInfo: partsRequest.parts_requested,
+                priority: partsRequest.priority || 'normal',
+                notes: partsRequest.notes || '',
+                shopId
+            })
+
+            if (result.results?.some(r => r.success)) {
+                // Refresh the data to show updated status
+                await fetchPartsRequests()
+            }
+
+        } catch (error) {
+            console.error('Error calling suppliers:', error)
+            toast.error('Failed to initiate calls')
+        } finally {
+            setProcessingAction(null)
+        }
+    }
+
+    const handleRecallSupplier = async (partsRequestId: string, supplierId: string, supplierName: string, phoneNumber: string) => {
+        if (!shopId) return
+        
+        try {
+            setProcessingAction(partsRequestId)
+            
+            const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
+            if (!partsRequest) return
+
+            toast.info(`Initiating recall to ${supplierName}...`)
+
+            // Start a new call to this specific supplier
+            const result = await VoiceCallService.startMultiSupplierCalls({
+                partsRequestId,
+                suppliers: [{
+                    id: supplierId,
+                    name: supplierName,
+                    phone_number: phoneNumber,
+                    contact_person: ''
+                }],
+                purpose: 'quote_request',
+                vehicleInfo: partsRequest.vehicle_info,
+                partsInfo: partsRequest.parts_requested,
+                priority: partsRequest.priority || 'normal',
+                notes: `Recall to ${supplierName}`,
+                shopId
+            })
+
+            if (result.results?.some(r => r.success)) {
+                toast.success(`Recall to ${supplierName} initiated successfully`)
+                // Refresh the data to show updated status
+                await fetchPartsRequests()
+            }
+
+        } catch (error) {
+            console.error('Error recalling supplier:', error)
+            toast.error('Failed to initiate recall')
+        } finally {
+            setProcessingAction(null)
         }
     }
 
@@ -164,6 +275,7 @@ export default function VoiceCallingPage() {
 
     const getStatusCounts = () => {
         const counts = {
+            total: partsRequests.length,
             active: 0,
             completed: 0,
             failed: 0
@@ -181,22 +293,6 @@ export default function VoiceCallingPage() {
         })
 
         return counts
-    }
-
-    const filterRequests = (filter: string) => {
-        return partsRequests.filter(request => {
-            const status = request.mappedStatus || mapDatabaseStatus(request.status)
-            switch (filter) {
-                case 'active':
-                    return !['completed', 'failed', 'cancelled'].includes(status)
-                case 'completed':
-                    return status === 'completed'
-                case 'failed':
-                    return ['failed', 'cancelled'].includes(status)
-                default:
-                    return true
-            }
-        })
     }
 
     // Loading state
@@ -233,7 +329,7 @@ export default function VoiceCallingPage() {
                                 <p className="text-gray-400 text-sm mb-3">
                                     {typeof error === 'string' ? error : 'Unknown error occurred'}
                                 </p>
-                                <button 
+                                <button
                                     onClick={() => fetchPartsRequests()}
                                     className="text-blue-400 hover:text-blue-300 text-sm underline"
                                 >
@@ -266,7 +362,7 @@ export default function VoiceCallingPage() {
                             </BreadcrumbList>
                         </Breadcrumb>
 
-                        {/* Header */}
+                    {/* Header */}
                         <div className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-3xl font-bold text-white">Voice Calling Dashboard</h1>
@@ -281,7 +377,7 @@ export default function VoiceCallingPage() {
                                 >
                                     Manage Suppliers
                                 </Button>
-                                <Button 
+                                <Button
                                     onClick={fetchPartsRequests}
                                     variant="outline"
                                     size="sm"
@@ -290,7 +386,7 @@ export default function VoiceCallingPage() {
                                     <RefreshCw className="h-4 w-4 mr-2" />
                                     Refresh
                                 </Button>
-                                <CallForm 
+                                <CallForm
                                     trigger={
                                         <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                                             <Plus className="h-4 w-4 mr-2" />
@@ -300,7 +396,7 @@ export default function VoiceCallingPage() {
                                     onCallComplete={fetchPartsRequests}
                                 />
                             </div>
-                        </div>
+                    </div>
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -320,184 +416,75 @@ export default function VoiceCallingPage() {
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium text-gray-300">Completed</CardTitle>
                                     <CheckCircle className="h-4 w-4 text-gray-400" />
-                                </CardHeader>
-                                <CardContent>
+                            </CardHeader>
+                            <CardContent>
                                     <div className="text-2xl font-bold text-white">{statusCounts.completed}</div>
                                     <p className="text-xs text-gray-400">
                                         Successfully completed
                                     </p>
-                                </CardContent>
+                            </CardContent>
                             </Card>
                             <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium text-gray-300">Need Attention</CardTitle>
                                     <AlertCircle className="h-4 w-4 text-gray-400" />
-                                </CardHeader>
-                                <CardContent>
+                            </CardHeader>
+                            <CardContent>
                                     <div className="text-2xl font-bold text-white">{statusCounts.failed}</div>
                                     <p className="text-xs text-gray-400">
                                         Failed or cancelled
                                     </p>
                                 </CardContent>
                             </Card>
-                        </div>
+                                    </div>
 
                         {/* Main Content */}
-                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            <TabsList className="bg-[#1a1a1a] border-[#2a2a2a]">
-                                <TabsTrigger value="active" className="data-[state=active]:bg-[#2a2a2a] text-gray-300">
-                                    Active ({statusCounts.active})
-                                </TabsTrigger>
-                                <TabsTrigger value="completed" className="data-[state=active]:bg-[#2a2a2a] text-gray-300">
-                                    Completed ({statusCounts.completed})
-                                </TabsTrigger>
-                                <TabsTrigger value="failed" className="data-[state=active]:bg-[#2a2a2a] text-gray-300">
-                                    Need Attention ({statusCounts.failed})
-                                </TabsTrigger>
-                            </TabsList>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-semibold text-white">
+                                    All Parts Requests ({statusCounts.total})
+                                </h2>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    asChild
+                                    className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                >
+                                    <Link href="/voice-calling/logs">
+                                        View Call Logs
+                                    </Link>
+                                </Button>
+                                    </div>
+                            
+                            <div className="grid gap-4">
+                                {partsRequests.map((request) => (
+                                    <PartsRequestCard
+                                        key={request.id}
+                                        request={request as any}
+                                        onAction={handleAction}
+                                        onRefresh={handleRefresh}
+                                        onCallSuppliers={handleCallSuppliers}
+                                        onRecallSupplier={handleRecallSupplier}
+                                        processing={processingAction === request.id}
+                                        refreshing={refreshingRequest === request.id}
+                                    />
+                                ))}
 
-                            <TabsContent value={activeTab} className="mt-6">
-                                <div className="grid gap-4">
-                                    {filterRequests(activeTab).map((request) => (
-                                        <PartsRequestCard
-                                            key={request.id}
-                                            request={request}
-                                            onAction={handleAction}
-                                            processing={processingAction === request.id}
-                                        />
-                                    ))}
-                                    
-                                    {filterRequests(activeTab).length === 0 && (
-                                        <EmptyState
-                                            title={`No ${activeTab} requests`}
-                                            description={
-                                                activeTab === 'active' 
-                                                    ? 'Create a new parts request to get started'
-                                                    : `No ${activeTab} requests found`
-                                            }
-                                            action={activeTab === 'active' ? {
-                                                label: 'New Request',
-                                                onClick: () => {} // CallForm will handle this
-                                            } : undefined}
-                                        />
-                                    )}
+                                {partsRequests.length === 0 && (
+                                    <EmptyState
+                                        title="No parts requests"
+                                        description="Create a new parts request to get started"
+                                        action={{
+                                            label: 'New Request',
+                                            onClick: () => { } // CallForm will handle this
+                                        }}
+                                    />
+                                )}
+                                    </div>
                                 </div>
-                            </TabsContent>
-                        </Tabs>
                     </div>
                 </div>
             </div>
         </div>
-    )
-}
-
-interface PartsRequestCardProps {
-    request: PartsRequestWithActions
-    onAction: (partsRequestId: string, action: StatusAction) => void
-    processing: boolean
-}
-
-function PartsRequestCard({ request, onAction, processing }: PartsRequestCardProps) {
-    const statusConfig = getStatusConfig(request.status as PartsRequestStatus)
-    
-    return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <Badge 
-                            className={`${statusConfig.color} ${statusConfig.bgColor}`}
-                            variant="secondary"
-                        >
-                            {statusConfig.label}
-                        </Badge>
-                        <div>
-                            <h3 className="font-semibold text-white">
-                                {request.supplier_info?.supplier_name || 'Unknown Supplier'}
-                            </h3>
-                            <p className="text-sm text-gray-400">
-                                {request.parts_requested?.length || 0} parts • Created {formatDate(request.created_at)}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        {request.availableActions.map((action) => (
-                            <Button
-                                key={action.action}
-                                size="sm"
-                                variant={action.variant || 'default'}
-                                onClick={() => onAction(request.id, action)}
-                                disabled={processing}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                                {processing ? (
-                                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                                ) : (
-                                    <Phone className="h-3 w-3 mr-1" />
-                                )}
-                                {action.label}
-                            </Button>
-                        ))}
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            asChild
-                            className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
-                        >
-                            <Link href={`/voice-calling/parts/${request.id}`}>
-                                View Details
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-3">
-                    {/* Parts Summary */}
-                    <div>
-                        <h4 className="text-sm font-medium mb-2 text-gray-300">Parts Requested:</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {request.parts_requested?.slice(0, 3).map((part, index) => (
-                                <Badge key={index} variant="outline" className="text-xs border-[#2a2a2a] text-gray-300">
-                                    {part.part_name} (Qty: {part.quantity})
-                                </Badge>
-                            ))}
-                            {(request.parts_requested?.length || 0) > 3 && (
-                                <Badge variant="outline" className="text-xs border-[#2a2a2a] text-gray-300">
-                                    +{(request.parts_requested?.length || 0) - 3} more
-                                </Badge>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Call History */}
-                    {request.callHistory?.length > 0 && (
-                        <div>
-                            <h4 className="text-sm font-medium mb-2 text-gray-300">Recent Calls:</h4>
-                            <div className="space-y-1">
-                                {request.callHistory.slice(0, 2).map((call) => (
-                                    <div key={call.id} className="flex items-center justify-between text-xs text-gray-400">
-                                        <span>{call.purpose.replace('_', ' ')} • {formatDate(call.created_at)}</span>
-                                        <Badge variant="outline" className="text-xs border-[#2a2a2a] text-gray-300">
-                                            {call.status}
-                                        </Badge>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Quote Info */}
-                    {request.quote_provided && (
-                        <div className="bg-green-900/20 border border-green-800/30 p-3 rounded-lg">
-                            <h4 className="text-sm font-medium text-green-400 mb-1">Quote Available</h4>
-                            <p className="text-xs text-green-300">
-                                Quote received and ready for review
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
     )
 }

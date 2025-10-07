@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
         const {
             vehicle_info,
             parts_info,
+            supplier,
             suppliers,
             priority,
             notes,
@@ -20,19 +21,23 @@ export async function POST(request: NextRequest) {
             user_id
         } = body
 
-        // Get first supplier for the call
-        if (!suppliers || !Array.isArray(suppliers) || suppliers.length === 0) {
+        // Handle both single supplier and suppliers array for backward compatibility
+        let supplierData
+        if (supplier) {
+            supplierData = supplier
+        } else if (suppliers && Array.isArray(suppliers) && suppliers.length > 0) {
+            supplierData = suppliers[0]
+        } else {
             return NextResponse.json(
-                { error: 'No suppliers provided' },
+                { error: 'No supplier provided' },
                 { status: 400 }
             )
         }
 
-        const supplier = suppliers[0]
-        const rawPhoneNumber = supplier.phone_number
-        const supplier_name = supplier.name
-        const supplier_contact_person = supplier.contact_person
-        const supplier_id = supplier.id
+        const rawPhoneNumber = supplierData.phone_number
+        const supplier_name = supplierData.name
+        const supplier_contact_person = supplierData.contact_person
+        const supplier_id = supplierData.id
 
         if (!rawPhoneNumber) {
             return NextResponse.json(
@@ -131,12 +136,14 @@ export async function POST(request: NextRequest) {
         // Get call ID from response
         const callId = (call as any).id || ''
         
+        // Create voice_calls record with supplier name
         const voiceCallLog = await MiaCallingService.createVoiceCallLog({
             shop_id: userShopId,
             phone_number,
             vapi_call_id: callId,
             parts_request_id,
             supplier_id: supplier_id && isValidUUID(supplier_id) ? supplier_id : null,
+            supplier_name: supplier_name || 'Unknown Supplier',
             user_id: user_id && isValidUUID(user_id) ? user_id : null,
             purpose: call_purpose,
             sequence_number: sequence_number

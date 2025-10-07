@@ -11,13 +11,15 @@ interface SupplierModalProps {
     onOpenChange: (open: boolean) => void
     onSuccess: (supplier: Supplier) => void
     trigger?: React.ReactNode
+    supplier?: Supplier | null
 }
 
 export default function SupplierModal({ 
     open, 
     onOpenChange, 
     onSuccess, 
-    trigger 
+    trigger,
+    supplier 
 }: SupplierModalProps) {
     const defaultTrigger = (
         <Button className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -44,7 +46,7 @@ export default function SupplierModal({
                 <DialogHeader>
                     <DialogTitle className="text-white flex items-center gap-2">
                         <Building2 className="h-5 w-5" />
-                        Add New Supplier
+                        {supplier ? 'Edit Supplier' : 'Add New Supplier'}
                     </DialogTitle>
                 </DialogHeader>
                 <div className="flex-1 overflow-hidden">
@@ -52,6 +54,7 @@ export default function SupplierModal({
                         isModal={true}
                         onSuccess={handleSuccess}
                         onCancel={handleCancel}
+                        supplier={supplier}
                     />
                 </div>
             </DialogContent>

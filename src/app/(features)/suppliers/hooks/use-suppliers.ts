@@ -10,6 +10,8 @@ interface UseSuppliersReturn {
     error: string | null
     fetchSuppliers: () => Promise<void>
     addSupplier: (supplier: Supplier) => void
+    updateSupplier: (id: string, supplier: Supplier) => void
+    deleteSupplier: (id: string) => Promise<void>
     handleCallSupplier: (supplier: Supplier) => void
 }
 
@@ -46,16 +48,42 @@ export function useSuppliers(): UseSuppliersReturn {
         setSuppliers(prev => [newSupplier, ...prev])
     }
 
+    const updateSupplier = (id: string, updatedSupplier: Supplier) => {
+        setSuppliers(prev => 
+            prev.map(supplier => 
+                supplier.id === id ? updatedSupplier : supplier
+            )
+        )
+    }
+
+    const deleteSupplier = async (id: string) => {
+        try {
+            const response = await fetch(`/api/suppliers/${id}`, {
+                method: 'DELETE'
+            })
+
+            if (!response.ok) {
+                const data = await response.json()
+                throw new Error(data.error || 'Failed to delete supplier')
+            }
+
+            setSuppliers(prev => prev.filter(supplier => supplier.id !== id))
+            toast.success('Supplier deleted successfully')
+        } catch (error) {
+            console.error('Error deleting supplier:', error)
+            toast.error(error instanceof Error ? error.message : 'Failed to delete supplier')
+            throw error
+        }
+    }
+
     const handleCallSupplier = (supplier: Supplier) => {
         if (!supplier.phone_number) {
             toast.error('No phone number available for this supplier')
             return
         }
 
-        // Navigate to voice ordering with pre-filled phone number
-        const encodedPhone = encodeURIComponent(supplier.phone_number)
-        const encodedName = encodeURIComponent(supplier.name)
-        window.location.href = `/voice-calling/ordering?phone=${encodedPhone}&supplier=${encodedName}`
+        // Navigate to voice calling with pre-filled supplier
+        window.location.href = `/voice-calling`
     }
 
     useEffect(() => {
@@ -68,6 +96,8 @@ export function useSuppliers(): UseSuppliersReturn {
         error,
         fetchSuppliers,
         addSupplier,
+        updateSupplier,
+        deleteSupplier,
         handleCallSupplier
     }
 }
