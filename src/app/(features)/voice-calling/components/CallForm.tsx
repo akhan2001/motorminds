@@ -139,7 +139,7 @@ export default function CallForm({
             return
         }
 
-        if (!partInfo.partName || !partInfo.description) {
+        if (!partInfo.partName && !partInfo.description) {
             toast.error('Please provide a part name or description')
             return
         }
@@ -593,7 +593,7 @@ export default function CallForm({
                             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
                         >
                             <Phone className="h-5 w-5 mr-2" />
-                            {isSubmitting ? 'Creating Request...' : isCalling ? 'Mia is calling...' : 'Start AI Call'}
+                            {isSubmitting ? 'Creating Request...' : isCalling ? 'Mia is calling...' : 'Create Parts Request'}
                         </Button>
                         <Button
                             variant="outline"
