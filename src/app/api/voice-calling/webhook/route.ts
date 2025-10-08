@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MiaAssistantHelper } from '@/lib/integrations/vapi/assistant-configuration'
-import { broadcastCallUpdate } from '@/app/api/voice-calling/events/route'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 /**
  * Vapi Webhook Handler - Receives call lifecycle events
@@ -9,8 +9,25 @@ import { supabase } from '@/lib/supabase'
  */
 export async function POST(request: NextRequest) {
     try {
+
+        // Check for API key in headers
+        // const apiKey = request.headers.get('x-api-key')
+        // const expectedApiKey = process.env.VAPI_WEBHOOK_SECRET
+
+        // if (!apiKey || apiKey !== expectedApiKey) {
+        //     console.log('❌ Invalid API key')
+        //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        // }
+
+        // console.log ('API key validated')
+
         const body = await request.json()
-        console.log('📨 VAPI webhook received:', JSON.stringify(body, null, 2))
+        console.log('📨 VAPI webhook received')
+        
+        // Show general webhook toast
+        toast.info('📨 Webhook received', {
+            description: 'Processing Vapi event...'
+        })
 
         // Handle different webhook structures
         // Option 1: Direct message type (as per VAPI example)
@@ -110,7 +127,6 @@ async function handleCallEndReport(call: any, message: any, shopId?: string) {
     console.log('🏁 End of call report received for call:', call?.id || 'unknown')
     
     try {
-        
         // Extract call analysis data from the message
         const analysisData = message.analysis || message.structuredData || call?.analysis || null
         
@@ -119,10 +135,59 @@ async function handleCallEndReport(call: any, message: any, shopId?: string) {
             return NextResponse.json({ success: true, note: 'No analysis data' })
         }
         
-        console.log('📊 Processing call analysis:', JSON.stringify(analysisData, null, 2))
+        console.log('📊 Processing call analysis')
         
-        // Process the end of call report using the existing comprehensive handler
-        await handleEndOfCallReport(call, { analysis: analysisData }, shopId)
+        // Update the voice_calls record with basic info
+        const { error: updateError } = await supabase
+            .from('voice_calls')
+            .update({
+                status: 'completed',
+                ended_at: new Date().toISOString(),
+                quote_received: analysisData?.structuredData || analysisData,
+                call_metadata: {
+                    ...call.metadata,
+                    end_reason: call.endedReason,
+                    analysis: analysisData,
+                    webhook_processed_at: new Date().toISOString()
+                },
+                updated_at: new Date().toISOString()
+            })
+            .eq('vapi_call_id', call.id)
+
+        if (updateError) {
+            console.error('❌ Failed to update voice call:', updateError)
+        } else {
+            console.log('✅ Voice call updated with webhook data')
+            
+            // Trigger refresh-request to do comprehensive processing
+            const partsRequestId = call.metadata?.parts_request_id
+            const callShopId = shopId || call.metadata?.shop_id
+            
+            if (partsRequestId) {
+                console.log('🔄 Triggering comprehensive refresh for parts request:', partsRequestId)
+                
+                // Call the refresh-request endpoint internally with shop_id
+                try {
+                    const refreshResponse = await fetch(`/api/voice-calling/refresh-request`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            parts_request_id: partsRequestId,
+                            shop_id: callShopId // Pass shop_id to bypass auth
+                        })
+                    })
+                    
+                    if (refreshResponse.ok) {
+                        console.log('✅ Refresh triggered successfully')
+                    } else {
+                        console.error('⚠️ Refresh trigger failed:', await refreshResponse.text())
+                    }
+                } catch (refreshError) {
+                    console.error('⚠️ Error triggering refresh:', refreshError)
+                    // Don't fail the webhook if refresh fails
+                }
+            }
+        }
         
         return NextResponse.json({ success: true, processed: 'end_of_call_report' })
         
@@ -141,6 +206,11 @@ async function handleCallEndReport(call: any, message: any, shopId?: string) {
  */
 async function handleCallStart(call: any, shopId?: string) {
     console.log('📞 Call started:', call.id, shopId ? `for shop: ${shopId}` : '')
+    
+    // Show toast notification
+    toast.info('📞 Call started', {
+        description: `Call ID: ${call.id.slice(0, 8)}...`
+    })
 
     const { error } = await supabase
         .from('voice_calls')
@@ -157,10 +227,15 @@ async function handleCallStart(call: any, shopId?: string) {
 }
 
 /**
- * Handle call end event - This is the main event you need!
+ * Handle call end event - Simplified to use refresh-request logic
  */
 async function handleCallEnd(call: any, shopId?: string) {
     console.log('🏁 Call ended:', call.id, shopId ? `for shop: ${shopId}` : '')
+    
+    // Show toast notification
+    toast.success('🏁 Call completed', {
+        description: `Call ID: ${call.id.slice(0, 8)}...`
+    })
 
     try {
         // Calculate duration
@@ -169,37 +244,12 @@ async function handleCallEnd(call: any, shopId?: string) {
             ? Math.round((endedAt.getTime() - new Date(call.startedAt).getTime()) / 1000)
             : null
 
-        // Extract analysis data if available
+        // Extract basic analysis data
         const analysisData = call.analysis || call.analysisResult || null
         const transcript = call.transcript || call.messages || []
         const summary = call.summary || analysisData?.summary || null
 
-        // Extract structured data for parts quote
-        let quoteReceived = null
-        let partsDiscussed = []
-        let actionsTaken = []
-
-        if (analysisData?.structuredData) {
-            quoteReceived = analysisData.structuredData
-            
-            // Extract parts discussed
-            if (analysisData.structuredData.parts_info) {
-                partsDiscussed = Array.isArray(analysisData.structuredData.parts_info) 
-                    ? analysisData.structuredData.parts_info 
-                    : [analysisData.structuredData.parts_info]
-            }
-
-            // Extract actions taken
-            if (analysisData.structuredData.call_outcome) {
-                actionsTaken.push({
-                    type: 'quote_request',
-                    result: analysisData.structuredData.call_outcome,
-                    timestamp: endedAt.toISOString()
-                })
-            }
-        }
-
-        // Update voice_calls table
+        // Update voice_calls table with basic info
         const { data: voiceCall, error: updateError } = await supabase
             .from('voice_calls')
             .update({
@@ -208,20 +258,19 @@ async function handleCallEnd(call: any, shopId?: string) {
                 duration_seconds: durationSeconds,
                 transcript: transcript,
                 call_summary: summary,
-                parts_discussed: partsDiscussed,
-                actions_taken: actionsTaken,
-                quote_received: quoteReceived,
+                quote_received: analysisData?.structuredData || null,
                 call_metadata: {
                     ...call.metadata,
                     end_reason: call.endedReason,
                     cost: call.cost,
                     analysis: analysisData,
-                    shop_id: shopId
+                    shop_id: shopId,
+                    webhook_processed_at: new Date().toISOString()
                 },
                 updated_at: new Date().toISOString()
             })
             .eq('vapi_call_id', call.id)
-            .select('parts_request_id, shop_id')
+            .select('parts_request_id')
             .single()
 
         if (updateError) {
@@ -231,30 +280,31 @@ async function handleCallEnd(call: any, shopId?: string) {
 
         console.log('✅ Call updated successfully:', call.id)
 
-        // If quote was received and we have a parts_request_id, update the parts request
-        if (quoteReceived && voiceCall?.parts_request_id) {
-            console.log('💰 Saving quote to parts request:', voiceCall.parts_request_id)
-
-            // Store both quote_provided and call_analysis for comprehensive data
-            const { error: quoteError } = await supabase
-                .from('parts_requests')
-                .update({
-                    quote_provided: quoteReceived,
-                    call_analysis: analysisData?.structuredData || null,
-                    status: 'quoted',
-                    updated_at: new Date().toISOString()
+        // Trigger refresh-request to do comprehensive processing
+        if (voiceCall?.parts_request_id) {
+            const callShopId = shopId || call.metadata?.shop_id
+            console.log('🔄 Triggering comprehensive refresh for parts request:', voiceCall.parts_request_id)
+            
+            try {
+                const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/voice-calling/refresh-request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        parts_request_id: voiceCall.parts_request_id,
+                        shop_id: callShopId // Pass shop_id to bypass auth
+                    })
                 })
-                .eq('id', voiceCall.parts_request_id)
-
-            if (quoteError) {
-                console.error('Failed to update parts request with quote:', quoteError)
-            } else {
-                console.log('✅ Parts request updated with quote and analysis')
+                
+                if (refreshResponse.ok) {
+                    console.log('✅ Refresh triggered successfully')
+                } else {
+                    console.error('⚠️ Refresh trigger failed:', await refreshResponse.text())
+                }
+            } catch (refreshError) {
+                console.error('⚠️ Error triggering refresh:', refreshError)
+                // Don't fail the webhook if refresh fails
             }
         }
-
-        // Optional: Trigger real-time updates to frontend
-        // You could use Supabase realtime, webhooks, or WebSocket here
 
     } catch (error) {
         console.error('Error processing call end:', error)
@@ -324,17 +374,22 @@ async function handleCallHang(call: any, shopId?: string) {
 }
 
 /**
- * Handle end of call report (most important function)
+ * Handle end of call report - Simplified to use refresh-request logic
  */
 async function handleEndOfCallReport(call: any, message: any, shopId?: string) {
     console.log('📊 End of call report received:', call.id, shopId ? `for shop: ${shopId}` : '')
+    
+    // Show toast notification
+    toast.info('📊 Call analysis received', {
+        description: `Processing results for call ${call.id.slice(0, 8)}...`
+    })
     
     try {
         // Extract analysis data from the report
         const reportData = message.report || message.analysis || message.data || null
         const analysisData = call.analysis || reportData || null
         
-        console.log('📊 Analysis data received:', JSON.stringify(analysisData, null, 2))
+        console.log('📊 Analysis data received')
         
         // Calculate duration
         const endedAt = new Date()
@@ -342,7 +397,7 @@ async function handleEndOfCallReport(call: any, message: any, shopId?: string) {
             ? Math.round((endedAt.getTime() - new Date(call.startedAt).getTime()) / 1000)
             : null
 
-        // Update voice_calls table with comprehensive data
+        // Update voice_calls table with basic data
         const { data: voiceCall, error: updateError } = await supabase
             .from('voice_calls')
             .update({
@@ -351,44 +406,59 @@ async function handleEndOfCallReport(call: any, message: any, shopId?: string) {
                 duration_seconds: durationSeconds,
                 transcript: call.transcript || [],
                 call_summary: call.summary || analysisData?.summary || null,
-                call_analysis: analysisData,
                 quote_received: analysisData?.structuredData || analysisData?.quote_details || null,
                 call_metadata: {
                     ...call.metadata,
                     end_reason: call.endedReason,
                     cost: call.cost,
                     analysis: analysisData,
-                    shop_id: shopId
+                    shop_id: shopId,
+                    webhook_processed_at: new Date().toISOString()
                 },
                 updated_at: new Date().toISOString()
             })
             .eq('vapi_call_id', call.id)
-            .select()
+            .select('parts_request_id')
+            .single()
 
         if (updateError) {
             console.error('❌ Failed to update voice call:', updateError)
             return
         }
 
-        console.log('✅ Voice call updated successfully:', voiceCall)
+        console.log('✅ Voice call updated successfully')
 
-        // Update parts_request based on call outcome
-        const partsRequestId = call.metadata?.parts_request_id
-        if (partsRequestId && analysisData) {
-            await updatePartsRequestFromCallOutcome(partsRequestId, analysisData, call)
+        // Trigger refresh-request to do comprehensive processing
+        const partsRequestId = voiceCall?.parts_request_id || call.metadata?.parts_request_id
+        const callShopId = shopId || call.metadata?.shop_id
+        
+        if (partsRequestId) {
+            console.log('🔄 Triggering comprehensive refresh for parts request:', partsRequestId)
+            
+            try {
+                const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/voice-calling/refresh-request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        parts_request_id: partsRequestId,
+                        shop_id: callShopId // Pass shop_id to bypass auth
+                    })
+                })
+                
+                if (refreshResponse.ok) {
+                    console.log('✅ Refresh triggered successfully')
+                } else {
+                    console.error('⚠️ Refresh trigger failed:', await refreshResponse.text())
+                }
+            } catch (refreshError) {
+                console.error('⚠️ Error triggering refresh:', refreshError)
+                // Don't fail the webhook if refresh fails
+            }
         }
 
     } catch (error) {
         console.error('❌ Error processing end of call report:', error)
-        
-        // Broadcast failure update
-        broadcastCallUpdate(call.id, {
-            type: 'call_failed',
-            status: 'failed',
-            callId: call.id,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            timestamp: new Date().toISOString()
-        })
+        // Note: Using polling instead of real-time SSE events
     }
 }
 
@@ -397,6 +467,11 @@ async function handleEndOfCallReport(call: any, message: any, shopId?: string) {
  */
 async function handleStatusUpdate(call: any, message: any, shopId?: string) {
     console.log('📈 Status update received for call:', call?.id || 'unknown', 'Status:', message.status)
+    
+    // Show toast notification
+    toast.info(`📈 Call status: ${message.status}`, {
+        description: `Call ID: ${call?.id?.slice(0, 8) || 'unknown'}...`
+    })
     
     try {
         
@@ -424,74 +499,6 @@ async function handleStatusUpdate(call: any, message: any, shopId?: string) {
     }
 }
 
-/**
- * Update parts request based on call outcome analysis
- */
-async function updatePartsRequestFromCallOutcome(partsRequestId: string, analysisData: any, call: any) {
-    try {
-        const callOutcome = analysisData.call_outcome?.status || 'unknown'
-        const successEvaluation = analysisData.successEvaluation
-        const structuredData = analysisData.structuredData
-        
-        console.log('🎯 Evaluating call outcome:', { callOutcome, successEvaluation, partsRequestId })
-
-        let newStatus = 'processing' // default fallback
-        let adminNotes = `Call completed at ${new Date().toISOString()}`
-
-        // Determine new status based on call outcome
-        if (callOutcome === 'voicemail' || callOutcome === 'no_answer' || callOutcome === 'busy') {
-            newStatus = 'pending' // Reset to allow retry
-            adminNotes = `Call failed: ${callOutcome}. Ready for retry.`
-        } else if (successEvaluation === true || callOutcome === 'successful') {
-            if (structuredData?.quote_details || structuredData?.parts_info) {
-                newStatus = 'quoted' // Quote received, ready to order
-                adminNotes = `Quote received successfully. Ready to place order.`
-            } else {
-                newStatus = 'processing' // Call connected but incomplete info
-                adminNotes = `Call connected but incomplete quote information.`
-            }
-        } else if (successEvaluation === false || callOutcome === 'failed') {
-            newStatus = 'pending' // Allow retry
-            adminNotes = `Call unsuccessful: ${callOutcome}. May need different approach.`
-        }
-
-        // Update parts request
-        const updateData: any = {
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-            admin_notes: adminNotes
-        }
-
-        // Add quote data if successful
-        if (newStatus === 'quoted' && structuredData) {
-            updateData.quote_provided = structuredData
-            updateData.actual_cost = structuredData.quote_details?.total_cost || null
-        }
-
-        const { error: partsError } = await supabase
-            .from('parts_requests')
-            .update(updateData)
-            .eq('id', partsRequestId)
-
-        if (partsError) {
-            console.error('❌ Failed to update parts request:', partsError)
-        } else {
-            console.log('✅ Parts request updated:', { partsRequestId, newStatus, callOutcome })
-            
-            // Update voice call status based on outcome
-            await supabase
-                .from('voice_calls')
-                .update({
-                    status: successEvaluation === true ? 'ready_to_order' : 
-                           callOutcome === 'voicemail' ? 'failed' : 'completed'
-                })
-                .eq('vapi_call_id', call.id)
-        }
-
-    } catch (error) {
-        console.error('❌ Error updating parts request from call outcome:', error)
-    }
-}
 
 /**
  * GET method for webhook verification (if needed by Vapi)

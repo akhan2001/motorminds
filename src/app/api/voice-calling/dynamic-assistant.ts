@@ -4,6 +4,12 @@
  */
 
 export interface CallContext {
+    supplier_info: {
+        name: string
+        contact_person: string
+        id: string
+        account_number: string
+    }
     vehicle_info: {
         year: string
         make: string
@@ -27,31 +33,29 @@ export interface CallContext {
  * Generate dynamic system prompt for VAPI assistant
  */
 export function generateSystemPrompt(context: CallContext): string {
-    const { vehicle_info, parts_info, priority, notes, shop_name = "AutoPro Mechanics" } = context
+    const { supplier_info, vehicle_info, parts_info, priority, notes, shop_name = "AutoPro Mechanics" } = context
 
     return `**VAPI Parts Quote Request Prompt**
 
 [Identity]
-You are Mia, an AI assistant calling on behalf of ${shop_name} to request parts quotes. Provide the account number if the supplier asks for one.
+You are Maverick, an AI assistant calling on behalf of ${shop_name} to request parts quotes. Provide the account number if the supplier asks for one.
 
 [Tone]
 Have a natural and casual tone while being efficient, and clear. Don't keep repeating your sentences (ex. "yes, i want the part for the [year] [make] [model]"). Only mention any additional information, if they ask for it.
 
-1. **Vehicle & Parts Request**  
+1. **Vehicle & Parts Request**
    - "Vehicle: ${vehicle_info?.year || 'Unknown'} ${vehicle_info?.make || 'Unknown'} ${vehicle_info?.model || 'Unknown'}"  
    - "Parts needed: ${parts_info?.quantity || 1} ${parts_info?.partName || 'Unknown Part'}${parts_info?.partNumber ? `, part number ${parts_info.partNumber}` : ''}."
    ${parts_info?.description ? `- "Additional details: ${parts_info.description}"` : ''}
    ${vehicle_info?.engine ? `- "Engine: ${vehicle_info.engine}"` : ''} 
 
-2. **Quote Information**  
-   - "Can you provide the price, availability, and delivery time for these parts?"
+2. **Quote Information**
+   - "Can you provide the price and availability for these parts?"
 
-3. **Details to Collect**  
-   - Part availability: In stock/Backordered/Discontinued  
-   - Shop price: $[PRICE]  
-   - Delivery time: [DELIVERY_DAYS] business days  
-   - Part number: [PART_NUMBER]  
-   - Contact person name: [CONTACT_NAME]  
+3. **Details to Collect**
+   - Part availability: In stock/Backordered/Discontinued
+   - Shop price: $[PRICE]
+   - Quote number: [QUOTE_NUMBER]
 
 4. **Confirmation and End**  
    - "Just to confirm, that's ${parts_info?.quantity || 1} ${parts_info?.partName || 'the requested parts'} for $[PRICE], available, delivery in [DELIVERY_DAYS] business days."  
@@ -65,6 +69,7 @@ Have a natural and casual tone while being efficient, and clear. Don't keep repe
   - "Could you confirm the part number or price again?"  
   - "Can you clarify the delivery time for me?"
   - There will be moments of silence because the user is looking for parts, so you should wait until the user speaks again.
+- If the supplier asks for the account number and if ${supplier_info.account_number} == null || empty, say "I don't have the account number, I'm just requesting a quote."
 
 **Priority Level**: ${priority}
 **Shop Notes**: ${notes || 'None'}
@@ -88,11 +93,11 @@ export function createDynamicAssistant(context: CallContext) {
             temperature: 0.5
         },
         voice: {
-            voiceId: "Paige" as const,
+            voiceId: "Cole" as const,
             provider: "vapi" as const,
         },
         backgroundSound: "off",
-        firstMessage: "Hi, I'm calling to request a quote for parts.",
+        firstMessage: "Hey, I'm calling to request a quote for parts.",
         endCallMessage: "Thanks for the quote. We'll call back again to place the order if needed.",
         voicemailMessage: "Hi,I was calling to request a quote for parts please call us back. Thank you.",
         transcriber: {
@@ -101,8 +106,10 @@ export function createDynamicAssistant(context: CallContext) {
             language: "en" as const
         },
         endCallFunctionEnabled: true,
-        serverUrl: "https://app.motorminds.ca/api/voice-calling/webhook",
-        serverMessages: ["end-of-call-report"],
+        // server: {
+        //     url: "https://5025680084bd.ngrok-free.app/api/voice-calling/webhook"
+        // },
+        // serverMessages: ["end-of-call-report"],
         analysisPlan: {
             summaryPlan: {
                 messages: [

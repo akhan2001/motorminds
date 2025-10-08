@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -32,11 +32,15 @@ interface CallFormProps {
     }
 }
 
-export default function CallForm({ 
+export interface CallFormRef {
+    openForm: () => void
+}
+
+const CallForm = forwardRef<CallFormRef, CallFormProps>(({ 
     trigger, 
     onCallComplete,
     prefillData 
-}: CallFormProps) {
+}, ref) => {
     const [open, setOpen] = useState(false)
     const [selectedSuppliers, setSelectedSuppliers] = useState<SelectedSupplier[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -46,6 +50,11 @@ export default function CallForm({
     const [partsRequestId, setPartsRequestId] = useState<string | null>(null)
     const [quoteData, setQuoteData] = useState<any>(null)
     const [isPolling, setIsPolling] = useState(false)
+
+    // Expose methods to parent component
+    useImperativeHandle(ref, () => ({
+        openForm: () => setOpen(true)
+    }))
 
     const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo>({
         year: '',
@@ -607,4 +616,8 @@ export default function CallForm({
             </DialogContent>
         </Dialog>
     )
-}
+})
+
+CallForm.displayName = 'CallForm'
+
+export default CallForm

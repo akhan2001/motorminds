@@ -38,6 +38,14 @@ export async function POST(request: NextRequest) {
         const supplier_name = supplierData.name
         const supplier_contact_person = supplierData.contact_person
         const supplier_id = supplierData.id
+        const supplier_account_number = supplierData.account_number
+
+        const supplier_info = {
+            name: supplier_name,
+            contact_person: supplier_contact_person,
+            id: supplier_id,
+            account_number: supplier_account_number
+        }
 
         if (!rawPhoneNumber) {
             return NextResponse.json(
@@ -67,6 +75,7 @@ export async function POST(request: NextRequest) {
 
         // Create dynamic assistant configuration
         const callContext: CallContext = {
+            supplier_info,
             vehicle_info,
             parts_info,
             priority,

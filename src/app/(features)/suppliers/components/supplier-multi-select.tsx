@@ -5,9 +5,11 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { X, Plus, Check } from 'lucide-react'
 import { useSuppliers } from '@/app/(features)/suppliers/hooks/use-suppliers'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
+import SupplierIntakeForm from './supplier-intake-form'
 
 interface SelectedSupplier {
     id: string
@@ -39,8 +41,6 @@ export default function SupplierMultiSelect({
     const { suppliers, loading, error } = useSuppliers()
     const [showDropdown, setShowDropdown] = useState(false)
     const [showCustomForm, setShowCustomForm] = useState(false)
-    const [customName, setCustomName] = useState('')
-    const [customPhone, setCustomPhone] = useState('')
 
     // Filter only active suppliers
     const activeSuppliers = suppliers.filter(supplier => supplier.status === 'active')
@@ -64,19 +64,16 @@ export default function SupplierMultiSelect({
         }
     }
 
-    const handleCustomSupplierAdd = () => {
-        if (!customName.trim() || !customPhone.trim()) return
-
+    const handleCustomSupplierSuccess = (newSupplier: any) => {
         const customSupplier: SelectedSupplier = {
-            id: `custom-${Date.now()}`,
-            name: customName,
-            phone_number: customPhone,
-            isCustom: true
+            id: newSupplier.id,
+            name: newSupplier.name,
+            phone_number: newSupplier.phone_number,
+            contact_person: newSupplier.contact_person,
+            isCustom: false // This is now a real supplier in the database
         }
 
         onSuppliersChange([...selectedSuppliers, customSupplier])
-        setCustomName('')
-        setCustomPhone('')
         setShowCustomForm(false)
     }
 
@@ -216,43 +213,21 @@ export default function SupplierMultiSelect({
                         </Card>
                     )}
 
-                    {/* Custom Supplier Form */}
-                    {showCustomForm && (
-                        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-                            <CardContent className="p-3 space-y-3">
-                                <Input
-                                    value={customName}
-                                    onChange={(e) => setCustomName(e.target.value)}
-                                    placeholder="Supplier Name"
-                                    className="bg-[#111111] border-[#2a2a2a] text-white text-sm"
+                    {/* Custom Supplier Dialog */}
+                    <Dialog open={showCustomForm} onOpenChange={setShowCustomForm} >
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden bg-[#111111] border-[#2a2a2a]">
+                            <DialogHeader>
+                                <DialogTitle className="text-white">Add New Supplier</DialogTitle>
+                            </DialogHeader>
+                            <div className="overflow-y-auto">
+                                <SupplierIntakeForm
+                                    onSuccess={handleCustomSupplierSuccess}
+                                    onCancel={() => setShowCustomForm(false)}
+                                    isModal={true}
                                 />
-                                <Input
-                                    value={customPhone}
-                                    onChange={(e) => setCustomPhone(e.target.value)}
-                                    placeholder="Phone Number"
-                                    className="bg-[#111111] border-[#2a2a2a] text-white text-sm"
-                                />
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={handleCustomSupplierAdd}
-                                        disabled={!customName.trim() || !customPhone.trim()}
-                                        size="sm"
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        Add Supplier
-                                    </Button>
-                                    <Button
-                                        onClick={() => setShowCustomForm(false)}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-[#2a2a2a] text-gray-400 hover:bg-[#2a2a2a]"
-                                    >
-                                        Cancel
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             )}
         </div>
