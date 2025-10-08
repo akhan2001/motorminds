@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../operations/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -58,6 +58,9 @@ export default function VoiceCallingPage() {
     const [dataError, setDataError] = useState<string | null>(null)
     const [processingAction, setProcessingAction] = useState<string | null>(null)
     const [refreshingRequest, setRefreshingRequest] = useState<string | null>(null)
+    
+    // Ref to control CallForm
+    const callFormRef = useRef<{ openForm: () => void }>(null)
 
     // Combined loading state
     const isLoading = authLoading || (shopId && loading)
@@ -107,9 +110,9 @@ export default function VoiceCallingPage() {
         try {
             setRefreshingRequest(partsRequestId)
             toast.info('Refreshing supplier call statuses...')
-            
+
             const result = await VoiceCallService.refreshPartsRequest(partsRequestId)
-            
+
             if (result.success) {
                 // Refresh the parts requests list to show updated data
                 await fetchPartsRequests()
@@ -124,15 +127,15 @@ export default function VoiceCallingPage() {
 
     const handleCallSuppliers = async (partsRequestId: string) => {
         if (!shopId) return
-        
+
         try {
             setProcessingAction(partsRequestId)
-            
+
             const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
             if (!partsRequest) return
 
             const selectedSuppliers = partsRequest.supplier_info?.selected_suppliers || []
-            
+
             if (selectedSuppliers.length === 0) {
                 toast.error('No suppliers found for this request')
                 return
@@ -172,10 +175,10 @@ export default function VoiceCallingPage() {
 
     const handleRecallSupplier = async (partsRequestId: string, supplierId: string, supplierName: string, phoneNumber: string) => {
         if (!shopId) return
-        
+
         try {
             setProcessingAction(partsRequestId)
-            
+
             const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
             if (!partsRequest) return
 
@@ -212,12 +215,16 @@ export default function VoiceCallingPage() {
         }
     }
 
+    const handleOpenCallForm = () => {
+        callFormRef.current?.openForm()
+    }
+
     const handleAction = async (partsRequestId: string, action: StatusAction) => {
         if (!shopId) return
-        
+
         try {
             setProcessingAction(partsRequestId)
-            
+
             const partsRequest = partsRequests.find(pr => pr.id === partsRequestId)
             if (!partsRequest) return
 
@@ -239,7 +246,7 @@ export default function VoiceCallingPage() {
             // Get supplier info for the call
             const supplierId = partsRequest.supplier_info?.supplier_id
             const phoneNumber = partsRequest.supplier_info?.phone_number
-            
+
             if (!supplierId || !phoneNumber) {
                 toast.error('Missing supplier information for this request')
                 return
@@ -387,6 +394,7 @@ export default function VoiceCallingPage() {
                                     Refresh
                                 </Button>
                                 <CallForm
+                                    ref={callFormRef}
                                     trigger={
                                         <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                                             <Plus className="h-4 w-4 mr-2" />
@@ -455,7 +463,7 @@ export default function VoiceCallingPage() {
                                     </Link>
                                 </Button>
                                     </div>
-                            
+
                             <div className="grid gap-4">
                                 {partsRequests.map((request) => (
                                     <PartsRequestCard
@@ -476,7 +484,7 @@ export default function VoiceCallingPage() {
                                         description="Create a new parts request to get started"
                                         action={{
                                             label: 'New Request',
-                                            onClick: () => { } // CallForm will handle this
+                                            onClick: handleOpenCallForm
                                         }}
                                     />
                                 )}
