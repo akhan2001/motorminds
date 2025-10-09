@@ -1,8 +1,9 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET all active fixed costs for a shop
 export async function GET(req: NextRequest) {
+    const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get('shop_id');
     const startDateStr = searchParams.get('start_date');
@@ -176,6 +177,7 @@ export async function GET(req: NextRequest) {
 // POST a new fixed cost
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const body = await req.json();
         const { shop_id, cost_name, amount, frequency, category, start_date } = body;
 
@@ -201,6 +203,7 @@ export async function POST(req: NextRequest) {
 // UPDATE an existing fixed cost
 export async function PUT(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const body = await req.json();
         const { id, cost_name, amount, frequency, category, start_date } = body;
 
@@ -234,6 +237,7 @@ export async function PUT(req: NextRequest) {
 // DELETE a fixed cost
 export async function DELETE(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const { id } = await req.json();
 
         if (!id) {
