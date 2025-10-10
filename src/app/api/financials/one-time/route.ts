@@ -1,8 +1,9 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET one-time costs or filter by date range
 export async function GET(req: NextRequest) {
+    const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get("shop_id");
     const startDateStr = searchParams.get("start_date");
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
 // POST create new one-time cost
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const body = await req.json();
         const { shop_id, cost_name, amount, category, cost_date } = body;
 
@@ -59,6 +61,7 @@ export async function POST(req: NextRequest) {
 // DELETE remove a one-time cost by id
 export async function DELETE(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const body = await req.json();
         const { id } = body;
 
@@ -78,6 +81,7 @@ export async function DELETE(req: NextRequest) {
 // PUT update an existing one-time cost
 export async function PUT(req: NextRequest) {
     try {
+        const supabase = await createClient();
         const body = await req.json();
         const { id, cost_name, amount, category, cost_date } = body;
 
