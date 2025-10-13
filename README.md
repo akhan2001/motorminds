@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MotorMinds - AI-Powered Automotive Shop Management Platform
+
+MotorMinds is a comprehensive automotive shop management platform that transforms traditional auto repair shops through AI-powered automation, intelligent workflow optimization, and data-driven business insights.
+
+## Features
+
+### Core Platform
+- **Work Order Management**: Complete service order lifecycle management
+- **Customer CRM**: Comprehensive customer and vehicle management
+- **Parts & Inventory**: AI-powered parts sourcing and inventory optimization
+- **Financial Analytics**: Revenue tracking, cost analysis, and business intelligence
+- **Appointment Scheduling**: Intelligent scheduling and capacity optimization
+
+### AI-Powered Capabilities
+- **MIA AI Assistant**: Intelligent shop assistant with diagnostic capabilities
+- **Voice Calling Automation**: Automated supplier communication
+- **Predictive Maintenance**: AI-powered maintenance recommendations
+- **Revenue Optimization**: Intelligent upsell suggestions and pricing
+- **Shop Performance Analytics**: Data-driven insights and optimization
+
+### Advanced Integrations
+- **Voice AI**: Vapi AI for automated supplier calls
+- **Document Management**: DocuSeal for contract automation
+- **Communication**: Twilio SMS/Voice integration
+- **Email Automation**: Resend for customer communication
+- **Real-time Analytics**: Live performance monitoring
+
+## Technology Stack
+
+### Frontend
+- **Framework**: Next.js 15.3.2 (App Router)
+- **Language**: TypeScript
+- **UI**: React 18 with Tailwind CSS
+- **Components**: Radix UI + shadcn/ui
+- **State Management**: TanStack Query (React Query)
+
+### Backend
+- **Runtime**: Node.js with Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: NextAuth.js with Supabase
+- **File Storage**: Supabase Storage
+- **Real-time**: Supabase Realtime subscriptions
+
+### AI & Machine Learning
+- **AI Framework**: LangChain
+- **AI Providers**: OpenAI GPT-4, Perplexity AI
+- **Voice AI**: Vapi AI (voice calling)
+- **Text-to-Speech**: Vogent AI
+- **AI SDK**: Vercel AI SDK
+
+### Infrastructure
+- **Hosting**: Vercel Platform
+- **CDN**: Vercel Edge Network
+- **Database**: Supabase (managed PostgreSQL)
+- **Monitoring**: Built-in Vercel monitoring
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ 
+- npm, yarn, pnpm, or bun
+- Supabase account
+- OpenAI API key
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Installation
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-org/motorminds.git
+   cd motorminds
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Configure your environment variables:
+   ```env
+   # Database
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   
+   # Authentication
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your_nextauth_secret
+   
+   # AI Services
+   OPENAI_API_KEY=your_openai_api_key
+   PERPLEXITY_API_KEY=your_perplexity_api_key
+   VAPI_API_KEY=your_vapi_api_key
+   
+   # External Services
+   TWILIO_ACCOUNT_SID=your_twilio_sid
+   TWILIO_AUTH_TOKEN=your_twilio_token
+   RESEND_API_KEY=your_resend_api_key
+   ```
 
-## Learn More
+4. **Database Setup**
+   ```bash
+   # Run Supabase migrations
+   npx supabase db reset
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+5. **Start Development Server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+6. **Open Application**
+   Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+motorminds/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (features)/        # Feature-based routing
+│   │   ├── (auth)/           # Authentication routes
+│   │   ├── (public)/         # Public routes
+│   │   └── api/              # API routes
+│   ├── components/           # Shared UI components
+│   ├── lib/                  # Core libraries and utilities
+│   ├── hooks/                # Custom React hooks
+│   ├── contexts/             # React contexts
+│   └── types/                # TypeScript type definitions
+├── docs/                     # Private documentation (ignored by Git)
+├── supabase/                 # Supabase configuration
+└── public/                   # Static assets
