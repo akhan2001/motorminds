@@ -14,7 +14,8 @@ import {
 	AlertCircle,
 	CheckCircle,
 	Clock,
-	Slash
+	Slash,
+	Database
 } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import Link from 'next/link'
@@ -72,7 +73,15 @@ export default function AdminPage() {
 		}).format(amount)
 	}
 
-	const quickActions: any[] = []
+	const quickActions: any[] = [
+		{
+			title: 'Verify Staging Tables',
+			description: 'Check staging database table integrity and data quality',
+			href: '/admin/pages/migrations',
+			icon: Database,
+			color: 'bg-blue-600'
+		}
+	]
 
 	const recentActivity: any[] = []
 
