@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Trash2, Loader2 } from 'lucide-react'
 import { WorkOrderKanbanItem } from '../../../types/work-order'
@@ -33,6 +33,9 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                         </div>
                         Delete Work Order
                     </DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to delete this work order?
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
@@ -65,10 +68,6 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                             </div>
                         </div>
                     </div>
-
-                    <div className="text-sm text-gray-400">
-                        <p>Are you sure you want to delete this work order?</p>
-                    </div>
                 </div>
 
                 <DialogFooter className="flex gap-3">
@@ -76,7 +75,7 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                         variant="outline"
                         onClick={onClose}
                         disabled={isDeleting}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-gray-300"
                     >
                         Cancel
                     </Button>

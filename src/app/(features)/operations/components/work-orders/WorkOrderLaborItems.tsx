@@ -3,9 +3,12 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { MinusIcon, PlusIcon, Clock, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, Wrench } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
+import { TechnicianDropdown } from "@/app/(features)/technician/components/TechnicianDropdown";
+import { useAuth } from "../../hooks/use-auth";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../types/work-order-items";
 import { WorkOrderItemsService } from "../../lib/work-order-items-service";
 
@@ -94,14 +97,14 @@ export function WorkOrderLaborItems({
         const updatedItems = items.map(item => {
             if (item.id !== id) return item;
             
-            let updatedItem = { ...item };
+            const updatedItem = { ...item };
             
             // Convert string values to numbers for numeric fields
             if (field === 'labor_hours' || field === 'unit_price') {
                 const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
-                updatedItem[field] = numValue;
-            } else {
-                updatedItem[field] = value as any;
+                updatedItem[field] = numValue as number;
+            } else if (field === 'technician_id' || field === 'description' || field === 'notes') {
+                updatedItem[field] = value as string;
             }
             
             // Calculate total price when hours or unit price changes
@@ -115,133 +118,147 @@ export function WorkOrderLaborItems({
         onItemsChange(updatedItems);
     };
 
+    const { shopId } = useAuth();
+
     return (
-        <div className="sm:col-span-3 space-y-4">
-            <div className="flex items-center gap-2 mt-2">
-                <h3 className="text-lg font-medium text-white">Labor Items</h3>
+        <div className="space-y-4">
+            <div className="flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-blue-400" />
+                <h3 className="text-lg font-semibold text-white">Labor Items</h3>
             </div>
-            
-            {items.map((item, index) => (
-                <div key={item.id} className="space-y-3 p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
-                    {/* First Row: Description */}
-                    <div className="flex items-end gap-2">
-                        <div className="flex-grow">
-                            {index === 0 && <Label className="text-xs text-gray-400">Labor Description</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="Enter labor description (e.g., Oil change, Brake inspection)"
-                                value={item.description}
-                                onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                            />
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex gap-1 pb-px">
-                            {/* Save Button - Only show if workOrderId is provided */}
-                            {workOrderId && (
+
+            {items.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 border border-dashed border-[#2a2a2a] rounded-lg">
+                    No labor items added yet. Click "Add Labor" to get started.
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {items.map((item, index) => (
+                        <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-3">
+                                <h4 className="text-sm font-medium text-blue-400">Labor Item {index + 1}</h4>
                                 <Button
                                     type="button"
-                                    variant="outline"
+                                    onClick={() => removeItem(item.id)}
+                                    variant="ghost"
                                     size="sm"
-                                    className="bg-green-600 border-green-600 text-white hover:bg-green-700 hover:text-white"
-                                    onClick={() => saveItemToDatabase(item)}
-                                    disabled={!item.description.trim()}
-                                    title="Save to work order"
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
                                 >
-                                    <Save className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
-                            )}
-                            
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
-                                onClick={() => removeItem(item.id)}
-                            >
-                                <MinusIcon className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Second Row: Hours, Rate, Total */}
-                    <div className="flex items-end gap-2">
-                        <div className="w-24">
-                            {index === 0 && <Label className="text-xs text-gray-400">Hours</Label>}
-                            <div className="relative">
-                                <Clock className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <Input
-                                    className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full pl-8"
-                                    placeholder="1.0"
-                                    type="number"
-                                    step="0.25"
-                                    min="0"
-                                    value={item.labor_hours}
-                                    onChange={(e) => {
-                                        if (parseFloat(e.target.value) < 0) return;
-                                        updateItem(item.id, 'labor_hours', e.target.value);
-                                    }}
-                                />
+                            <div className="space-y-3">
+                                {/* Description */}
+                                <div>
+                                    <Label htmlFor={`labor_description_${index}`} className="text-gray-400 text-xs">
+                                        Description *
+                                    </Label>
+                                    <Input
+                                        id={`labor_description_${index}`}
+                                        value={item.description}
+                                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                        className="bg-[#111111] border-[#2a2a2a] text-white"
+                                        placeholder="e.g., Oil change, Brake repair"
+                                    />
+                                </div>
+
+                                {/* Labor Hours and Rate */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label htmlFor={`labor_hours_${index}`} className="text-gray-400 text-xs">
+                                            Labor Hours
+                                        </Label>
+                                        <Input
+                                            id={`labor_hours_${index}`}
+                                            type="number"
+                                            value={item.labor_hours || ''}
+                                            onChange={(e) => updateItem(item.id, 'labor_hours', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="2.5"
+                                            min="0"
+                                            step="0.25"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`labor_rate_${index}`} className="text-gray-400 text-xs">
+                                            Rate per Hour *
+                                        </Label>
+                                        <Input
+                                            id={`labor_rate_${index}`}
+                                            type="number"
+                                            value={item.unit_price}
+                                            onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            min="0"
+                                            step="0.01"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Technician and Total */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label htmlFor={`technician_${index}`} className="text-gray-400 text-xs">
+                                            Technician (Optional)
+                                        </Label>
+                                        <TechnicianDropdown
+                                            shopId={shopId || ''}
+                                            selectedTechnicianId={item.technician_id || ''}
+                                            onTechnicianSelect={(technicianId) => updateItem(item.id, 'technician_id', technicianId === 'none' ? '' : technicianId)}
+                                            placeholder="Select Technician"
+                                            className="bg-[#111111] border-[#2a2a2a]"
+                                            showNoneOption={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`labor_total_${index}`} className="text-gray-400 text-xs">
+                                            Total Price
+                                        </Label>
+                                        <Input
+                                            id={`labor_total_${index}`}
+                                            type="number"
+                                            value={item.total_price.toFixed(2)}
+                                            disabled
+                                            className="bg-[#0a0a0a] border-[#2a2a2a] text-white font-semibold"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Notes */}
+                                {item.notes !== undefined && (
+                                    <div>
+                                        <Label htmlFor={`labor_notes_${index}`} className="text-gray-400 text-xs">
+                                            Notes (Optional)
+                                        </Label>
+                                        <Textarea
+                                            id={`labor_notes_${index}`}
+                                            value={item.notes || ''}
+                                            onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="Additional notes..."
+                                            rows={2}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Rate/Hour</Label>}
-                            <div className="relative">
-                                <span className="text-gray-300 text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
-                                <Input
-                                    className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full pl-6"
-                                    placeholder="0.00"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={item.unit_price}
-                                    onChange={(e) => {
-                                        if (parseFloat(e.target.value) < 0) return;
-                                        updateItem(item.id, 'unit_price', e.target.value);
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Total</Label>}
-                            <div className="relative">
-                                <span className="text-gray-300 text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
-                                <Input
-                                    className="bg-[#0d0d0d] text-gray-300 text-sm border-[#626262] w-full pl-6"
-                                    value={item.total_price}
-                                    readOnly
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Third Row: Notes (Optional) */}
-                    <div>
-                        {index === 0 && <Label className="text-xs text-gray-400">Notes (Optional)</Label>}
-                        <Input
-                            className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                            placeholder="Additional notes or special instructions..."
-                            value={item.notes || ''}
-                            onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                        />
-                    </div>
+                    ))}
                 </div>
-            ))}
-            
-            {items.length < 10 && (
+            )}
+
+            {/* Add Labor Button at Bottom */}
+            <div className="pt-3 border-t border-[#2a2a2a]">
                 <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
                     onClick={addItem}
+                    size="sm"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Add Labor Item
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Labor
                 </Button>
-            )}
+            </div>
         </div>
     );
 } 

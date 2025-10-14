@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import { v4 as uuidv4 } from 'uuid'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "../../../types/work-order"
 import { useWorkOrderWithDetails, useUpdateWorkOrder } from "../../../hooks/use-work-orders"
@@ -13,19 +14,21 @@ import { CustomerInformation } from "./customer-information"
 import { VehicleInformation } from "./vehicle-information"
 import { WorkOrderNotes } from "./work-order-notes"
 import { WorkOrderModalFooter } from "./work-order-modal-footer"
-import { WorkOrderItemsList } from "../../work-order-items"
 import { WorkOrderRightPanel } from "./work-order-right-panel"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
+import { WorkOrderItemCard } from "../../work-order-items/work-order-item-card"
 import { SelectedTemplatesPanel } from "../../work-order-items/templates/selected-templates-panel"
 import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import { getWorkOrderItems } from "../../../lib/work-order-items-service"
+import { useWorkOrderItems } from "../../../hooks/use-work-order-items"
 import { useCreateInvoiceFromWorkOrder } from "../../../../financials/hooks/use-invoices"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 import { PanelProvider } from "../../../contexts"
 import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
 import { WorkOrderPartsItems } from "../WorkOrderPartsItems"
+import { CostSummary } from "./cost-summary"
 
 export interface WorkOrderDetailsModalProps {
     workOrder: WorkOrderKanbanItem
@@ -88,6 +91,9 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     
     // Fetch full work order details
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
+    
+    // Fetch work order items for cost summary
+    const { data: workOrderItems = [] } = useWorkOrderItems(initialWorkOrder.id)
     
     // Update work order mutation
     const updateWorkOrderMutation = useUpdateWorkOrder()
@@ -159,6 +165,45 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         }
     }, [workOrderDetails])
 
+    // Populate labor and parts items from fetched work order items
+    useEffect(() => {
+        if (workOrderItems && workOrderItems.length > 0) {
+            // Separate labor and parts items
+            const labor: LaborFormItem[] = []
+            const parts: PartFormItem[] = []
+
+            workOrderItems.forEach(item => {
+                if (item.item_type === 'labor') {
+                    labor.push({
+                        id: item.id,
+                        description: item.description,
+                        labor_hours: item.labor_hours || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.labor_hours || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        technician_id: item.technician_id || ''
+                    })
+                } else if (item.item_type === 'part') {
+                    parts.push({
+                        id: item.id,
+                        description: item.description,
+                        part_number: item.part_number || '',
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        supplier: item.supplier || '',
+                        category: item.category || '',
+                        warranty_period: item.warranty_period || '',
+                        notes: item.notes || ''
+                    })
+                }
+            })
+
+            setLaborItems(labor)
+            setPartsItems(parts)
+        }
+    }, [workOrderItems])
+
     const handleFieldChange = (field: string, value: any) => {
         setFormData(prev => ({
             ...prev,
@@ -228,9 +273,11 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         
         if (isAlreadySelected) {
             // Template already selected, don't add it again
+            toast.info('Template already selected')
             return
         }
         
+        // Add to selected templates
         const selectedTemplate: SelectedTemplate = {
             ...template,
             selectedQuantity: template.quantity,
@@ -238,6 +285,38 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
             selectedLaborHours: template.labor_hours
         }
         setSelectedTemplates(prev => [...prev, selectedTemplate])
+        
+        // Auto-populate the appropriate items list based on template type
+        if (template.item_type === 'labor') {
+            // Add to labor items
+            const newLaborItem: LaborFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                labor_hours: template.labor_hours || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.labor_hours || 1) * (template.unit_price || 0),
+                notes: template.description || '',
+                technician_id: ''
+            }
+            setLaborItems(prev => [...prev, newLaborItem])
+            toast.success(`Labor template "${template.name}" added to items`)
+        } else if (template.item_type === 'part') {
+            // Add to parts items
+            const newPartItem: PartFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                part_number: template.part_number || '',
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.quantity || 1) * (template.unit_price || 0),
+                supplier: template.supplier || '',
+                category: template.category || '',
+                warranty_period: template.warranty_period || '',
+                notes: template.description || ''
+            }
+            setPartsItems(prev => [...prev, newPartItem])
+            toast.success(`Part template "${template.name}" added to items`)
+        }
     }
 
     const handleRemoveTemplate = (templateId: string) => {
@@ -257,6 +336,13 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     // Labor items handlers
     const handleLaborItemsChange = (items: LaborFormItem[]) => {
         setLaborItems(items)
+        
+        // Update selected templates - remove any templates that no longer have corresponding items
+        // This ensures the green highlight is removed when items are deleted
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'labor' || itemDescriptions.includes(template.name)
+        ))
     }
 
     const handleLaborItemSaved = (item: any) => {
@@ -268,6 +354,13 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
     // Parts items handlers
     const handlePartsItemsChange = (items: PartFormItem[]) => {
         setPartsItems(items)
+        
+        // Update selected templates - remove any templates that no longer have corresponding items
+        // This ensures the green highlight is removed when items are deleted
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'part' || itemDescriptions.includes(template.name)
+        ))
     }
 
     const handlePartItemSaved = (item: any) => {
@@ -590,35 +683,60 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     onRemoveTag={handleRemoveTag}
                                 />
 
-                                {/* Work Order Items */}
-                                <WorkOrderItemsList 
-                                    workOrderId={initialWorkOrder.id}
-                                    shopId={initialWorkOrder.shop_id}
-                                    isEditable={canEdit()}
-                                />
+                                {/* Work Order Items - For Completed Work Orders (Read-Only Cards) */}
+                                {workOrderDetails?.status === 'completed' && workOrderItems.length > 0 && (
+                                    <div className="space-y-4 mt-6">
+                                        <h3 className="text-lg font-semibold text-white">Work Order Items</h3>
+                                        <div className="space-y-3">
+                                            {workOrderItems.map((item) => (
+                                                <WorkOrderItemCard
+                                                    key={item.id}
+                                                    item={item}
+                                                    isEditable={false}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                                {/* Labor Items - Only show when editing */}
-                                {isEditing && canEdit() && (
-                                    <div className="transition-opacity duration-200">
-                                        <WorkOrderLaborItems
-                                            items={laborItems}
-                                            onItemsChange={handleLaborItemsChange}
-                                            workOrderId={initialWorkOrder.id}
-                                            technicianOptions={technicianOptions}
-                                            onItemSaved={handleLaborItemSaved}
+                                {/* Cost Summary - Only show for completed work orders */}
+                                {workOrderDetails?.status === 'completed' && workOrderItems.length > 0 && (
+                                    <div className="mt-6">
+                                        <CostSummary 
+                                            workOrderItems={workOrderItems}
                                         />
                                     </div>
                                 )}
 
-                                {/* Parts Items - Only show when editing */}
-                                {isEditing && canEdit() && (
-                                    <div className="transition-opacity duration-200 mt-6">
-                                        <WorkOrderPartsItems
-                                            items={partsItems}
-                                            onItemsChange={handlePartsItemsChange}
-                                            workOrderId={initialWorkOrder.id}
-                                            onItemSaved={handlePartItemSaved}
-                                        />
+                                {/* Work Order Items - Show for in-progress work orders (Editable) */}
+                                {workOrderDetails?.status !== 'completed' && (
+                                    <div className="bg-[#131313] border border-[#333333] rounded-lg mt-6">
+                                        <div className="p-4">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <h3 className="text-lg font-semibold text-white">Work Order Items</h3>
+                                            </div>
+
+                                            {/* Labor Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderLaborItems
+                                                    items={laborItems}
+                                                    onItemsChange={handleLaborItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    technicianOptions={technicianOptions}
+                                                    onItemSaved={handleLaborItemSaved}
+                                                />
+                                            </div>
+
+                                            {/* Parts Items */}
+                                            <div>
+                                                <WorkOrderPartsItems
+                                                    items={partsItems}
+                                                    onItemsChange={handlePartsItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handlePartItemSaved}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 

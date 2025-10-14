@@ -3,7 +3,8 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { MinusIcon, PlusIcon, Package, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, Package } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../types/work-order-items";
@@ -127,170 +128,179 @@ export function WorkOrderPartsItems({
     };
 
     return (
-        <div className="sm:col-span-3 space-y-4">
+        <div className="space-y-4">
             <div className="flex items-center gap-2">
-                <h3 className="text-lg font-medium text-white">Parts Items</h3>
+                <Package className="h-5 w-5 text-green-400" />
+                <h3 className="text-lg font-semibold text-white">Parts Items</h3>
             </div>
-            
-            {items.map((item, index) => (
-                <div key={item.id} className="space-y-3 p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
-                    {/* First Row: Description and Part Number */}
-                    <div className="flex items-end gap-2">
-                        <div className="flex-grow">
-                            {index === 0 && <Label className="text-xs text-gray-400">Part Description</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="Enter part description (e.g., Brake pads, Oil filter)"
-                                value={item.description}
-                                onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                            />
-                        </div>
-                        
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Part Number</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="P/N"
-                                value={item.part_number || ''}
-                                onChange={(e) => updateItem(item.id, 'part_number', e.target.value)}
-                            />
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex gap-1 pb-px">
-                            {/* Save Button - Only show if workOrderId is provided */}
-                            {workOrderId && (
+
+            {items.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 border border-dashed border-[#2a2a2a] rounded-lg">
+                    No parts items added yet. Click "Add Part" to get started.
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {items.map((item, index) => (
+                        <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-3">
+                                <h4 className="text-sm font-medium text-green-400">Part Item {index + 1}</h4>
                                 <Button
                                     type="button"
-                                    variant="outline"
+                                    onClick={() => removeItem(item.id)}
+                                    variant="ghost"
                                     size="sm"
-                                    className="bg-green-600 border-green-600 text-white hover:bg-green-700 hover:text-white"
-                                    onClick={() => saveItemToDatabase(item)}
-                                    disabled={!item.description.trim() || item.quantity <= 0}
-                                    title="Save to work order"
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
                                 >
-                                    <Save className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
-                            )}
-                            
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
-                                onClick={() => removeItem(item.id)}
-                            >
-                                <MinusIcon className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Second Row: Quantity, Unit Price, Total */}
-                    <div className="flex items-end gap-2">
-                        <div className="w-24">
-                            {index === 0 && <Label className="text-xs text-gray-400">Qty</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="1"
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => {
-                                    if (parseInt(e.target.value) < 1) return;
-                                    updateItem(item.id, 'quantity', e.target.value);
-                                }}
-                            />
-                        </div>
-                        
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Unit Price</Label>}
-                            <div className="relative">
-                                <span className="text-gray-300 text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
-                                <Input
-                                    className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full pl-6"
-                                    placeholder="0.00"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={item.unit_price}
-                                    onChange={(e) => {
-                                        if (parseFloat(e.target.value) < 0) return;
-                                        updateItem(item.id, 'unit_price', e.target.value);
-                                    }}
-                                />
+                            <div className="space-y-3">
+                                {/* Description and Part Number */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label htmlFor={`part_description_${index}`} className="text-gray-400 text-xs">
+                                            Description *
+                                        </Label>
+                                        <Input
+                                            id={`part_description_${index}`}
+                                            value={item.description}
+                                            onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="e.g., Brake pads, Oil filter"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`part_number_${index}`} className="text-gray-400 text-xs">
+                                            Part Number
+                                        </Label>
+                                        <Input
+                                            id={`part_number_${index}`}
+                                            value={item.part_number || ''}
+                                            onChange={(e) => updateItem(item.id, 'part_number', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="P/N"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Quantity, Unit Price, Total */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <Label htmlFor={`part_quantity_${index}`} className="text-gray-400 text-xs">
+                                            Quantity *
+                                        </Label>
+                                        <Input
+                                            id={`part_quantity_${index}`}
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            min="1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`part_unit_price_${index}`} className="text-gray-400 text-xs">
+                                            Unit Price *
+                                        </Label>
+                                        <Input
+                                            id={`part_unit_price_${index}`}
+                                            type="number"
+                                            value={item.unit_price}
+                                            onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            min="0"
+                                            step="0.01"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`part_total_${index}`} className="text-gray-400 text-xs">
+                                            Total Price
+                                        </Label>
+                                        <Input
+                                            id={`part_total_${index}`}
+                                            type="number"
+                                            value={item.total_price.toFixed(2)}
+                                            disabled
+                                            className="bg-[#0a0a0a] border-[#2a2a2a] text-white font-semibold"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Supplier, Category, Warranty */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <Label htmlFor={`part_supplier_${index}`} className="text-gray-400 text-xs">
+                                            Supplier
+                                        </Label>
+                                        <Input
+                                            id={`part_supplier_${index}`}
+                                            value={item.supplier || ''}
+                                            onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="Supplier name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`part_category_${index}`} className="text-gray-400 text-xs">
+                                            Category
+                                        </Label>
+                                        <Input
+                                            id={`part_category_${index}`}
+                                            value={item.category || ''}
+                                            onChange={(e) => updateItem(item.id, 'category', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="Category"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`part_warranty_${index}`} className="text-gray-400 text-xs">
+                                            Warranty
+                                        </Label>
+                                        <Input
+                                            id={`part_warranty_${index}`}
+                                            value={item.warranty_period || ''}
+                                            onChange={(e) => updateItem(item.id, 'warranty_period', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="12 months"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Notes */}
+                                {item.notes !== undefined && (
+                                    <div>
+                                        <Label htmlFor={`part_notes_${index}`} className="text-gray-400 text-xs">
+                                            Notes (Optional)
+                                        </Label>
+                                        <Textarea
+                                            id={`part_notes_${index}`}
+                                            value={item.notes || ''}
+                                            onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
+                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            placeholder="Additional notes..."
+                                            rows={2}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
-
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Total</Label>}
-                            <div className="relative">
-                                <span className="text-gray-300 text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
-                                <Input
-                                    className="bg-[#0d0d0d] text-gray-300 text-sm border-[#626262] w-full pl-6"
-                                    value={item.total_price.toFixed(2)}
-                                    readOnly
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex-grow">
-                            {index === 0 && <Label className="text-xs text-gray-400">Supplier</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="Supplier name"
-                                value={item.supplier || ''}
-                                onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Third Row: Category, Warranty, Notes */}
-                    <div className="flex items-end gap-2">
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Category</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="Category"
-                                value={item.category || ''}
-                                onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                            />
-                        </div>
-
-                        <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Warranty</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="12 months"
-                                value={item.warranty_period || ''}
-                                onChange={(e) => updateItem(item.id, 'warranty_period', e.target.value)}
-                            />
-                        </div>
-
-                        <div className="flex-grow">
-                            {index === 0 && <Label className="text-xs text-gray-400">Notes (Optional)</Label>}
-                            <Input
-                                className="bg-[#0d0d0d] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
-                                placeholder="Additional notes or special instructions..."
-                                value={item.notes || ''}
-                                onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                            />
-                        </div>
-                    </div>
+                    ))}
                 </div>
-            ))}
-            
-            {items.length < 20 && (
+            )}
+
+            {/* Add Part Button at Bottom */}
+            <div className="pt-3 border-t border-[#2a2a2a]">
                 <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
                     onClick={addItem}
+                    size="sm"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                 >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Add Part Item
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Part
                 </Button>
-            )}
+            </div>
         </div>
     );
 }
