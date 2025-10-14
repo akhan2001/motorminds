@@ -32,11 +32,6 @@ const adminNavItems = [
 		icon: Database
 	},
 	{
-		name: 'Invoice Import',
-		href: '/admin/migrations/invoices',
-		icon: FileText
-	},
-	{
 		name: 'Settings',
 		href: '/admin/settings',
 		icon: Settings

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Database } from 'lucide-react'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'
 import AdminNav from '../../../components/AdminNav'
+import MigrationsNav from '../../../components/migrations/MigrationsNav'
 import { AdminService } from '../../../lib/admin-service'
 import { useInvoiceMigration } from '../../../hooks/use-invoice-migration'
 import { InvoiceMigrationFormData } from '../../../schemas/invoice-migration'
@@ -144,6 +145,9 @@ export default function InvoiceImportPage() {
                                 Import historical customer invoices from CSV files with AI-powered column mapping
                             </p>
                         </div>
+
+                        {/* Migrations Navigation */}
+                        <MigrationsNav />
 
                         {/* Progress Steps */}
                         <ProgressSteps currentStep={currentStep} />
