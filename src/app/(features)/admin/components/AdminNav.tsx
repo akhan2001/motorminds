@@ -28,8 +28,13 @@ const adminNavItems = [
 	},
 	{
 		name: 'Migrations',
-		href: '/admin/pages/migrations',
+		href: '/admin/migrations',
 		icon: Database
+	},
+	{
+		name: 'Invoice Import',
+		href: '/admin/migrations/invoices',
+		icon: FileText
 	},
 	{
 		name: 'Settings',
