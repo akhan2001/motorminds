@@ -1,23 +1,10 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
     Database,
     CheckCircle,
-    AlertTriangle,
-    XCircle,
-    RefreshCw,
-    Play,
-    Clock,
-    BarChart3,
-    Server,
-    Activity,
-    Settings,
-    TrendingUp,
-    FileText,
-    Upload
+    AlertTriangle
 } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import Link from 'next/link'
@@ -25,7 +12,7 @@ import AdminNav from '../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { BreadcrumbPage } from '@/components/ui/breadcrumb'
 import { StagingVerificationComponent } from '../../components/staging-verification'
-import { InvoiceStagingReviewComponent } from '../../components/invoice-staging-review'
+import MigrationsNav from '../../components/migrations/MigrationsNav'
 
 export default function MigrationsPage() {
     return (
@@ -65,6 +52,9 @@ export default function MigrationsPage() {
                                 Manage database migrations and verify staging tables
                             </p>
                         </div>
+
+                        {/* Migrations Navigation */}
+                        <MigrationsNav />
 
                         {/* Quick Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -122,73 +112,6 @@ export default function MigrationsPage() {
 
                         {/* Staging Verification Component */}
                         <StagingVerificationComponent />
-
-                        {/* Invoice Migration Section */}
-                        <Card className="bg-[#111111] border-[#2a2a2a] mt-8">
-                            <CardHeader>
-                                <CardTitle className="text-white flex items-center">
-                                    <FileText className="h-5 w-5 mr-2" />
-                                    Invoice History Migration
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                                        <Link href="/admin/migrations/invoices">
-                                            <Upload className="h-4 w-4 mr-2" />
-                                            Import Invoices
-                                        </Link>
-                                    </Button>
-                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                                        <Link href="/admin/migrations/invoices/review">
-                                            <FileText className="h-4 w-4 mr-2" />
-                                            Review Staging
-                                        </Link>
-                                    </Button>
-                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                                        <Link href="/admin/migrations/invoices/batches">
-                                            <Database className="h-4 w-4 mr-2" />
-                                            View Batches
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Invoice Staging Review Component */}
-                        <InvoiceStagingReviewComponent />
-
-                        {/* Quick Actions */}
-                        <Card className="bg-[#111111] border-[#2a2a2a] mt-8">
-                            <CardHeader>
-                                <CardTitle className="text-white flex items-center">
-                                    <Settings className="h-5 w-5 mr-2" />
-                                    Quick Actions
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                                        <Link href="/admin/migrations/verify">
-                                            <CheckCircle className="h-4 w-4 mr-2" />
-                                            Verify All Tables
-                                        </Link>
-                                    </Button>
-                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                                        <Link href="/admin/migrations/refresh">
-                                            <RefreshCw className="h-4 w-4 mr-2" />
-                                            Refresh Staging
-                                        </Link>
-                                    </Button>
-                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
-                                        <Link href="/admin/migrations/history">
-                                            <BarChart3 className="h-4 w-4 mr-2" />
-                                            View History
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
             </div>

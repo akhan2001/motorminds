@@ -29,7 +29,7 @@ export default function FileUploadComponent({
             <CardHeader>
                 <CardTitle className="text-white flex items-center">
                     <Upload className="h-5 w-5 mr-2" />
-                    Upload Invoice CSV File
+                    Upload CSV File
                 </CardTitle>
             </CardHeader>
             <CardContent>
