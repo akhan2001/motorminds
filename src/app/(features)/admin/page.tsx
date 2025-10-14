@@ -77,7 +77,7 @@ export default function AdminPage() {
 		{
 			title: 'Verify Staging Tables',
 			description: 'Check staging database table integrity and data quality',
-			href: '/admin/pages/migrations',
+			href: '/admin/migrations',
 			icon: Database,
 			color: 'bg-blue-600'
 		}

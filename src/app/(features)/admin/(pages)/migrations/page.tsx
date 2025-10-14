@@ -15,7 +15,9 @@ import {
     Server,
     Activity,
     Settings,
-    TrendingUp
+    TrendingUp,
+    FileText,
+    Upload
 } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import Link from 'next/link'
@@ -23,6 +25,7 @@ import AdminNav from '../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { BreadcrumbPage } from '@/components/ui/breadcrumb'
 import { StagingVerificationComponent } from '../../components/staging-verification'
+import { InvoiceStagingReviewComponent } from '../../components/invoice-staging-review'
 
 export default function MigrationsPage() {
     return (
@@ -119,6 +122,41 @@ export default function MigrationsPage() {
 
                         {/* Staging Verification Component */}
                         <StagingVerificationComponent />
+
+                        {/* Invoice Migration Section */}
+                        <Card className="bg-[#111111] border-[#2a2a2a] mt-8">
+                            <CardHeader>
+                                <CardTitle className="text-white flex items-center">
+                                    <FileText className="h-5 w-5 mr-2" />
+                                    Invoice History Migration
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+                                        <Link href="/admin/migrations/invoices">
+                                            <Upload className="h-4 w-4 mr-2" />
+                                            Import Invoices
+                                        </Link>
+                                    </Button>
+                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+                                        <Link href="/admin/migrations/invoices/review">
+                                            <FileText className="h-4 w-4 mr-2" />
+                                            Review Staging
+                                        </Link>
+                                    </Button>
+                                    <Button asChild variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+                                        <Link href="/admin/migrations/invoices/batches">
+                                            <Database className="h-4 w-4 mr-2" />
+                                            View Batches
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Invoice Staging Review Component */}
+                        <InvoiceStagingReviewComponent />
 
                         {/* Quick Actions */}
                         <Card className="bg-[#111111] border-[#2a2a2a] mt-8">
