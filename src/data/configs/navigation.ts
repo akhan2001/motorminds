@@ -81,6 +81,11 @@ export const navigationConfig: NavItem[] = [
         requiredRoles: ['admin', 'super', 'user']
     },
     {
+        name: "Migrations",
+        href: "/migrations",
+        requiredRoles: ['admin', 'super', 'user']
+    },
+    {
         name: "Admin",
         href: "/admin",
         requiredRoles: ['admin', 'super']
