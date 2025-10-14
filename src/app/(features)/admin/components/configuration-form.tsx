@@ -98,23 +98,43 @@ export default function ConfigurationFormComponent({
                             </div>
                             
                             {watchReferenceCustomers && (
-                                <div className="ml-6 p-4 bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg">
-                                    <Label className="text-white text-sm">Which column identifies the customer? *</Label>
-                                    <Select onValueChange={(value) => setValue('customerIdColumn', value)}>
-                                        <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white mt-2">
-                                            <SelectValue placeholder="Select column (email, phone, name)" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {csvAnalysis.headers.filter(h => h && h.trim()).map((header) => (
-                                                <SelectItem key={header} value={header}>
-                                                    {header}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.customerIdColumn && (
-                                        <p className="text-red-400 text-sm mt-1">{errors.customerIdColumn.message}</p>
-                                    )}
+                                <div className="ml-6 p-4 bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg space-y-4">
+                                    <div>
+                                        <Label className="text-white text-sm">Which CSV column contains customer data? *</Label>
+                                        <Select onValueChange={(value) => setValue('customerIdColumn', value)}>
+                                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white mt-2">
+                                                <SelectValue placeholder="Select CSV column (email, phone, name)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {csvAnalysis.headers.filter(h => h && h.trim()).map((header) => (
+                                                    <SelectItem key={header} value={header}>
+                                                        {header}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.customerIdColumn && (
+                                            <p className="text-red-400 text-sm mt-1">{errors.customerIdColumn.message}</p>
+                                        )}
+                                    </div>
+                                    
+                                    <div>
+                                        <Label className="text-white text-sm">Match against which staging_customers column? *</Label>
+                                        <Select onValueChange={(value) => setValue('customerMatchColumn', value)}>
+                                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white mt-2">
+                                                <SelectValue placeholder="Select staging column to match" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="customer_email">Email</SelectItem>
+                                                <SelectItem value="customer_phone">Phone</SelectItem>
+                                                <SelectItem value="customer_name">Name</SelectItem>
+                                                <SelectItem value="license_plate">License Plate</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.customerMatchColumn && (
+                                            <p className="text-red-400 text-sm mt-1">{errors.customerMatchColumn.message}</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

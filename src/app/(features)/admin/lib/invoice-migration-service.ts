@@ -344,14 +344,15 @@ Only include fields you're confident about (>0.7 confidence). Return ONLY valid 
                 }
             })
 
-            // Note: customer_id and matched_vehicle_id will be filled in during matching phase
-            // For now, we store the identifiers in custom_fields for reference
-            if (formData.referenceCustomers && formData.customerIdColumn) {
-                const customerIdValue = row[formData.customerIdColumn]
-                if (customerIdValue) {
+            // Customer matching logic
+            if (formData.referenceCustomers && formData.customerIdColumn && formData.customerMatchColumn) {
+                const customerValue = row[formData.customerIdColumn]
+                if (customerValue) {
+                    // Store the identifier for later matching
                     stagingRow.custom_fields = {
                         ...(stagingRow.custom_fields || {}),
-                        customer_identifier: customerIdValue
+                        customer_identifier: customerValue,
+                        customer_match_column: formData.customerMatchColumn
                     }
                 }
             }
@@ -389,11 +390,26 @@ Only include fields you're confident about (>0.7 confidence). Return ONLY valid 
             }
 
             console.log('Successfully inserted records:', data?.length)
+            
+            // If customer matching is enabled, run the matching process
+            let customerMatchResults = { matched: 0, unmatched: 0 }
+            if (formData.referenceCustomers && formData.customerIdColumn && formData.customerMatchColumn) {
+                try {
+                    console.log('Running customer matching...')
+                    customerMatchResults = await this.matchCustomersToStaging(batchId)
+                    console.log('Customer matching results:', customerMatchResults)
+                } catch (error) {
+                    console.error('Customer matching failed:', error)
+                    // Don't fail the import if matching fails
+                }
+            }
+            
             return {
                 success: true,
                 imported_count: data?.length || stagingRecords.length,
                 failed_count: 0,
-                batch_id: batchId
+                batch_id: batchId,
+                customer_matches: customerMatchResults
             }
         } catch (error: any) {
             console.error('Import error:', error)
@@ -404,6 +420,69 @@ Only include fields you're confident about (>0.7 confidence). Return ONLY valid 
                 batch_id: batchId,
                 errors: [error.message || 'Unknown error occurred']
             }
+        }
+    }
+
+    async matchCustomersToStaging(batchId: string): Promise<{ matched: number, unmatched: number }> {
+        const supabase = createClient()
+        
+        try {
+            // Get all invoices in this batch that need customer matching
+            const { data: invoices, error: invoicesError } = await supabase
+                .from('staging_customer_invoices')
+                .select('id, custom_fields, shop_id')
+                .eq('import_batch_id', batchId)
+                .not('custom_fields->customer_identifier', 'is', null)
+
+            if (invoicesError) throw invoicesError
+
+            let matched = 0
+            let unmatched = 0
+
+            for (const invoice of invoices || []) {
+                const customerIdentifier = invoice.custom_fields?.customer_identifier
+                const matchColumn = invoice.custom_fields?.customer_match_column
+
+                if (!customerIdentifier || !matchColumn) {
+                    unmatched++
+                    continue
+                }
+
+                // Find matching customer in staging_customers
+                const { data: customer, error: customerError } = await supabase
+                    .from('staging_customers')
+                    .select('id')
+                    .eq('shop_id', invoice.shop_id)
+                    .eq(matchColumn, customerIdentifier)
+                    .limit(1)
+                    .single()
+
+                if (customerError || !customer) {
+                    unmatched++
+                    continue
+                }
+
+                // Update invoice with matched customer_id
+                const { error: updateError } = await supabase
+                    .from('staging_customer_invoices')
+                    .update({ 
+                        customer_id: customer.id,
+                        import_status: 'matched'
+                    })
+                    .eq('id', invoice.id)
+
+                if (updateError) {
+                    console.error('Error updating invoice with customer:', updateError)
+                    unmatched++
+                } else {
+                    matched++
+                }
+            }
+
+            return { matched, unmatched }
+        } catch (error: any) {
+            console.error('Error matching customers:', error)
+            throw error
         }
     }
 }

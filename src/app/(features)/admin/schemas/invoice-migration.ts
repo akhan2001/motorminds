@@ -5,6 +5,7 @@ export const InvoiceMigrationFormSchema = z.object({
     
     referenceCustomers: z.boolean().default(false),
     customerIdColumn: z.string().optional(),
+    customerMatchColumn: z.string().optional(),
     
     referenceVehicles: z.boolean().default(false),
     vehicleIdColumn: z.string().optional(),
@@ -20,6 +21,14 @@ export const InvoiceMigrationFormSchema = z.object({
 }, {
     message: "Customer ID column is required when referencing customers",
     path: ["customerIdColumn"]
+}).refine((data) => {
+    if (data.referenceCustomers && !data.customerMatchColumn) {
+        return false
+    }
+    return true
+}, {
+    message: "Customer match column is required when referencing customers",
+    path: ["customerMatchColumn"]
 }).refine((data) => {
     if (data.referenceVehicles && !data.vehicleIdColumn) {
         return false
