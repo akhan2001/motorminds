@@ -29,13 +29,15 @@ interface WorkOrderPartsItemsProps {
     onItemsChange: (items: PartFormItem[]) => void;
     workOrderId?: string; // Optional for creating items
     onItemSaved?: (item: WorkOrderItem) => void; // Callback when item is saved to database
+    isEditing?: boolean; // Whether the work order is in edit mode
 }
 
 export function WorkOrderPartsItems({ 
     items, 
     onItemsChange, 
     workOrderId, 
-    onItemSaved 
+    onItemSaved,
+    isEditing = true
 }: WorkOrderPartsItemsProps) {
     
     // Helper function to convert form item to service format
@@ -100,20 +102,60 @@ export function WorkOrderPartsItems({
         }]);
     };
 
-    const acceptItem = (id: string) => {
+    const acceptItem = async (id: string) => {
         const updatedItems = items.map(item => 
             item.id === id ? { ...item, active: true } : item
         );
         onItemsChange(updatedItems);
-        toast.success('Part item accepted');
+        
+        // Save to database if workOrderId exists
+        if (workOrderId) {
+            try {
+                const item = items.find(item => item.id === id);
+                if (item) {
+                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: true });
+                    toast.success('Part item accepted and saved');
+                }
+            } catch (error: any) {
+                console.error('Error updating part item:', error);
+                toast.error('Failed to save acceptance status');
+                // Revert local state on error
+                const revertedItems = items.map(item => 
+                    item.id === id ? { ...item, active: undefined } : item
+                );
+                onItemsChange(revertedItems);
+            }
+        } else {
+            toast.success('Part item accepted');
+        }
     };
 
-    const declineItem = (id: string) => {
+    const declineItem = async (id: string) => {
         const updatedItems = items.map(item => 
             item.id === id ? { ...item, active: false } : item
         );
         onItemsChange(updatedItems);
-        toast.info('Part item declined');
+        
+        // Save to database if workOrderId exists
+        if (workOrderId) {
+            try {
+                const item = items.find(item => item.id === id);
+                if (item) {
+                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: false });
+                    toast.info('Part item declined and saved');
+                }
+            } catch (error: any) {
+                console.error('Error updating part item:', error);
+                toast.error('Failed to save decline status');
+                // Revert local state on error
+                const revertedItems = items.map(item => 
+                    item.id === id ? { ...item, active: undefined } : item
+                );
+                onItemsChange(revertedItems);
+            }
+        } else {
+            toast.info('Part item declined');
+        }
     };
 
     const removeItem = (id: string) => {
@@ -178,43 +220,45 @@ export function WorkOrderPartsItems({
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    {/* Accept/Decline buttons */}
-                                    {item.active !== true && (
+                                {isEditing && (
+                                    <div className="flex items-center gap-1">
+                                        {/* Accept/Decline buttons */}
+                                        {item.active !== true && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => acceptItem(item.id)}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-green-400 hover:text-green-300 hover:bg-green-900/20 h-7 w-7 p-0"
+                                                title="Accept"
+                                            >
+                                                <CheckCircle className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                        {item.active !== false && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => declineItem(item.id)}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
+                                                title="Decline"
+                                            >
+                                                <XCircle className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                         <Button
                                             type="button"
-                                            onClick={() => acceptItem(item.id)}
+                                            onClick={() => removeItem(item.id)}
                                             variant="ghost"
                                             size="sm"
-                                            className="text-green-400 hover:text-green-300 hover:bg-green-900/20 h-7 w-7 p-0"
-                                            title="Accept"
+                                            className="text-gray-400 hover:text-gray-300 hover:bg-gray-900/20 h-7 w-7 p-0"
+                                            title="Delete"
                                         >
-                                            <CheckCircle className="h-4 w-4" />
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
-                                    )}
-                                    {item.active !== false && (
-                                        <Button
-                                            type="button"
-                                            onClick={() => declineItem(item.id)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
-                                            title="Decline"
-                                        >
-                                            <XCircle className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeItem(item.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-gray-400 hover:text-gray-300 hover:bg-gray-900/20 h-7 w-7 p-0"
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-3">
@@ -229,6 +273,7 @@ export function WorkOrderPartsItems({
                                             value={item.description}
                                             onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             placeholder="e.g., Brake pads, Oil filter"
                                         />
                                     </div>
@@ -241,6 +286,7 @@ export function WorkOrderPartsItems({
                                             value={item.part_number || ''}
                                             onChange={(e) => updateItem(item.id, 'part_number', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             placeholder="P/N"
                                         />
                                     </div>
@@ -258,6 +304,7 @@ export function WorkOrderPartsItems({
                                             value={item.quantity}
                                             onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             min="1"
                                         />
                                     </div>
@@ -271,6 +318,7 @@ export function WorkOrderPartsItems({
                                             value={item.unit_price}
                                             onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             min="0"
                                             step="0.01"
                                         />
@@ -300,6 +348,7 @@ export function WorkOrderPartsItems({
                                             value={item.supplier || ''}
                                             onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             placeholder="Supplier name"
                                         />
                                     </div>
@@ -312,6 +361,7 @@ export function WorkOrderPartsItems({
                                             value={item.category || ''}
                                             onChange={(e) => updateItem(item.id, 'category', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             placeholder="Category"
                                         />
                                     </div>
@@ -324,6 +374,7 @@ export function WorkOrderPartsItems({
                                             value={item.warranty_period || ''}
                                             onChange={(e) => updateItem(item.id, 'warranty_period', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             placeholder="12 months"
                                         />
                                     </div>
@@ -340,6 +391,7 @@ export function WorkOrderPartsItems({
                                             value={item.notes || ''}
                                             onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            disabled={!isEditing}
                                             placeholder="Additional notes..."
                                             rows={2}
                                         />
@@ -351,18 +403,20 @@ export function WorkOrderPartsItems({
                 </div>
             )}
 
-            {/* Add Part Button at Bottom */}
-            <div className="pt-3 border-t border-[#2a2a2a]">
-                <Button
-                    type="button"
-                    onClick={addItem}
-                    size="sm"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Part
-                </Button>
-            </div>
+            {/* Add Part Button at Bottom - Only show when editing */}
+            {isEditing && (
+                <div className="pt-3 border-t border-[#2a2a2a]">
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        size="sm"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Part
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

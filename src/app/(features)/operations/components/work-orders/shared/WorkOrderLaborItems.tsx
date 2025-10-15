@@ -29,6 +29,7 @@ interface WorkOrderLaborItemsProps {
     workOrderId?: string; // Optional for creating items
     technicianOptions?: { id: string; name: string }[];
     onItemSaved?: (item: WorkOrderItem) => void; // Callback when item is saved to database
+    isEditing?: boolean; // Whether the work order is in edit mode
 }
 
 export function WorkOrderLaborItems({ 
@@ -36,7 +37,8 @@ export function WorkOrderLaborItems({
     onItemsChange, 
     workOrderId, 
     technicianOptions = [], 
-    onItemSaved 
+    onItemSaved,
+    isEditing = true
 }: WorkOrderLaborItemsProps) {
     
     // Helper function to convert form item to service format
@@ -73,6 +75,7 @@ export function WorkOrderLaborItems({
             toast.error(error.message || 'Failed to save labor item');
         }
     };
+
     
     const addItem = () => {
         if (items.length >= 10) {
@@ -91,20 +94,60 @@ export function WorkOrderLaborItems({
         }]);
     };
 
-    const acceptItem = (id: string) => {
+    const acceptItem = async (id: string) => {
         const updatedItems = items.map(item => 
             item.id === id ? { ...item, active: true } : item
         );
         onItemsChange(updatedItems);
-        toast.success('Labor item accepted');
+        
+        // Save to database if workOrderId exists
+        if (workOrderId) {
+            try {
+                const item = items.find(item => item.id === id);
+                if (item) {
+                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: true });
+                    toast.success('Labor item accepted and saved');
+                }
+            } catch (error: any) {
+                console.error('Error updating labor item:', error);
+                toast.error('Failed to save acceptance status');
+                // Revert local state on error
+                const revertedItems = items.map(item => 
+                    item.id === id ? { ...item, active: undefined } : item
+                );
+                onItemsChange(revertedItems);
+            }
+        } else {
+            toast.success('Labor item accepted');
+        }
     };
 
-    const declineItem = (id: string) => {
+    const declineItem = async (id: string) => {
         const updatedItems = items.map(item => 
             item.id === id ? { ...item, active: false } : item
         );
         onItemsChange(updatedItems);
-        toast.info('Labor item declined');
+        
+        // Save to database if workOrderId exists
+        if (workOrderId) {
+            try {
+                const item = items.find(item => item.id === id);
+                if (item) {
+                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: false });
+                    toast.info('Labor item declined and saved');
+                }
+            } catch (error: any) {
+                console.error('Error updating labor item:', error);
+                toast.error('Failed to save decline status');
+                // Revert local state on error
+                const revertedItems = items.map(item => 
+                    item.id === id ? { ...item, active: undefined } : item
+                );
+                onItemsChange(revertedItems);
+            }
+        } else {
+            toast.info('Labor item declined');
+        }
     };
 
     const removeItem = (id: string) => {
@@ -171,43 +214,45 @@ export function WorkOrderLaborItems({
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    {/* Accept/Decline buttons */}
-                                    {item.active !== true && (
+                                {isEditing && (
+                                    <div className="flex items-center gap-1">
+                                        {/* Accept/Decline buttons */}
+                                        {item.active !== true && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => acceptItem(item.id)}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-green-400 hover:text-green-300 hover:bg-green-900/20 h-7 w-7 p-0"
+                                                title="Accept"
+                                            >
+                                                <CheckCircle className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                        {item.active !== false && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => declineItem(item.id)}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
+                                                title="Decline"
+                                            >
+                                                <XCircle className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                         <Button
                                             type="button"
-                                            onClick={() => acceptItem(item.id)}
+                                            onClick={() => removeItem(item.id)}
                                             variant="ghost"
                                             size="sm"
-                                            className="text-green-400 hover:text-green-300 hover:bg-green-900/20 h-7 w-7 p-0"
-                                            title="Accept"
+                                            className="text-gray-400 hover:text-gray-300 hover:bg-gray-900/20 h-7 w-7 p-0"
+                                            title="Delete"
                                         >
-                                            <CheckCircle className="h-4 w-4" />
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
-                                    )}
-                                    {item.active !== false && (
-                                        <Button
-                                            type="button"
-                                            onClick={() => declineItem(item.id)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
-                                            title="Decline"
-                                        >
-                                            <XCircle className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeItem(item.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-gray-400 hover:text-gray-300 hover:bg-gray-900/20 h-7 w-7 p-0"
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-3">
@@ -222,6 +267,7 @@ export function WorkOrderLaborItems({
                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                         className="bg-[#111111] border-[#2a2a2a] text-white"
                                         placeholder="e.g., Oil change, Brake repair"
+                                        disabled={!isEditing}
                                     />
                                 </div>
 
@@ -240,6 +286,7 @@ export function WorkOrderLaborItems({
                                             placeholder="2.5"
                                             min="0"
                                             step="0.25"
+                                            disabled={!isEditing}
                                         />
                                     </div>
                                     <div>
@@ -254,6 +301,7 @@ export function WorkOrderLaborItems({
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
                                             min="0"
                                             step="0.01"
+                                            disabled={!isEditing}
                                         />
                                     </div>
                                 </div>
@@ -271,6 +319,7 @@ export function WorkOrderLaborItems({
                                             placeholder="Select Technician"
                                             className="bg-[#111111] border-[#2a2a2a]"
                                             showNoneOption={true}
+                                            disabled={!isEditing}
                                         />
                                     </div>
                                     <div>
@@ -300,6 +349,7 @@ export function WorkOrderLaborItems({
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
                                             placeholder="Additional notes..."
                                             rows={2}
+                                            disabled={!isEditing}
                                         />
                                     </div>
                                 )}
@@ -309,18 +359,20 @@ export function WorkOrderLaborItems({
                 </div>
             )}
 
-            {/* Add Labor Button at Bottom */}
-            <div className="pt-3 border-t border-[#2a2a2a]">
-                <Button
-                    type="button"
-                    onClick={addItem}
-                    size="sm"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Labor
-                </Button>
-            </div>
+            {/* Add Labor Button at Bottom - Only show when editing */}
+            {isEditing && (
+                <div className="pt-3 border-t border-[#2a2a2a]">
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        size="sm"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Labor
+                    </Button>
+                </div>
+            )}
         </div>
     );
 } 
