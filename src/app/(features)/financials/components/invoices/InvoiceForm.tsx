@@ -13,8 +13,8 @@ import { useAuth } from '../../../operations/hooks/use-auth'
 import { useInvoice, useCreateInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
 import { toast } from 'sonner'
-import { CustomerInformation } from '../../../operations/components/work-orders/WorkOrderModal/customer-information'
-import { VehicleInformation } from '../../../operations/components/work-orders/WorkOrderModal/vehicle-information'
+import { CustomerInformation } from '../../../operations/components/work-orders/shared/customer-information'
+import { VehicleInformation } from '../../../operations/components/work-orders/shared/vehicle-information'
 
 interface InvoiceFormProps {
     invoiceId: string | null

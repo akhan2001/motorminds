@@ -33,6 +33,7 @@ export interface VehicleDropdownProps {
     disabled?: boolean
     className?: string
     isLoading?: boolean
+    refreshTrigger?: number // Add this to force refresh when a new vehicle is created
 }
 
 export interface VehicleFormData {

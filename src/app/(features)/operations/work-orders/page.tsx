@@ -4,8 +4,9 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
-import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
-import { WorkOrderCompletionModal } from "../components/work-orders/WorkOrderCompletionModal";
+import { WorkOrderCreateModal } from "../components/work-orders/create";
+import { WorkOrderEditModal } from "../components/work-orders/manage/work-order-edit-modal";
+import { WorkOrderCompletionModal } from "../components/work-orders/complete";
 import { WorkOrderItemTemplatesModal } from "../components/work-order-items/templates/work-order-item-templates-modal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
@@ -37,10 +38,10 @@ async function createWorkOrderItemsFromTemplates(workOrderId: string, selectedTe
             labor_hours: template.selectedLaborHours || template.labor_hours,
             technician_id: template.selectedTechnicianId,
         }
-        
+
         return WorkOrderItemsService.createWorkOrderItem(itemData)
     })
-    
+
     return Promise.all(itemPromises)
 }
 
@@ -57,10 +58,10 @@ async function createWorkOrderItemsFromLaborItems(workOrderId: string, laborItem
             notes: item.notes,
             technician_id: item.technician_id,
         }
-        
+
         return WorkOrderItemsService.createWorkOrderItem(itemData)
     })
-    
+
     return Promise.all(itemPromises)
 }
 
@@ -79,30 +80,30 @@ async function createWorkOrderItemsFromPartsItems(workOrderId: string, partsItem
             warranty_period: item.warranty_period,
             notes: item.notes,
         }
-        
+
         return WorkOrderItemsService.createWorkOrderItem(itemData)
     })
-    
+
     return Promise.all(itemPromises)
 }
 
 // Helper function to transform WorkOrderWithDetails to WorkOrderKanbanItem
 function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOrderKanbanItem {
     // Format customer display
-    const customerDisplay = workOrder.customer 
-        ? workOrder.customer.customer_name 
+    const customerDisplay = workOrder.customer
+        ? workOrder.customer.customer_name
         : 'Unknown Customer'
-    
+
     // Format vehicle display  
-    const vehicleDisplay = workOrder.vehicle 
+    const vehicleDisplay = workOrder.vehicle
         ? `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}${workOrder.vehicle.license_plate ? ` (${workOrder.vehicle.license_plate})` : ''}`
         : 'Unknown Vehicle'
-    
+
     // Format technician display
-    const technicianDisplay = workOrder.technician 
+    const technicianDisplay = workOrder.technician
         ? `${workOrder.technician.first_name} ${workOrder.technician.last_name || ''}`
         : workOrder.assigned_technician_id || 'Unassigned'
-        
+
     return {
         id: workOrder.id,
         title: workOrder.title,
@@ -123,29 +124,29 @@ function WorkOrdersContent() {
     // Navigation
     const router = useRouter()
     const searchParams = useSearchParams()
-    
+
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
-    
+
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
     const createWorkOrderMutation = useCreateWorkOrderWithDependencies()
     const updateWorkOrderMutation = useUpdateWorkOrder()
     const deleteWorkOrderMutation = useDeleteWorkOrder()
-    
+
     // Combined loading state
     const isLoading = authLoading || (shopId && workOrdersLoading)
     // Combined error state
     const error = authError || workOrdersError
-    
+
     // Transform work orders to kanban format
     const kanbanData = useMemo(() => {
         if (!workOrders) return []
-        
+
         const pending = workOrders.filter(wo => wo.status === 'pending' || wo.status === 'approved')
         const inProgress = workOrders.filter(wo => wo.status === 'in_progress' || wo.status === 'waiting_parts' || wo.status === 'waiting_customer')
         const completed = workOrders.filter(wo => wo.status === 'completed' || wo.status === 'invoiced')
-        
+
         return [
             {
                 id: 'pending',
@@ -155,7 +156,7 @@ function WorkOrdersContent() {
             },
             {
                 id: 'in-progress',
-                title: 'In Progress', 
+                title: 'In Progress',
                 color: 'bg-blue-500',
                 items: inProgress.map(transformWorkOrderToKanbanItem)
             },
@@ -167,33 +168,33 @@ function WorkOrdersContent() {
             }
         ]
     }, [workOrders])
-    
+
     // Calculate stats using custom hook
     const stats = useWorkOrderStats(kanbanData)
-    
+
     // Modal state
     const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrderKanbanItem | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-    
+
     // View state
     const [isCompactView, setIsCompactView] = useState(false)
-    
+
     // Completion modal state
     const [completionWorkOrder, setCompletionWorkOrder] = useState<WorkOrderWithDetails | null>(null)
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
-    
+
     // Templates modal state
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
 
     // Handle URL parameter changes to open/close modal
     useEffect(() => {
         const workOrderId = searchParams?.get('id')
-        
+
         if (workOrderId && workOrders) {
             // Find the work order in the current data
             const foundWorkOrder = workOrders.find(wo => wo.id === workOrderId)
-            
+
             if (foundWorkOrder) {
                 // Convert to kanban item format
                 const kanbanItem = transformWorkOrderToKanbanItem(foundWorkOrder)
@@ -235,6 +236,11 @@ function WorkOrdersContent() {
         setIsTemplatesModalOpen(false)
     }
 
+    // Handle work order items
+    const handleWorkOrderItems = () => {
+        router.push('/operations/work-order-items')
+    }
+
     // Handle create modal close
     const handleCreateModalClose = () => {
         setIsCreateModalOpen(false)
@@ -261,7 +267,7 @@ function WorkOrdersContent() {
         if (completionWorkOrder) {
             try {
                 // Update work order status to completed
-                const updateData: Partial<WorkOrder> = { 
+                const updateData: Partial<WorkOrder> = {
                     status: 'completed',
                     updated_at: new Date().toISOString(),
                     completed_at: new Date().toISOString()
@@ -274,7 +280,7 @@ function WorkOrdersContent() {
 
                 // Refetch work orders
                 refetch()
-                
+
                 // Close modal
                 handleCompletionModalClose()
             } catch (error) {
@@ -323,10 +329,10 @@ function WorkOrdersContent() {
                     mileage: workOrderData.vehicleMileage || undefined,
                 }
             }
-            
+
             console.log('Creating work order with payload:', payload)
             const newWorkOrder = await createWorkOrderMutation.mutateAsync(payload)
-            
+
             // Track total items created for user feedback
             let totalItemsCreated = 0
 
@@ -364,7 +370,7 @@ function WorkOrdersContent() {
             }
 
             setIsCreateModalOpen(false)
-            
+
             // Show success message with items count
             if (totalItemsCreated > 0) {
                 toast.success(`Work order created with ${totalItemsCreated} items`)
@@ -386,7 +392,7 @@ function WorkOrdersContent() {
         try {
             // Use the work order ID from the updated work order
             const workOrderId = updatedWorkOrder.id
-            
+
             // Prepare the update data
             const updateData: Partial<WorkOrder> = {
                 title: updatedWorkOrder.title,
@@ -415,7 +421,7 @@ function WorkOrdersContent() {
 
             // Refetch to get updated data
             refetch()
-            
+
             // Update local state
             setSelectedWorkOrder(updatedWorkOrder)
         } catch (error) {
@@ -471,7 +477,7 @@ function WorkOrdersContent() {
                                 <p className="text-gray-400 text-sm mb-3">
                                     {error instanceof Error ? error.message : 'Unknown error occurred'}
                                 </p>
-                                <button 
+                                <button
                                     onClick={() => refetch()}
                                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
                                 >
@@ -487,9 +493,9 @@ function WorkOrdersContent() {
 
     // Don't render main content if we don't have authentication data
     if (!shopId || !user) {
-    return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
-            <Nav />
+        return (
+            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+                <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -508,7 +514,7 @@ function WorkOrdersContent() {
     }
 
     return (
-        <DragDropProvider 
+        <DragDropProvider
             onWorkOrderUpdate={(workOrderId, newStatus) => {
                 // Refetch work orders when status is updated via drag and drop
                 refetch()
@@ -518,14 +524,14 @@ function WorkOrdersContent() {
             <div className="h-screen flex flex-col bg-[#0d0d0d]">
                 <Nav />
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <WorkOrderHeader 
+                    <WorkOrderHeader
                         isCompactView={isCompactView}
                         onToggleView={handleToggleView}
                         onNewWorkOrder={handleNewWorkOrder}
                         onTemplatesClick={handleTemplatesClick}
                     />
-            <div className="flex-1 overflow-hidden">
-                        <WorkOrderKanban 
+                    <div className="flex-1 overflow-hidden">
+                        <WorkOrderKanban
                             columns={kanbanData}
                             onCardClick={handleCardClick}
                             isCompactView={isCompactView}
@@ -533,9 +539,9 @@ function WorkOrdersContent() {
                     </div>
                 </div>
 
-                {/* Work Order Details Modal */}
+                {/* Work Order Edit Modal (Manage Phase) */}
                 {isModalOpen && selectedWorkOrder && (
-                    <WorkOrderDetailsModal
+                    <WorkOrderEditModal
                         workOrder={selectedWorkOrder}
                         onClose={handleModalClose}
                         onSave={handleWorkOrderSave}
@@ -545,7 +551,7 @@ function WorkOrdersContent() {
 
                 {/* Work Order Create Modal */}
                 {isCreateModalOpen && (
-                    <WorkOrderCreateModal 
+                    <WorkOrderCreateModal
                         onClose={handleCreateModalClose}
                         onSave={handleWorkOrderCreate}
                         shopId={shopId}

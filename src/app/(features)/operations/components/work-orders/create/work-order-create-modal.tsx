@@ -2,25 +2,26 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import { v4 as uuidv4 } from 'uuid'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { WorkOrderPriority } from "../../../types/work-order"
-import { WorkOrderModalHeader } from "./work-order-modal-header"
-// import { WorkOrderStatusBar } from "./work-order-status-bar"
-import { WorkOrderInformation } from "./work-order-information"
-import { CustomerInformation } from "./customer-information"
-import { VehicleInformation } from "./vehicle-information"
-import { FinancialInformation } from "./financial-information"
-import { WorkOrderNotes } from "./work-order-notes"
-import { WorkOrderModalFooter } from "./work-order-modal-footer"
+import {
+    WorkOrderModalHeader,
+    WorkOrderInformation,
+    CustomerInformation,
+    VehicleInformation,
+    WorkOrderNotes,
+    WorkOrderModalFooter,
+    WorkOrderLaborItems,
+    WorkOrderPartsItems
+} from "../shared"
+import { FinancialInformation } from "../manage/financial-information"
 import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
-import { SelectedTemplatesPanel } from "../../work-order-items/templates/selected-templates-panel"
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import type { WorkOrderItemCreateData } from "../../../types/work-order-items"
 import { PanelProvider } from "../../../contexts"
 import { Input } from "@/components/ui/input"
-import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
-import { WorkOrderPartsItems } from "../WorkOrderPartsItems"
 
 // Define the LaborFormItem interface locally to match the component
 interface LaborFormItem {
@@ -230,6 +231,13 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             ...prev,
             laborItems: items
         }))
+        
+        // Update selected templates - remove any templates that no longer have corresponding items
+        // This ensures the green highlight is removed when items are deleted
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'labor' || itemDescriptions.includes(template.name)
+        ))
     }
 
     const handleLaborItemSaved = (item: any) => {
@@ -243,6 +251,13 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             ...prev,
             partsItems: items
         }))
+        
+        // Update selected templates - remove any templates that no longer have corresponding items
+        // This ensures the green highlight is removed when items are deleted
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'part' || itemDescriptions.includes(template.name)
+        ))
     }
 
     const handlePartItemSaved = (item: any) => {
@@ -257,9 +272,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         
         if (isAlreadySelected) {
             // Template already selected, don't add it again
+            toast.info('Template already selected')
             return
         }
         
+        // Add to selected templates
         const selectedTemplate: SelectedTemplate = {
             ...template,
             selectedQuantity: template.quantity,
@@ -267,20 +284,44 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             selectedLaborHours: template.labor_hours
         }
         setSelectedTemplates(prev => [...prev, selectedTemplate])
-    }
-
-    const handleRemoveTemplate = (templateId: string) => {
-        setSelectedTemplates(prev => prev.filter(template => template.id !== templateId))
-    }
-
-    const handleUpdateTemplate = (templateId: string, updates: Partial<SelectedTemplate>) => {
-        setSelectedTemplates(prev => 
-            prev.map(template => 
-                template.id === templateId 
-                    ? { ...template, ...updates }
-                    : template
-            )
-        )
+        
+        // Auto-populate the appropriate items list based on template type
+        if (template.item_type === 'labor') {
+            // Add to labor items
+            const newLaborItem: LaborFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                labor_hours: template.labor_hours || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.labor_hours || 1) * (template.unit_price || 0),
+                notes: template.description || '',
+                technician_id: ''
+            }
+            setFormData(prev => ({
+                ...prev,
+                laborItems: [...prev.laborItems, newLaborItem]
+            }))
+            toast.success(`Labor template "${template.name}" added to items`)
+        } else if (template.item_type === 'part') {
+            // Add to parts items
+            const newPartItem: PartFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                part_number: template.part_number || '',
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.quantity || 1) * (template.unit_price || 0),
+                supplier: template.supplier || '',
+                category: template.category || '',
+                warranty_period: template.warranty_period || '',
+                notes: template.description || ''
+            }
+            setFormData(prev => ({
+                ...prev,
+                partsItems: [...prev.partsItems, newPartItem]
+            }))
+            toast.success(`Part template "${template.name}" added to items`)
+        }
     }
 
     const handleSave = async () => {
@@ -325,7 +366,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 partsCost: parseFloat(formData.partsCost) || 0,
                 totalCost: parseFloat(formData.totalCost) || 0,
                 notes: formData.notes,
-                selectedTemplates: selectedTemplates, // Include selected templates
+                // Don't pass selectedTemplates - items are already in laborItems/partsItems
                 laborItems: formData.laborItems, // Include labor items
                 partsItems: formData.partsItems, // Include parts items
             }
@@ -438,41 +479,39 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                             onAddTag={handleAddTag}
                                             onRemoveTag={handleRemoveTag}
                                         />
-
-                                        {/* Selected Templates Panel - Moved underneath Work Order Information */}
-                                        {isStep3Complete() && (
-                                            <div className="mt-6">
-                                                <SelectedTemplatesPanel
-                                                    selectedTemplates={selectedTemplates}
-                                                    onRemoveTemplate={handleRemoveTemplate}
-                                                    onUpdateTemplate={handleUpdateTemplate}
-                                                    shopId={shopId}
-                                                    className="border border-[#2a2a2a] rounded-lg"
-                                                />
-                                            </div>
-                                        )}
-
-                                        {/* Labor Items */}
-                                        <div className="transition-opacity duration-200">
-                                            <WorkOrderLaborItems
-                                                items={formData.laborItems}
-                                                onItemsChange={handleLaborItemsChange}
-                                                workOrderId={undefined} // No workOrderId for creation - save buttons won't show
-                                                technicianOptions={technicianOptions}
-                                                onItemSaved={handleLaborItemSaved}
-                                            />
-                                        </div>
-
-                                        {/* Parts Items */}
-                                        <div className="transition-opacity duration-200 mt-6">
-                                            <WorkOrderPartsItems
-                                                items={formData.partsItems}
-                                                onItemsChange={handlePartsItemsChange}
-                                                workOrderId={undefined} // No workOrderId for creation - save buttons won't show
-                                                onItemSaved={handlePartItemSaved}
-                                            />
-                                        </div>
                                     </div>
+
+                                    {/* Work Order Items Card - Only show after Step 3 is complete */}
+                                    {isStep3Complete() && (
+                                        <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                                            <div className="p-4">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <h3 className="text-lg font-semibold text-white">Work Order Items</h3>
+                                                </div>
+
+                                                {/* Labor Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderLaborItems
+                                                        items={formData.laborItems}
+                                                        onItemsChange={handleLaborItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        technicianOptions={technicianOptions}
+                                                        onItemSaved={handleLaborItemSaved}
+                                                    />
+                                                </div>
+
+                                                {/* Parts Items */}
+                                                <div>
+                                                    <WorkOrderPartsItems
+                                                        items={formData.partsItems}
+                                                        onItemsChange={handlePartsItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        onItemSaved={handlePartItemSaved}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Optional Sections - Available after Step 3 is complete */}
                                     {isStep3Complete() && (

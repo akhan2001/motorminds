@@ -12,7 +12,8 @@ export const VehicleDropdown: React.FC<VehicleDropdownProps> = ({
     placeholder = "Select Vehicle",
     disabled = false,
     className = "",
-    isLoading: externalLoading = false
+    isLoading: externalLoading = false,
+    refreshTrigger
 }) => {
     const [vehicleOptions, setVehicleOptions] = useState<VehicleOption[]>([])
     const [internalLoading, setInternalLoading] = useState(false)
@@ -20,7 +21,7 @@ export const VehicleDropdown: React.FC<VehicleDropdownProps> = ({
     // Combine external and internal loading states
     const isLoading = externalLoading || internalLoading
 
-    // Fetch vehicles when customerId changes
+    // Fetch vehicles when customerId or refreshTrigger changes
     useEffect(() => {
         async function fetchVehicles() {
             if (!customerId || customerId === "new") {
@@ -44,7 +45,7 @@ export const VehicleDropdown: React.FC<VehicleDropdownProps> = ({
         }
 
         fetchVehicles()
-    }, [customerId])
+    }, [customerId, refreshTrigger])
 
     // Handle vehicle selection
     const handleVehicleChange = (value: string) => {

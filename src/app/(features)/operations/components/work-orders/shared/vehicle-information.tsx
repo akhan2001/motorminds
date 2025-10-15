@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button"
 import { VehicleDropdown } from "@/app/(features)/customers/components/Selection"
 import { VehicleService } from "@/app/(features)/customers/lib/vehicle-service"
 import { decodeVin } from "@/app/(features)/customers/vehicles/lib/vin-decode"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Save, Loader2, Search } from "lucide-react"
 import type { VehicleOption, VehicleFormData } from "@/app/(features)/customers/types/vehicle"
+import { VEHICLE_MAKES } from "@/app/(features)/customers/types/vehicle"
 
 export interface VehicleInformationProps {
     customerId?: string // Added to enable vehicle dropdown
@@ -220,24 +222,35 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Year</Label>
                             <Input
+                                type="number"
                                 value={vehicleYear}
                                 onChange={(e) => isEditing && onFieldChange('vehicleYear', e.target.value)}
                                 className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
-                                placeholder="e.g. 2020"
+                                placeholder="2020"
+                                min="1970"
+                                max={new Date().getFullYear() + 1}
                             />
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Make</Label>
-                            <Input
+                            <Select
                                 value={vehicleMake}
-                                onChange={(e) => isEditing && onFieldChange('vehicleMake', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
-                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
-                                required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
-                                placeholder="e.g. Honda"
-                            />
+                                onValueChange={(value) => isEditing && onFieldChange('vehicleMake', value)}
+                                disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                            >
+                                <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500">
+                                    <SelectValue placeholder="Select make" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                                    {VEHICLE_MAKES.map((make) => (
+                                        <SelectItem key={make} value={make} className="text-white hover:bg-[#2a2a2a]">
+                                            {make}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Model</Label>
