@@ -7,9 +7,9 @@ import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Car, User, Phone, MessageSquare, Lock, Loader2 } from 'lucide-react'
 import { formatPhoneNumber } from '@/lib/utils/text'
-import { useWorkOrderMessaging } from '../../hooks/use-work-order-messaging'
-import { DEFAULT_COMPLETION_MESSAGE, formatMessage } from './Messages/MessagePrompts'
-import type { WorkOrderCompletionModalProps } from '../../types/work-order-messaging'
+import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
+import { DEFAULT_COMPLETION_MESSAGE, formatMessage } from '../Messages/MessagePrompts'
+import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
 
 export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> = ({
     workOrder,

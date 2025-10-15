@@ -7,15 +7,20 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "../../../types/work-order"
 import { useWorkOrderWithDetails, useUpdateWorkOrder } from "../../../hooks/use-work-orders"
 import { Loader2 } from "lucide-react"
-import { WorkOrderModalHeader } from "./work-order-modal-header"
-import { WorkOrderStatusBar } from "./work-order-status-bar"
-import { WorkOrderInformation } from "./work-order-information"
-import { CustomerInformation } from "./customer-information"
-import { VehicleInformation } from "./vehicle-information"
-import { WorkOrderNotes } from "./work-order-notes"
-import { WorkOrderModalFooter } from "./work-order-modal-footer"
-import { WorkOrderRightPanel } from "./work-order-right-panel"
+import {
+    WorkOrderModalHeader,
+    WorkOrderStatusBar,
+    WorkOrderInformation,
+    CustomerInformation,
+    VehicleInformation,
+    WorkOrderNotes,
+    WorkOrderModalFooter,
+    WorkOrderRightPanel,
+    WorkOrderLaborItems,
+    WorkOrderPartsItems
+} from "../shared"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
+import { WorkOrderCostSummary } from "../complete"
 import { WorkOrderItemCard } from "../../work-order-items/work-order-item-card"
 import { SelectedTemplatesPanel } from "../../work-order-items/templates/selected-templates-panel"
 import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
@@ -26,17 +31,17 @@ import { useWorkOrderItems } from "../../../hooks/use-work-order-items"
 import { useCreateInvoiceFromWorkOrder } from "../../../../financials/hooks/use-invoices"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 import { PanelProvider } from "../../../contexts"
-import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
-import { WorkOrderPartsItems } from "../WorkOrderPartsItems"
-import { CostSummary } from "./cost-summary"
 
-export interface WorkOrderDetailsModalProps {
+export interface WorkOrderEditModalProps {
     workOrder: WorkOrderKanbanItem
     onClose: () => void
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     onDelete?: (workOrderId: string) => void
     className?: string
 }
+
+// Backwards compatibility type alias
+export type WorkOrderDetailsModalProps = WorkOrderEditModalProps
 
 interface SelectedTemplate extends WorkOrderItemTemplate {
     selectedQuantity?: number
@@ -69,7 +74,7 @@ interface PartFormItem {
     notes?: string;
 }
 
-export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({ 
+export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({ 
     workOrder: initialWorkOrder,
     onClose,
     onSave,
@@ -683,26 +688,10 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
                                     onRemoveTag={handleRemoveTag}
                                 />
 
-                                {/* Work Order Items - For Completed Work Orders (Read-Only Cards) */}
-                                {workOrderDetails?.status === 'completed' && workOrderItems.length > 0 && (
-                                    <div className="space-y-4 mt-6">
-                                        <h3 className="text-lg font-semibold text-white">Work Order Items</h3>
-                                        <div className="space-y-3">
-                                            {workOrderItems.map((item) => (
-                                                <WorkOrderItemCard
-                                                    key={item.id}
-                                                    item={item}
-                                                    isEditable={false}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
                                 {/* Cost Summary - Only show for completed work orders */}
                                 {workOrderDetails?.status === 'completed' && workOrderItems.length > 0 && (
                                     <div className="mt-6">
-                                        <CostSummary 
+                                        <WorkOrderCostSummary 
                                             workOrderItems={workOrderItems}
                                         />
                                     </div>
@@ -790,3 +779,6 @@ export const WorkOrderDetailsModal: React.FC<WorkOrderDetailsModalProps> = ({
         </div>
     )
 }
+
+// Backwards compatibility export
+export const WorkOrderDetailsModal = WorkOrderEditModal

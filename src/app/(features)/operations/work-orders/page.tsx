@@ -4,8 +4,9 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
-import { WorkOrderDetailsModal, WorkOrderCreateModal } from "../components/work-orders/WorkOrderModal";
-import { WorkOrderCompletionModal } from "../components/work-orders/WorkOrderCompletionModal";
+import { WorkOrderCreateModal } from "../components/work-orders/create";
+import { WorkOrderEditModal } from "../components/work-orders/manage/work-order-edit-modal";
+import { WorkOrderCompletionModal } from "../components/work-orders/complete";
 import { WorkOrderItemTemplatesModal } from "../components/work-order-items/templates/work-order-item-templates-modal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
@@ -528,7 +529,6 @@ function WorkOrdersContent() {
                         onToggleView={handleToggleView}
                         onNewWorkOrder={handleNewWorkOrder}
                         onTemplatesClick={handleTemplatesClick}
-                        onWorkOrderItems={handleWorkOrderItems}
                     />
                     <div className="flex-1 overflow-hidden">
                         <WorkOrderKanban
@@ -539,9 +539,9 @@ function WorkOrdersContent() {
                     </div>
                 </div>
 
-                {/* Work Order Details Modal */}
+                {/* Work Order Edit Modal (Manage Phase) */}
                 {isModalOpen && selectedWorkOrder && (
-                    <WorkOrderDetailsModal
+                    <WorkOrderEditModal
                         workOrder={selectedWorkOrder}
                         onClose={handleModalClose}
                         onSave={handleWorkOrderSave}

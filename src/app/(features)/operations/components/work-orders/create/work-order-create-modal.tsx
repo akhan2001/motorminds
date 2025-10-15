@@ -5,23 +5,23 @@ import { toast } from "sonner"
 import { v4 as uuidv4 } from 'uuid'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { WorkOrderPriority } from "../../../types/work-order"
-import { WorkOrderModalHeader } from "./work-order-modal-header"
-// import { WorkOrderStatusBar } from "./work-order-status-bar"
-import { WorkOrderInformation } from "./work-order-information"
-import { CustomerInformation } from "./customer-information"
-import { VehicleInformation } from "./vehicle-information"
-import { FinancialInformation } from "./financial-information"
-import { WorkOrderNotes } from "./work-order-notes"
-import { WorkOrderModalFooter } from "./work-order-modal-footer"
+import {
+    WorkOrderModalHeader,
+    WorkOrderInformation,
+    CustomerInformation,
+    VehicleInformation,
+    WorkOrderNotes,
+    WorkOrderModalFooter,
+    WorkOrderLaborItems,
+    WorkOrderPartsItems
+} from "../shared"
+import { FinancialInformation } from "../manage/financial-information"
 import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
-import { SelectedTemplatesPanel } from "../../work-order-items/templates/selected-templates-panel"
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import type { WorkOrderItemCreateData } from "../../../types/work-order-items"
 import { PanelProvider } from "../../../contexts"
 import { Input } from "@/components/ui/input"
-import { WorkOrderLaborItems } from "../WorkOrderLaborItems"
-import { WorkOrderPartsItems } from "../WorkOrderPartsItems"
 
 // Define the LaborFormItem interface locally to match the component
 interface LaborFormItem {
@@ -324,20 +324,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         }
     }
 
-    const handleRemoveTemplate = (templateId: string) => {
-        setSelectedTemplates(prev => prev.filter(template => template.id !== templateId))
-    }
-
-    const handleUpdateTemplate = (templateId: string, updates: Partial<SelectedTemplate>) => {
-        setSelectedTemplates(prev => 
-            prev.map(template => 
-                template.id === templateId 
-                    ? { ...template, ...updates }
-                    : template
-            )
-        )
-    }
-
     const handleSave = async () => {
         setIsSubmitting(true)
         
@@ -380,7 +366,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 partsCost: parseFloat(formData.partsCost) || 0,
                 totalCost: parseFloat(formData.totalCost) || 0,
                 notes: formData.notes,
-                selectedTemplates: selectedTemplates, // Include selected templates
+                // Don't pass selectedTemplates - items are already in laborItems/partsItems
                 laborItems: formData.laborItems, // Include labor items
                 partsItems: formData.partsItems, // Include parts items
             }
@@ -493,19 +479,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                             onAddTag={handleAddTag}
                                             onRemoveTag={handleRemoveTag}
                                         />
-
-                                        {/* Selected Templates Panel - Moved underneath Work Order Information */}
-                                        {isStep3Complete() && selectedTemplates.length > 0 && (
-                                            <div className="mt-6">
-                                                <SelectedTemplatesPanel
-                                                    selectedTemplates={selectedTemplates}
-                                                    onRemoveTemplate={handleRemoveTemplate}
-                                                    onUpdateTemplate={handleUpdateTemplate}
-                                                    shopId={shopId}
-                                                    className="border border-[#2a2a2a] rounded-lg"
-                                                />
-                                            </div>
-                                        )}
                                     </div>
 
                                     {/* Work Order Items Card - Only show after Step 3 is complete */}
