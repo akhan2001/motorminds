@@ -80,11 +80,11 @@ export const navigationConfig: NavItem[] = [
         subItems: mechanicHubSubItems,
         requiredRoles: ['admin', 'super', 'user']
     },
-    {
-        name: "Migrations",
-        href: "/migrations",
-        requiredRoles: ['admin', 'super', 'user']
-    },
+    // {
+    //     name: "Migrations",
+    //     href: "/migrations",
+    //     requiredRoles: ['admin', 'super', 'user']
+    // },
     {
         name: "Admin",
         href: "/admin",

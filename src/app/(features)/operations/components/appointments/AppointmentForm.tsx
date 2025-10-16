@@ -27,7 +27,7 @@ import {
 import { format, addDays } from 'date-fns'
 import { useAvailableSlots } from '../../hooks/appointments/useAvailbility'
 import { useCreateAppointment } from '../../hooks/appointments/useAppointments'
-import CustomerDropdown from '../../../customers/components/Selection/CustomerDropdown'
+import { CustomerSearchBar } from '@/components/common/customers/customer-search-bar'
 import { CustomerForm } from '../../../customers/components/Selection/CustomerForm'
 import { VehicleDropdown } from '../../../customers/components/Selection/VehicleDropdown'
 import { NewVehicleForm } from '../../../customers/components/Selection/NewVehicleForm'
@@ -169,34 +169,6 @@ export function AppointmentForm({
         }
     }
 
-    // Handle customer selection
-    const handleCustomerSelect = (customerId: string, customerData?: any) => {
-        if (customerId === "new") {
-            setShowNewCustomerForm(true)
-            setSelectedCustomer(null)
-            setSelectedCustomerId('')
-        } else {
-            setSelectedCustomerId(customerId)
-            if (customerData) {
-                const customer: Customer = {
-                    id: customerData.id,
-                    customer_name: customerData.name,
-                    customer_phone: customerData.phone,
-                    customer_email: customerData.email,
-                    customer_address: customerData.address
-                }
-                setSelectedCustomer(customer)
-            }
-            setShowNewCustomerForm(false)
-        }
-        
-        setSelectedVehicleId('') // Reset vehicle selection
-        setSelectedVehicle(null)
-        setShowNewVehicleForm(false)
-        
-        // Clear customer-related errors
-        setErrors(prev => ({ ...prev, customer: '' }))
-    }
 
     // Handle vehicle selection
     const handleVehicleSelect = (vehicleId: string, vehicle?: VehicleOption) => {
@@ -486,13 +458,25 @@ export function AppointmentForm({
                             {/* Customer Selection */}
                             <div className="space-y-2">
                                 <Label htmlFor="customer-select" className="text-gray-300 text-xs">Customer *</Label>
-                                <CustomerDropdown
-                                    shopId={shopId}
-                                    selectedCustomerId={selectedCustomerId}
-                                    onCustomerSelect={handleCustomerSelect}
-                                    placeholder="Select Customer"
-                                    disabled={false}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a]"
+                                <CustomerSearchBar
+                                    onSelect={(customer) => {
+                                        setSelectedCustomerId(customer.id)
+                                        setSelectedCustomer({
+                                            id: customer.id,
+                                            customer_name: customer.customer_name,
+                                            customer_phone: customer.customer_phone,
+                                            customer_email: customer.customer_email,
+                                            customer_address: customer.customer_address
+                                        })
+                                        setShowNewCustomerForm(false)
+                                        setSelectedVehicleId('') // Reset vehicle selection
+                                        setSelectedVehicle(null)
+                                        setShowNewVehicleForm(false)
+                                        // Clear customer-related errors
+                                        setErrors(prev => ({ ...prev, customer: '' }))
+                                    }}
+                                    placeholder="Search customers..."
+                                    className="w-full"
                                 />
                                 {errors.customer && (
                                     <p className="text-red-400 text-xs mt-1">{errors.customer}</p>
