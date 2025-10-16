@@ -475,6 +475,16 @@ export function AppointmentForm({
                                         // Clear customer-related errors
                                         setErrors(prev => ({ ...prev, customer: '' }))
                                     }}
+                                    onCreateNew={() => {
+                                        setShowNewCustomerForm(true)
+                                        setSelectedCustomerId('')
+                                        setSelectedCustomer(null)
+                                        setSelectedVehicleId('')
+                                        setSelectedVehicle(null)
+                                        setShowNewVehicleForm(false)
+                                        // Clear customer-related errors
+                                        setErrors(prev => ({ ...prev, customer: '' }))
+                                    }}
                                     placeholder="Search customers..."
                                     className="w-full"
                                 />
