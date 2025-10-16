@@ -18,6 +18,7 @@ interface InvoiceCardProps {
     clientEmail?: string
     workOrder?: string
     description?: string
+    poNumber?: string
     vehicleInfo?: {
         year?: string
         make?: string
@@ -45,6 +46,7 @@ export function InvoiceCard({
     clientEmail,
     workOrder,
     description,
+    poNumber,
     vehicleInfo = {},
     source,
     estimatedAmount,
@@ -109,6 +111,9 @@ export function InvoiceCard({
                     <div className="text-right text-gray-400">
                         {/* <p className="font-medium text-white">{description || workOrder || "No description available"}</p> */}
                         Invoice #{displayNumber || invoiceNumber}
+                        {poNumber && (
+                            <p className="text-xs text-gray-400 mt-1">PO: {poNumber}</p>
+                        )}
                         {source === 'customer_generated' && estimatedAmount && estimatedAmount > 0 && (
                             <p className="text-xs text-blue-400 mt-1">Est. Budget: ${estimatedAmount.toFixed(2)}</p>
                         )}

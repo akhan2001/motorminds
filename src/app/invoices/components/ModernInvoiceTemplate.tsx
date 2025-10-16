@@ -397,6 +397,12 @@ const InvoiceHeader = ({ invoice }: { invoice: any }) => (
             <View style={styles.invoiceFields}>
                 <Text style={styles.fieldLabel}>Invoice No:</Text>
                 <Text style={styles.sectionContent}>{invoice.displayNumber || ''}</Text>
+                {invoice.po_number && (
+                    <>
+                        <Text style={styles.fieldLabel}>PO Number:</Text>
+                        <Text style={styles.sectionContent}>{invoice.po_number}</Text>
+                    </>
+                )}
                 <Text style={styles.fieldLabel}>Date:</Text>
                 <Text style={styles.sectionContent}>{formatDate(invoice.issueDate) || ''}</Text>
             </View>

@@ -12,9 +12,11 @@ import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { InvoiceLineItems } from "./form-sections/InvoiceLineItems";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { MinusIcon, PlusIcon, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { CustomerInformation } from "@/app/(features)/operations/components/work-orders/shared/customer-information";
+import { VehicleInformation } from "@/app/(features)/operations/components/work-orders/shared/vehicle-information";
 
 export default function InvoiceForm({ 
     onClose, 
@@ -36,7 +38,6 @@ export default function InvoiceForm({
     const [selectedCustomerId, setSelectedCustomerId] = useState("");
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [customerVehicles, setCustomerVehicles] = useState<any[]>([]);
-    const [selectedVehicleId, setSelectedVehicleId] = useState("");
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
     const [invoiceDate, setInvoiceDate] = useState(formattedDate);
@@ -70,6 +71,24 @@ export default function InvoiceForm({
         model: '',
         license_plate: ''
     });
+
+    // New state for CustomerInformation and VehicleInformation components
+    const [customerId, setCustomerId] = useState("");
+    const [customerName, setCustomerName] = useState("");
+    const [customerEmail, setCustomerEmail] = useState("");
+    const [customerPhone, setCustomerPhone] = useState("");
+    const [customerAddress, setCustomerAddress] = useState("");
+    
+    const [selectedVehicleId, setSelectedVehicleId] = useState("");
+    const [vehicleId, setVehicleId] = useState("");
+    const [vehicleYear, setVehicleYear] = useState("");
+    const [vehicleMake, setVehicleMake] = useState("");
+    const [vehicleModel, setVehicleModel] = useState("");
+    const [vehicleColor, setVehicleColor] = useState("");
+    const [vehicleVin, setVehicleVin] = useState("");
+    const [vehicleLicensePlate, setVehicleLicensePlate] = useState("");
+    const [vehicleMileage, setVehicleMileage] = useState("");
+    const [poNumber, setPoNumber] = useState("");
 
     // Load customers
     useEffect(() => {
@@ -167,9 +186,6 @@ export default function InvoiceForm({
         setTotal(subtotal.toFixed(2));
     };
 
-    const handleCustomerChange = (value: string) => {
-        setSelectedCustomerId(value);
-    };
 
     const handleVehicleChange = (value: string) => {
         setSelectedVehicleId(value);
@@ -186,20 +202,115 @@ export default function InvoiceForm({
         }
     };
 
+    // Handlers for CustomerInformation component
+    const handleCustomerFieldChange = (field: string, value: string) => {
+        switch (field) {
+            case 'customer':
+                setCustomerName(value);
+                break;
+            case 'customerEmail':
+                setCustomerEmail(value);
+                break;
+            case 'customerPhone':
+                setCustomerPhone(value);
+                break;
+            case 'customerAddress':
+                setCustomerAddress(value);
+                break;
+        }
+    };
+
+    const handleCustomerChange = (newCustomerId: string) => {
+        setCustomerId(newCustomerId);
+        if (newCustomerId === "new") {
+            setShowNewClientForm(true);
+        } else {
+            setShowNewClientForm(false);
+        }
+    };
+
+    const handleCustomerSaved = (newCustomerId: string, customerData: any) => {
+        setCustomerId(newCustomerId);
+        setCustomerName(customerData.name);
+        setCustomerEmail(customerData.email || '');
+        setCustomerPhone(customerData.phone || '');
+        setCustomerAddress(customerData.address || '');
+        setShowNewClientForm(false);
+    };
+
+    // Handlers for VehicleInformation component
+    const handleVehicleFieldChange = (field: string, value: string) => {
+        switch (field) {
+            case 'vehicleYear':
+                setVehicleYear(value);
+                break;
+            case 'vehicleMake':
+                setVehicleMake(value);
+                break;
+            case 'vehicleModel':
+                setVehicleModel(value);
+                break;
+            case 'vehicleColor':
+                setVehicleColor(value);
+                break;
+            case 'vehicleVin':
+                setVehicleVin(value);
+                break;
+            case 'vehicleLicensePlate':
+                setVehicleLicensePlate(value);
+                break;
+            case 'vehicleMileage':
+                setVehicleMileage(value);
+                break;
+        }
+    };
+
+    const handleVehicleSelect = (newVehicleId: string, vehicleData?: any) => {
+        setSelectedVehicleId(newVehicleId);
+        if (newVehicleId === "new") {
+            setShowNewVehicleForm(true);
+        } else {
+            setShowNewVehicleForm(false);
+            if (vehicleData) {
+                setVehicleId(vehicleData.id);
+                setVehicleYear(vehicleData.year?.toString() || '');
+                setVehicleMake(vehicleData.make || '');
+                setVehicleModel(vehicleData.model || '');
+                setVehicleColor(vehicleData.color || '');
+                setVehicleVin(vehicleData.vin || '');
+                setVehicleLicensePlate(vehicleData.licensePlate || '');
+                setVehicleMileage(vehicleData.mileage || '');
+            }
+        }
+    };
+
+    const handleVehicleSaved = (newVehicleId: string, vehicleData: any) => {
+        setVehicleId(newVehicleId);
+        setSelectedVehicleId(newVehicleId);
+        setVehicleYear(vehicleData.year?.toString() || '');
+        setVehicleMake(vehicleData.make || '');
+        setVehicleModel(vehicleData.model || '');
+        setVehicleColor(vehicleData.color || '');
+        setVehicleVin(vehicleData.vin || '');
+        setVehicleLicensePlate(vehicleData.licensePlate || '');
+        setVehicleMileage(vehicleData.mileage || '');
+        setShowNewVehicleForm(false);
+    };
+
     const validateForm = () => {
         if (!shopId) {
             toast.error("Shop ID is required");
             return false;
         }
         
-        // Check either selected customer or new client info
-        if (!showNewClientForm && !selectedCustomerId) {
-            toast.error("Please select a customer");
+        // Check customer information from new component state
+        if (!customerName.trim()) {
+            toast.error("Please enter customer name");
             return false;
         }
         
-        if (showNewClientForm && !clientInfo.client_name) {
-            toast.error("Please enter client name");
+        if (!customerPhone.trim()) {
+            toast.error("Please enter customer phone number");
             return false;
         }
         
@@ -256,11 +367,11 @@ export default function InvoiceForm({
                 shop_email: shopEmail || "",
                 shop_phone: shopPhone || "",
                 // Client info...
-                client_name: showNewClientForm ? clientInfo.client_name : (selectedCustomer?.customer_name || "Unknown Client"),
-                client_address: showNewClientForm ? clientInfo.client_address : (selectedCustomer?.customer_address || ""),
-                client_email: showNewClientForm ? clientInfo.client_email : (selectedCustomer?.customer_email || ""),
-                client_phone: showNewClientForm ? clientInfo.client_phone : (selectedCustomer?.customer_phone || ""),
-                customer_id: showNewClientForm ? null : selectedCustomerId, // Include customer_id when using existing customer
+                client_name: customerName || "Unknown Client",
+                client_address: customerAddress || "",
+                client_email: customerEmail || "",
+                client_phone: customerPhone || "",
+                customer_id: customerId && customerId !== "new" ? customerId : null, // Include customer_id when using existing customer
                 // Invoice details...
                 issue_date: invoiceDate || new Date().toISOString(),
                 notes: notes || "",
@@ -270,7 +381,16 @@ export default function InvoiceForm({
                 amount: parseFloat(total) || 0,
                 // For edit mode, keep existing status; for create mode, set to "UNPAID"
                 status: "UNPAID",
-                vehicle_info: vehicleInfo,
+                vehicle_info: {
+                    year: vehicleYear,
+                    make: vehicleMake,
+                    model: vehicleModel,
+                    license_plate: vehicleLicensePlate,
+                    color: vehicleColor,
+                    vin: vehicleVin,
+                    mileage: vehicleMileage
+                },
+                po_number: poNumber,
                 // Add the new arrays
                 labour_items: labourItems.map(item => ({
                     description: item.description,
@@ -330,20 +450,49 @@ export default function InvoiceForm({
             model: '',
             license_plate: ''
         });
+        
+        // Reset new component state
+        setCustomerId("");
+        setCustomerName("");
+        setCustomerEmail("");
+        setCustomerPhone("");
+        setCustomerAddress("");
+        setVehicleId("");
+        setVehicleYear("");
+        setVehicleMake("");
+        setVehicleModel("");
+        setVehicleColor("");
+        setVehicleVin("");
+        setVehicleLicensePlate("");
+        setVehicleMileage("");
+        setPoNumber("");
+        
         toast.success("Form cleared");
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen}>
             <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-0 max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] flex flex-col">
                 {/* Sticky Header */}
                 <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#222222] rounded-t-lg">
-                    <DialogTitle className="text-white text-xl sm:text-2xl">
-                        Create New Invoice
-                    </DialogTitle>
-                    <DialogDescription className="text-gray-400 text-xs sm:text-sm">
-                        Fill in the details below to create a new invoice.
-                    </DialogDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <DialogTitle className="text-white text-xl sm:text-2xl">
+                                Create New Invoice
+                            </DialogTitle>
+                            <DialogDescription className="text-gray-400 text-xs sm:text-sm">
+                                Fill in the details below to create a new invoice.
+                            </DialogDescription>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onClose}
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </DialogHeader>
 
                 {/* Scrollable Content */}
@@ -388,160 +537,38 @@ export default function InvoiceForm({
                     </div>
                     </div>
        
-                    <h3 className="text-lg font-medium pl-6">Client & Vehicle Information</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#1A1A1A] rounded-xl p-6">
-                        {/* Customer selection */}
-                        <div className="space-y-2 ">
-                            <label className="text-gray-300 text-sm font-medium mb-1 block">Customer Information</label>
-                            <div className="flex flex-wrap gap-2">
-                                <div className="w-full sm:w-auto sm:flex-1">
-                                    <Select 
-                                        value={selectedCustomerId} 
-                                        onValueChange={handleCustomerChange} 
-                                        disabled={showNewClientForm}
-                                    >
-                                        <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${showNewClientForm ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                            <SelectValue placeholder="Select a customer" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                                            {customers.map((customer) => (
-                                                <SelectItem key={customer.id} value={customer.id}>
-                                                    {customer.customer_name} <span className="text-gray-400 text-xs">{formatPhoneNumber(customer.customer_phone)}</span>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button 
-                                    className={`${showNewClientForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262] h-10 w-10 p-0 sm:h-10 sm:w-10`}
-                                    onClick={() => {
-                                        setShowNewClientForm(!showNewClientForm);
-                                        if (!showNewClientForm) {
-                                            setSelectedCustomerId(''); // Clear selected customer when enabling manual input
-                                        }
-                                    }}
-                                >
-                                    {showNewClientForm ? <MinusIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-                                </Button>
-                            </div>
+                    {/* Customer Information */}
+                    <CustomerInformation
+                        customerId={customerId}
+                        customerName={customerName}
+                        customerEmail={customerEmail}
+                        customerPhone={customerPhone}
+                        customerAddress={customerAddress}
+                        isEditing={true}
+                        isCreating={true}
+                        onFieldChange={handleCustomerFieldChange}
+                        onCustomerChange={handleCustomerChange}
+                        onCustomerSaved={handleCustomerSaved}
+                    />
 
-                            {/* New Client Form */}
-                            {showNewClientForm && (
-                                <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
-                                    <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Client Name"
-                                        value={clientInfo.client_name}
-                                        onChange={(e) => setClientInfo({...clientInfo, client_name: e.target.value})}
-                                    />
-                                    <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Client Phone"
-                                        value={clientInfo.client_phone}
-                                        onChange={(e) => setClientInfo({...clientInfo, client_phone: e.target.value})}
-                                        required
-                                        pattern="\d{10}"                                    
-                                    />  
-                                    <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Client Email"
-                                        type="email"
-                                        value={clientInfo.client_email}
-                                        onChange={(e) => setClientInfo({...clientInfo, client_email: e.target.value})}
-                                    />
-                                    <Input
-                                        className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                        placeholder="Client Address"
-                                        value={clientInfo.client_address}
-                                        onChange={(e) => setClientInfo({...clientInfo, client_address: e.target.value})}
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Vehicle Information */}
-                        <div className="space-y-2">
-                            <label className="text-gray-300 text-sm font-medium mb-1 block">Vehicle Information</label>
-                            <div className="flex flex-wrap gap-2">
-                                <div className="w-full sm:w-auto sm:flex-1">
-                                    <Select 
-                                        value={selectedVehicleId} 
-                                        onValueChange={handleVehicleChange}
-                                        disabled={showNewVehicleForm || showNewClientForm}
-                                    >
-                                        <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${
-                                            (showNewVehicleForm || showNewClientForm) ? 'opacity-50 cursor-not-allowed' : ''
-                                        }`}>
-                                            <SelectValue placeholder="Select a vehicle" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
-                                            {customerVehicles.map((vehicle) => (
-                                                <SelectItem key={vehicle.id} value={vehicle.id}>
-                                                    {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.license_plate===null || vehicle.license_plate==="NULL" ? <span className="text-gray-400 text-xs">(No License Plate)</span> : <span className="text-gray-400 text-xs">({vehicle.license_plate})</span>}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button 
-                                    className={`${showNewVehicleForm ? 'bg-[#363636]' : 'bg-[#292929]'} hover:bg-[#363636] text-white border border-[#626262] h-10 w-10 p-0 sm:h-10 sm:w-10`}
-                                    onClick={() => {
-                                        setShowNewVehicleForm(!showNewVehicleForm);
-                                        if (!showNewVehicleForm) {
-                                            setSelectedVehicleId('');
-                                            setVehicleInfo(null);
-                                        }
-                                    }}
-                                >
-                                    {showNewVehicleForm ? <MinusIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-                                </Button>
-                            </div>
-
-                            {/* Manual Vehicle Form */}
-                            {showNewVehicleForm && (
-                                <div className="space-y-2 mt-2 p-3 border border-[#626262] rounded-md">
-                                    <div className="grid grid-cols-1 gap-2">
-                                        <Input
-                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                            placeholder="Year"
-                                            value={manualVehicleInfo.year}
-                                            onChange={(e) => {
-                                                setManualVehicleInfo({...manualVehicleInfo, year: e.target.value});
-                                                setVehicleInfo({...manualVehicleInfo, year: e.target.value});
-                                            }}
-                                        />
-                                        <Input
-                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                            placeholder="Make"
-                                            value={manualVehicleInfo.make}
-                                            onChange={(e) => {
-                                                setManualVehicleInfo({...manualVehicleInfo, make: e.target.value});
-                                                setVehicleInfo({...manualVehicleInfo, make: e.target.value});
-                                            }}
-                                        />
-                                        <Input
-                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                            placeholder="Model"
-                                            value={manualVehicleInfo.model}
-                                            onChange={(e) => {
-                                                setManualVehicleInfo({...manualVehicleInfo, model: e.target.value});
-                                                setVehicleInfo({...manualVehicleInfo, model: e.target.value});
-                                            }}
-                                        />
-                                        <Input
-                                            className="bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500"
-                                            placeholder="License Plate"
-                                            value={manualVehicleInfo.license_plate}
-                                            onChange={(e) => {
-                                                setManualVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
-                                                setVehicleInfo({...manualVehicleInfo, license_plate: e.target.value});
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* Vehicle Information */}
+                    <VehicleInformation
+                        customerId={customerId}
+                        selectedVehicleId={selectedVehicleId}
+                        vehicleId={vehicleId}
+                        vehicleYear={vehicleYear}
+                        vehicleMake={vehicleMake}
+                        vehicleModel={vehicleModel}
+                        vehicleColor={vehicleColor}
+                        vehicleVin={vehicleVin}
+                        vehicleLicensePlate={vehicleLicensePlate}
+                        vehicleMileage={vehicleMileage}
+                        isEditing={true}
+                        isCreating={true}
+                        onFieldChange={handleVehicleFieldChange}
+                        onVehicleSelect={handleVehicleSelect}
+                        onVehicleSaved={handleVehicleSaved}
+                    />
 
                     {/* Invoice date
                     <div className="space-y-2 bg-[#1A1A1A] rounded-xl p-6">
@@ -568,6 +595,16 @@ export default function InvoiceForm({
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     required
+                                />
+                            </div>
+                            
+                            <label className="text-gray-300 text-sm self-center sm:col-span-1">PO Number</label>
+                            <div className="sm:col-span-3">
+                                <Input
+                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    placeholder="Enter PO number (optional)"
+                                    value={poNumber}
+                                    onChange={(e) => setPoNumber(e.target.value)}
                                 />
                             </div>
                             
