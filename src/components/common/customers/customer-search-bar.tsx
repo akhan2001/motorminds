@@ -119,9 +119,9 @@ export function CustomerSearchBar({
                         aria-expanded={open}
                         className={cn(
                             "w-full justify-start text-left font-normal h-10 px-3 py-2",
-                            "bg-white border border-gray-300 rounded-lg shadow-sm",
-                            "hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200",
-                            "transition-all duration-200",
+                            "bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-sm",
+                            "hover:bg-[#2a2a2a] hover:border-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-200",
+                            "transition-all duration-200 text-white",
                             !selectedCustomer && "text-gray-500"
                         )}
                         disabled={disabled}
@@ -131,22 +131,23 @@ export function CustomerSearchBar({
                         <ChevronDown className="ml-auto h-4 w-4 text-gray-400" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                    <Command>
+                <PopoverContent className="w-full p-0 bg-[#1a1a1a] border-[#3a3a3a]" align="start">
+                    <Command className="bg-[#1a1a1a]">
                         <CommandInput
                             placeholder="Search customers..."
                             value={searchQuery}
                             onValueChange={handleInputChange}
                             ref={inputRef}
+                            className="bg-[#1a1a1a] text-white border-[#3a3a3a] focus:border-red-500"
                         />
                         <CommandList>
                             {customersLoading && (
-                                <div className="p-4 text-center text-sm text-gray-500">
+                                <div className="p-4 text-center text-sm text-gray-400">
                                     Searching...
                                 </div>
                             )}
                             {!customersLoading && customers.length === 0 && searchQuery.trim() && (
-                                <CommandEmpty>No customers found.</CommandEmpty>
+                                <CommandEmpty className="text-gray-400">No customers found.</CommandEmpty>
                             )}
                             {customers.length > 0 && (
                                 <CommandGroup>
@@ -155,19 +156,19 @@ export function CustomerSearchBar({
                                             key={customer.id}
                                             value={customer.customer_name}
                                             onSelect={() => handleCustomerSelect(customer)}
-                                            className="flex items-center gap-3 p-3 cursor-pointer"
+                                            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-[#2a2a2a] text-white"
                                         >
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage src="" />
-                                                <AvatarFallback className="bg-blue-500 text-white text-xs">
+                                                <AvatarFallback className="bg-red-600 text-white text-xs">
                                                     {getInitials(customer.customer_name)}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-gray-900 truncate">
+                                                <div className="font-medium text-white truncate">
                                                     {customer.customer_name}
                                                 </div>
-                                                <div className="text-sm text-gray-500 truncate">
+                                                <div className="text-sm text-gray-400 truncate">
                                                     {customer.customer_phone && formatPhoneNumber(customer.customer_phone)}
                                                     {customer.customer_email && ` • ${customer.customer_email}`}
                                                 </div>
@@ -189,9 +190,9 @@ export function CustomerSearchBar({
                             variant="outline"
                             className={cn(
                                 "w-full justify-start text-left font-normal h-10 px-3 py-2 mt-2",
-                                "bg-white border border-gray-300 rounded-lg shadow-sm",
-                                "hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200",
-                                "transition-all duration-200"
+                                "bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-sm",
+                                "hover:bg-[#2a2a2a] hover:border-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-200",
+                                "transition-all duration-200 text-white"
                             )}
                         >
                             <Car className="mr-2 h-4 w-4 text-gray-400" />
@@ -202,16 +203,16 @@ export function CustomerSearchBar({
                             <ChevronDown className="ml-auto h-4 w-4 text-gray-400" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                        <Command>
+                    <PopoverContent className="w-full p-0 bg-[#1a1a1a] border-[#3a3a3a]" align="start">
+                        <Command className="bg-[#1a1a1a]">
                             <CommandList>
                                 {vehiclesLoading && (
-                                    <div className="p-4 text-center text-sm text-gray-500">
+                                    <div className="p-4 text-center text-sm text-gray-400">
                                         Loading vehicles...
                                     </div>
                                 )}
                                 {!vehiclesLoading && vehicles.length === 0 && (
-                                    <div className="p-4 text-center text-sm text-gray-500">
+                                    <div className="p-4 text-center text-sm text-gray-400">
                                         No vehicles found for this customer.
                                     </div>
                                 )}
@@ -222,15 +223,15 @@ export function CustomerSearchBar({
                                                 key={vehicle.id}
                                                 value={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                                                 onSelect={() => handleVehicleSelect(vehicle)}
-                                                className="flex items-center gap-3 p-3 cursor-pointer"
+                                                className="flex items-center gap-3 p-3 cursor-pointer hover:bg-[#2a2a2a] text-white"
                                             >
                                                 <Car className="h-4 w-4 text-gray-400" />
                                                 <div className="flex-1">
-                                                    <div className="font-medium text-gray-900">
+                                                    <div className="font-medium text-white">
                                                         {vehicle.year} {vehicle.make} {vehicle.model}
                                                     </div>
                                                     {vehicle.license_plate && (
-                                                        <div className="text-sm text-gray-500">
+                                                        <div className="text-sm text-gray-400">
                                                             {vehicle.license_plate}
                                                         </div>
                                                     )}
