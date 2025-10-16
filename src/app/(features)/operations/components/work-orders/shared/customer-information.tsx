@@ -138,6 +138,14 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                             onFieldChange('customerAddress', customer.customer_address || '')
                                             onCustomerChange?.(customer.id)
                                         }}
+                                        onCreateNew={() => {
+                                            // Clear all fields for new customer
+                                            onFieldChange('customer', '')
+                                            onFieldChange('customerEmail', '')
+                                            onFieldChange('customerPhone', '')
+                                            onFieldChange('customerAddress', '')
+                                            onCustomerChange?.("new")
+                                        }}
                                         placeholder="Search customers..."
                                         className="w-full"
                                     />
