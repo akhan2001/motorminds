@@ -130,25 +130,16 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                             <div className="flex flex-wrap gap-2">
                                 <div className="w-full sm:w-auto sm:flex-1">
                                     <CustomerSearchBar
-                                        onSelect={(data) => {
+                                        onSelect={(customer) => {
                                             // Handle customer selection from search bar
-                                            if (data.customer) {
-                                                onFieldChange('customer', data.customer.customer_name)
-                                                onFieldChange('customerEmail', data.customer.customer_email || '')
-                                                onFieldChange('customerPhone', data.customer.customer_phone || '')
-                                                onFieldChange('customerAddress', data.customer.customer_address || '')
-                                                onCustomerChange?.(data.customer.id)
-
-                                                // Handle vehicle selection if provided
-                                                if (data.vehicle) {
-                                                    // You can add vehicle handling logic here if needed
-                                                    console.log('Selected vehicle:', data.vehicle)
-                                                }
-                                            }
+                                            onFieldChange('customer', customer.customer_name)
+                                            onFieldChange('customerEmail', customer.customer_email || '')
+                                            onFieldChange('customerPhone', customer.customer_phone || '')
+                                            onFieldChange('customerAddress', customer.customer_address || '')
+                                            onCustomerChange?.(customer.id)
                                         }}
                                         placeholder="Search customers..."
                                         className="w-full"
-                                        showVehicles={true}
                                     />
                                 </div>
                             </div>
