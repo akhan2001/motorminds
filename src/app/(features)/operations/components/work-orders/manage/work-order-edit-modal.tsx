@@ -59,6 +59,7 @@ interface LaborFormItem {
     total_price: number;
     notes?: string;
     technician_id?: string;
+    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 interface PartFormItem {
@@ -72,6 +73,7 @@ interface PartFormItem {
     category?: string;
     warranty_period?: string;
     notes?: string;
+    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({ 
@@ -173,11 +175,30 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Populate labor and parts items from fetched work order items
     useEffect(() => {
         if (workOrderItems && workOrderItems.length > 0) {
+            // Debug logging
+            console.log('WorkOrderEditModal - Processing work order items:', workOrderItems.map(item => ({
+                id: item.id,
+                description: item.description,
+                item_type: item.item_type,
+                labor_hours: item.labor_hours,
+                unit_price: item.unit_price,
+                active: item.active
+            })))
+            
             // Separate labor and parts items
             const labor: LaborFormItem[] = []
             const parts: PartFormItem[] = []
 
             workOrderItems.forEach(item => {
+                console.log('WorkOrderEditModal - Processing item:', {
+                    id: item.id,
+                    description: item.description,
+                    item_type: item.item_type,
+                    isLabor: item.item_type === 'labor',
+                    isPart: item.item_type === 'part',
+                    active: item.active
+                })
+                
                 if (item.item_type === 'labor') {
                     labor.push({
                         id: item.id,
@@ -186,7 +207,8 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                         unit_price: item.unit_price || 0,
                         total_price: (item.labor_hours || 1) * (item.unit_price || 0),
                         notes: item.notes || '',
-                        technician_id: item.technician_id || ''
+                        technician_id: item.technician_id || '',
+                        active: item.active // Include the active status from database
                     })
                 } else if (item.item_type === 'part') {
                     parts.push({
@@ -199,7 +221,8 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                         supplier: item.supplier || '',
                         category: item.category || '',
                         warranty_period: item.warranty_period || '',
-                        notes: item.notes || ''
+                        notes: item.notes || '',
+                        active: item.active // Include the active status from database
                     })
                 }
             })
@@ -427,7 +450,10 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         }
 
         try {
-            // Use the mutation hook to update the work order
+            // First save all work order items
+            await saveAllItems()
+            
+            // Then update the work order
             await updateWorkOrderMutation.mutateAsync({
                 id: workOrderId,
                 data: updateData
@@ -450,7 +476,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             await onSave?.(updatedWorkOrder, formData)
             
             setIsEditing(false)
-            toast.success("Work order updated successfully")
+            toast.success("Work order and items updated successfully")
         } catch (error) {
             console.error('Error saving work order:', error)
             toast.error("Failed to update work order")
@@ -474,6 +500,51 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
     const handleDeleteCancel = () => {
         setIsDeleteConfirmationOpen(false)
+    }
+
+    // Save all labor and parts items when saving work order
+    const saveAllItems = async () => {
+        try {
+            const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+            if (!workOrderId) return
+
+            // Save all labor items
+            for (const item of laborItems) {
+                if (item.description.trim()) {
+                    await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                        description: item.description,
+                        labor_hours: item.labor_hours,
+                        unit_price: item.unit_price,
+                        notes: item.notes,
+                        technician_id: item.technician_id,
+                        active: item.active
+                    })
+                }
+            }
+
+            // Save all parts items
+            for (const item of partsItems) {
+                if (item.description.trim()) {
+                    await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                        description: item.description,
+                        part_number: item.part_number,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price,
+                        supplier: item.supplier,
+                        category: item.category,
+                        warranty_period: item.warranty_period,
+                        notes: item.notes,
+                        active: item.active
+                    })
+                }
+            }
+
+            console.log('All work order items saved successfully')
+        } catch (error) {
+            console.error('Error saving work order items:', error)
+            toast.error('Failed to save some work order items')
+            throw error // Re-throw to prevent work order save if items fail
+        }
     }
 
     const createInvoiceMutation = useCreateInvoiceFromWorkOrder()
@@ -713,6 +784,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                     workOrderId={initialWorkOrder.id}
                                                     technicianOptions={technicianOptions}
                                                     onItemSaved={handleLaborItemSaved}
+                                                    isEditing={isEditing}
                                                 />
                                             </div>
 
@@ -723,6 +795,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                     onItemsChange={handlePartsItemsChange}
                                                     workOrderId={initialWorkOrder.id}
                                                     onItemSaved={handlePartItemSaved}
+                                                    isEditing={isEditing}
                                                 />
                                             </div>
                                         </div>

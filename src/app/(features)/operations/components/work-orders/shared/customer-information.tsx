@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials, formatPhoneNumber } from "@/lib/utils/text"
 import { useAuth } from "../../../hooks/use-auth"
 import { CustomerDropdown } from "@/app/(features)/customers/components/Selection"
+import { CustomerSearchBar } from "@/components/common/customers/customer-search-bar"
 import { CustomerService, type CustomerFormData } from "@/app/(features)/customers/lib/customer-service"
 import { toast } from "sonner"
 import { Save, Loader2 } from "lucide-react"
@@ -88,9 +89,9 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
             }
 
             const savedCustomer = await CustomerService.createCustomer(shopId, customerData)
-            
+
             toast.success(`Customer "${savedCustomer.customer_name}" created successfully`)
-            
+
             // Notify parent component with the new customer data
             onCustomerSaved?.(savedCustomer.id, {
                 id: savedCustomer.id,
@@ -99,10 +100,10 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                 phone: savedCustomer.customer_phone,
                 address: savedCustomer.customer_address
             })
-            
+
             // Update the customer ID to the newly created customer
             onCustomerChange?.(savedCustomer.id)
-            
+
         } catch (error: any) {
             console.error('Error saving customer:', error)
             toast.error(error.message || 'Failed to save customer')
@@ -124,17 +125,21 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-4">
-                        {/* Customer Selection Dropdown (only for creation mode) */}
+                        {/* Customer Selection - Use Search Bar for better UX */}
                         {isCreating && isEditing && (
                             <div className="flex flex-wrap gap-2">
                                 <div className="w-full sm:w-auto sm:flex-1">
-                                    <CustomerDropdown
-                                        shopId={shopId || ""}
-                                        selectedCustomerId={customerId}
-                                        onCustomerSelect={handleCustomerSelect}
-                                        placeholder={shopId ? "Select Customer" : "Loading..."}
+                                    <CustomerSearchBar
+                                        onSelect={(customer) => {
+                                            // Handle customer selection from search bar
+                                            onFieldChange('customer', customer.customer_name)
+                                            onFieldChange('customerEmail', customer.customer_email || '')
+                                            onFieldChange('customerPhone', customer.customer_phone || '')
+                                            onFieldChange('customerAddress', customer.customer_address || '')
+                                            onCustomerChange?.(customer.id)
+                                        }}
+                                        placeholder="Search customers..."
                                         className="w-full"
-                                        isLoading={!shopId}
                                     />
                                 </div>
                             </div>
@@ -165,7 +170,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         inputMode="numeric"
                                     />
                                 </div>
-                                
+
                                 {/* Second row */}
                                 <div>
                                     <Input
@@ -187,7 +192,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                     />
                                 </div>
                             </div>
-                            
+
                             {/* Save Customer Button - Only show when creating new customer */}
                             {isCreating && isEditing && customerId === "new" && (
                                 <div className="mt-4 flex justify-end">
