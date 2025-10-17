@@ -665,6 +665,8 @@ export default function  EditInvoiceForm({
                         onFieldChange={handleVehicleFieldChange}
                         onVehicleSelect={handleVehicleSelect}
                         onVehicleSaved={handleVehicleSaved}
+                        invoiceNumber={existingInvoice?.invoiceNumber}
+                        shopId={shopId}
                     />
 
                     {/* Invoice details */}

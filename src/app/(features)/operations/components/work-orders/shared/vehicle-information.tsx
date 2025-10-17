@@ -30,6 +30,9 @@ export interface VehicleInformationProps {
     onVehicleSelect?: (vehicleId: string, vehicleData?: VehicleOption) => void // Added for vehicle selection
     onVehicleSaved?: (vehicleId: string, vehicleData: any) => void
     className?: string
+    // For invoice vehicle info updates
+    invoiceNumber?: string
+    shopId?: string
 }
 
 export const VehicleInformation: React.FC<VehicleInformationProps> = ({
@@ -48,7 +51,9 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     onFieldChange,
     onVehicleSelect,
     onVehicleSaved,
-    className = ""
+    className = "",
+    invoiceNumber,
+    shopId
 }) => {
     const [isSaving, setIsSaving] = useState(false)
     const [vinDecoding, setVinDecoding] = useState(false)
@@ -61,6 +66,35 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             return
         }
 
+        // If this is an invoice vehicle (vehicleId === 'existing'), use invoice update function
+        if (vehicleId === 'existing' && invoiceNumber && shopId) {
+            setIsSaving(true)
+            try {
+                // Dynamically import the invoice utils to avoid circular dependency
+                const { updateInvoiceVehicleInfo } = await import('@/app/invoices/utils/invoice-utils')
+                
+                const vehicleInfo = {
+                    year: vehicleYear,
+                    make: vehicleMake,
+                    model: vehicleModel,
+                    license_plate: vehicleLicensePlate,
+                    color: vehicleColor,
+                    vin: vehicleVin,
+                    mileage: vehicleMileage
+                }
+                
+                await updateInvoiceVehicleInfo(invoiceNumber, vehicleInfo, shopId)
+                toast.success("Vehicle information updated successfully")
+            } catch (error) {
+                console.error('Error updating invoice vehicle:', error)
+                toast.error("Failed to update vehicle information")
+            } finally {
+                setIsSaving(false)
+            }
+            return
+        }
+
+        // Otherwise, update the customer vehicle in the database
         setIsSaving(true)
         try {
             await VehicleService.updateVehicle(vehicleId, {
