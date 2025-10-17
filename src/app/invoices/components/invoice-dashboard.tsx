@@ -275,12 +275,14 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,
                 model: invoice.vehicle_information.model,
-                license_plate: invoice.vehicle_information.license_plate
+                license_plate: invoice.vehicle_information.license_plate,
+                vin: invoice.vehicle_information.vin
             } : {
                 year: "",
                 make: "",
                 model: "",
-                license_plate: ""
+                license_plate: "",
+                vin: ""
             }
         }
     }

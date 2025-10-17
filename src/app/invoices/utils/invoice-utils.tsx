@@ -330,3 +330,39 @@ export async function updateInvoice(invoiceNumber: string, invoiceData: any, sho
 		throw error;
 	}
 }
+
+export async function updateInvoiceVehicleInfo(invoiceNumber: string, vehicleInfo: any, shopId: string) {
+	try {
+		// Validate that we have an invoice number to update
+		if (!invoiceNumber) {
+			console.error("No invoice number provided for vehicle update");
+			throw new Error("Invoice number is required for vehicle updates");
+		}
+		
+		// Log update operation for debugging
+		console.log(`Updating vehicle info for invoice ${invoiceNumber}`, vehicleInfo);
+		
+		// Execute the update operation with Supabase
+		const { data, error } = await supabase
+			.from('invoices')
+			.update({ vehicle_information: vehicleInfo })
+			.eq('invoice_number', invoiceNumber)
+			.eq('shop_id', shopId) // Additional security check
+			.select();
+			
+		if (error) {
+			console.error("Supabase update error:", error);
+			throw error;
+		}
+		
+		if (!data || data.length === 0) {
+			console.error("No invoice was updated - may not exist or no permission");
+			throw new Error("Failed to update invoice vehicle info - not found or permission denied");
+		}
+		
+		return data;
+	} catch (error) {
+		console.error("Error in updateInvoiceVehicleInfo:", error);
+		throw error;
+	}
+}

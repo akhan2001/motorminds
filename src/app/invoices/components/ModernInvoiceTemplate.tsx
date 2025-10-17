@@ -481,6 +481,10 @@ const CustomerVehicleInfo = ({ invoice }: { invoice: any }) => (
                 <Text style={styles.fieldLabelSmall}>Odometer:</Text>
                 <Text style={styles.sectionContent}>{invoice.mileage || ''}</Text>
             </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>VIN:</Text>
+                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.vin || ''}</Text>
+            </View>
         </View>
     </View>
 );
