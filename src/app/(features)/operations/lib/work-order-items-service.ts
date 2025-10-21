@@ -63,6 +63,9 @@ export class WorkOrderItemsService {
 
         if (error) {
             console.error('Error fetching work order item:', error)
+            if (error.code === 'PGRST116') {
+                throw new Error(`Work order item with ID ${itemId} not found`)
+            }
             throw new Error(`Failed to fetch work order item: ${error.message}`)
         }
 
@@ -171,10 +174,15 @@ export class WorkOrderItemsService {
         // Recalculate total price if quantity or unit_price changed
         if (itemData.quantity !== undefined || itemData.unit_price !== undefined) {
             // Get current item to get missing values
-            const currentItem = await this.getWorkOrderItem(itemId)
-            const newQuantity = itemData.quantity ?? currentItem.quantity
-            const newUnitPrice = itemData.unit_price ?? currentItem.unit_price
-            updatePayload.total_price = newQuantity * newUnitPrice
+            try {
+                const currentItem = await this.getWorkOrderItem(itemId)
+                const newQuantity = itemData.quantity ?? currentItem.quantity
+                const newUnitPrice = itemData.unit_price ?? currentItem.unit_price
+                updatePayload.total_price = newQuantity * newUnitPrice
+            } catch (error) {
+                // If item doesn't exist, we can't update it
+                throw new Error(`Work order item with ID ${itemId} not found`)
+            }
         }
 
         if (itemData.supplier !== undefined) updatePayload.supplier = itemData.supplier?.trim() || null
@@ -320,6 +328,22 @@ export class WorkOrderItemsService {
         }
 
         return data
+    }
+
+    /**
+     * Check if a work order item exists by ID
+     */
+    static async workOrderItemExists(itemId: string): Promise<boolean> {
+        if (!itemId) {
+            return false
+        }
+
+        try {
+            await this.getWorkOrderItem(itemId)
+            return true
+        } catch (error) {
+            return false
+        }
     }
 }
 
