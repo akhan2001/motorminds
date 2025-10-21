@@ -9,6 +9,7 @@ import Image from "next/image"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { login, signup } from "./actions"
+import { Turnstile } from "@marsidev/react-turnstile"
 
 export default function AuthComponent() {
     const [showPassword, setShowPassword] = useState(false)
@@ -16,6 +17,7 @@ export default function AuthComponent() {
     const [message, setMessage] = useState<string | null>(null)
     const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
     useEffect(() => {
         const errorParam = searchParams?.get('error')
@@ -31,8 +33,13 @@ export default function AuthComponent() {
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+        if (!captchaToken) {
+            setError('Please complete the CAPTCHA')
+            return
+        }
         setIsLoading(true)
         const formData = new FormData(e.currentTarget)
+        formData.append('captcha-token', captchaToken)
         await login(formData)
         setIsLoading(false)
     }
@@ -106,10 +113,21 @@ export default function AuthComponent() {
                         </div>
                     </div>
 
+                    {/* Turnstile CAPTCHA */}
+                    <div className="flex justify-center">
+                        <Turnstile
+                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                            onSuccess={(token) => setCaptchaToken(token)}
+                            onError={() => setCaptchaToken(null)}
+                            onExpire={() => setCaptchaToken(null)}
+                        />
+                    </div>
+
                     <Button
                         type="submit"
+                        disabled={!captchaToken || isLoading}
                         className="w-full rounded-lg bg-white px-4 py-2.5 sm:py-3 text-sm font-medium 
-                                   text-black transition hover:bg-gray-100"
+                                   text-black transition hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : "Sign In"}
                     </Button>
@@ -120,11 +138,11 @@ export default function AuthComponent() {
                         Forgot Your Password? <span className="underline hover:text-white">Reset It Here</span>
                     </Link>
                 </div>
-                <div className="mt-5 md:mt-6 text-center">
+                {/* <div className="mt-5 md:mt-6 text-center">
                     <p className="text-xs sm:text-sm text-gray-400">
                         Don't have an account? <Link href="/signup" className="underline hover:text-white">Create Account</Link>
                     </p>
-                </div>
+                </div> */}
             </div>
         </div>
     )

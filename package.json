@@ -92,6 +92,7 @@
         "next": "^15.3.2",
         "next-auth": "^4.24.11",
         "next-themes": "^0.4.6",
+        "next-turnstile": "^1.0.7",
         "openai": "^4.91.0",
         "rate-limiter-flexible": "^7.2.0",
         "react": "^18.2.0",
@@ -118,6 +119,7 @@
         "twilio": "^5.8.0",
         "use-debounce": "^10.0.5",
         "use-stick-to-bottom": "^1.0.46",
+        "uuid": "^13.0.0",
         "webflow-api": "^3.1.0",
         "zod": "^3.25.75"
     },
