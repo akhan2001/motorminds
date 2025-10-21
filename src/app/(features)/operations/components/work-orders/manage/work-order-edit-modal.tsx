@@ -508,34 +508,84 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             const workOrderId = workOrderDetails?.id || initialWorkOrder.id
             if (!workOrderId) return
 
+            // Get existing work order items to determine which are new vs existing
+            const existingItems = await WorkOrderItemsService.getWorkOrderItems(workOrderId)
+            const existingItemIds = new Set(existingItems.map(item => item.id))
+
             // Save all labor items
             for (const item of laborItems) {
                 if (item.description.trim()) {
-                    await WorkOrderItemsService.updateWorkOrderItem(item.id, {
-                        description: item.description,
-                        labor_hours: item.labor_hours,
-                        unit_price: item.unit_price,
-                        notes: item.notes,
-                        technician_id: item.technician_id,
-                        active: item.active
-                    })
+                    try {
+                        if (existingItemIds.has(item.id)) {
+                            // Update existing item
+                            console.log('Updating existing labor item:', item.id)
+                            await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                                description: item.description,
+                                labor_hours: item.labor_hours,
+                                unit_price: item.unit_price,
+                                notes: item.notes,
+                                technician_id: item.technician_id,
+                                active: item.active
+                            })
+                        } else {
+                            // Create new item
+                            console.log('Creating new labor item:', item.id)
+                            await WorkOrderItemsService.createWorkOrderItem({
+                                work_order_id: workOrderId,
+                                item_type: 'labor',
+                                description: item.description,
+                                quantity: 1, // Labor items typically have quantity of 1
+                                unit_price: item.unit_price,
+                                labor_hours: item.labor_hours,
+                                notes: item.notes,
+                                technician_id: item.technician_id,
+                            })
+                        }
+                    } catch (error) {
+                        console.error(`Error saving labor item ${item.id}:`, error)
+                        throw error
+                    }
                 }
             }
 
             // Save all parts items
             for (const item of partsItems) {
                 if (item.description.trim()) {
-                    await WorkOrderItemsService.updateWorkOrderItem(item.id, {
-                        description: item.description,
-                        part_number: item.part_number,
-                        quantity: item.quantity,
-                        unit_price: item.unit_price,
-                        supplier: item.supplier,
-                        category: item.category,
-                        warranty_period: item.warranty_period,
-                        notes: item.notes,
-                        active: item.active
-                    })
+                    try {
+                        if (existingItemIds.has(item.id)) {
+                            // Update existing item
+                            console.log('Updating existing parts item:', item.id)
+                            await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                                description: item.description,
+                                part_number: item.part_number,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                supplier: item.supplier,
+                                category: item.category,
+                                warranty_period: item.warranty_period,
+                                notes: item.notes,
+                                active: item.active
+                            })
+                        } else {
+                            // Create new item
+                            console.log('Creating new parts item:', item.id)
+                            await WorkOrderItemsService.createWorkOrderItem({
+                                work_order_id: workOrderId,
+                                item_type: 'part',
+                                description: item.description,
+                                part_number: item.part_number,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                supplier: item.supplier,
+                                category: item.category,
+                                warranty_period: item.warranty_period,
+                                notes: item.notes,
+                            })
+                        }
+                    } catch (error) {
+                        console.error(`Error saving parts item ${item.id}:`, error)
+                        throw error
+                    }
                 }
             }
 
