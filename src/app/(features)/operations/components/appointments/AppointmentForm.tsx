@@ -27,9 +27,10 @@ import {
 import { format, addDays } from 'date-fns'
 import { useAvailableSlots } from '../../hooks/appointments/useAvailbility'
 import { useCreateAppointment } from '../../hooks/appointments/useAppointments'
-import CustomerDropdown from '../../../customers/components/Selection/CustomerDropdown'
+import { CustomerSearchBar } from '@/components/common/customers/customer-search-bar'
 import { CustomerForm } from '../../../customers/components/Selection/CustomerForm'
 import { VehicleDropdown } from '../../../customers/components/Selection/VehicleDropdown'
+import { NewVehicleForm } from '../../../customers/components/Selection/NewVehicleForm'
 import type { AppointmentCreateData } from '../../types/appointment'
 import { createClient } from '@/utils/supabase/client'
 
@@ -103,18 +104,9 @@ export function AppointmentForm({
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [showNewCustomerForm, setShowNewCustomerForm] = useState(false)
     const [showNewVehicleForm, setShowNewVehicleForm] = useState(false)
+    const [vehicleRefreshTrigger, setVehicleRefreshTrigger] = useState(0)
     
     
-    // New vehicle form state  
-    const [newVehicleData, setNewVehicleData] = useState({
-        year: new Date().getFullYear().toString(),
-        make: '',
-        model: '',
-        color: '',
-        vin: '',
-        licensePlate: '',
-        mileage: ''
-    })
 
     // Fetch available slots for the selected date
     const { 
@@ -177,34 +169,6 @@ export function AppointmentForm({
         }
     }
 
-    // Handle customer selection
-    const handleCustomerSelect = (customerId: string, customerData?: any) => {
-        if (customerId === "new") {
-            setShowNewCustomerForm(true)
-            setSelectedCustomer(null)
-            setSelectedCustomerId('')
-        } else {
-            setSelectedCustomerId(customerId)
-            if (customerData) {
-                const customer: Customer = {
-                    id: customerData.id,
-                    customer_name: customerData.name,
-                    customer_phone: customerData.phone,
-                    customer_email: customerData.email,
-                    customer_address: customerData.address
-                }
-                setSelectedCustomer(customer)
-            }
-            setShowNewCustomerForm(false)
-        }
-        
-        setSelectedVehicleId('') // Reset vehicle selection
-        setSelectedVehicle(null)
-        setShowNewVehicleForm(false)
-        
-        // Clear customer-related errors
-        setErrors(prev => ({ ...prev, customer: '' }))
-    }
 
     // Handle vehicle selection
     const handleVehicleSelect = (vehicleId: string, vehicle?: VehicleOption) => {
@@ -220,15 +184,6 @@ export function AppointmentForm({
     // Removed handleCreateNewCustomer - now handled by CustomerDropdown
 
 
-    // Handle new vehicle data changes  
-    const handleNewVehicleChange = (field: string, value: string) => {
-        setNewVehicleData(prev => ({ ...prev, [field]: value }))
-        
-        // Clear field error when user starts typing
-        if (errors[`newVehicle.${field}`]) {
-            setErrors(prev => ({ ...prev, [`newVehicle.${field}`]: '' }))
-        }
-    }
 
     // Validate form
     const validateForm = () => {
@@ -251,11 +206,6 @@ export function AppointmentForm({
             newErrors.vehicle = 'Vehicle is required'
         }
         
-        // New vehicle validation if creating new vehicle  
-        if (showNewVehicleForm) {
-            if (!newVehicleData.make.trim()) newErrors['newVehicle.make'] = 'Vehicle make is required'
-            if (!newVehicleData.model.trim()) newErrors['newVehicle.model'] = 'Vehicle model is required'
-        }
 
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
@@ -279,29 +229,6 @@ export function AppointmentForm({
     const createVehicleIfNeeded = async (customerId: string): Promise<string> => {
         if (selectedVehicle && selectedVehicleId !== 'new') {
             return selectedVehicle.id
-        }
-        
-        if (showNewVehicleForm) {
-            const { data: newVehicle, error } = await supabase
-                .from('customer_vehicles')
-                .insert([{
-                    customer_id: customerId,
-                    year: parseInt(newVehicleData.year) || new Date().getFullYear(),
-                    make: newVehicleData.make.trim(),
-                    model: newVehicleData.model.trim(),
-                    color: newVehicleData.color.trim() || null,
-                    vin: newVehicleData.vin.trim() || null,
-                    license_plate: newVehicleData.licensePlate.trim() || null,
-                    mileage: newVehicleData.mileage ? parseInt(newVehicleData.mileage) : null,
-                }])
-                .select()
-                .single()
-
-            if (error) {
-                throw new Error(`Failed to create vehicle: ${error.message}`)
-            }
-
-            return newVehicle.id
         }
         
         throw new Error('No vehicle selected or created')
@@ -339,7 +266,7 @@ export function AppointmentForm({
                 appointmentDate: format(new Date(), 'yyyy-MM-dd'),
                 startTime: '',
                 endTime: '',
-                serviceType: '',
+                serviceType: [],
                 notes: '',
             })
             setSelectedCustomer(null)
@@ -348,15 +275,6 @@ export function AppointmentForm({
             setSelectedVehicle(null)
             setShowNewCustomerForm(false)
             setShowNewVehicleForm(false)
-            setNewVehicleData({
-                year: new Date().getFullYear().toString(),
-                make: '',
-                model: '',
-                color: '',
-                vin: '',
-                licensePlate: '',
-                mileage: ''
-            })
         } catch (error) {
             console.error('Failed to create appointment:', error)
             setErrors({ submit: error instanceof Error ? error.message : 'Failed to create appointment' })
@@ -540,13 +458,35 @@ export function AppointmentForm({
                             {/* Customer Selection */}
                             <div className="space-y-2">
                                 <Label htmlFor="customer-select" className="text-gray-300 text-xs">Customer *</Label>
-                                <CustomerDropdown
-                                    shopId={shopId}
-                                    selectedCustomerId={selectedCustomerId}
-                                    onCustomerSelect={handleCustomerSelect}
-                                    placeholder="Select Customer"
-                                    disabled={false}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a]"
+                                <CustomerSearchBar
+                                    onSelect={(customer) => {
+                                        setSelectedCustomerId(customer.id)
+                                        setSelectedCustomer({
+                                            id: customer.id,
+                                            customer_name: customer.customer_name,
+                                            customer_phone: customer.customer_phone,
+                                            customer_email: customer.customer_email,
+                                            customer_address: customer.customer_address
+                                        })
+                                        setShowNewCustomerForm(false)
+                                        setSelectedVehicleId('') // Reset vehicle selection
+                                        setSelectedVehicle(null)
+                                        setShowNewVehicleForm(false)
+                                        // Clear customer-related errors
+                                        setErrors(prev => ({ ...prev, customer: '' }))
+                                    }}
+                                    onCreateNew={() => {
+                                        setShowNewCustomerForm(true)
+                                        setSelectedCustomerId('')
+                                        setSelectedCustomer(null)
+                                        setSelectedVehicleId('')
+                                        setSelectedVehicle(null)
+                                        setShowNewVehicleForm(false)
+                                        // Clear customer-related errors
+                                        setErrors(prev => ({ ...prev, customer: '' }))
+                                    }}
+                                    placeholder="Search customers..."
+                                    className="w-full"
                                 />
                                 {errors.customer && (
                                     <p className="text-red-400 text-xs mt-1">{errors.customer}</p>
@@ -591,6 +531,7 @@ export function AppointmentForm({
                                     onVehicleSelect={handleVehicleSelect}
                                     placeholder="Select or add vehicle"
                                     disabled={!selectedCustomerId && !showNewCustomerForm}
+                                    refreshTrigger={vehicleRefreshTrigger}
                                 />
                                 {errors.vehicle && (
                                     <p className="text-red-400 text-xs mt-1">{errors.vehicle}</p>
@@ -599,93 +540,19 @@ export function AppointmentForm({
 
                             {/* New Vehicle Form */}
                             {showNewVehicleForm && (
-                                <Card className="bg-[#0d0d0d] border-[#2a2a2a] p-4 mt-4">
-                                    <CardTitle className="text-md font-medium text-white mb-3 flex items-center justify-between">
-                                        New Vehicle Details
-                                        <Button variant="ghost" size="sm" onClick={() => setShowNewVehicleForm(false)} className="text-gray-400 hover:text-white">
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </CardTitle>
-                                    <div className="space-y-3">
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">Year</Label>
-                                                <Input
-                                                    type="number"
-                                                    value={newVehicleData.year}
-                                                    onChange={(e) => handleNewVehicleChange('year', e.target.value)}
-                                                    placeholder="2023"
-                                                    min="1900"
-                                                    max={new Date().getFullYear() + 1}
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">Make *</Label>
-                                                <Input
-                                                    value={newVehicleData.make}
-                                                    onChange={(e) => handleNewVehicleChange('make', e.target.value)}
-                                                    placeholder="Toyota"
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                                {errors['newVehicle.make'] && (
-                                                    <p className="text-red-400 text-xs mt-1">{errors['newVehicle.make']}</p>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">Model *</Label>
-                                                <Input
-                                                    value={newVehicleData.model}
-                                                    onChange={(e) => handleNewVehicleChange('model', e.target.value)}
-                                                    placeholder="Camry"
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                                {errors['newVehicle.model'] && (
-                                                    <p className="text-red-400 text-xs mt-1">{errors['newVehicle.model']}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <Label className="text-gray-300 text-xs">Color</Label>
-                                            <Input
-                                                value={newVehicleData.color}
-                                                onChange={(e) => handleNewVehicleChange('color', e.target.value)}
-                                                placeholder="Red"
-                                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label className="text-gray-300 text-xs">VIN</Label>
-                                            <Input
-                                                value={newVehicleData.vin}
-                                                onChange={(e) => handleNewVehicleChange('vin', e.target.value)}
-                                                placeholder="17-digit VIN"
-                                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">License Plate</Label>
-                                                <Input
-                                                    value={newVehicleData.licensePlate}
-                                                    onChange={(e) => handleNewVehicleChange('licensePlate', e.target.value)}
-                                                    placeholder="ABC-123"
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label className="text-gray-300 text-xs">Mileage</Label>
-                                                <Input
-                                                    type="number"
-                                                    value={newVehicleData.mileage}
-                                                    onChange={(e) => handleNewVehicleChange('mileage', e.target.value)}
-                                                    placeholder="50000"
-                                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
+                                <NewVehicleForm
+                                    customerId={selectedCustomerId}
+                                    onVehicleCreated={(vehicle) => {
+                                        setSelectedVehicle(vehicle)
+                                        setSelectedVehicleId(vehicle.id)
+                                        setShowNewVehicleForm(false)
+                                        // Trigger vehicle list refresh
+                                        setVehicleRefreshTrigger(prev => prev + 1)
+                                        // Clear any vehicle errors
+                                        setErrors(prev => ({ ...prev, vehicle: '' }))
+                                    }}
+                                    onCancel={() => setShowNewVehicleForm(false)}
+                                />
                             )}
                         </div>
 

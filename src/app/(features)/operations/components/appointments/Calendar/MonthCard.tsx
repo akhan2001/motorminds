@@ -162,7 +162,7 @@ export function MonthCard({
                             size="sm"
                             variant="ghost"
                             onClick={(e) => handleCreateClick(date, e)}
-                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white"
+                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-whit hover:bg-[#2a2a2a]"
                         >
                             <Plus className="h-2 w-2" />
                         </Button>

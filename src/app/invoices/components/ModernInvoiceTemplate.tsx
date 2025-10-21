@@ -397,6 +397,12 @@ const InvoiceHeader = ({ invoice }: { invoice: any }) => (
             <View style={styles.invoiceFields}>
                 <Text style={styles.fieldLabel}>Invoice No:</Text>
                 <Text style={styles.sectionContent}>{invoice.displayNumber || ''}</Text>
+                {invoice.po_number && (
+                    <>
+                        <Text style={styles.fieldLabel}>PO Number:</Text>
+                        <Text style={styles.sectionContent}>{invoice.po_number}</Text>
+                    </>
+                )}
                 <Text style={styles.fieldLabel}>Date:</Text>
                 <Text style={styles.sectionContent}>{formatDate(invoice.issueDate) || ''}</Text>
             </View>
@@ -474,6 +480,10 @@ const CustomerVehicleInfo = ({ invoice }: { invoice: any }) => (
             <View style={styles.fieldRow}>
                 <Text style={styles.fieldLabelSmall}>Odometer:</Text>
                 <Text style={styles.sectionContent}>{invoice.mileage || ''}</Text>
+            </View>
+            <View style={styles.fieldRow}>
+                <Text style={styles.fieldLabelSmall}>VIN:</Text>
+                <Text style={styles.sectionContent}>{invoice.vehicleInfo?.vin || ''}</Text>
             </View>
         </View>
     </View>

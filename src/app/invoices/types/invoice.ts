@@ -31,6 +31,7 @@ export interface Invoice {
     notes?: string
     mileage?: string
     assigned_to?: string
+    po_number?: string
     vehicle_information?: VehicleInformation
     source?: "customer_generated" | "shop_generated"
     estimated_amount?: number

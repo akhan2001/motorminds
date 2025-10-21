@@ -11,7 +11,13 @@ export type { WorkOrderCardProps } from './work-order-card'
 export { default as WorkOrderCardSmall } from './work-order-card-small'
 export type { WorkOrderCardSmallProps } from './work-order-card-small'
 
-// Export modular modal components
+// Phase-based exports (new structure)
+export * from './create'
+export * from './manage'
+export * from './complete'
+export * from './shared'
+
+// Backwards compatibility - export from old WorkOrderModal structure
 export * from './WorkOrderModal'
 
 // TODO: Add other work order components as they are created

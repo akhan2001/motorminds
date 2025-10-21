@@ -13,4 +13,9 @@ export interface Customer {
     shop_id: string
     created_at: string
     updated_at?: string
+    notes?: string
+    shops?: {
+        shop_name: string
+        shop_email: string
+    }
 }

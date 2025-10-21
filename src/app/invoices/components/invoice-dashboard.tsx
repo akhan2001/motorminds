@@ -265,6 +265,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
             assignedTo: invoice.assigned_to,
             hst_number: businessDetails.hst_number,
             business_number: businessDetails.business_number,
+            po_number: invoice.po_number,
             labour_items: invoice.labour_items || [],
             parts_items: invoice.parts_items || [],
             source: invoice.source,
@@ -274,12 +275,14 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 year: invoice.vehicle_information.year,
                 make: invoice.vehicle_information.make,
                 model: invoice.vehicle_information.model,
-                license_plate: invoice.vehicle_information.license_plate
+                license_plate: invoice.vehicle_information.license_plate,
+                vin: invoice.vehicle_information.vin
             } : {
                 year: "",
                 make: "",
                 model: "",
-                license_plate: ""
+                license_plate: "",
+                vin: ""
             }
         }
     }
@@ -445,6 +448,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                                 clientAddress={invoice.client_address}
                                 clientEmail={invoice.client_email}
                                 description={invoice.description}
+                                poNumber={invoice.po_number}
                                 vehicleInfo={invoice.vehicle_information ? {
                                     year: invoice.vehicle_information.year,
                                     make: invoice.vehicle_information.make,

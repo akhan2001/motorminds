@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
             // Search by exact phone number
             query = query.eq('customer_phone', phone);
         } else if (search) {
-            // Full-text search on name and email
-            query = query.textSearch('customers_search_idx', search);
+            // Use ILIKE search for name, email, and phone (works without special indexes)
+            query = query.or(`customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`);
         }
 
         const { data: customers, error } = await query;

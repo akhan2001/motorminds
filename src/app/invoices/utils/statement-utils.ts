@@ -281,6 +281,13 @@ export function getDateRangePresets(): { label: string, getValue: () => Statemen
                 start: new Date(2020, 0, 1), // Arbitrary old date
                 end: today
             })
+        },
+        {
+            label: 'Custom',
+            getValue: () => ({
+                start: new Date(), // Will be overridden by component state
+                end: new Date()    // Will be overridden by component state
+            })
         }
     ];
 }

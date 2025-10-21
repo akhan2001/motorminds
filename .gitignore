@@ -61,4 +61,5 @@ local-*
 # Mock data files (development only)
 src/app/(features)/operations/mock-work-orders.json
 
+# Private documentation system (internal business-technical alignment)
 /docs/

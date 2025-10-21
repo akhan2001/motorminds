@@ -30,30 +30,6 @@ function validateInsights(data: any): data is ImmediateInsights {
     return true;
 }
 
-// Default insights fallback
-function createDefaultInsights(): ImmediateInsights {
-    return {
-        upsell_suggestions: [{
-            title: "Comprehensive Diagnostic Inspection",
-            description: "Multi-point diagnostic inspection to identify potential issues before they become major repairs.",
-            estimatedValue: 150,
-            priority: "medium",
-            category: "preventive"
-        }],
-        flags: [{
-            type: "info",
-            message: "Vehicle age and mileage suggest proactive maintenance to prevent costly repairs",
-            category: "maintenance"
-        }],
-        work_order_analysis: {
-            current_work_assessment: "Current service in progress. Recommend comprehensive inspection to identify additional maintenance needs.",
-            related_systems: ["Engine", "Transmission", "Cooling System", "Brake System"],
-            mileage_considerations: "At this service interval, consider inspecting wear items and preventive maintenance components",
-            timing_recommendations: "Complete current work, then schedule follow-up inspection within 30 days"
-        },
-        summary: "Technical diagnostic and preventive maintenance recommendations based on vehicle service requirements"
-    };
-}
 
 export async function POST(req: Request) {
     try {
@@ -315,18 +291,18 @@ export async function POST(req: Request) {
         } catch (error) {
             console.error('OpenAI API error or timeout:', error);
             return NextResponse.json({
-                success: true,
-                insights: createDefaultInsights()
-            });
+                success: false,
+                error: 'Failed to generate insights due to AI service error'
+            }, { status: 500 });
         }
 
         // Parse AI response
         const aiResponse = response.choices[0]?.message?.content?.trim();
         if (!aiResponse) {
             return NextResponse.json({
-                success: true,
-                insights: createDefaultInsights()
-            });
+                success: false,
+                error: 'No response from AI service'
+            }, { status: 500 });
         }
 
         let parsedResponse;
@@ -379,7 +355,10 @@ export async function POST(req: Request) {
             
             insights = parsedResponse as ImmediateInsights;
         } else {
-            insights = createDefaultInsights();
+            return NextResponse.json({
+                success: false,
+                error: 'Invalid response format from AI service'
+            }, { status: 500 });
         }
 
         // Save insights to database

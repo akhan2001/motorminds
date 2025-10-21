@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogHeader, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, FileText, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { getCustomers } from "@/app/customers/api/customer-utils";
@@ -12,7 +11,6 @@ import { fetchShopBusinessDetails } from "../utils/invoice-utils";
 import { downloadStatementPDF } from "../utils/statement-generator";
 import { getDateRangePresets } from "../utils/statement-utils";
 import { StatementDateRange, StatementCustomer, StatementShopInfo } from "../types/statement";
-import { cn } from "@/lib/utils";
 
 interface StatementGeneratorDialogProps {
     isOpen: boolean;
@@ -214,6 +212,16 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                                     <SelectItem 
                                         key={preset.label} 
                                         value={preset.label.toLowerCase().replace(/\s+/g, '_')}
+                                        onClick={() => {
+                                            if (preset.label === 'Custom') {
+                                                setDatePreset('custom');
+                                            }
+                                            else {
+                                                setDatePreset(preset.label.toLowerCase().replace(/\s+/g, '_'));
+                                            }
+                                            setCustomStartDate(preset.getValue()?.start ?? undefined);
+                                            setCustomEndDate(preset.getValue()?.end ?? undefined);
+                                        }}
                                     >
                                         {preset.label}
                                     </SelectItem>
@@ -221,6 +229,33 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {/* Custom Date Range Pickers */}
+                    {datePreset === 'custom' && (
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Start Date */}
+                            <div className="space-y-2">
+                                <label className="text-gray-300 text-sm font-medium">Start Date</label>
+                                <Input
+                                    type="date"
+                                    value={customStartDate ? format(customStartDate, "yyyy-MM-dd") : ""}
+                                    onChange={(e) => setCustomStartDate(e.target.value ? new Date(e.target.value) : undefined)}
+                                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100"
+                                />
+                            </div>
+
+                            {/* End Date */}
+                            <div className="space-y-2">
+                                <label className="text-gray-300 text-sm font-medium">End Date</label>
+                                <Input
+                                    type="date"
+                                    value={customEndDate ? format(customEndDate, "yyyy-MM-dd") : ""}
+                                    onChange={(e) => setCustomEndDate(e.target.value ? new Date(e.target.value) : undefined)}
+                                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100"
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Preview Info */}
                     {selectedCustomer && (
