@@ -159,7 +159,7 @@ export function AppointmentDetailsCard({
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-400 text-sm">Date:</span>
                                 <span className="text-white text-sm">
-                                    {format(new Date(appointment.appointment_date), 'EEEE, MMMM d, yyyy')}
+                                    {format(new Date(appointment.appointment_date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}
                                 </span>
                             </div>
                             {appointment.start_time && (
