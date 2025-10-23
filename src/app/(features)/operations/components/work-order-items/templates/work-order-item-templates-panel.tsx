@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Search, Filter, Package } from 'lucide-react'
 import { WorkOrderItemTemplateCard } from './work-order-item-template-card'
 import { WorkOrderItemTemplateCardSmall } from './work-order-item-template-card-small'
-import { WorkOrderItemTemplateForm } from './work-order-item-template-form'
 import { useWorkOrderItemTemplates, useDeleteWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { useCloneTemplateToWorkOrder } from '../../../hooks/use-work-order-item-templates'
 import { getTemplateCategories } from './Categories/template-categories'
@@ -21,6 +19,8 @@ interface WorkOrderItemTemplatesPanelProps {
     technicianId?: string
     onTemplateSelected?: (template: WorkOrderItemTemplate) => void
     selectedTemplateIds?: string[]
+    onCreateTemplate?: () => void // Callback for create action
+    onEditTemplate?: (template: WorkOrderItemTemplate) => void // Callback for edit action
     className?: string
 }
 
@@ -30,19 +30,32 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
     technicianId,
     onTemplateSelected,
     selectedTemplateIds = [],
+    onCreateTemplate,
+    onEditTemplate,
     className = ""
 }) => {
-    const [searchTerm, setSearchTerm] = useState('')
+    const [searchInput, setSearchInput] = useState('') // User's input (immediate)
+    const [searchTerm, setSearchTerm] = useState('') // Debounced search term (delayed)
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
-    const [isFormOpen, setIsFormOpen] = useState(false)
-    const [editingTemplate, setEditingTemplate] = useState<WorkOrderItemTemplate | null>(null)
     
     // Get panel context to determine card size
     const { context } = usePanelContext()
     const useSmallCard = context === 'work-order-modal' || context === 'work-order-edit'
 
-    // Hooks
-    const { data: templates = [], isLoading, error } = useWorkOrderItemTemplates(shopId)
+    // Debounce search input - wait 300ms after user stops typing
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearchTerm(searchInput)
+        }, 300)
+
+        return () => clearTimeout(timer)
+    }, [searchInput])
+
+    // Only fetch templates when user starts searching
+    const shouldFetch = searchTerm.length > 0 // || selectedCategory !== 'all' // Category filter disabled
+    
+    // Hooks - only load when needed (enabled flag prevents unnecessary API calls)
+    const { data: templates = [], isLoading, error } = useWorkOrderItemTemplates(shopId, { enabled: shouldFetch })
     const deleteTemplateMutation = useDeleteWorkOrderItemTemplate()
     const cloneTemplateMutation = useCloneTemplateToWorkOrder()
     
@@ -50,15 +63,21 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
     const categories = getTemplateCategories().map(cat => cat.value)
 
     // Filter templates based on search and category
-    const filteredTemplates = templates.filter(template => {
-        const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            template.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredTemplates = React.useMemo(() => {
+        if (!shouldFetch) return []
         
-        const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
-        
-        return matchesSearch && matchesCategory
-    })
+        return templates.filter(template => {
+            const matchesSearch = searchTerm.length === 0 || 
+                template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                template.category?.toLowerCase().includes(searchTerm.toLowerCase())
+            
+            const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
+            
+            return matchesSearch && matchesCategory
+        })
+    }, [templates, searchTerm, selectedCategory, shouldFetch])
+
 
     const handleTemplateSelect = async (template: WorkOrderItemTemplate) => {
         if (workOrderId && workOrderId !== "new") {
@@ -78,9 +97,9 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
         }
     }
 
-    const handleEditTemplate = (template: WorkOrderItemTemplate) => {
-        setEditingTemplate(template)
-        setIsFormOpen(true)
+    const handleEditTemplateClick = (template: WorkOrderItemTemplate) => {
+        // Use callback if provided, otherwise do nothing
+        onEditTemplate?.(template)
     }
 
     const handleDeleteTemplate = async (templateId: string) => {
@@ -91,19 +110,9 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
         }
     }
 
-    const handleCreateTemplate = () => {
-        setEditingTemplate(null)
-        setIsFormOpen(true)
-    }
-
-    const handleFormSuccess = () => {
-        setIsFormOpen(false)
-        setEditingTemplate(null)
-    }
-
-    const handleFormCancel = () => {
-        setIsFormOpen(false)
-        setEditingTemplate(null)
+    const handleCreateTemplateClick = () => {
+        // Use callback if provided, otherwise do nothing
+        onCreateTemplate?.()
     }
 
     if (isLoading) {
@@ -151,37 +160,62 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
         )
     }
 
-    return (
-        <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
-            {/* Header */}
-            <div className="p-4 border-b border-[#222222] flex-shrink-0">
-                <div className="flex items-center justify-between mb-3">
-                    <div>
-                        <h3 className="text-white font-medium text-base">Templates</h3>
-                        <p className="text-gray-400 text-sm mt-1">Reusable work order items</p>
-                    </div>
-                    <Button
-                        size="sm"
-                        onClick={handleCreateTemplate}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                        <Plus className="h-3 w-3 mr-1" />
-                        New
-                    </Button>
-                </div>
+    // Don't show header in modal context (modal already has header)
+    const showHeader = context !== 'templates-page'
 
-                {/* Search and Filter */}
-                <div className="space-y-2">
-                    <div className="relative">
+    return (
+        <div className={`w-full bg-[#131313] ${showHeader ? 'border-l border-[#222222]' : ''} flex flex-col h-full min-h-0 ${className}`}>
+            {/* Header - only show in work order contexts */}
+            {showHeader && (
+                <div className="p-4 border-b border-[#222222] flex-shrink-0">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 className="text-white font-medium text-base">Templates</h3>
+                            <p className="text-gray-400 text-sm mt-1">Reusable work order items</p>
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={handleCreateTemplateClick}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            <Plus className="h-3 w-3 mr-1" />
+                            New
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Search and Filter - always show */}
+            <div className="p-4 border-b border-[#222222] flex-shrink-0">
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
                         <Input
                             placeholder="Search templates..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
                             className="pl-9 bg-[#292929] text-white border-[#626262] text-sm"
                         />
+                        {searchInput !== searchTerm && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
+                            </div>
+                        )}
                     </div>
-                    
+                    {!showHeader && (
+                        <Button
+                            size="sm"
+                            onClick={handleCreateTemplateClick}
+                            className="bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
+                        >
+                            <Plus className="h-4 w-4 mr-1" />
+                            New
+                        </Button>
+                    )}
+                </div>
+                
+                {/* Category Filter - Commented out for now */}
+                {/* <div className="mt-2">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                         <SelectTrigger className="bg-[#292929] text-white border-[#626262] text-sm">
                             <Filter className="h-3 w-3 mr-2" />
@@ -196,13 +230,32 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                             ))}
                         </SelectContent>
                     </Select>
-                </div>
+                </div> */}
             </div>
 
             {/* Content Area - Scrollable */}
             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                 <div className={`p-4 ${useSmallCard ? 'space-y-2' : 'space-y-3'}`}>
-                    {filteredTemplates.length > 0 ? (
+                    {!shouldFetch ? (
+                        /* Show search prompt - templates only load when searching/filtering */
+                        <div className="text-center py-12">
+                            <Search className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                            <h4 className="text-white text-lg font-medium mb-2">
+                                Search for Templates
+                            </h4>
+                            <p className="text-gray-400 text-sm mb-2">
+                                Use the search bar above to find templates
+                            </p>
+                            <p className="text-gray-500 text-xs">
+                                Or select a category to browse by type
+                            </p>
+                        </div>
+                    ) : isLoading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                            <p className="text-gray-400 text-sm">Loading templates...</p>
+                        </div>
+                    ) : filteredTemplates.length > 0 ? (
                         filteredTemplates.map((template) => {
                             const CardComponent = useSmallCard ? WorkOrderItemTemplateCardSmall : WorkOrderItemTemplateCard
                             return (
@@ -210,7 +263,7 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                                     key={template.id}
                                     template={template}
                                     onSelect={workOrderId ? handleTemplateSelect : undefined}
-                                    onEdit={handleEditTemplate}
+                                    onEdit={handleEditTemplateClick}
                                     onDelete={handleDeleteTemplate}
                                     isSelectable={!!workOrderId}
                                     isSelected={selectedTemplateIds.includes(template.id)}
@@ -221,43 +274,21 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                         <div className="text-center py-8">
                             <Package className="h-8 w-8 text-gray-500 mx-auto mb-2" />
                             <p className="text-gray-500 text-base">
-                                {searchTerm || selectedCategory !== 'all' 
-                                    ? 'No templates found' 
-                                    : 'No templates created yet'
+                                {templates.length === 0
+                                    ? 'No templates created yet'
+                                    : 'No templates found'
                                 }
                             </p>
                             <p className="text-gray-600 text-sm mt-1">
-                                {searchTerm || selectedCategory !== 'all'
-                                    ? 'Try adjusting your search or filter'
-                                    : 'Create your first template to get started'
+                                {templates.length === 0
+                                    ? 'Create your first template to get started'
+                                    : 'Try adjusting your search or filter'
                                 }
                             </p>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Template Form Dialog */}
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent className="max-w-2xl bg-[#111111] border-[#2a2a2a] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-white">
-                            {editingTemplate ? 'Edit Template' : 'Create New Item Template'}
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <DialogDescription className="text-gray-400">
-                        Create templates for parts, labor, services, and fees.
-                    </DialogDescription>
-
-                    <WorkOrderItemTemplateForm
-                        template={editingTemplate || undefined}
-                        shopId={shopId}
-                        onSuccess={handleFormSuccess}
-                        onCancel={handleFormCancel}
-                    />
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }

@@ -58,6 +58,12 @@ export function calculateWorkOrderItemsTotals(items: WorkOrderItem[]) {
                 case 'fee':
                     acc.feesTotal += item.total_price
                     break
+                case 'discount':
+                    acc.discountsTotal += item.total_price
+                    break
+                case 'package':
+                    acc.packagesTotal += item.total_price
+                    break
             }
 
             if (item.total_cost) {
@@ -72,6 +78,8 @@ export function calculateWorkOrderItemsTotals(items: WorkOrderItem[]) {
             laborTotal: 0,
             servicesTotal: 0,
             feesTotal: 0,
+            discountsTotal: 0,
+            packagesTotal: 0,
             laborHours: 0,
             totalCost: 0,
         }

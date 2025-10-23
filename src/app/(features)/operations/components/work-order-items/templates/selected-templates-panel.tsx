@@ -139,10 +139,22 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
             color: 'text-purple-400'
         },
         {
+            type: 'Packages',
+            value: totals.package || 0,
+            icon: Package,
+            color: 'text-indigo-400'
+        },
+        {
             type: 'Fees',
             value: totals.fee || 0,
             icon: DollarSign,
             color: 'text-orange-400'
+        },
+        {
+            type: 'Discounts',
+            value: totals.discount || 0,
+            icon: DollarSign,
+            color: 'text-red-400'
         }
     ].filter(item => item.value > 0)
 

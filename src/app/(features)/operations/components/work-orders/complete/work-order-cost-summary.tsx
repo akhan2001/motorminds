@@ -155,6 +155,22 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
+					{calculations.packagesTotal > 0 && (
+						<div className="flex justify-between">
+							<span className="text-gray-400">Packages</span>
+							<span className="text-white font-medium">
+								{formatCurrency(calculations.packagesTotal)}
+							</span>
+						</div>
+					)}
+					{calculations.discountsTotal > 0 && (
+						<div className="flex justify-between">
+							<span className="text-red-400">Discounts</span>
+							<span className="text-red-400 font-medium">
+								-{formatCurrency(calculations.discountsTotal)}
+							</span>
+						</div>
+					)}
 					<div className="flex justify-between pt-2 border-t border-gray-600">
 						<span className="text-white">Subtotal</span>
 						<span className="text-white font-medium">

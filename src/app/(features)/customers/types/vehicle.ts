@@ -3,23 +3,23 @@
 export interface CustomerVehicle {
     id: string
     customer_id: string
-    year: number
-    make: string
-    model: string
-    vin?: string
-    license_plate?: string
-    engine_type?: string
-    color?: string
-    mileage?: number
+    year: number | null // Allow null for staging vehicles
+    make: string | null // Allow null for staging vehicles
+    model: string | null // Allow null for staging vehicles
+    vin?: string | null
+    license_plate?: string | null
+    engine_type?: string | null
+    color?: string | null
+    mileage?: number | null
     created_at: string
 }
 
 export interface VehicleOption {
     id: string
     displayName: string // "2015 Honda Civic (ABC123)"
-    year: number
-    make: string
-    model: string
+    year?: number // Optional for staging vehicles
+    make?: string // Optional for staging vehicles
+    model?: string // Optional for staging vehicles
     licensePlate?: string
     color?: string
     vin?: string

@@ -17,7 +17,8 @@ import {
     WorkOrderModalFooter,
     WorkOrderRightPanel,
     WorkOrderLaborItems,
-    WorkOrderPartsItems
+    WorkOrderPartsItems,
+    WorkOrderGenericItems
 } from "../shared"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
 import { WorkOrderCostSummary } from "../complete"
@@ -76,6 +77,16 @@ interface PartFormItem {
     active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
+interface GenericFormItem {
+    id: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    notes?: string;
+    active?: boolean; // true = accepted, false = declined, undefined = pending
+}
+
 export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({ 
     workOrder: initialWorkOrder,
     onClose,
@@ -88,6 +99,10 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
     const [laborItems, setLaborItems] = useState<LaborFormItem[]>([])
     const [partsItems, setPartsItems] = useState<PartFormItem[]>([])
+    const [serviceItems, setServiceItems] = useState<GenericFormItem[]>([])
+    const [feeItems, setFeeItems] = useState<GenericFormItem[]>([])
+    const [discountItems, setDiscountItems] = useState<GenericFormItem[]>([])
+    const [packageItems, setPackageItems] = useState<GenericFormItem[]>([])
     
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -185,17 +200,19 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 active: item.active
             })))
             
-            // Separate labor and parts items
+            // Separate items by type
             const labor: LaborFormItem[] = []
             const parts: PartFormItem[] = []
+            const services: GenericFormItem[] = []
+            const fees: GenericFormItem[] = []
+            const discounts: GenericFormItem[] = []
+            const packages: GenericFormItem[] = []
 
             workOrderItems.forEach(item => {
                 console.log('WorkOrderEditModal - Processing item:', {
                     id: item.id,
                     description: item.description,
                     item_type: item.item_type,
-                    isLabor: item.item_type === 'labor',
-                    isPart: item.item_type === 'part',
                     active: item.active
                 })
                 
@@ -208,7 +225,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                         total_price: (item.labor_hours || 1) * (item.unit_price || 0),
                         notes: item.notes || '',
                         technician_id: item.technician_id || '',
-                        active: item.active // Include the active status from database
+                        active: item.active
                     })
                 } else if (item.item_type === 'part') {
                     parts.push({
@@ -222,13 +239,57 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                         category: item.category || '',
                         warranty_period: item.warranty_period || '',
                         notes: item.notes || '',
-                        active: item.active // Include the active status from database
+                        active: item.active
+                    })
+                } else if (item.item_type === 'service') {
+                    services.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
+                    })
+                } else if (item.item_type === 'fee') {
+                    fees.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
+                    })
+                } else if (item.item_type === 'discount') {
+                    discounts.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
+                    })
+                } else if (item.item_type === 'package') {
+                    packages.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
                     })
                 }
             })
 
             setLaborItems(labor)
             setPartsItems(parts)
+            setServiceItems(services)
+            setFeeItems(fees)
+            setDiscountItems(discounts)
+            setPackageItems(packages)
         }
     }, [workOrderItems])
 
@@ -395,6 +456,43 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         // Handle successful save of individual part item
         toast.success(`Part item "${item.description}" saved successfully`)
         // Optionally refresh work order items list
+    }
+
+    // Generic items handlers
+    const handleServiceItemsChange = (items: GenericFormItem[]) => {
+        setServiceItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'service' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleFeeItemsChange = (items: GenericFormItem[]) => {
+        setFeeItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'fee' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleDiscountItemsChange = (items: GenericFormItem[]) => {
+        setDiscountItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'discount' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handlePackageItemsChange = (items: GenericFormItem[]) => {
+        setPackageItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'package' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleGenericItemSaved = (item: any) => {
+        toast.success(`${item.item_type} item "${item.description}" saved successfully`)
     }
 
     // Function to add selected templates as work order items
@@ -839,13 +937,65 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                             </div>
 
                                             {/* Parts Items */}
-                                            <div>
+                                            <div className="mb-6">
                                                 <WorkOrderPartsItems
                                                     items={partsItems}
                                                     onItemsChange={handlePartsItemsChange}
                                                     workOrderId={initialWorkOrder.id}
                                                     onItemSaved={handlePartItemSaved}
                                                     isEditing={isEditing}
+                                                />
+                                            </div>
+
+                                            {/* Service Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderGenericItems
+                                                    items={serviceItems}
+                                                    onItemsChange={handleServiceItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="service"
+                                                    title="Services"
+                                                />
+                                            </div>
+
+                                            {/* Fee Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderGenericItems
+                                                    items={feeItems}
+                                                    onItemsChange={handleFeeItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="fee"
+                                                    title="Fees"
+                                                />
+                                            </div>
+
+                                            {/* Discount Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderGenericItems
+                                                    items={discountItems}
+                                                    onItemsChange={handleDiscountItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="discount"
+                                                    title="Discounts"
+                                                />
+                                            </div>
+
+                                            {/* Package Items */}
+                                            <div>
+                                                <WorkOrderGenericItems
+                                                    items={packageItems}
+                                                    onItemsChange={handlePackageItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="package"
+                                                    title="Packages"
                                                 />
                                             </div>
                                         </div>
