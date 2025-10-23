@@ -17,7 +17,7 @@ import { useUserRole } from "@/hooks/core/useUserRole"
 import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
-import { FeedbackDropdown } from "@/components/common/LayoutHeader/FeedbackDropdown/FeedbackDropdown"
+import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
 
 export function Nav() {
 	const router = useRouter()
