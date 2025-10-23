@@ -18,6 +18,7 @@ import { useUserRole } from "@/hooks/core/useUserRole"
 import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
+import { FeedbackDropdown } from "@/components/common/LayoutHeader/FeedbackDropdown/FeedbackDropdown"
 
 export function Nav() {
 	const router = useRouter()
@@ -261,6 +262,8 @@ export function Nav() {
 									</AlertDialogContent>
 								</AlertDialog>
 							</button>
+							{/* Feedback Dropdown */}
+							<FeedbackDropdown />
 							<button className="text-[#979797] hover:text-white transition-colors">
 								<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
 							</button>
