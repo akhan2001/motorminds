@@ -68,7 +68,7 @@ export const FeedbackDropdown = ({ className }: FeedbackDropdownProps) => {
                                 <span className="grid gap-1 text-center">
                                     <Lightbulb size="28" className="mx-auto text-yellow-400" />
                                     <span className="text-base">Idea</span>
-                                    <span className="text-xs text-gray-400">to improve Motorminds</span>
+                                    <span className="text-xs text-gray-400">to improve MotorMinds</span>
                                 </span>
                             </Button>
                         </div>
