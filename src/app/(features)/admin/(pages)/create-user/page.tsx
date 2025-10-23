@@ -31,8 +31,8 @@ const defaultShopForm: AdminShopFormData = {
     shopCity: '',
     shopProvince: '',
     website: '',
-    businessNumber: '',
-    hstNumber: '',
+    businessNumber: null,
+    hstNumber: null,
     servicesOffered: [],
     operatingHours: {
         monday: { open: '09:00', close: '17:00', closed: false },
