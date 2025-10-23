@@ -1,0 +1,498 @@
+$10 Off Coupon	13	-10	discount	fees
+$10 Off Coupon 1	13	-10	discount	fees
+$10 Off Coupon 2	13	-10	discount	fees
+205/55/16 Wanli	13	50	service	general
+A/C Accumulator	13	150	service	air_conditioning
+A/C Compressor Replacement	13	549.99	part	engine
+A/C Control Unit	13	200	service	suspension
+A/C Drier Replacement	13	100	labor	engine
+A/C Evaporative Core Replacement	13	300	labor	engine
+A/C Expansion Valve Replacement	13	80	part	engine
+A/C Gas Refill	13	119.99	service	engine
+A/C Line Fix	13	75	part	transmission
+A/C Line replacement	13	120	part	engine
+A/C Pressure Switch Replacement	13	60	part	engine
+A/C Refrigerant Service	13	119.99	labor	engine
+A/C Relay Replacement	13	40	labor	engine
+A/C Stop Leak Service	13	25	part	engine
+A/C Valves Replacement	13	90	part	engine
+A/C check	13	50	labor	air_conditioning
+ABS Module	13	200	part	electrical
+ABS RIngs Replacement	13	50	labor	engine
+Addition Oil - 1L	13	10	service	engine
+Additional Oil	13	15	service	engine
+Air Compressor Replacement	13	300	part	engine
+Air Conditioner O Rings Replacement	13	25	labor	engine
+Air Conditioner valves Replacement	13	80	part	engine
+Airbag Replacement	13	400	labor	engine
+Alternator Replacement	13	549.99	part	engine
+Ambient Temperature Sensor Replacement	13	60	part	engine
+Axle Bearing Bracket Replacement	13	120	part	engine
+BCM Replacement	13	250	labor	engine
+Back Camera Installation	13	150	labor	brakes
+Backing Plate Replacement	13	80	part	engine
+Ball Joint Replacement	13	180	part	engine
+Battery Cable Replacement	13	40	part	engine
+Battery Circuit Fuse Replacement	13	30	part	engine
+Battery Installation - Customer's own Part	13	39.99	part	brakes
+Battery Replacement	13	219.99	part	engine
+Battery Sensor Replacement	13	50	part	engine
+Battery Terminals Replacement	13	35	part	engine
+Blend Door Actuator Replacement	13	50	part	engine
+Blower Motor	13	50	part	suspension
+Blower Motor Resistor Replacement	13	50	part	engine
+Body Control Module Replacement	13	50	part	engine
+Body Kit Installation	13	50	package	brakes
+Body Repair	13	50	labor	engine
+Body Skirt Fix	13	50	labor	air_conditioning
+Boost Pressure Sensor Replacement	13	50	part	engine
+Boot Button	13	50	service	general
+Brake Caliper Replacement	13	50	part	engine
+Brake Fluid Replacement	13	149.99	labor	engine
+Brake Hardware Kit	13	50	package	brakes
+Brake Hose Replacement	13	50	part	engine
+Brake Light Switch Replacement	13	50	part	engine
+Brake Lines Repair	13	50	part	engine
+Brake Master Cylinder Replacement	13	50	part	engine
+Brake Service	13	50	labor	engine
+Brake Wear Sensor Replacement	13	50	part	engine
+Brake vaccum Pump Replacement	13	50	part	engine
+Brakes & Rotors Replacement, Customer's own Parts	13	50	part	engine
+Bump Deflector	13	50	service	general
+Bumper Grill Replacement	13	50	labor	engine
+Bumper Grill Upper	13	50	part	suspension
+Bumper Repair	13	50	labor	engine
+Bumper Replacement	13	50	labor	engine
+CV Axle Replacement	13	319.99	labor	engine
+CV Axle Replacement (Rear Right)	13	50	part	engine
+CV Axle Seal Replacement (Right)	13	50	part	engine
+CV Axle seal Replacement (Left)	13	50	part	engine
+Cabin Air Filter	13	39.99	part	engine
+Caliper Bolt Kit Replacement	13	50	package	engine
+Caliper Hose Replacement	13	50	part	engine
+Caliper Pin Boot Replacement	13	50	part	engine
+Caliper Rebuilt	13	50	part	brakes
+Camber Bolt Kit Replacement	13	50	package	engine
+Camshaft Sensor Replacement	13	50	part	engine
+Canister Purge Valve Replacement	13	50	part	engine
+Canister vent Solenoid	13	50	service	general
+Carburator Cleaning	13	50	labor	general
+Carburator Replacement	13	50	labor	engine
+Catalytic Converter	13	50	part	air_conditioning
+Catalytic Converter Assembly Replacement	13	50	part	engine
+Catalytic Converter Assembly Replacement	13	50	part	engine
+Catalytic Converter Replacement	13	50	part	engine
+Catalytic Convertor	13	50	part	air_conditioning
+Catalytic Delete	13	50	part	air_conditioning
+Check Engine Light	13	50	part	engine
+Clock Spring Replacement	13	50	part	engine
+Clutch Kit Replacement	13	50	package	engine
+Compressor Belt Replacement	13	50	part	engine
+Control Arm Bushing Replacement	13	50	part	engine
+Control Arm Replacement	13	349.99	part	engine
+Control Arm With Ball Joint Replacement	13	50	part	engine
+Control Arm with Ball-Joint Replacement	13	349.99	part	engine
+Coolant Change	13	50	labor	engine
+Coolant Change Service	13	50	labor	engine
+Coolant Flush	13	50	labor	engine
+Coolant Hose Connector Replacement	13	50	part	engine
+Coolant Hose Repair	13	50	part	engine
+Coolant Hose Replacement	13	50	part	engine
+Coolant Line Replacement	13	50	part	engine
+Coolant Reservoir Cap Replacement	13	50	labor	engine
+Coolant Reservoir Replacement	13	50	labor	engine
+Coolant Temperature Sensor Replacement	13	50	part	engine
+Coolant Top Up	13	50	part	engine
+Cowl Vent Panel Replacement	13	50	labor	engine
+Crankshaft Position Sensor	13	50	part	air_conditioning
+Crankshaft Position Sensor Replacement	13	50	part	engine
+Credit	13	50	discount	fees
+D1S HID Bulbs (OEM)	13	50	part	general
+DIesel Filter Replacement	13	50	part	engine
+Dash Cam Installation	13	50	labor	brakes
+Dash Cam Replacement	13	50	labor	engine
+Diagnostics	13	0	labor	maintenance
+Differential Fluid Change Service	13	50	labor	engine
+Differential Replacement	13	50	labor	engine
+Differential Seal Replacement	13	50	part	engine
+Dip Stick Tube Replacement	13	50	labor	engine
+Dipstick Replacement	13	50	labor	engine
+Direct Injection Fuel Pump Replacement	13	50	part	engine
+Door Actuator Replacement (RL)	13	50	part	engine
+Door Actuator Replacement (RR)	13	50	part	engine
+Door Actuator Replacement (Right Side)	13	50	part	engine
+Door Latch Replacement	13	50	labor	engine
+Door Mirror Assembly	13	50	part	air_conditioning
+Door Mirror Glass Installation	13	50	labor	brakes
+Door Module Replacement	13	50	part	engine
+Door Replacement	13	50	labor	engine
+Drain Plug Gasket Replacement	13	50	part	engine
+Drain Plug Replacement	13	50	labor	engine
+Driver Seat Replacement	13	50	part	engine
+Driveshaft Replacement	13	50	labor	engine
+ECM Replacement	13	50	labor	engine
+ECU Replacement	13	50	labor	engine
+EGR valve Replacement	13	50	part	engine
+EVAP Leak Detection Pump Replacement	13	50	part	engine
+EVAP Temperature Sensor Replacement	13	50	part	engine
+EVAP line Repair	13	50	part	engine
+Echlin Canister Vent Valve Replacement	13	50	part	engine
+Electric Repair	13	50	labor	engine
+Engine Air Filter	13	29.99	part	engine
+Engine Air Intake Hose Replacement	13	50	part	engine
+Engine Control Module Replacement	13	50	part	engine
+Engine Coolant Pipe (Rear Upper)	13	50	part	engine
+Engine Coolant Water Outlet Replacement	13	50	labor	engine
+Engine Cooling Fan Assembly Replacement	13	50	part	engine
+Engine Cooling Fan Assembly Replacement	13	50	part	engine
+Engine Crankcase Breather Hose Replacement	13	50	part	engine
+Engine Flush	13	19.99	labor	engine
+Engine Intake Manifold Runner Solenoid Replacement	13	50	part	engine
+Engine Intake manifold Actuator Replacement	13	50	part	engine
+Engine Mounts Replacement	13	50	part	engine
+Engine Oil 5L	13	50	service	engine
+Engine Oil Cooler Lines Replacement	13	50	part	engine
+Engine Oil Cooler Replacement	13	50	labor	engine
+Engine Oil Level Sensor Replacement	13	50	part	engine
+Engine Oil Pan Gasket Replacement	13	50	part	engine
+Engine Oil Pan Replacement	13	349.99	labor	engine
+Engine Oil Pan Seal	13	50	part	engine
+Engine Oil Pressure Switch Replacement	13	50	part	engine
+Engine Oil Topup	13	50	part	engine
+Engine Remove & Replacement	13	50	labor	engine
+Engine Swap	13	50	labor	engine
+Engine Timing Cover Gasket Replacement	13	50	part	engine
+Engine Variable Valve Timing Replacement	13	50	part	engine
+Evaporator Valve Replacement	13	50	part	engine
+Exhaust Bracket Replacement	13	50	part	engine
+Exhaust Manifold Gasket Replacement	13	50	part	engine
+Exhaust Manifold Replacement	13	50	part	engine
+Exhaust Repair	13	50	labor	engine
+Exhaust Y Pipe Replacement	13	50	labor	engine
+Expansion Tank Hose Replacement	13	50	part	engine
+Exterior Door Handle Replacement	13	50	labor	engine
+External Ignition Distributor Replacement (Battery Module)	13	50	part	engine
+Fender Lining Replacement	13	50	labor	engine
+Fender Replacement	13	50	labor	engine
+Flex Pipe Replacement	13	50	labor	engine
+Fog Light Replacement	13	50	part	engine
+Front Brake Pads Only Replacement	13	50	part	engine
+Front Brake Pads Replacement	13	50	part	engine
+Front Brakes & Rotors Replacement	13	379.99	part	engine
+Front Left Brake Caliper Replacement	13	50	part	engine
+Front Left CV Axle Replacement	13	50	part	engine
+Front Left Caliper Replacement	13	50	part	engine
+Front Left Door lock Actuator	13	50	part	suspension
+Front Left Forward Control Arm Replacement	13	50	part	engine
+Front Left Lower Rearward Control Arm Replacement	13	50	part	engine
+Front Left Outer Tie Rod	13	50	part	suspension
+Front Left Wheel Bearing Replacement	13	50	part	engine
+Front Lower Ball Joint Replacement	13	50	part	engine
+Front Lower COntrol Arms With ball Joint (Right)	13	50	part	suspension
+Front Lower Control Arm with Ball Joint Replacement (Left)	13	50	part	engine
+Front Lower Rearward Control Arms	13	50	part	suspension
+Front Right Ball Joint Replacement	13	50	part	engine
+Front Right Brake Caliper Replacement	13	50	part	engine
+Front Right CV Axle Replacement	13	50	part	engine
+Front Right Lower Forward Control Arm Replacement	13	50	part	engine
+Front Right Outer Tie Rod Replacement	13	50	part	engine
+Front Right Wheel Bearing Replacement	13	50	part	engine
+Front Rigth Rearward Control Arm Replacement	13	50	part	engine
+Front Rotors Replacement	13	50	part	engine
+Front Shock Absorber Replacement	13	50	part	engine
+Front Strut Mount Replacement	13	50	part	engine
+Front Sway Bar Links Replacement	13	50	part	engine
+Front Wiper Motor Replacement	13	50	part	engine
+Fuel Canister Replacement	13	50	labor	engine
+Fuel Feed Line Replacement	13	50	fee	engine
+Fuel Filler Neck Replacement	13	50	labor	engine
+Fuel Filter Replacement	13	50	part	engine
+Fuel Injector Cleaner	13	50	service	engine
+Fuel Injector O Rings Replacement	13	50	labor	engine
+Fuel Injector Replacement	13	50	labor	engine
+Fuel Line Repair	13	50	part	engine
+Fuel Pressure Sensor Replacement	13	50	part	engine
+Fuel Pump Cam Follower Replacement	13	50	part	engine
+Fuel Pump Replacement	13	50	part	engine
+Fuel Tank Strap Replacement	13	50	labor	engine
+Full Synthetic Oil Change Package - 5L	13	69.99	package	engine
+Fuse Box Replacement (Engine)	13	50	labor	engine
+Gas Tank Replacement	13	50	labor	engine
+Gas cap Replacement	13	50	labor	engine
+Gear Shift Soelnoid Replacement	13	50	part	engine
+General Repair	13	50	labor	engine
+General Repair	13	50	labor	engine
+HVAC Air Distribution Defrost Door	13	50	service	suspension
+HVAC Air Distribution Door, Center	13	50	part	suspension
+HVAC Air Distribution Door, Right Side Replacement	13	50	part	engine
+HVAC Air Distribution, Recirculating Door	13	50	service	suspension
+Headlight Assembly Replacement	13	50	part	engine
+Headlight Ballast Replacement	13	50	part	engine
+Headlight Replacement	13	50	part	engine
+Headlight Restoration	13	50	part	maintenance
+Heat Shield Fix	13	50	labor	general
+Heat Shield Removal	13	50	service	general
+Heater Core Replacement	13	50	labor	engine
+Heater Hose Replacement (LH)	13	50	part	engine
+Heater Hose Replacement (RH)	13	50	part	engine
+Heater Pipe Replacement	13	50	labor	engine
+Heater Valve Replacement	13	50	part	engine
+Hood Lift Support Replacement	13	50	labor	engine
+Hood Release Cable	13	50	part	transmission
+Hood Replacement	13	50	labor	engine
+Horn Replacement	13	50	labor	engine
+Horn Switch Replacement	13	50	part	engine
+Hose Repair	13	50	part	engine
+Hose Replacement	13	50	part	engine
+Idler Pulley Replacement	13	50	labor	engine
+Ignition Coil Replacement	13	179.99	labor	engine
+Ignition Control Module Replacement	13	50	part	engine
+Ignition Key Housing Replacment	13	50	service	air_conditioning
+Ignition Switch Replacement	13	50	part	engine
+Immobilizer Replacement	13	50	labor	engine
+Impact Sensor Replacement	13	50	part	engine
+Inner Tie Rod Replacement	13	50	part	engine
+Intake Manifold Gasket Replacement	13	50	part	engine
+Intake Manifold Replacement	13	50	part	engine
+Intake Manifold Runner Replacement	13	50	part	engine
+Intercooler Hose Pipe Replacement	13	50	part	engine
+Intermediate Shaft Replacement	13	50	labor	engine
+Internal Door Handle Replacement	13	50	labor	engine
+Key Programming	13	50	labor	air_conditioning
+Knock Sensor Replacement	13	50	part	engine
+LED Headlight Kit	13	119.99	package	maintenance
+License Plate Light	13	50	part	transmission
+Liftgate Lock Actuator Replacement	13	50	part	engine
+Light Bulb Replacement	13	19.99	part	engine
+Lower Ball Joint Replacement	13	50	part	engine
+Lucas Oil Stabilizer	13	50	part	engine
+Lug Bolts Replacement	13	50	labor	engine
+Lug Nuts Replacement	13	50	labor	engine
+Main Seal Crankshaft	13	349.99	part	engine
+Manifold Absolute Pressure Sensor Replacement	13	50	part	engine
+Manual Alignment	13	50	labor	general
+Mass Air Flow Sensor Replacement	13	50	part	engine
+Master Window Switch Replacement	13	50	part	engine
+Mirror Repair	13	50	labor	engine
+Mirror Switch Replacement	13	50	part	engine
+Muffler Repair/Fix	13	50	part	engine
+Muffler Replacement	13	50	part	engine
+Neutral Safety Switch Replacement	13	50	part	engine
+New Rims	13	50	part	tires
+New Tire With Rim	13	50	part	tires
+New Tires	13	179.99	part	tires
+New Tires With Balancing	13	50	part	tires
+Off Rim On Rim Service	13	29.99	discount	engine
+Oil Additive	13	50	service	engine
+Oil Change Customer's Own Oil/Filter	13	29.99	part	engine
+Oil Filter Cap Replacement	13	50	part	engine
+Oil Filter Housing Gasket Replacement	13	50	part	engine
+Oil Filter Housing Replacement	13	50	part	engine
+On rim Off Rim Tires	13	29.99	discount	tires
+Outer Tie Rod Replacement	13	50	part	engine
+Overflow Rdaiator Hose Replacement	13	50	part	engine
+Overhead Console Sunglass Storage Replacement	13	50	labor	engine
+Oxygen Sensor Connector Replacement	13	50	part	engine
+Oxygen Sensor Replacement	13	50	part	engine
+Oxygen Sensor Replacement (B1S2)	13	50	part	engine
+PCV Valve Replacement	13	50	part	engine
+Parking Brake Adjustment	13	50	labor	brakes
+Parking Brake Cable Replacement	13	50	part	engine
+Parking Brake Service	13	50	labor	engine
+Parking Brake Shoes Replacement	13	50	part	engine
+Passenger Seat Replacement	13	50	part	engine
+Power Brake Booster Replacement	13	50	part	engine
+Power Steering Assist Motor Coupling	13	50	part	air_conditioning
+Power Steering Column	13	50	service	air_conditioning
+Power Steering Fluid	13	50	service	engine
+Power Steering Fluid Change	13	50	labor	engine
+Power Steering Hose Repair	13	50	part	engine
+Power Steering Pressure Line Replacement	13	50	part	engine
+Power steering Fluid Pump Replacement	13	50	part	engine
+Pre_Safety Inspection	13	89.99	labor	air_conditioning
+Premium Synthetic Castrol Oil Change Package - 5L	13	89.99	package	engine
+Purge Valve Solinoid	13	50	part	air_conditioning
+Quick Strut Assembly Replacement	13	50	part	engine
+Quote / Estimate	13	0	fee	fees
+Rack & Pinion Replacement	13	50	labor	engine
+Rack and Pinion Boot Replacement	13	50	labor	engine
+Radiator Cap Replacement	13	50	part	engine
+Radiator Fan Resistor Replacement	13	50	part	engine
+Radiator Filler Neck Replacement	13	50	part	engine
+Radiator Hose Replacement (Lower)	13	50	part	engine
+Radiator Hose Replacement (Upper)	13	50	part	engine
+Radiator Replacement	13	50	part	engine
+Radio Repair	13	50	labor	engine
+Radio Repair	13	50	labor	engine
+Rear Brake Pads Replacement	13	50	part	engine
+Rear Brakes & Rotors Replacement	13	399	part	engine
+Rear Brakes and Rotors Replacement	13	50	part	engine
+Rear Coil Springs Replacement	13	50	part	engine
+Rear Control Arm Replacement	13	349.99	part	engine
+Rear Drums Replacement	13	50	part	engine
+Rear Drums and Shoes Replacement	13	50	part	engine
+Rear Lateral Arms Replacement	13	50	part	engine
+Rear Left Bearing Replacement	13	50	part	engine
+Rear Left CV Axle Replacement	13	50	part	engine
+Rear Left Caliper Replacement	13	50	part	engine
+Rear Left Wheel Bearing Replacement	13	50	part	engine
+Rear Lower Control Arm Replacement	13	50	part	engine
+Rear Quick Strut Assembly Replacement	13	50	part	engine
+Rear Right Caliper Replacement	13	50	part	engine
+Rear Right Output Shaft Seal Replacement	13	50	part	engine
+Rear Right Wheel Bearing Replacement	13	50	part	engine
+Rear Rocker Arms Replacement	13	50	part	engine
+Rear Rotors Replacement	13	50	part	engine
+Rear Shock Mount Replacement	13	50	part	engine
+Rear Shocks Replacement	13	50	part	engine
+Rear Sway Bar Bushing Replacement	13	50	part	engine
+Rear Sway Bar Link Replacement	13	99.99	part	engine
+Rear Upper Control Arm	13	50	part	suspension
+Rear View Mirror Replacement	13	50	part	engine
+Rear Wiper Motor Replacement	13	50	part	engine
+Rear left Brake Caliper Replacement	13	50	part	engine
+Regular Oil Change Package - 5L	13	39.99	package	engine
+Repair	13	50	labor	engine
+Repair Bumper	13	50	labor	engine
+Resonator Delete	13	50	service	general
+Resonator Replacement	13	50	labor	engine
+Rocker Replacement	13	50	labor	engine
+Safety Inspection	13	179.99	labor	air_conditioning
+Sand, Paint & Clear Coat	13	50	service	general
+Seasonal Tire Changeover	13	39.99	part	engine
+Seasonal Tire Changeover Off Rim	13	79.99	discount	engine
+Seasonal Tire Changeover Off Rim - Low Profile	13	50	discount	engine
+Seasonal Tire Changeover Off Rim - Tesla	13	118	discount	engine
+Seasonal Tire Changeover with Balancing	13	59.99	part	engine
+Seat Adjusting Switch Replacement	13	50	part	engine
+Seat Belt Replacement	13	50	part	engine
+Seat Switch Replacement	13	50	part	engine
+Secondary Air Injection Check Valve Replacement	13	50	part	engine
+Secondary Air Injection Pump Replacement	13	50	part	engine
+Seconday Air Pump Replacement	13	50	part	engine
+Serpentine Belt Replacement	13	50	part	engine
+Serpentine Belt Tensioner Replacement	13	0	part	engine
+Service Charge	13	50	fee	engine
+Service On Front Brakes	13	50	part	engine
+Shifter Assembly Replacement	13	50	part	engine
+Shifter Cable Replacement	13	50	part	engine
+Shock Bellows Replacement	13	50	part	engine
+Side View Mirror Replacement	13	50	part	engine
+Skid Plate Fix	13	50	part	transmission
+Skid Plate Removal	13	50	part	transmission
+Skid Plate and Engine Cover Replacement	13	50	part	engine
+Smoke Test	13	50	labor	maintenance
+Smoke Test	13	50	labor	maintenance
+Spare Tire Installation	13	19.99	part	brakes
+Spark Plug Wire Set Replacement	13	50	package	engine
+Spark Plugs Replacement	13	24.99	labor	engine
+Spark Plugs and 1 Ignition Coil Replacement	13	50	labor	engine
+Spindle Replacement	13	50	labor	engine
+Starter Replacement	13	549.99	part	engine
+Steering Pressure Line Repair	13	50	part	engine
+Subframe Fixing	13	50	labor	general
+Subframe Replacement	13	50	labor	engine
+Sunroof Motor Replacement	13	50	part	engine
+Suspension Valve Block	13	50	part	suspension
+Sway Bar Bushing Replacement	13	319.99	part	engine
+Sway Bar Links Replacement	13	99.99	part	engine
+TPMS Sensor	13	50	part	air_conditioning
+TPMS Valve Only	13	50	part	air_conditioning
+Tail Gate Handle Replacement	13	50	labor	engine
+Tail Light Replacement	13	50	part	engine
+Tailgate Actuator Replacement	13	50	part	engine
+Tailgate Replacement	13	50	labor	engine
+Tailgate Support Replacement	13	50	labor	engine
+Temperature Door, Center	13	50	part	suspension
+Temperature Door, Left Side	13	50	part	suspension
+Temperature Door, Right Side	13	50	part	suspension
+Thermostat Replacement	13	50	labor	engine
+Thermostat and Coolant Temperature Sensor Replacmenet	13	50	part	engine
+Thermostat with Housing Replacement	13	359.99	labor	engine
+Third Brake Light Replacement	13	50	part	engine
+Throttle Body Replacement	13	50	labor	engine
+Throttle Body Service	13	50	labor	engine
+Timing Belt Kit	13	50	package	engine
+Timing Belt Tensioner Replacement	13	50	part	engine
+Timing Chain Replacement Service	13	50	part	engine
+Timing nothing	13	50	service	engine
+Tip	13	0	fee	fees
+Tire Balancing	13	14.99	part	tires
+Tire Change & Balancing	13	19.99	part	engine
+Tire Change On Rim	13	50	part	engine
+Tire Changeover Off Rim	13	50	discount	engine
+Tire Plug	13	19.99	part	electrical
+Tire Rotation	13	50	part	tires
+Tire Rotation with Balancing	13	59.99	part	tires
+Tire Seal Leak Repair Service	13	39.99	part	engine
+Tire Valve Stem	13	4.99	part	air_conditioning
+Tire Valve Stem Replacement	13	39.99	part	engine
+Tow Service	13	79.99	fee	engine
+Trail Bushings Replacement	13	50	part	engine
+Trailing Arms Replacement	13	50	part	engine
+Transfer Case Oil Replacement	13	50	labor	engine
+Transmission Fluid Change Service	13	179.99	labor	engine
+Transmission Fluid Top-Up	13	-1	part	engine
+Transmission Lines Repair	13	50	part	engine
+Transmission Oil Cooler Line Replacement	13	50	part	engine
+Transmission Oil Cooler Replacement	13	50	labor	engine
+Transmission Oil Filter Replacement	13	50	part	engine
+Transmission Oil Pan Replacement	13	50	labor	engine
+Transmission Oil Pan Seal	13	50	part	engine
+Transmission Replacement	13	50	labor	engine
+Transmission Valve Body Cover Replacement	13	50	part	engine
+Transmission oil pressure switch	13	50	part	engine
+Trunk Lid Supports	13	50	service	electrical
+Trunk Release Cable Replacement	13	50	part	engine
+Tune Up	13	119.99	labor	general
+Turbo Charger Cooler Lines Replacement	13	50	fee	engine
+Turbo Wastegate Actuator Replacement	13	50	part	engine
+Turbocharger Replacement	13	50	fee	engine
+Turn Signal Light Bulb Replacment	13	19.99	part	air_conditioning
+Ultra Premium Full Synthetic Oil Change - 0W40	13	119.99	labor	engine
+Ultra Premium Full Synthetic Oil Change - 5W30	13	119.99	labor	engine
+Ultra Premium Full Synthetic Oil Change - 5W40	13	119.99	labor	engine
+Ultra Premium oil Change Package - 5L	13	119.99	package	engine
+Undercoat	13	50	service	general
+Upper Control Arm Replacement	13	50	part	engine
+Used Tire	13	50	part	tires
+V Belt Replacement	13	50	part	engine
+VVT Solenoid Replacement (Exhaust)	13	50	labor	engine
+VVT Solinoid Replacement	13	50	labor	engine
+VVT Sprocket Replacement	13	50	labor	engine
+Vaccum Pump Replacement	13	50	part	engine
+Valve Cover Gasket Replacement	13	259.99	part	engine
+Valve Cover Replacement	13	50	part	engine
+Valve Solenoid Replacement	13	50	part	engine
+Vapor Canister Purge Solenoid	13	50	service	engine
+Vehicle Speed Sensor Replacement	13	50	part	engine
+Washer Fluid Nozzles Replacement	13	50	labor	engine
+Washer Fluid Pump Replacement	13	50	part	engine
+Washer Fluid Reservoir Replacement	13	50	labor	engine
+Water Pump Replacement	13	50	part	engine
+Wheel Balancing	13	50	part	tires
+Wheel Bearing Replacement	13	349.99	part	engine
+Wheel Brake Cylinder Replacement	13	50	part	engine
+Wheel Hub Assembly Replacement	13	349.99	part	engine
+Wheel Lock/Nut Extraction	13	79.99	part	air_conditioning
+Wheel Spacers Installation	13	50	part	brakes
+Wheel Speed Sensor (ABS)	13	50	part	air_conditioning
+Wheel Speed Sensor Connectore Replacemnet	13	50	part	air_conditioning
+Wheel Stud Replacement	13	79.99	part	engine
+Window Glass Replacement	13	50	labor	engine
+Window Regulator Motor Replacement	13	50	part	engine
+Window Regulator Replacement	13	50	labor	engine
+Window Regulator and Motor Assembly (Front Left)	13	50	part	suspension
+Window Regulator and Motor Assembly (Front Right)	13	50	part	suspension
+Windshield Replacement	13	50	labor	engine
+Windshield Wiper Motor Replacement	13	50	part	engine
+Winter Steele Rims, Black	13	50	part	air_conditioning
+Wiper Arm	13	50	part	suspension
+Wiper Blades Replacement	13	24.99	labor	engine
+Wiper Transmission Replacement	13	50	labor	engine
+abs light on	13	50	part	electrical
+air hose	13	50	part	transmission
+body	13	50	service	air_conditioning
+condenser Replacement	13	50	labor	engine
+oil flush	13	50	labor	engine
+380-wiper linkesh	13	50	part	general

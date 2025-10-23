@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { InvoiceSendModal } from './InvoiceSendModal'
 
 interface InvoiceDetailsProps {
     invoiceId: string
@@ -23,6 +24,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
     const { shopId } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const deleteMutation = useDeleteInvoice()
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice?')) return
@@ -41,7 +43,14 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
     }
 
     const handleSend = () => {
-        toast.info('Email send coming soon')
+        setIsSendModalOpen(true)
+    }
+
+    const handleSendConfirm = (sendEmail: boolean, customMessage?: string) => {
+        if (sendEmail) {
+            toast.success('Invoice email sent successfully!')
+        }
+        setIsSendModalOpen(false)
     }
 
     if (isLoading) {
@@ -241,6 +250,16 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
                     </div>
                 </div>
             </Card>
+
+            {/* Invoice Send Modal */}
+            {invoice && (
+                <InvoiceSendModal
+                    invoice={invoice}
+                    isOpen={isSendModalOpen}
+                    onClose={() => setIsSendModalOpen(false)}
+                    onConfirm={handleSendConfirm}
+                />
+            )}
         </div>
     )
 }

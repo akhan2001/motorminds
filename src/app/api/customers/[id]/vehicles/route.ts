@@ -16,21 +16,33 @@ export async function GET(
 
         const supabase = await createClient();
         
-        // First verify the customer belongs to this shop
-        const { data: customer, error: customerError } = await supabase
-            .from('customers')
-            .select('id')
-            .eq('id', id)
-            .eq('shop_id', shopId)
-            .single();
+        // Check if customer exists in either customers or staging_customers table
+        const [regularCustomer, stagingCustomer] = await Promise.all([
+            supabase
+                .from('customers')
+                .select('id')
+                .eq('id', id)
+                .eq('shop_id', shopId)
+                .maybeSingle(),
+            supabase
+                .from('staging_customers')
+                .select('id')
+                .eq('id', id)
+                .eq('shop_id', shopId)
+                .maybeSingle()
+        ]);
 
-        if (customerError || !customer) {
+        const isStaging = !regularCustomer.data && stagingCustomer.data;
+        const customerExists = regularCustomer.data || stagingCustomer.data;
+
+        if (!customerExists) {
             return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
         }
 
-        // Get vehicles for this customer
+        // Get vehicles from the appropriate table
+        const vehiclesTable = isStaging ? 'staging_customer_vehicles' : 'customer_vehicles';
         const { data: vehicles, error: vehiclesError } = await supabase
-            .from('customer_vehicles')
+            .from(vehiclesTable)
             .select('*')
             .eq('customer_id', id)
             .order('year', { ascending: false });

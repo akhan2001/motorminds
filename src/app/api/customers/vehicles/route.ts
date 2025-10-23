@@ -26,9 +26,26 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Get vehicles for the customer
+        // Check if customer is in staging or regular table
+        const [regularCustomer, stagingCustomer] = await Promise.all([
+            supabase
+                .from('customers')
+                .select('id')
+                .eq('id', customerId)
+                .maybeSingle(),
+            supabase
+                .from('staging_customers')
+                .select('id')
+                .eq('id', customerId)
+                .maybeSingle()
+        ]);
+
+        const isStaging = !regularCustomer.data && stagingCustomer.data;
+
+        // Get vehicles from the appropriate table
+        const vehiclesTable = isStaging ? 'staging_customer_vehicles' : 'customer_vehicles';
         const { data: vehicles, error } = await supabase
-            .from('customer_vehicles')
+            .from(vehiclesTable)
             .select('*')
             .eq('customer_id', customerId)
             .order('created_at', { ascending: false })

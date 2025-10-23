@@ -243,7 +243,7 @@ export class WorkOrderItemsService {
                 // For labor: labor_hours * unit_price
                 total = (item.labor_hours || 0) * (item.unit_price || 0)
             } else {
-                // For parts, services, fees: quantity * unit_price
+                // For parts, services, fees, discounts, packages: quantity * unit_price
                 total = (item.quantity || 0) * (item.unit_price || 0)
             }
             
@@ -260,6 +260,12 @@ export class WorkOrderItemsService {
                 case 'fee':
                     acc.totalFees += total
                     break
+                case 'discount':
+                    acc.totalDiscounts += total
+                    break
+                case 'package':
+                    acc.totalPackages += total
+                    break
             }
             
             acc.grandTotal += total
@@ -271,6 +277,8 @@ export class WorkOrderItemsService {
             totalParts: 0,
             totalServices: 0,
             totalFees: 0,
+            totalDiscounts: 0,
+            totalPackages: 0,
             grandTotal: 0,
             itemCount: 0
         })

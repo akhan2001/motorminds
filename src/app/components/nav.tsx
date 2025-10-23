@@ -1,14 +1,13 @@
 "use client"
 
 import { createClient } from "@/utils/supabase/client"
-import { Settings, HelpCircle, ChevronDown, MessageCircle, Sparkles } from "lucide-react"
+import { Settings, ChevronDown, MessageCircle, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { LogOut, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -18,6 +17,7 @@ import { useUserRole } from "@/hooks/core/useUserRole"
 import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
+import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
 
 export function Nav() {
 	const router = useRouter()
@@ -240,27 +240,8 @@ export function Nav() {
 							>
 								<MessageCircle className="inline-block w-5 h-5" />
 							</button>
-							<button className="text-[#979797] hover:text-white transition-colors">
-								<AlertDialog>
-									<AlertDialogTrigger asChild>
-										<HelpCircle className="inline-block w-5 h-5" />
-									</AlertDialogTrigger>
-									<AlertDialogContent className="bg-[#0d0d0d] text-white border-[#1f1f1f]">
-										<AlertDialogHeader>
-											<AlertDialogTitle>You Are About to Leave the App</AlertDialogTitle>
-											<AlertDialogDescription>
-												You are about to open an external contact page. Do you want to continue?
-											</AlertDialogDescription>
-										</AlertDialogHeader>
-										<AlertDialogFooter>
-											<AlertDialogCancel className="">Cancel</AlertDialogCancel>
-											<AlertDialogAction className="border-none bg-red-600 text-white hover:bg-red-700" onClick={() => window.open("https://www.motorminds.ca/contact-us", "_blank")}>
-												Yes, Continue
-											</AlertDialogAction>
-										</AlertDialogFooter>
-									</AlertDialogContent>
-								</AlertDialog>
-							</button>
+							{/* Feedback Dropdown */}
+							<FeedbackDropdown />
 							<button className="text-[#979797] hover:text-white transition-colors">
 								<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
 							</button>

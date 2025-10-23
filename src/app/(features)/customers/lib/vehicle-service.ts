@@ -7,24 +7,28 @@ export class VehicleService {
 
     /**
      * Get all vehicles for a specific customer
+     * Uses API endpoint to handle both regular and staging customers
      */
     static async getCustomerVehicles(customerId: string): Promise<CustomerVehicle[]> {
         if (!customerId) {
             throw new Error('Customer ID is required')
         }
 
-        const { data, error } = await this.supabase
-            .from('customer_vehicles')
-            .select('*')
-            .eq('customer_id', customerId)
-            .order('created_at', { ascending: false })
+        try {
+            // Use API endpoint which handles both customer_vehicles and staging_vehicles
+            const response = await fetch(`/api/customers/${customerId}/vehicles`)
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.error || `Failed to fetch vehicles: ${response.statusText}`)
+            }
 
-        if (error) {
+            const vehicles = await response.json()
+            return vehicles || []
+        } catch (error) {
             console.error('Error fetching customer vehicles:', error)
-            throw new Error(`Failed to fetch vehicles: ${error.message}`)
+            throw error instanceof Error ? error : new Error('Failed to fetch vehicles')
         }
-
-        return data || []
     }
 
     /**
@@ -138,11 +142,20 @@ export class VehicleService {
 
     /**
      * Format vehicle for display in dropdowns
+     * Handles null values from staging vehicles
      */
     static formatVehicleDisplay(vehicle: CustomerVehicle): string {
-        const yearMakeModel = `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+        const parts = [
+            vehicle.year || 'Unknown Year',
+            vehicle.make || 'Unknown Make',
+            vehicle.model || 'Unknown Model'
+        ].filter(Boolean)
+        
+        const yearMakeModel = parts.join(' ')
         const licensePlate = vehicle.license_plate ? ` (${vehicle.license_plate})` : ''
-        return `${yearMakeModel}${licensePlate}`
+        const vin = !vehicle.license_plate && vehicle.vin ? ` (VIN: ${vehicle.vin.slice(-6)})` : ''
+        
+        return `${yearMakeModel}${licensePlate}${vin}`.trim() || 'Incomplete Vehicle Info'
     }
 
     /**
@@ -152,9 +165,9 @@ export class VehicleService {
         return {
             id: vehicle.id,
             displayName: this.formatVehicleDisplay(vehicle),
-            year: vehicle.year,
-            make: vehicle.make,
-            model: vehicle.model,
+            year: vehicle.year || undefined,
+            make: vehicle.make || undefined,
+            model: vehicle.model || undefined,
             licensePlate: vehicle.license_plate || undefined,
             color: vehicle.color || undefined,
             vin: vehicle.vin || undefined,

@@ -301,11 +301,12 @@ export function WorkOrderPartsItems({
                                         <Input
                                             id={`part_quantity_${index}`}
                                             type="number"
-                                            value={item.quantity}
+                                            value={item.quantity || ''}
                                             onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
                                             disabled={!isEditing}
                                             min="1"
+                                            placeholder="1"
                                         />
                                     </div>
                                     <div>
@@ -315,12 +316,13 @@ export function WorkOrderPartsItems({
                                         <Input
                                             id={`part_unit_price_${index}`}
                                             type="number"
-                                            value={item.unit_price}
+                                            value={item.unit_price || ''}
                                             onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
                                             className="bg-[#111111] border-[#2a2a2a] text-white"
                                             disabled={!isEditing}
                                             min="0"
                                             step="0.01"
+                                            placeholder="0.00"
                                         />
                                     </div>
                                     <div>

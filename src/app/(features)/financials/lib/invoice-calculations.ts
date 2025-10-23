@@ -6,12 +6,16 @@ export interface InvoiceCalculations {
 	partsTotal: number
 	servicesTotal: number
 	feesTotal: number
+	discountsTotal: number
+	packagesTotal: number
 	approvedItems: WorkOrderItem[]
 	rejectedItems: WorkOrderItem[]
 	labourItems: WorkOrderItem[]
 	partsItems: WorkOrderItem[]
 	servicesItems: WorkOrderItem[]
 	feesItems: WorkOrderItem[]
+	discountsItems: WorkOrderItem[]
+	packagesItems: WorkOrderItem[]
 }
 
 /**
@@ -27,6 +31,8 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	const partsItems = approvedItems.filter(item => item.item_type === 'part')
 	const servicesItems = approvedItems.filter(item => item.item_type === 'service')
 	const feesItems = approvedItems.filter(item => item.item_type === 'fee')
+	const discountsItems = approvedItems.filter(item => item.item_type === 'discount')
+	const packagesItems = approvedItems.filter(item => item.item_type === 'package')
 	
 	// Calculate totals for approved items only
 	const labourTotal = labourItems.reduce((sum, item) => {
@@ -53,7 +59,19 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		return sum + total
 	}, 0)
 	
-	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal
+	const discountsTotal = discountsItems.reduce((sum, item) => {
+		// For discounts: quantity * unit_price
+		const total = (item.quantity || 0) * (item.unit_price || 0)
+		return sum + total
+	}, 0)
+	
+	const packagesTotal = packagesItems.reduce((sum, item) => {
+		// For packages: quantity * unit_price
+		const total = (item.quantity || 0) * (item.unit_price || 0)
+		return sum + total
+	}, 0)
+	
+	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal + discountsTotal + packagesTotal
 	
 	return {
 		subtotal,
@@ -61,12 +79,16 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		partsTotal,
 		servicesTotal,
 		feesTotal,
+		discountsTotal,
+		packagesTotal,
 		approvedItems,
 		rejectedItems,
 		labourItems,
 		partsItems,
 		servicesItems,
-		feesItems
+		feesItems,
+		discountsItems,
+		packagesItems
 	}
 }
 
