@@ -92,6 +92,30 @@ export function useCreateWorkOrder() {
 }
 
 // New mutation hook for creating work orders with customer/vehicle dependencies
+export function useCreateWalkInWorkOrder() {
+    const queryClient = useQueryClient()
+    
+    return useMutation({
+        mutationFn: async (data: {
+            workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id' | 'customer_type' | 'walk_in_vehicle_info'>
+            walkInVehicleInfo: any // WalkInVehicleInfo type
+        }) => {
+            // Generate work order number if not provided
+            if (!data.workOrder.work_order_number) {
+                const workOrderNumber = await workOrderService.generateWorkOrderNumber(data.workOrder.shop_id)
+                data.workOrder.work_order_number = workOrderNumber
+            }
+            
+            return workOrderService.createWalkInWorkOrder(data)
+        },
+        onSuccess: () => {
+            // Invalidate and refetch work orders
+            queryClient.invalidateQueries({ queryKey: ['work-orders'] })
+            queryClient.invalidateQueries({ queryKey: ['work-orders-with-details'] })
+        },
+    })
+}
+
 export function useCreateWorkOrderWithDependencies() {
     const queryClient = useQueryClient()
     

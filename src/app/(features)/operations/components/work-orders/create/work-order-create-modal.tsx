@@ -22,6 +22,8 @@ import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
 import type { WorkOrderItemCreateData } from "../../../types/work-order-items"
 import { PanelProvider } from "../../../contexts"
 import { Input } from "@/components/ui/input"
+import { WalkInVehicleForm } from "./WalkInVehicleForm"
+import type { WalkInVehicleInfo } from "../../../../customers/types/vehicle"
 
 // Define the LaborFormItem interface locally to match the component
 interface LaborFormItem {
@@ -68,6 +70,9 @@ interface NewWorkOrderFormData {
     vehicle: string
     tags: string[]
     
+    // Customer type selection
+    customerType: 'registered' | 'walk_in'
+    
     // Additional fields for comprehensive work order
     customerEmail: string
     customerPhone: string
@@ -81,6 +86,9 @@ interface NewWorkOrderFormData {
     vehicleMileage: string
     vehicleVin: string
     vehicleLicensePlate: string
+    
+    // Walk-in vehicle information
+    walkInVehicleInfo: WalkInVehicleInfo
     
     // Work order specifics
     estimatedHours: string
@@ -134,6 +142,9 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         vehicle: "",
         tags: [],
         
+        // Customer type selection
+        customerType: "registered",
+        
         // Customer details (will be populated when customer is selected)
         customerEmail: "",
         customerPhone: "",
@@ -147,6 +158,17 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         vehicleMileage: "",
         vehicleVin: "",
         vehicleLicensePlate: "",
+        
+        // Walk-in vehicle information
+        walkInVehicleInfo: {
+            year: new Date().getFullYear(),
+            make: "",
+            model: "",
+            license_plate: "",
+            color: "",
+            vin: "",
+            mileage: 0
+        },
         
         // Work order specifics
         estimatedHours: "",
@@ -175,11 +197,26 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
     // Step validation functions
     const isStep1Complete = () => {
+        if (formData.customerType === 'walk_in') {
+            // For walk-in customers, validate walk-in vehicle info
+            return formData.walkInVehicleInfo.year && 
+                   formData.walkInVehicleInfo.make.trim() && 
+                   formData.walkInVehicleInfo.model.trim() && 
+                   formData.walkInVehicleInfo.license_plate.trim()
+        }
+        
+        // For registered customers, validate customer selection
         return formData.customerId && formData.customerId !== "" && 
                (formData.customerId !== "new" || formData.customer.trim())
     }
 
     const isStep2Complete = () => {
+        if (formData.customerType === 'walk_in') {
+            // For walk-in customers, step 2 is already complete (vehicle info is in step 1)
+            return isStep1Complete()
+        }
+        
+        // For registered customers, validate vehicle selection
         return isStep1Complete() && 
                ((formData.vehicleId && formData.vehicleId !== "" && formData.vehicleId !== "new") || // Existing vehicle selected OR
                ((!formData.vehicleId || formData.vehicleId === "new") && // New vehicle with required fields
@@ -206,6 +243,35 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         setFormData(prev => ({
             ...prev,
             [field]: value
+        }))
+    }
+
+    const handleWalkInVehicleChange = (vehicleInfo: WalkInVehicleInfo) => {
+        setFormData(prev => ({
+            ...prev,
+            walkInVehicleInfo: vehicleInfo
+        }))
+    }
+
+    const handleCustomerTypeChange = (customerType: 'registered' | 'walk_in') => {
+        setFormData(prev => ({
+            ...prev,
+            customerType,
+            // Reset customer/vehicle data when switching types
+            customerId: customerType === 'registered' ? prev.customerId : '',
+            customer: customerType === 'registered' ? prev.customer : '',
+            vehicleId: customerType === 'registered' ? prev.vehicleId : '',
+            vehicle: customerType === 'registered' ? prev.vehicle : '',
+            // Reset walk-in data when switching to registered
+            walkInVehicleInfo: customerType === 'walk_in' ? prev.walkInVehicleInfo : {
+                year: new Date().getFullYear(),
+                make: "",
+                model: "",
+                license_plate: "",
+                color: "",
+                vin: "",
+                mileage: 0
+            }
         }))
     }
 
@@ -354,11 +420,13 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 priority: formData.priority,
                 assignee: formData.assignee,
                 assigneeId: formData.assigneeId,
-                customerId: formData.customerId,
-                vehicleId: formData.vehicleId,
-                customer: formData.customer,
-                vehicle: formData.vehicle,
-                vehicleMileage: formData.vehicleMileage,
+                customerType: formData.customerType,
+                customerId: formData.customerType === 'registered' ? formData.customerId : undefined,
+                vehicleId: formData.customerType === 'registered' ? formData.vehicleId : undefined,
+                customer: formData.customerType === 'registered' ? formData.customer : undefined,
+                vehicle: formData.customerType === 'registered' ? formData.vehicle : undefined,
+                vehicleMileage: formData.customerType === 'registered' ? formData.vehicleMileage : undefined,
+                walkInVehicleInfo: formData.customerType === 'walk_in' ? formData.walkInVehicleInfo : undefined,
                 tags: formData.tags,
                 date: formData.date,
                 estimatedHours: parseFloat(formData.estimatedHours) || 0,
@@ -411,48 +479,94 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                             {/* Main Content - Scrollable */}
                             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                                 <div className="p-6 space-y-6">
-                                    {/* Step 1: Customer Information */}
+                                    {/* Customer Type Selection */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                        <CustomerInformation 
-                                            customerId={formData.customerId}
-                                            customerName={formData.customer}
-                                            customerEmail={formData.customerEmail}
-                                            customerPhone={formData.customerPhone}
-                                            customerAddress={formData.customerAddress}
-                                            isEditing={currentStep >= 1}
-                                            onFieldChange={handleFieldChange}
-                                            onCustomerChange={(customerId) => handleFieldChange('customerId', customerId)}
-                                            isCreating={true}
-                                        />
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold text-white">Customer Type</h3>
+                                            
+                                            <div className="space-y-3">
+                                                <label className="text-sm font-medium text-gray-300">Select Customer Type</label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        className={`p-4 border rounded-lg text-center transition-colors ${
+                                                            formData.customerType === 'registered' 
+                                                                ? 'border-blue-500 bg-blue-500/10 text-blue-400' 
+                                                                : 'border-gray-600 hover:border-gray-500'
+                                                        }`}
+                                                        onClick={() => handleCustomerTypeChange('registered')}
+                                                    >
+                                                        <div className="font-medium">Registered Customer</div>
+                                                        <div className="text-xs text-gray-400">Existing customer</div>
+                                                    </button>
+                                                    
+                                                    <button
+                                                        className={`p-4 border rounded-lg text-center transition-colors ${
+                                                            formData.customerType === 'walk_in' 
+                                                                ? 'border-green-500 bg-green-500/10 text-green-400' 
+                                                                : 'border-gray-600 hover:border-gray-500'
+                                                        }`}
+                                                        onClick={() => handleCustomerTypeChange('walk_in')}
+                                                    >
+                                                        <div className="font-medium">Walk-in Customer</div>
+                                                        <div className="text-xs text-gray-400">Vehicle only</div>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* Step 2: Vehicle Information */}
-                                    <div className={`transition-opacity duration-200 ${currentStep >= 2 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                        <VehicleInformation 
-                                            customerId={formData.customerId}
-                                            selectedVehicleId={formData.vehicleId}
-                                            vehicleYear={formData.vehicleYear}
-                                            vehicleMake={formData.vehicleMake}
-                                            vehicleModel={formData.vehicleModel}
-                                            vehicleColor={formData.vehicleColor}
-                                            vehicleVin={formData.vehicleVin}
-                                            vehicleLicensePlate={formData.vehicleLicensePlate}
-                                            vehicleMileage={formData.vehicleMileage}
-                                            isEditing={currentStep >= 2}
-                                            onFieldChange={handleFieldChange}
-                                            onVehicleSelect={(vehicleId, vehicleData) => {
-                                                handleFieldChange('vehicleId', vehicleId)
-                                                if (vehicleData) {
-                                                    // Format vehicle display name
-                                                    const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`
-                                                    handleFieldChange('vehicle', vehicleDisplay)
-                                                } else if (vehicleId === "new") {
-                                                    handleFieldChange('vehicle', '')
-                                                }
-                                            }}
-                                            isCreating={true}
-                                        />
+                                    {/* Step 1: Customer/Vehicle Information */}
+                                    <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                        {formData.customerType === 'registered' ? (
+                                            <CustomerInformation 
+                                                customerId={formData.customerId}
+                                                customerName={formData.customer}
+                                                customerEmail={formData.customerEmail}
+                                                customerPhone={formData.customerPhone}
+                                                customerAddress={formData.customerAddress}
+                                                isEditing={currentStep >= 1}
+                                                onFieldChange={handleFieldChange}
+                                                onCustomerChange={(customerId) => handleFieldChange('customerId', customerId)}
+                                                isCreating={true}
+                                            />
+                                        ) : (
+                                            <WalkInVehicleForm
+                                                data={formData.walkInVehicleInfo}
+                                                onDataChange={handleWalkInVehicleChange}
+                                                isEditing={currentStep >= 1}
+                                            />
+                                        )}
                                     </div>
+
+                                    {/* Step 2: Vehicle Information (Registered Customers Only) */}
+                                    {formData.customerType === 'registered' && (
+                                        <div className={`transition-opacity duration-200 ${currentStep >= 2 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                            <VehicleInformation 
+                                                customerId={formData.customerId}
+                                                selectedVehicleId={formData.vehicleId}
+                                                vehicleYear={formData.vehicleYear}
+                                                vehicleMake={formData.vehicleMake}
+                                                vehicleModel={formData.vehicleModel}
+                                                vehicleColor={formData.vehicleColor}
+                                                vehicleVin={formData.vehicleVin}
+                                                vehicleLicensePlate={formData.vehicleLicensePlate}
+                                                vehicleMileage={formData.vehicleMileage}
+                                                isEditing={currentStep >= 2}
+                                                onFieldChange={handleFieldChange}
+                                                onVehicleSelect={(vehicleId, vehicleData) => {
+                                                    handleFieldChange('vehicleId', vehicleId)
+                                                    if (vehicleData) {
+                                                        // Format vehicle display name
+                                                        const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`
+                                                        handleFieldChange('vehicle', vehicleDisplay)
+                                                    } else if (vehicleId === "new") {
+                                                        handleFieldChange('vehicle', '')
+                                                    }
+                                                }}
+                                                isCreating={true}
+                                            />
+                                        </div>
+                                    )}
                                     
                                     {/* Step 3: Work Order Information */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
