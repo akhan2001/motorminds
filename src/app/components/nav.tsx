@@ -248,6 +248,35 @@ export function Nav() {
 						</>
 					)}
 					
+					{/* MIA Diagnostics Button - shown for all users */}
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button 
+									className={`${
+										pathname === '/mia' ? "opacity-100" : "opacity-70"
+									} hover:opacity-100 transition-opacity relative`}
+									onClick={() => router.push('/mia')}
+									aria-label="Open MIA Diagnostics"
+								>
+									<Image
+										src="/red-motorminds-logo-svg.svg"
+										alt="MIA Diagnostics"
+										width={24}
+										height={24}
+										className="w-6 h-6"
+									/>
+									{pathname === '/mia' && (
+										<span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#f52f2f]"></span>
+									)}
+								</button>
+							</TooltipTrigger>
+							<TooltipContent className="bg-[#1f1f1f] text-white border-none">
+								<p className="text-xs">MIA Diagnostics</p>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+					
 					{/* Profile Dropdown - shown for all users */}
 					<ProfileDropdown 
 						avatar={shopInfo?.logo_image_url || ""}
