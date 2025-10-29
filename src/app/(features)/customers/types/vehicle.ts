@@ -70,3 +70,13 @@ export const VEHICLE_TYPES: { value: VehicleType; label: string }[] = [
     { value: 'motorcycle', label: 'Motorcycle' },
     { value: 'other', label: 'Other' },
 ]
+
+export interface WalkInVehicleInfo {
+    year: number
+    make: string
+    model: string
+    license_plate: string
+    color?: string
+    vin?: string
+    mileage?: number
+}
