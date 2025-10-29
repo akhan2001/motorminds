@@ -63,3 +63,10 @@ src/app/(features)/operations/mock-work-orders.json
 
 # Private documentation system (internal business-technical alignment)
 /docs/
+
+# Scripts and migrations (operational tools - not production code)
+/scripts/output/
+/scripts/services.txt
+/scripts/*.csv
+/scripts/temp/
+/scripts/*.log

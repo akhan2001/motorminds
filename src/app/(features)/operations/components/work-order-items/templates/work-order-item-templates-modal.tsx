@@ -46,8 +46,8 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl bg-[#111111] text-white border-[#2a2a2a] max-h-[90vh] overflow-hidden">
-                <DialogHeader>
+            <DialogContent className="max-w-4xl bg-[#111111] text-white border-[#2a2a2a] max-h-[90vh] flex flex-col">
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle className="text-white">
                         Work Order Item Templates
                     </DialogTitle>
@@ -55,29 +55,27 @@ export const WorkOrderItemTemplatesModal: React.FC<WorkOrderItemTemplatesModalPr
                         Work Order Item Templates help you save time by creating reusable templates for your work orders.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                     {isFormOpen ? (
-                        <div className="h-full overflow-y-auto">
-                            <WorkOrderItemTemplateForm
-                                template={editingTemplate || undefined}
-                                shopId={shopId}
-                                onSuccess={handleFormSuccess}
-                                onCancel={handleFormCancel}
-                            />
-                        </div>
+                        <WorkOrderItemTemplateForm
+                            template={editingTemplate || undefined}
+                            shopId={shopId}
+                            onSuccess={handleFormSuccess}
+                            onCancel={handleFormCancel}
+                        />
                     ) : (
-                        <div className="h-full overflow-y-auto">
-                            <PanelProvider 
-                                allowTemplateActions={true} 
-                                allowTemplateSelection={false}
-                                context="templates-page"
-                            >
-                                <WorkOrderItemTemplatesPanel
-                                    shopId={shopId}
-                                    className="h-full"
-                                />
-                            </PanelProvider>
-                        </div>
+                        <PanelProvider 
+                            allowTemplateActions={true} 
+                            allowTemplateSelection={false}
+                            context="templates-page"
+                        >
+                            <WorkOrderItemTemplatesPanel
+                                shopId={shopId}
+                                onCreateTemplate={handleCreateTemplate}
+                                onEditTemplate={handleEditTemplate}
+                                className="h-full"
+                            />
+                        </PanelProvider>
                     )}
                 </div>
             </DialogContent>

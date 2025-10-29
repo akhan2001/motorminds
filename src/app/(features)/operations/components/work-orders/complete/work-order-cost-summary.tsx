@@ -13,6 +13,8 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 	className = "" 
 }) => {
 	const calculations = calculateInvoiceTotals(workOrderItems)
+
+	const TAX_RATE = 0.13
 	
 	const getItemStatusColor = (item: WorkOrderItem) => {
 		if (item.active === false) {
@@ -153,10 +155,38 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
+					{calculations.packagesTotal > 0 && (
+						<div className="flex justify-between">
+							<span className="text-gray-400">Packages</span>
+							<span className="text-white font-medium">
+								{formatCurrency(calculations.packagesTotal)}
+							</span>
+						</div>
+					)}
+					{calculations.discountsTotal > 0 && (
+						<div className="flex justify-between">
+							<span className="text-red-400">Discounts</span>
+							<span className="text-red-400 font-medium">
+								-{formatCurrency(calculations.discountsTotal)}
+							</span>
+						</div>
+					)}
+					<div className="flex justify-between pt-2 border-t border-gray-600">
+						<span className="text-white">Subtotal</span>
+						<span className="text-white font-medium">
+							{formatCurrency(calculations.subtotal)}
+						</span>
+					</div>
+					<div className="flex justify-between">
+						<span className="text-gray-400">Tax ({Math.round(TAX_RATE * 100)}%)</span>
+						<span className="text-white font-medium">
+							{formatCurrency(calculations.subtotal * TAX_RATE)}
+						</span>
+					</div>
 					<div className="flex justify-between text-lg font-semibold pt-2 border-t border-gray-600">
 						<span className="text-white">Total (Approved Items Only)</span>
 						<span className="text-white">
-							{formatCurrency(calculations.subtotal)}
+							{formatCurrency(calculations.subtotal * (1 + TAX_RATE))}
 						</span>
 					</div>
 					{calculations.rejectedItems.length > 0 && (

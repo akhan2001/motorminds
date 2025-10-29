@@ -124,10 +124,10 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             onFieldChange('vehicleMileage', '')
             onVehicleSelect?.("new")
         } else if (vehicleData) {
-            // Existing vehicle - populate data
-            onFieldChange('vehicleYear', vehicleData.year.toString())
-            onFieldChange('vehicleMake', vehicleData.make)
-            onFieldChange('vehicleModel', vehicleData.model)
+            // Existing vehicle - populate data (handle null values from staging)
+            onFieldChange('vehicleYear', vehicleData.year ? vehicleData.year.toString() : '')
+            onFieldChange('vehicleMake', vehicleData.make || '')
+            onFieldChange('vehicleModel', vehicleData.model || '')
             onFieldChange('vehicleColor', vehicleData.color || '')
             onFieldChange('vehicleVin', vehicleData.vin || '')
             onFieldChange('vehicleLicensePlate', vehicleData.licensePlate || '')

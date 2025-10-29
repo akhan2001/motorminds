@@ -14,6 +14,7 @@ import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { InvoiceSendModal } from './InvoiceSendModal'
 
 interface InvoiceViewOnlyProps {
     invoiceId: string
@@ -26,6 +27,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const deleteMutation = useDeleteInvoice()
     const [isLandscape, setIsLandscape] = useState(false)
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -44,7 +46,14 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     }
 
     const handleSend = () => {
-        toast.info('Email send coming soon')
+        setIsSendModalOpen(true)
+    }
+
+    const handleSendConfirm = (sendEmail: boolean, customMessage?: string) => {
+        if (sendEmail) {
+            toast.success('Invoice email sent successfully!')
+        }
+        setIsSendModalOpen(false)
     }
 
     const toggleFormat = () => {
@@ -360,6 +369,16 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                 </Button>
             </div>
+
+            {/* Invoice Send Modal */}
+            {invoice && (
+                <InvoiceSendModal
+                    invoice={invoice}
+                    isOpen={isSendModalOpen}
+                    onClose={() => setIsSendModalOpen(false)}
+                    onConfirm={handleSendConfirm}
+                />
+            )}
         </div>
     )
 }

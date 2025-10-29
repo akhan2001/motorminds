@@ -1,13 +1,12 @@
-// @ts-nocheck
-import { defineConfig } from "vitest/config";
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-    test: {
-        globals: true,
-        environment: "node",
-        include: ["tests/**/*.test.ts"],
-        coverage: {
-            reporter: ["text", "html"]
-        }
-    }
-}); 
+  plugins: [tsconfigPaths()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}']
+  },
+})

@@ -10,12 +10,16 @@ export interface WorkOrder {
     
     // Relationships
     shop_id: string
-    customer_id: string
-    vehicle_id: string
+    customer_id?: string // Made option for walk-ins
+    vehicle_id?: string // Made option for walk-ins
     appointment_id?: string
     invoice_id?: string
     assigned_technician_id?: string
     
+    // New walk-in fields
+    customer_type: 'registered' | 'walk_in'
+    walk_in_vehicle_info?: WalkInVehicleInfo
+
     // Metadata
     tags?: string[]
     attachments?: any[]
@@ -66,6 +70,9 @@ export type WorkOrderStatus =
     | 'on_hold'
 
 export type WorkOrderPriority = 'low' | 'medium' | 'high' | 'urgent'
+
+// Import WalkInVehicleInfo from customers types
+import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 
 export interface WorkOrderItem {
     id: string

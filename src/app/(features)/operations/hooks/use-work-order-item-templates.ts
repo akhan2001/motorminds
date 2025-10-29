@@ -22,12 +22,14 @@ export const workOrderItemTemplateKeys = {
 
 /**
  * Hook to fetch all templates for a shop
+ * @param shopId - The shop ID
+ * @param options - Additional query options (e.g., enabled flag for lazy loading)
  */
-export function useWorkOrderItemTemplates(shopId: string) {
+export function useWorkOrderItemTemplates(shopId: string, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: workOrderItemTemplateKeys.list(shopId),
         queryFn: () => WorkOrderItemTemplatesService.getTemplatesByShopId(shopId),
-        enabled: !!shopId,
+        enabled: options?.enabled !== undefined ? (!!shopId && options.enabled) : !!shopId,
         staleTime: 30 * 1000, // 30 seconds
     })
 }

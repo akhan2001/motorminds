@@ -36,10 +36,13 @@ export async function getShopName(shopId: string) {
 }
 
 export async function getShopInfo(shopId: string) {
+    console.log('getShopInfo called with shopId:', shopId);
     const { data, error } = await supabase
         .from('shops')
         .select('*')
         .eq('id', shopId);
+    
+    console.log('getShopInfo query result:', { data, error });
     
     if (error) {
         console.error('Error fetching shop info:', error);

@@ -9,4 +9,5 @@ export { WorkOrderStatusBar } from './work-order-status-bar'
 export { WorkOrderRightPanel } from './work-order-right-panel'
 export { WorkOrderLaborItems } from './WorkOrderLaborItems'
 export { WorkOrderPartsItems } from './WorkOrderPartsItems'
+export { WorkOrderGenericItems } from './WorkOrderGenericItems'
 

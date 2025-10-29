@@ -1,6 +1,7 @@
 // Main service for work order CRUD operations
 import { createClient } from '@/lib/supabase'
 import type { WorkOrder, WorkOrderWithDetails, WorkOrderItem, WorkOrderStatus } from '../types/work-order'
+import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 
 export class WorkOrderService {
     private supabase = createClient()
@@ -222,6 +223,30 @@ export class WorkOrderService {
         return data || []
     }
 
+    // CREATE work order for walk-in customers (no customer/vehicle records)
+    async createWalkInWorkOrder(data: {
+        workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id' | 'customer_type' | 'walk_in_vehicle_info'>
+        walkInVehicleInfo: WalkInVehicleInfo
+    }): Promise<WorkOrder> {
+        console.log('Creating walk-in work order with vehicle info:', data.walkInVehicleInfo)
+        
+        // Validate required walk-in vehicle fields
+        if (!data.walkInVehicleInfo.year || !data.walkInVehicleInfo.make || !data.walkInVehicleInfo.model || !data.walkInVehicleInfo.license_plate) {
+            throw new Error('Year, make, model, and license plate are required for walk-in customers')
+        }
+
+        const workOrderData: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'> = {
+            ...data.workOrder,
+            customer_id: undefined,
+            vehicle_id: undefined,
+            customer_type: 'walk_in',
+            walk_in_vehicle_info: data.walkInVehicleInfo,
+        }
+
+        console.log('Creating work order with walk-in data:', workOrderData)
+        return this.createWorkOrder(workOrderData)
+    }
+
     // CREATE work order with customer and vehicle creation if needed
     async createWorkOrderWithDependencies(data: {
         workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id'>
@@ -318,6 +343,8 @@ export class WorkOrderService {
             ...data.workOrder,
             customer_id: customerId,
             vehicle_id: vehicleId,
+            customer_type: 'registered',
+            walk_in_vehicle_info: undefined,
         }
 
         console.log('Creating work order with customer_id:', customerId, 'vehicle_id:', vehicleId)

@@ -17,7 +17,8 @@ import {
     WorkOrderModalFooter,
     WorkOrderRightPanel,
     WorkOrderLaborItems,
-    WorkOrderPartsItems
+    WorkOrderPartsItems,
+    WorkOrderGenericItems
 } from "../shared"
 import { WorkOrderDeleteConfirmation } from "./work-order-delete-confirmation"
 import { WorkOrderCostSummary } from "../complete"
@@ -76,6 +77,16 @@ interface PartFormItem {
     active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
+interface GenericFormItem {
+    id: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    notes?: string;
+    active?: boolean; // true = accepted, false = declined, undefined = pending
+}
+
 export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({ 
     workOrder: initialWorkOrder,
     onClose,
@@ -88,6 +99,10 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
     const [laborItems, setLaborItems] = useState<LaborFormItem[]>([])
     const [partsItems, setPartsItems] = useState<PartFormItem[]>([])
+    const [serviceItems, setServiceItems] = useState<GenericFormItem[]>([])
+    const [feeItems, setFeeItems] = useState<GenericFormItem[]>([])
+    const [discountItems, setDiscountItems] = useState<GenericFormItem[]>([])
+    const [packageItems, setPackageItems] = useState<GenericFormItem[]>([])
     
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -137,6 +152,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Update form when work order details are fetched
     useEffect(() => {
         if (workOrderDetails) {
+            // Handle walk-in customers
+            const isWalkIn = workOrderDetails.customer_type === 'walk_in'
+            
             setFormData(prev => ({
                 ...prev,
                 title: workOrderDetails.title || "",
@@ -146,25 +164,41 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
                     : workOrderDetails.assigned_technician_id || "",
                 date: workOrderDetails.created_at.split('T')[0] || "",
-                customer: workOrderDetails.customer?.customer_name || "",
-                vehicle: workOrderDetails.vehicle 
-                    ? `${workOrderDetails.vehicle.year} ${workOrderDetails.vehicle.make} ${workOrderDetails.vehicle.model}${workOrderDetails.vehicle.license_plate ? ` (${workOrderDetails.vehicle.license_plate})` : ''}`
-                    : "",
+                customer: isWalkIn ? "Walk-in Customer" : (workOrderDetails.customer?.customer_name || ""),
+                vehicle: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? `${workOrderDetails.walk_in_vehicle_info.year} ${workOrderDetails.walk_in_vehicle_info.make} ${workOrderDetails.walk_in_vehicle_info.model}${workOrderDetails.walk_in_vehicle_info.license_plate ? ` (${workOrderDetails.walk_in_vehicle_info.license_plate})` : ''}`
+                    : workOrderDetails.vehicle 
+                        ? `${workOrderDetails.vehicle.year} ${workOrderDetails.vehicle.make} ${workOrderDetails.vehicle.model}${workOrderDetails.vehicle.license_plate ? ` (${workOrderDetails.vehicle.license_plate})` : ''}`
+                        : "",
                 tags: workOrderDetails.tags || [],
                 
                 // Customer details
-                customerEmail: workOrderDetails.customer?.customer_email || "",
-                customerPhone: workOrderDetails.customer?.customer_phone || "",
-                customerAddress: workOrderDetails.customer?.customer_address || "",
+                customerEmail: isWalkIn ? "" : (workOrderDetails.customer?.customer_email || ""),
+                customerPhone: isWalkIn ? "" : (workOrderDetails.customer?.customer_phone || ""),
+                customerAddress: isWalkIn ? "" : (workOrderDetails.customer?.customer_address || ""),
                 
-                // Vehicle details
-                vehicleYear: workOrderDetails.vehicle?.year?.toString() || "",
-                vehicleMake: workOrderDetails.vehicle?.make || "",
-                vehicleModel: workOrderDetails.vehicle?.model || "",
-                vehicleColor: workOrderDetails.vehicle?.color || "",
-                vehicleMileage: workOrderDetails.vehicle?.mileage?.toString() || "",
-                vehicleVin: workOrderDetails.vehicle?.vin || "",
-                vehicleLicensePlate: workOrderDetails.vehicle?.license_plate || "",
+                // Vehicle details - use walk-in info if available
+                vehicleYear: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.year?.toString() || ""
+                    : workOrderDetails.vehicle?.year?.toString() || "",
+                vehicleMake: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.make || ""
+                    : workOrderDetails.vehicle?.make || "",
+                vehicleModel: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.model || ""
+                    : workOrderDetails.vehicle?.model || "",
+                vehicleColor: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.color || ""
+                    : workOrderDetails.vehicle?.color || "",
+                vehicleMileage: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.mileage?.toString() || ""
+                    : workOrderDetails.vehicle?.mileage?.toString() || "",
+                vehicleVin: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.vin || ""
+                    : workOrderDetails.vehicle?.vin || "",
+                vehicleLicensePlate: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.license_plate || ""
+                    : workOrderDetails.vehicle?.license_plate || "",
                 
                 // Work order notes
                 notes: workOrderDetails.notes || "",
@@ -185,17 +219,19 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 active: item.active
             })))
             
-            // Separate labor and parts items
+            // Separate items by type
             const labor: LaborFormItem[] = []
             const parts: PartFormItem[] = []
+            const services: GenericFormItem[] = []
+            const fees: GenericFormItem[] = []
+            const discounts: GenericFormItem[] = []
+            const packages: GenericFormItem[] = []
 
             workOrderItems.forEach(item => {
                 console.log('WorkOrderEditModal - Processing item:', {
                     id: item.id,
                     description: item.description,
                     item_type: item.item_type,
-                    isLabor: item.item_type === 'labor',
-                    isPart: item.item_type === 'part',
                     active: item.active
                 })
                 
@@ -208,7 +244,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                         total_price: (item.labor_hours || 1) * (item.unit_price || 0),
                         notes: item.notes || '',
                         technician_id: item.technician_id || '',
-                        active: item.active // Include the active status from database
+                        active: item.active
                     })
                 } else if (item.item_type === 'part') {
                     parts.push({
@@ -222,13 +258,57 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                         category: item.category || '',
                         warranty_period: item.warranty_period || '',
                         notes: item.notes || '',
-                        active: item.active // Include the active status from database
+                        active: item.active
+                    })
+                } else if (item.item_type === 'service') {
+                    services.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
+                    })
+                } else if (item.item_type === 'fee') {
+                    fees.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
+                    })
+                } else if (item.item_type === 'discount') {
+                    discounts.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
+                    })
+                } else if (item.item_type === 'package') {
+                    packages.push({
+                        id: item.id,
+                        description: item.description,
+                        quantity: item.quantity || 1,
+                        unit_price: item.unit_price || 0,
+                        total_price: (item.quantity || 1) * (item.unit_price || 0),
+                        notes: item.notes || '',
+                        active: item.active
                     })
                 }
             })
 
             setLaborItems(labor)
             setPartsItems(parts)
+            setServiceItems(services)
+            setFeeItems(fees)
+            setDiscountItems(discounts)
+            setPackageItems(packages)
         }
     }, [workOrderItems])
 
@@ -395,6 +475,43 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         // Handle successful save of individual part item
         toast.success(`Part item "${item.description}" saved successfully`)
         // Optionally refresh work order items list
+    }
+
+    // Generic items handlers
+    const handleServiceItemsChange = (items: GenericFormItem[]) => {
+        setServiceItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'service' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleFeeItemsChange = (items: GenericFormItem[]) => {
+        setFeeItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'fee' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleDiscountItemsChange = (items: GenericFormItem[]) => {
+        setDiscountItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'discount' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handlePackageItemsChange = (items: GenericFormItem[]) => {
+        setPackageItems(items)
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template => 
+            template.item_type !== 'package' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleGenericItemSaved = (item: any) => {
+        toast.success(`${item.item_type} item "${item.description}" saved successfully`)
     }
 
     // Function to add selected templates as work order items
@@ -839,13 +956,65 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                             </div>
 
                                             {/* Parts Items */}
-                                            <div>
+                                            <div className="mb-6">
                                                 <WorkOrderPartsItems
                                                     items={partsItems}
                                                     onItemsChange={handlePartsItemsChange}
                                                     workOrderId={initialWorkOrder.id}
                                                     onItemSaved={handlePartItemSaved}
                                                     isEditing={isEditing}
+                                                />
+                                            </div>
+
+                                            {/* Service Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderGenericItems
+                                                    items={serviceItems}
+                                                    onItemsChange={handleServiceItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="service"
+                                                    title="Services"
+                                                />
+                                            </div>
+
+                                            {/* Fee Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderGenericItems
+                                                    items={feeItems}
+                                                    onItemsChange={handleFeeItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="fee"
+                                                    title="Fees"
+                                                />
+                                            </div>
+
+                                            {/* Discount Items */}
+                                            <div className="mb-6">
+                                                <WorkOrderGenericItems
+                                                    items={discountItems}
+                                                    onItemsChange={handleDiscountItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="discount"
+                                                    title="Discounts"
+                                                />
+                                            </div>
+
+                                            {/* Package Items */}
+                                            <div>
+                                                <WorkOrderGenericItems
+                                                    items={packageItems}
+                                                    onItemsChange={handlePackageItemsChange}
+                                                    workOrderId={initialWorkOrder.id}
+                                                    onItemSaved={handleGenericItemSaved}
+                                                    isEditing={isEditing}
+                                                    itemType="package"
+                                                    title="Packages"
                                                 />
                                             </div>
                                         </div>
@@ -866,7 +1035,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 isEditing={isEditing}
                                 canEdit={canEdit()}
                                 canDelete={canDelete()}
-                                canGenerateInvoice={true}
+                                canGenerateInvoice={workOrderDetails?.customer_type === 'registered'}
                                 workOrderStatus={workOrderDetails?.status || initialWorkOrder.status}
                                 onEdit={handleEdit}
                                 onSave={handleSave}

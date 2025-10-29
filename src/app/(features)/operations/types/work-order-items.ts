@@ -3,9 +3,11 @@
 export interface WorkOrderItem {
     id: string
     work_order_id: string
+    shop_id: string
     shop_service_id?: string
+    invoice_id?: string
     
-    item_type: 'labor' | 'part' | 'service' | 'fee'
+    item_type: 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package'
     description: string
     part_number?: string
     
@@ -22,13 +24,13 @@ export interface WorkOrderItem {
     
     labor_hours?: number
     technician_id?: string
+    active?: boolean
     
     created_at: string
     completed_at?: string
-    active?: boolean
 }
 
-export type WorkOrderItemType = 'labor' | 'part' | 'service' | 'fee'
+export type WorkOrderItemType = 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package'
 
 export interface WorkOrderItemFormData {
     item_type: WorkOrderItemType
@@ -55,6 +57,8 @@ export interface WorkOrderItemSummary {
     totalParts: number
     totalServices: number
     totalFees: number
+    totalDiscounts: number
+    totalPackages: number
     grandTotal: number
     itemCount: number
 }

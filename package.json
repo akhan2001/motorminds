@@ -7,7 +7,9 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "test": "vitest",
+        "test:run": "vitest run"
     },
     "dependencies": {
         "@ai-sdk/openai": "^1.2.3",
@@ -118,20 +120,27 @@
         "twilio": "^5.8.0",
         "use-debounce": "^10.0.5",
         "use-stick-to-bottom": "^1.0.46",
+        "uuid": "^13.0.0",
         "webflow-api": "^3.1.0",
         "zod": "^3.25.75"
     },
     "devDependencies": {
+        "@testing-library/dom": "^10.4.1",
+        "@testing-library/react": "^16.3.0",
         "@types/bcryptjs": "^2.4.6",
         "@types/node": "22.13.1",
         "@types/react": "19.0.8",
+        "@vitejs/plugin-react": "^5.1.0",
         "autoprefixer": "^10.0.0",
         "eslint": "^8.0.0",
         "eslint-config-next": "^12.3.4",
+        "jsdom": "^27.0.1",
         "next-transpile-modules": "^10.0.1",
         "postcss": "^8.0.0",
         "prettier": "^3.6.2",
-        "typescript": "4.9.5"
+        "typescript": "4.9.5",
+        "vite-tsconfig-paths": "^5.1.4",
+        "vitest": "^4.0.4"
     },
     "author": "",
     "license": "ISC"
