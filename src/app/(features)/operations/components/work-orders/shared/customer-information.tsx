@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials, formatPhoneNumber } from "@/lib/utils/text"
@@ -41,6 +42,38 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
 }) => {
     const { shopId } = useAuth()
     const [isSaving, setIsSaving] = useState(false)
+    const [errors, setErrors] = useState<Partial<Record<'customer' | 'customerPhone' | 'customerEmail', string>>>({})
+
+    const validateField = (field: 'customer' | 'customerPhone' | 'customerEmail', value: string): string | undefined => {
+        switch (field) {
+            case 'customer':
+                if (!value || value.trim().length === 0) return 'Name is required'
+                return undefined
+            case 'customerPhone':
+                if (!value || value.trim().length === 0) return 'Phone number is required'
+                // Basic phone validation (allows digits and common symbols)
+                if (!/^[0-9()+\-\s]{7,}$/.test(value.trim())) return 'Enter a valid phone number'
+                return undefined
+            case 'customerEmail':
+                if (!value) return undefined // optional
+                if (!/^\S+@\S+\.[\w]{2,}$/.test(value.trim())) return 'Enter a valid email address'
+                return undefined
+            default:
+                return undefined
+        }
+    }
+
+    const handleBlur = (field: 'customer' | 'customerPhone' | 'customerEmail', value: string) => {
+        const error = validateField(field, value)
+        if (error) setErrors(prev => ({ ...prev, [field]: error }))
+    }
+
+    const isFormValid = () => {
+        const nameErr = validateField('customer', customerName)
+        const phoneErr = validateField('customerPhone', customerPhone)
+        const emailErr = validateField('customerEmail', customerEmail)
+        return !nameErr && !phoneErr && !emailErr
+    }
 
     // Handle customer selection from dropdown
     const handleCustomerSelect = (selectedCustomerId: string, customerData?: any) => {
@@ -51,6 +84,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
             onFieldChange('customerPhone', '')
             onFieldChange('customerAddress', '')
             onCustomerChange?.("new")
+            setErrors({})
         } else if (customerData) {
             // Existing customer - populate data
             onFieldChange('customer', customerData.name)
@@ -58,6 +92,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
             onFieldChange('customerPhone', customerData.phone || '')
             onFieldChange('customerAddress', customerData.address || '')
             onCustomerChange?.(selectedCustomerId)
+            setErrors({})
         }
     }
 
@@ -68,15 +103,11 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
             return
         }
 
-        if (!customerName.trim()) {
-            toast.error('Customer name is required')
-            return
-        }
-
-        if (!customerPhone.trim()) {
-            toast.error('Customer phone is required')
-            return
-        }
+        const nameErr = validateField('customer', customerName)
+        const phoneErr = validateField('customerPhone', customerPhone)
+        const emailErr = validateField('customerEmail', customerEmail)
+        setErrors(prev => ({ ...prev, customer: nameErr, customerPhone: phoneErr, customerEmail: emailErr }))
+        if (nameErr || phoneErr || emailErr) return
 
         setIsSaving(true)
         try {
@@ -158,40 +189,81 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {/* First row */}
                                 <div>
+                                    <Label htmlFor="customer_name" className="text-gray-400">Name *</Label>
                                     <Input
-                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
+                                        id="customer_name"
+                                        className={`bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customer ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Customer Name"
                                         value={customerName}
-                                        onChange={(e) => isEditing && onFieldChange('customer', e.target.value)}
+                                        onChange={(e) => {
+                                            if (!isEditing) return
+                                            onFieldChange('customer', e.target.value)
+                                            if (errors.customer) setErrors(prev => ({ ...prev, customer: undefined }))
+                                        }}
+                                        onBlur={() => handleBlur('customer', customerName)}
                                         disabled={!isEditing || (isCreating && customerId !== "new")}
                                         required={isCreating && customerId === "new"}
                                     />
+                                    {errors.customer && (
+                                        <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                            {errors.customer}
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
+                                    <Label htmlFor="customer_phone" className="text-gray-400">Phone *</Label>
                                     <Input
-                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
+                                        id="customer_phone"
+                                        className={`bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerPhone ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Phone Number"
                                         value={formatPhoneNumber(customerPhone)}
-                                        onChange={(e) => isEditing && onFieldChange('customerPhone', e.target.value)}
+                                        onChange={(e) => {
+                                            if (!isEditing) return
+                                            onFieldChange('customerPhone', e.target.value)
+                                            if (errors.customerPhone) setErrors(prev => ({ ...prev, customerPhone: undefined }))
+                                        }}
+                                        onBlur={() => handleBlur('customerPhone', customerPhone)}
                                         disabled={!isEditing || (isCreating && customerId !== "new")}
                                         required={isCreating && customerId === "new"}
                                         inputMode="numeric"
                                     />
+                                    {errors.customerPhone && (
+                                        <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                            {errors.customerPhone}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Second row */}
                                 <div>
+                                    <Label htmlFor="customer_email" className="text-gray-400">Email</Label>
                                     <Input
-                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
+                                        id="customer_email"
+                                        className={`bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerEmail ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Email Address"
                                         type="email"
                                         value={customerEmail}
-                                        onChange={(e) => isEditing && onFieldChange('customerEmail', e.target.value)}
+                                        onChange={(e) => {
+                                            if (!isEditing) return
+                                            onFieldChange('customerEmail', e.target.value)
+                                            if (errors.customerEmail) setErrors(prev => ({ ...prev, customerEmail: undefined }))
+                                        }}
+                                        onBlur={() => handleBlur('customerEmail', customerEmail)}
                                         disabled={!isEditing || (isCreating && customerId !== "new")}
                                     />
+                                    {errors.customerEmail && (
+                                        <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                            {errors.customerEmail}
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
+                                    <Label htmlFor="customer_address" className="text-gray-400">Address</Label>
                                     <Input
+                                        id="customer_address"
                                         className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Address"
                                         value={customerAddress}
@@ -206,7 +278,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                 <div className="mt-4 flex justify-end">
                                     <Button
                                         onClick={handleSaveCustomer}
-                                        disabled={isSaving || !customerName.trim() || !customerPhone.trim()}
+                                        disabled={isSaving || !isFormValid()}
                                         className="bg-green-600 hover:bg-green-700 text-white"
                                         size="sm"
                                     >

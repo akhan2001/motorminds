@@ -58,6 +58,39 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [isSaving, setIsSaving] = useState(false)
     const [vinDecoding, setVinDecoding] = useState(false)
     const [isSavingNewVehicle, setIsSavingNewVehicle] = useState(false)
+    const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
+
+    const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string): string | undefined => {
+        switch (field) {
+            case 'vehicleYear':
+                if (!value || value.trim().length === 0) return 'Year is required'
+                const year = parseInt(value)
+                if (isNaN(year) || year < 1900 || year > new Date().getFullYear() + 1) {
+                    return 'Please enter a valid year'
+                }
+                return undefined
+            case 'vehicleMake':
+                if (!value || value.trim().length === 0) return 'Make is required'
+                return undefined
+            case 'vehicleModel':
+                if (!value || value.trim().length === 0) return 'Model is required'
+                return undefined
+            default:
+                return undefined
+        }
+    }
+
+    const handleBlur = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string) => {
+        const error = validateField(field, value)
+        if (error) setErrors(prev => ({ ...prev, [field]: error }))
+    }
+
+    const isFormValid = () => {
+        const yearErr = validateField('vehicleYear', vehicleYear)
+        const makeErr = validateField('vehicleMake', vehicleMake)
+        const modelErr = validateField('vehicleModel', vehicleModel)
+        return !yearErr && !makeErr && !modelErr
+    }
 
     // Handle saving vehicle updates
     const handleSaveVehicle = async () => {
@@ -122,6 +155,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             onFieldChange('vehicleVin', '')
             onFieldChange('vehicleLicensePlate', '')
             onFieldChange('vehicleMileage', '')
+            setErrors({}) // Clear errors when starting new vehicle
             onVehicleSelect?.("new")
         } else if (vehicleData) {
             // Existing vehicle - populate data (handle null values from staging)
@@ -132,6 +166,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             onFieldChange('vehicleVin', vehicleData.vin || '')
             onFieldChange('vehicleLicensePlate', vehicleData.licensePlate || '')
             onFieldChange('vehicleMileage', '') // Mileage not included in dropdown data
+            setErrors({}) // Clear errors when selecting existing vehicle
             onVehicleSelect?.(vehicleId, vehicleData)
         }
     }
@@ -143,18 +178,13 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             return
         }
 
-        if (!vehicleYear.trim()) {
-            toast.error('Vehicle year is required')
-            return
-        }
-
-        if (!vehicleMake.trim()) {
-            toast.error('Vehicle make is required')
-            return
-        }
-
-        if (!vehicleModel.trim()) {
-            toast.error('Vehicle model is required')
+        // Validate all required fields
+        const yearErr = validateField('vehicleYear', vehicleYear)
+        const makeErr = validateField('vehicleMake', vehicleMake)
+        const modelErr = validateField('vehicleModel', vehicleModel)
+        setErrors(prev => ({ ...prev, vehicleYear: yearErr, vehicleMake: makeErr, vehicleModel: modelErr }))
+        
+        if (yearErr || makeErr || modelErr) {
             return
         }
 
@@ -254,27 +284,46 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                 <div className="space-y-2 mt-2 p-3 border border-[#2a2a2a] rounded-md">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Year</Label>
+                            <Label htmlFor="vehicle_year" className="text-gray-400">Year *</Label>
                             <Input
+                                id="vehicle_year"
                                 type="number"
                                 value={vehicleYear}
-                                onChange={(e) => isEditing && onFieldChange('vehicleYear', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                onChange={(e) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleYear', e.target.value)
+                                    if (errors.vehicleYear) setErrors(prev => ({ ...prev, vehicleYear: undefined }))
+                                }}
+                                onBlur={() => handleBlur('vehicleYear', vehicleYear)}
+                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="2020"
                                 min="1970"
                                 max={new Date().getFullYear() + 1}
                             />
+                            {errors.vehicleYear && (
+                                <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                    {errors.vehicleYear}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Make</Label>
+                            <Label htmlFor="vehicle_make" className="text-gray-400">Make *</Label>
                             <Select
                                 value={vehicleMake}
-                                onValueChange={(value) => isEditing && onFieldChange('vehicleMake', value)}
+                                onValueChange={(value) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleMake', value)
+                                    if (errors.vehicleMake) setErrors(prev => ({ ...prev, vehicleMake: undefined }))
+                                }}
                                 disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                             >
-                                <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500">
+                                <SelectTrigger 
+                                    id="vehicle_make"
+                                    className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
+                                >
                                     <SelectValue placeholder="Select make" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
@@ -285,17 +334,35 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {errors.vehicleMake && (
+                                <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                    {errors.vehicleMake}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Model</Label>
+                            <Label htmlFor="vehicle_model" className="text-gray-400">Model *</Label>
                             <Input
+                                id="vehicle_model"
                                 value={vehicleModel}
-                                onChange={(e) => isEditing && onFieldChange('vehicleModel', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                onChange={(e) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleModel', e.target.value)
+                                    if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                }}
+                                onBlur={() => handleBlur('vehicleModel', vehicleModel)}
+                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Civic"
                             />
+                            {errors.vehicleModel && (
+                                <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                    {errors.vehicleModel}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
                             <Label className="text-gray-400">Color</Label>
@@ -369,7 +436,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                         <div className="mt-4 flex justify-end">
                             <Button
                                 onClick={handleSaveNewVehicle}
-                                disabled={isSavingNewVehicle || !vehicleYear.trim() || !vehicleMake.trim() || !vehicleModel.trim() || !customerId || customerId === "new"}
+                                disabled={isSavingNewVehicle || !isFormValid() || !customerId || customerId === "new"}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 size="sm"
                             >

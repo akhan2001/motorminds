@@ -24,7 +24,7 @@ export function CustomerSearchBar({
     onSelect,
     onCreateNew,
     showCreateOption = true,
-    placeholder = "Search customers...",
+    placeholder = "Search customers by name, phone, or email...",
     className,
     disabled = false
 }: CustomerSearchBarProps) {
@@ -105,7 +105,7 @@ export function CustomerSearchBar({
                         {/* Search Input */}
                         <div className="p-3 border-b border-[#3a3a3a]">
                             <Input
-                                placeholder="Search customers..."
+                                placeholder="Search customers by name, phone, or email..."
                                 value={searchQuery}
                                 onChange={(e) => handleInputChange(e.target.value)}
                                 ref={inputRef}
