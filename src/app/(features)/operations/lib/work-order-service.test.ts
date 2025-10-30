@@ -70,8 +70,8 @@ describe('WorkOrderService', () => {
                 ...mockWorkOrderData,
                 customer_type: 'walk_in' as const,
                 walk_in_vehicle_info: mockWalkInVehicleInfo,
-                customer_id: undefined,
-                vehicle_id: undefined
+                customer_id: null,
+                vehicle_id: null
             }
 
             // Mock the createWorkOrder method
@@ -86,14 +86,14 @@ describe('WorkOrderService', () => {
             // Assert
             expect(result.customer_type).toBe('walk_in')
             expect(result.walk_in_vehicle_info).toEqual(mockWalkInVehicleInfo)
-            expect(result.customer_id).toBeUndefined()
-            expect(result.vehicle_id).toBeUndefined()
+            expect(result.customer_id).toBeNull()
+            expect(result.vehicle_id).toBeNull()
             expect(service.createWorkOrder).toHaveBeenCalledWith({
                 ...mockWorkOrderData,
                 customer_type: 'walk_in',
                 walk_in_vehicle_info: mockWalkInVehicleInfo,
-                customer_id: undefined,
-                vehicle_id: undefined
+                customer_id: null,
+                vehicle_id: null
             })
         })
 
@@ -172,8 +172,8 @@ describe('WorkOrderService', () => {
                 ...mockWorkOrderData,
                 customer_type: 'walk_in' as const,
                 walk_in_vehicle_info: vehicleInfoWithOptionals,
-                customer_id: undefined,
-                vehicle_id: undefined
+                customer_id: null,
+                vehicle_id: null
             }
 
             vi.spyOn(service, 'createWorkOrder').mockResolvedValue(mockWorkOrder)
@@ -207,8 +207,8 @@ describe('WorkOrderService', () => {
                 ...mockWorkOrderData,
                 customer_type: 'walk_in' as const,
                 walk_in_vehicle_info: minimalVehicleInfo,
-                customer_id: undefined,
-                vehicle_id: undefined
+                customer_id: null,
+                vehicle_id: null
             }
 
             vi.spyOn(service, 'createWorkOrder').mockResolvedValue(mockWorkOrder)
