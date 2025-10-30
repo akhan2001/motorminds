@@ -1,21 +1,8 @@
 "use client"
 
 import { useState } from 'react'
-import { MessageSquare, Plus, Settings, X, Zap, ChevronDown } from 'lucide-react'
+import { MessageSquare, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { 
-    DropdownMenu, 
-    DropdownMenuContent, 
-    DropdownMenuItem, 
-    DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu'
-import { 
-    Tooltip, 
-    TooltipContent, 
-    TooltipProvider, 
-    TooltipTrigger 
-} from '@/components/ui/tooltip'
-import { Badge } from '@/components/ui/badge'
 
 interface DiagnosticChatHeaderProps {
     isChatLoading?: boolean
@@ -48,8 +35,8 @@ export function DiagnosticChatHeader({
                 <div className="flex items-center gap-3">
                     {/* AI Icon with Animation */}
                     <div className="relative">
-                        <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                            <MessageSquare className="w-4 h-4 text-white" />
+                        <div className="w-6 h-6 bg-transparent flex items-center justify-center">
+                            <img src="/red-motorminds-logo-svg.svg" alt="MIA Logo" className="w-full h-full object-contain hover:brightness-125 transition-all duration-200" />
                         </div>
                         {isChatLoading && (
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
@@ -59,65 +46,15 @@ export function DiagnosticChatHeader({
 
                 {/* Right Side - Action Buttons */}
                 <div className="flex items-center gap-1">
-                    {/* New Chat Button */}
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onNewChat}
-                                    disabled={isChatLoading}
-                                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#1f1f1f]"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>New Chat Session</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    {/* Settings Button */}
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onSettingsClick}
-                                    disabled={isChatLoading}
-                                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#1f1f1f]"
-                                >
-                                    <Settings className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Settings</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    {/* Close Button */}
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onCloseAssistant}
-                                    disabled={isChatLoading}
-                                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#1f1f1f]"
-                                >
-                                    <X className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Close Assistant</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onCloseAssistant}
+                        disabled={isChatLoading}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-transparent"
+                    >
+                        <X className="w-4 h-4" />
+                    </Button>
                 </div>
             </div>
 
@@ -132,8 +69,8 @@ export function DiagnosticChatHeader({
                                     Data Sharing Notice
                                 </p>
                                 <p className="text-yellow-300/80 text-xs leading-relaxed">
-                                    This chat may share your shop data, vehicle information, and diagnostic codes 
-                                    with AI services to provide better assistance. 
+                                    This chat may share your shop data, vehicle information, and diagnostic codes
+                                    with AI services to provide better assistance.
                                     {aiOptInLevel === 'none' && (
                                         <span className="block mt-1 font-medium">
                                             Currently sharing: <Badge variant="destructive" className="ml-1">No Data</Badge>

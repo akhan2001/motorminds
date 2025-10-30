@@ -4,19 +4,12 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowUp } from 'lucide-react'
+import { defaultPrompts } from './AIDiagnostics.prompts'
 
 interface DiagnosticsInputProps {
     chatInstance: any
     selectedVehicleId: number | null
 }
-
-const QUICK_PROMPTS = [
-    "Get me the vehicles details",
-    "Show me diagnostic trouble codes",
-    "What are common issues?",
-    "What fluids does this vehicle use?",
-    "What's the spark plug part number?"
-]
 
 export function DiagnosticsInput({ chatInstance, selectedVehicleId }: DiagnosticsInputProps) {
     const [localInput, setLocalInput] = useState('')
@@ -65,16 +58,16 @@ export function DiagnosticsInput({ chatInstance, selectedVehicleId }: Diagnostic
                 <div className="mb-3">
                     <p className="text-xs text-gray-400 mb-2">Quick Prompts:</p>
                     <div className="flex flex-wrap gap-1">
-                        {QUICK_PROMPTS.map((prompt, index) => (
+                        {defaultPrompts.map((prompt, index) => (
                             <Button
                                 key={index}
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleQuickPrompt(prompt)}
+                                onClick={() => handleQuickPrompt(prompt.prompt)}
                                 className="text-xs h-6 px-2 bg-[#1f1f1f] border-[#2a2a2a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
                                 disabled={isLoading}
                             >
-                                {prompt}
+                                {prompt.title}
                             </Button>
                         ))}
                     </div>
