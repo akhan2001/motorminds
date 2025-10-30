@@ -1,32 +1,36 @@
 // Appointment types based on actual database schema
+import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 export interface Appointment {
     id: string
     created_at: string
     shop_id: string
-    customer_id: string
-    vehicle_id: string
-    appointment_date: string          // date field
+    customer_id?: string // Made option for walk-ins
+    vehicle_id?: string // Made option for walk-ins
+    appointment_date: string
     notes?: string
-    start_time?: string              // time without time zone
-    end_time?: string                // time without time zone  
+    start_time?: string
+    end_time?: string
     service_type: string
     updated_at: string
     status?: AppointmentStatus
     confirmation_code?: string
     created_by_customer?: boolean
+    // New walk-in fields
+    customer_type: 'registered' | 'walk_in'
+    walk_in_vehicle_info?: WalkInVehicleInfo
 }
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
 
 // Extended type with joined data for display
 export interface AppointmentWithDetails extends Appointment {
-    customer: {
+    customer?: {
         id: string
         customer_name: string
         customer_email?: string
         customer_phone?: string
     }
-    vehicle: {
+    vehicle?: {
         id: string
         year?: number
         make?: string
@@ -53,8 +57,8 @@ export interface CalendarAppointment extends AppointmentWithDetails {
 // Create appointment form data
 export interface AppointmentCreateData {
     shop_id: string
-    customer_id: string
-    vehicle_id: string
+    customer_id?: string // Made option for walk-ins
+    vehicle_id?: string // Made option for walk-ins
     appointment_date: string
     start_time: string
     end_time: string
@@ -62,6 +66,9 @@ export interface AppointmentCreateData {
     notes?: string
     status?: AppointmentStatus
     created_by_customer?: boolean
+    // Add walk-in fields
+    customer_type?: 'registered' | 'walk_in'
+    walk_in_vehicle_info?: WalkInVehicleInfo
 }
 
 // Update appointment form data

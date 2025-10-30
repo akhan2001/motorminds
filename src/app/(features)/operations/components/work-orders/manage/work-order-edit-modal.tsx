@@ -152,6 +152,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Update form when work order details are fetched
     useEffect(() => {
         if (workOrderDetails) {
+            // Handle walk-in customers
+            const isWalkIn = workOrderDetails.customer_type === 'walk_in'
+            
             setFormData(prev => ({
                 ...prev,
                 title: workOrderDetails.title || "",
@@ -161,25 +164,41 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
                     : workOrderDetails.assigned_technician_id || "",
                 date: workOrderDetails.created_at.split('T')[0] || "",
-                customer: workOrderDetails.customer?.customer_name || "",
-                vehicle: workOrderDetails.vehicle 
-                    ? `${workOrderDetails.vehicle.year} ${workOrderDetails.vehicle.make} ${workOrderDetails.vehicle.model}${workOrderDetails.vehicle.license_plate ? ` (${workOrderDetails.vehicle.license_plate})` : ''}`
-                    : "",
+                customer: isWalkIn ? "Walk-in Customer" : (workOrderDetails.customer?.customer_name || ""),
+                vehicle: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? `${workOrderDetails.walk_in_vehicle_info.year} ${workOrderDetails.walk_in_vehicle_info.make} ${workOrderDetails.walk_in_vehicle_info.model}${workOrderDetails.walk_in_vehicle_info.license_plate ? ` (${workOrderDetails.walk_in_vehicle_info.license_plate})` : ''}`
+                    : workOrderDetails.vehicle 
+                        ? `${workOrderDetails.vehicle.year} ${workOrderDetails.vehicle.make} ${workOrderDetails.vehicle.model}${workOrderDetails.vehicle.license_plate ? ` (${workOrderDetails.vehicle.license_plate})` : ''}`
+                        : "",
                 tags: workOrderDetails.tags || [],
                 
                 // Customer details
-                customerEmail: workOrderDetails.customer?.customer_email || "",
-                customerPhone: workOrderDetails.customer?.customer_phone || "",
-                customerAddress: workOrderDetails.customer?.customer_address || "",
+                customerEmail: isWalkIn ? "" : (workOrderDetails.customer?.customer_email || ""),
+                customerPhone: isWalkIn ? "" : (workOrderDetails.customer?.customer_phone || ""),
+                customerAddress: isWalkIn ? "" : (workOrderDetails.customer?.customer_address || ""),
                 
-                // Vehicle details
-                vehicleYear: workOrderDetails.vehicle?.year?.toString() || "",
-                vehicleMake: workOrderDetails.vehicle?.make || "",
-                vehicleModel: workOrderDetails.vehicle?.model || "",
-                vehicleColor: workOrderDetails.vehicle?.color || "",
-                vehicleMileage: workOrderDetails.vehicle?.mileage?.toString() || "",
-                vehicleVin: workOrderDetails.vehicle?.vin || "",
-                vehicleLicensePlate: workOrderDetails.vehicle?.license_plate || "",
+                // Vehicle details - use walk-in info if available
+                vehicleYear: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.year?.toString() || ""
+                    : workOrderDetails.vehicle?.year?.toString() || "",
+                vehicleMake: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.make || ""
+                    : workOrderDetails.vehicle?.make || "",
+                vehicleModel: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.model || ""
+                    : workOrderDetails.vehicle?.model || "",
+                vehicleColor: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.color || ""
+                    : workOrderDetails.vehicle?.color || "",
+                vehicleMileage: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.mileage?.toString() || ""
+                    : workOrderDetails.vehicle?.mileage?.toString() || "",
+                vehicleVin: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.vin || ""
+                    : workOrderDetails.vehicle?.vin || "",
+                vehicleLicensePlate: isWalkIn && workOrderDetails.walk_in_vehicle_info
+                    ? workOrderDetails.walk_in_vehicle_info.license_plate || ""
+                    : workOrderDetails.vehicle?.license_plate || "",
                 
                 // Work order notes
                 notes: workOrderDetails.notes || "",
@@ -1016,7 +1035,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 isEditing={isEditing}
                                 canEdit={canEdit()}
                                 canDelete={canDelete()}
-                                canGenerateInvoice={true}
+                                canGenerateInvoice={workOrderDetails?.customer_type === 'registered'}
                                 workOrderStatus={workOrderDetails?.status || initialWorkOrder.status}
                                 onEdit={handleEdit}
                                 onSave={handleSave}

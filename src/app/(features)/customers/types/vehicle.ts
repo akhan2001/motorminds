@@ -50,8 +50,8 @@ export interface VehicleFormData {
 // Common vehicle makes for dropdowns
 export const VEHICLE_MAKES = [
     'Acura', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 'Chrysler', 'Dodge',
-    'Ford', 'Genesis', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jeep', 'Kia',
-    'Lexus', 'Lincoln', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 
+    'Ford', 'Genesis', 'GMC', 'Honda', 'Hyundai', 'Infiniti', 'Jeep', 'Kia', 'Land Rover',
+    'Lexus', 'Lincoln', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Porsche',
     'Ram', 'Subaru', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo'
 ]
 
@@ -70,3 +70,13 @@ export const VEHICLE_TYPES: { value: VehicleType; label: string }[] = [
     { value: 'motorcycle', label: 'Motorcycle' },
     { value: 'other', label: 'Other' },
 ]
+
+export interface WalkInVehicleInfo {
+    year: number
+    make: string
+    model: string
+    license_plate: string
+    color?: string
+    vin?: string
+    mileage?: number
+}
