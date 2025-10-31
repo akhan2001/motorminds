@@ -62,16 +62,16 @@ export async function POST(request: NextRequest) {
             end_time,
             service_type,
             notes,
-            created_by_customer = false
+            created_by_customer = false,
+            customer_type = 'registered',
+            walk_in_vehicle_info
         } = body;
 
-        // Validate required fields
-        if (!customer_id || !vehicle_id || !appointment_date || !start_time || !end_time || !service_type) {
+        // Validate required fields based on customer type
+        if (!appointment_date || !start_time || !end_time || !service_type) {
             return NextResponse.json({ 
                 error: 'Missing required fields',
                 missing: {
-                    customer_id: !customer_id,
-                    vehicle_id: !vehicle_id,
                     appointment_date: !appointment_date,
                     start_time: !start_time,
                     end_time: !end_time,
@@ -80,19 +80,47 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
+        // Validate based on customer type
+        if (customer_type === 'registered') {
+            if (!customer_id || !vehicle_id) {
+                return NextResponse.json({ 
+                    error: 'Missing required fields for registered customer',
+                    missing: {
+                        customer_id: !customer_id,
+                        vehicle_id: !vehicle_id
+                    }
+                }, { status: 400 });
+            }
+        } else if (customer_type === 'walk_in') {
+            if (!walk_in_vehicle_info) {
+                return NextResponse.json({ 
+                    error: 'Missing walk_in_vehicle_info for walk-in appointment'
+                }, { status: 400 });
+            }
+            // Validate walk-in vehicle info
+            if (!walk_in_vehicle_info.year || !walk_in_vehicle_info.make || 
+                !walk_in_vehicle_info.model || !walk_in_vehicle_info.license_plate) {
+                return NextResponse.json({ 
+                    error: 'Year, make, model, and license plate are required for walk-in vehicles'
+                }, { status: 400 });
+            }
+        }
+
         const supabase = await createClient();
 
         // Create appointment
         const appointmentData = {
             shop_id: shopId,
-            customer_id,
-            vehicle_id,
+            customer_id: customer_type === 'walk_in' ? null : customer_id,
+            vehicle_id: customer_type === 'walk_in' ? (vehicle_id || null) : vehicle_id,
             appointment_date,
             start_time,
             end_time,
             service_type,
             notes,
             created_by_customer,
+            customer_type,
+            walk_in_vehicle_info: customer_type === 'walk_in' ? walk_in_vehicle_info : null,
             confirmation_code: generateConfirmationCode()
         };
         
@@ -114,30 +142,35 @@ export async function POST(request: NextRequest) {
             }, { status: 500 });
         }
 
-        // Auto-generate repair order using existing schema
-        const orderNumber = `RO-${Date.now()}`;
-        const repairOrderData = {
-            shop_id: shopId,
-            customer_id,
-            vehicle_id,
-            appointment_id: appointment.id,
-            order_number: orderNumber,
-            status: 'pending',
-            total_cost: 0
-        };
-        
-        console.log('Creating repair order with data:', repairOrderData);
-        
-        const { data: repairOrder, error: repairOrderError } = await supabase
-            .from('repair_orders')
-            .insert(repairOrderData)
-            .select()
-            .single();
+        // Auto-generate repair order only for registered customers
+        let repairOrder = null;
+        if (customer_type === 'registered' && customer_id && vehicle_id) {
+            const orderNumber = `RO-${Date.now()}`;
+            const repairOrderData = {
+                shop_id: shopId,
+                customer_id,
+                vehicle_id,
+                appointment_id: appointment.id,
+                order_number: orderNumber,
+                status: 'pending',
+                total_cost: 0
+            };
+            
+            console.log('Creating repair order with data:', repairOrderData);
+            
+            const { data: createdRepairOrder, error: repairOrderError } = await supabase
+                .from('repair_orders')
+                .insert(repairOrderData)
+                .select()
+                .single();
 
-        if (repairOrderError) {
-            console.error('Failed to create repair order:', repairOrderError);
-            // Don't fail the entire request if repair order creation fails
-            // The appointment was created successfully
+            if (repairOrderError) {
+                console.error('Failed to create repair order:', repairOrderError);
+                // Don't fail the entire request if repair order creation fails
+                // The appointment was created successfully
+            } else {
+                repairOrder = createdRepairOrder;
+            }
         }
 
         // Send real-time notification

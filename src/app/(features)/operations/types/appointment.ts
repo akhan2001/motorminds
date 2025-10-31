@@ -4,8 +4,8 @@ export interface Appointment {
     id: string
     created_at: string
     shop_id: string
-    customer_id?: string // Made option for walk-ins
-    vehicle_id?: string // Made option for walk-ins
+    customer_id?: string | null // null for walk-ins
+    vehicle_id?: string | null // may be null or set for walk-ins
     appointment_date: string
     notes?: string
     start_time?: string
@@ -57,8 +57,8 @@ export interface CalendarAppointment extends AppointmentWithDetails {
 // Create appointment form data
 export interface AppointmentCreateData {
     shop_id: string
-    customer_id?: string // Made option for walk-ins
-    vehicle_id?: string // Made option for walk-ins
+    customer_id?: string | null // null for walk-ins
+    vehicle_id?: string | null // may be null or set for walk-ins
     appointment_date: string
     start_time: string
     end_time: string

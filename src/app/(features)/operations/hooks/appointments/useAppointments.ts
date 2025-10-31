@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AppointmentService, createWorkOrderFromAppointmentDirect } from '../../lib/appointment-service'
+import { AppointmentService } from '../../lib/appointment-service'
 import { toast } from 'sonner'
 import type { 
     AppointmentWithDetails,
@@ -50,7 +50,7 @@ export const useCalendarAppointments = (
             // Transform appointments for calendar component
             return appointments.map(apt => ({
                 ...apt,
-                title: `${apt.customer.customer_name} - ${apt.service_type}`,
+                title: `${apt.customer?.customer_name} - ${apt.service_type}`,
                 start: new Date(`${apt.appointment_date}T${apt.start_time || '09:00'}`),
                 end: new Date(`${apt.appointment_date}T${apt.end_time || '10:00'}`)
             }))
@@ -251,7 +251,7 @@ export const useCreateWorkOrderFromAppointment = () => {
     const queryClient = useQueryClient()
     
     return useMutation({
-        mutationFn: createWorkOrderFromAppointmentDirect,
+        mutationFn: AppointmentService.createWorkOrderFromAppointment,
         onSuccess: (workOrderId, appointmentId) => {
             // Invalidate appointments to refresh status
             queryClient.invalidateQueries({

@@ -11,7 +11,6 @@ import type {
 const supabase = createClient()
 
 export class AppointmentService {
-    static readonly VERSION = '2.0.0' // Cache busting version
     
     /**
      * Get appointments with proper joins based on actual FK relationships
@@ -356,32 +355,10 @@ export class AppointmentService {
         return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
     }
 
-    /**
-     * Create a work order from an appointment (v2 - cache busted)
-     */
-    static async createWorkOrderFromAppointmentV2(appointmentId: string): Promise<string> {
-        console.log('Creating work order for appointment:', appointmentId) // Debug log
-        // First get the appointment details (inlined to avoid caching issues)
+    static async createWorkOrderFromAppointment(appointmentId: string): Promise<string> {
         const { data: appointment, error: fetchError } = await supabase
             .from('appointments')
-            .select(`
-                id,
-                created_at,
-                shop_id,
-                customer_id,
-                vehicle_id,
-                appointment_date,
-                notes,
-                start_time,
-                end_time,
-                service_type,
-                updated_at,
-                status,
-                confirmation_code,
-                created_by_customer,
-                customer, customer_id,
-                vehicle, vehicle_id
-            `)
+            .select(`*, customer:customers(*), vehicle:customer_vehicles(*)`)
             .eq('id', appointmentId)
             .single()
         
@@ -389,50 +366,33 @@ export class AppointmentService {
             throw new Error('Appointment not found')
         }
 
-        // Generate work order number (format: WO-YYYYMMDD-XXXX)
-        const today = new Date()
-        const dateStr = today.getFullYear() + 
-                      String(today.getMonth() + 1).padStart(2, '0') + 
-                      String(today.getDate()).padStart(2, '0')
-        const randomSuffix = Math.floor(1000 + Math.random() * 9000)
-        const workOrderNumber = `WO-${dateStr}-${randomSuffix}`
+        const workOrderNumber = `WO-${Date.now()}`
+        const customerName = appointment.customer?.customer_name || 'Customer'
 
-        // Create work order
         const { data: workOrder, error } = await supabase
             .from('work_orders')
-            .insert([{
+            .insert({
                 work_order_number: workOrderNumber,
                 shop_id: appointment.shop_id,
                 customer_id: appointment.customer_id,
                 vehicle_id: appointment.vehicle_id,
                 appointment_id: appointmentId,
-                title: `${appointment.service_type} - ${(appointment as any).customer.customer_name}`,
-                description: `Work order created from appointment scheduled for ${appointment.appointment_date}`,
+                title: `${appointment.service_type} - ${customerName}`,
                 notes: appointment.notes,
                 status: 'pending',
                 priority: 'medium'
-            }])
+            })
             .select()
             .single()
 
-        if (error) {
-            throw new Error(`Failed to create work order: ${error.message}`)
-        }
+        if (error) throw new Error(`Failed to create work order: ${error.message}`)
 
-        // Update appointment status to indicate it has been converted (inlined to avoid caching issues)
         await supabase
             .from('appointments')
             .update({ status: 'in_progress' })
             .eq('id', appointmentId)
 
         return workOrder.id
-    }
-
-    /**
-     * Legacy method for compatibility (delegates to V2)
-     */
-    static async createWorkOrderFromAppointment(appointmentId: string): Promise<string> {
-        return AppointmentService.createWorkOrderFromAppointmentV2(appointmentId)
     }
 
     /**
@@ -444,70 +404,4 @@ export class AppointmentService {
         const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
         return new Date(d.setDate(diff))
     }
-}
-
-// Direct export function to bypass class caching issues
-export async function createWorkOrderFromAppointmentDirect(appointmentId: string): Promise<string> {
-    console.log('Direct function: Creating work order for appointment:', appointmentId) // Debug log
-    
-    const supabaseClient = createClient()
-    
-    // First get the appointment details
-    const { data: appointment, error: fetchError } = await supabaseClient
-        .from('appointments')
-        .select(`
-            id, created_at, shop_id, customer_id, vehicle_id,
-            appointment_date, notes, start_time, end_time,
-            service_type, updated_at, status, confirmation_code,
-            created_by_customer,
-            customer:customers!appointments_customer_id_fkey(
-                id, customer_name, customer_phone, customer_email
-            ),
-            vehicle:customer_vehicles!appointments_vehicle_id_fkey(
-                id, year, make, model, license_plate, color, vin, mileage
-            )
-        `)
-        .eq('id', appointmentId)
-        .single()
-    
-    if (fetchError || !appointment) {
-        throw new Error('Appointment not found')
-    }
-
-    // Generate work order number (format: WO-YYYYMMDD-XXXX)
-    const today = new Date()
-    const dateStr = today.getFullYear() + 
-                  String(today.getMonth() + 1).padStart(2, '0') + 
-                  String(today.getDate()).padStart(2, '0')
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000)
-    const workOrderNumber = `WO-${dateStr}-${randomSuffix}`
-
-    // Create work order
-    const { data: workOrder, error } = await supabaseClient
-        .from('work_orders')
-        .insert([{
-            work_order_number: workOrderNumber,
-            shop_id: appointment.shop_id,
-            customer_id: appointment.customer_id,
-            vehicle_id: appointment.vehicle_id,
-            appointment_id: appointmentId,
-            title: `${appointment.service_type}`,
-            notes: appointment.notes,
-            status: 'pending',
-            priority: 'medium'
-        }])
-    .select()
-    .single()
-
-    if (error) {
-        throw new Error(`Failed to create work order: ${error.message}`)
-    }
-
-    // Update appointment status to indicate it has been converted
-    await supabaseClient
-        .from('appointments')
-        .update({ status: 'in_progress' })
-        .eq('id', appointmentId)
-
-    return workOrder.id
 }

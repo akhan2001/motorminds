@@ -211,7 +211,7 @@ export function DayCard({
                                             <div className="flex items-center gap-1">
                                                 <User className="h-3 w-3 text-gray-400" />
                                                 <span className="text-xs text-white truncate">
-                                                    {appointment.customer.customer_name}
+                                                    {appointment.customer?.customer_name}
                                                 </span>
                                             </div>
                                             
@@ -220,7 +220,7 @@ export function DayCard({
                                                     <div className="flex items-center gap-1">
                                                         <Car className="h-3 w-3 text-gray-400" />
                                                         <span className="text-xs text-gray-300 truncate">
-                                                            {appointment.vehicle.year} {appointment.vehicle.make} {appointment.vehicle.model}
+                                                            {appointment.vehicle?.year} {appointment.vehicle?.make} {appointment.vehicle?.model}
                                                         </span>
                                                     </div>
                                                     

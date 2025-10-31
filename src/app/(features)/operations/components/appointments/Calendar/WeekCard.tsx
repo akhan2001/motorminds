@@ -177,7 +177,7 @@ export function WeekCard({
                     `}
                 >
                     <div className="text-xs font-medium text-white truncate">
-                        {appointment.customer.customer_name}
+                        {appointment.customer?.customer_name}
                     </div>
                     <div className="text-xs text-white/80 truncate">
                         {appointment.service_type}
