@@ -4,6 +4,7 @@ import { Calendar, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getPriorityColor } from "@/lib/utils/status"
 import { WorkOrderPriority } from "../../../types/work-order"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 
 export interface WorkOrderStatusBarProps {
     priority: WorkOrderPriority
@@ -33,8 +34,19 @@ export const WorkOrderStatusBar: React.FC<WorkOrderStatusBarProps> = ({
                 </div>
                 {assignee && (
                     <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-300">{assignee}</span>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-gray-400" />
+                                        <span className="text-sm text-gray-300">{assignee}</span>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="bg-[#0d0d0d] border-[#1f1f1f] text-white">
+                                    <span className="text-sm text-gray-300">Assigned Technician</span>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 )}
             </div>

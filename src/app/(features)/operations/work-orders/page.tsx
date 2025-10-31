@@ -324,6 +324,8 @@ function WorkOrdersContent() {
                         status: 'pending' as const,
                         priority: workOrderData.priority,
                         shop_id: shopId,
+                        // Ensure selected/created vehicle is linked on create
+                        vehicle_id: workOrderData.vehicleId || undefined,
                         assigned_technician_id: workOrderData.assigneeId || undefined,
                         tags: workOrderData.tags || [],
                         attachments: [],

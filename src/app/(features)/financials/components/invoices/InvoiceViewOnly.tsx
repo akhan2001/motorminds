@@ -8,13 +8,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { 
     Edit, Download, Send, Trash2, 
-    User, Car, LayoutIcon, X, Check, XCircle
+    User, Car, LayoutIcon, X, Check, XCircle, Wrench
 } from 'lucide-react'
 import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
+import { useRouter } from 'next/navigation'
 
 interface InvoiceViewOnlyProps {
     invoiceId: string
@@ -23,6 +24,7 @@ interface InvoiceViewOnlyProps {
 }
 
 const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, onClose }) => {
+    const router = useRouter()
     const { shopId } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const deleteMutation = useDeleteInvoice()
@@ -59,6 +61,14 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const toggleFormat = () => {
         setIsLandscape(!isLandscape)
         toast.success(`PDF format set to ${!isLandscape ? 'Landscape' : 'Portrait'}`)
+    }
+
+    const handleGoToWorkOrder = () => {
+        if (invoice?.work_order_id) {
+            router.push(`/operations/work-orders?id=${invoice.work_order_id}`)
+        } else {
+            toast.error('No work order associated with this invoice')
+        }
     }
 
     const formatCurrency = (amount: number) => {
@@ -129,6 +139,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         <p className="text-gray-400 text-sm">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
+                        {invoice.work_order_id && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleGoToWorkOrder}
+                                className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            >
+                                <Wrench className="h-4 w-4 mr-2" />
+                                Go to Work Order
+                            </Button>
+                        )}
                         <Button
                             variant="ghost"
                             size="sm"

@@ -1,11 +1,12 @@
-import type { UserRole } from '@/types/core/user';
+import type { UserRole, AdminType } from '@/types/core/user';
 
 export interface NavItem {
     name: string;
     href: string;
     hasDropdown?: boolean;
-    subItems?: Array<{ name: string; href: string }>;
+    subItems?: Array<{ name: string; href: string; adminTypes?: AdminType[] }>;
     requiredRoles: UserRole[];
+    adminTypes?: AdminType[]; // Optional: restrict to specific admin types
 }
 
 // Define mechanic hub subitems with role requirements
@@ -87,7 +88,45 @@ export const navigationConfig: NavItem[] = [
     {
         name: "Admin",
         href: "/admin",
-        requiredRoles: ['admin', 'super']
+        requiredRoles: ['admin', 'super', 'shop_admin'],
+        hasDropdown: true,
+        subItems: [
+            { 
+                name: "Dashboard", 
+                href: "/admin",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+            },
+            { 
+                name: "Organizations", 
+                href: "/admin/super-admin/organizations",
+                adminTypes: ['super-admin']
+            },
+            { 
+                name: "Shops", 
+                href: "/admin/organization/shops",
+                adminTypes: ['organization-admin']
+            },
+            { 
+                name: "Users", 
+                href: "/admin/users",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+            },
+            { 
+                name: "Shop Users", 
+                href: "/admin/shop/users",
+                adminTypes: ['shop-admin']
+            },
+            { 
+                name: "Migrations", 
+                href: "/admin/migrations",
+                adminTypes: ['super-admin']
+            },
+            { 
+                name: "Settings", 
+                href: "/admin/settings",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+            }
+        ]
     }
 ];
 

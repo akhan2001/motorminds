@@ -1,6 +1,7 @@
 // Vehicle service for API interactions
 import { createClient } from '@/utils/supabase/client'
-import type { CustomerVehicle, VehicleFormData } from '../types/vehicle'
+import type { CustomerVehicle, VehicleFormData, WalkInVehicleInfo } from '../types/vehicle'
+import { normalizeLicensePlate, validateLicensePlate, generateSearchPatterns } from './vehicle-search-utils'
 
 export class VehicleService {
     private static supabase = createClient()
@@ -172,5 +173,137 @@ export class VehicleService {
             color: vehicle.color || undefined,
             vin: vehicle.vin || undefined,
         }
+    }
+
+    /**
+     * Search vehicles by license plate (simple version without shop filtering for debugging)
+     */
+    static async searchVehiclesByPlateSimple(query: string, limit: number = 10): Promise<CustomerVehicle[]> {
+        if (!query || query.trim().length === 0) {
+            return []
+        }
+
+        try {
+            const normalizedQuery = normalizeLicensePlate(query)
+            console.log('Simple search for normalized query:', normalizedQuery)
+            
+            const { data, error } = await this.supabase
+                .from('customer_vehicles')
+                .select('*')
+                .ilike('license_plate', normalizedQuery)
+                .limit(limit)
+
+            if (error) {
+                console.error('Error in simple search:', error)
+                throw new Error(`Failed to search vehicles: ${error.message}`)
+            }
+
+            console.log('Simple search results:', data?.length || 0)
+            return data || []
+        } catch (error) {
+            console.error('Error in simple vehicle search:', error)
+            throw error instanceof Error ? error : new Error('Failed to search vehicles')
+        }
+    }
+
+    /**
+     * Search vehicles by license plate using API route
+     * Supports fuzzy matching and partial searches
+     * Only returns vehicles that belong to customers of the specified shop, or walk-in vehicles (customer_id = null)
+     */
+    static async searchVehiclesByPlate(query: string, shopId: string, limit: number = 10): Promise<CustomerVehicle[]> {
+        if (!query || query.trim().length === 0) {
+            return []
+        }
+
+        if (!shopId) {
+            throw new Error('Shop ID is required for vehicle search')
+        }
+
+        try {
+            console.log('Searching vehicles via API:', query, 'shop:', shopId)
+            
+            const searchParams = new URLSearchParams({
+                q: query,
+                limit: limit.toString()
+            })
+
+            const response = await fetch(`/api/customers/vehicles/search?${searchParams}`)
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.error || `Search failed: ${response.statusText}`)
+            }
+
+            const data = await response.json()
+            console.log('API search results:', data.vehicles?.length || 0)
+            
+            return data.vehicles || []
+        } catch (error) {
+            console.error('Error searching vehicles by plate:', error)
+            throw error instanceof Error ? error : new Error('Failed to search vehicles')
+        }
+    }
+
+    /**
+     * Create a walk-in vehicle (no customer association)
+     */
+    static async createWalkInVehicle(vehicleData: WalkInVehicleInfo): Promise<CustomerVehicle> {
+        // Validate license plate
+        const plateValidation = validateLicensePlate(vehicleData.license_plate)
+        if (!plateValidation.isValid) {
+            throw new Error(plateValidation.error || 'Invalid license plate')
+        }
+
+        const vehiclePayload = {
+            customer_id: null, // Walk-in vehicle has no customer association
+            year: vehicleData.year ? vehicleData.year.toString() : null, // Convert to string to match DB schema
+            make: vehicleData.make.trim(),
+            model: vehicleData.model.trim(),
+            vin: vehicleData.vin?.trim() || null,
+            license_plate: normalizeLicensePlate(vehicleData.license_plate),
+            color: vehicleData.color?.trim() || null,
+            mileage: vehicleData.mileage || null,
+            engine_type: null, // Not provided in walk-in form
+        }
+
+        const { data, error } = await this.supabase
+            .from('customer_vehicles')
+            .insert([vehiclePayload])
+            .select()
+            .single()
+
+        if (error) {
+            console.error('Error creating walk-in vehicle:', error)
+            throw new Error(`Failed to create vehicle: ${error.message}`)
+        }
+
+        return data
+    }
+
+    /**
+     * Check if a license plate already exists within the shop's scope
+     * Useful for preventing duplicates
+     * Only checks vehicles that belong to customers of the specified shop, or walk-in vehicles
+     */
+    static async checkPlateExists(licensePlate: string, shopId: string): Promise<boolean> {
+        if (!licensePlate) return false
+        if (!shopId) return false
+
+        try {
+            // Use the search API to check if plate exists
+            const results = await this.searchVehiclesByPlate(licensePlate, shopId, 1)
+            return results.length > 0
+        } catch (error) {
+            console.error('Error checking plate existence:', error)
+            return false
+        }
+    }
+
+    /**
+     * Normalize license plate for consistent storage
+     */
+    static normalizePlate(plate: string): string {
+        return normalizeLicensePlate(plate)
     }
 }

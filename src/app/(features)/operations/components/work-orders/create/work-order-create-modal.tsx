@@ -69,15 +69,15 @@ interface NewWorkOrderFormData {
     vehicleId: string // Added vehicle ID tracking
     vehicle: string
     tags: string[]
-    
+
     // Customer type selection
     customerType: 'registered' | 'walk_in'
-    
+
     // Additional fields for comprehensive work order
     customerEmail: string
     customerPhone: string
     customerAddress: string
-    
+
     // Vehicle details
     vehicleYear: string
     vehicleMake: string
@@ -86,20 +86,20 @@ interface NewWorkOrderFormData {
     vehicleMileage: string
     vehicleVin: string
     vehicleLicensePlate: string
-    
+
     // Walk-in vehicle information
     walkInVehicleInfo: WalkInVehicleInfo
-    
+
     // Work order specifics
     estimatedHours: string
     laborCost: string
     partsCost: string
     totalCost: string
     notes: string
-    
+
     // Labor items
     laborItems: LaborFormItem[]
-    
+
     // Parts items
     partsItems: PartFormItem[]
 }
@@ -111,7 +111,7 @@ interface SelectedTemplate extends WorkOrderItemTemplate {
     selectedTechnicianId?: string
 }
 
-export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({ 
+export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     onClose,
     onSave,
     className = "",
@@ -120,14 +120,14 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [currentStep, setCurrentStep] = useState(1) // Track current step (1, 2, 3)
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
-    
+
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
         { id: 'tech-1', name: 'John Smith' },
         { id: 'tech-2', name: 'Jane Doe' },
         { id: 'tech-3', name: 'Mike Johnson' },
     ]
-    
+
     // Form state for new work order
     const [formData, setFormData] = useState<NewWorkOrderFormData>({
         title: "",
@@ -141,15 +141,15 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         vehicleId: "",
         vehicle: "",
         tags: [],
-        
+
         // Customer type selection
         customerType: "registered",
-        
+
         // Customer details (will be populated when customer is selected)
         customerEmail: "",
         customerPhone: "",
         customerAddress: "",
-        
+
         // Vehicle details (will be populated when vehicle is selected)
         vehicleYear: "",
         vehicleMake: "",
@@ -158,7 +158,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         vehicleMileage: "",
         vehicleVin: "",
         vehicleLicensePlate: "",
-        
+
         // Walk-in vehicle information
         walkInVehicleInfo: {
             year: new Date().getFullYear(),
@@ -169,17 +169,17 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             vin: "",
             mileage: 0
         },
-        
+
         // Work order specifics
         estimatedHours: "",
         laborCost: "0.00",
         partsCost: "0.00",
         totalCost: "0.00",
         notes: "",
-        
+
         // Labor items
         laborItems: [],
-        
+
         // Parts items
         partsItems: [],
     })
@@ -199,15 +199,15 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     const isStep1Complete = () => {
         if (formData.customerType === 'walk_in') {
             // For walk-in customers, validate walk-in vehicle info
-            return formData.walkInVehicleInfo.year && 
-                   formData.walkInVehicleInfo.make.trim() && 
-                   formData.walkInVehicleInfo.model.trim() && 
-                   formData.walkInVehicleInfo.license_plate.trim()
+            return formData.walkInVehicleInfo.year &&
+                formData.walkInVehicleInfo.make.trim() &&
+                formData.walkInVehicleInfo.model.trim() &&
+                formData.walkInVehicleInfo.license_plate.trim()
         }
-        
+
         // For registered customers, validate customer selection
-        return formData.customerId && formData.customerId !== "" && 
-               (formData.customerId !== "new" || formData.customer.trim())
+        // Must have a valid customer ID (not "new" or empty)
+        return formData.customerId && formData.customerId !== "" && formData.customerId !== "new"
     }
 
     const isStep2Complete = () => {
@@ -215,19 +215,20 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             // For walk-in customers, step 2 is already complete (vehicle info is in step 1)
             return isStep1Complete()
         }
-        
+
         // For registered customers, validate vehicle selection
-        return isStep1Complete() && 
-               ((formData.vehicleId && formData.vehicleId !== "" && formData.vehicleId !== "new") || // Existing vehicle selected OR
-               ((!formData.vehicleId || formData.vehicleId === "new") && // New vehicle with required fields
-                formData.vehicleMake.trim() && 
-                formData.vehicleModel.trim() && 
-                formData.vehicleYear.trim()))
+        // Must have completed step 1 (customer saved) AND have valid vehicle
+        return isStep1Complete() &&
+            ((formData.vehicleId && formData.vehicleId !== "" && formData.vehicleId !== "new") || // Existing vehicle selected OR
+                ((!formData.vehicleId || formData.vehicleId === "new") && // New vehicle with required fields
+                    formData.vehicleMake.trim() &&
+                    formData.vehicleModel.trim() &&
+                    formData.vehicleYear.trim()))
     }
 
     const isStep3Complete = () => {
-        return isStep2Complete() && 
-               formData.title.trim()
+        return isStep2Complete() &&
+            formData.title.trim()
     }
 
     // Auto-advance to next step when current step is completed
@@ -237,7 +238,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         } else if (currentStep === 2 && isStep2Complete()) {
             setCurrentStep(3)
         }
-    }, [currentStep, formData.customerId, formData.customer, formData.vehicleId, formData.vehicleMake, formData.vehicleModel, formData.vehicleYear, formData.title])
+    }, [currentStep, formData.customerId, formData.customer, formData.vehicleId, formData.vehicleMake, formData.vehicleModel, formData.vehicleYear, formData.title, formData.customerType, formData.walkInVehicleInfo])
 
     const handleFieldChange = (field: string, value: any) => {
         setFormData(prev => ({
@@ -260,7 +261,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             // Reset customer/vehicle data when switching types
             customerId: customerType === 'registered' ? prev.customerId : '',
             customer: customerType === 'registered' ? prev.customer : '',
-            vehicleId: customerType === 'registered' ? prev.vehicleId : '',
+            vehicleId: customerType === 'registered' ? prev.vehicleId : (customerType === 'walk_in' ? prev.vehicleId : ''),
             vehicle: customerType === 'registered' ? prev.vehicle : '',
             // Reset walk-in data when switching to registered
             walkInVehicleInfo: customerType === 'walk_in' ? prev.walkInVehicleInfo : {
@@ -297,11 +298,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             ...prev,
             laborItems: items
         }))
-        
+
         // Update selected templates - remove any templates that no longer have corresponding items
         // This ensures the green highlight is removed when items are deleted
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'labor' || itemDescriptions.includes(template.name)
         ))
     }
@@ -317,11 +318,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             ...prev,
             partsItems: items
         }))
-        
+
         // Update selected templates - remove any templates that no longer have corresponding items
         // This ensures the green highlight is removed when items are deleted
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'part' || itemDescriptions.includes(template.name)
         ))
     }
@@ -335,13 +336,13 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     const handleTemplateSelect = (template: WorkOrderItemTemplate) => {
         // Check if template is already selected
         const isAlreadySelected = selectedTemplates.some(selected => selected.id === template.id)
-        
+
         if (isAlreadySelected) {
             // Template already selected, don't add it again
             toast.info('Template already selected')
             return
         }
-        
+
         // Add to selected templates
         const selectedTemplate: SelectedTemplate = {
             ...template,
@@ -350,7 +351,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             selectedLaborHours: template.labor_hours
         }
         setSelectedTemplates(prev => [...prev, selectedTemplate])
-        
+
         // Auto-populate the appropriate items list based on template type
         if (template.item_type === 'labor') {
             // Add to labor items
@@ -392,7 +393,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
     const handleSave = async () => {
         setIsSubmitting(true)
-        
+
         try {
             // Validate all required steps are complete
             if (!isStep1Complete()) {
@@ -400,13 +401,13 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 setCurrentStep(1)
                 return
             }
-            
+
             if (!isStep2Complete()) {
                 toast.error("Please complete vehicle information")
                 setCurrentStep(2)
                 return
             }
-            
+
             if (!isStep3Complete()) {
                 toast.error("Please enter a work order title")
                 setCurrentStep(3)
@@ -422,7 +423,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 assigneeId: formData.assigneeId,
                 customerType: formData.customerType,
                 customerId: formData.customerType === 'registered' ? formData.customerId : undefined,
-                vehicleId: formData.customerType === 'registered' ? formData.vehicleId : undefined,
+                vehicleId: formData.vehicleId || undefined,
                 customer: formData.customerType === 'registered' ? formData.customer : undefined,
                 vehicle: formData.customerType === 'registered' ? formData.vehicle : undefined,
                 vehicleMileage: formData.customerType === 'registered' ? formData.vehicleMileage : undefined,
@@ -462,7 +463,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                     <ResizablePanel defaultSize={65} minSize={50} maxSize={75}>
                         <div className="flex flex-col h-full min-h-0">
                             {/* Header */}
-                            <WorkOrderModalHeader 
+                            <WorkOrderModalHeader
                                 workOrder={{ id: 'new', title: 'New Work Order' } as any}
                                 onClose={onClose}
                                 isCreating={true}
@@ -483,34 +484,28 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                         <div className="space-y-4">
                                             <h3 className="text-lg font-semibold text-white">Customer Type</h3>
-                                            
-                                            <div className="space-y-3">
-                                                <label className="text-sm font-medium text-gray-300">Select Customer Type</label>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <button
-                                                        className={`p-4 border rounded-lg text-center transition-colors ${
-                                                            formData.customerType === 'registered' 
-                                                                ? 'border-blue-500 bg-blue-500/10 text-blue-400' 
-                                                                : 'border-gray-600 hover:border-gray-500'
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'registered'
+                                                            ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                                                            : 'border-gray-600 hover:border-gray-500'
                                                         }`}
-                                                        onClick={() => handleCustomerTypeChange('registered')}
-                                                    >
-                                                        <div className="font-medium">Registered Customer</div>
-                                                        <div className="text-xs text-gray-400">Existing customer</div>
-                                                    </button>
-                                                    
-                                                    <button
-                                                        className={`p-4 border rounded-lg text-center transition-colors ${
-                                                            formData.customerType === 'walk_in' 
-                                                                ? 'border-green-500 bg-green-500/10 text-green-400' 
-                                                                : 'border-gray-600 hover:border-gray-500'
+                                                    onClick={() => handleCustomerTypeChange('registered')}
+                                                >
+                                                    <div className="font-medium">Registered Customer</div>
+                                                    <div className="text-xs text-gray-400">Existing customer</div>
+                                                </button>
+
+                                                <button
+                                                    className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'walk_in'
+                                                            ? 'border-green-500 bg-green-500/10 text-green-400'
+                                                            : 'border-gray-600 hover:border-gray-500'
                                                         }`}
-                                                        onClick={() => handleCustomerTypeChange('walk_in')}
-                                                    >
-                                                        <div className="font-medium">Walk-in Customer</div>
-                                                        <div className="text-xs text-gray-400">Vehicle only</div>
-                                                    </button>
-                                                </div>
+                                                    onClick={() => handleCustomerTypeChange('walk_in')}
+                                                >
+                                                    <div className="font-medium">Vehicle Search</div>
+                                                    <div className="text-xs text-gray-400">Search by license plate</div>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -518,7 +513,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     {/* Step 1: Customer/Vehicle Information */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                         {formData.customerType === 'registered' ? (
-                                            <CustomerInformation 
+                                            <CustomerInformation
                                                 customerId={formData.customerId}
                                                 customerName={formData.customer}
                                                 customerEmail={formData.customerEmail}
@@ -527,12 +522,27 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 isEditing={currentStep >= 1}
                                                 onFieldChange={handleFieldChange}
                                                 onCustomerChange={(customerId) => handleFieldChange('customerId', customerId)}
+                                                onCustomerSaved={(customerId, customerData) => {
+                                                    // Update customer ID and data when customer is saved
+                                                    handleFieldChange('customerId', customerId)
+                                                    handleFieldChange('customer', customerData.name)
+                                                    handleFieldChange('customerEmail', customerData.email || '')
+                                                    handleFieldChange('customerPhone', customerData.phone || '')
+                                                    handleFieldChange('customerAddress', customerData.address || '')
+                                                }}
                                                 isCreating={true}
                                             />
                                         ) : (
                                             <WalkInVehicleForm
                                                 data={formData.walkInVehicleInfo}
                                                 onDataChange={handleWalkInVehicleChange}
+                                                shopId={shopId || ""}
+                                                onVehicleSelected={(vehicleId) => {
+                                                    handleFieldChange('vehicleId', vehicleId)
+                                                }}
+                                                onVehicleCreated={(vehicleId) => {
+                                                    handleFieldChange('vehicleId', vehicleId)
+                                                }}
                                                 isEditing={currentStep >= 1}
                                             />
                                         )}
@@ -541,7 +551,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     {/* Step 2: Vehicle Information (Registered Customers Only) */}
                                     {formData.customerType === 'registered' && (
                                         <div className={`transition-opacity duration-200 ${currentStep >= 2 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                            <VehicleInformation 
+                                            <VehicleInformation
                                                 customerId={formData.customerId}
                                                 selectedVehicleId={formData.vehicleId}
                                                 vehicleYear={formData.vehicleYear}
@@ -567,11 +577,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                             />
                                         </div>
                                     )}
-                                    
+
                                     {/* Step 3: Work Order Information */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                        
-                                        <WorkOrderInformation 
+
+                                        <WorkOrderInformation
                                             title={formData.title}
                                             description={formData.description}
                                             priority={formData.priority}
@@ -650,7 +660,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 <h3 className="text-lg font-semibold text-white mb-4">
                                                     Notes <span className="text-xs text-gray-400 font-normal">(Optional)</span>
                                                 </h3>
-                                                <WorkOrderNotes 
+                                                <WorkOrderNotes
                                                     notes={formData.notes}
                                                     isEditing={true}
                                                     onFieldChange={handleFieldChange}
@@ -662,11 +672,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                             </div>
 
                             {/* Footer */}
-                            <WorkOrderModalFooter 
+                            <WorkOrderModalFooter
                                 isEditing={true} // Always in edit mode for creation
                                 isCreating={true}
                                 isSubmitting={isSubmitting}
-                                onEdit={() => {}} // Not needed for creation
+                                onEdit={() => { }} // Not needed for creation
                                 onSave={handleSave}
                                 onCancel={handleCancel}
                                 onClose={onClose}
@@ -680,12 +690,12 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                     {/* Right Panel - Work Order Item Templates */}
                     <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                        <PanelProvider 
-                            allowTemplateActions={false} 
+                        <PanelProvider
+                            allowTemplateActions={false}
                             allowTemplateSelection={true}
                             context="work-order-modal"
                         >
-                            <WorkOrderItemTemplatesPanel 
+                            <WorkOrderItemTemplatesPanel
                                 shopId={shopId || ""}
                                 workOrderId="new" // Enable template selection for new work orders
                                 onTemplateSelected={handleTemplateSelect}

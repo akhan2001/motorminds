@@ -130,14 +130,14 @@ export async function GET(request: NextRequest) {
 			// Boost if email matches
 			if (customer.customer_email?.toLowerCase().includes(lowerQuery)) score += 30
 
-      // Boost if phone matches
-      if (customer.customer_phone?.includes(searchTerm.replace(/\D/g, ''))) score += 40
-      
-      // Slightly prefer staging customers (they're newer)
-      if (customer._isStaging) score += 5
-      
-      return { ...customer, _score: score }
-    }).sort((a, b) => b._score - a._score)
+			// Boost if phone matches
+			if (customer.customer_phone?.includes(searchTerm.replace(/\D/g, ''))) score += 40
+			
+			// Slightly prefer staging customers (they're newer)
+			if (customer._isStaging) score += 5
+			
+			return { ...customer, _score: score }
+		}).sort((a, b) => b._score - a._score)
 
     // Remove the score from the response (keep _isStaging for vehicle lookup)
     const finalCustomers = scoredCustomers.map(({ _score, ...customer }) => customer)

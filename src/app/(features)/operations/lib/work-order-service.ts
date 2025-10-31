@@ -223,12 +223,13 @@ export class WorkOrderService {
         return data || []
     }
 
-    // CREATE work order for walk-in customers (no customer/vehicle records)
+    // CREATE work order for walk-in customers (no customer record, optional vehicle record)
     async createWalkInWorkOrder(data: {
-        workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id' | 'customer_type' | 'walk_in_vehicle_info'>
+        workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'customer_type' | 'walk_in_vehicle_info'>
         walkInVehicleInfo: WalkInVehicleInfo
     }): Promise<WorkOrder> {
         console.log('Creating walk-in work order with vehicle info:', data.walkInVehicleInfo)
+        console.log('Walk-in work order vehicle_id:', data.workOrder.vehicle_id)
         
         // Validate required walk-in vehicle fields
         if (!data.walkInVehicleInfo.year || !data.walkInVehicleInfo.make || !data.walkInVehicleInfo.model || !data.walkInVehicleInfo.license_plate) {
@@ -237,8 +238,9 @@ export class WorkOrderService {
 
         const workOrderData: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'> = {
             ...data.workOrder,
-            customer_id: undefined,
-            vehicle_id: undefined,
+            customer_id: null, // explicit null for walk-in
+            // preserve vehicle_id if provided; else explicit null
+            vehicle_id: data.workOrder.vehicle_id || null,
             customer_type: 'walk_in',
             walk_in_vehicle_info: data.walkInVehicleInfo,
         }

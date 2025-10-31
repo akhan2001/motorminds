@@ -32,6 +32,8 @@ import { useWorkOrderItems } from "../../../hooks/use-work-order-items"
 import { useCreateInvoiceFromWorkOrder } from "../../../../financials/hooks/use-invoices"
 import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calculations"
 import { PanelProvider } from "../../../contexts"
+import { useWorkOrderInvoice } from "../../../hooks/use-work-order-invoice"
+import { useRouter } from "next/navigation"
 
 export interface WorkOrderEditModalProps {
     workOrder: WorkOrderKanbanItem
@@ -94,6 +96,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     onDelete,
     className = ""
 }) => {
+    const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
@@ -116,6 +119,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     
     // Fetch work order items for cost summary
     const { data: workOrderItems = [] } = useWorkOrderItems(initialWorkOrder.id)
+    
+    // Check if work order has an invoice
+    const { data: workOrderInvoice } = useWorkOrderInvoice(initialWorkOrder.id)
     
     // Update work order mutation
     const updateWorkOrderMutation = useUpdateWorkOrder()
@@ -747,14 +753,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             if (newInvoice) {
                 console.log('Invoice created:', newInvoice)
                 
-                // Show success message with invoice number
-                toast.success(`Invoice ${newInvoice.display_id || newInvoice.invoice_number} generated successfully!`)
-                
-                // Navigate to the new invoices page
-                window.location.href = '/financials/invoices'
-                
-                // Close work order modal
-                onClose()
+                // Show success message with option to view invoice
+                toast.success(
+                    `Invoice ${newInvoice.display_id || newInvoice.invoice_number} generated successfully!`,
+                    {
+                        action: {
+                            label: 'View Invoice',
+                            onClick: () => router.push('/financials/invoices')
+                        },
+                        duration: 5000
+                    }
+                )
             }
             
         } catch (error: any) {
@@ -768,6 +777,12 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             
             const errorMessage = error?.message || 'Failed to generate invoice. Please try again.'
             toast.error(errorMessage)
+        }
+    }
+
+    const handleGoToInvoice = () => {
+        if (workOrderInvoice) {
+            router.push('/financials/invoices')
         }
     }
 
@@ -1037,12 +1052,14 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 canDelete={canDelete()}
                                 canGenerateInvoice={workOrderDetails?.customer_type === 'registered'}
                                 workOrderStatus={workOrderDetails?.status || initialWorkOrder.status}
+                                hasInvoice={!!workOrderInvoice}
                                 onEdit={handleEdit}
                                 onSave={handleSave}
                                 onCancel={handleCancel}
                                 onClose={onClose}
                                 onDelete={onDelete ? handleDelete : undefined}
                                 onGenerateInvoice={handleGenerateInvoice}
+                                onGoToInvoice={handleGoToInvoice}
                             />
                         </div>
                     </ResizablePanel>

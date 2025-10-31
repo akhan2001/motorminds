@@ -1,4 +1,5 @@
 export const mockWalkInVehicleInfo = {
+    id: 'test-vehicle-id',
     year: 2020,
     make: 'Toyota',
     model: 'Camry',

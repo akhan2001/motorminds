@@ -240,8 +240,15 @@ export function useCreateInvoiceFromWorkOrder() {
                 throw woError
             }
 
-            // Check if work order already has an invoice
-            if (workOrder.invoice_id) {
+            // Check if work order already has an invoice by querying invoices_table
+            const { data: existingInvoice } = await supabase
+                .from('invoices_table')
+                .select('id')
+                .eq('work_order_id', work_order_id)
+                .limit(1)
+                .single()
+
+            if (existingInvoice) {
                 throw new Error('This work order has already been converted to an invoice. Each work order can only be converted once.')
             }
 
@@ -349,12 +356,7 @@ export function useCreateInvoiceFromWorkOrder() {
                 throw invoiceError
             }
 
-            // Update work order with invoice reference
-            await supabase
-                .from('work_orders')
-                .update({ invoice_id: invoice.invoice_number })
-                .eq('id', work_order_id)
-
+            // No need to update work order - relationship is maintained via invoices_table.work_order_id
             return invoice as Invoice
         },
         onSuccess: (data) => {

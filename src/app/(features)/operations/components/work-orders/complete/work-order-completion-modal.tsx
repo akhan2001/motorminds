@@ -201,7 +201,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         variant="outline"
                         onClick={handleSkipMessage}
                         disabled={isLoading}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
                     >
                         Complete Without Message
                     </Button>

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         } else {
             console.log('Shop not found, using fallback')
             shop = {
-                shop_name: 'Motorminds Shop',
+                shop_name: 'MotorMinds Shop',
                 shop_email: process.env.FEEDBACK_EMAIL || 'info@motorminds.ca'
             }
         }
@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
                 ${message.replace(/\n/g, '<br>')}
             </div>
             <hr>
-            <p><small>This feedback was submitted via the Motorminds application.</small></p>
+            <p><small>This feedback was submitted via the MotorMinds application.</small></p>
         `
 
         // Send email via Resend
         const { data, error } = await resend.emails.send({
-            from: `Motorminds Feedback <${process.env.RESEND_FROM_EMAIL || 'noreply@motorminds.ca'}>`,
+            from: `MotorMinds Feedback <${process.env.RESEND_FROM_EMAIL || 'noreply@motorminds.ca'}>`,
             to: [process.env.FEEDBACK_EMAIL || 'info@motorminds.ca'],
             subject: subject,
             html: emailBody,

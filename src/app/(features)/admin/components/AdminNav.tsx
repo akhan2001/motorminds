@@ -3,49 +3,88 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Package, Settings, BarChart3, Users, FileText, Database } from 'lucide-react'
+import { Package, Settings, BarChart3, Users, FileText, Database, Building2, Wrench } from 'lucide-react'
+import { useAdminContext } from './admin-context/useAdminContext'
+import type { AdminType } from '@/types/core/user'
 
-const adminNavItems = [
+interface AdminNavItem {
+	name: string
+	href: string
+	icon: any
+	adminTypes: AdminType[]
+}
+
+const adminNavItems: AdminNavItem[] = [
 	{
 		name: 'Dashboard',
-		href: '/admin/',
-		icon: BarChart3
+		href: '/admin',
+		icon: BarChart3,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
 	},
 	{
-		name: 'Parts Requests',
-		href: '/admin/parts-requests',
-		icon: Package
+		name: 'Organizations',
+		href: '/admin/super-admin/organizations',
+		icon: Building2,
+		adminTypes: ['super-admin']
+	},
+	{
+		name: 'Shops',
+		href: '/admin/organization/shops',
+		icon: Building2,
+		adminTypes: ['organization-admin']
 	},
 	{
 		name: 'Users',
 		href: '/admin/users',
-		icon: Users
+		icon: Users,
+		adminTypes: ['super-admin', 'organization-admin']
+	},
+	{
+		name: 'Shop Users',
+		href: '/admin/shop/users',
+		icon: Users,
+		adminTypes: ['shop-admin']
+	},
+	{
+		name: 'Parts Requests',
+		href: '/admin/parts-requests',
+		icon: Package,
+		adminTypes: ['super-admin']
 	},
 	{
 		name: 'Customer Statements',
 		href: '/admin/customer-statements',
-		icon: FileText
+		icon: FileText,
+		adminTypes: ['super-admin']
 	},
 	{
 		name: 'Migrations',
 		href: '/admin/migrations',
-		icon: Database
+		icon: Database,
+		adminTypes: ['super-admin']
 	},
 	{
 		name: 'Settings',
 		href: '/admin/settings',
-		icon: Settings
+		icon: Settings,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
 	}
 ]
 
 export default function AdminNav() {
 	const pathname = usePathname()
+	const { adminType } = useAdminContext()
+
+	// Filter nav items based on admin type
+	const filteredNavItems = adminNavItems.filter(item => 
+		adminType && item.adminTypes.includes(adminType)
+	)
 
 	return (
-		<div className="flex gap-2 mb-6">
-			{adminNavItems.map((item) => {
+		<div className="flex gap-2 mb-6 overflow-x-auto">
+			{filteredNavItems.map((item) => {
 				const Icon = item.icon
-				const isActive = pathname === item.href
+				const isActive = pathname && (pathname === item.href || pathname.startsWith(item.href + '/'))
 
 				return (
 					<Button
@@ -54,8 +93,8 @@ export default function AdminNav() {
 						variant={isActive ? 'default' : 'outline'}
 						className={
 							isActive
-								? 'bg-blue-600 hover:bg-blue-700'
-								: 'border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white'
+								? 'bg-blue-600 hover:bg-blue-700 whitespace-nowrap'
+								: 'border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white whitespace-nowrap'
 						}
 						size="sm"
 					>

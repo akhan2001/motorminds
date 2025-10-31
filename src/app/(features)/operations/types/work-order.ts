@@ -10,11 +10,11 @@ export interface WorkOrder {
     
     // Relationships
     shop_id: string
-    customer_id?: string // Made option for walk-ins
-    vehicle_id?: string // Made option for walk-ins
-    appointment_id?: string
-    invoice_id?: string
-    assigned_technician_id?: string
+    customer_id?: string | null // null for walk-ins
+    vehicle_id?: string | null // may be null or set for walk-ins
+    appointment_id?: string | null
+    invoice_id?: string | null
+    assigned_technician_id?: string | null
     
     // New walk-in fields
     customer_type: 'registered' | 'walk_in'

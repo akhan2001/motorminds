@@ -7,11 +7,15 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle, Search, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { decodeVin } from '@/app/(features)/customers/vehicles/lib/vin-decode'
-import type { WalkInVehicleInfo } from '../../../../customers/types/vehicle'
+import { VehicleSearchByPlate } from '../../../../customers/components/vehicles'
+import type { WalkInVehicleInfo, CustomerVehicle } from '../../../../customers/types/vehicle'
 
 interface WalkInVehicleFormProps {
     data: WalkInVehicleInfo
     onDataChange: (data: WalkInVehicleInfo) => void
+    shopId: string
+    onVehicleSelected?: (vehicleId: string) => void
+    onVehicleCreated?: (vehicleId: string) => void
     isEditing?: boolean
     className?: string
 }
@@ -19,6 +23,9 @@ interface WalkInVehicleFormProps {
 export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
     data,
     onDataChange,
+    shopId,
+    onVehicleSelected,
+    onVehicleCreated,
     isEditing = true,
     className = ""
 }) => {
@@ -126,9 +133,64 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
         }
     }
 
+    // Handle vehicle selection from search
+    const handleVehicleSelected = (vehicle: CustomerVehicle) => {
+        // Convert CustomerVehicle to WalkInVehicleInfo format
+        const vehicleInfo: WalkInVehicleInfo = {
+            year: vehicle.year ? parseInt(vehicle.year.toString()) : undefined,
+            make: vehicle.make || '',
+            model: vehicle.model || '',
+            license_plate: vehicle.license_plate || '',
+            color: vehicle.color || '',
+            vin: vehicle.vin || '',
+            mileage: vehicle.mileage || undefined
+        }
+        
+        onDataChange(vehicleInfo)
+        
+        // Notify parent if callback provided
+        if (onVehicleSelected) {
+            onVehicleSelected(vehicle.id)
+        }
+    }
+
+    // Handle vehicle creation from search
+    const handleVehicleCreated = (vehicle: CustomerVehicle) => {
+        // Convert CustomerVehicle to WalkInVehicleInfo format and populate form
+        const vehicleInfo: WalkInVehicleInfo = {
+            year: vehicle.year ? parseInt(vehicle.year.toString()) : undefined,
+            make: vehicle.make || '',
+            model: vehicle.model || '',
+            license_plate: vehicle.license_plate || '',
+            color: vehicle.color || '',
+            vin: vehicle.vin || '',
+            mileage: vehicle.mileage || undefined
+        }
+        
+        onDataChange(vehicleInfo)
+        
+        // Notify parent if callback provided
+        if (onVehicleCreated) {
+            onVehicleCreated(vehicle.id)
+        }
+    }
+
     return (
         <div className={`space-y-4 ${className}`}>
             <h3 className="text-lg font-medium text-white">Walk-in Vehicle Information</h3>
+            
+            {/* Vehicle Search */}
+            {isEditing && (
+                <div className="bg-[#1A1A1A] rounded-xl p-6">
+                    <VehicleSearchByPlate
+                        shopId={shopId}
+                        onVehicleSelected={handleVehicleSelected}
+                        onVehicleCreated={handleVehicleCreated}
+                        disabled={!isEditing}
+                    />
+                </div>
+            )}
+            
             <div className="bg-[#1A1A1A] rounded-xl p-6">
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
