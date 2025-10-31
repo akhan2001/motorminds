@@ -4,8 +4,9 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, FileText, Filter, Download, Send } from 'lucide-react'
+import { Plus, Search, FileText, Filter, Download, Send, Archive } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 interface InvoiceHeaderProps {
     className?: string
@@ -24,6 +25,12 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     onBulkDownload,
     onBulkSend
 }) => {
+    const router = useRouter()
+
+    const handleArchivedInvoices = () => {
+        router.push('/financials/invoices/archived')
+    }
+
     return (
         <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
             {/* Main Header */}
@@ -44,6 +51,16 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleArchivedInvoices}
+                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        >
+                            <Archive className="h-4 w-4 mr-2" />
+                            Archived Invoices
+                        </Button>
+                        
                         <Button
                             variant="outline"
                             size="sm"

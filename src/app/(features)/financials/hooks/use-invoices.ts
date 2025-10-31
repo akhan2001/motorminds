@@ -18,6 +18,7 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters) {
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('shop_id', shopId)
+                .or('archived.eq.false,archived.is.null')
                 .order('created_at', { ascending: false })
 
             // Apply filters
@@ -69,6 +70,7 @@ export function useInvoice(invoiceId: string) {
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('invoice_number', invoiceId)
+                .or('archived.eq.false,archived.is.null')
                 .single()
 
             if (error) {
@@ -90,6 +92,7 @@ export function useInvoiceStats(shopId: string) {
                 .from('invoices_table')
                 .select('status, total_amount, paid_date')
                 .eq('shop_id', shopId)
+                .or('archived.eq.false,archived.is.null')
 
             if (error) throw error
 

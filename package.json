@@ -118,7 +118,7 @@
         "tailwindcss": "^3.0.0",
         "tailwindcss-animate": "^1.0.7",
         "twilio": "^5.8.0",
-        "use-debounce": "^10.0.5",
+        "use-debounce": "^10.0.6",
         "use-stick-to-bottom": "^1.0.46",
         "uuid": "^13.0.0",
         "webflow-api": "^3.1.0",
