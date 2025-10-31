@@ -15,6 +15,8 @@ import { useAuth } from '../../../operations/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
+import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
+import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { useRouter } from 'next/navigation'
 
 interface InvoiceViewOnlyProps {
@@ -29,7 +31,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const deleteMutation = useDeleteInvoice()
     const [isLandscape, setIsLandscape] = useState(false)
-    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+    const [isSendChoiceModalOpen, setIsSendChoiceModalOpen] = useState(false)
+    const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false)
+    const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -48,14 +52,31 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     }
 
     const handleSend = () => {
-        setIsSendModalOpen(true)
+        setIsSendChoiceModalOpen(true)
     }
 
-    const handleSendConfirm = (sendEmail: boolean, customMessage?: string) => {
+    const handleEmailChoice = () => {
+        setIsSendChoiceModalOpen(false)
+        setIsSendEmailModalOpen(true)
+    }
+
+    const handleSmsChoice = () => {
+        setIsSendChoiceModalOpen(false)
+        setIsSendSmsModalOpen(true)
+    }
+
+    const handleSendEmailConfirm = (sendEmail: boolean, customMessage?: string) => {
         if (sendEmail) {
             toast.success('Invoice email sent successfully!')
         }
-        setIsSendModalOpen(false)
+        setIsSendEmailModalOpen(false)
+    }
+
+    const handleSendSmsConfirm = (sendSms: boolean, customMessage?: string) => {
+        if (sendSms) {
+            toast.success('Invoice SMS sent successfully!')
+        }
+        setIsSendSmsModalOpen(false)
     }
 
     const toggleFormat = () => {
@@ -391,13 +412,34 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                 </Button>
             </div>
 
-            {/* Invoice Send Modal */}
+            {/* Invoice Send Choice Modal */}
+            {invoice && (
+                <InvoiceSendChoiceModal
+                    invoice={invoice}
+                    isOpen={isSendChoiceModalOpen}
+                    onClose={() => setIsSendChoiceModalOpen(false)}
+                    onEmailChoice={handleEmailChoice}
+                    onSmsChoice={handleSmsChoice}
+                />
+            )}
+
+            {/* Invoice Send Email Modal */}
             {invoice && (
                 <InvoiceSendModal
                     invoice={invoice}
-                    isOpen={isSendModalOpen}
-                    onClose={() => setIsSendModalOpen(false)}
-                    onConfirm={handleSendConfirm}
+                    isOpen={isSendEmailModalOpen}
+                    onClose={() => setIsSendEmailModalOpen(false)}
+                    onConfirm={handleSendEmailConfirm}
+                />
+            )}
+
+            {/* Invoice Send SMS Modal */}
+            {invoice && (
+                <InvoiceSendSmsModal
+                    invoice={invoice}
+                    isOpen={isSendSmsModalOpen}
+                    onClose={() => setIsSendSmsModalOpen(false)}
+                    onConfirm={handleSendSmsConfirm}
                 />
             )}
         </div>

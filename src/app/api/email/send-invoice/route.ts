@@ -53,15 +53,17 @@ export async function POST(request: NextRequest) {
             }, { status: 400 })
         }
 
-        // Determine the "from" email address
-        // Use shop email if available, otherwise use a default noreply email
-        const fromEmail = shop.shop_email || 'noreply@motorminds.app'
+        // Always use verified domain for "from" address
+        // Use shop email as reply-to if it exists
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@motorminds.ca' // Always use verified domain
         const fromName = shop.shop_name || 'MotorMinds'
+        const replyToEmail = shop.shop_email // Shop's actual email for replies
 
         // Send email via Resend
         const { data: emailData, error: emailError } = await resend.emails.send({
             from: `${fromName} <${fromEmail}>`,
             to: [to],
+            replyTo: replyToEmail ? [replyToEmail] : undefined,
             subject: subject,
             html: `
                 <!DOCTYPE html>
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
                     </div>
                     <div style="text-align: center; color: #6c757d; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
                         <p>This email was sent from ${fromName}</p>
-                        ${shop.shop_email ? `<p>Reply to: ${shop.shop_email}</p>` : ''}
+                        ${replyToEmail ? `<p>Reply to: ${replyToEmail}</p>` : ''}
                     </div>
                 </body>
                 </html>
