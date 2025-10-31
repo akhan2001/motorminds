@@ -2,6 +2,7 @@
 
 import { Nav } from '@/app/components/nav'
 import InvoiceDashboardClient from './components/invoice-dashboard-client'
+import { NewInvoicesBanner } from './components/NewInvoicesBanner'
 import { checkUser } from '@/utils/supabase/supabase-auth'
 import { getShopId } from '@/utils/supabase/supabase-shop'
 import { useState, useEffect } from 'react'
@@ -55,6 +56,7 @@ export default function InvoicesPage() {
     return (
         <div className="flex flex-col min-h-screen bg-black text-white">
             <Nav />
+            <NewInvoicesBanner />
             <InvoiceDashboardClient shopId={shopId} />
         </div>
     )
