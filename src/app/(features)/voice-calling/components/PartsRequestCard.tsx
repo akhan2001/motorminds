@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { 
     Phone, 
     RefreshCw, 
@@ -216,16 +217,25 @@ const PartsRequestCard = memo(function PartsRequestCard({
                     
                     {/* Show refresh button if calls exist */}
                     {supplierCalls.length > 0 && (
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleRefreshClick}
-                            disabled={refreshing}
-                            className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
-                        >
-                            <RefreshCw className={`h-3 w-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-                            {refreshing ? 'Refreshing...' : 'Refresh'}
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleRefreshClick}
+                                        disabled={refreshing}
+                                        className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
+                                    >
+                                        <RefreshCw className={`h-3 w-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+                                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Refresh often to get the latest call status updates</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     )}
                     
                     {request.availableActions?.map((action: StatusAction) => (

@@ -15,7 +15,6 @@ const mechanicHubSubItems = [
     { name: "Parts & Ordering", href: "/parts-ordering" },
     { name: "Appointments", href: "/appointments" },
     { name: "Services & Parts", href: "/mechanic-hub/service-parts" },
-    { name: "Invoices", href: "/financials/invoices" },
 ];
 
 const customerSubItems = [
@@ -24,6 +23,11 @@ const customerSubItems = [
     { name: "Customer Intake Form", href: "/customer-intake" },
     { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
     { name: "Customer Contracts", href: "/customer-contracts" },
+];
+
+const financialsSubItems = [
+    { name: "Analytics", href: "/financials" },
+    { name: "Invoices", href: "/financials/invoices" },
 ];
 
 export const navigationConfig: NavItem[] = [
@@ -52,11 +56,6 @@ export const navigationConfig: NavItem[] = [
         href: "/mia-ai",
         requiredRoles: ['admin', 'super', 'demo', 'user']
     },
-    {
-        name: "Financials",
-        href: "/financials",
-        requiredRoles: ['admin', 'super', 'user']
-    },
     // {
     //     name: "Parts",
     //     href: "/parts",
@@ -74,18 +73,18 @@ export const navigationConfig: NavItem[] = [
     //     href: "/suppliers",
     //     requiredRoles: ['user', 'admin', 'super', 'demo']
     // },
-    {
-        name: "Mechanics Hub",
-        href: "/mechanic-hub",
-        hasDropdown: true,
-        subItems: mechanicHubSubItems,
-        requiredRoles: ['admin', 'super', 'user']
-    },
     // {
     //     name: "Migrations",
     //     href: "/migrations",
     //     requiredRoles: ['admin', 'super', 'user']
     // },
+    {
+        name: "Financials",
+        href: "/financials",
+        hasDropdown: true,
+        subItems: financialsSubItems,
+        requiredRoles: ['admin', 'super', 'user']
+    },
     {
         name: "Admin",
         href: "/admin",

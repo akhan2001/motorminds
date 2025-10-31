@@ -68,10 +68,6 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
         onConfirm(true, customMessage)
     }
 
-    const handleSkipEmail = () => {
-        onConfirm(false)
-    }
-
     const vehicleInfo = invoice.vehicle ? 
         `${invoice.vehicle.year} ${invoice.vehicle.make} ${invoice.vehicle.model}` : 
         'Vehicle information not available'
@@ -220,11 +216,11 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                 <DialogFooter className="flex gap-3">
                     <Button
                         variant="outline"
-                        onClick={handleSkipEmail}
+                        onClick={onClose}
                         disabled={isLoading}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
                     >
-                        Skip Email
+                        Cancel
                     </Button>
                     
                     <TooltipProvider>

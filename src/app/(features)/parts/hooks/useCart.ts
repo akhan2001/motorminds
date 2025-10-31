@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Part } from './usePartsData'
 import { MiaProduct, ChatMessage } from './useChat'
+import { sendPartsRequestEmail } from '@/lib/parts-request/parts-request-email-service'
 
 export const useCart = () => {
     const [cart, setCart] = useState<Part[]>([])
@@ -118,7 +119,28 @@ export const useCart = () => {
             }
 
             if (data.success) {
-                setSubmissionSuccess(`Parts request submitted successfully! Request ID: ${data.requestId}. Our team will review and contact you soon.`)
+                // Send email notification following feedback pattern
+                try {
+                    const emailResult = await sendPartsRequestEmail({
+                        partsRequestId: data.data.id,
+                        shopId: '', // Will be retrieved from user context in service
+                        vehicleInfo: vehicleInfo,
+                        partsRequested: cart,
+                        customerNotes: customerNotes.trim() || undefined,
+                        totalEstimatedPrice: data.data.totalEstimatedPrice,
+                        priority: 'normal'
+                    })
+
+                    if (!emailResult.success) {
+                        console.error('Failed to send parts request email:', emailResult.error)
+                        // Don't fail the submission if email fails
+                    }
+                } catch (emailError) {
+                    console.error('Email notification error:', emailError)
+                    // Don't fail the submission if email fails
+                }
+
+                setSubmissionSuccess(`Parts request submitted successfully! Request ID: ${data.requestId}. An email has been sent to info@motorminds.ca.`)
                 setCart([]) // Clear cart after successful submission
                 setCustomerNotes('')
                 return data
