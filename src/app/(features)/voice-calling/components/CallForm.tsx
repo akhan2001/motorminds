@@ -21,6 +21,7 @@ import { VoiceCallService } from '../lib/voiceCallService'
 import { createClient } from '@/utils/supabase/client'
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from '@/components/ui/select'
 import { VoiceCallPurpose } from '../types/voice-call'
+import { sendPartsRequestEmail } from '@/lib/parts-request/parts-request-email-service'
 
 
 interface CallFormProps {
@@ -181,7 +182,7 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
             // Convert form data to parts request format
             const partsRequested = [{
                 part_name: partInfo.partName,
-                part_number: partInfo.partNumber || null,
+                part_number: partInfo.partNumber || undefined,
                 quantity: partInfo.quantity || 1,
                 estimated_price: 0,
                 description: partInfo.description || '',
@@ -232,7 +233,47 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                 userId: user.id
             })
 
-            toast.success('Parts request created successfully! You can now call suppliers from the dashboard.')
+            // Send email notification following feedback pattern
+            try {
+                // Convert vehicleData for email service (year should be string)
+                const emailVehicleInfo = {
+                    year: vehicleData.year ? String(vehicleData.year) : undefined,
+                    make: vehicleData.make,
+                    model: vehicleData.model,
+                    engine: vehicleData.engine || undefined
+                }
+
+                // Convert partsRequested for email service
+                const emailPartsRequested = partsRequested.map(part => ({
+                    part_name: part.part_name,
+                    part_number: part.part_number || undefined,
+                    quantity: part.quantity,
+                    estimated_price: part.estimated_price,
+                    description: part.description || undefined
+                }))
+
+                const emailResult = await sendPartsRequestEmail({
+                    partsRequestId: newPartsRequest.id,
+                    shopId: shopId,
+                    vehicleInfo: emailVehicleInfo,
+                    partsRequested: emailPartsRequested,
+                    notes: notes.trim() || undefined,
+                    totalEstimatedPrice: 0, // Parts request doesn't have estimated price from form
+                    priority: priority
+                })
+
+                if (!emailResult.success) {
+                    console.error('Failed to send parts request email:', emailResult.error)
+                    // Don't fail the submission if email fails
+                } else {
+                    console.log('Parts request email sent successfully')
+                }
+            } catch (emailError) {
+                console.error('Email notification error:', emailError)
+                // Don't fail the submission if email fails
+            }
+
+            toast.success('Parts request created successfully!')
             setPartsRequestId(newPartsRequest.id)
             
             // Notify parent to refresh the list

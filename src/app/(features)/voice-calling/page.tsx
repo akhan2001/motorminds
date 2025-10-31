@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Phone, Clock, CheckCircle, AlertCircle, Plus, RefreshCw, Loader2 } from 'lucide-react'
+import { AlertTriangle, Info } from 'lucide-react'
 import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { EmptyState } from '@/components/common/feedback/empty-states'
@@ -58,7 +59,7 @@ export default function VoiceCallingPage() {
     const [dataError, setDataError] = useState<string | null>(null)
     const [processingAction, setProcessingAction] = useState<string | null>(null)
     const [refreshingRequest, setRefreshingRequest] = useState<string | null>(null)
-    
+
     // Ref to control CallForm
     const callFormRef = useRef<{ openForm: () => void }>(null)
 
@@ -369,7 +370,21 @@ export default function VoiceCallingPage() {
                             </BreadcrumbList>
                         </Breadcrumb>
 
-                    {/* Header */}
+                        {/* Work in Progress Banner */}
+                        <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                    <h4 className="text-yellow-400 font-semibold text-sm mb-1">Work in Progress</h4>
+                                    <p className="text-yellow-200/80 text-xs">
+                                        The MIA AI voice calling feature is currently under active development.
+                                        Some functionality may be limited or unavailable. We're working hard to improve this feature.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Header */}
                         <div className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-3xl font-bold text-white">Voice Calling Dashboard</h1>
@@ -404,7 +419,7 @@ export default function VoiceCallingPage() {
                                     onCallComplete={fetchPartsRequests}
                                 />
                             </div>
-                    </div>
+                        </div>
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -424,27 +439,27 @@ export default function VoiceCallingPage() {
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium text-gray-300">Completed</CardTitle>
                                     <CheckCircle className="h-4 w-4 text-gray-400" />
-                            </CardHeader>
-                            <CardContent>
+                                </CardHeader>
+                                <CardContent>
                                     <div className="text-2xl font-bold text-white">{statusCounts.completed}</div>
                                     <p className="text-xs text-gray-400">
                                         Successfully completed
                                     </p>
-                            </CardContent>
+                                </CardContent>
                             </Card>
                             <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium text-gray-300">Need Attention</CardTitle>
                                     <AlertCircle className="h-4 w-4 text-gray-400" />
-                            </CardHeader>
-                            <CardContent>
+                                </CardHeader>
+                                <CardContent>
                                     <div className="text-2xl font-bold text-white">{statusCounts.failed}</div>
                                     <p className="text-xs text-gray-400">
                                         Failed or cancelled
                                     </p>
                                 </CardContent>
                             </Card>
-                                    </div>
+                        </div>
 
                         {/* Main Content */}
                         <div className="space-y-4">
@@ -462,7 +477,7 @@ export default function VoiceCallingPage() {
                                         View Call Logs
                                     </Link>
                                 </Button>
-                                    </div>
+                            </div>
 
                             <div className="grid gap-4">
                                 {partsRequests.map((request) => (
@@ -488,8 +503,8 @@ export default function VoiceCallingPage() {
                                         }}
                                     />
                                 )}
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
