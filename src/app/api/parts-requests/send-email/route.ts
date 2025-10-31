@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
             
             <hr style="margin: 20px 0;">
             <p><small>This parts request was submitted via the Motorminds application.</small></p>
-            <p><small>To respond, please visit: <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://app.motorminds.ca'}/admin/parts-requests">Admin Dashboard</a></small></p>
+            <p><small>To respond, please visit: <a href="https://app.motorminds.ca/admin/parts-requests">Admin Dashboard</a></small></p>
         `
 
         // Send email via Resend
