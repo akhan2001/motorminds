@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -23,7 +24,15 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     onNewWorkOrder,
     onTemplatesClick
 }) => {
+    const router = useRouter()
     const messagingAvailability = useMessagingAvailability()
+
+    const handleMessagesClick = () => {
+        if (messagingAvailability.isAvailable) {
+            router.push('/messages')
+        }
+    }
+
     return (
         <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
             {/* Main Header */}
@@ -74,6 +83,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                     variant="outline"
                                     size="sm"
                                     disabled={!messagingAvailability.isAvailable}
+                                    onClick={handleMessagesClick}
                                     className={cn(
                                         "bg-transparent border-[#3a3a3a] text-gray-300",
                                         messagingAvailability.isAvailable

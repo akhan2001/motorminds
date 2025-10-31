@@ -11,12 +11,14 @@ export interface WorkOrderModalFooterProps {
     canDelete?: boolean
     canGenerateInvoice?: boolean
     workOrderStatus?: string
+    hasInvoice?: boolean
     onEdit?: () => void
     onSave: () => void
     onCancel: () => void
     onClose: () => void
     onDelete?: () => void
     onGenerateInvoice?: () => void
+    onGoToInvoice?: () => void
     className?: string
 }
 
@@ -28,12 +30,14 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     canDelete = true,
     canGenerateInvoice = false,
     workOrderStatus,
+    hasInvoice = false,
     onEdit,
     onSave,
     onCancel,
     onClose,
     onDelete,
     onGenerateInvoice,
+    onGoToInvoice,
     className = ""
 }) => {
     return (
@@ -79,7 +83,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                     </>
                 ) : (
                     <>
-                        {onEdit && (
+                        {onEdit && workOrderStatus !== 'completed' && (
                             <Button
                                 variant="outline"
                                 className={`border px-8 ${
@@ -93,15 +97,26 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                                 Edit
                             </Button>
                         )}
-                        {onGenerateInvoice && canGenerateInvoice && workOrderStatus === 'completed' && (
-                            <Button
-                                variant="outline"
-                                className="border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-white px-8"
-                                onClick={onGenerateInvoice}
-                            >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Generate Invoice
-                            </Button>
+                        {canGenerateInvoice && workOrderStatus === 'completed' && (
+                            hasInvoice ? (
+                                <Button
+                                    variant="outline"
+                                    className="border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:text-white px-8"
+                                    onClick={onGoToInvoice}
+                                >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Go to Invoice
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    className="border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-white px-8"
+                                    onClick={onGenerateInvoice}
+                                >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Generate Invoice
+                                </Button>
+                            )
                         )}
                         <Button
                             variant="outline"
