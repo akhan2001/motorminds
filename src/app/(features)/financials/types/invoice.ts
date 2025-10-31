@@ -91,6 +91,7 @@ export type InvoiceStatus =
     | 'sent'
     | 'viewed'
     | 'paid'
+    | 'unpaid'
     | 'overdue'
     | 'cancelled'
     | 'refunded'
