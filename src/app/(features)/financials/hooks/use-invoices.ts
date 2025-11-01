@@ -173,7 +173,7 @@ export function useUpdateInvoice() {
                     }
                     return sum + item.total_price
                 }, 0)
-                const tax_rate = data.tax_rate || 0.13
+                const tax_rate = data.tax_rate ?? 0  // Use 0 if null/undefined (tax disabled)
                 const tax_amount = subtotal * tax_rate
                 const discount = data.discount_amount || 0
                 const total_amount = subtotal + tax_amount - discount

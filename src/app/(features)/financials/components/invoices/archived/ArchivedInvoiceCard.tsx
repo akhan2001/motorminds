@@ -87,7 +87,7 @@ export const ArchivedInvoiceCard: React.FC<ArchivedInvoiceCardProps> = ({ invoic
                         {invoice.status === "paid" ? "AMOUNT PAID" : "AMOUNT DUE"}
                     </p>
                     <p className={`text-base font-bold ${invoice.status === "paid" ? "text-green-500" : "text-red-500"}`}>
-                        ${Number(invoice.total_amount).toFixed(2)}
+                        ${Number((!invoice.tax_rate || invoice.tax_rate === 0) ? invoice.subtotal : invoice.total_amount).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">Issued: {format(new Date(invoice.issue_date), 'MMM dd, yyyy')}</p>
                 </div>
