@@ -306,15 +306,15 @@ export default function VoiceCallingPage() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center space-x-4 p-6">
                             <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                             <div>
-                                <p className="text-white font-medium">Loading Voice Calling Dashboard</p>
-                                <p className="text-gray-400 text-sm">Fetching parts requests and call data...</p>
+                                <p className="text-foreground dark:text-white font-medium">Loading Voice Calling Dashboard</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm">Fetching parts requests and call data...</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -326,20 +326,20 @@ export default function VoiceCallingPage() {
     // Error state
     if (error) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center space-x-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-red-500" />
+                            <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-500" />
                             <div>
-                                <p className="text-white font-medium">Failed to Load Voice Calling Dashboard</p>
-                                <p className="text-gray-400 text-sm mb-3">
+                                <p className="text-foreground dark:text-white font-medium">Failed to Load Voice Calling Dashboard</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm mb-3">
                                     {typeof error === 'string' ? error : 'Unknown error occurred'}
                                 </p>
                                 <button
                                     onClick={() => fetchPartsRequests()}
-                                    className="text-blue-400 hover:text-blue-300 text-sm underline"
+                                    className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 text-sm underline"
                                 >
                                     Try Again
                                 </button>
@@ -354,7 +354,7 @@ export default function VoiceCallingPage() {
     const statusCounts = getStatusCounts()
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
@@ -363,7 +363,7 @@ export default function VoiceCallingPage() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="text-white">
+                                    <BreadcrumbPage className="text-foreground dark:text-white">
                                         Voice Calling Dashboard
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
@@ -373,10 +373,10 @@ export default function VoiceCallingPage() {
                         {/* Work in Progress Banner */}
                         <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                             <div className="flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                                <AlertTriangle className="h-5 w-5 text-yellow-500 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1">
-                                    <h4 className="text-yellow-400 font-semibold text-sm mb-1">Work in Progress</h4>
-                                    <p className="text-yellow-200/80 text-xs">
+                                    <h4 className="text-yellow-600 dark:text-yellow-400 font-semibold text-sm mb-1">Work in Progress</h4>
+                                    <p className="text-yellow-700 dark:text-yellow-200/80 text-xs">
                                         The MIA AI voice calling feature is currently under active development.
                                         Some functionality may be limited or unavailable. We're working hard to improve this feature.
                                     </p>
@@ -387,15 +387,15 @@ export default function VoiceCallingPage() {
                         {/* Header */}
                         <div className="flex items-center justify-between">
                             <div>
-                                <h1 className="text-3xl font-bold text-white">Voice Calling Dashboard</h1>
-                                <p className="text-gray-400 mt-1">Manage your AI-powered parts ordering calls</p>
+                                <h1 className="text-3xl font-bold text-foreground dark:text-white">Voice Calling Dashboard</h1>
+                                <p className="text-muted-foreground dark:text-gray-400 mt-1">Manage your AI-powered parts ordering calls</p>
                             </div>
                             <div className="flex gap-3">
                                 <Button
                                     onClick={() => window.location.href = '/suppliers'}
                                     variant="outline"
                                     size="sm"
-                                    className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                    className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
                                 >
                                     Manage Suppliers
                                 </Button>
@@ -403,7 +403,7 @@ export default function VoiceCallingPage() {
                                     onClick={fetchPartsRequests}
                                     variant="outline"
                                     size="sm"
-                                    className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                    className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
                                 >
                                     <RefreshCw className="h-4 w-4 mr-2" />
                                     Refresh
@@ -423,38 +423,38 @@ export default function VoiceCallingPage() {
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-300">Active Requests</CardTitle>
-                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <CardTitle className="text-sm font-medium text-foreground dark:text-gray-300">Active Requests</CardTitle>
+                                    <Clock className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold text-white">{statusCounts.active}</div>
-                                    <p className="text-xs text-gray-400">
+                                    <div className="text-2xl font-bold text-foreground dark:text-white">{statusCounts.active}</div>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400">
                                         In progress or pending
                                     </p>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-300">Completed</CardTitle>
-                                    <CheckCircle className="h-4 w-4 text-gray-400" />
+                                    <CardTitle className="text-sm font-medium text-foreground dark:text-gray-300">Completed</CardTitle>
+                                    <CheckCircle className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold text-white">{statusCounts.completed}</div>
-                                    <p className="text-xs text-gray-400">
+                                    <div className="text-2xl font-bold text-foreground dark:text-white">{statusCounts.completed}</div>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400">
                                         Successfully completed
                                     </p>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium text-gray-300">Need Attention</CardTitle>
-                                    <AlertCircle className="h-4 w-4 text-gray-400" />
+                                    <CardTitle className="text-sm font-medium text-foreground dark:text-gray-300">Need Attention</CardTitle>
+                                    <AlertCircle className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold text-white">{statusCounts.failed}</div>
-                                    <p className="text-xs text-gray-400">
+                                    <div className="text-2xl font-bold text-foreground dark:text-white">{statusCounts.failed}</div>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400">
                                         Failed or cancelled
                                     </p>
                                 </CardContent>
@@ -464,14 +464,14 @@ export default function VoiceCallingPage() {
                         {/* Main Content */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-white">
+                                <h2 className="text-xl font-semibold text-foreground dark:text-white">
                                     All Parts Requests ({statusCounts.total})
                                 </h2>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     asChild
-                                    className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                    className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
                                 >
                                     <Link href="/voice-calling/logs">
                                         View Call Logs

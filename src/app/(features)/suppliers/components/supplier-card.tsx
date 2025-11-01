@@ -62,42 +62,42 @@ export default function SupplierCard({ supplier, onCallSupplier, onEdit, onDelet
     }
 
     return (
-        <Card className="bg-[#111111] border-[#2a2a2a]">
+        <Card className="bg-card dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+                <CardTitle className="text-foreground dark:text-white flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
                     {supplier.name}
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 {supplier.contact_person && (
-                    <div className="flex items-center gap-2 text-gray-300">
+                    <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
                         <span className="text-sm">Contact: {supplier.contact_person}</span>
                     </div>
                 )}
 
                 {supplier.phone_number && (
-                    <div className="flex items-center gap-2 text-gray-300">
+                    <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
                         <Phone className="h-4 w-4" />
                         <span className="text-sm">{supplier.phone_number}</span>
                     </div>
                 )}
 
                 {supplier.email && (
-                    <div className="flex items-center gap-2 text-gray-300">
+                    <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
                         <Mail className="h-4 w-4" />
                         <span className="text-sm">{supplier.email}</span>
                     </div>
                 )}
 
                 {supplier.account_number && (
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-muted-foreground dark:text-gray-400">
                         Account: {supplier.account_number}
                     </div>
                 )}
 
                 {supplier.address?.city && supplier.address?.province && (
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-muted-foreground dark:text-gray-400">
                         {supplier.address.city}, {supplier.address.province}
                     </div>
                 )}
@@ -126,7 +126,7 @@ export default function SupplierCard({ supplier, onCallSupplier, onEdit, onDelet
                         <Button
                             onClick={handleEditClick}
                             variant="outline"
-                            className="flex-1 border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
+                            className="flex-1 border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
                             size="sm"
                         >
                             <Edit className="h-4 w-4 mr-2" />
@@ -135,7 +135,7 @@ export default function SupplierCard({ supplier, onCallSupplier, onEdit, onDelet
                         <Button
                             onClick={handleDeleteClick}
                             variant="outline"
-                            className="flex-1 border-red-800/30 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                            className="flex-1 border-red-800/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-500/10 dark:hover:bg-red-900/20"
                             size="sm"
                         >
                             <Trash2 className="h-4 w-4 mr-2" />

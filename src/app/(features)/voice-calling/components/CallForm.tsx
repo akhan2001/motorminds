@@ -478,12 +478,12 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0d0d0d] border-[#2a2a2a]">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#2a2a2a]">
                 <DialogHeader>
-                    <DialogTitle className="text-white text-xl">
+                    <DialogTitle className="text-foreground dark:text-white text-xl">
                         AI Parts Ordering
                     </DialogTitle>
-                    <DialogDescription className="text-gray-400 text-sm">
+                    <DialogDescription className="text-muted-foreground dark:text-gray-400 text-sm">
                         Fill our the form below to create a parts request and have Mia AI to call the suppliers.
                     </DialogDescription>
                 </DialogHeader>
@@ -491,15 +491,15 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                 <div className="space-y-6">
                     {/* Call Status Display */}
                     {callStatus === 'calling' && (
-                        <Card className="bg-blue-50 border border-blue-200">
+                        <Card className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
                             <CardContent className="p-4">
                                 <div className="flex items-center">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
-                                    <span className="text-blue-800 font-medium">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 dark:border-blue-400 mr-3"></div>
+                                    <span className="text-blue-800 dark:text-blue-200 font-medium">
                                         Calling {selectedSuppliers[0]?.name}... Please wait.
                                     </span>
                                 </div>
-                                <p className="text-blue-600 text-sm mt-2">
+                                <p className="text-blue-600 dark:text-blue-300 text-sm mt-2">
                                     Mia AI is speaking with the supplier to get your quote.
                                 </p>
                             </CardContent>
@@ -507,9 +507,9 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                     )}
 
                     {callStatus === 'completed' && quoteData && (
-                        <Card className="bg-green-50 border border-green-200">
+                        <Card className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
                             <CardHeader>
-                                <CardTitle className="text-green-800 flex items-center gap-2">
+                                <CardTitle className="text-green-800 dark:text-green-200 flex items-center gap-2">
                                     <Package className="h-5 w-5" />
                                     Quote Received!
                                 </CardTitle>
@@ -518,17 +518,17 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                                 {quoteData.parts_info && quoteData.parts_info.length > 0 ? (
                                     <div className="space-y-3">
                                         {quoteData.parts_info.map((part: any, index: number) => (
-                                            <div key={index} className="bg-white p-3 rounded-lg border">
+                                            <div key={index} className="bg-white dark:bg-[#1a1a1a] p-3 rounded-lg border border-border dark:border-[#2a2a2a]">
                                                 <div className="flex justify-between items-start">
                                                     <div>
-                                                        <h4 className="font-semibold text-gray-900">{part.part_name}</h4>
+                                                        <h4 className="font-semibold text-foreground dark:text-white">{part.part_name}</h4>
                                                         {part.part_number && (
-                                                            <p className="text-sm text-gray-600">Part #: {part.part_number}</p>
+                                                            <p className="text-sm text-muted-foreground dark:text-gray-400">Part #: {part.part_number}</p>
                                                         )}
-                                                        <p className="text-sm text-gray-600">Qty: {part.quantity}</p>
+                                                        <p className="text-sm text-muted-foreground dark:text-gray-400">Qty: {part.quantity}</p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-xl font-bold text-green-600">
+                                                        <p className="text-xl font-bold text-green-600 dark:text-green-400">
                                                             ${part.unit_price?.toFixed(2) || 'N/A'}
                                                         </p>
                                                     </div>
@@ -537,10 +537,10 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                                         ))}
                                         
                                         {quoteData.quote_details && (
-                                            <div className="bg-gray-50 p-3 rounded-lg border-t-2 border-green-500">
+                                            <div className="bg-slate-50 dark:bg-[#0d0d0d] p-3 rounded-lg border-t-2 border-green-500 dark:border-green-600">
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-lg font-semibold text-gray-900">Total:</span>
-                                                    <span className="text-2xl font-bold text-green-600">
+                                                    <span className="text-lg font-semibold text-foreground dark:text-white">Total:</span>
+                                                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                                                         ${quoteData.quote_details.total_cost?.toFixed(2) || 'N/A'}
                                                     </span>
                                                 </div>
@@ -559,7 +559,7 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                                     </div>
                                 ) : (
                                     <div className="text-center py-4">
-                                        <p className="text-green-700">Call completed, but no quote details available.</p>
+                                        <p className="text-green-700 dark:text-green-300">Call completed, but no quote details available.</p>
                                         <Button 
                                             variant="outline"
                                             onClick={handleClose}
@@ -574,15 +574,15 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                     )}
 
                     {callStatus === 'failed' && (
-                        <Card className="bg-red-50 border border-red-200">
+                        <Card className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
                             <CardContent className="p-4">
-                                <div className="text-red-800">
+                                <div className="text-red-800 dark:text-red-200">
                                     <p className="font-medium">Call failed</p>
-                                    <p className="text-sm text-red-600">Please check the phone number and try again.</p>
+                                    <p className="text-sm text-red-600 dark:text-red-400">Please check the phone number and try again.</p>
                                     <Button 
                                         variant="outline"
                                         onClick={() => setCallStatus('idle')}
-                                        className="mt-3 border-red-300 text-red-700 hover:bg-red-50"
+                                        className="mt-3 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
                                         Try Again
                                     </Button>
@@ -592,19 +592,19 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                     )}
 
                     {/* <div>
-                        <h3 className="text-lg font-medium text-white">Call Purpose</h3>
+                        <h3 className="text-lg font-medium text-foreground dark:text-white">Call Purpose</h3>
                         <Select
                             value={callPurpose}
                             onValueChange={(value) => setCallPurpose(value as VoiceCallPurpose)}
                         >
-                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                            <SelectTrigger className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                            <SelectItem className="hover:bg-[#2a2a2a]" value="quote_request">Quote Request</SelectItem>
-                                <SelectItem className="hover:bg-[#2a2a2a]" value="parts_ordering">Parts Ordering</SelectItem>
-                                <SelectItem className="hover:bg-[#2a2a2a]" value="general_inquiry">General Inquiry</SelectItem>
-                                <SelectItem className="hover:bg-[#2a2a2a]" value="order_followup">Order Follow-up</SelectItem>
+                            <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                            <SelectItem className="hover:bg-accent dark:hover:bg-[#2a2a2a]" value="quote_request">Quote Request</SelectItem>
+                                <SelectItem className="hover:bg-accent dark:hover:bg-[#2a2a2a]" value="parts_ordering">Parts Ordering</SelectItem>
+                                <SelectItem className="hover:bg-accent dark:hover:bg-[#2a2a2a]" value="general_inquiry">General Inquiry</SelectItem>
+                                <SelectItem className="hover:bg-accent dark:hover:bg-[#2a2a2a]" value="order_followup">Order Follow-up</SelectItem>
                             </SelectContent>
                         </Select>
                     </div> */}
@@ -648,7 +648,7 @@ const CallForm = forwardRef<CallFormRef, CallFormProps>(({
                         <Button
                             variant="outline"
                             onClick={handleClose}
-                            className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                            className="border-border dark:border-gray-600 text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-gray-800"
                         >
                             Cancel
                         </Button>

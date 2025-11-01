@@ -16,10 +16,10 @@ export default function SupplierCallForm({
     onSuppliersChange 
 }: SupplierCallFormProps) {
     return (
-        <Card className="bg-[#111111] border-[#2a2a2a]">
+        <Card className="bg-card dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                    <Building className="h-5 w-5 text-blue-400" />
+                <CardTitle className="text-foreground dark:text-white flex items-center gap-2">
+                    <Building className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                     Supplier Selection
                 </CardTitle>
             </CardHeader>

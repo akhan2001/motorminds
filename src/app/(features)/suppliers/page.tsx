@@ -48,7 +48,7 @@ export default function SuppliersPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="min-h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 flex flex-col">
                 <div className="p-6 max-w-6xl mx-auto w-full">
@@ -56,10 +56,10 @@ export default function SuppliersPage() {
                     {/* Header */}
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">
+                            <h1 className="text-3xl font-bold text-foreground dark:text-white mb-2">
                                 Suppliers Management
                             </h1>
-                            <p className="text-gray-400">
+                            <p className="text-muted-foreground dark:text-gray-400">
                                 Manage your automotive parts suppliers and contact information
                             </p>
                         </div>

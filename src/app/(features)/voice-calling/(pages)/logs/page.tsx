@@ -107,7 +107,7 @@ export default function VoiceCallLogsPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -117,7 +117,7 @@ export default function VoiceCallLogsPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 overflow-y-auto">
                 <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
@@ -125,13 +125,13 @@ export default function VoiceCallLogsPage() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="/voice-calling" className="text-gray-400 hover:text-white">
+                                <BreadcrumbLink href="/voice-calling" className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white">
                                     Voice Calling
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbPage className="text-white">
+                                <BreadcrumbPage className="text-foreground dark:text-white">
                                     Call Logs
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
@@ -141,15 +141,15 @@ export default function VoiceCallLogsPage() {
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Voice Call Logs</h1>
-                            <p className="text-gray-400 mt-1">Complete history of all AI-powered supplier calls</p>
+                            <h1 className="text-3xl font-bold text-foreground dark:text-white">Voice Call Logs</h1>
+                            <p className="text-muted-foreground dark:text-gray-400 mt-1">Complete history of all AI-powered supplier calls</p>
                         </div>
                         <div className="flex gap-3">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 asChild
-                                className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
                             >
                                 <Link href="/voice-calling">
                                     <ArrowLeft className="h-4 w-4 mr-2" />
@@ -160,7 +160,7 @@ export default function VoiceCallLogsPage() {
                                 onClick={fetchLogs}
                                 variant="outline"
                                 size="sm"
-                                className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#1a1a1a]"
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
                             >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Refresh
@@ -170,32 +170,32 @@ export default function VoiceCallLogsPage() {
 
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                        <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                             <CardContent className="pt-6">
-                                <div className="text-sm text-gray-400">Total Calls</div>
-                                <div className="text-2xl font-bold text-white mt-1">{logs.length}</div>
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">Total Calls</div>
+                                <div className="text-2xl font-bold text-foreground dark:text-white mt-1">{logs.length}</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                        <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                             <CardContent className="pt-6">
-                                <div className="text-sm text-gray-400">Completed</div>
-                                <div className="text-2xl font-bold text-green-400 mt-1">
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">Completed</div>
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
                                     {logs.filter(l => l.status === 'completed').length}
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                        <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                             <CardContent className="pt-6">
-                                <div className="text-sm text-gray-400">Failed</div>
-                                <div className="text-2xl font-bold text-red-400 mt-1">
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">Failed</div>
+                                <div className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
                                     {logs.filter(l => l.status === 'failed').length}
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                        <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                             <CardContent className="pt-6">
-                                <div className="text-sm text-gray-400">In Progress</div>
-                                <div className="text-2xl font-bold text-yellow-400 mt-1">
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">In Progress</div>
+                                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">
                                     {logs.filter(l => ['connecting', 'in_progress'].includes(l.status)).length}
                                 </div>
                             </CardContent>
@@ -203,12 +203,12 @@ export default function VoiceCallLogsPage() {
                     </div>
 
                     {/* Logs Table */}
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="p-0">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
-                                    <thead className="border-b border-[#2a2a2a]">
-                                        <tr className="text-left text-sm text-gray-400">
+                                    <thead className="border-b border-border dark:border-[#2a2a2a]">
+                                        <tr className="text-left text-sm text-muted-foreground dark:text-gray-400">
                                             <th className="p-4 font-medium">Date & Time</th>
                                             <th className="p-4 font-medium">Supplier</th>
                                             <th className="p-4 font-medium">Purpose</th>
@@ -226,29 +226,29 @@ export default function VoiceCallLogsPage() {
                                             return (
                                                 <tr 
                                                     key={log.id} 
-                                                    className="border-b border-[#2a2a2a] hover:bg-[#131313] transition-colors"
+                                                    className="border-b border-border dark:border-[#2a2a2a] hover:bg-accent dark:hover:bg-[#131313] transition-colors"
                                                 >
                                                     <td className="p-4">
                                                         <div className="flex items-center gap-2 text-sm">
-                                                            <Calendar className="w-4 h-4 text-gray-500" />
-                                                            <span className="text-gray-300">
+                                                            <Calendar className="w-4 h-4 text-muted-foreground dark:text-gray-500" />
+                                                            <span className="text-foreground dark:text-gray-300">
                                                                 {formatDate(log.created_at)}
                                                             </span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="flex flex-col">
-                                                            <span className="text-white font-medium text-sm">
+                                                            <span className="text-foreground dark:text-white font-medium text-sm">
                                                                 {log.supplier_name || 'Unknown'}
                                                             </span>
-                                                            <span className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
+                                                            <span className="text-muted-foreground dark:text-gray-500 text-xs flex items-center gap-1 mt-0.5">
                                                                 <Phone className="w-3 h-3" />
                                                                 {log.phone_number}
                                                             </span>
                                                         </div>
                                                     </td>
                                                     <td className="p-4">
-                                                        <Badge variant="outline" className="text-xs border-[#2a2a2a] text-gray-300">
+                                                        <Badge variant="outline" className="text-xs border-border dark:border-[#2a2a2a] text-foreground dark:text-gray-300">
                                                             {getPurposeLabel(log.purpose)}
                                                         </Badge>
                                                     </td>
@@ -259,12 +259,12 @@ export default function VoiceCallLogsPage() {
                                                         </Badge>
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className="text-gray-300 text-sm">
+                                                        <span className="text-foreground dark:text-gray-300 text-sm">
                                                             {formatDuration(log.duration_seconds)}
                                                         </span>
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className="text-gray-400 text-sm">
+                                                        <span className="text-muted-foreground dark:text-gray-400 text-sm">
                                                             #{log.sequence_number || 1}
                                                         </span>
                                                     </td>
@@ -296,13 +296,13 @@ export default function VoiceCallLogsPage() {
                                                             const formattedPrice = price > 0 ? (typeof price === 'number' ? price.toFixed(2) : String(price)) : 'N/A'
                                                             
                                                             return (
-                                                                <span className="text-green-400 text-sm font-medium">
+                                                                <span className="text-green-600 dark:text-green-400 text-sm font-medium">
                                                                     ${formattedPrice}
                                                                 </span>
                                                             )
                                                         })()}
                                                         {!log.quote_received && (
-                                                            <span className="text-gray-500 text-sm">-</span>
+                                                            <span className="text-muted-foreground dark:text-gray-500 text-sm">-</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -312,7 +312,7 @@ export default function VoiceCallLogsPage() {
                                 </table>
 
                                 {logs.length === 0 && (
-                                    <div className="p-12 text-center text-gray-500">
+                                    <div className="p-12 text-center text-muted-foreground dark:text-gray-500">
                                         <Phone className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                         <p className="text-lg">No call logs yet</p>
                                         <p className="text-sm mt-1">Call logs will appear here once you start making calls</p>
