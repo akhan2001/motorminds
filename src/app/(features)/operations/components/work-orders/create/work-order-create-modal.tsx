@@ -457,7 +457,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden">
-            <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
+            <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
                 <ResizablePanelGroup direction="horizontal" className="w-full h-full">
                     {/* Main Content Panel */}
                     <ResizablePanel defaultSize={65} minSize={50} maxSize={75}>
@@ -483,28 +483,28 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     {/* Customer Type Selection */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                         <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold text-white">Customer Type</h3>
+                                            <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Type</h3>
                                             <div className="grid grid-cols-2 gap-3">
                                                 <button
                                                     className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'registered'
-                                                            ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                                                            : 'border-gray-600 hover:border-gray-500'
+                                                            ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
+                                                            : 'border-border dark:border-gray-600 hover:border-muted dark:hover:border-gray-500'
                                                         }`}
                                                     onClick={() => handleCustomerTypeChange('registered')}
                                                 >
-                                                    <div className="font-medium">Registered Customer</div>
-                                                    <div className="text-xs text-gray-400">Existing customer</div>
+                                                    <div className="font-medium text-foreground dark:text-white">Registered Customer</div>
+                                                    <div className="text-xs text-muted-foreground dark:text-gray-400">Existing customer</div>
                                                 </button>
 
                                                 <button
                                                     className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'walk_in'
-                                                            ? 'border-green-500 bg-green-500/10 text-green-400'
-                                                            : 'border-gray-600 hover:border-gray-500'
+                                                            ? 'border-green-500 bg-green-500/10 text-green-500 dark:text-green-400'
+                                                            : 'border-border dark:border-gray-600 hover:border-muted dark:hover:border-gray-500'
                                                         }`}
                                                     onClick={() => handleCustomerTypeChange('walk_in')}
                                                 >
-                                                    <div className="font-medium">Vehicle Search</div>
-                                                    <div className="text-xs text-gray-400">Search by license plate</div>
+                                                    <div className="font-medium text-foreground dark:text-white">Vehicle Search</div>
+                                                    <div className="text-xs text-muted-foreground dark:text-gray-400">Search by license plate</div>
                                                 </button>
                                             </div>
                                         </div>
@@ -607,10 +607,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                                     {/* Work Order Items Card - Only show after Step 3 is complete */}
                                     {isStep3Complete() && (
-                                        <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                                        <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                             <div className="p-4">
                                                 <div className="flex items-center gap-2 mb-4">
-                                                    <h3 className="text-lg font-semibold text-white">Work Order Items</h3>
+                                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Work Order Items</h3>
                                                 </div>
 
                                                 {/* Labor Items */}
@@ -657,8 +657,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                                             {/* Notes */}
                                             <div className="transition-opacity duration-200">
-                                                <h3 className="text-lg font-semibold text-white mb-4">
-                                                    Notes <span className="text-xs text-gray-400 font-normal">(Optional)</span>
+                                                <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">
+                                                    Notes <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
                                                 </h3>
                                                 <WorkOrderNotes
                                                     notes={formData.notes}

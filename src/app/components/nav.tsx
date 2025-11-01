@@ -9,8 +9,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { LogOut, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
 import { MobileNav } from "./mobile-nav"
 import { useQueryClient } from '@tanstack/react-query'
 import { useUserRole } from "@/hooks/core/useUserRole"
@@ -22,8 +20,6 @@ import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/Fe
 export function Nav() {
 	const router = useRouter()
 	const pathname = usePathname()
-	const { theme, setTheme } = useTheme()
-	const [mounted, setMounted] = useState(false)
 	const [open, setOpen] = useState(false)
 	const queryClient = useQueryClient()
 	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
@@ -32,22 +28,6 @@ export function Nav() {
 	if (!pathname) {
 		return null
 	}
-
-	// useEffect only runs on the client, so now we can safely show the UI
-	useEffect(() => {
-		setMounted(true)
-	}, [])
-
-	// Avatar is now handled by the ProfileDropdown component
-
-	// Render the icon based on mounted state to avoid hydration mismatch
-	const themeIcon = mounted && theme === "light" ? (
-		<Moon className="w-4 h-4 mr-2" />
-	) : (
-		<Sun className="w-4 h-4 mr-2" />
-	)
-
-	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
 	// Fetch admin type if user is admin
 	const [adminType, setAdminType] = useState<'super-admin' | 'organization-admin' | 'shop-admin' | null>(null)
@@ -278,25 +258,6 @@ export function Nav() {
 				</div>
 				{/* Right: Actions */}
 				<div className="hidden lg:flex items-center gap-4">
-					{/* Theme Toggle Button */}
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<button
-									onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-									className="text-muted-foreground hover:text-foreground transition-colors"
-									disabled={!mounted}
-									aria-label={themeText}
-								>
-									{themeIcon}
-								</button>
-							</TooltipTrigger>
-							<TooltipContent className="bg-popover text-popover-foreground border-border">
-								<p>{themeText}</p>
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
-					
 					{/* Full navigation for non-demo users */}
 					{userRole !== 'demo' && (
 						<>

@@ -41,7 +41,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     className = ""
 }) => {
     return (
-        <div className={`flex items-center justify-between p-6 border-t border-[#222222] shrink-0 ${className}`}>
+        <div className={`flex items-center justify-between p-6 border-t border-border dark:border-[#222222] shrink-0 ${className}`}>
             <div className="flex items-center gap-2">
                 {onDelete && (
                     <Button
@@ -49,7 +49,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         className={
                             canDelete 
                                 ? 'bg-[#e23232] text-white hover:bg-[#e23232]/80' 
-                                : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+                                : 'bg-gray-600 dark:bg-gray-600 text-muted-foreground dark:text-gray-400 cursor-not-allowed opacity-50'
                         }
                         onClick={onDelete}
                         disabled={!canDelete}
@@ -65,7 +65,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                     <>
                         <Button
                             variant="outline"
-                            className="border border-[#626262] px-8 text-gray-300 hover:bg-[#626262] hover:text-white"
+                            className="border border-border dark:border-[#626262] px-8 text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white"
                             onClick={onCancel}
                         >
                             Cancel
@@ -88,8 +88,8 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                                 variant="outline"
                                 className={`border px-8 ${
                                     canEdit 
-                                        ? 'border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white' 
-                                        : 'border-gray-600 text-gray-500 cursor-not-allowed opacity-50'
+                                        ? 'border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white' 
+                                        : 'border-border dark:border-gray-600 text-muted-foreground dark:text-gray-500 cursor-not-allowed opacity-50'
                                 }`}
                                 onClick={onEdit}
                                 disabled={!canEdit}
@@ -101,7 +101,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                             hasInvoice ? (
                                 <Button
                                     variant="outline"
-                                    className="border border-green-500/50 text-green-400 hover:bg-green-500/10 hover:text-white px-8"
+                                    className="border border-green-500/50 text-green-500 dark:text-green-400 hover:bg-green-500/10 hover:text-green-600 dark:hover:text-white px-8"
                                     onClick={onGoToInvoice}
                                 >
                                     <FileText className="h-4 w-4 mr-2" />
@@ -110,7 +110,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                             ) : (
                                 <Button
                                     variant="outline"
-                                    className="border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-white px-8"
+                                    className="border border-blue-500/50 text-blue-500 dark:text-blue-400 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-white px-8"
                                     onClick={onGenerateInvoice}
                                 >
                                     <FileText className="h-4 w-4 mr-2" />
@@ -120,7 +120,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         )}
                         <Button
                             variant="outline"
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                            className="border border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white"
                             onClick={onClose}
                         >
                             Close

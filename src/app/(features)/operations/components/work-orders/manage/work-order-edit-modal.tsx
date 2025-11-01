@@ -824,7 +824,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     if (isLoading) {
         return (
             <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-                <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-8 flex items-center gap-3">
+                <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8 flex items-center gap-3">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <span>Loading work order details...</span>
                 </div>
@@ -836,11 +836,11 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     if (error) {
         return (
             <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-                <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-8 text-center">
-                    <p className="text-red-400 mb-4">Failed to load work order details</p>
+                <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8 text-center">
+                    <p className="text-red-500 dark:text-red-400 mb-4">Failed to load work order details</p>
                     <button 
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+                        className="px-4 py-2 bg-secondary dark:bg-gray-600 hover:bg-accent dark:hover:bg-gray-700 rounded text-foreground dark:text-white"
                     >
                         Close
                     </button>
@@ -856,7 +856,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden">
-            <div className="bg-[#131313] text-white border-none rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
+            <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
                 <ResizablePanelGroup direction="horizontal" className="w-full h-full">
                     {/* Main Content Panel */}
                     <ResizablePanel defaultSize={60} minSize={50} maxSize={70}>
@@ -913,7 +913,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
                                 {/* Vehicle Information */}
                                 <VehicleInformation 
-                                    vehicleId={workOrderDetails.vehicle_id}
+                                    vehicleId={workOrderDetails.vehicle_id || ""}
                                     vehicleYear={formData.vehicleYear}
                                     vehicleMake={formData.vehicleMake}
                                     vehicleModel={formData.vehicleModel}
@@ -952,10 +952,10 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
                                 {/* Work Order Items - Show for in-progress work orders (Editable) */}
                                 {workOrderDetails?.status !== 'completed' && (
-                                    <div className="bg-[#131313] border border-[#333333] rounded-lg mt-6">
+                                    <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg mt-6">
                                         <div className="p-4">
                                             <div className="flex items-center gap-2 mb-4">
-                                                <h3 className="text-lg font-semibold text-white">Work Order Items</h3>
+                                                <h3 className="text-lg font-semibold text-foreground dark:text-white">Work Order Items</h3>
                                             </div>
 
                                             {/* Labor Items */}

@@ -183,7 +183,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
         <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
             {/* Item Type Selection */}
             <div className="space-y-2">
-                <Label htmlFor="item_type" className="text-sm font-medium text-gray-300">
+                <Label htmlFor="item_type" className="text-sm font-medium text-foreground dark:text-gray-300">
                     Item Type *
                 </Label>
                 <Select
@@ -191,17 +191,17 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     onValueChange={(value: any) => handleFieldChange('item_type', value)}
                     disabled={!!template} // Disable when editing existing template
                 >
-                    <SelectTrigger className={`bg-[#1a1a1a] border-[#2a2a2a] text-white ${template ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                    <SelectTrigger className={`bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white ${template ? 'opacity-60 cursor-not-allowed' : ''}`}>
                         <SelectValue placeholder="Select item type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         {itemTypeOptions.map((option) => {
                             const IconComponent = option.icon
                             return (
                                 <SelectItem 
                                     key={option.value} 
                                     value={option.value}
-                                    className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
+                                    className="text-popover-foreground dark:text-gray-300 hover:text-popover-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
                                 >
                                     <div className="flex items-center gap-2">
                                         <IconComponent className="h-4 w-4" />
@@ -213,7 +213,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     </SelectContent>
                 </Select>
                 {template && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground dark:text-gray-500">
                         Item type cannot be changed after creation
                     </p>
                 )}
@@ -221,7 +221,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
 
             {/* Name */}
             <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-gray-300">
+                <Label htmlFor="name" className="text-sm font-medium text-foreground dark:text-gray-300">
                     Name *
                 </Label>
                 <Input
@@ -229,14 +229,14 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     value={formData.name}
                     onChange={(e) => handleFieldChange('name', e.target.value)}
                     placeholder="Enter template name..."
-                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                    className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                     required
                 />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium text-gray-300">
+                <Label htmlFor="description" className="text-sm font-medium text-foreground dark:text-gray-300">
                     Description
                 </Label>
                 <Textarea
@@ -244,14 +244,14 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     value={formData.description}
                     onChange={(e) => handleFieldChange('description', e.target.value)}
                     placeholder="Enter template description..."
-                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                    className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                     rows={3}
                 />
             </div>
 
             {/* Category */}
             <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-medium text-gray-300">
+                <Label htmlFor="category" className="text-sm font-medium text-foreground dark:text-gray-300">
                     Category
                 </Label>
                 <Input
@@ -259,7 +259,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     value={formData.category || ''}
                     onChange={(e) => handleFieldChange('category', e.target.value)}
                     placeholder="Enter category..."
-                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                    className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                 />
             </div>
 
@@ -267,7 +267,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                 {/* Quantity - Hidden for labor items */}
                 {!isLabor && (
                     <div className="space-y-2">
-                        <Label htmlFor="quantity" className="text-sm font-medium text-gray-300">
+                        <Label htmlFor="quantity" className="text-sm font-medium text-foreground dark:text-gray-300">
                             Quantity *
                         </Label>
                         <Input
@@ -278,7 +278,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                             value={formData.quantity}
                             onChange={(e) => handleFieldChange('quantity', parseFloat(e.target.value) || 0)}
                             placeholder="Enter quantity..."
-                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                             required
                         />
                     </div>
@@ -286,7 +286,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
 
                 {/* Unit Price */}
                 <div className="space-y-2">
-                    <Label htmlFor="unit_price" className="text-sm font-medium text-gray-300">
+                    <Label htmlFor="unit_price" className="text-sm font-medium text-foreground dark:text-gray-300">
                         {isLabor ? 'Hourly Rate' : 'Unit Price'} *
                     </Label>
                     <Input
@@ -297,7 +297,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                         value={formData.unit_price}
                         onChange={(e) => handleFieldChange('unit_price', parseFloat(e.target.value) || 0)}
                         placeholder={isLabor ? "Enter hourly rate..." : "Enter unit price..."}
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                         required
                     />
                 </div>
@@ -306,7 +306,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
             {/* Labor Hours (for labor items) */}
             {isLabor && (
                 <div className="space-y-2">
-                    <Label htmlFor="labor_hours" className="text-sm font-medium text-gray-300">
+                    <Label htmlFor="labor_hours" className="text-sm font-medium text-foreground dark:text-gray-300">
                         Labor Hours
                     </Label>
                     <Input
@@ -317,7 +317,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                         value={formData.labor_hours || ''}
                         onChange={(e) => handleFieldChange('labor_hours', parseFloat(e.target.value) || undefined)}
                         placeholder="Enter hours..."
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                     />
                 </div>
             )}
@@ -325,7 +325,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
             {/* Part Number (for parts and some services) */}
             {(isPart || formData.item_type === 'service') && (
                 <div className="space-y-2">
-                    <Label htmlFor="part_number" className="text-sm font-medium text-gray-300">
+                    <Label htmlFor="part_number" className="text-sm font-medium text-foreground dark:text-gray-300">
                         Part Number {isPart ? '*' : ''}
                     </Label>
                     <Input
@@ -333,7 +333,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                         value={formData.part_number || ''}
                         onChange={(e) => handleFieldChange('part_number', e.target.value)}
                         placeholder="Enter part number..."
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                         required={isPart}
                     />
                 </div>
@@ -342,7 +342,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
             {/* Supplier (for parts and services only) */}
             {(isPart || formData.item_type === 'service') && (
                 <div className="space-y-2">
-                    <Label htmlFor="supplier" className="text-sm font-medium text-gray-300">
+                    <Label htmlFor="supplier" className="text-sm font-medium text-foreground dark:text-gray-300">
                         Supplier
                     </Label>
                     <Input
@@ -350,14 +350,14 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                         value={formData.supplier || ''}
                         onChange={(e) => handleFieldChange('supplier', e.target.value)}
                         placeholder="Enter supplier..."
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                     />
                 </div>
             )}
 
             {/* Unit Cost */}
             <div className="space-y-2">
-                <Label htmlFor="unit_cost" className="text-sm font-medium text-gray-300">
+                <Label htmlFor="unit_cost" className="text-sm font-medium text-foreground dark:text-gray-300">
                     Unit Cost
                 </Label>
                 <Input
@@ -368,14 +368,14 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                     value={formData.unit_cost}
                     onChange={(e) => handleFieldChange('unit_cost', parseFloat(e.target.value) || 0)}
                     placeholder="Enter cost price..."
-                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                    className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                 />
             </div>
 
             {/* Warranty Period (for parts) */}
             {isPart && (
                 <div className="space-y-2">
-                    <Label htmlFor="warranty_period" className="text-sm font-medium text-gray-300">
+                    <Label htmlFor="warranty_period" className="text-sm font-medium text-foreground dark:text-gray-300">
                         Warranty Period
                     </Label>
                     <Input
@@ -383,23 +383,23 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                         value={formData.warranty_period || ''}
                         onChange={(e) => handleFieldChange('warranty_period', e.target.value)}
                         placeholder="e.g., 1 year, 12 months..."
-                        className="bg-[#1a1a1a] border-[#2a2a2a] text-white placeholder:text-gray-500"
+                        className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500"
                     />
                 </div>
             )}
 
-            <Separator className="bg-[#2a2a2a]" />
+            <Separator className="bg-border dark:bg-[#2a2a2a]" />
 
             {/* Calculation Display */}
-            <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
+            <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-300 text-sm">
+                    <span className="text-foreground dark:text-gray-300 text-sm">
                         {isLabor 
                             ? `${formData.labor_hours || 0} hours × $${formData.unit_price.toFixed(2)}/hr`
                             : `${formData.quantity} × $${formData.unit_price.toFixed(2)}`
                         }
                     </span>
-                    <span className="text-white font-semibold text-lg">
+                    <span className="text-foreground dark:text-white font-semibold text-lg">
                         Total: ${calculateTotal().toFixed(2)}
                     </span>
                 </div>
@@ -413,7 +413,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                         variant="outline"
                         onClick={onCancel}
                         disabled={isSubmitting}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a]"
                     >
                         Cancel
                     </Button>

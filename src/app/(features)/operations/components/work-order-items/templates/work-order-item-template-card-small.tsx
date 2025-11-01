@@ -122,12 +122,12 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
 
     return (
         <Card 
-            className={`bg-[#1a1a1a] border-[#2a2a2a] transition-colors group ${
+            className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] transition-colors group ${
                 canSelect 
                     ? isSelected 
                         ? 'border-green-500 bg-green-500/5 cursor-pointer' 
-                        : 'hover:border-[#3a3a3a] cursor-pointer'
-                    : 'hover:border-[#3a3a3a]'
+                        : 'hover:border-accent dark:hover:border-[#3a3a3a] cursor-pointer'
+                    : 'hover:border-accent dark:hover:border-[#3a3a3a]'
             } ${className}`}
             onClick={canSelect ? handleSelect : undefined}
         >
@@ -146,7 +146,7 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
                                 {getItemTypeLabel(template.item_type)}
                             </Badge>
                             {canSelect && isSelected && (
-                                <Badge variant="outline" className="text-xs bg-green-500/10 text-green-400 border-green-500/20 px-1.5 py-0.5">
+                                <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 dark:text-green-400 border-green-500/20 px-1.5 py-0.5">
                                     ✓
                                 </Badge>
                             )}
@@ -159,7 +159,7 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleEdit}
-                                    className="h-5 w-5 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                                    className="h-5 w-5 p-0 text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
                                 >
                                     <Pencil className="h-2.5 w-2.5" />
                                 </Button>
@@ -169,7 +169,7 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleDelete}
-                                    className="h-5 w-5 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                                    className="h-5 w-5 p-0 text-muted-foreground dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10"
                                 >
                                     <Trash2 className="h-2.5 w-2.5" />
                                 </Button>
@@ -178,27 +178,27 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
                     </div>
 
                     {/* Template name */}
-                    <h3 className="text-white font-medium text-sm line-clamp-1">
+                    <h3 className="text-foreground dark:text-white font-medium text-sm line-clamp-1">
                         {template.name}
                     </h3>
 
                     {/* Description - only show if short */}
                     {template.description && template.description.length <= 50 && (
-                        <p className="text-gray-400 text-xs line-clamp-1">
+                        <p className="text-muted-foreground dark:text-gray-400 text-xs line-clamp-1">
                             {template.description}
                         </p>
                     )}
 
                     {/* Part-specific info - compact */}
                     {isPart && template.part_number && (
-                        <p className="text-gray-500 text-xs">
+                        <p className="text-muted-foreground dark:text-gray-500 text-xs">
                             #{template.part_number}
                         </p>
                     )}
 
                     {/* Labor hours - compact */}
                     {isLabor && template.labor_hours && (
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground dark:text-gray-400">
                             <Clock className="h-2.5 w-2.5" />
                             {template.labor_hours}h
                         </div>
@@ -206,7 +206,7 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
 
                     {/* Pricing information - compact */}
                     <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-muted-foreground dark:text-gray-400">
                             {isLabor ? (
                                 <span>
                                     {template.quantity} × {formatCurrency(template.unit_price)}/hr
@@ -218,7 +218,7 @@ export const WorkOrderItemTemplateCardSmall: React.FC<WorkOrderItemTemplateCardS
                             )}
                         </div>
                         <div className="text-right">
-                            <p className="text-white font-semibold text-sm">
+                            <p className="text-foreground dark:text-white font-semibold text-sm">
                                 {formatCurrency(template.quantity * template.unit_price)}
                             </p>
                         </div>

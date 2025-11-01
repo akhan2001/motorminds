@@ -64,12 +64,12 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
 
     return (
         <div className={`space-y-4 ${className}`}>
-            <h3 className="text-lg font-medium text-white">Work Order Information</h3>
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
+            <h3 className="text-lg font-medium text-foreground dark:text-white">Work Order Information</h3>
+            <div className="bg-slate-50 dark:bg-[#1A1A1A] rounded-xl p-6">
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Title *</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Title *</Label>
                             <Input
                                 value={title}
                                 onChange={(e) => {
@@ -82,30 +82,30 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                         onFieldChange('title', value)
                                     }
                                 }}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
                                 maxLength={100}
                                 placeholder={isEditing ? "Brief Title for Work Order" : ""}
                             />
                             {isEditing && (
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
                                     {title.length}/100 characters
                                 </p>
                             )}
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Priority</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Priority</Label>
                             {isEditing ? (
                                 <Select 
                                     value={priority} 
                                     onValueChange={(value) => onFieldChange('priority', value as WorkOrderPriority)}
                                 >
-                                    <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500">
+                                    <SelectTrigger className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500">
                                         <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#1a1a1a] text-white border-[#2a2a2a]">
+                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] text-popover-foreground dark:text-white border-border dark:border-[#2a2a2a]">
                                         {priorityOptions.map((option) => (
-                                            <SelectItem key={option.value} value={option.value}>
+                                            <SelectItem key={option.value} value={option.value} className="hover:bg-accent dark:hover:bg-[#2a2a2a]">
                                                 <div className="flex items-center">
                                                     <div className={`w-2 h-2 rounded-full ${option.color} mr-2`}></div>
                                                     {option.label}
@@ -115,25 +115,25 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     </SelectContent>
                                 </Select>
                             ) : (
-                                <div className="flex items-center gap-2 h-10 px-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-md">
+                                <div className="flex items-center gap-2 h-10 px-3 bg-background dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md">
                                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(priority)}`}></div>
-                                    <span className="text-white capitalize text-sm">{priority}</span>
+                                    <span className="text-foreground dark:text-white capitalize text-sm">{priority}</span>
                                 </div>
                             )}
                         </div>
                     </div>
                     
                     <div className="space-y-1.5">
-                        <Label className="text-gray-400">Description</Label>
+                        <Label className="text-muted-foreground dark:text-gray-400">Description</Label>
                         <textarea
                             value={description}
                             onChange={(e) => isEditing && onFieldChange('description', e.target.value)}
-                            className="w-full bg-[#1a1a1a] text-white text-sm border border-[#2a2a2a] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto"
+                            className="w-full bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border border-border dark:border-[#2a2a2a] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto"
                             readOnly={!isEditing}
                             placeholder={isEditing ? "Describe the work to be performed..." : ""}
                         />
                         {isEditing && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
                                 💡 Adding a detailed description helps the AI better understand and assist with this work order
                             </p>
                         )}
@@ -141,7 +141,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Assigned To</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Assigned To</Label>
                             <TechnicianDropdown
                                 shopId={shopId || ""}
                                 selectedTechnicianId={assigneeId || "none"}
@@ -153,12 +153,12 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Date</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Date</Label>
                             <Input
                                 type="date"
                                 value={date}
                                 onChange={(e) => isEditing && onFieldChange('date', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 dark:[&::-webkit-calendar-picker-indicator]:filter dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 readOnly={!isEditing}
                             />
                         </div>

@@ -159,13 +159,13 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
     ].filter(item => item.value > 0)
 
     return (
-        <div className={`w-full bg-[#131313] flex flex-col h-full min-h-0 ${className}`}>
+        <div className={`w-full bg-slate-50 dark:bg-[#131313] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
-            <div className="p-4 border-b border-[#222222] flex-shrink-0">
+            <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-white font-medium text-base">Selected Items</h3>
-                        <p className="text-gray-400 text-sm mt-1">
+                        <h3 className="text-foreground dark:text-white font-medium text-base">Selected Items</h3>
+                        <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
                             {selectedTemplates.length} item{selectedTemplates.length !== 1 ? 's' : ''} selected
                         </p>
                     </div>
@@ -190,7 +190,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                     : quantity * unitPrice    // For parts, services, fees: quantity * unit_price
 
                                 return (
-                                    <Card key={template.id} className="bg-[#1a1a1a] border-[#2a2a2a]">
+                                    <Card key={template.id} className="bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                         <CardContent className="p-3">
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex items-center gap-2">
@@ -208,31 +208,31 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                     size="sm"
                                                     variant="ghost"
                                                     onClick={() => onRemoveTemplate(template.id)}
-                                                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
+                                                    className="h-6 w-6 p-0 text-muted-foreground dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400"
                                                 >
                                                     <X className="h-3 w-3" />
                                                 </Button>
                                             </div>
 
-                                            <h4 className="text-white font-medium text-base mb-1">
+                                            <h4 className="text-foreground dark:text-white font-medium text-base mb-1">
                                                 {template.name}
                                             </h4>
 
                                             {template.description && (
-                                                <p className="text-gray-400 text-sm mb-2 line-clamp-2">
+                                                <p className="text-muted-foreground dark:text-gray-400 text-sm mb-2 line-clamp-2">
                                                     {template.description}
                                                 </p>
                                             )}
 
                                             {/* Item-specific details */}
                                             {template.part_number && (
-                                                <p className="text-gray-500 text-sm">
+                                                <p className="text-muted-foreground dark:text-gray-500 text-sm">
                                                     Part: {template.part_number}
                                                 </p>
                                             )}
 
                                             {template.supplier && (
-                                                <p className="text-gray-500 text-sm">
+                                                <p className="text-muted-foreground dark:text-gray-500 text-sm">
                                                     Supplier: {template.supplier}
                                                 </p>
                                             )}
@@ -242,7 +242,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                 {/* Quantity (for non-labor items) */}
                                                 {!isLabor && (
                                                     <div>
-                                                        <Label className="text-xs text-gray-400 mb-1 block">
+                                                        <Label className="text-xs text-muted-foreground dark:text-gray-400 mb-1 block">
                                                             Quantity
                                                         </Label>
                                                         <Input
@@ -255,7 +255,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                                     selectedQuantity: parseFloat(e.target.value) || 0 
                                                                 })
                                                             }
-                                                            className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                            className="h-8 text-sm bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                         />
                                                     </div>
                                                 )}
@@ -263,7 +263,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                 {/* Labor Hours (for labor items) */}
                                                 {isLabor && (
                                                     <div>
-                                                        <Label className="text-xs text-gray-400 mb-1 block">
+                                                        <Label className="text-xs text-muted-foreground dark:text-gray-400 mb-1 block">
                                                             Labor Hours
                                                         </Label>
                                                         <Input
@@ -276,14 +276,14 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                                     selectedLaborHours: parseFloat(e.target.value) || 0 
                                                                 })
                                                             }
-                                                            className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                            className="h-8 text-sm bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                         />
                                                     </div>
                                                 )}
 
                                                 {/* Unit Price */}
                                                 <div>
-                                                    <Label className="text-xs text-gray-400 mb-1 block">
+                                                    <Label className="text-xs text-muted-foreground dark:text-gray-400 mb-1 block">
                                                         {isLabor ? 'Hourly Rate' : 'Unit Price'}
                                                     </Label>
                                                     <Input
@@ -296,14 +296,14 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                                 selectedUnitPrice: parseFloat(e.target.value) || 0 
                                                             })
                                                         }
-                                                        className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                        className="h-8 text-sm bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                     />
                                                 </div>
 
                                                 {/* Technician Selection (for labor items) */}
                                                 {isLabor && shopId && (
                                                     <div>
-                                                        <Label className="text-xs text-gray-400 mb-1 block">
+                                                        <Label className="text-xs text-muted-foreground dark:text-gray-400 mb-1 block">
                                                             Technician
                                                         </Label>
                                                         <TechnicianDropdown
@@ -323,8 +323,8 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                             </div>
 
                                             {/* Pricing Information */}
-                                            <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#2a2a2a]">
-                                                <div className="flex items-center gap-4 text-sm text-gray-400">
+                                            <div className="flex items-center justify-between mt-3 pt-2 border-t border-border dark:border-[#2a2a2a]">
+                                                <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
                                                     {isLabor ? (
                                                         <span>
                                                             {quantity} hrs × {formatCurrency(unitPrice)}/hr
@@ -335,7 +335,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="text-white font-medium text-base">
+                                                <span className="text-foreground dark:text-white font-medium text-base">
                                                     {formatCurrency(total)}
                                                 </span>
                                             </div>
@@ -346,9 +346,9 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                         </div>
                     ) : (
                         <div className="text-center py-8">
-                            <Package className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                            <p className="text-gray-500 text-base">No items selected</p>
-                            <p className="text-gray-600 text-sm mt-1">
+                            <Package className="h-8 w-8 text-muted-foreground dark:text-gray-500 mx-auto mb-2" />
+                            <p className="text-muted-foreground dark:text-gray-500 text-base">No items selected</p>
+                            <p className="text-muted-foreground dark:text-gray-600 text-sm mt-1">
                                 Select templates from the right panel to add them here
                             </p>
                         </div>
@@ -358,7 +358,7 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
 
             {/* Cost Summary Footer */}
             {selectedTemplates.length > 0 && (
-                <div className="p-4 border-t border-[#222222] flex-shrink-0">
+                <div className="p-4 border-t border-border dark:border-[#222222] flex-shrink-0">
                     <div className="space-y-3">
                         {/* Individual totals */}
                         {summaryItems.map((item) => {
@@ -367,9 +367,9 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                                 <div key={item.type} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <IconComponent className={`h-3 w-3 ${item.color}`} />
-                                        <span className="text-sm text-gray-400">{item.type}</span>
+                                        <span className="text-sm text-muted-foreground dark:text-gray-400">{item.type}</span>
                                     </div>
-                                    <span className="text-sm text-gray-300 font-medium">
+                                    <span className="text-sm text-foreground dark:text-gray-300 font-medium">
                                         {formatCurrency(item.value)}
                                     </span>
                                 </div>
@@ -377,12 +377,12 @@ export const SelectedTemplatesPanel: React.FC<SelectedTemplatesPanelProps> = ({
                         })}
 
                         {/* Separator */}
-                        <hr className="border-[#2a2a2a]" />
+                        <hr className="border-border dark:border-[#2a2a2a]" />
 
                         {/* Grand Total */}
                         <div className="flex items-center justify-between">
-                            <span className="text-base font-medium text-white">Total</span>
-                            <span className="text-lg font-semibold text-green-400">
+                            <span className="text-base font-medium text-foreground dark:text-white">Total</span>
+                            <span className="text-lg font-semibold text-green-500 dark:text-green-400">
                                 {formatCurrency(grandTotal)}
                             </span>
                         </div>

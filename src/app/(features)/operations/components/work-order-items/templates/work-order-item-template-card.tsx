@@ -122,12 +122,12 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
 
     return (
         <Card 
-            className={`bg-[#1a1a1a] border-[#2a2a2a] transition-colors group ${
+            className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] transition-colors group ${
                 canSelect 
                     ? isSelected 
                         ? 'border-green-500 bg-green-500/5 cursor-pointer' 
-                        : 'hover:border-[#3a3a3a] cursor-pointer'
-                    : 'hover:border-[#3a3a3a]'
+                        : 'hover:border-accent dark:hover:border-[#3a3a3a] cursor-pointer'
+                    : 'hover:border-accent dark:hover:border-[#3a3a3a]'
             } ${className}`}
             onClick={canSelect ? handleSelect : undefined}
         >
@@ -146,12 +146,12 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                                 {getItemTypeLabel(template.item_type)}
                             </Badge>
                             {template.category && (
-                                <Badge variant="secondary" className="text-sm bg-[#2a2a2a] text-gray-400">
+                                <Badge variant="secondary" className="text-sm bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-400">
                                     {template.category}
                                 </Badge>
                             )}
                             {canSelect && isSelected && (
-                                <Badge variant="outline" className="text-sm bg-green-500/10 text-green-400 border-green-500/20">
+                                <Badge variant="outline" className="text-sm bg-green-500/10 text-green-500 dark:text-green-400 border-green-500/20">
                                     ✓ Selected
                                 </Badge>
                             )}
@@ -164,7 +164,7 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleEdit}
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                                    className="h-6 w-6 p-0 text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
                                 >
                                     <Pencil className="h-3 w-3" />
                                 </Button>
@@ -174,7 +174,7 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleDelete}
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                                    className="h-6 w-6 p-0 text-muted-foreground dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10"
                                 >
                                     <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -183,33 +183,33 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                     </div>
 
                     {/* Template name */}
-                    <h3 className="text-white font-medium text-base line-clamp-2">
+                    <h3 className="text-foreground dark:text-white font-medium text-base line-clamp-2">
                         {template.name}
                     </h3>
 
                     {/* Description */}
                     {template.description && (
-                        <p className="text-gray-400 text-sm line-clamp-2">
+                        <p className="text-muted-foreground dark:text-gray-400 text-sm line-clamp-2">
                             {template.description}
                         </p>
                     )}
 
                     {/* Part-specific info */}
                     {isPart && template.part_number && (
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-500 text-sm">
                             Part #: {template.part_number}
                         </p>
                     )}
 
                     {isPart && template.supplier && (
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-500 text-sm">
                             Supplier: {template.supplier}
                         </p>
                     )}
 
                     {/* Labor hours */}
                     {isLabor && template.labor_hours && (
-                        <div className="flex items-center gap-1 text-sm text-gray-400">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400">
                             <Clock className="h-3 w-3" />
                             {template.labor_hours} hours
                         </div>
@@ -217,7 +217,7 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
 
                     {/* Pricing information */}
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground dark:text-gray-400">
                             {isLabor ? (
                                 <span>
                                     {template.quantity} × {formatCurrency(template.unit_price)}/hr
@@ -229,7 +229,7 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
                             )}
                         </div>
                         <div className="text-right">
-                            <p className="text-white font-semibold text-base">
+                            <p className="text-foreground dark:text-white font-semibold text-base">
                                 {formatCurrency(template.quantity * template.unit_price)}
                             </p>
                         </div>
@@ -237,7 +237,7 @@ export const WorkOrderItemTemplateCard: React.FC<WorkOrderItemTemplateCardProps>
 
                     {/* Warranty period */}
                     {template.warranty_period && (
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-500 text-sm">
                             Warranty: {template.warranty_period}
                         </p>
                     )}
