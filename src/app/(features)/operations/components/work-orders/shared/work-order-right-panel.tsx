@@ -1,18 +1,21 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Package, Lightbulb, MessageSquare } from "lucide-react"
+import { Package, Lightbulb, MessageSquare, FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { MiaInsightsIntegration } from '@/app/(features)/ai/mia-insights'
 import { WorkOrderItemTemplatesPanel } from '../../work-order-items/templates/work-order-item-templates-panel'
 import { PanelProvider } from '../../../contexts/PanelContext'
 import { ChatPanel } from '../WorkOrderModal/chat-panel'
+import { InvoiceHistoryPanel } from './invoice-history-panel'
 
 export interface WorkOrderRightPanelProps {
     workOrderId: string
     shopId?: string
     workOrderStatus?: string
     technicianId?: string
+    customerId?: string | null
+    customerType?: 'registered' | 'walk_in'
     className?: string
 }
 
@@ -21,24 +24,41 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     shopId,
     workOrderStatus,
     technicianId,
+    customerId,
+    customerType,
     className = ""
 }) => {
     // Determine if work order is completed (read-only mode)
     const isCompleted = workOrderStatus && 
         ['completed', 'invoiced', 'cancelled'].includes(workOrderStatus.toLowerCase())
     
-    const [activeTab, setActiveTab] = useState<'insights' | 'templates' | 'chat'>('insights')
+    // Determine if work order is in progress (show invoice history)
+    const isInProgress = workOrderStatus && 
+        ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer', 'on_hold'].includes(workOrderStatus.toLowerCase())
+    
+    // Only show history for registered customers (not walk-ins)
+    const isRegisteredCustomer = customerType === 'registered' && !!customerId
+    
+    
+    const [activeTab, setActiveTab] = useState<'insights' | 'templates' | 'chat' | 'history'>('insights')
 
     return (
         <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
             <div className="p-4 border-b border-[#222222] flex-shrink-0">
                 <h3 className="text-white font-medium text-lg">
-                    {isCompleted ? 'Insights & Chat' : 'Insights & Templates'}
+                    {isCompleted 
+                        ? 'Insights & Chat' 
+                        : isInProgress && isRegisteredCustomer
+                        ? 'Insights, Templates & History'
+                        : 'Insights & Templates'
+                    }
                 </h3>
                 <p className="text-gray-400 text-sm mt-1">
                     {isCompleted 
                         ? 'AI insights and team communication' 
+                        : isInProgress && isRegisteredCustomer
+                        ? 'AI insights, reusable items, and customer history'
                         : 'AI insights and reusable work order items'
                     }
                 </p>
@@ -59,7 +79,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                         <span>Insights</span>
                     </div>
                 </button>
-                {!isCompleted ? (
+                {!isCompleted && (
                     <button 
                         onClick={() => setActiveTab('templates')}
                         className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
@@ -73,7 +93,26 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                             <span>Templates</span>
                         </div>
                     </button>
-                ) : (
+                )}
+                
+                {/* History tab - ONLY for registered customers in progress */}
+                {isInProgress && isRegisteredCustomer && (
+                    <button 
+                        onClick={() => setActiveTab('history')}
+                        className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
+                            activeTab === 'history' 
+                                ? 'text-white bg-[#1a1a1a] border-blue-500' 
+                                : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a] border-transparent hover:border-gray-600'
+                        }`}
+                    >
+                        <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                            <FileText className="h-3 w-3" />
+                            <span>History</span>
+                        </div>
+                    </button>
+                )}
+                
+                {isCompleted && (
                     <button 
                         onClick={() => setActiveTab('chat')}
                         className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
@@ -143,6 +182,16 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Add History tab content */}
+                {activeTab === 'history' && (
+                    <div className="h-full">
+                        <InvoiceHistoryPanel
+                            customerId={customerId}
+                            shopId={shopId}
+                        />
                     </div>
                 )}
 

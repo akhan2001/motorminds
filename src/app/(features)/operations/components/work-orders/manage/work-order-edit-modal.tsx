@@ -1073,6 +1073,8 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                             workOrderId={initialWorkOrder.id} 
                             shopId={initialWorkOrder.shop_id}
                             workOrderStatus={initialWorkOrder.status}
+                            customerId={workOrderDetails?.customer_id}
+                            customerType={workOrderDetails?.customer_type}
                         />
                     </ResizablePanel>
                 </ResizablePanelGroup>
