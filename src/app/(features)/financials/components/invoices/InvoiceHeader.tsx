@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Plus, Search, FileText, Filter, Download, Send, Archive } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
+import { TemplateSelector } from './TemplateSelector'
+import { useTemplatePreference } from '../../hooks/use-template-preference'
 
 interface InvoiceHeaderProps {
     className?: string
@@ -26,6 +28,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     onBulkSend
 }) => {
     const router = useRouter()
+    const { templateId, setTemplateId } = useTemplatePreference()
 
     const handleArchivedInvoices = () => {
         router.push('/financials/invoices/archived')
@@ -51,6 +54,12 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
+                        <TemplateSelector
+                            selectedTemplateId={templateId}
+                            onTemplateChange={setTemplateId}
+                            className="gap-2 bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        />
+                        
                         <Button
                             variant="outline"
                             size="sm"
@@ -61,7 +70,8 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                             Archived Invoices
                         </Button>
                         
-                        <Button
+                        {/* TODO: Implement bulk send functionality */}
+                        {/* <Button
                             variant="outline"
                             size="sm"
                             onClick={onBulkSend}
@@ -69,7 +79,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                         >
                             <Send className="h-4 w-4 mr-2" />
                             Bulk Send
-                        </Button>
+                        </Button> */}
 
                         {/* Create Invoice Button */}
                         <Button
