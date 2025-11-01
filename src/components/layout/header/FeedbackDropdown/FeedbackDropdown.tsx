@@ -50,7 +50,7 @@ export const FeedbackDropdown = ({ className }: FeedbackDropdownProps) => {
             if (!open) setStage('select')
         }}>
             <PopoverTrigger asChild>
-                <button className={`text-[#979797] hover:text-white transition-colors ${className}`}>
+                <button className={`text-muted-foreground hover:text-black dark:hover:text-white transition-colors ${className}`}>
                     <Lightbulb className="inline-block w-5 h-5" />
                 </button>
             </PopoverTrigger>

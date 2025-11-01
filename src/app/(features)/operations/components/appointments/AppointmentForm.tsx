@@ -294,10 +294,10 @@ export function AppointmentForm({
     }, [])
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
             <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         New Appointment
                     </CardTitle>
@@ -306,7 +306,7 @@ export function AppointmentForm({
                             variant="ghost"
                             size="sm"
                             onClick={onClose}
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -328,14 +328,14 @@ export function AppointmentForm({
 
                         {/* Appointment Details */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                                 <Clock className="h-4 w-4" />
                                 Appointment Details
                             </h3>
 
                             {/* Quick Date Selection */}
                             <div>
-                                <h3 className="text-gray-300 text-xs mb-1">Quick Date Select</h3>
+                                <h3 className="text-muted-foreground text-xs mb-1">Quick Date Select</h3>
                                 <div className="flex flex-wrap gap-1 mt-1">
                                     {quickDates.map((date) => (
                                         <Button
@@ -348,7 +348,7 @@ export function AppointmentForm({
                                                 text-xs h-7
                                                 ${formData.appointmentDate === date.value 
                                                     ? 'bg-blue-600 text-white' 
-                                                    : 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
+                                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                                                 }
                                                 ${date.isToday ? 'ring-1 ring-blue-500/50' : ''}
                                             `}
@@ -361,12 +361,12 @@ export function AppointmentForm({
 
                             {/* Date Input */}
                             <div>
-                                <h3 className="text-gray-300 text-xs mb-1">Date</h3>
+                                <h3 className="text-muted-foreground text-xs mb-1">Date</h3>
                                 <Input
                                     type="date"
                                     value={formData.appointmentDate}
                                     onChange={(e) => handleInputChange('appointmentDate', e.target.value)}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                    className="bg-background text-foreground border-border text-sm dark:[&::-webkit-calendar-picker-indicator]:filter dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 />
                                 {errors.appointmentDate && (
                                     <p className="text-red-400 text-xs mt-1">{errors.appointmentDate}</p>
@@ -375,7 +375,7 @@ export function AppointmentForm({
 
                             {/* Service Type */}
                             <div>
-                                <h3 className="text-gray-300 text-xs mb-1">Service Type</h3>
+                                <h3 className="text-muted-foreground text-xs mb-1">Service Type</h3>
                                 
                                 {/* Selected Services Display */}
                                 {formData.serviceType.length > 0 && (
@@ -398,12 +398,12 @@ export function AppointmentForm({
                                 
                                 {/* Service Type Selection */}
                                 <Select onValueChange={handleServiceTypeToggle}>
-                                    <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm">
+                                    <SelectTrigger className="bg-background text-foreground border-border text-sm">
                                         <SelectValue placeholder="Add service type" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                                    <SelectContent className="bg-popover text-popover-foreground border-border">
                                         {SERVICE_TYPES.filter(service => !formData.serviceType.includes(service)).map((service) => (
-                                            <SelectItem key={service} value={service} className="text-white hover:bg-[#2a2a2a]">
+                                            <SelectItem key={service} value={service} className="hover:bg-accent hover:text-accent-foreground">
                                                 {service}
                                             </SelectItem>
                                         ))}
@@ -417,20 +417,20 @@ export function AppointmentForm({
                             {/* Custom Time Input */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <h3 className="text-gray-300 text-xs mb-1">Start Time</h3>
+                                    <h3 className="text-muted-foreground text-xs mb-1">Start Time</h3>
                                     <TimeSelect
                                         value={formData.startTime}
                                         onChange={(value) => handleInputChange('startTime', value)}
-                                        className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                                        className="bg-background text-foreground border-border text-sm"
                                         placeholder="Select start time"
                                     />
                                 </div>
                                 <div>
-                                    <h3 className="text-gray-300 text-xs mb-1">End Time</h3>
+                                    <h3 className="text-muted-foreground text-xs mb-1">End Time</h3>
                                     <TimeSelect
                                         value={formData.endTime}
                                         onChange={(value) => handleInputChange('endTime', value)}
-                                        className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                                        className="bg-background text-foreground border-border text-sm"
                                         placeholder="Select end time"
                                     />
                                 </div>
@@ -438,26 +438,26 @@ export function AppointmentForm({
 
                             {/* Notes */}
                             <div>
-                                <Label className="text-gray-300 text-xs">Notes</Label>
+                                <Label className="text-muted-foreground text-xs">Notes</Label>
                                 <Textarea
                                     value={formData.notes}
                                     onChange={(e) => handleInputChange('notes', e.target.value)}
                                     placeholder="Any special requests or notes..."
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm min-h-[60px]"
+                                    className="bg-background text-foreground border-border text-sm min-h-[60px]"
                                 />
                             </div>
                         </div>
 
                         {/* Customer Details */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-medium text-white flex items-center gap-2 border-t border-[#2a2a2a] pt-4">
+                            <h3 className="text-sm font-medium text-foreground flex items-center gap-2 border-t border-border pt-4">
                                 <User className="h-4 w-4" />
                                 Customer Information
                             </h3>
 
                             {/* Customer Selection */}
                             <div className="space-y-2">
-                                <Label htmlFor="customer-select" className="text-gray-300 text-xs">Customer *</Label>
+                                <Label htmlFor="customer-select" className="text-muted-foreground text-xs">Customer *</Label>
                                 <CustomerSearchBar
                                     onSelect={(customer) => {
                                         setSelectedCustomerId(customer.id)
@@ -517,14 +517,14 @@ export function AppointmentForm({
 
                         {/* Vehicle Details */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-medium text-white flex items-center gap-2 border-t border-[#2a2a2a] pt-4">
+                            <h3 className="text-sm font-medium text-foreground flex items-center gap-2 border-t border-border pt-4">
                                 <Car className="h-4 w-4" />
                                 Vehicle Information
                             </h3>
 
                             {/* Vehicle Selection */}
                             <div className="space-y-2">
-                                <Label htmlFor="vehicle-select" className="text-gray-300 text-xs">Vehicle *</Label>
+                                <Label htmlFor="vehicle-select" className="text-muted-foreground text-xs">Vehicle *</Label>
                                 <VehicleDropdown
                                     customerId={selectedCustomerId || (showNewCustomerForm ? 'new' : '')}
                                     selectedVehicleId={selectedVehicleId}
@@ -557,7 +557,7 @@ export function AppointmentForm({
                         </div>
 
                         {/* Submit Button */}
-                        <div className="border-t border-[#2a2a2a] pt-4">
+                        <div className="border-t border-border pt-4">
                             <Button
                                 type="submit"
                                 disabled={createAppointment.isPending}

@@ -141,9 +141,9 @@ export function MonthCard({
                 key={dateString}
                 onClick={() => handleDateClick(date)}
                 className={`
-                    relative p-1 min-h-[120px] border border-[#2a2a2a] cursor-pointer
-                    transition-all duration-200 hover:bg-[#1a1a1a] group
-                    ${isCurrentMonth ? 'bg-[#0d0d0d]' : 'bg-[#0a0a0a] opacity-40'}
+                    relative p-1 min-h-[120px] border border-border cursor-pointer
+                    transition-all duration-200 hover:bg-accent group
+                    ${isCurrentMonth ? 'bg-background' : 'bg-muted opacity-40'}
                     ${isSelected ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''}
                     ${isToday ? 'bg-blue-500/5 border-blue-500/50' : ''}
                 `}
@@ -152,7 +152,7 @@ export function MonthCard({
                 <div className="flex items-center justify-between mb-1 px-1">
                     <span className={`
                         text-xs font-bold
-                        ${!isCurrentMonth ? 'text-gray-600' : isToday ? 'text-blue-400' : 'text-white'}
+                        ${!isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-blue-500' : 'text-foreground'}
                     `}>
                         {dayNumber}
                     </span>
@@ -162,7 +162,7 @@ export function MonthCard({
                             size="sm"
                             variant="ghost"
                             onClick={(e) => handleCreateClick(date, e)}
-                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-whit hover:bg-[#2a2a2a]"
+                            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             <Plus className="h-2 w-2" />
                         </Button>
@@ -187,9 +187,9 @@ export function MonthCard({
                                     e.stopPropagation()
                                     onAppointmentClick?.(appointment)
                                 }}
-                                className={`
+                                        className={`
                                     text-xs p-1 rounded border-l-2 truncate cursor-pointer
-                                    bg-[#1a1a1a] border-[#2a2a2a] hover:bg-[#2a2a2a]
+                                    bg-white dark:bg-card border-border hover:bg-accent
                                     transition-all duration-200 hover:scale-[1.02]
                                     ${getStatusColor(appointment.status || 'scheduled').replace('bg-', 'border-l-')}
                                 `}
@@ -197,10 +197,10 @@ export function MonthCard({
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-white text-[10px] truncate">
+                                        <div className="font-medium text-foreground text-[10px] truncate">
                                             {appointment.start_time} {appointment.customer.customer_name}
                                         </div>
-                                        <div className="text-gray-400 text-[9px] truncate">
+                                        <div className="text-muted-foreground text-[9px] truncate">
                                             {appointment.service_type}
                                         </div>
                                     </div>
@@ -214,7 +214,7 @@ export function MonthCard({
                         
                         {/* Show count if more appointments */}
                         {dayAppointments.length > 4 && (
-                            <div className="text-[9px] text-gray-400 font-medium px-1 py-0.5 bg-[#1a1a1a] rounded text-center">
+                            <div className="text-[9px] text-muted-foreground font-medium px-1 py-0.5 bg-white dark:bg-card rounded text-center">
                                 +{dayAppointments.length - 4} more
                             </div>
                         )}
@@ -226,15 +226,15 @@ export function MonthCard({
 
     if (isLoading) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+            <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
                 <CardHeader className="flex-shrink-0">
-                    <Skeleton className="h-6 w-32 bg-[#2a2a2a]" />
+                    <Skeleton className="h-6 w-32 bg-muted" />
                 </CardHeader>
                 <CardContent className="flex-1 min-h-0">
                     <ScrollArea className="h-full">
                         <div className="grid grid-cols-7 gap-1">
                             {Array.from({ length: 42 }).map((_, i) => (
-                                <Skeleton key={i} className="h-20 bg-[#2a2a2a]" />
+                                <Skeleton key={i} className="h-20 bg-muted" />
                             ))}
                         </div>
                     </ScrollArea>
@@ -244,10 +244,10 @@ export function MonthCard({
     }
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
             <CardHeader className="pb-4 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         {format(currentMonth, 'MMMM yyyy')}
                     </CardTitle>
@@ -257,7 +257,7 @@ export function MonthCard({
                             variant="ghost"
                             size="sm"
                             onClick={handlePreviousMonth}
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
@@ -272,7 +272,7 @@ export function MonthCard({
                                 const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
                                 onDateSelect?.(todayString)
                             }}
-                            className="px-3 h-8 text-xs text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             Today
                         </Button>
@@ -281,7 +281,7 @@ export function MonthCard({
                             variant="ghost"
                             size="sm"
                             onClick={handleNextMonth}
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -294,7 +294,7 @@ export function MonthCard({
                     {/* Week Headers */}
                     <div className="grid grid-cols-7 gap-1 mb-2">
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                            <div key={day} className="text-center text-xs font-medium text-gray-400 py-2">
+                            <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
                                 {day}
                             </div>
                         ))}

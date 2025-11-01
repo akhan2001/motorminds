@@ -159,7 +159,7 @@ export function Nav() {
 	// Show loading state while fetching role and shop info
 	if (isLoadingRole || isLoadingShop) {
 		return (
-			<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+			<header className="bg-background px-4 pt-2 border-b border-border z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 					<div className="flex items-center gap-4 py-3">
 						<div className="flex items-center gap-2">
@@ -168,11 +168,11 @@ export function Nav() {
 								alt="Motorminds Logo"
 								width={35}
 								height={35}
-								className="w-8 h-8"
+								className="w-8 h-8 dark:invert-0 invert"
 							/>
-							<span className="text-white font-medium">Motorminds</span>
+							<span className="text-foreground font-medium">Motorminds</span>
 						</div>
-						<div className="text-[#979797] text-sm">Loading...</div>
+						<div className="text-muted-foreground text-sm">Loading...</div>
 					</div>
 				</nav>
 			</header>
@@ -180,13 +180,13 @@ export function Nav() {
 	}
 
 	return (
-		<header className="bg-[#0d0d0d] px-4 pt-2 border-b border-[#1f1f1f] z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+		<header className="bg-background px-4 pt-2 border-b border-border z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}
 					<div className="flex items-center gap-4 py-3">
 						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-[#1f1f1f] px-2 py-1 rounded-md transition-opacity"
+						className="flex items-center gap-2 cursor-pointer hover:bg-accent px-2 py-1 rounded-md transition-opacity"
 						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
 						>
 							<Image
@@ -194,19 +194,19 @@ export function Nav() {
 							alt="Motorminds Logo"
 							width={35}
 							height={35}
-							className="w-8 h-8"
+							className="w-8 h-8 dark:invert-0 invert"
 							/>
-							<span className="text-white font-medium">Motorminds</span>
+							<span className="text-foreground font-medium">Motorminds</span>
 						</div>
 						<div className="hidden lg:block">
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-white border-[#979797]">
+									<Badge variant="outline" className="cursor-default text-foreground border-muted-foreground">
 										{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
 									</Badge>
 								</TooltipTrigger>
-								<TooltipContent className="bg-[#1f1f1f] text-white border-none">
+								<TooltipContent className="bg-popover text-popover-foreground border-border">
 									<p className="text-xs text-[#FBBC05]">
 										{userRole === 'demo' && 'Demo Access - Limited Features'}
 										{userRole === 'admin' && 'Administrator - Full Access'}
@@ -230,26 +230,26 @@ export function Nav() {
 												className={`py-2 border-b-2 flex items-center gap-1 ${
 													activeLink === item.name
 													? "text-[#b22222] border-[#b22222]"
-													: "text-[#979797] border-transparent hover:text-white hover:border-[#979797] transition-colors"
+													: "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground transition-colors"
 												}`}
 											>
 												{item.name}
 												<ChevronDown className="h-4 w-4" />
 											</button>
 										</DropdownMenuTrigger>
-										<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f] min-w-[180px]">
+										<DropdownMenuContent className="bg-popover text-popover-foreground border-border min-w-[180px]">
 											{item.subItems && item.subItems.length > 0 ? (
 												item.subItems.map((subItem) => (
 													<DropdownMenuItem 
 														key={subItem.name}
 														onClick={() => handleSubItemClick(item.name, subItem.href)}
-														className="cursor-pointer hover:bg-[#1f1f1f] hover:text-white"
+														className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
 													>
 														{subItem.name}
 													</DropdownMenuItem>
 												))
 											) : (
-												<DropdownMenuItem className="text-gray-500 cursor-default">
+												<DropdownMenuItem className="text-muted-foreground cursor-default">
 													No items available
 												</DropdownMenuItem>
 											)}
@@ -264,12 +264,12 @@ export function Nav() {
 									className={`py-2 border-b-2 flex items-center gap-1 group ${
 										activeLink === item.name
 										? "text-[#b22222] border-[#b22222]"
-										: "text-[#979797] border-transparent hover:border-red-500 transition-colors"
-									} ${item.name === 'Mia AI' ? 'text-white hover:text-red-500 hover:animate-pulse' : 'hover:text-white'}`}
+										: "text-muted-foreground border-transparent hover:border-red-500 transition-colors"
+									} ${item.name === 'Mia AI' ? 'text-foreground hover:text-red-500 hover:animate-pulse' : 'hover:text-foreground'}`}
 								>
 									{item.name}
 									{item.name === 'Mia AI' && (
-										<Sparkles className="h-3 w-3 text-white transition-colors group-hover:text-red-500" />
+										<Sparkles className="h-3 w-3 text-foreground transition-colors group-hover:text-red-500" />
 									)}
 								</a>
 							)
@@ -278,20 +278,39 @@ export function Nav() {
 				</div>
 				{/* Right: Actions */}
 				<div className="hidden lg:flex items-center gap-4">
+					{/* Theme Toggle Button */}
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+									className="text-muted-foreground hover:text-foreground transition-colors"
+									disabled={!mounted}
+									aria-label={themeText}
+								>
+									{themeIcon}
+								</button>
+							</TooltipTrigger>
+							<TooltipContent className="bg-popover text-popover-foreground border-border">
+								<p>{themeText}</p>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+					
 					{/* Full navigation for non-demo users */}
 					{userRole !== 'demo' && (
 						<>
 							<button 
 								className={`${
-									activeLink === "Messages" ? "text-white" : "text-[#979797]"
-								} hover:text-white transition-colors`} 
+									activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
+								} hover:text-foreground transition-colors`} 
 								onClick={() => router.push("/messages")}
 							>
 								<MessageCircle className="inline-block w-5 h-5" />
 							</button>
 							{/* Feedback Dropdown */}
 							<FeedbackDropdown />
-							<button className="text-[#979797] hover:text-white transition-colors">
+							<button className="text-muted-foreground hover:text-foreground transition-colors">
 								<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
 							</button>
 						</>
