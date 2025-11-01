@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Package, Settings, BarChart3, Users, FileText, Database, Building2, Wrench } from 'lucide-react'
+import { Package, Settings, BarChart3, Users, FileText, Database, Building2, Wrench, UserPlus, UserSearch } from 'lucide-react'
 import { useAdminContext } from './admin-context/useAdminContext'
 import type { AdminType } from '@/types/core/user'
 
@@ -37,13 +37,25 @@ const adminNavItems: AdminNavItem[] = [
 		name: 'Users',
 		href: '/admin/users',
 		icon: Users,
-		adminTypes: ['super-admin', 'organization-admin']
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
 	},
 	{
 		name: 'Shop Users',
 		href: '/admin/shop/users',
 		icon: Users,
 		adminTypes: ['shop-admin']
+	},
+	{
+		name: 'Create User',
+		href: '/admin/create-user',
+		icon: UserPlus,
+		adminTypes: ['super-admin', 'organization-admin']
+	},
+	{
+		name: 'Customers',
+		href: '/admin/customers',
+		icon: UserSearch,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
 	},
 	{
 		name: 'Parts Requests',

@@ -37,33 +37,38 @@ export async function GET(request: NextRequest) {
         const userRole = userData.role?.toUpperCase()
 
         // Determine admin type based on role and context
+        // NOTE: All users have shop_id, so we can't use shop_id absence to determine super-admin
         let adminType: 'super-admin' | 'organization-admin' | 'shop-admin' | null = null
         let organizationId: string | null = null
-        let shopId: string | null = null
+        let shopId: string | null = userData.shop_id || null
 
-        // Super Admin - MotorMinds platform admin (no organization)
-        if (userRole === 'ADMIN' && !userData.organization_id && !userData.shop_id) {
+        // Priority 1: Super Admin - MotorMinds platform admin
+        // If role is 'super-admin', ALWAYS super-admin (regardless of shop_id/org_id)
+        if (userRole === 'SUPER-ADMIN') {
             adminType = 'super-admin'
         }
-        // Organization Admin - MSO admin (has organization but can access multiple shops)
+        // Priority 2: Organization Admin - MSO admin (has organization)
+        // If user has organization_id, they're organization-admin (can manage multiple shops)
         else if (userRole === 'ADMIN' && userData.organization_id) {
             adminType = 'organization-admin'
             organizationId = userData.organization_id
         }
-        // Shop Admin - Shop-level admin (has specific shop)
-        else if ((userRole === 'ADMIN' || userRole === 'SHOP_ADMIN') && userData.shop_id) {
+        // Priority 3: Shop Admin - Shop-level admin (role='admin' without organization)
+        // If user has role='admin' but no organization_id, they're shop-admin
+        else if (userRole === 'ADMIN' || userRole === 'SHOP_ADMIN') {
             adminType = 'shop-admin'
-            shopId = userData.shop_id
             
-            // Get organization from shop if exists
-            const { data: shopData } = await supabase
-                .from('shops')
-                .select('organization_id')
-                .eq('id', userData.shop_id)
-                .single()
-            
-            if (shopData?.organization_id) {
-                organizationId = shopData.organization_id
+            // Get organization from shop if exists (shop might belong to org)
+            if (userData.shop_id) {
+                const { data: shopData } = await supabase
+                    .from('shops')
+                    .select('organization_id')
+                    .eq('id', userData.shop_id)
+                    .single()
+                
+                if (shopData?.organization_id) {
+                    organizationId = shopData.organization_id
+                }
             }
         }
 

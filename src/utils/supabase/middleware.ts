@@ -120,8 +120,6 @@ export async function updateSession(request: NextRequest) {
 // Admin access control - only admin users can access /admin routes
 if (request.nextUrl.pathname.startsWith('/admin') && user) {
 	try {
-		// console.log('Checking admin access for user:', user.id);
-		
 		// Use server-side Supabase client for database query
 		const { data: userData, error } = await supabase
 			.from('users')
@@ -129,16 +127,15 @@ if (request.nextUrl.pathname.startsWith('/admin') && user) {
 			.eq('id', user.id)
 			.single();
 
-		// console.log('Database query result:', { userData, error });
-
 		if (error || !userData) {
 			console.log('Error or no userData, redirecting to operations/appointments');
 			const redirectUrl = new URL('/operations/appointments', request.url)
 			return NextResponse.redirect(redirectUrl)
 		}
 
-		const isAdmin = userData.role?.toUpperCase() === 'ADMIN';
-		// console.log('isAdmin result:', isAdmin);
+		// Allow both 'admin' and 'super-admin' roles to access admin routes
+		const userRole = userData.role?.toUpperCase();
+		const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER-ADMIN';
 		
 		if (!isAdmin) {
 			// User is not admin - redirect to operations/appointments
