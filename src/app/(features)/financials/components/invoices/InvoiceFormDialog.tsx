@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Save, Plus, Trash2, User, Car, X, LayoutIcon } from 'lucide-react'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useInvoice, useCreateInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
@@ -66,6 +67,9 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     // State for work order items
     const [workOrderItems, setWorkOrderItems] = useState<WorkOrderItem[]>([])
     const [isLoadingWorkOrderItems, setIsLoadingWorkOrderItems] = useState(false)
+    
+    // Tax toggle state
+    const [includeTax, setIncludeTax] = useState(true)
 
     // Function to fetch work order items
     const fetchWorkOrderItems = async (workOrderId: string) => {
@@ -142,6 +146,9 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                 notes: invoice.notes,
                 invoice_items: invoiceItems
             })
+            
+            // Set tax toggle based on tax_rate
+            setIncludeTax(Number(invoice.tax_rate) > 0)
 
             // Only fetch work order items if invoice_items is empty and there's a work order ID
             if (invoice.work_order_id && invoiceItems.length === 0) {
@@ -179,15 +186,21 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
         }
 
         try {
+            // Ensure tax_rate is 0 if tax is disabled
+            const finalFormData = {
+                ...formData,
+                tax_rate: includeTax ? formData.tax_rate : 0
+            }
+            
             if (invoiceId) {
                 await updateMutation.mutateAsync({
                     id: invoiceId,
-                    data: formData
+                    data: finalFormData
                 })
                 toast.success('Invoice updated successfully')
             } else {
                 await createMutation.mutateAsync({
-                    ...formData,
+                    ...finalFormData,
                     shop_id: shopId
                 })
                 toast.success('Invoice created successfully')
@@ -244,11 +257,21 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     }
 
     const calculateTax = () => {
+        if (!includeTax) return 0
         return calculateSubtotal() * formData.tax_rate
     }
 
     const calculateTotal = () => {
         return calculateSubtotal() + calculateTax() - formData.discount_amount
+    }
+    
+    const handleTaxToggle = (checked: boolean) => {
+        setIncludeTax(checked)
+        if (!checked) {
+            setFormData(prev => ({ ...prev, tax_rate: 0 }))
+        } else {
+            setFormData(prev => ({ ...prev, tax_rate: 0.13 })) // Default tax rate
+        }
     }
 
     if (isLoading && invoiceId) {
@@ -574,14 +597,43 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                     </div>
                                     
                                     <div className="space-y-2">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox
+                                                    id="include-tax"
+                                                    checked={includeTax}
+                                                    onCheckedChange={handleTaxToggle}
+                                                    className="border-gray-500"
+                                                />
+                                                <Label htmlFor="include-tax" className="text-sm text-gray-300 cursor-pointer">
+                                                    Include Tax
+                                                </Label>
+                                            </div>
+                                            {includeTax && (
+                                                <Input
+                                                    type="number"
+                                                    value={(formData.tax_rate * 100).toFixed(0)}
+                                                    onChange={(e) => {
+                                                        const rate = Number(e.target.value) / 100
+                                                        setFormData(prev => ({ ...prev, tax_rate: rate }))
+                                                    }}
+                                                    className="w-20 h-8 bg-[#1a1a1a] border-[#2a2a2a] text-white text-right text-sm"
+                                                    min="0"
+                                                    max="100"
+                                                    step="0.1"
+                                                />
+                                            )}
+                                        </div>
                                         <div className="flex justify-between text-gray-400">
                                             <span>Subtotal:</span>
                                             <span>${calculateSubtotal().toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between text-gray-400">
-                                            <span>Tax ({(formData.tax_rate * 100).toFixed(0)}%):</span>
-                                            <span>${calculateTax().toFixed(2)}</span>
-                                        </div>
+                                        {includeTax && (
+                                            <div className="flex justify-between text-gray-400">
+                                                <span>Tax ({(formData.tax_rate * 100).toFixed(0)}%):</span>
+                                                <span>${calculateTax().toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         {/* <div className="flex justify-between text-gray-400">
                                             <span>Discount:</span>
                                             <Input
