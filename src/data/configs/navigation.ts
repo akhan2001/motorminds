@@ -88,7 +88,7 @@ export const navigationConfig: NavItem[] = [
     {
         name: "Admin",
         href: "/admin",
-        requiredRoles: ['admin', 'super', 'shop_admin'],
+        requiredRoles: ['admin', 'super', 'shop_admin'], // Only admins, filtered by adminType
         hasDropdown: true,
         subItems: [
             { 
@@ -115,6 +115,26 @@ export const navigationConfig: NavItem[] = [
                 name: "Shop Users", 
                 href: "/admin/shop/users",
                 adminTypes: ['shop-admin']
+            },
+            { 
+                name: "Create User", 
+                href: "/admin/create-user",
+                adminTypes: ['super-admin', 'organization-admin']
+            },
+            { 
+                name: "Customers", 
+                href: "/admin/customers",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+            },
+            { 
+                name: "Parts Requests", 
+                href: "/admin/parts-requests",
+                adminTypes: ['super-admin']
+            },
+            { 
+                name: "Customer Statements", 
+                href: "/admin/customer-statements",
+                adminTypes: ['super-admin']
             },
             { 
                 name: "Migrations", 

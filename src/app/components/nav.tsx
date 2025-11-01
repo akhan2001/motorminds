@@ -49,10 +49,53 @@ export function Nav() {
 
 	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
-	// Get filtered navigation items based on user role
+	// Fetch admin type if user is admin
+	const [adminType, setAdminType] = useState<'super-admin' | 'organization-admin' | 'shop-admin' | null>(null)
+	
+	useEffect(() => {
+		const fetchAdminType = async () => {
+			// Only fetch if user role suggests they might be admin
+			// Check for 'admin' or 'super-admin' (database can have either)
+			const roleStr = typeof userRole === 'string' ? userRole.toLowerCase() : ''
+			if (!userRole || (roleStr !== 'admin' && roleStr !== 'super-admin')) {
+				setAdminType(null)
+				return
+			}
+			
+			try {
+				const response = await fetch('/api/admin/context')
+				if (response.ok) {
+					const data = await response.json()
+					console.log('Admin context fetched:', data)
+					setAdminType(data.adminType || null)
+				} else {
+					// Not an admin (403) - set to null
+					console.log('Admin context fetch failed:', response.status, response.statusText)
+					setAdminType(null)
+				}
+			} catch (error) {
+				// Error fetching - set to null
+				console.error('Error fetching admin context:', error)
+				setAdminType(null)
+			}
+		}
+		
+		fetchAdminType()
+	}, [userRole])
+
+	// Get filtered navigation items based on user role and admin type
 	const navItems = useMemo(() => {
-		return getFilteredNavItems(userRole ?? null);
-	}, [userRole]);
+		const items = getFilteredNavItems(userRole ?? null, adminType || undefined);
+		// Debug: Log Admin item specifically
+		const adminItem = items.find(item => item.name === 'Admin');
+		if (adminItem) {
+			console.log('Admin item:', { 
+				subItems: adminItem.subItems?.length || 0,
+				subItemNames: adminItem.subItems?.map(s => s.name) || []
+			});
+		}
+		return items;
+	}, [userRole, adminType]);
 
 	let activeLink = ""
 	let longestMatch = 0
@@ -195,15 +238,21 @@ export function Nav() {
 											</button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent className="bg-[#0d0d0d] text-white border-[#1f1f1f] min-w-[180px]">
-											{item.subItems?.map((subItem) => (
-												<DropdownMenuItem 
-													key={subItem.name}
-													onClick={() => handleSubItemClick(item.name, subItem.href)}
-													className="cursor-pointer hover:bg-[#1f1f1f] hover:text-white"
-												>
-													{subItem.name}
+											{item.subItems && item.subItems.length > 0 ? (
+												item.subItems.map((subItem) => (
+													<DropdownMenuItem 
+														key={subItem.name}
+														onClick={() => handleSubItemClick(item.name, subItem.href)}
+														className="cursor-pointer hover:bg-[#1f1f1f] hover:text-white"
+													>
+														{subItem.name}
+													</DropdownMenuItem>
+												))
+											) : (
+												<DropdownMenuItem className="text-gray-500 cursor-default">
+													No items available
 												</DropdownMenuItem>
-											))}
+											)}
 										</DropdownMenuContent>
 									</DropdownMenu>
 								</div>
