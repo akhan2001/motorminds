@@ -42,27 +42,31 @@ export async function getWorkOrderItemsForInvoice(
 export function calculateWorkOrderItemsTotals(items: WorkOrderItem[]) {
     return items.reduce(
         (acc, item) => {
-            acc.subtotal += item.total_price
-
             switch (item.item_type) {
                 case 'part':
                     acc.partsTotal += item.total_price
+                    acc.subtotal += item.total_price
                     break
                 case 'labor':
                     acc.laborTotal += item.total_price
                     acc.laborHours += item.labor_hours || 0
+                    acc.subtotal += item.total_price
                     break
                 case 'service':
                     acc.servicesTotal += item.total_price
+                    acc.subtotal += item.total_price
                     break
                 case 'fee':
                     acc.feesTotal += item.total_price
+                    acc.subtotal += item.total_price
                     break
                 case 'discount':
                     acc.discountsTotal += item.total_price
+                    acc.subtotal -= item.total_price // Subtract discounts instead of adding
                     break
                 case 'package':
                     acc.packagesTotal += item.total_price
+                    acc.subtotal += item.total_price
                     break
             }
 

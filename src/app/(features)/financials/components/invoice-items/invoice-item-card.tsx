@@ -12,7 +12,9 @@ import {
     RotateCcw,
     Clock,
     User,
-    AlertCircle
+    AlertCircle,
+    Tag,
+    Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -40,6 +42,10 @@ const getItemTypeIcon = (type: InvoiceItemType) => {
             return <Briefcase className="h-4 w-4" />
         case 'fee':
             return <DollarSign className="h-4 w-4" />
+        case 'discount':
+            return <Tag className="h-4 w-4" />
+        case 'package':
+            return <Layers className="h-4 w-4" />
         default:
             return <Package className="h-4 w-4" />
     }
@@ -55,6 +61,10 @@ const getItemTypeBadgeColor = (type: InvoiceItemType) => {
             return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
         case 'fee':
             return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+        case 'discount':
+            return 'bg-red-500/20 text-red-400 border-red-500/30'
+        case 'package':
+            return 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
         default:
             return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
     }

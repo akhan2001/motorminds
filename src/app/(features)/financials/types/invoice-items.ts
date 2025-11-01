@@ -1,4 +1,4 @@
-export type InvoiceItemType = 'labor' | 'part' | 'service' | 'fee'
+export type InvoiceItemType = 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package'
 
 export interface InvoiceItem {
   id: string

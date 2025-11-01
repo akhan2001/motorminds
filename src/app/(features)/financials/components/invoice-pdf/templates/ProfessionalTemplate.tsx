@@ -183,9 +183,15 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
         })
     }
 
-    // Calculate totals - only active items
+    // Calculate totals - only active items, handle discounts correctly
     const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false)
-    const subtotal = activeItems.reduce((sum, item) => sum + item.total_price, 0)
+    const subtotal = activeItems.reduce((sum, item) => {
+        // Discounts subtract from subtotal, all other items add
+        if ((item as any).item_type === 'discount') {
+            return sum - item.total_price
+        }
+        return sum + item.total_price
+    }, 0)
     const tax = subtotal * invoice.tax_rate
     const total = subtotal + tax - invoice.discount_amount
 
@@ -276,23 +282,44 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             <Text style={styles.col4}>Unit Price</Text>
                             <Text style={styles.col5}>Total</Text>
                         </View>
-                        {activeItems.map((item, index) => (
-                            <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
-                                <Text style={styles.col1}>{item.description}</Text>
-                                <Text style={styles.col2}>{item.item_type}</Text>
-                                <Text style={styles.col3}>
-                                    {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
-                                </Text>
-                                <Text style={styles.col4}>{formatCurrency(item.unit_price)}</Text>
-                                <Text style={styles.col5}>{formatCurrency(item.total_price)}</Text>
-                            </View>
-                        ))}
+                        {activeItems.map((item, index) => {
+                            const isDiscount = (item as any).item_type === 'discount'
+                            return (
+                                <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
+                                    <Text style={styles.col1}>{item.description}</Text>
+                                    <Text style={styles.col2}>{(item.item_type as string).charAt(0).toUpperCase() + (item.item_type as string).slice(1)}</Text>
+                                    <Text style={styles.col3}>
+                                        {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
+                                    </Text>
+                                    <Text style={styles.col4}>{formatCurrency(item.unit_price)}</Text>
+                                    <Text style={[styles.col5, isDiscount ? { color: '#dc2626' } : {}]}>
+                                        {isDiscount ? '-' : ''}{formatCurrency(item.total_price)}
+                                    </Text>
+                                </View>
+                            )
+                        })}
                     </View>
                 </View>
 
                 {/* Totals */}
                 <View style={styles.totalsSection}>
                     <View style={styles.totalsBox}>
+                        {(() => {
+                            // Calculate discount items total
+                            const discountItemsTotal = activeItems
+                                .filter(item => (item as any).item_type === 'discount')
+                                .reduce((sum, item) => sum + item.total_price, 0)
+                            const totalDiscounts = discountItemsTotal + invoice.discount_amount
+                            
+                            return totalDiscounts > 0 ? (
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>Discount:</Text>
+                                    <Text style={[styles.totalValue, { color: '#dc2626' }]}>
+                                        -{formatCurrency(totalDiscounts)}
+                                    </Text>
+                                </View>
+                            ) : null
+                        })()}
                         <View style={styles.totalRow}>
                             <Text style={styles.totalLabel}>Subtotal:</Text>
                             <Text style={styles.totalValue}>{formatCurrency(subtotal)}</Text>
@@ -301,12 +328,6 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             <Text style={styles.totalLabel}>Tax ({(invoice.tax_rate * 100).toFixed(2)}%):</Text>
                             <Text style={styles.totalValue}>{formatCurrency(tax)}</Text>
                         </View>
-                        {invoice.discount_amount > 0 && (
-                            <View style={styles.totalRow}>
-                                <Text style={styles.totalLabel}>Discount:</Text>
-                                <Text style={styles.totalValue}>-{formatCurrency(invoice.discount_amount)}</Text>
-                            </View>
-                        )}
                         <View style={styles.grandTotal}>
                             <Text style={styles.grandTotalLabel}>Total Amount:</Text>
                             <Text style={styles.grandTotalValue}>{formatCurrency(total)}</Text>

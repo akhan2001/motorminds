@@ -250,25 +250,29 @@ export class WorkOrderItemsService {
             switch (item.item_type) {
                 case 'labor':
                     acc.totalLabor += total
+                    acc.grandTotal += total
                     break
                 case 'part':
                     acc.totalParts += total
+                    acc.grandTotal += total
                     break
                 case 'service':
                     acc.totalServices += total
+                    acc.grandTotal += total
                     break
                 case 'fee':
                     acc.totalFees += total
+                    acc.grandTotal += total
                     break
                 case 'discount':
                     acc.totalDiscounts += total
+                    acc.grandTotal -= total // Subtract discounts instead of adding
                     break
                 case 'package':
                     acc.totalPackages += total
+                    acc.grandTotal += total
                     break
             }
-            
-            acc.grandTotal += total
             acc.itemCount += 1
             
             return acc
