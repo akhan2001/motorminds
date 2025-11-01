@@ -9,12 +9,15 @@ import { ArchivedInvoiceCard } from '../../../components/invoices/archived/Archi
 import { ModernSearchInput } from './ModernSearchInput'
 import { ModernPagination } from './ModernPagination'
 import { useSearch } from './SearchProvider'
+import { InvoiceDetailSheet } from '../../../components/invoices/InvoiceDetailSheet'
+import { useInvoiceDetailSheet } from '../../hooks/use-invoice-detail-sheet'
 
 const ITEMS_PER_PAGE = 50
 
 export function ModernArchivedInvoicesList() {
   const { shopId } = useAuth()
   const { searchTerm, page } = useSearch()
+  const { selectedInvoice, isSheetOpen, openInvoiceDetail, closeInvoiceDetail } = useInvoiceDetailSheet()
   
   const { 
     data: invoices = [], 
@@ -115,10 +118,7 @@ export function ModernArchivedInvoicesList() {
                 <ArchivedInvoiceCard
                   key={invoice.id}
                   invoice={invoice}
-                  onClick={() => {
-                    // Could open a modal or navigate to detail view
-                    console.log('Invoice clicked:', invoice.invoice_number)
-                  }}
+                  onClick={() => openInvoiceDetail(invoice)}
                 />
               ))}
             </div>
@@ -133,6 +133,13 @@ export function ModernArchivedInvoicesList() {
           </>
         )}
       </CardContent>
+
+      {/* Invoice Detail Sheet */}
+      <InvoiceDetailSheet
+        invoice={selectedInvoice}
+        isOpen={isSheetOpen}
+        onClose={closeInvoiceDetail}
+      />
     </Card>
   )
 }

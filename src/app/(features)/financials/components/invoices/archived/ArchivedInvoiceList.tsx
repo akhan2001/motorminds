@@ -8,6 +8,8 @@ import { AlertCircle, Archive, FileText } from 'lucide-react'
 import { useAuth } from '../../../../operations/hooks/use-auth'
 import { useArchivedInvoices } from '../../../hooks/use-archived-invoices'
 import { ArchivedInvoiceCard } from './ArchivedInvoiceCard'
+import { InvoiceDetailSheet } from '../InvoiceDetailSheet'
+import { useInvoiceDetailSheet } from '../../../hooks/use-invoice-detail-sheet'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 

@@ -14,6 +14,8 @@ import {
 import { useAuth } from '../../../../operations/hooks/use-auth'
 import { useArchivedInvoices, useArchivedInvoiceCount } from '../../../hooks/use-archived-invoices'
 import { ArchivedInvoiceCard } from './ArchivedInvoiceCard'
+import { InvoiceDetailSheet } from '../InvoiceDetailSheet'
+import { useInvoiceDetailSheet } from '../../../hooks/use-invoice-detail-sheet'
 
 interface ArchivedInvoicesTableProps {
     // No props needed
@@ -24,6 +26,7 @@ const ITEMS_PER_PAGE = 50
 export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
     const { shopId } = useAuth()
     const [currentPage, setCurrentPage] = useState(1)
+    const { selectedInvoice, isSheetOpen, openInvoiceDetail, closeInvoiceDetail } = useInvoiceDetailSheet()
     
     const { data: invoices, isLoading, error } = useArchivedInvoices({
         shopId: shopId || '',
@@ -108,10 +111,7 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                                     key={invoice.id}
                                     invoice={invoice}
                                     isSelected={false}
-                                    onClick={() => {
-                                        // Could open a modal or navigate to detail view
-                                        console.log('Invoice clicked:', invoice.invoice_number)
-                                    }}
+                                    onClick={() => openInvoiceDetail(invoice)}
                                 />
                             ))}
                         </div>
@@ -182,6 +182,13 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                     </>
                 )}
             </CardContent>
+
+            {/* Invoice Detail Sheet */}
+            <InvoiceDetailSheet
+                invoice={selectedInvoice}
+                isOpen={isSheetOpen}
+                onClose={closeInvoiceDetail}
+            />
         </Card>
     )
 }
