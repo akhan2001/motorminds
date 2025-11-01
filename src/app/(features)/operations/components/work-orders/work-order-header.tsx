@@ -34,15 +34,15 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     }
 
     return (
-        <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
+        <div className={cn("bg-background border-b border-border flex-shrink-0", className)}>
             {/* Main Header */}
             <div className="px-6 py-3">
                 <div className="flex items-center justify-between">
                     {/* Left Section - Title */}
                     <div className="flex items-center gap-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-white">Work Orders</h1>
-                            <p className="text-sm text-gray-400 mt-1">
+                            <h1 className="text-2xl font-bold text-foreground">Work Orders</h1>
+                            <p className="text-sm text-muted-foreground mt-1">
                                 Manage and track all work orders
                             </p>
                         </div>
@@ -52,10 +52,10 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     <div className="flex items-center gap-3">
                         {/* Search Bar */}
                         <div className="relative w-80">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Find customer and create work order..."
-                                className="pl-10 h-10 bg-[#1a1a1a] border-[#3a3a3a] text-white placeholder:text-gray-500 focus:border-red-500"
+                                className="pl-10 h-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-red-500"
                             />
                         </div>
 
@@ -85,9 +85,9 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                     disabled={!messagingAvailability.isAvailable}
                                     onClick={handleMessagesClick}
                                     className={cn(
-                                        "bg-transparent border-[#3a3a3a] text-gray-300",
+                                        "bg-transparent border-border text-muted-foreground",
                                         messagingAvailability.isAvailable
-                                            ? "hover:bg-[#2a2a2a] hover:text-white"
+                                            ? "hover:bg-accent hover:text-foreground"
                                             : "opacity-50 cursor-not-allowed"
                                     )}
                                 >
@@ -102,7 +102,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                 </Button>
                             </TooltipTrigger>
                             {!messagingAvailability.isAvailable && !messagingAvailability.isLoading && (
-                                <TooltipContent>
+                                <TooltipContent className="bg-popover text-popover-foreground border-border">
                                     <p>Contact admin to set up messaging</p>
                                 </TooltipContent>
                             )}
@@ -114,7 +114,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={onTemplatesClick}
-                        className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                         <Layers className="h-4 w-4 mr-2" />
                         Items Templates
@@ -123,7 +123,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     <Button
                         variant="outline"
                         size="sm"
-                        className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                         onClick={onToggleView}
                     >
                         {isCompactView ? (

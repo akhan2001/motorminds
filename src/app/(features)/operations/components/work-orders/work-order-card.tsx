@@ -21,18 +21,18 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
 }) => {
     return (
         <Card 
-            className={`bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a] transition-all cursor-pointer ${className}`}
+            className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all cursor-pointer ${className}`}
             onClick={() => onClick?.(item)}
         >
             <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
-                    <CardTitle className="text-sm font-medium text-white line-clamp-2">
+                    <CardTitle className="text-sm font-medium text-foreground dark:text-white line-clamp-2">
                         {truncateText(item.title, 50)}
                     </CardTitle>
                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(item.priority)} flex-shrink-0 mt-1`} />
                 </div>
                 {item.description && (
-                    <p className="text-xs text-gray-400 line-clamp-2 mt-1">
+                    <p className="text-xs text-muted-foreground dark:text-gray-400 line-clamp-2 mt-1">
                         {truncateText(item.description, 80)}
                     </p>
                 )}
@@ -40,17 +40,17 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
             <CardContent className="pt-0">
                 {/* Customer & Vehicle Info */}
                 {(item.customer || item.vehicle) && (
-                    <div className="text-xs text-gray-300 mb-2">
+                    <div className="text-xs text-foreground dark:text-gray-300 mb-2">
                         {item.customer && <div className="font-medium">{item.customer}</div>}
-                        {item.vehicle && <div className="text-gray-400">{item.vehicle}</div>}
+                        {item.vehicle && <div className="text-muted-foreground dark:text-gray-400">{item.vehicle}</div>}
                     </div>
                 )}
                 
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">
                     <div className="flex items-center gap-3">
                         {item.assignee && (
                             <div className="flex items-center gap-1">
-                                <div className="w-4 h-4 bg-[#444] rounded-full flex items-center justify-center text-xs text-white">
+                                <div className="w-4 h-4 bg-secondary dark:bg-[#444] rounded-full flex items-center justify-center text-xs text-secondary-foreground dark:text-white">
                                     {getInitials(item.assignee)}
                                 </div>
                                 <span>{truncateText(item.assignee, 12)}</span>
@@ -69,7 +69,7 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                             <Badge 
                                 key={index} 
                                 variant="secondary" 
-                                className="text-xs bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]"
+                                className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a]"
                             >
                                 {tag}
                             </Badge>

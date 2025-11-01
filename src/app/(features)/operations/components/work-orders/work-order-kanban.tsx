@@ -19,7 +19,7 @@ export const WorkOrderKanban: React.FC<WorkOrderKanbanProps> = ({
     className = ""
 }) => {
     return (
-        <div className={`h-full bg-[#0d0d0d] min-h-0 ${className}`}>
+        <div className={`h-full bg-background min-h-0 ${className}`}>
             <div className="h-full flex min-h-0">
                 {columns.map((column) => (
                     <DroppableColumn 

@@ -20,18 +20,18 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
 }) => {
     return (
         <Card 
-            className={`bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a] transition-all cursor-pointer ${className}`}
+            className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all cursor-pointer ${className}`}
             onClick={() => onClick?.(item)}
         >
             <CardContent className="p-3">
                 {/* Header Row */}
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-medium text-white truncate">
+                        <h4 className="text-xs font-medium text-foreground dark:text-white truncate">
                             {truncateText(item.title, 30)}
                         </h4>
                         {item.vehicle && (
-                            <p className="text-xs text-gray-400 truncate mt-0.5">
+                            <p className="text-xs text-muted-foreground dark:text-gray-400 truncate mt-0.5">
                                 {truncateText(item.vehicle, 25)}
                             </p>
                         )}
@@ -40,11 +40,11 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
                 </div>
 
                 {/* Bottom Row */}
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">
                     <div className="flex items-center gap-2">
                         {item.assignee && (
                             <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 bg-[#444] rounded-full flex items-center justify-center text-xs text-white">
+                                <div className="w-3 h-3 bg-secondary dark:bg-[#444] rounded-full flex items-center justify-center text-xs text-secondary-foreground dark:text-white">
                                     {getInitials(item.assignee)}
                                 </div>
                                 <span className="truncate max-w-[60px]">{truncateText(item.assignee, 8)}</span>
