@@ -18,6 +18,9 @@ import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { useRouter } from 'next/navigation'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { useTemplatePreference } from '../../hooks/use-template-preference'
+import { generateInvoicePDF, downloadPDF, getInvoiceFilename } from '../../lib/pdf/pdf-generator'
 
 interface InvoiceViewOnlyProps {
     invoiceId: string
@@ -29,11 +32,14 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const router = useRouter()
     const { shopId } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
+    const { data: shopInfo } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
+    const { templateId, setTemplateId } = useTemplatePreference()
     const [isLandscape, setIsLandscape] = useState(false)
     const [isSendChoiceModalOpen, setIsSendChoiceModalOpen] = useState(false)
     const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false)
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
+    const [isDownloading, setIsDownloading] = useState(false)
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -47,8 +53,24 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         }
     }
 
-    const handleDownload = () => {
-        toast.info('PDF download coming soon')
+    const handleDownload = async () => {
+        if (!invoice || !shopInfo) {
+            toast.error('Invoice or shop information not available')
+            return
+        }
+
+        setIsDownloading(true)
+        try {
+            const blob = await generateInvoicePDF(invoice, shopInfo, templateId)
+            const filename = getInvoiceFilename(invoice)
+            downloadPDF(blob, filename)
+            toast.success('Invoice PDF downloaded successfully')
+        } catch (error) {
+            console.error('PDF generation error:', error)
+            toast.error('Failed to generate PDF')
+        } finally {
+            setIsDownloading(false)
+        }
     }
 
     const handleSend = () => {
@@ -376,21 +398,14 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                 </Button>
-                {/* <Button 
-                    size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700" 
-                    onClick={toggleFormat}
-                >
-                    <LayoutIcon className="w-4 h-4 mr-2" />
-                    {isLandscape ? "Portrait" : "Landscape"}
-                </Button> */}
                 <Button 
                     size="sm"
                     className="bg-gray-600 text-white hover:bg-gray-700" 
                     onClick={handleDownload}
+                    disabled={isDownloading || !shopInfo}
                 >
                     <Download className="w-4 h-4 mr-2" />
-                    PDF
+                    {isDownloading ? 'Generating...' : 'PDF'}
                 </Button>
                 <Button 
                     size="sm"
