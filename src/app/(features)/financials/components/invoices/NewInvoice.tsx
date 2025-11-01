@@ -133,7 +133,13 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
     }
 
     const calculateSubtotal = () => {
-        return formData.invoice_items.reduce((sum, item) => sum + item.total_price, 0)
+        return formData.invoice_items.reduce((sum, item) => {
+            // Discounts subtract from subtotal, all other items add
+            if ((item as any).item_type === 'discount') {
+                return sum - item.total_price
+            }
+            return sum + item.total_price
+        }, 0)
     }
 
     const calculateTax = () => {
@@ -144,10 +150,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         return calculateSubtotal() + calculateTax() - formData.discount_amount
     }
 
-
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl h-[90vh] bg-[#0d0d0d] border-[#2a2a2a] p-0 flex flex-col">
+        <Dialog open={isOpen} onOpenChange={() => {}}>
+            <DialogContent className="max-w-4xl h-[90vh] bg-[#0d0d0d] border-[#2a2a2a] p-0 flex flex-col [&>button:last-child]:hidden">
                 {/* Fixed Header */}
                 <DialogHeader className="bg-[#131313] p-4 border-b border-[#333333] flex-shrink-0">
                     <div className="flex items-start justify-between">

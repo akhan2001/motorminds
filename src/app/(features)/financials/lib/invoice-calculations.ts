@@ -71,7 +71,8 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		return sum + total
 	}, 0)
 	
-	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal + discountsTotal + packagesTotal
+	// Subtract discounts from subtotal (discounts reduce the total)
+	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
 	
 	return {
 		subtotal,

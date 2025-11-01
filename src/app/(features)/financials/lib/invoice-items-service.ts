@@ -236,24 +236,37 @@ class InvoiceItemsService {
 
     items.forEach((item) => {
       const itemTotal = item.total_price || 0
-      summary.subtotal += itemTotal
 
       switch (item.item_type) {
         case 'part':
           summary.partsTotal += itemTotal
+          summary.subtotal += itemTotal
           break
         case 'labor':
           summary.laborTotal += itemTotal
           summary.laborHoursTotal += item.labor_hours || 0
+          summary.subtotal += itemTotal
           break
         case 'service':
           summary.servicesTotal += itemTotal
+          summary.subtotal += itemTotal
           break
         case 'fee':
           summary.feesTotal += itemTotal
+          summary.subtotal += itemTotal
+          break
+        case 'discount':
+          // Discounts reduce subtotal (itemTotal is positive, subtract it)
+          summary.subtotal -= itemTotal
+          summary.totalDiscount += itemTotal
+          break
+        case 'package':
+          // Packages are additive (like services)
+          summary.subtotal += itemTotal
           break
       }
 
+      // Add invoice-specific discounts (separate from discount items)
       summary.totalDiscount += item.invoice_specific_discount || 0
     })
 

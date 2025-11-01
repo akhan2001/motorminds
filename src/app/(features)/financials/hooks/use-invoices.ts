@@ -119,8 +119,13 @@ export function useCreateInvoice() {
 
     return useMutation({
         mutationFn: async (data: InvoiceFormData & { shop_id: string }) => {
-            // Calculate totals
-            const subtotal = data.invoice_items.reduce((sum, item) => sum + item.total_price, 0)
+            // Calculate totals - discounts subtract from subtotal
+            const subtotal = data.invoice_items.reduce((sum, item) => {
+                if (item.item_type === 'discount') {
+                    return sum - item.total_price
+                }
+                return sum + item.total_price
+            }, 0)
             const tax_amount = subtotal * data.tax_rate
             const total_amount = subtotal + tax_amount - data.discount_amount
 
@@ -129,10 +134,10 @@ export function useCreateInvoice() {
                 subtotal,
                 tax_amount,
                 total_amount,
-                labor_total: data.invoice_items.filter(i => i.item_type === 'labor').reduce((sum, i) => sum + i.total_price, 0),
-                parts_total: data.invoice_items.filter(i => i.item_type === 'part').reduce((sum, i) => sum + i.total_price, 0),
-                services_total: data.invoice_items.filter(i => i.item_type === 'service').reduce((sum, i) => sum + i.total_price, 0),
-                fees_total: data.invoice_items.filter(i => i.item_type === 'fee').reduce((sum, i) => sum + i.total_price, 0),
+                labor_total: data.invoice_items.filter(i => i.item_type === 'labor' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                parts_total: data.invoice_items.filter(i => i.item_type === 'part' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                services_total: data.invoice_items.filter(i => i.item_type === 'service' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                fees_total: data.invoice_items.filter(i => i.item_type === 'fee' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
             }
 
             const { data: invoice, error } = await supabase
@@ -161,7 +166,13 @@ export function useUpdateInvoice() {
             let updates: any = { ...data }
             
             if (data.invoice_items) {
-                const subtotal = data.invoice_items.reduce((sum, item) => sum + item.total_price, 0)
+                // Calculate subtotal - discounts subtract, all other items add
+                const subtotal = data.invoice_items.reduce((sum, item) => {
+                    if (item.item_type === 'discount') {
+                        return sum - item.total_price
+                    }
+                    return sum + item.total_price
+                }, 0)
                 const tax_rate = data.tax_rate || 0.13
                 const tax_amount = subtotal * tax_rate
                 const discount = data.discount_amount || 0
@@ -172,10 +183,10 @@ export function useUpdateInvoice() {
                     subtotal,
                     tax_amount,
                     total_amount,
-                    labor_total: data.invoice_items.filter(i => i.item_type === 'labor').reduce((sum, i) => sum + i.total_price, 0),
-                    parts_total: data.invoice_items.filter(i => i.item_type === 'part').reduce((sum, i) => sum + i.total_price, 0),
-                    services_total: data.invoice_items.filter(i => i.item_type === 'service').reduce((sum, i) => sum + i.total_price, 0),
-                    fees_total: data.invoice_items.filter(i => i.item_type === 'fee').reduce((sum, i) => sum + i.total_price, 0),
+                    labor_total: data.invoice_items.filter(i => i.item_type === 'labor' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    parts_total: data.invoice_items.filter(i => i.item_type === 'part' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    services_total: data.invoice_items.filter(i => i.item_type === 'service' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    fees_total: data.invoice_items.filter(i => i.item_type === 'fee' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
                 }
             }
 
@@ -301,10 +312,16 @@ export function useCreateInvoiceFromWorkOrder() {
                 }
             })
 
-            // Create invoice - only include approved items in subtotal
+            // Create invoice - only include approved items in subtotal, handle discounts correctly
             const subtotal = invoiceItems
                 .filter(item => item.active !== false)
-                .reduce((sum, item) => sum + item.total_price, 0)
+                .reduce((sum, item) => {
+                    // Discounts subtract from subtotal, all other items add
+                    if (item.item_type === 'discount') {
+                        return sum - item.total_price
+                    }
+                    return sum + item.total_price
+                }, 0)
             const tax_rate = 0.13
             const tax_amount = subtotal * tax_rate
             const total_amount = subtotal + tax_amount
@@ -341,10 +358,10 @@ export function useCreateInvoiceFromWorkOrder() {
                     tax_amount,
                     total_amount,
                     discount_amount: 0,
-                    labor_total: invoiceItems.filter(i => i.item_type === 'labor').reduce((sum, i) => sum + i.total_price, 0),
-                    parts_total: invoiceItems.filter(i => i.item_type === 'part').reduce((sum, i) => sum + i.total_price, 0),
-                    services_total: invoiceItems.filter(i => i.item_type === 'service').reduce((sum, i) => sum + i.total_price, 0),
-                    fees_total: invoiceItems.filter(i => i.item_type === 'fee').reduce((sum, i) => sum + i.total_price, 0),
+                    labor_total: invoiceItems.filter(i => i.item_type === 'labor' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    parts_total: invoiceItems.filter(i => i.item_type === 'part' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    services_total: invoiceItems.filter(i => i.item_type === 'service' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    fees_total: invoiceItems.filter(i => i.item_type === 'fee' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
                     invoice_items: invoiceItems,
                     issue_date: new Date().toISOString(),
                 })

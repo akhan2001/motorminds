@@ -158,10 +158,16 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         )
     }
 
-    // Calculate totals - only include approved items in subtotal
+    // Calculate totals - only include active items, handle discounts correctly
     const subtotal = invoice.invoice_items
         .filter(item => (item as any).active !== false)
-        .reduce((sum, item) => sum + item.total_price, 0)
+        .reduce((sum, item) => {
+            // Discounts subtract from subtotal, all other items add
+            if (item.item_type === 'discount') {
+                return sum - item.total_price
+            }
+            return sum + item.total_price
+        }, 0)
     const tax = subtotal * invoice.tax_rate
     const total = subtotal + tax - invoice.discount_amount
 
@@ -286,7 +292,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 
                                 {/* Invoice Items */}
                                 {invoice.invoice_items.map((item, index) => {
-                                    const isActive = (item as any).active !== false // Use the 'active' field from database
+                                    const isActive = (item as any).active !== false // Use the 'active' field from JSONB
                                     return (
                                         <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-gray-800">
                                             <div className="col-span-5 text-white">

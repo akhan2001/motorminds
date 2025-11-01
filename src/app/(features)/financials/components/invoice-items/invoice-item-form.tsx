@@ -30,6 +30,8 @@ const itemTypes: { value: InvoiceItemType; label: string }[] = [
     { value: 'labor', label: 'Labor' },
     { value: 'service', label: 'Service' },
     { value: 'fee', label: 'Fee' },
+    { value: 'discount', label: 'Discount' },
+    { value: 'package', label: 'Package' },
 ]
 
 export const InvoiceItemForm: React.FC<InvoiceItemFormProps> = ({

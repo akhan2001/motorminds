@@ -77,7 +77,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
             setWorkOrderItems(items)
             
             // Convert work order items to invoice items format
-            const invoiceItems: InvoiceItem[] = items.map(item => ({
+            const invoiceItems = items.map(item => ({
                 id: item.id,
                 item_type: item.item_type,
                 description: item.description,
@@ -95,7 +95,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
             // Update form data with work order items
             setFormData(prev => ({
                 ...prev,
-                invoice_items: invoiceItems
+                invoice_items: invoiceItems as any
             }))
         } catch (error) {
             console.error('Error fetching work order items:', error)
@@ -107,6 +107,24 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
 
     useEffect(() => {
         if (invoice) {
+            // Parse invoice_items from JSONB field - handle both array and object formats
+            let invoiceItems = invoice.invoice_items || []
+            
+            // If invoice_items is a string, parse it
+            if (typeof invoiceItems === 'string') {
+                try {
+                    invoiceItems = JSON.parse(invoiceItems)
+                } catch (e) {
+                    console.error('Error parsing invoice_items:', e)
+                    invoiceItems = []
+                }
+            }
+            
+            // Ensure it's an array
+            if (!Array.isArray(invoiceItems)) {
+                invoiceItems = []
+            }
+
             setFormData({
                 customer_id: invoice.customer_id,
                 vehicle_id: invoice.vehicle_id,
@@ -122,11 +140,11 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                 payment_method: invoice.payment_method,
                 payment_reference: invoice.payment_reference,
                 notes: invoice.notes,
-                invoice_items: invoice.invoice_items || []
+                invoice_items: invoiceItems
             })
 
-            // Fetch work order items if there's a work order ID
-            if (invoice.work_order_id) {
+            // Only fetch work order items if invoice_items is empty and there's a work order ID
+            if (invoice.work_order_id && invoiceItems.length === 0) {
                 fetchWorkOrderItems(invoice.work_order_id)
             }
 
@@ -216,7 +234,13 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     }
 
     const calculateSubtotal = () => {
-        return formData.invoice_items.reduce((sum, item) => sum + item.total_price, 0)
+        return formData.invoice_items.reduce((sum, item) => {
+            // Discounts subtract from subtotal, all other items add
+            if ((item as any).item_type === 'discount') {
+                return sum - item.total_price
+            }
+            return sum + item.total_price
+        }, 0)
     }
 
     const calculateTax = () => {
@@ -244,8 +268,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl h-[90vh] bg-[#0d0d0d] border-[#2a2a2a] p-0 flex flex-col">
+        <Dialog open={isOpen} onOpenChange={() => {}}>
+            <DialogContent className="max-w-4xl h-[90vh] bg-[#0d0d0d] border-[#2a2a2a] p-0 flex flex-col [&>button:last-child]:hidden">
                 {/* Fixed Header */}
                 <DialogHeader className="bg-[#131313] p-4 border-b border-[#333333] flex-shrink-0">
                     <div className="flex items-start justify-between">
@@ -442,9 +466,18 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                             </div>
                                         ) : (
                                             formData.invoice_items.map((item, index) => (
-                                            <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+                                            <div key={item.id || `item-${index}`} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
                                                 <div className="flex items-start justify-between mb-3">
-                                                    <h4 className="text-sm font-medium text-gray-300">Item {index + 1}</h4>
+                                                    <div>
+                                                        <h4 className="text-sm font-medium text-gray-300">
+                                                            {item.description || `Item ${index + 1}`}
+                                                        </h4>
+                                                        {item.item_type && (
+                                                            <span className="text-xs text-gray-500 capitalize">
+                                                                {item.item_type}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <Button
                                                         type="button"
                                                         onClick={() => removeItem(index)}
@@ -471,6 +504,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                                                 <SelectItem value="labor">Labor</SelectItem>
                                                                 <SelectItem value="service">Service</SelectItem>
                                                                 <SelectItem value="fee">Fee</SelectItem>
+                                                                <SelectItem value="discount">Discount</SelectItem>
+                                                                <SelectItem value="package">Package</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>

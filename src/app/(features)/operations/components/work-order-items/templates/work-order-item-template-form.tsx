@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Package, Wrench, Star, DollarSign, Loader2, Save } from 'lucide-react'
+import { Package, Wrench, Star, DollarSign, Loader2, Save, Tag, Layers } from 'lucide-react'
 import { useCreateWorkOrderItemTemplate, useUpdateWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate, WorkOrderItemTemplateFormData } from '../../../types/work-order-item-templates'
@@ -23,6 +23,8 @@ const itemTypeOptions = [
     { value: 'part', label: 'Part', icon: Package },
     { value: 'service', label: 'Service', icon: Star },
     { value: 'fee', label: 'Fee', icon: DollarSign },
+    { value: 'discount', label: 'Discount', icon: Tag },
+    { value: 'package', label: 'Package', icon: Layers },
 ]
 
 interface WorkOrderItemTemplateFormProps {
@@ -80,7 +82,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
 
     // Ensure form always has a valid item_type
     useEffect(() => {
-        if (!formData.item_type || !['labor', 'part', 'service', 'fee'].includes(formData.item_type)) {
+        if (!formData.item_type || !['labor', 'part', 'service', 'fee', 'discount', 'package'].includes(formData.item_type)) {
             setFormData(prev => ({
                 ...prev,
                 item_type: 'labor'
@@ -96,7 +98,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
             }
             
             // Ensure item_type is always valid
-            if (field === 'item_type' && (!value || !['labor', 'part', 'service', 'fee'].includes(value))) {
+            if (field === 'item_type' && (!value || !['labor', 'part', 'service', 'fee', 'discount', 'package'].includes(value))) {
                 newData.item_type = 'labor' // Default fallback
             }
             
@@ -120,7 +122,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
 
         try {
             // Validate item_type before submitting
-            const validItemTypes = ['labor', 'part', 'service', 'fee']
+            const validItemTypes = ['labor', 'part', 'service', 'fee', 'discount', 'package']
             
             if (!formData.item_type || !validItemTypes.includes(formData.item_type)) {
                 throw new Error(`Invalid item type: "${formData.item_type}". Must be one of: ${validItemTypes.join(', ')}`)
@@ -174,6 +176,8 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
     const isPart = formData.item_type === 'part'
     const isService = formData.item_type === 'service'
     const isFee = formData.item_type === 'fee'
+    const isDiscount = formData.item_type === 'discount'
+    const isPackage = formData.item_type === 'package'
 
     return (
         <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
