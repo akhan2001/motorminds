@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from "react"
 import { TasksProvider } from "@/contexts/tasks-context"
 import { ConfirmationProvider } from "@/app/components/confirmation-service"
+import { AdminContextProvider } from "@/contexts/admin-context"
 
 export default function Providers({
   children,
@@ -14,11 +15,13 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TasksProvider>
-        <ConfirmationProvider>
-          {children}
-        </ConfirmationProvider>
-      </TasksProvider>
+      <AdminContextProvider>
+        <TasksProvider>
+          <ConfirmationProvider>
+            {children}
+          </ConfirmationProvider>
+        </TasksProvider>
+      </AdminContextProvider>
     </QueryClientProvider>
   )
 } 
