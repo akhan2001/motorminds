@@ -63,13 +63,13 @@ const InvoiceDashboard: React.FC<InvoiceDashboardProps> = ({
     // Default empty state
     return (
         <>
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex items-center justify-center">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] h-full flex items-center justify-center">
                 <div className="text-center p-8">
-                    <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <FileText className="h-16 w-16 text-muted-foreground dark:text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
                         No Invoice Selected
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground dark:text-gray-400 text-sm">
                         Select an invoice from the list or create a new one
                     </p>
                 </div>

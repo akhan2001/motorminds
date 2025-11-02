@@ -134,9 +134,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     if (isLoading) {
         return (
             <div className="h-full flex flex-col space-y-4 p-4">
-                <Skeleton className="h-10 w-full bg-[#2a2a2a]" />
-                <Skeleton className="h-32 w-full bg-[#2a2a2a]" />
-                <Skeleton className="h-48 w-full bg-[#2a2a2a]" />
+                <Skeleton className="h-10 w-full bg-secondary dark:bg-[#2a2a2a]" />
+                <Skeleton className="h-32 w-full bg-secondary dark:bg-[#2a2a2a]" />
+                <Skeleton className="h-48 w-full bg-secondary dark:bg-[#2a2a2a]" />
             </div>
         )
     }
@@ -144,12 +144,12 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     if (error || !invoice) {
         return (
             <div className="h-full flex items-center justify-center p-4">
-                <Card className="bg-[#1a1a1a] border-[#2a2a2a] p-8">
+                <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                     <div className="flex flex-col items-center justify-center text-center">
-                        <h3 className="text-lg font-semibold text-white mb-2">
+                        <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
                             Error Loading Invoice
                         </h3>
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-400 text-sm">
                             Failed to load invoice details. Please try again.
                         </p>
                     </div>
@@ -172,20 +172,20 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const total = subtotal + tax - invoice.discount_amount
 
     return (
-        <div className="h-full flex flex-col bg-[#0d0d0d]">
+        <div className="h-full flex flex-col bg-background dark:bg-[#0d0d0d]">
             {/* Fixed Header */}
-            <div className="bg-[#131313] p-4 border-b border-[#333333]">
+            <div className="bg-slate-50 dark:bg-[#131313] p-4 border-b border-border dark:border-[#333333]">
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                        <h2 className="text-xl font-semibold text-white">
+                        <h2 className="text-xl font-semibold text-foreground dark:text-white">
                             Invoice #{invoice.invoice_number}
                         </h2>
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-500 text-sm">
                             {invoice.id}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-400 text-sm">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
                         {invoice.work_order_id && (
@@ -193,7 +193,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 variant="outline"
                                 size="sm"
                                 onClick={handleGoToWorkOrder}
-                                className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                                className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                             >
                                 <Wrench className="h-4 w-4 mr-2" />
                                 Go to Work Order
@@ -203,7 +203,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             variant="ghost"
                             size="sm"
                             onClick={onClose}
-                            className="text-gray-400 hover:text-white hover:bg-transparent"
+                            className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-transparent"
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -212,31 +212,31 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-2">
+            <div className="flex-1 overflow-y-auto bg-background dark:bg-[#1A1A1A] p-2">
                 <div className="space-y-2">
                     {/* Customer Information Card */}
-                    <Card className="bg-[#131313] border-[#333333]">
+                    <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
                             <div className="flex items-center gap-2 mb-4">
-                                <User className="h-4 w-4 text-blue-400" />
-                                <h3 className="text-lg font-semibold text-white">Customer Information</h3>
+                                <User className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                                <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Information</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs text-gray-500">Name</p>
-                                    <p className="text-white font-medium">{invoice.customer?.customer_name || 'N/A'}</p>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Name</p>
+                                    <p className="text-foreground dark:text-white font-medium">{invoice.customer?.customer_name || 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Phone</p>
-                                    <p className="text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Phone</p>
+                                    <p className="text-foreground dark:text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Email</p>
-                                    <p className="text-gray-300">{invoice.customer?.customer_email || 'N/A'}</p>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Email</p>
+                                    <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_email || 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Address</p>
-                                    <p className="text-gray-300">{invoice.customer?.customer_address || 'N/A'}</p>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Address</p>
+                                    <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_address || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
@@ -244,13 +244,13 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     
                     {/* Vehicle Information Card */}
                     {invoice.vehicle && (
-                        <Card className="bg-[#131313] border-[#333333]">
+                        <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                             <div className="p-4">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <Car className="h-4 w-4 text-green-400" />
-                                    <h3 className="text-lg font-semibold text-white">Vehicle Information</h3>
+                                    <Car className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Vehicle Information</h3>
                                 </div>
-                                <p className="text-white">
+                                <p className="text-foreground dark:text-white">
                                     {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
                                     {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' 
                                         ? ` - ${invoice.vehicle.license_plate}` 
@@ -262,28 +262,28 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     )}
                     
                     {/* Work Order Details Card */}
-                    <Card className="bg-[#131313] border-[#333333]">
+                    <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
                             <div className="flex items-center gap-2 mb-4">
-                                <LayoutIcon className="h-4 w-4 text-purple-400" />
-                                <h2 className="text-lg font-semibold text-white">Work Order Details</h2>
+                                <LayoutIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                <h2 className="text-lg font-semibold text-foreground dark:text-white">Work Order Details</h2>
                             </div>
                             
                             {invoice.title && (
                                 <div className="mb-1">
-                                    <h3 className="text-md font-semibold text-white">{invoice.title}</h3>
+                                    <h3 className="text-md font-semibold text-foreground dark:text-white">{invoice.title}</h3>
                                 </div>
                             )}
                             
                             {invoice.description && (
                                 <div className="mb-4">
-                                    <p className="text-gray-400">{invoice.description}</p>
+                                    <p className="text-muted-foreground dark:text-gray-400">{invoice.description}</p>
                                 </div>
                             )}
 
                             {/* Line Items Table */}
                             <div className="space-y-2">
-                                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-400 border-b border-gray-700 pb-2">
+                                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground dark:text-gray-400 border-b border-border dark:border-gray-700 pb-2">
                                     <div className="col-span-5">DESCRIPTION</div>
                                     <div className="col-span-2 text-center">TYPE</div>
                                     <div className="col-span-2 text-center">QTY / HOURS</div>
@@ -294,8 +294,8 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 {invoice.invoice_items.map((item, index) => {
                                     const isActive = (item as any).active !== false // Use the 'active' field from JSONB
                                     return (
-                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-gray-800">
-                                            <div className="col-span-5 text-white">
+                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-border dark:border-gray-800">
+                                            <div className="col-span-5 text-foreground dark:text-white">
                                                 <div className="flex items-center gap-2">
                                                     {isActive ? (
                                                         <Check className="h-3 w-3 text-green-500" />
@@ -306,25 +306,25 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                                 </div>
                                             </div>
                                             <div className="col-span-2 text-center">
-                                                <Badge variant="outline" className="text-xs capitalize text-white">
+                                                <Badge variant="outline" className="text-xs capitalize text-foreground dark:text-white">
                                                     {item.item_type}
                                                 </Badge>
                                             </div>
-                                            <div className="col-span-2 text-center text-white">
+                                            <div className="col-span-2 text-center text-foreground dark:text-white">
                                                 {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
                                             </div>
-                                            <div className="col-span-3 text-right text-white">
+                                            <div className="col-span-3 text-right text-foreground dark:text-white">
                                                 {item.item_type === 'labor' ? (
                                                     <span>
                                                         {formatCurrency(item.total_price)}
-                                                        <span className="text-gray-400 text-xs ml-1">
+                                                        <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">
                                                             ({formatCurrency(item.unit_price)}/hr)
                                                         </span>
                                                     </span>
                                                 ) : item.quantity > 1 ? (
                                                     <span>
                                                         {formatCurrency(item.total_price)}
-                                                        <span className="text-gray-400 text-xs ml-1">
+                                                        <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">
                                                             ({formatCurrency(item.unit_price)}/ea)
                                                         </span>
                                                     </span>
@@ -338,43 +338,43 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             </div>
                             
                             {invoice.notes && (
-                                <div className="mt-4 pt-4 border-t border-gray-700">
-                                    <p className="text-white font-medium">Notes:</p>
-                                    <p className="text-gray-400 mt-1">{invoice.notes}</p>
+                                <div className="mt-4 pt-4 border-t border-border dark:border-gray-700">
+                                    <p className="text-foreground dark:text-white font-medium">Notes:</p>
+                                    <p className="text-muted-foreground dark:text-gray-400 mt-1">{invoice.notes}</p>
                                 </div>
                             )}
                         </div>
                     </Card>
                     
                     {/* Amount and Status Card */}
-                    <Card className="bg-[#131313] border-[#333333]">
+                    <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 {/* <div className="h-4 w-4 bg-yellow-400 rounded-full"></div> */}
-                                <h3 className="text-lg font-semibold text-white">Invoice Summary</h3>
+                                <h3 className="text-lg font-semibold text-foreground dark:text-white">Invoice Summary</h3>
                             </div>
                             <div className="space-y-2">
-                                <div className="flex justify-between text-white">
+                                <div className="flex justify-between text-foreground dark:text-white">
                                     <span>Subtotal:</span>
                                     <span>{formatCurrency(subtotal)}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-400">
+                                <div className="flex justify-between text-muted-foreground dark:text-gray-400">
                                     <span>Tax ({(invoice.tax_rate * 100).toFixed(0)}%):</span>
                                     <span>{formatCurrency(tax)}</span>
                                 </div>
                                 {/* {invoice.discount_amount > 0 && (
-                                    <div className="flex justify-between text-gray-400">
+                                    <div className="flex justify-between text-muted-foreground dark:text-gray-400">
                                         <span>Discount:</span>
                                         <span>-{formatCurrency(invoice.discount_amount)}</span>
                                     </div>
                                 )} */}
-                                <Separator className="bg-gray-700" />
+                                <Separator className="bg-border dark:bg-gray-700" />
                                 <div className="flex justify-between items-center pt-2">
                                     <div>
-                                        <p className="text-gray-400 font-medium">Amount Due:</p>
+                                        <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Due:</p>
                                     </div>
                                     <div>
-                                    <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
+                                    <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                     </div>
                                 </div>
                                 <Badge 
