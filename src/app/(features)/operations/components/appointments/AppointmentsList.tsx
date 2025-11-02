@@ -105,10 +105,16 @@ export function AppointmentsList({
                                                 `} />
                                             </div>
                                             <div className="text-sm text-white mb-1">
-                                                {appointment.customer.customer_name}
+                                                {appointment.customer_type === 'walk_in' 
+                                                    ? 'Walk-in Customer' 
+                                                    : appointment.customer?.customer_name || 'Unknown Customer'}
                                             </div>
                                             <div className="text-xs text-gray-400 mb-1">
-                                                {appointment.vehicle.year} {appointment.vehicle.make} {appointment.vehicle.model}
+                                                {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info
+                                                    ? `${appointment.walk_in_vehicle_info.year} ${appointment.walk_in_vehicle_info.make} ${appointment.walk_in_vehicle_info.model}`
+                                                    : appointment.vehicle
+                                                        ? `${appointment.vehicle.year || ''} ${appointment.vehicle.make || ''} ${appointment.vehicle.model || ''}`.trim()
+                                                        : 'Unknown Vehicle'}
                                             </div>
                                             <div className="text-xs text-gray-300">
                                                 {appointment.service_type}

@@ -135,6 +135,60 @@ export const useCreateAppointment = () => {
 }
 
 /**
+ * Hook to create a walk-in appointment (no customer record)
+ */
+export const useCreateWalkInAppointment = () => {
+    const queryClient = useQueryClient()
+    
+    return useMutation({
+        mutationFn: async (data: {
+            appointment: Omit<AppointmentCreateData, 'customer_id' | 'vehicle_id' | 'customer_type' | 'walk_in_vehicle_info'>
+            walkInVehicleInfo: { year: number; make: string; model: string; license_plate: string; color?: string; vin?: string; mileage?: number }
+            vehicleId?: string | null
+        }) => {
+            // Validation
+            if (!data.appointment.appointment_date) {
+                throw new Error('Appointment date is required')
+            }
+
+            if (!data.appointment.start_time || !data.appointment.end_time) {
+                throw new Error('Missing required time fields')
+            }
+
+            // Check availability
+            const isAvailable = await AppointmentService.checkTimeSlotAvailability(
+                data.appointment.shop_id,
+                data.appointment.appointment_date,
+                data.appointment.start_time,
+                data.appointment.end_time
+            )
+
+            if (!isAvailable) {
+                throw new Error('Selected time slot is not available')
+            }
+
+            return AppointmentService.createWalkInAppointment(data)
+        },
+        onSuccess: (newAppointment) => {
+            // Invalidate relevant queries
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.lists()
+            })
+            queryClient.invalidateQueries({
+                queryKey: appointmentKeys.stats(newAppointment.shop_id)
+            })
+            
+            // Show success message
+            toast.success('Walk-in appointment created successfully')
+        },
+        onError: (error: Error) => {
+            console.error('Failed to create walk-in appointment:', error)
+            toast.error(error.message || 'Failed to create walk-in appointment')
+        }
+    })
+}
+
+/**
  * Hook to update an existing appointment
  */
 export const useUpdateAppointment = () => {

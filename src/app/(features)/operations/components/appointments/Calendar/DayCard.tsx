@@ -211,7 +211,9 @@ export function DayCard({
                                             <div className="flex items-center gap-1">
                                                 <User className="h-3 w-3 text-gray-400" />
                                                 <span className="text-xs text-white truncate">
-                                                    {appointment.customer?.customer_name}
+                                                    {appointment.customer_type === 'walk_in' 
+                                                        ? 'Walk-in Customer' 
+                                                        : appointment.customer?.customer_name || 'Unknown Customer'}
                                                 </span>
                                             </div>
                                             
