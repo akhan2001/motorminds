@@ -45,7 +45,7 @@ export function ModernPagination({ totalItems, itemsPerPage }: ModernPaginationP
 
   return (
     <div className="flex items-center justify-between">
-      <div className="text-sm text-gray-400">
+      <div className="text-sm text-muted-foreground dark:text-gray-400">
         Showing {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, totalItems)} of {totalItems.toLocaleString()} results
       </div>
       
@@ -55,7 +55,7 @@ export function ModernPagination({ totalItems, itemsPerPage }: ModernPaginationP
           size="sm"
           onClick={() => updatePage(page - 1)}
           disabled={page === 1}
-          className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white disabled:opacity-50"
+          className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white disabled:opacity-50"
         >
           <ChevronLeft className="h-4 w-4" />
           Previous
@@ -65,7 +65,7 @@ export function ModernPagination({ totalItems, itemsPerPage }: ModernPaginationP
           <div key={index}>
             {pageNum === '...' ? (
               <div className="px-3 py-2">
-                <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
               </div>
             ) : (
               <Button
@@ -75,7 +75,7 @@ export function ModernPagination({ totalItems, itemsPerPage }: ModernPaginationP
                 className={
                   page === pageNum
                     ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                    : "bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                 }
               >
                 {pageNum}
@@ -89,7 +89,7 @@ export function ModernPagination({ totalItems, itemsPerPage }: ModernPaginationP
           size="sm"
           onClick={() => updatePage(page + 1)}
           disabled={page === totalPages}
-          className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white disabled:opacity-50"
+          className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white disabled:opacity-50"
         >
           Next
           <ChevronRight className="h-4 w-4" />

@@ -59,11 +59,11 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
         return (
             <div className="h-full space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                    <Skeleton className="h-8 w-48 bg-[#2a2a2a]" />
-                    <Skeleton className="h-6 w-24 bg-[#2a2a2a]" />
+                    <Skeleton className="h-8 w-48 bg-secondary dark:bg-[#2a2a2a]" />
+                    <Skeleton className="h-6 w-24 bg-secondary dark:bg-[#2a2a2a]" />
                 </div>
                 {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full bg-[#2a2a2a]" />
+                    <Skeleton key={i} className="h-32 w-full bg-secondary dark:bg-[#2a2a2a]" />
                 ))}
             </div>
         )
@@ -71,13 +71,13 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
 
     if (error) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a] p-8">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                 <div className="flex flex-col items-center justify-center text-center">
-                    <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <AlertCircle className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
                         Error Loading Archived Invoices
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground dark:text-gray-400 text-sm">
                         {error instanceof Error ? error.message : 'Failed to load archived invoices'}
                     </p>
                 </div>
@@ -87,13 +87,13 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
 
     if (filteredInvoices.length === 0) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a] p-8">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                 <div className="flex flex-col items-center justify-center text-center">
-                    <Archive className="h-12 w-12 text-gray-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <Archive className="h-12 w-12 text-muted-foreground dark:text-gray-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
                         {searchValue ? 'No archived invoices found' : 'No archived invoices'}
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground dark:text-gray-400 text-sm">
                         {searchValue 
                             ? 'Try adjusting your search terms'
                             : 'Archived invoices will appear here'
@@ -108,11 +108,11 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
         <div className="h-full flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <Archive className="h-4 w-4 text-gray-400" />
+                <h2 className="text-lg font-semibold text-foreground dark:text-white flex items-center gap-2">
+                    <Archive className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                     Archived Invoices
                 </h2>
-                <Badge variant="secondary" className="bg-[#2a2a2a] text-gray-300">
+                <Badge variant="secondary" className="bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-300">
                     {filteredInvoices.length} {filteredInvoices.length === 1 ? 'invoice' : 'invoices'}
                 </Badge>
             </div>
@@ -131,8 +131,8 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
 
             {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-800">
-                    <div className="text-sm text-gray-400">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border dark:border-gray-800">
+                    <div className="text-sm text-muted-foreground dark:text-gray-400">
                         Page {currentPage} of {totalPages}
                     </div>
                     <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
                             size="sm"
                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                             disabled={currentPage === 1}
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a]"
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a]"
                         >
                             <ChevronLeft className="h-4 w-4" />
                             Previous
@@ -151,7 +151,7 @@ const ArchivedInvoiceList: React.FC<ArchivedInvoiceListProps> = ({
                             size="sm"
                             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                             disabled={currentPage === totalPages}
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a]"
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a]"
                         >
                             Next
                             <ChevronRight className="h-4 w-4" />
