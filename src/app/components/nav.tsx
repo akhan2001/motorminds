@@ -18,6 +18,7 @@ import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
+import { useAdminContextWithRole } from "@/contexts/admin-context"
 
 export function Nav() {
 	const router = useRouter()
@@ -49,39 +50,8 @@ export function Nav() {
 
 	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
 
-	// Fetch admin type if user is admin
-	const [adminType, setAdminType] = useState<'super-admin' | 'organization-admin' | 'shop-admin' | null>(null)
-	
-	useEffect(() => {
-		const fetchAdminType = async () => {
-			// Only fetch if user role suggests they might be admin
-			// Check for 'admin' or 'super-admin' (database can have either)
-			const roleStr = typeof userRole === 'string' ? userRole.toLowerCase() : ''
-			if (!userRole || (roleStr !== 'admin' && roleStr !== 'super-admin')) {
-				setAdminType(null)
-				return
-			}
-			
-			try {
-				const response = await fetch('/api/admin/context')
-				if (response.ok) {
-					const data = await response.json()
-					console.log('Admin context fetched:', data)
-					setAdminType(data.adminType || null)
-				} else {
-					// Not an admin (403) - set to null
-					console.log('Admin context fetch failed:', response.status, response.statusText)
-					setAdminType(null)
-				}
-			} catch (error) {
-				// Error fetching - set to null
-				console.error('Error fetching admin context:', error)
-				setAdminType(null)
-			}
-		}
-		
-		fetchAdminType()
-	}, [userRole])
+	// Use cached admin context
+	const { adminType } = useAdminContextWithRole(userRole ?? null)
 
 	// Get filtered navigation items based on user role and admin type
 	const navItems = useMemo(() => {

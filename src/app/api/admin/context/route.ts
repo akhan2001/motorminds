@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 
+// Simple in-memory cache for admin context (5 minute TTL)
+const adminContextCache = new Map<string, { data: any, timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient()
@@ -13,6 +17,13 @@ export async function GET(request: NextRequest) {
                 { error: 'Unauthorized' },
                 { status: 401 }
             )
+        }
+
+        // Check cache first
+        const cacheKey = user.id
+        const cached = adminContextCache.get(cacheKey)
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            return NextResponse.json(cached.data)
         }
 
         // Get user details with organization context
@@ -79,12 +90,20 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        return NextResponse.json({
+        const result = {
             adminType,
             organizationId,
             shopId,
             userId: user.id
+        }
+
+        // Cache the result
+        adminContextCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
         })
+
+        return NextResponse.json(result)
     } catch (error) {
         console.error('Error fetching admin context:', error)
         return NextResponse.json(
