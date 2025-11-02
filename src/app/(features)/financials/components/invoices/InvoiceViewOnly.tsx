@@ -395,7 +395,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
             </div>
 
             {/* Fixed Footer with Actions */}
-            <div className="bg-[#131313] border-t border-[#333333] p-4 flex flex-wrap gap-2">
+            <div className="bg-slate-50 dark:bg-[#131313] border-t border-border dark:border-[#333333] p-4 flex flex-wrap gap-2">
                 <Button 
                     size="sm"
                     className="bg-green-600 text-white hover:bg-green-700" 

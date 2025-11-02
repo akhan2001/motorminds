@@ -90,13 +90,13 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-[#111111] border-[#2a2a2a] text-white">
+            <DialogContent className="max-w-2xl bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-green-500" />
+                    <DialogTitle className="text-xl font-semibold text-foreground dark:text-white flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-green-600 dark:text-green-400" />
                         Send Invoice SMS
                     </DialogTitle>
-                    <DialogDescription className="text-md text-gray-400">
+                    <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
                         Send the invoice details to the customer via SMS.
                     </DialogDescription>
                 </DialogHeader>
@@ -104,15 +104,15 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                 <div className="space-y-6">
                     {/* Invoice Summary */}
                     <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-gray-300">Invoice Summary</h3>
-                        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
+                        <h3 className="text-sm font-medium text-foreground dark:text-gray-300">Invoice Summary</h3>
+                        <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-semibold text-white">Invoice #{invoice.invoice_number}</span>
-                                <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                                <span className="text-lg font-semibold text-foreground dark:text-white">Invoice #{invoice.invoice_number}</span>
+                                <Badge variant="outline" className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20">
                                     {invoice.status}
                                 </Badge>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
                                 <div className="flex items-center gap-1">
                                     <DollarSign className="h-3 w-3" />
                                     {formatCurrency(invoice.total_amount || 0)}
@@ -124,14 +124,14 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                     {/* Customer & Vehicle Info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <User className="h-4 w-4" />
                                 Customer
                             </h4>
-                            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">{invoice.customer.customer_name || 'Unknown'}</p>
+                            <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-border dark:border-[#2a2a2a]">
+                                <p className="text-foreground dark:text-white font-medium">{invoice.customer.customer_name || 'Unknown'}</p>
                                 {invoice.customer.customer_phone && (
-                                    <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 mt-1">
                                         <Phone className="h-3 w-3" />
                                         {formatPhoneNumber(invoice.customer.customer_phone)}
                                     </div>
@@ -140,14 +140,14 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <Car className="h-4 w-4" />
                                 Vehicle
                             </h4>
-                            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">{vehicleInfo}</p>
+                            <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-border dark:border-[#2a2a2a]">
+                                <p className="text-foreground dark:text-white font-medium">{vehicleInfo}</p>
                                 {invoice.vehicle?.license_plate && (
-                                    <p className="text-sm text-gray-400 mt-1">
+                                    <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                                         License: {invoice.vehicle.license_plate}
                                     </p>
                                 )}
@@ -155,46 +155,46 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                         </div>
                     </div>
 
-                    <Separator className="bg-[#2a2a2a]" />
+                    <Separator className="bg-border dark:bg-[#2a2a2a]" />
 
                     {/* SMS Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Send Invoice SMS
                             </h3>
                             {messagingAvailability.isLoading && (
-                                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground dark:text-gray-400" />
                             )}
                         </div>
 
                         {!customerHasPhone ? (
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                                <p className="text-yellow-400 text-sm">
+                            <div className="bg-yellow-500/10 dark:bg-yellow-500/10 border border-yellow-500/20 dark:border-yellow-500/20 rounded-lg p-3">
+                                <p className="text-yellow-600 dark:text-yellow-400 text-sm">
                                     No phone number available for this customer.
                                 </p>
                             </div>
                         ) : !messagingAvailability.isAvailable ? (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                            <div className="bg-red-500/10 dark:bg-red-500/10 border border-red-500/20 dark:border-red-500/20 rounded-lg p-3">
                                 <div className="flex items-center gap-2">
-                                    <Lock className="h-4 w-4 text-red-400" />
-                                    <p className="text-red-400 text-sm">
+                                    <Lock className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                    <p className="text-red-600 dark:text-red-400 text-sm">
                                         SMS service is not available. Contact admin to set up Twilio.
                                     </p>
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                                    <div className="p-3 border-b border-[#2a2a2a]">
+                                <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg border border-border dark:border-[#2a2a2a]">
+                                    <div className="p-3 border-b border-border dark:border-[#2a2a2a]">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-300">SMS message to send:</span>
+                                            <span className="text-sm text-foreground dark:text-gray-300">SMS message to send:</span>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setIsEditing(!isEditing)}
-                                                className="text-green-400 hover:text-green-300"
+                                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                                             >
                                                 {isEditing ? 'Done' : 'Edit'}
                                             </Button>
@@ -206,22 +206,22 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                                 <Textarea
                                                     value={customMessage}
                                                     onChange={(e) => setCustomMessage(e.target.value)}
-                                                    className="bg-[#0a0a0a] border-[#2a2a2a] text-white resize-none"
+                                                    className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white resize-none"
                                                     rows={3}
                                                     placeholder="Enter your SMS message..."
                                                     maxLength={160}
                                                 />
-                                                <div className="flex justify-between text-xs text-gray-400">
+                                                <div className="flex justify-between text-xs text-muted-foreground dark:text-gray-400">
                                                     <span>SMS messages are limited to 160 characters</span>
                                                     <span>{customMessage.length}/160</span>
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
-                                                <p className="text-white text-sm leading-relaxed">
+                                                <p className="text-foreground dark:text-white text-sm leading-relaxed">
                                                     {customMessage}
                                                 </p>
-                                                <div className="text-xs text-gray-400">
+                                                <div className="text-xs text-muted-foreground dark:text-gray-400">
                                                     {customMessage.length}/160 characters
                                                 </div>
                                             </div>
@@ -238,7 +238,7 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                         variant="outline"
                         onClick={onClose}
                         disabled={isLoading}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
                     >
                         Cancel
                     </Button>
@@ -267,7 +267,7 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                 </div>
                             </TooltipTrigger>
                             {(!customerHasPhone || !messagingAvailability.isAvailable) && (
-                                <TooltipContent>
+                                <TooltipContent className="bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#1f1f1f] text-popover-foreground dark:text-white">
                                     <p>
                                         {!customerHasPhone 
                                             ? "Customer phone number required" 

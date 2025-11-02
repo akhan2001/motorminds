@@ -50,26 +50,26 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-green-400" />
-                <h3 className="text-lg font-semibold text-white">Parts Items</h3>
+                <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <h3 className="text-lg font-semibold text-foreground dark:text-white">Parts Items</h3>
             </div>
 
             {partsItems.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 border border-dashed border-[#2a2a2a] rounded-lg">
+                <div className="text-center py-8 text-muted-foreground dark:text-gray-500 border border-dashed border-border dark:border-[#2a2a2a] rounded-lg">
                     No parts added yet. Click "Add Part" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
                     {partsItems.map((item, index) => (
-                        <div key={item.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+                        <div key={item.id} className="bg-white dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-4">
                             <div className="flex items-start justify-between mb-3">
-                                <h4 className="text-sm font-medium text-green-400">Part Item {index + 1}</h4>
+                                <h4 className="text-sm font-medium text-green-600 dark:text-green-400">Part Item {index + 1}</h4>
                                 <Button
                                     type="button"
                                     onClick={() => removePartItem(index)}
                                     variant="ghost"
                                     size="sm"
-                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
+                                    className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 w-7 p-0"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -78,14 +78,14 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
                             <div className="space-y-3">
                                 {/* Description */}
                                 <div>
-                                    <Label htmlFor={`part_description_${index}`} className="text-gray-400 text-xs">
+                                    <Label htmlFor={`part_description_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
                                         Description *
                                     </Label>
                                     <Input
                                         id={`part_description_${index}`}
                                         value={item.description}
                                         onChange={(e) => updatePartItem(index, 'description', e.target.value)}
-                                        className="bg-[#111111] border-[#2a2a2a] text-white"
+                                        className="bg-background dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                         placeholder="e.g., Oil filter, Brake pads"
                                     />
                                 </div>
@@ -93,26 +93,26 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
                                 {/* Part Number and Supplier */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <Label htmlFor={`part_number_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_number_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
                                             Part Number
                                         </Label>
                                         <Input
                                             id={`part_number_${index}`}
                                             value={item.part_number || ''}
                                             onChange={(e) => updatePartItem(index, 'part_number', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-background dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                             placeholder="PN-12345"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`supplier_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`supplier_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
                                             Supplier
                                         </Label>
                                         <Input
                                             id={`supplier_${index}`}
                                             value={item.supplier || ''}
                                             onChange={(e) => updatePartItem(index, 'supplier', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-background dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                             placeholder="Supplier name"
                                         />
                                     </div>
@@ -121,7 +121,7 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
                                 {/* Quantity and Unit Price */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <Label htmlFor={`part_quantity_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_quantity_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
                                             Quantity *
                                         </Label>
                                         <Input
@@ -129,13 +129,13 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
                                             type="number"
                                             value={item.quantity}
                                             onChange={(e) => updatePartItem(index, 'quantity', Number(e.target.value))}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-background dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                             min="0"
                                             step="1"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`part_price_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_price_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
                                             Unit Price *
                                         </Label>
                                         <Input
@@ -143,7 +143,7 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
                                             type="number"
                                             value={item.unit_price}
                                             onChange={(e) => updatePartItem(index, 'unit_price', Number(e.target.value))}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-background dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                             min="0"
                                             step="0.01"
                                         />
@@ -152,7 +152,7 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
 
                                 {/* Total */}
                                 <div>
-                                    <Label htmlFor={`part_total_${index}`} className="text-gray-400 text-xs">
+                                    <Label htmlFor={`part_total_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
                                         Total Price
                                     </Label>
                                     <Input
@@ -160,7 +160,7 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
                                         type="number"
                                         value={item.total_price.toFixed(2)}
                                         disabled
-                                        className="bg-[#0a0a0a] border-[#2a2a2a] text-white font-semibold"
+                                        className="bg-slate-50 dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white font-semibold"
                                     />
                                 </div>
                             </div>
@@ -170,7 +170,7 @@ export const InvoicePartsItems: React.FC<InvoicePartsItemsProps> = ({ items, onI
             )}
 
             {/* Add Part Button at Bottom */}
-            <div className="pt-3 border-t border-[#2a2a2a]">
+            <div className="pt-3 border-t border-border dark:border-[#2a2a2a]">
                 <Button
                     type="button"
                     onClick={addPartItem}
