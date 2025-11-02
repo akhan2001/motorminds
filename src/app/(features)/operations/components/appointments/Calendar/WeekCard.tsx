@@ -177,7 +177,9 @@ export function WeekCard({
                     `}
                 >
                     <div className="text-xs font-medium text-white truncate">
-                        {appointment.customer?.customer_name}
+                        {appointment.customer_type === 'walk_in' 
+                            ? 'Walk-in Customer' 
+                            : appointment.customer?.customer_name || 'Unknown Customer'}
                     </div>
                     <div className="text-xs text-white/80 truncate">
                         {appointment.service_type}

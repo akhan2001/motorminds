@@ -32,10 +32,14 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
     // Format the default message with actual appointment data
     useEffect(() => {
         if (appointment && isOpen) {
-            const customerName = appointment.customer?.customer_name || 'Customer'
-            const vehicleInfo = appointment.vehicle ? 
-                `${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : 
-                undefined
+            const customerName = appointment.customer_type === 'walk_in' 
+                ? 'Customer' 
+                : appointment.customer?.customer_name || 'Customer'
+            const vehicleInfo = appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info
+                ? `${appointment.walk_in_vehicle_info.year} ${appointment.walk_in_vehicle_info.make} ${appointment.walk_in_vehicle_info.model}`
+                : appointment.vehicle 
+                    ? `${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` 
+                    : undefined
             const serviceType = appointment.service_type
             const appointmentDate = format(new Date(appointment.appointment_date), 'EEEE, MMMM d')
             const appointmentTime = appointment.start_time || 'your scheduled time'
@@ -55,7 +59,8 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
     }, [appointment, isOpen, selectedTemplate])
 
     const handleSendMessage = async () => {
-        if (!appointment.customer?.customer_phone) {
+        // Walk-in appointments don't have customer phone, so messaging is not available
+        if (appointment.customer_type === 'walk_in' || !appointment.customer?.customer_phone) {
             onConfirm(false)
             return
         }
@@ -77,11 +82,13 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
         setSelectedTemplate(templateType as any)
     }
 
-    const vehicleInfo = appointment.vehicle ? 
-        `${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : 
-        'Vehicle information not available'
+    const vehicleInfo = appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info
+        ? `${appointment.walk_in_vehicle_info.year} ${appointment.walk_in_vehicle_info.make} ${appointment.walk_in_vehicle_info.model}`
+        : appointment.vehicle 
+            ? `${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` 
+            : 'Vehicle information not available'
 
-    const customerHasPhone = appointment.customer?.customer_phone
+    const customerHasPhone = appointment.customer_type === 'registered' && appointment.customer?.customer_phone
     const appointmentDate = format(new Date(appointment.appointment_date), 'EEEE, MMMM d, yyyy')
     const appointmentTime = appointment.start_time || 'Not specified'
 
@@ -127,8 +134,12 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                                 Customer
                             </h4>
                             <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">{appointment.customer?.customer_name || 'Unknown'}</p>
-                                {appointment.customer?.customer_phone && (
+                                <p className="text-white font-medium">
+                                    {appointment.customer_type === 'walk_in' 
+                                        ? 'Walk-in Customer' 
+                                        : appointment.customer?.customer_name || 'Unknown'}
+                                </p>
+                                {appointment.customer_type === 'registered' && appointment.customer?.customer_phone && (
                                     <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
                                         <Phone className="h-3 w-3" />
                                         {formatPhoneNumber(appointment.customer.customer_phone)}
@@ -144,11 +155,13 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                             </h4>
                             <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
                                 <p className="text-white font-medium">{vehicleInfo}</p>
-                                {appointment.vehicle?.license_plate && (
+                                {(appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.license_plate) || appointment.vehicle?.license_plate ? (
                                     <p className="text-sm text-gray-400 mt-1">
-                                        License: {appointment.vehicle.license_plate}
+                                        License: {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.license_plate
+                                            ? appointment.walk_in_vehicle_info.license_plate
+                                            : appointment.vehicle?.license_plate}
                                     </p>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     </div>

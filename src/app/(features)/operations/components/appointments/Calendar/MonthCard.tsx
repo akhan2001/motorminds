@@ -193,12 +193,12 @@ export function MonthCard({
                                     transition-all duration-200 hover:scale-[1.02]
                                     ${getStatusColor(appointment.status || 'scheduled').replace('bg-', 'border-l-')}
                                 `}
-                                title={`${appointment.start_time} - ${appointment.customer.customer_name} (${appointment.service_type})`}
+                                title={`${appointment.start_time} - ${appointment.customer_type === 'walk_in' ? 'Walk-in Customer' : appointment.customer?.customer_name || 'Unknown'} (${appointment.service_type})`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
                                         <div className="font-medium text-white text-[10px] truncate">
-                                            {appointment.start_time} {appointment.customer.customer_name}
+                                            {appointment.start_time} {appointment.customer_type === 'walk_in' ? 'Walk-in' : appointment.customer?.customer_name || 'Unknown'}
                                         </div>
                                         <div className="text-gray-400 text-[9px] truncate">
                                             {appointment.service_type}

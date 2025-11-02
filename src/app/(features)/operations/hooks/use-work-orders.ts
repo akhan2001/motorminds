@@ -225,6 +225,9 @@ export function useDeleteWorkOrder() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             
+            // Invalidate appointments since deleting a work order may reset appointment status
+            queryClient.invalidateQueries({ queryKey: ['appointments'] })
+            
             toast.success('Work order deleted successfully')
         },
         onError: (error: any) => {

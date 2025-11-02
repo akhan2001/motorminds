@@ -7,6 +7,7 @@ import type {
     DateRange,
     AppointmentStats
 } from '../types/appointment'
+import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 
 const supabase = createClient()
 
@@ -36,6 +37,8 @@ export class AppointmentService {
                 status,
                 confirmation_code,
                 created_by_customer,
+                customer_type,
+                walk_in_vehicle_info,
                 customer:customers!appointments_customer_id_fkey(
                     id,
                     customer_name,
@@ -95,6 +98,8 @@ export class AppointmentService {
                 status,
                 confirmation_code,
                 created_by_customer,
+                customer_type,
+                walk_in_vehicle_info,
                 customer:customers!appointments_customer_id_fkey(
                     id,
                     customer_name,
@@ -146,6 +151,44 @@ export class AppointmentService {
 
         if (error) throw new Error(`Failed to create appointment: ${error.message}`)
         return data
+    }
+
+    /**
+     * Create a walk-in appointment (no customer record)
+     */
+    static async createWalkInAppointment(data: {
+        appointment: Omit<AppointmentCreateData, 'customer_id' | 'vehicle_id' | 'customer_type' | 'walk_in_vehicle_info'>
+        walkInVehicleInfo: WalkInVehicleInfo
+        vehicleId?: string | null
+    }): Promise<Appointment> {
+        // Validate required walk-in vehicle fields
+        if (!data.walkInVehicleInfo.year || !data.walkInVehicleInfo.make || 
+            !data.walkInVehicleInfo.model || !data.walkInVehicleInfo.license_plate) {
+            throw new Error('Year, make, model, and license plate are required for walk-in customers')
+        }
+
+        // Generate confirmation code
+        const confirmationCode = AppointmentService.generateConfirmationCode()
+
+        const appointmentData: AppointmentCreateData = {
+            ...data.appointment,
+            customer_id: null,
+            vehicle_id: data.vehicleId || null,
+            customer_type: 'walk_in',
+            walk_in_vehicle_info: data.walkInVehicleInfo,
+        }
+
+        const { data: appointmentResult, error } = await supabase
+            .from('appointments')
+            .insert({
+                ...appointmentData,
+                confirmation_code: confirmationCode
+            })
+            .select()
+            .single()
+
+        if (error) throw new Error(`Failed to create walk-in appointment: ${error.message}`)
+        return appointmentResult
     }
 
     /**
@@ -356,9 +399,17 @@ export class AppointmentService {
     }
 
     static async createWorkOrderFromAppointment(appointmentId: string): Promise<string> {
+        // Fetch appointment with all fields including customer_type and walk_in_vehicle_info
+        // Explicitly select customer_type and walk_in_vehicle_info to ensure they're included
         const { data: appointment, error: fetchError } = await supabase
             .from('appointments')
-            .select(`*, customer:customers(*), vehicle:customer_vehicles(*)`)
+            .select(`
+                *,
+                customer_type,
+                walk_in_vehicle_info,
+                customer:customers(*),
+                vehicle:customer_vehicles(*)
+            `)
             .eq('id', appointmentId)
             .single()
         
@@ -366,33 +417,98 @@ export class AppointmentService {
             throw new Error('Appointment not found')
         }
 
-        const workOrderNumber = `WO-${Date.now()}`
-        const customerName = appointment.customer?.customer_name || 'Customer'
+        // Import WorkOrderService dynamically to avoid circular dependencies
+        const { WorkOrderService } = await import('./work-order-service')
+        const workOrderService = new WorkOrderService()
 
-        const { data: workOrder, error } = await supabase
-            .from('work_orders')
-            .insert({
-                work_order_number: workOrderNumber,
+        const workOrderNumber = `WO-${Date.now()}`
+
+        let workOrderId: string
+
+        // Check customer_type - default to 'registered' if not set
+        const customerType = appointment.customer_type || 'registered'
+        const walkInVehicleInfo = appointment.walk_in_vehicle_info
+
+        console.log('Creating work order from appointment:', {
+            appointmentId,
+            customerType,
+            hasWalkInVehicleInfo: !!walkInVehicleInfo,
+            walkInVehicleInfo
+        })
+
+        if (customerType === 'walk_in') {
+            // Handle walk-in appointment
+            if (!walkInVehicleInfo) {
+                console.error('Walk-in appointment missing vehicle info:', appointment)
+                throw new Error('Walk-in vehicle information is required. Please ensure the appointment has walk_in_vehicle_info set.')
+            }
+
+            // Validate walk-in vehicle info structure
+            if (typeof walkInVehicleInfo !== 'object' || !walkInVehicleInfo.year || !walkInVehicleInfo.make || !walkInVehicleInfo.model) {
+                console.error('Invalid walk-in vehicle info structure:', walkInVehicleInfo)
+                throw new Error('Walk-in vehicle information is missing required fields (year, make, model)')
+            }
+
+            const vehicleDisplay = `${walkInVehicleInfo.year} ${walkInVehicleInfo.make} ${walkInVehicleInfo.model}${walkInVehicleInfo.license_plate ? ` (${walkInVehicleInfo.license_plate})` : ''}`
+
+            console.log('Creating walk-in work order with:', {
+                workOrderNumber,
                 shop_id: appointment.shop_id,
-                customer_id: appointment.customer_id,
                 vehicle_id: appointment.vehicle_id,
                 appointment_id: appointmentId,
-                title: `${appointment.service_type} - ${customerName}`,
-                notes: appointment.notes,
-                status: 'pending',
-                priority: 'medium'
+                walkInVehicleInfo
             })
-            .select()
-            .single()
 
-        if (error) throw new Error(`Failed to create work order: ${error.message}`)
+            const workOrder = await workOrderService.createWalkInWorkOrder({
+                workOrder: {
+                    work_order_number: workOrderNumber,
+                    shop_id: appointment.shop_id,
+                    vehicle_id: appointment.vehicle_id || undefined,
+                    appointment_id: appointmentId,
+                    title: `${appointment.service_type} - ${vehicleDisplay}`,
+                    notes: appointment.notes || undefined,
+                    status: 'pending',
+                    priority: 'medium',
+                    tags: [],
+                    attachments: [],
+                },
+                walkInVehicleInfo: walkInVehicleInfo,
+            })
+
+            console.log('Walk-in work order created successfully:', workOrder.id)
+            workOrderId = workOrder.id
+        } else {
+            // Handle registered customer appointment
+            const customer = Array.isArray(appointment.customer) ? appointment.customer[0] : appointment.customer
+            const customerName = customer?.customer_name || 'Customer'
+
+            const { data: workOrder, error } = await supabase
+                .from('work_orders')
+                .insert({
+                    work_order_number: workOrderNumber,
+                    shop_id: appointment.shop_id,
+                    customer_id: appointment.customer_id,
+                    vehicle_id: appointment.vehicle_id,
+                    appointment_id: appointmentId,
+                    title: `${appointment.service_type} - ${customerName}`,
+                    notes: appointment.notes,
+                    status: 'pending',
+                    priority: 'medium',
+                    customer_type: 'registered',
+                })
+                .select()
+                .single()
+
+            if (error) throw new Error(`Failed to create work order: ${error.message}`)
+            workOrderId = workOrder.id
+        }
 
         await supabase
             .from('appointments')
             .update({ status: 'in_progress' })
             .eq('id', appointmentId)
 
-        return workOrder.id
+        return workOrderId
     }
 
     /**
