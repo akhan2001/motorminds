@@ -197,13 +197,8 @@ export function MonthCard({
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
-<<<<<<< HEAD
                                         <div className="font-medium text-foreground text-[10px] truncate">
-                                            {appointment.start_time} {appointment.customer.customer_name}
-=======
-                                        <div className="font-medium text-white text-[10px] truncate">
                                             {appointment.start_time} {appointment.customer_type === 'walk_in' ? 'Walk-in' : appointment.customer?.customer_name || 'Unknown'}
->>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                         </div>
                                         <div className="text-muted-foreground text-[9px] truncate">
                                             {appointment.service_type}

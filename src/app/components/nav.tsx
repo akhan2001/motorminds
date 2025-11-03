@@ -30,60 +30,8 @@ export function Nav() {
 		return null
 	}
 
-<<<<<<< HEAD
-	// Fetch admin type if user is admin
-	const [adminType, setAdminType] = useState<'super-admin' | 'organization-admin' | 'shop-admin' | null>(null)
-	
-	useEffect(() => {
-		const fetchAdminType = async () => {
-			// Only fetch if user role suggests they might be admin
-			// Check for 'admin' or 'super-admin' (database can have either)
-			const roleStr = typeof userRole === 'string' ? userRole.toLowerCase() : ''
-			if (!userRole || (roleStr !== 'admin' && roleStr !== 'super-admin')) {
-				setAdminType(null)
-				return
-			}
-			
-			try {
-				const response = await fetch('/api/admin/context')
-				if (response.ok) {
-					const data = await response.json()
-					console.log('Admin context fetched:', data)
-					setAdminType(data.adminType || null)
-				} else {
-					// Not an admin (403) - set to null
-					console.log('Admin context fetch failed:', response.status, response.statusText)
-					setAdminType(null)
-				}
-			} catch (error) {
-				// Error fetching - set to null
-				console.error('Error fetching admin context:', error)
-				setAdminType(null)
-			}
-		}
-		
-		fetchAdminType()
-	}, [userRole])
-=======
-	// useEffect only runs on the client, so now we can safely show the UI
-	useEffect(() => {
-		setMounted(true)
-	}, [])
-
-	// Avatar is now handled by the ProfileDropdown component
-
-	// Render the icon based on mounted state to avoid hydration mismatch
-	const themeIcon = mounted && theme === "light" ? (
-		<Moon className="w-4 h-4 mr-2" />
-	) : (
-		<Sun className="w-4 h-4 mr-2" />
-	)
-
-	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
-
 	// Use cached admin context
 	const { adminType } = useAdminContextWithRole(userRole ?? null)
->>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
 
 	// Get filtered navigation items based on user role and admin type
 	const navItems = useMemo(() => {
