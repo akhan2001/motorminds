@@ -184,12 +184,20 @@ export function AppointmentDetailsCard({
                         </h4>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
+<<<<<<< HEAD
                                 <span className="text-muted-foreground text-sm">Name:</span>
                                 <span className="text-foreground text-sm font-medium">
                                     {appointment.customer.customer_name}
+=======
+                                <span className="text-gray-400 text-sm">Name:</span>
+                                <span className="text-white text-sm font-medium">
+                                    {appointment.customer_type === 'walk_in' 
+                                        ? 'Walk-in Customer' 
+                                        : appointment.customer?.customer_name || 'Unknown Customer'}
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                 </span>
                             </div>
-                            {appointment.customer.customer_phone && (
+                            {appointment.customer_type === 'registered' && appointment.customer?.customer_phone && (
                                 <div className="flex items-center justify-between">
                                     <span className="text-muted-foreground text-sm">Phone:</span>
                                     <span className="text-foreground text-sm">
@@ -197,7 +205,7 @@ export function AppointmentDetailsCard({
                                     </span>
                                 </div>
                             )}
-                            {appointment.customer.customer_email && (
+                            {appointment.customer_type === 'registered' && appointment.customer?.customer_email && (
                                 <div className="flex items-center justify-between">
                                     <span className="text-muted-foreground text-sm">Email:</span>
                                     <span className="text-foreground text-sm">
@@ -218,35 +226,69 @@ export function AppointmentDetailsCard({
                         </h4>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
+<<<<<<< HEAD
                                 <span className="text-muted-foreground text-sm">Vehicle:</span>
                                 <span className="text-foreground text-sm">
                                     {appointment.vehicle.year} {appointment.vehicle.make} {appointment.vehicle.model}
+=======
+                                <span className="text-gray-400 text-sm">Vehicle:</span>
+                                <span className="text-white text-sm">
+                                    {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info
+                                        ? `${appointment.walk_in_vehicle_info.year} ${appointment.walk_in_vehicle_info.make} ${appointment.walk_in_vehicle_info.model}${appointment.walk_in_vehicle_info.license_plate ? ` (${appointment.walk_in_vehicle_info.license_plate})` : ''}`
+                                        : appointment.vehicle
+                                            ? `${appointment.vehicle.year || ''} ${appointment.vehicle.make || ''} ${appointment.vehicle.model || ''}`.trim() || 'Unknown Vehicle'
+                                            : 'Unknown Vehicle'}
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                 </span>
                             </div>
-                            {appointment.vehicle.color && (
+                            {(appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.color) || appointment.vehicle?.color ? (
                                 <div className="flex items-center justify-between">
+<<<<<<< HEAD
                                     <span className="text-muted-foreground text-sm">Color:</span>
                                     <span className="text-foreground text-sm">
                                         {appointment.vehicle.color}
+=======
+                                    <span className="text-gray-400 text-sm">Color:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.color
+                                            ? appointment.walk_in_vehicle_info.color
+                                            : appointment.vehicle?.color}
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                     </span>
                                 </div>
-                            )}
-                            {appointment.vehicle.license_plate && (
+                            ) : null}
+                            {(appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.license_plate) || appointment.vehicle?.license_plate ? (
                                 <div className="flex items-center justify-between">
+<<<<<<< HEAD
                                     <span className="text-muted-foreground text-sm">License Plate:</span>
                                     <span className="text-foreground text-sm">
                                         {appointment.vehicle.license_plate}
+=======
+                                    <span className="text-gray-400 text-sm">License Plate:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.license_plate
+                                            ? appointment.walk_in_vehicle_info.license_plate
+                                            : appointment.vehicle?.license_plate}
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                     </span>
                                 </div>
-                            )}
-                            {appointment.vehicle.mileage && (
+                            ) : null}
+                            {(appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.mileage) || appointment.vehicle?.mileage ? (
                                 <div className="flex items-center justify-between">
+<<<<<<< HEAD
                                     <span className="text-muted-foreground text-sm">Mileage:</span>
                                     <span className="text-foreground text-sm">
                                         {appointment.vehicle.mileage?.toLocaleString()} miles
+=======
+                                    <span className="text-gray-400 text-sm">Mileage:</span>
+                                    <span className="text-white text-sm">
+                                        {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.mileage
+                                            ? appointment.walk_in_vehicle_info.mileage.toLocaleString()
+                                            : appointment.vehicle?.mileage?.toLocaleString()} miles
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                     </span>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                     </div>
 
@@ -301,17 +343,24 @@ export function AppointmentDetailsCard({
 
                     {/* Action Buttons */}
                     <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Message button - only show for registered customers with phone */}
+                        {appointment.customer_type === 'registered' && appointment.customer?.customer_phone && (
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleShowMessageModal}
+<<<<<<< HEAD
                                 className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+=======
+                                className="w-full bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                             >
                                 <MessageSquare className="h-4 w-4 mr-2" />
                                 Message
                             </Button>
+                        )}
 
+<<<<<<< HEAD
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -323,6 +372,19 @@ export function AppointmentDetailsCard({
                                 Edit
                             </Button>
                         </div>
+=======
+                        {/* Edit button - commented out for now */}
+                        {/* <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEdit?.(appointment)}
+                            disabled={!canEdit}
+                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button> */}
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
 
                         {canCreateWorkOrder ? (
                             <Button

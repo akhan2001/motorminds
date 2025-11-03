@@ -104,11 +104,25 @@ export function AppointmentsList({
                                                       'bg-yellow-500'}
                                                 `} />
                                             </div>
+<<<<<<< HEAD
                                             <div className="text-sm text-foreground mb-1">
                                                 {appointment.customer.customer_name}
                                             </div>
                                             <div className="text-xs text-muted-foreground mb-1">
                                                 {appointment.vehicle.year} {appointment.vehicle.make} {appointment.vehicle.model}
+=======
+                                            <div className="text-sm text-white mb-1">
+                                                {appointment.customer_type === 'walk_in' 
+                                                    ? 'Walk-in Customer' 
+                                                    : appointment.customer?.customer_name || 'Unknown Customer'}
+                                            </div>
+                                            <div className="text-xs text-gray-400 mb-1">
+                                                {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info
+                                                    ? `${appointment.walk_in_vehicle_info.year} ${appointment.walk_in_vehicle_info.make} ${appointment.walk_in_vehicle_info.model}`
+                                                    : appointment.vehicle
+                                                        ? `${appointment.vehicle.year || ''} ${appointment.vehicle.make || ''} ${appointment.vehicle.model || ''}`.trim()
+                                                        : 'Unknown Vehicle'}
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
                                             </div>
                                             <div className="text-xs text-muted-foreground">
                                                 {appointment.service_type}

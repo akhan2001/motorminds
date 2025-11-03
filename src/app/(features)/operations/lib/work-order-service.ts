@@ -184,14 +184,40 @@ export class WorkOrderService {
     
     // DELETE operations
     async deleteWorkOrder(id: string): Promise<void> {
-        const { error } = await this.supabase
+        // First, get the work order to check if it has an appointment_id
+        const { data: workOrder, error: fetchError } = await this.supabase
+            .from('work_orders')
+            .select('appointment_id')
+            .eq('id', id)
+            .single()
+
+        if (fetchError) {
+            console.error('Error fetching work order before deletion:', fetchError)
+            throw new Error(`Failed to fetch work order: ${fetchError.message}`)
+        }
+
+        // Delete the work order
+        const { error: deleteError } = await this.supabase
             .from('work_orders')
             .delete()
             .eq('id', id)
 
-        if (error) {
-            console.error('Error deleting work order:', error)
-            throw new Error(`Failed to delete work order: ${error.message}`)
+        if (deleteError) {
+            console.error('Error deleting work order:', deleteError)
+            throw new Error(`Failed to delete work order: ${deleteError.message}`)
+        }
+
+        // If the work order was linked to an appointment, reset the appointment status to 'scheduled'
+        if (workOrder?.appointment_id) {
+            const { error: updateError } = await this.supabase
+                .from('appointments')
+                .update({ status: 'scheduled' })
+                .eq('id', workOrder.appointment_id)
+
+            if (updateError) {
+                console.error('Error updating appointment status after work order deletion:', updateError)
+                // Don't throw - work order deletion succeeded, this is just cleanup
+            }
         }
     }
 

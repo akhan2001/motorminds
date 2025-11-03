@@ -1,6 +1,6 @@
 'use client'
 
-import { useAdminContext } from './admin-context/useAdminContext'
+import { useAdminContext } from '@/contexts/admin-context'
 import { SuperAdminDashboard } from './super-admin/SuperAdminDashboard'
 import { OrganizationDashboard } from './organization-admin/OrganizationDashboard'
 import { ShopDashboard } from './shop-admin/ShopDashboard'

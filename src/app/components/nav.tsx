@@ -16,6 +16,7 @@ import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
+import { useAdminContextWithRole } from "@/contexts/admin-context"
 
 export function Nav() {
 	const router = useRouter()
@@ -29,6 +30,7 @@ export function Nav() {
 		return null
 	}
 
+<<<<<<< HEAD
 	// Fetch admin type if user is admin
 	const [adminType, setAdminType] = useState<'super-admin' | 'organization-admin' | 'shop-admin' | null>(null)
 	
@@ -62,6 +64,26 @@ export function Nav() {
 		
 		fetchAdminType()
 	}, [userRole])
+=======
+	// useEffect only runs on the client, so now we can safely show the UI
+	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	// Avatar is now handled by the ProfileDropdown component
+
+	// Render the icon based on mounted state to avoid hydration mismatch
+	const themeIcon = mounted && theme === "light" ? (
+		<Moon className="w-4 h-4 mr-2" />
+	) : (
+		<Sun className="w-4 h-4 mr-2" />
+	)
+
+	const themeText = mounted && theme === "light" ? "Dark Mode" : "Light Mode"
+
+	// Use cached admin context
+	const { adminType } = useAdminContextWithRole(userRole ?? null)
+>>>>>>> 010e83e7599845dceeec3e8ddcbef1420d50c289
 
 	// Get filtered navigation items based on user role and admin type
 	const navItems = useMemo(() => {
