@@ -1,4 +1,4 @@
-import { Lightbulb, HelpCircle } from 'lucide-react'
+import { Lightbulb, HelpCircle, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -51,7 +51,7 @@ export const FeedbackDropdown = ({ className }: FeedbackDropdownProps) => {
         }}>
             <PopoverTrigger asChild>
                 <button className={`text-muted-foreground hover:text-black dark:hover:text-white transition-colors ${className}`}>
-                    <Lightbulb className="inline-block w-5 h-5" />
+                    <HelpCircle className="inline-block w-5 h-5" />
                 </button>
             </PopoverTrigger>
             <PopoverContent 
@@ -68,7 +68,7 @@ export const FeedbackDropdown = ({ className }: FeedbackDropdownProps) => {
                                 onClick={handleIssueClick}
                             >
                                 <span className="grid gap-1 text-center">
-                                    <HelpCircle size="28" className="mx-auto text-red-400" />
+                                    <AlertTriangle size="28" className="mx-auto text-red-400" />
                                     <span className="text-base">Issue</span>
                                     <span className="text-xs text-muted-foreground">with MotorMinds</span>
                                 </span>
