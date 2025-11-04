@@ -11,13 +11,13 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
     {
         id: 'ready_for_pickup',
         name: 'Ready for Pickup',
-        template: "Hey [Customer Name], your vehicle is now ready for pickup! Please contact us to schedule a convenient time to collect your vehicle.",
+        template: "Hey [Customer Name], your vehicle is now ready for pickup! Please contact us if you have any questions or concerns. See you soon!",
         description: 'Standard message when work is completed and vehicle is ready'
     },
     {
         id: 'ready_for_pickup_formal',
         name: 'Ready for Pickup (Formal)',
-        template: "Dear [Customer Name], we're pleased to inform you that your [Vehicle] has been serviced and is ready for pickup. Please call us at your convenience to arrange collection.",
+        template: "Dear [Customer Name], we're pleased to inform you that your [Vehicle] has been serviced and is ready for pickup. Please contact us if you have any questions or concerns. See you soon!",
         description: 'More formal version of the pickup ready message'
     },
     {
