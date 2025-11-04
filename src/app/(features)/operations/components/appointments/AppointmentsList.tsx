@@ -31,11 +31,11 @@ export function AppointmentsList({
     })
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full flex flex-col">
+        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-[#2a2a2a] flex-shrink-0">
+            <div className="p-4 border-b border-border flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-white">
+                    <h3 className="text-lg font-medium text-foreground">
                         {format(selectedDate, 'EEEE, MMMM d')}
                     </h3>
                     <Button 
@@ -54,7 +54,7 @@ export function AppointmentsList({
                 <ScrollArea className="h-full">
                     <div className="p-4 space-y-2">
                         {sortedAppointments.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400">
+                            <div className="text-center py-8 text-muted-foreground">
                                 <p>No appointments scheduled for this date</p>
                                 <p className="text-sm mt-2">Click "Add" to create one</p>
                             </div>
@@ -68,7 +68,7 @@ export function AppointmentsList({
                                 return (
                                     <div
                                         key={appointment.id}
-                                        className="relative p-3 rounded-lg border border-[#2a2a2a] bg-[#0d0d0d] hover:bg-[#1a1a1a] transition-colors group"
+                                        className="relative p-3 rounded-lg border border-border bg-white dark:bg-card hover:bg-accent transition-colors group"
                                     >
                                         {/* Cancel button - only show on hover and if cancellable */}
                                         {canCancel && onCancelAppointment && (
@@ -80,7 +80,7 @@ export function AppointmentsList({
                                                     onCancelAppointment(appointment.id)
                                                 }}
                                                 disabled={isCancelling}
-                                                className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-400 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute top-2 right-2 h-6 w-6 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
                                                 <X className="h-3 w-3" />
                                             </Button>
@@ -92,7 +92,7 @@ export function AppointmentsList({
                                             className="cursor-pointer"
                                         >
                                             <div className="flex items-center justify-between mb-2 pr-6">
-                                                <div className="text-sm font-medium text-white">
+                                                <div className="text-sm font-medium text-foreground">
                                                     {appointment.start_time} - {appointment.end_time}
                                                 </div>
                                                 <div className={`
@@ -104,23 +104,23 @@ export function AppointmentsList({
                                                       'bg-yellow-500'}
                                                 `} />
                                             </div>
-                                            <div className="text-sm text-white mb-1">
+                                            <div className="text-sm text-foreground mb-1">
                                                 {appointment.customer_type === 'walk_in' 
                                                     ? 'Walk-in Customer' 
                                                     : appointment.customer?.customer_name || 'Unknown Customer'}
                                             </div>
-                                            <div className="text-xs text-gray-400 mb-1">
+                                            <div className="text-xs text-muted-foreground mb-1">
                                                 {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info
                                                     ? `${appointment.walk_in_vehicle_info.year} ${appointment.walk_in_vehicle_info.make} ${appointment.walk_in_vehicle_info.model}`
                                                     : appointment.vehicle
                                                         ? `${appointment.vehicle.year || ''} ${appointment.vehicle.make || ''} ${appointment.vehicle.model || ''}`.trim()
                                                         : 'Unknown Vehicle'}
                                             </div>
-                                            <div className="text-xs text-gray-300">
+                                            <div className="text-xs text-muted-foreground">
                                                 {appointment.service_type}
                                             </div>
                                             {appointment.notes && (
-                                                <div className="text-xs text-gray-400 mt-2 italic">
+                                                <div className="text-xs text-muted-foreground mt-2 italic">
                                                     {appointment.notes}
                                                 </div>
                                             )}

@@ -26,18 +26,18 @@ export default function SuppliersList({
     if (loading) {
         return (
             <div className="text-center py-8">
-                <div className="text-gray-400">Loading suppliers...</div>
+                <div className="text-muted-foreground dark:text-gray-400">Loading suppliers...</div>
             </div>
         )
     }
 
     if (suppliers.length === 0) {
         return (
-            <Card className="bg-[#111111] border-[#2a2a2a]">
+            <Card className="bg-card dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
                 <CardContent className="text-center py-8">
-                    <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white mb-2">No suppliers yet</h3>
-                    <p className="text-gray-400 mb-4">
+                    <Building2 className="h-12 w-12 text-muted-foreground dark:text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground dark:text-white mb-2">No suppliers yet</h3>
+                    <p className="text-muted-foreground dark:text-gray-400 mb-4">
                         Add your first automotive parts supplier to get started
                     </p>
                     <Button

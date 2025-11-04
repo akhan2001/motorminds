@@ -146,8 +146,8 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
 
     return (
         <div className={`space-y-4 ${className}`}>
-            <h3 className="text-lg font-medium text-white">Customer Information</h3>
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
+            <h3 className="text-lg font-medium text-foreground dark:text-white">Customer Information</h3>
+            <div className="bg-slate-50 dark:bg-[#1A1A1A] rounded-xl p-6">
                 <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarImage src="" />
@@ -185,14 +185,14 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                         )}
 
                         {/* Customer Information Fields */}
-                        <div className="space-y-2 mt-2 p-3 border border-[#2a2a2a] rounded-md">
+                        <div className="space-y-2 mt-2 p-3 border border-border dark:border-[#2a2a2a] rounded-md">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {/* First row */}
                                 <div>
-                                    <Label htmlFor="customer_name" className="text-gray-400">Name *</Label>
+                                    <Label htmlFor="customer_name" className="text-muted-foreground dark:text-gray-400">Name *</Label>
                                     <Input
                                         id="customer_name"
-                                        className={`bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customer ? 'border-red-500 focus:border-red-500' : ''}`}
+                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customer ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Customer Name"
                                         value={customerName}
                                         onChange={(e) => {
@@ -205,17 +205,17 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         required={isCreating && customerId === "new"}
                                     />
                                     {errors.customer && (
-                                        <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                        <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
                                             {errors.customer}
                                         </div>
                                     )}
                                 </div>
                                 <div>
-                                    <Label htmlFor="customer_phone" className="text-gray-400">Phone *</Label>
+                                    <Label htmlFor="customer_phone" className="text-muted-foreground dark:text-gray-400">Phone *</Label>
                                     <Input
                                         id="customer_phone"
-                                        className={`bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerPhone ? 'border-red-500 focus:border-red-500' : ''}`}
+                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerPhone ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Phone Number"
                                         value={formatPhoneNumber(customerPhone)}
                                         onChange={(e) => {
@@ -229,7 +229,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         inputMode="numeric"
                                     />
                                     {errors.customerPhone && (
-                                        <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                        <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
                                             {errors.customerPhone}
                                         </div>
@@ -238,10 +238,10 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
 
                                 {/* Second row */}
                                 <div>
-                                    <Label htmlFor="customer_email" className="text-gray-400">Email</Label>
+                                    <Label htmlFor="customer_email" className="text-muted-foreground dark:text-gray-400">Email</Label>
                                     <Input
                                         id="customer_email"
-                                        className={`bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerEmail ? 'border-red-500 focus:border-red-500' : ''}`}
+                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerEmail ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Email Address"
                                         type="email"
                                         value={customerEmail}
@@ -254,17 +254,17 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         disabled={!isEditing || (isCreating && customerId !== "new")}
                                     />
                                     {errors.customerEmail && (
-                                        <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                        <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
                                             {errors.customerEmail}
                                         </div>
                                     )}
                                 </div>
                                 <div>
-                                    <Label htmlFor="customer_address" className="text-gray-400">Address</Label>
+                                    <Label htmlFor="customer_address" className="text-muted-foreground dark:text-gray-400">Address</Label>
                                     <Input
                                         id="customer_address"
-                                        className="bg-[#1a1a1a] text-white text-sm border-[#2a2a2a] focus:ring-gray-500 w-full"
+                                        className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Address"
                                         value={customerAddress}
                                         onChange={(e) => isEditing && onFieldChange('customerAddress', e.target.value)}

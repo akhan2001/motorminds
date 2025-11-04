@@ -19,15 +19,15 @@ export default function MiaAiPage() {
     // Loading state
     if (authLoading) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
                             <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                             <div>
-                                <p className="text-white font-medium">Loading Mia AI</p>
-                                <p className="text-gray-400 text-sm">Initializing AI services...</p>
+                                <p className="text-foreground dark:text-white font-medium">Loading Mia AI</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm">Initializing AI services...</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -39,15 +39,15 @@ export default function MiaAiPage() {
     // Error state
     if (authError) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-red-500" />
+                            <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-500" />
                             <div>
-                                <p className="text-white font-medium">Failed to Load Mia AI</p>
-                                <p className="text-gray-400 text-sm mb-3">
+                                <p className="text-foreground dark:text-white font-medium">Failed to Load Mia AI</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm mb-3">
                                     {authError && typeof authError === 'object' && 'message' in authError 
                                         ? (authError as Error).message 
                                         : 'Unknown error occurred'}
@@ -70,15 +70,15 @@ export default function MiaAiPage() {
     // Authentication check
     if (!shopId || !user) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500" />
+                            <AlertCircle className="h-6 w-6 text-yellow-500 dark:text-yellow-500" />
                             <div>
-                                <p className="text-white font-medium">Authentication Required</p>
-                                <p className="text-gray-400 text-sm">
+                                <p className="text-foreground dark:text-white font-medium">Authentication Required</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm">
                                     Unable to access Mia AI. Please ensure you are logged in.
                                 </p>
                             </div>
@@ -94,7 +94,7 @@ export default function MiaAiPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             
             <MiaPageHeader />
@@ -108,7 +108,7 @@ export default function MiaAiPage() {
                             return (
                                 <Card 
                                     key={feature.title}
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a] transition-all duration-200 cursor-pointer group"
+                                    className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all duration-200 cursor-pointer group"
                                     onClick={() => handleCardClick(feature.href)}
                                 >
                                     <CardHeader className="pb-4">
@@ -118,11 +118,11 @@ export default function MiaAiPage() {
                                                     <IconComponent className="h-6 w-6 text-white" />
                                                 </div>
                                                 <div>
-                                                    <CardTitle className="text-white text-lg group-hover:text-blue-400 transition-colors">
+                                                    <CardTitle className="text-foreground dark:text-white text-lg group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
                                                         {feature.title}
                                                     </CardTitle>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${feature.color.replace('bg-', 'bg-')} text-white`}>
+                                                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${feature.color} text-white`}>
                                                             {feature.badge}
                                                         </span>
                                                     </div>
@@ -132,13 +132,13 @@ export default function MiaAiPage() {
                                     </CardHeader>
                                     
                                     <CardContent className="pt-0">
-                                        <CardDescription className="text-gray-400 mb-4 leading-relaxed">
+                                        <CardDescription className="text-muted-foreground dark:text-gray-400 mb-4 leading-relaxed">
                                             {feature.description}
                                         </CardDescription>
                                         
                                         <div className="space-y-2 mb-6">
                                             {feature.features.map((featureItem, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 text-sm text-gray-300">
+                                                <div key={idx} className="flex items-center gap-2 text-sm text-foreground dark:text-gray-300">
                                                     <div className={`w-1.5 h-1.5 rounded-full ${feature.color}`} />
                                                     {featureItem}
                                                 </div>

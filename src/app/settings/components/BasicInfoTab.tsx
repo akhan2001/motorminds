@@ -9,7 +9,7 @@ interface BasicInfoTabProps {
 export function BasicInfoTab({ form }: BasicInfoTabProps) {
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-medium">Basic Information</h3>
+            <h3 className="text-xl font-medium text-foreground">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
@@ -20,7 +20,7 @@ export function BasicInfoTab({ form }: BasicInfoTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="MotorMinds Auto Shop" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -41,7 +41,7 @@ export function BasicInfoTab({ form }: BasicInfoTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="contact@motorminds.com" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -62,7 +62,7 @@ export function BasicInfoTab({ form }: BasicInfoTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="555-123-4567" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -83,7 +83,7 @@ export function BasicInfoTab({ form }: BasicInfoTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="John Smith" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>

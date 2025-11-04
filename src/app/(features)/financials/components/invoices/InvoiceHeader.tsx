@@ -35,18 +35,18 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     }
 
     return (
-        <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
+        <div className={cn("bg-background dark:bg-[#0d0d0d] border-b border-border dark:border-[#2a2a2a] flex-shrink-0", className)}>
             {/* Main Header */}
             <div className="px-6 py-3">
                 <div className="flex items-center justify-between">
                     {/* Left Section - Title */}
                     <div className="flex items-center gap-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
                                 {/* <FileText className="h-6 w-6" /> */}
                                 Invoices
                             </h1>
-                            <p className="text-sm text-gray-400 mt-1">
+                            <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                                 Create, manage, and track all invoices for your shop
                             </p>
                         </div>
@@ -57,14 +57,14 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                         <TemplateSelector
                             selectedTemplateId={templateId}
                             onTemplateChange={setTemplateId}
-                            className="gap-2 bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            className="gap-2 bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                         />
                         
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={handleArchivedInvoices}
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                         >
                             <Archive className="h-4 w-4 mr-2" />
                             Archived Invoices
@@ -75,7 +75,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={onBulkSend}
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                         >
                             <Send className="h-4 w-4 mr-2" />
                             Bulk Send
@@ -99,12 +99,12 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 <div className="flex items-center gap-3">
                     {/* Search Bar */}
                     <div className="relative flex-1 max-w-lg">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
                         <Input
                             placeholder="Search invoices by number, customer, or amount..."
                             value={searchValue}
                             onChange={(e) => onSearchChange?.(e.target.value)}
-                            className="pl-10 bg-[#1a1a1a] border-[#3a3a3a] text-white placeholder:text-gray-500 focus:border-red-500"
+                            className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#3a3a3a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500 focus:border-red-500"
                         />
                     </div>
 
@@ -113,7 +113,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                         >
                             <Filter className="h-4 w-4 mr-2" />
                             Filters

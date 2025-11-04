@@ -110,7 +110,7 @@ export const VehicleSearchByPlate: React.FC<VehicleSearchByPlateProps> = ({
     return (
         <div className={`space-y-4 ${className}`}>
             <div className="space-y-1.5">
-                <Label htmlFor="plate_search" className="text-gray-400">Search by License Plate</Label>
+                <Label htmlFor="plate_search" className="text-muted-foreground">Search by License Plate</Label>
                 <div className="flex gap-2">
                     <div className="relative flex-1">
                         <Input
@@ -119,11 +119,11 @@ export const VehicleSearchByPlate: React.FC<VehicleSearchByPlateProps> = ({
                             onChange={(e) => handleSearchChange(e.target.value)}
                             placeholder="ABC123"
                             disabled={disabled || createVehicleMutation.isPending}
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 pr-10"
+                            className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 pr-10"
                             maxLength={10}
                         />
                         {isSearching && (
-                            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+                            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                         )}
                     </div>
                     <Button
@@ -138,7 +138,7 @@ export const VehicleSearchByPlate: React.FC<VehicleSearchByPlateProps> = ({
                 </div>
                 
                 {searchError && (
-                    <div className="flex items-center gap-1 text-red-400 text-xs">
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                         <AlertCircle className="h-3 w-3" />
                         Failed to search vehicles
                     </div>
@@ -156,24 +156,24 @@ export const VehicleSearchByPlate: React.FC<VehicleSearchByPlateProps> = ({
 
             {/* No Results Message */}
             {searchQuery.trim() && !isSearching && searchResults && searchResults.length === 0 && (
-                <div className="text-center py-4 text-gray-400">
-                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No vehicles found with plate "{searchQuery}"</p>
-                    <p className="text-xs mt-1">Click "Add New" to create a vehicle with this plate</p>
+                <div className="text-center py-4 text-muted-foreground">
+                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50 text-muted-foreground" />
+                    <p className="text-sm text-foreground">No vehicles found with plate "{searchQuery}"</p>
+                    <p className="text-xs mt-1 text-muted-foreground">Click "Add New" to create a vehicle with this plate</p>
                 </div>
             )}
 
             {/* Create New Vehicle Form */}
             {showCreateForm && (
-                <div className="bg-[#1A1A1A] rounded-xl p-6 border border-[#2a2a2a]">
+                <div className="bg-slate-50 dark:bg-card rounded-xl p-6 border border-border">
                     <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-lg font-medium text-white">Add New Vehicle</h4>
+                        <h4 className="text-lg font-medium text-foreground">Add New Vehicle</h4>
                         <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowCreateForm(false)}
-                            className="text-gray-400 hover:text-white"
+                            className="text-muted-foreground hover:text-foreground"
                         >
                             Cancel
                         </Button>
@@ -181,86 +181,86 @@ export const VehicleSearchByPlate: React.FC<VehicleSearchByPlateProps> = ({
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label htmlFor="new_year" className="text-gray-400">Year *</Label>
+                            <Label htmlFor="new_year" className="text-foreground">Year *</Label>
                             <Input
                                 id="new_year"
                                 type="number"
                                 value={newVehicleData.year || ''}
                                 onChange={(e) => handleNewVehicleFieldChange('year', parseInt(e.target.value) || undefined)}
                                 placeholder="2020"
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                                 min="1900"
                                 max={new Date().getFullYear() + 1}
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="new_make" className="text-gray-400">Make *</Label>
+                            <Label htmlFor="new_make" className="text-foreground">Make *</Label>
                             <Input
                                 id="new_make"
                                 value={newVehicleData.make}
                                 onChange={(e) => handleNewVehicleFieldChange('make', e.target.value)}
                                 placeholder="Toyota"
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="new_model" className="text-gray-400">Model *</Label>
+                            <Label htmlFor="new_model" className="text-foreground">Model *</Label>
                             <Input
                                 id="new_model"
                                 value={newVehicleData.model}
                                 onChange={(e) => handleNewVehicleFieldChange('model', e.target.value)}
                                 placeholder="Camry"
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="new_license_plate" className="text-gray-400">License Plate *</Label>
+                            <Label htmlFor="new_license_plate" className="text-foreground">License Plate *</Label>
                             <Input
                                 id="new_license_plate"
                                 value={newVehicleData.license_plate}
                                 onChange={(e) => handleNewVehicleFieldChange('license_plate', e.target.value.toUpperCase())}
                                 placeholder="ABC123"
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                                 maxLength={10}
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="new_color" className="text-gray-400">Color</Label>
+                            <Label htmlFor="new_color" className="text-foreground">Color</Label>
                             <Input
                                 id="new_color"
                                 value={newVehicleData.color || ''}
                                 onChange={(e) => handleNewVehicleFieldChange('color', e.target.value)}
                                 placeholder="Silver"
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="new_vin" className="text-gray-400">VIN</Label>
+                            <Label htmlFor="new_vin" className="text-foreground">VIN</Label>
                             <Input
                                 id="new_vin"
                                 value={newVehicleData.vin || ''}
                                 onChange={(e) => handleNewVehicleFieldChange('vin', e.target.value.toUpperCase())}
                                 placeholder="1HGBH41JXMN109186"
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                                 maxLength={17}
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1.5 mt-4">
-                        <Label htmlFor="new_mileage" className="text-gray-400">Mileage</Label>
+                        <Label htmlFor="new_mileage" className="text-foreground">Mileage</Label>
                         <Input
                             id="new_mileage"
                             type="number"
                             value={newVehicleData.mileage || ''}
                             onChange={(e) => handleNewVehicleFieldChange('mileage', parseInt(e.target.value) || undefined)}
                             placeholder="45000"
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                            className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                             min="0"
                         />
                     </div>
@@ -271,7 +271,7 @@ export const VehicleSearchByPlate: React.FC<VehicleSearchByPlateProps> = ({
                             variant="outline"
                             onClick={() => setShowCreateForm(false)}
                             disabled={createVehicleMutation.isPending}
-                            className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
+                            className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
                             Cancel
                         </Button>

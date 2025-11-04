@@ -23,26 +23,26 @@ export function PayrollSummaryCard({ data }: PayrollSummaryCardProps) {
       : 0
 
   return (
-    <div className="h-full rounded-lg border border-[#222] bg-[#131313] p-6">
-      <h2 className="mb-4 text-lg font-semibold text-white">
+    <div className="h-full rounded-lg border border-border bg-white dark:bg-card p-6">
+      <h2 className="mb-4 text-lg font-semibold text-foreground">
         Payroll Summary
       </h2>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Total Monthly Payroll</span>
-          <span className="font-medium text-orange-500">
+          <span className="text-muted-foreground">Total Monthly Payroll</span>
+          <span className="font-medium text-red-600 dark:text-red-400">
             {formatCurrency(data.totalMonthlyPayroll)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Number of Employees</span>
-          <span className="font-medium text-white">
+          <span className="text-muted-foreground">Number of Employees</span>
+          <span className="font-medium text-foreground">
             {data.numberOfEmployees}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Average Per Employee</span>
-          <span className="font-medium text-white">
+          <span className="text-muted-foreground">Average Per Employee</span>
+          <span className="font-medium text-foreground">
             {formatCurrency(averagePayrollPerEmployee)}
           </span>
         </div>

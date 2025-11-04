@@ -117,12 +117,12 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
 
     if (isLoading) {
         return (
-            <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
+            <div className={`w-full bg-slate-50 dark:bg-[#131313] border-l border-border dark:border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
                 {/* Header */}
-                <div className="p-4 border-b border-[#222222] flex-shrink-0">
+                <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
                     <div>
-                        <h3 className="text-white font-medium text-sm">Templates</h3>
-                        <p className="text-gray-400 text-xs mt-1">Reusable work order items</p>
+                        <h3 className="text-foreground dark:text-white font-medium text-sm">Templates</h3>
+                        <p className="text-muted-foreground dark:text-gray-400 text-xs mt-1">Reusable work order items</p>
                     </div>
                 </div>
 
@@ -130,7 +130,7 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                        <p className="text-gray-400 text-base">Loading templates...</p>
+                        <p className="text-muted-foreground dark:text-gray-400 text-base">Loading templates...</p>
                     </div>
                 </div>
             </div>
@@ -139,21 +139,21 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
 
     if (error) {
         return (
-            <div className={`w-full bg-[#131313] border-l border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
+            <div className={`w-full bg-slate-50 dark:bg-[#131313] border-l border-border dark:border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
                 {/* Header */}
-                <div className="p-4 border-b border-[#222222] flex-shrink-0">
+                <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
                     <div>
-                        <h3 className="text-white font-medium text-sm">Templates</h3>
-                        <p className="text-gray-400 text-xs mt-1">Reusable work order items</p>
+                        <h3 className="text-foreground dark:text-white font-medium text-sm">Templates</h3>
+                        <p className="text-muted-foreground dark:text-gray-400 text-xs mt-1">Reusable work order items</p>
                     </div>
                 </div>
 
                 {/* Error State */}
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
-                        <Package className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                        <p className="text-red-400 text-base">Failed to load templates</p>
-                        <p className="text-gray-500 text-sm mt-1">{error.message}</p>
+                        <Package className="h-8 w-8 text-red-500 dark:text-red-400 mx-auto mb-2" />
+                        <p className="text-red-500 dark:text-red-400 text-base">Failed to load templates</p>
+                        <p className="text-muted-foreground dark:text-gray-500 text-sm mt-1">{error.message}</p>
                     </div>
                 </div>
             </div>
@@ -164,14 +164,14 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
     const showHeader = context !== 'templates-page'
 
     return (
-        <div className={`w-full bg-[#131313] ${showHeader ? 'border-l border-[#222222]' : ''} flex flex-col h-full min-h-0 ${className}`}>
+        <div className={`w-full bg-slate-50 dark:bg-[#131313] ${showHeader ? 'border-l border-border dark:border-[#222222]' : ''} flex flex-col h-full min-h-0 ${className}`}>
             {/* Header - only show in work order contexts */}
             {showHeader && (
-                <div className="p-4 border-b border-[#222222] flex-shrink-0">
+                <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
                     <div className="flex items-center justify-between mb-3">
                         <div>
-                            <h3 className="text-white font-medium text-base">Templates</h3>
-                            <p className="text-gray-400 text-sm mt-1">Reusable work order items</p>
+                            <h3 className="text-foreground dark:text-white font-medium text-base">Templates</h3>
+                            <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">Reusable work order items</p>
                         </div>
                         <Button
                             size="sm"
@@ -186,19 +186,19 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
             )}
 
             {/* Search and Filter - always show */}
-            <div className="p-4 border-b border-[#222222] flex-shrink-0">
+            <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground dark:text-gray-400" />
                         <Input
                             placeholder="Search templates..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="pl-9 bg-[#292929] text-white border-[#626262] text-sm"
+                            className="pl-9 bg-background dark:bg-[#292929] text-foreground dark:text-white border-border dark:border-[#626262] text-sm"
                         />
                         {searchInput !== searchTerm && (
                             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-400"></div>
+                                <div className="animate-spin rounded-full h-3 w-3 border-b border-muted-foreground dark:border-gray-400"></div>
                             </div>
                         )}
                     </div>
@@ -217,11 +217,11 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                 {/* Category Filter - Commented out for now */}
                 {/* <div className="mt-2">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="bg-[#292929] text-white border-[#626262] text-sm">
+                        <SelectTrigger className="bg-background dark:bg-[#292929] text-foreground dark:text-white border-border dark:border-[#626262] text-sm">
                             <Filter className="h-3 w-3 mr-2" />
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                        <SelectContent className="bg-popover dark:bg-[#292929] text-popover-foreground dark:text-white border-border dark:border-[#626262]">
                             <SelectItem value="all">All Categories</SelectItem>
                             {categories.map((category) => (
                                 <SelectItem key={category} value={category}>
@@ -234,26 +234,26 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
             </div>
 
             {/* Content Area - Scrollable */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-800">
                 <div className={`p-4 ${useSmallCard ? 'space-y-2' : 'space-y-3'}`}>
                     {!shouldFetch ? (
                         /* Show search prompt - templates only load when searching/filtering */
                         <div className="text-center py-12">
-                            <Search className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                            <h4 className="text-white text-lg font-medium mb-2">
+                            <Search className="h-12 w-12 text-muted-foreground dark:text-gray-600 mx-auto mb-4" />
+                            <h4 className="text-foreground dark:text-white text-lg font-medium mb-2">
                                 Search for Templates
                             </h4>
-                            <p className="text-gray-400 text-sm mb-2">
+                            <p className="text-muted-foreground dark:text-gray-400 text-sm mb-2">
                                 Use the search bar above to find templates
                             </p>
-                            <p className="text-gray-500 text-xs">
+                            <p className="text-muted-foreground dark:text-gray-500 text-xs">
                                 Or select a category to browse by type
                             </p>
                         </div>
                     ) : isLoading ? (
                         <div className="text-center py-12">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                            <p className="text-gray-400 text-sm">Loading templates...</p>
+                            <p className="text-muted-foreground dark:text-gray-400 text-sm">Loading templates...</p>
                         </div>
                     ) : filteredTemplates.length > 0 ? (
                         filteredTemplates.map((template) => {
@@ -272,14 +272,14 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                         })
                     ) : (
                         <div className="text-center py-8">
-                            <Package className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                            <p className="text-gray-500 text-base">
+                            <Package className="h-8 w-8 text-muted-foreground dark:text-gray-500 mx-auto mb-2" />
+                            <p className="text-muted-foreground dark:text-gray-500 text-base">
                                 {templates.length === 0
                                     ? 'No templates created yet'
                                     : 'No templates found'
                                 }
                             </p>
-                            <p className="text-gray-600 text-sm mt-1">
+                            <p className="text-muted-foreground dark:text-gray-600 text-sm mt-1">
                                 {templates.length === 0
                                     ? 'Create your first template to get started'
                                     : 'Try adjusting your search or filter'

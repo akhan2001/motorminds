@@ -120,7 +120,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
     }, [onRecallSupplier, request.id])
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a] transition-all">
+        <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all">
             <CardHeader className="pb-3">
                 {/* Top Section: Status, Vehicle, Actions */}
                 <div className="flex items-start justify-between gap-4">
@@ -135,14 +135,14 @@ const PartsRequestCard = memo(function PartsRequestCard({
                         <div className="flex-1 min-w-0">
                             {/* Vehicle Info */}
                             <div className="flex items-center gap-2 mb-1">
-                                <Car className="h-4 w-4 text-blue-400 shrink-0" />
-                                <h3 className="font-semibold text-white text-lg truncate">
+                                <Car className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
+                                <h3 className="font-semibold text-foreground dark:text-white text-lg truncate">
                                     {request.vehicle_info?.year} {request.vehicle_info?.make} {request.vehicle_info?.model}
                                 </h3>
                             </div>
                             
                             {/* Meta Info */}
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground dark:text-gray-400">
                                 <div className="flex items-center gap-1">
                                     <Package className="h-3 w-3" />
                                     <span>{request.parts_requested?.length || 0} part{request.parts_requested?.length !== 1 ? 's' : ''}</span>
@@ -152,7 +152,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
                                     <span>
                                         {supplierStats.totalSuppliers} supplier{supplierStats.totalSuppliers !== 1 ? 's' : ''}
                                         {supplierStats.totalCalls > supplierStats.totalSuppliers && (
-                                            <span className="text-gray-500"> ({supplierStats.totalCalls} call{supplierStats.totalCalls !== 1 ? 's' : ''})</span>
+                                            <span className="text-muted-foreground dark:text-gray-500"> ({supplierStats.totalCalls} call{supplierStats.totalCalls !== 1 ? 's' : ''})</span>
                                         )}
                                     </span>
                                 </div>
@@ -162,7 +162,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
                                 </div>
                                 {request.vehicle_info?.vin && (
                                     <div className="flex items-center gap-1">
-                                        <span className="font-mono text-gray-500">VIN: {request.vehicle_info.vin.slice(-8)}</span>
+                                        <span className="font-mono text-muted-foreground dark:text-gray-500">VIN: {request.vehicle_info.vin.slice(-8)}</span>
                                     </div>
                                 )}
                             </div>
@@ -172,22 +172,22 @@ const PartsRequestCard = memo(function PartsRequestCard({
                     {/* Progress Indicator for Multi-Supplier */}
                     {supplierStats.totalSuppliers > 1 && (
                         <div className="text-right shrink-0">
-                            <div className="text-xs text-gray-400 mb-1">
+                            <div className="text-xs text-muted-foreground dark:text-gray-400 mb-1">
                                 Progress
                             </div>
-                            <div className="text-sm font-semibold text-gray-300 mb-1">
+                            <div className="text-sm font-semibold text-foreground dark:text-gray-300 mb-1">
                                 {supplierStats.completedSuppliers}/{supplierStats.totalSuppliers}
                             </div>
-                            <div className="w-24 bg-gray-700 rounded-full h-2">
+                            <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                 <div 
-                                    className="bg-blue-600 h-2 rounded-full transition-all"
+                                    className="bg-blue-600 dark:bg-blue-600 h-2 rounded-full transition-all"
                                     style={{ 
                                         width: `${(supplierStats.completedSuppliers / supplierStats.totalSuppliers) * 100}%` 
                                     }}
                                 />
                             </div>
                             {supplierStats.inProgressCalls > 0 && (
-                                <div className="text-xs text-yellow-400 mt-1 flex items-center gap-1">
+                                <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1 flex items-center gap-1">
                                     <Clock className="h-3 w-3 animate-pulse" />
                                     {supplierStats.inProgressCalls} calling...
                                 </div>
@@ -197,7 +197,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#2a2a2a]">
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border dark:border-[#2a2a2a]">
                     {/* Show "Call Suppliers" button if no calls exist yet */}
                     {supplierCalls.length === 0 && (
                         <Button
@@ -225,7 +225,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
                                         variant="outline"
                                         onClick={handleRefreshClick}
                                         disabled={refreshing}
-                                        className="border-[#2a2a2a] text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
+                                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
                                     >
                                         <RefreshCw className={`h-3 w-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
                                         {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -262,7 +262,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
                         size="sm"
                         variant="ghost"
                         onClick={handleToggleExpand}
-                        className="text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                        className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
                     >
                         {isExpanded ? 'Show Less' : 'Show More'}
                     </Button>
@@ -279,37 +279,37 @@ const PartsRequestCard = memo(function PartsRequestCard({
                 {/* Selected Suppliers - Show if no calls made yet */}
                 {supplierCalls.length === 0 && request.supplier_info?.selected_suppliers && (
                     <>
-                        <Separator className="my-3 bg-[#2a2a2a]" />
+                        <Separator className="my-3 bg-border dark:bg-[#2a2a2a]" />
                         <div className="mb-3">
-                            <h4 className="text-xs font-medium mb-2 text-gray-400 uppercase tracking-wide">
+                            <h4 className="text-xs font-medium mb-2 text-muted-foreground dark:text-gray-400 uppercase tracking-wide">
                                 Selected Suppliers ({request.supplier_info.selected_suppliers.length})
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {request.supplier_info.selected_suppliers.map((supplier: any, index: number) => (
                                     <div
                                         key={`${request.id}-supplier-${supplier.id}-${index}`}
-                                        className="bg-[#0d0d0d] border border-[#2a2a2a] rounded-lg p-3"
+                                        className="bg-slate-50 dark:bg-[#0d0d0d] border border-border dark:border-[#2a2a2a] rounded-lg p-3"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-gray-200 text-sm truncate">
+                                                <div className="font-medium text-foreground dark:text-gray-200 text-sm truncate">
                                                     {supplier.name}
                                                 </div>
                                                 {supplier.phone_number && (
-                                                    <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                                                    <div className="text-xs text-muted-foreground dark:text-gray-400 mt-1 flex items-center gap-1">
                                                         <Phone className="w-3 h-3" />
                                                         {supplier.phone_number}
                                                     </div>
                                                 )}
                                                 {supplier.contact_person && (
-                                                    <div className="text-xs text-gray-500 mt-0.5">
+                                                    <div className="text-xs text-muted-foreground dark:text-gray-500 mt-0.5">
                                                         Contact: {supplier.contact_person}
                                                     </div>
                                                 )}
                                             </div>
                                             <Badge 
                                                 variant="outline" 
-                                                className="text-xs border-blue-800/30 text-blue-400 bg-blue-900/20 ml-2 shrink-0"
+                                                className="text-xs border-blue-800/30 dark:border-blue-800/30 text-blue-600 dark:text-blue-400 bg-blue-900/20 ml-2 shrink-0"
                                             >
                                                 Ready
                                             </Badge>
@@ -324,7 +324,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
                 {/* Supplier Status Grid - Show after calls are made */}
                 {supplierCalls.length > 0 && (
                     <>
-                        <Separator className="my-3 bg-[#2a2a2a]" />
+                        <Separator className="my-3 bg-border dark:bg-[#2a2a2a]" />
                         <SupplierCallsSection
                             partsRequestId={request.id}
                             refreshTrigger={refreshing}
@@ -338,34 +338,34 @@ const PartsRequestCard = memo(function PartsRequestCard({
                 {/* Expanded Details */}
                 {isExpanded && (
                     <>
-                        <Separator className="my-3 bg-[#2a2a2a]" />
+                        <Separator className="my-3 bg-border dark:bg-[#2a2a2a]" />
                         
                         {/* Vehicle Details */}
                         <div className="mb-3">
-                            <h4 className="text-xs font-medium mb-2 text-gray-400 uppercase tracking-wide">Vehicle Details</h4>
+                            <h4 className="text-xs font-medium mb-2 text-muted-foreground dark:text-gray-400 uppercase tracking-wide">Vehicle Details</h4>
                             <div className="grid grid-cols-2 gap-2 text-xs">
                                 {request.vehicle_info?.engine && (
                                     <div>
-                                        <span className="text-gray-500">Engine:</span>
-                                        <span className="ml-2 text-gray-300">{request.vehicle_info.engine}</span>
+                                        <span className="text-muted-foreground dark:text-gray-500">Engine:</span>
+                                        <span className="ml-2 text-foreground dark:text-gray-300">{request.vehicle_info.engine}</span>
                                     </div>
                                 )}
                                 {request.vehicle_info?.mileage && (
                                     <div>
-                                        <span className="text-gray-500">Mileage:</span>
-                                        <span className="ml-2 text-gray-300">{request.vehicle_info.mileage}</span>
+                                        <span className="text-muted-foreground dark:text-gray-500">Mileage:</span>
+                                        <span className="ml-2 text-foreground dark:text-gray-300">{request.vehicle_info.mileage}</span>
                                     </div>
                                 )}
                                 {request.vehicle_info?.transmission && (
                                     <div>
-                                        <span className="text-gray-500">Transmission:</span>
-                                        <span className="ml-2 text-gray-300">{request.vehicle_info.transmission}</span>
+                                        <span className="text-muted-foreground dark:text-gray-500">Transmission:</span>
+                                        <span className="ml-2 text-foreground dark:text-gray-300">{request.vehicle_info.transmission}</span>
                                     </div>
                                 )}
                                 {request.vehicle_info?.color && (
                                     <div>
-                                        <span className="text-gray-500">Color:</span>
-                                        <span className="ml-2 text-gray-300">{request.vehicle_info.color}</span>
+                                        <span className="text-muted-foreground dark:text-gray-500">Color:</span>
+                                        <span className="ml-2 text-foreground dark:text-gray-300">{request.vehicle_info.color}</span>
                                     </div>
                                 )}
                             </div>
@@ -374,14 +374,14 @@ const PartsRequestCard = memo(function PartsRequestCard({
                         {/* Notes */}
                         {(request.notes || request.admin_notes) && (
                             <div className="mb-3">
-                                <h4 className="text-xs font-medium mb-2 text-gray-400 uppercase tracking-wide">Notes</h4>
+                                <h4 className="text-xs font-medium mb-2 text-muted-foreground dark:text-gray-400 uppercase tracking-wide">Notes</h4>
                                 {request.notes && (
-                                    <p className="text-xs text-gray-300 mb-1 bg-[#0d0d0d] p-2 rounded border border-[#2a2a2a]">
+                                    <p className="text-xs text-foreground dark:text-gray-300 mb-1 bg-slate-50 dark:bg-[#0d0d0d] p-2 rounded border border-border dark:border-[#2a2a2a]">
                                         {request.notes}
                                     </p>
                                 )}
                                 {request.admin_notes && (
-                                    <p className="text-xs text-yellow-300 bg-yellow-900/20 p-2 rounded border border-yellow-800/30">
+                                    <p className="text-xs text-yellow-700 dark:text-yellow-300 bg-yellow-900/20 dark:bg-yellow-900/20 p-2 rounded border border-yellow-800/30 dark:border-yellow-800/30">
                                         <span className="font-semibold">Admin:</span> {request.admin_notes}
                                     </p>
                                 )}
@@ -390,12 +390,12 @@ const PartsRequestCard = memo(function PartsRequestCard({
 
                         {/* Quote Info */}
                         {request.quote_provided && (
-                            <div className="bg-green-900/20 border border-green-800/30 p-3 rounded-lg">
-                                <h4 className="text-sm font-medium text-green-400 mb-1 flex items-center gap-2">
+                            <div className="bg-green-900/20 dark:bg-green-900/20 border border-green-800/30 dark:border-green-800/30 p-3 rounded-lg">
+                                <h4 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1 flex items-center gap-2">
                                     <CheckCircle2 className="h-4 w-4" />
                                     Quote Available
                                 </h4>
-                                <p className="text-xs text-green-300">
+                                <p className="text-xs text-green-700 dark:text-green-300">
                                     Quote received and ready for review
                                 </p>
                             </div>
@@ -405,7 +405,7 @@ const PartsRequestCard = memo(function PartsRequestCard({
 
                 {/* Empty State */}
                 {supplierCalls.length === 0 && (
-                    <div className="text-center py-6 text-gray-500 text-sm">
+                    <div className="text-center py-6 text-muted-foreground dark:text-gray-500 text-sm">
                         <Phone className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>No supplier calls yet</p>
                         <p className="text-xs mt-1">Click an action button above to initiate calls</p>

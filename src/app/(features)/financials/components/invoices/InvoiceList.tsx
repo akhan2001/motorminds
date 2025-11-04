@@ -43,11 +43,11 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
         return (
             <div className="h-full space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                    <Skeleton className="h-8 w-48 bg-[#2a2a2a]" />
-                    <Skeleton className="h-6 w-24 bg-[#2a2a2a]" />
+                    <Skeleton className="h-8 w-48 bg-secondary dark:bg-[#2a2a2a]" />
+                    <Skeleton className="h-6 w-24 bg-secondary dark:bg-[#2a2a2a]" />
                 </div>
                 {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full bg-[#2a2a2a]" />
+                    <Skeleton key={i} className="h-32 w-full bg-secondary dark:bg-[#2a2a2a]" />
                 ))}
             </div>
         )
@@ -55,13 +55,13 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
 
     if (error) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a] p-8">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                 <div className="flex flex-col items-center justify-center text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
                         Error Loading Invoices
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground dark:text-gray-400 text-sm">
                         {error instanceof Error ? error.message : 'Failed to load invoices'}
                     </p>
                 </div>
@@ -71,17 +71,17 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
 
     if (filteredInvoices.length === 0) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a] p-8">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                 <div className="flex flex-col items-center justify-center text-center">
-                    <FileText className="h-12 w-12 text-gray-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <FileText className="h-12 w-12 text-muted-foreground dark:text-gray-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
                         {searchValue ? 'No invoices found' : 'No invoices yet'}
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground dark:text-gray-400 text-sm">
                         {searchValue 
                             ? 'Try adjusting your search terms'
                             : 'Create your first invoice to get started'
-                        }
+                    }
                     </p>
                 </div>
             </Card>

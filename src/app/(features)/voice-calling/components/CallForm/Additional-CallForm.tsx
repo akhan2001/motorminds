@@ -22,37 +22,37 @@ export default function AdditionalCallForm({
     onNotesChange
 }: AdditionalCallFormProps) {
     return (
-        <Card className="bg-[#111111] border-[#2a2a2a]">
+        <Card className="bg-card dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                    <Send className="h-5 w-5 text-purple-400" />
+                <CardTitle className="text-foreground dark:text-white flex items-center gap-2">
+                    <Send className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     Additional Information
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <Label className="text-white">Priority</Label>
+                        <Label className="text-foreground dark:text-white">Priority</Label>
                         <Select value={priority} onValueChange={onPriorityChange}>
-                            <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                            <SelectTrigger className="bg-background dark:bg-gray-900 border-border dark:border-gray-700 text-foreground dark:text-white">
                                 <SelectValue placeholder="Select priority" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="normal">Normal</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                                <SelectItem value="low" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Low</SelectItem>
+                                <SelectItem value="normal" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Normal</SelectItem>
+                                <SelectItem value="high" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">High</SelectItem>
+                                <SelectItem value="urgent" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Urgent</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 </div>
                 <div>
-                    <Label className="text-white">Additional Notes</Label>
+                    <Label className="text-foreground dark:text-white">Additional Notes</Label>
                     <Textarea
                         value={notes}
                         onChange={(e) => onNotesChange(e.target.value)}
                         placeholder="Additional notes for this parts request..."
-                        className="bg-gray-900 border-gray-700 text-white"
+                        className="bg-background dark:bg-gray-900 border-border dark:border-gray-700 text-foreground dark:text-white"
                         rows={2}
                     />
                 </div>

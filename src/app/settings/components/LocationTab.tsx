@@ -9,7 +9,7 @@ interface LocationTabProps {
 export function LocationTab({ form }: LocationTabProps) {
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-medium">Location</h3>
+            <h3 className="text-xl font-medium text-foreground">Location</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
@@ -20,7 +20,7 @@ export function LocationTab({ form }: LocationTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="123 Main Street" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -39,7 +39,7 @@ export function LocationTab({ form }: LocationTabProps) {
                                 <FormControl>
                                     <Input 
                                         placeholder="Anytown" 
-                                        className="bg-[#292929] border-[#626262] text-white" 
+                                        className="bg-white dark:bg-background border-border text-foreground" 
                                         {...field} 
                                     />
                                 </FormControl>
@@ -57,7 +57,7 @@ export function LocationTab({ form }: LocationTabProps) {
                                 <FormControl>
                                     <Input 
                                         placeholder="CA" 
-                                        className="bg-[#292929] border-[#626262] text-white" 
+                                        className="bg-white dark:bg-background border-border text-foreground" 
                                         {...field} 
                                     />
                                 </FormControl>
@@ -76,7 +76,7 @@ export function LocationTab({ form }: LocationTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://motorminds.ca" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>

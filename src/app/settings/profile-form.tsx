@@ -407,8 +407,8 @@ export function ProfileForm({ shopId }: { shopId: string }) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Loading shop information...</span>
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                <span className="ml-2 text-foreground">Loading shop information...</span>
             </div>
         )
     }
@@ -436,38 +436,38 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
-                            <TabsList className="grid grid-cols-5 mb-8 bg-[#222] border-none text-white">
+                            <TabsList className="grid grid-cols-5 mb-8 bg-slate-50 dark:bg-muted border-none text-foreground">
                                 <TabsTrigger 
                                     value="basic" 
-                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
                                     onClick={() => window.location.hash = '#basic'}
                                 >
                                     Basic Info
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="location" 
-                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
                                     onClick={() => window.location.hash = '#location'}
                                 >
                                     Location
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="details" 
-                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
                                     onClick={() => window.location.hash = '#details'}
                                 >
                                     Shop Details
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="images" 
-                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
                                     onClick={() => window.location.hash = '#images'}
                                 >
                                     Images
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="social" 
-                                    className="data-[state=active]:bg-[#555] data-[state=active]:text-white hover:bg-[#333]"
+                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
                                     onClick={() => window.location.hash = '#social'}
                                 >
                                     Social Media
@@ -515,14 +515,14 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                                 type="button"
                                 variant="outline"
                                 onClick={() => router.back()}
-                                className="bg-[#292929] hover:bg-[#333] border-[#626262] text-white"
+                                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={state.isSaving}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                 onClick={(e) => {
                                     console.log('Save button clicked');
                                     console.log('Form state:', form.formState);

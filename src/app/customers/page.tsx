@@ -39,7 +39,7 @@ export default function CustomersPage() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col min-h-screen bg-black text-white">
+            <div className="flex flex-col min-h-screen bg-background text-foreground">
                 <Nav activeLink="Customers" />
                 {/* <CustomersTableLoading /> */}
             </div>
@@ -48,17 +48,17 @@ export default function CustomersPage() {
 
     if (!shopId) {
         return (
-            <div className="flex flex-col min-h-screen bg-black text-white">
+            <div className="flex flex-col min-h-screen bg-background text-foreground">
                 <Nav activeLink="Customers" />
                 <div className="flex justify-center items-center h-[80vh]">
-                    <p>No shop found for this user.</p>
+                    <p className="text-foreground">No shop found for this user.</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Nav activeLink="Customers" />
             <CustomerDashboard shopId={shopId} user={user} />
         </div>

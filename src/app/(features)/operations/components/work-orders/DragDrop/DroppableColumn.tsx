@@ -77,11 +77,11 @@ const KanbanColumn: React.FC<DroppableColumnProps> = ({
             onDrop={handleColumnDrop}
         >
             {/* Column Header - Fixed height with strict padding */}
-            <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a] flex-shrink-0 bg-[#111111]">
+            <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0 bg-slate-50 dark:bg-[#111111]">
                 <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${column.color} flex-shrink-0`} />
-                    <h3 className="font-semibold text-white text-sm">{column.title}</h3>
-                    <Badge variant="secondary" className="text-xs bg-[#2a2a2a] text-gray-400 px-2 py-1">
+                    <h3 className="font-semibold text-foreground dark:text-white text-sm">{column.title}</h3>
+                    <Badge variant="secondary" className="text-xs bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-400 px-2 py-1">
                         {formatNumber(column.items.length)}
                     </Badge>
                 </div>
@@ -104,14 +104,14 @@ const KanbanColumn: React.FC<DroppableColumnProps> = ({
                         ))
                     ) : (
                         <motion.div 
-                            className="flex flex-col items-center justify-center py-16 text-gray-500"
+                            className="flex flex-col items-center justify-center py-16 text-muted-foreground"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 }}
                         >
                             <Clock className="h-8 w-8 mb-3 opacity-50" />
                             <p className="text-sm font-medium">No work orders</p>
-                            <p className="text-xs text-gray-600 mt-1">Drag work orders here</p>
+                            <p className="text-xs text-muted-foreground mt-1">Drag work orders here</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -142,7 +142,7 @@ const KanbanColumn: React.FC<DroppableColumnProps> = ({
 export const DroppableColumn: React.FC<DroppableColumnProps> = (props) => {
     return (
         <motion.div
-            className="h-full bg-[#111111] border-r border-[#2a2a2a] last:border-r-0 min-h-0 flex flex-col relative"
+            className="h-full bg-slate-50 dark:bg-[#111111] border-r border-border dark:border-[#2a2a2a] last:border-r-0 min-h-0 flex flex-col relative"
             layout
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

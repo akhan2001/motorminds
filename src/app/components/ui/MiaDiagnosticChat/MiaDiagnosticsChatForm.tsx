@@ -76,7 +76,7 @@ const DiagnosticChatFormComponent = forwardRef<HTMLFormElement, DiagnosticFormPr
                     ref={formRef}
                     onSubmit={handleSubmit}
                     className={cn(
-                        'relative flex items-end gap-2 rounded-lg border border-[#444444] bg-[#1a1a1a] p-2 focus-within:border-[#f52f2f] transition-colors',
+                        'relative flex items-end gap-2 rounded-lg border border-border bg-white dark:bg-background p-2 focus-within:border-red-600 transition-colors',
                         className
                     )}
                 >
@@ -88,7 +88,7 @@ const DiagnosticChatFormComponent = forwardRef<HTMLFormElement, DiagnosticFormPr
                         placeholder={placeholder}
                         disabled={disabled || loading}
                         className={cn(
-                            'min-h-[80px] max-h-64 resize-none border-0 bg-transparent p-3 text-white placeholder-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0',
+                            'min-h-[80px] max-h-64 resize-none border-0 bg-transparent p-3 text-foreground placeholder-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0',
                             isMobile ? 'text-base' : 'text-sm'
                         )}
                         rows={3}
@@ -101,13 +101,13 @@ const DiagnosticChatFormComponent = forwardRef<HTMLFormElement, DiagnosticFormPr
                                 <Button
                                     type="button"
                                     onClick={onStop}
-                                    className="flex items-center justify-center rounded-full bg-[#444444] w-10 h-10 hover:bg-[#333333] border border-[#666666]"
+                                    className="flex items-center justify-center rounded-full bg-muted w-10 h-10 hover:bg-muted/80 border border-border"
                                     aria-label="Stop response"
                                 >
-                                    <Square size={16} fill="currentColor" className="text-white" />
+                                    <Square size={16} fill="currentColor" className="text-foreground" />
                                 </Button>
                             ) : (
-                                <div className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10">
+                                <div className="flex items-center justify-center rounded-full bg-red-600 w-10 h-10">
                                     <span role="status" className="flex justify-center">
                                         <LoaderCircle className="animate-spin h-5 w-5 text-white" />
                                     </span>
@@ -116,7 +116,7 @@ const DiagnosticChatFormComponent = forwardRef<HTMLFormElement, DiagnosticFormPr
                         ) : (
                             <Button
                                 type="submit"
-                                className="flex items-center justify-center rounded-full bg-[#f52f2f] w-10 h-10 hover:bg-[#f52f2f]/90"
+                                className="flex items-center justify-center rounded-full bg-red-600 w-10 h-10 hover:bg-red-700"
                                 disabled={!canSubmit}
                                 aria-label="Send message"
                             >

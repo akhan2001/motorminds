@@ -277,9 +277,9 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     if (isLoading && invoiceId) {
         return (
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="max-w-4xl h-[90vh] bg-[#0d0d0d] border-[#2a2a2a]">
+                <DialogContent className="max-w-4xl h-[90vh] bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#2a2a2a]">
                     <div className="flex items-center justify-center h-full">
-                        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-8">
+                        <div className="bg-slate-50 dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-8">
                             <div className="flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin text-red-500" />
                             </div>
@@ -292,15 +292,15 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
 
     return (
         <Dialog open={isOpen} onOpenChange={() => {}}>
-            <DialogContent className="max-w-4xl h-[90vh] bg-[#0d0d0d] border-[#2a2a2a] p-0 flex flex-col [&>button:last-child]:hidden">
+            <DialogContent className="max-w-4xl h-[90vh] bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#2a2a2a] p-0 flex flex-col [&>button:last-child]:hidden">
                 {/* Fixed Header */}
-                <DialogHeader className="bg-[#131313] p-4 border-b border-[#333333] flex-shrink-0">
+                <DialogHeader className="bg-slate-50 dark:bg-[#131313] p-4 border-b border-border dark:border-[#333333] flex-shrink-0">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
-                            <DialogTitle className="text-xl font-semibold text-white">
+                            <DialogTitle className="text-xl font-semibold text-foreground dark:text-white">
                                 {invoiceId ? 'Edit Invoice' : 'Create Invoice'}
                             </DialogTitle>
-                            <DialogDescription className="text-gray-400 text-xs sm:text-sm">
+                            <DialogDescription className="text-muted-foreground dark:text-gray-400 text-xs sm:text-sm">
                                 {invoiceId ? `Invoice #${invoice?.invoice_number || invoiceId}` : 'New Invoice'}
                             </DialogDescription>
                         </div>
@@ -308,7 +308,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                             variant="ghost"
                             size="sm"
                             onClick={onClose}
-                            className="text-gray-400 hover:text-white hover:bg-transparent"
+                            className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-transparent"
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -316,36 +316,36 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                 </DialogHeader>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-4">
+                <div className="flex-1 overflow-y-auto bg-background dark:bg-[#1A1A1A] p-4">
                         <form id="invoice-form" onSubmit={handleSubmit} className="space-y-4">
                             {/* Basic Information Card */}
-                            <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                 <div className="p-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <LayoutIcon className="h-4 w-4 text-purple-400" />
-                                        <h3 className="text-lg font-semibold text-white">Invoice Information</h3>
+                                        <LayoutIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white">Invoice Information</h3>
                                     </div>
                                     
                                     <div className="space-y-4">
                                         <div>
-                                            <Label htmlFor="title" className="text-gray-400 text-xs">Title</Label>
+                                            <Label htmlFor="title" className="text-muted-foreground dark:text-gray-400 text-xs">Title</Label>
                                             <Input
                                                 id="title"
                                                 value={formData.title}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                 placeholder="Invoice title"
                                                 required
                                             />
                                         </div>
 
                                         <div>
-                                            <Label htmlFor="description" className="text-gray-400 text-xs">Description</Label>
+                                            <Label htmlFor="description" className="text-muted-foreground dark:text-gray-400 text-xs">Description</Label>
                                             <Textarea
                                                 id="description"
                                                 value={formData.description || ''}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                 placeholder="Invoice description"
                                                 rows={3}
                                             />
@@ -353,39 +353,39 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <Label htmlFor="status" className="text-gray-400 text-xs">Status</Label>
+                                                <Label htmlFor="status" className="text-muted-foreground dark:text-gray-400 text-xs">Status</Label>
                                                 <Select
                                                     value={formData.status}
                                                     onValueChange={(value: any) => setFormData(prev => ({ ...prev, status: value }))}
                                                 >
-                                                    <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                                                    <SelectTrigger className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
                                                         <SelectValue />
                                                     </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="draft">Draft</SelectItem>
-                                                        <SelectItem value="sent">Sent</SelectItem>
-                                                        <SelectItem value="viewed">Viewed</SelectItem>
-                                                        <SelectItem value="paid">Paid</SelectItem>
-                                                        <SelectItem value="overdue">Overdue</SelectItem>
-                                                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                                                        <SelectItem value="draft" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Draft</SelectItem>
+                                                        <SelectItem value="sent" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Sent</SelectItem>
+                                                        <SelectItem value="viewed" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Viewed</SelectItem>
+                                                        <SelectItem value="paid" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Paid</SelectItem>
+                                                        <SelectItem value="overdue" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Overdue</SelectItem>
+                                                        <SelectItem value="cancelled" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Cancelled</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
 
                                             <div>
-                                                <Label htmlFor="priority" className="text-gray-400 text-xs">Priority</Label>
+                                                <Label htmlFor="priority" className="text-muted-foreground dark:text-gray-400 text-xs">Priority</Label>
                                                 <Select
                                                     value={formData.priority}
                                                     onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}
                                                 >
-                                                    <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                                                    <SelectTrigger className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
                                                         <SelectValue />
                                                     </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="low">Low</SelectItem>
-                                                        <SelectItem value="medium">Medium</SelectItem>
-                                                        <SelectItem value="high">High</SelectItem>
-                                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                                                        <SelectItem value="low" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Low</SelectItem>
+                                                        <SelectItem value="medium" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Medium</SelectItem>
+                                                        <SelectItem value="high" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">High</SelectItem>
+                                                        <SelectItem value="urgent" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Urgent</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -395,11 +395,11 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                             </div>
 
                             {/* Customer Information Card */}
-                            <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                 <div className="p-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <User className="h-4 w-4 text-blue-400" />
-                                        <h3 className="text-lg font-semibold text-white">Customer Information</h3>
+                                        <User className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Information</h3>
                                     </div>
                                     
                                     <CustomerInformation
@@ -421,11 +421,11 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                             </div>
 
                             {/* Vehicle Information Card */}
-                            <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                 <div className="p-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <Car className="h-4 w-4 text-green-400" />
-                                        <h3 className="text-lg font-semibold text-white">Vehicle Information</h3>
+                                        <Car className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white">Vehicle Information</h3>
                                     </div>
                                     
                                     <VehicleInformation
@@ -454,15 +454,15 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                             </div>
 
                             {/* Invoice Items Card */}
-                            <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                 <div className="p-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
-                                            <div className="h-4 w-4 bg-yellow-400 rounded-full"></div>
-                                            <h3 className="text-lg font-semibold text-white">
+                                            <div className="h-4 w-4 bg-yellow-500 dark:bg-yellow-400 rounded-full"></div>
+                                            <h3 className="text-lg font-semibold text-foreground dark:text-white">
                                                 Invoice Items
                                                 {invoice?.work_order_id && (
-                                                    <span className="text-sm text-gray-400 ml-2">(from work order)</span>
+                                                    <span className="text-sm text-muted-foreground dark:text-gray-400 ml-2">(from work order)</span>
                                                 )}
                                             </h3>
                                         </div>
@@ -479,24 +479,24 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
 
                                     <div className="space-y-3">
                                         {isLoadingWorkOrderItems ? (
-                                            <div className="text-center py-8 text-gray-500">
+                                            <div className="text-center py-8 text-muted-foreground dark:text-gray-500">
                                                 <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                                                 Loading work order items...
                                             </div>
                                         ) : formData.invoice_items.length === 0 ? (
-                                            <div className="text-center py-8 text-gray-500">
+                                            <div className="text-center py-8 text-muted-foreground dark:text-gray-500">
                                                 No items found. {invoice?.work_order_id ? 'This invoice is not linked to a work order.' : 'Click "Add Item" to get started.'}
                                             </div>
                                         ) : (
                                             formData.invoice_items.map((item, index) => (
-                                            <div key={item.id || `item-${index}`} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+                                            <div key={item.id || `item-${index}`} className="bg-white dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-4">
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div>
-                                                        <h4 className="text-sm font-medium text-gray-300">
+                                                        <h4 className="text-sm font-medium text-foreground dark:text-gray-300">
                                                             {item.description || `Item ${index + 1}`}
                                                         </h4>
                                                         {item.item_type && (
-                                                            <span className="text-xs text-gray-500 capitalize">
+                                                            <span className="text-xs text-muted-foreground dark:text-gray-500 capitalize">
                                                                 {item.item_type}
                                                             </span>
                                                         )}
@@ -506,7 +506,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                                         onClick={() => removeItem(index)}
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                                        className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -514,70 +514,70 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
 
                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                                     <div>
-                                                        <Label htmlFor={`item_type_${index}`} className="text-gray-400 text-xs">Type</Label>
+                                                        <Label htmlFor={`item_type_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Type</Label>
                                                         <Select
                                                             value={item.item_type}
                                                             onValueChange={(value: any) => updateItem(index, 'item_type', value)}
                                                         >
-                                                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                                                            <SelectTrigger className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
                                                                 <SelectValue />
                                                             </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="part">Part</SelectItem>
-                                                                <SelectItem value="labor">Labor</SelectItem>
-                                                                <SelectItem value="service">Service</SelectItem>
-                                                                <SelectItem value="fee">Fee</SelectItem>
-                                                                <SelectItem value="discount">Discount</SelectItem>
-                                                                <SelectItem value="package">Package</SelectItem>
+                                                            <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                                                                <SelectItem value="part" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Part</SelectItem>
+                                                                <SelectItem value="labor" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Labor</SelectItem>
+                                                                <SelectItem value="service" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Service</SelectItem>
+                                                                <SelectItem value="fee" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Fee</SelectItem>
+                                                                <SelectItem value="discount" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Discount</SelectItem>
+                                                                <SelectItem value="package" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Package</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
 
                                                     <div>
-                                                        <Label htmlFor={`item_description_${index}`} className="text-gray-400 text-xs">Description</Label>
+                                                        <Label htmlFor={`item_description_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Description</Label>
                                                         <Input
                                                             id={`item_description_${index}`}
                                                             value={item.description}
                                                             onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                             placeholder="Item description"
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <Label htmlFor={`item_quantity_${index}`} className="text-gray-400 text-xs">Quantity</Label>
+                                                        <Label htmlFor={`item_quantity_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Quantity</Label>
                                                         <Input
                                                             id={`item_quantity_${index}`}
                                                             type="number"
                                                             value={item.quantity}
                                                             onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                             min="0"
                                                             step="0.01"
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <Label htmlFor={`item_unit_price_${index}`} className="text-gray-400 text-xs">Unit Price</Label>
+                                                        <Label htmlFor={`item_unit_price_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Unit Price</Label>
                                                         <Input
                                                             id={`item_unit_price_${index}`}
                                                             type="number"
                                                             value={item.unit_price}
                                                             onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))}
-                                                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                             min="0"
                                                             step="0.01"
                                                         />
                                                     </div>
 
                                                     <div className="lg:col-span-2">
-                                                        <Label htmlFor={`item_total_${index}`} className="text-gray-400 text-xs">Total Price</Label>
+                                                        <Label htmlFor={`item_total_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Total Price</Label>
                                                         <Input
                                                             id={`item_total_${index}`}
                                                             type="number"
                                                             value={item.total_price}
                                                             disabled
-                                                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                                            className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
                                                         />
                                                     </div>
                                                 </div>
@@ -589,11 +589,11 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                             </div>
 
                             {/* Invoice Summary Card */}
-                            <div className="bg-[#131313] border border-[#333333] rounded-lg">
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                 <div className="p-4">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <div className="h-4 w-4 bg-yellow-400 rounded-full"></div>
-                                        <h3 className="text-lg font-semibold text-white">Invoice Summary</h3>
+                                        <div className="h-4 w-4 bg-yellow-500 dark:bg-yellow-400 rounded-full"></div>
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white">Invoice Summary</h3>
                                     </div>
                                     
                                     <div className="space-y-2">
@@ -603,9 +603,9 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                                     id="include-tax"
                                                     checked={includeTax}
                                                     onCheckedChange={handleTaxToggle}
-                                                    className="border-gray-500"
+                                                    className="border-border dark:border-gray-500"
                                                 />
-                                                <Label htmlFor="include-tax" className="text-sm text-gray-300 cursor-pointer">
+                                                <Label htmlFor="include-tax" className="text-sm text-foreground dark:text-gray-300 cursor-pointer">
                                                     Include Tax
                                                 </Label>
                                             </div>
@@ -617,36 +617,36 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                                         const rate = Number(e.target.value) / 100
                                                         setFormData(prev => ({ ...prev, tax_rate: rate }))
                                                     }}
-                                                    className="w-20 h-8 bg-[#1a1a1a] border-[#2a2a2a] text-white text-right text-sm"
+                                                    className="w-20 h-8 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white text-right text-sm"
                                                     min="0"
                                                     max="100"
                                                     step="0.1"
                                                 />
                                             )}
                                         </div>
-                                        <div className="flex justify-between text-gray-400">
+                                        <div className="flex justify-between text-muted-foreground dark:text-gray-400">
                                             <span>Subtotal:</span>
                                             <span>${calculateSubtotal().toFixed(2)}</span>
                                         </div>
                                         {includeTax && (
-                                            <div className="flex justify-between text-gray-400">
+                                            <div className="flex justify-between text-muted-foreground dark:text-gray-400">
                                                 <span>Tax ({(formData.tax_rate * 100).toFixed(0)}%):</span>
                                                 <span>${calculateTax().toFixed(2)}</span>
                                             </div>
                                         )}
-                                        {/* <div className="flex justify-between text-gray-400">
+                                        {/* <div className="flex justify-between text-muted-foreground dark:text-gray-400">
                                             <span>Discount:</span>
                                             <Input
                                                 type="number"
                                                 value={formData.discount_amount}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, discount_amount: Number(e.target.value) }))}
-                                                className="w-24 h-6 bg-[#1a1a1a] border-[#2a2a2a] text-white text-right"
+                                                className="w-24 h-6 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white text-right"
                                                 min="0"
                                                 step="0.01"
                                             />
                                         </div> */}
-                                        <Separator className="bg-gray-700" />
-                                        <div className="flex justify-between text-white font-bold text-lg pt-2">
+                                        <Separator className="bg-border dark:bg-gray-700" />
+                                        <div className="flex justify-between text-foreground dark:text-white font-bold text-lg pt-2">
                                             <span>Total:</span>
                                             <span>${calculateTotal().toFixed(2)}</span>
                                         </div>
@@ -657,7 +657,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Fixed Footer with Actions */}
-                <div className="bg-[#131313] border-t border-[#333333] p-4 flex flex-wrap gap-2 flex-shrink-0">
+                <div className="bg-slate-50 dark:bg-[#131313] border-t border-border dark:border-[#333333] p-4 flex flex-wrap gap-2 flex-shrink-0">
                     <Button
                         type="submit"
                         form="invoice-form"
@@ -674,7 +674,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                     <Button
                         type="button"
                         variant="outline"
-                        className="bg-transparent border-[#2a2a2a] text-gray-300 hover:bg-[#2a2a2a]"
+                        className="bg-transparent border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a]"
                         onClick={onClose}
                     >
                         Cancel

@@ -70,16 +70,16 @@ export const TechnicianDropdown: React.FC<TechnicianDropdownProps> = ({
             onValueChange={handleTechnicianChange}
             disabled={disabled || isLoading}
         >
-            <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${className}`}>
+            <SelectTrigger className={`bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 focus:border-red-600 ${className}`}>
                 <SelectValue placeholder={isLoading ? "Loading technicians..." : placeholder} />
             </SelectTrigger>
-            <SelectContent className="bg-[#292929] text-white border-[#626262]">
+            <SelectContent className="bg-popover text-popover-foreground border-border">
                 {showNoneOption && (
-                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="none" className="hover:bg-muted">None</SelectItem>
                 )}
                 {technicianOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                        {option.fullName} <span className="text-gray-400 text-xs">({option.role})</span>
+                    <SelectItem key={option.id} value={option.id} className="hover:bg-muted">
+                        <span className="text-foreground">{option.fullName}</span> <span className="text-muted-foreground text-xs">({option.role})</span>
                     </SelectItem>
                 ))}
             </SelectContent>

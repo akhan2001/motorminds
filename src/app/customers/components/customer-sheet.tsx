@@ -289,12 +289,12 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
     return (
         <>
             <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
-                <SheetContent className="bg-[#131313] text-white border-l-1 border-l-[#222] overflow-y-auto">
+                <SheetContent className="bg-slate-50 dark:bg-card text-foreground border-l border-border overflow-y-auto">
                     <SheetHeader>
-                        <SheetTitle className="text-white">
+                        <SheetTitle className="text-foreground">
                             {customer.customer_name}
                         </SheetTitle>
-                        <SheetDescription className="text-gray-400">
+                        <SheetDescription className="text-muted-foreground">
                             View and edit customer details
                         </SheetDescription>
                     </SheetHeader>
@@ -302,16 +302,16 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                     <div className="grid gap-4 py-4">
                         <Button
                             variant="outline" 
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full"
+                            className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground w-full"
                             onClick={() => router.push(`/customers/${customer.id}`)}
                         >
                             View Full Customer Profile
                             <ArrowUpRight className="w-3 h-3" />
                         </Button>
-                        <Separator className="bg-[#666]"/>
-                        <h2 className="text-lg font-semibold text-gray-300">Customer Information</h2>
+                        <Separator className="bg-border"/>
+                        <h2 className="text-lg font-semibold text-foreground">Customer Information</h2>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-left text-gray-300">
+                            <Label htmlFor="name" className="text-left text-foreground">
                                 Name
                             </Label>
                             <div className="col-span-3">
@@ -319,14 +319,14 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                     id="name"
                                     value={editedCustomer.customerName}
                                     onChange={(e) => setEditedCustomer({ ...editedCustomer, customerName: e.target.value })}
-                                    className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                    className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                     readOnly={!isEditing}
                                 />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-left text-gray-300">
+                            <Label htmlFor="email" className="text-left text-foreground">
                                 Email
                             </Label>
                             <div className="col-span-3 flex items-center gap-2">
@@ -334,13 +334,13 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                     id="email" 
                                     value={editedCustomer.customerEmail}
                                     onChange={(e) => setEditedCustomer({ ...editedCustomer, customerEmail: e.target.value })}
-                                    className="flex-1 bg-[#292929] text-white border-[#626262]"
+                                    className="flex-1 bg-white dark:bg-background text-foreground border-border"
                                     readOnly={!isEditing}
                                 />
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    className="h-8 w-8 border border-[#626262] hover:border-red-500 text-gray-400 hover:text-red-500 hover:bg-red-500/10 flex-shrink-0"
+                                    className="h-8 w-8 border border-border hover:border-red-500 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 flex-shrink-0"
                                     onClick={() => openSendEmailDialog(editedCustomer.customerEmail)}
                                 >
                                     <Mail className="h-4 w-4" />
@@ -349,14 +349,14 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="phone" className="text-left text-gray-300">
+                            <Label htmlFor="phone" className="text-left text-foreground">
                                 Phone *
                             </Label>
                             <Input
                                 id="phone"
                                 value={editedCustomer.customerPhone}
                                 onChange={(e) => setEditedCustomer({ ...editedCustomer, customerPhone: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                 readOnly={!isEditing}
                                 required
                                 placeholder="Enter phone number"
@@ -364,41 +364,41 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="address" className="text-left text-gray-300">
+                            <Label htmlFor="address" className="text-left text-foreground">
                                 Address
                             </Label>
                             <Input
                                 id="address"
                                 value={editedCustomer.customerAddress}
                                 onChange={(e) => setEditedCustomer({ ...editedCustomer, customerAddress: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                 readOnly={!isEditing}
                             />
                         </div>
 
-                        <Separator className="bg-[#666]"/>
+                        <Separator className="bg-border"/>
 
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-gray-300">Customer Vehicles</h2>
-                            <span className="text-sm text-gray-400">{customerVehicles.length} vehicle{customerVehicles.length !== 1 ? 's' : ''}</span>
+                            <h2 className="text-lg font-semibold text-foreground">Customer Vehicles</h2>
+                            <span className="text-sm text-muted-foreground">{customerVehicles.length} vehicle{customerVehicles.length !== 1 ? 's' : ''}</span>
                         </div>
                         
                         {customerVehicles.length === 0 ? (
-                            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 text-center">
-                                <Car className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                                <h3 className="text-lg font-medium text-gray-300 mb-2">No Vehicles Added</h3>
-                                <p className="text-gray-400 text-sm mb-4">Add a vehicle to get started with work orders and service history.</p>
+                            <div className="bg-muted/50 border border-border rounded-lg p-6 text-center">
+                                <Car className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                                <h3 className="text-lg font-medium text-foreground mb-2">No Vehicles Added</h3>
+                                <p className="text-muted-foreground text-sm mb-4">Add a vehicle to get started with work orders and service history.</p>
                             </div>
                         ) : (
                             customerVehicles.map((vehicle) => (
                                 <Card 
                                     key={vehicle.id} 
-                                    className="bg-[#1a1a1a] border-[#2a2a2a] text-white mb-3 hover:border-[#3a3a3a] transition-colors"
+                                    className="bg-card border-border text-foreground mb-3 hover:border-border transition-colors"
                                 >
                                     <CardHeader className="pb-4">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
-                                                <CardTitle className="text-lg font-semibold flex items-center gap-2 mb-2">
+                                                <CardTitle className="text-lg font-semibold flex items-center gap-2 mb-2 text-foreground">
                                                     <Car className="w-5 h-5 text-blue-400" />
                                                     {vehicle.year} {vehicle.make} {vehicle.model}
                                                 </CardTitle>
@@ -406,24 +406,24 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                                     {vehicle.color && (
                                                         <div className="flex items-center gap-2">
                                                             <div 
-                                                                className="w-3 h-3 rounded-full border border-gray-500"
+                                                                className="w-3 h-3 rounded-full border border-border"
                                                                 style={{ backgroundColor: vehicle.color.toLowerCase() }}
                                                             />
-                                                            <span className="text-gray-300">{vehicle.color}</span>
+                                                            <span className="text-foreground">{vehicle.color}</span>
                                                         </div>
                                                     )}
                                                     {vehicle.vin && (
-                                                        <div className="text-gray-400">
-                                                            <span className="text-gray-500">VIN:</span> {vehicle.vin.slice(-6)}
+                                                        <div className="text-muted-foreground">
+                                                            <span className="text-muted-foreground">VIN:</span> {vehicle.vin.slice(-6)}
                                                         </div>
                                                     )}
                                                     {vehicle.engine_type && (
-                                                        <div className="text-gray-400">
-                                                            <span className="text-gray-500">Engine:</span> {vehicle.engine_type}
+                                                        <div className="text-muted-foreground">
+                                                            <span className="text-muted-foreground">Engine:</span> {vehicle.engine_type}
                                                         </div>
                                                     )}
-                                                    <div className="text-gray-400">
-                                                        <span className="text-gray-500">Added:</span> {new Date(vehicle.created_at).toLocaleDateString()}
+                                                    <div className="text-muted-foreground">
+                                                        <span className="text-muted-foreground">Added:</span> {new Date(vehicle.created_at).toLocaleDateString()}
                                                     </div>
                                                 </div>
                                             </div>
@@ -431,7 +431,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-blue-400 hover:bg-blue-400/10"
                                                     onClick={() => setEditingVehicle(vehicle)}
                                                     title="Edit vehicle"
                                                 >
@@ -442,7 +442,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-400/10"
                                                     onClick={() => setIsDeletingVehicle(vehicle.id)}
                                                     title="Delete vehicle"
                                                 >
@@ -459,7 +459,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
                         <Button
                             variant="outline"
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                            className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                             onClick={() => setIsAddingVehicle(true)}
                         >
                             Add Vehicle <Plus className="w-4 h-4 ml-2" />
@@ -472,7 +472,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                 <>
                                     <Button
                                         variant="outline"
-                                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                                        className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                         onClick={handleEdit}
                                     >
                                         Edit
@@ -488,13 +488,13 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                 <>
                                     <Button
                                         variant="outline"
-                                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                                        className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                         onClick={handleCancel}
                                     >
                                         Cancel
                                     </Button>
                                     <Button
-                                        className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
+                                        className="bg-red-600 text-white hover:bg-red-700"
                                         onClick={handleSave}
                                     >
                                         Save Changes
@@ -530,15 +530,15 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
             )}
 
             <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
-                <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">
+                <AlertDialogContent className="bg-slate-50 dark:bg-card text-foreground border border-border">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Customer?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-gray-400">
+                        <AlertDialogTitle className="text-foreground">Delete Customer?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
                             This will remove the customer from your shop.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white">
+                        <AlertDialogCancel className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground">
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
@@ -553,15 +553,15 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
 
 
             <AlertDialog open={Boolean(isDeletingVehicle)} onOpenChange={() => setIsDeletingVehicle(null)}>
-                <AlertDialogContent className="bg-[#131313] text-white border border-[#222]">
+                <AlertDialogContent className="bg-slate-50 dark:bg-card text-foreground border border-border">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Vehicle</AlertDialogTitle>
-                        <AlertDialogDescription className="text-gray-400">
+                        <AlertDialogTitle className="text-foreground">Delete Vehicle</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
                             Are you sure you want to delete this vehicle? This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white">
+                        <AlertDialogCancel className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground">
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction

@@ -22,12 +22,12 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
     const displayNumber = workOrderDetails?.work_order_number || workOrder.id
     
     return (
-        <div className={`flex items-center justify-between p-6 border-b border-[#222222] shrink-0 ${className}`}>
+        <div className={`flex items-center justify-between p-6 border-b border-border dark:border-[#222222] shrink-0 ${className}`}>
             <div className="space-y-1">
-                <h2 className="text-white text-xl sm:text-2xl">
+                <h2 className="text-foreground dark:text-white text-xl sm:text-2xl">
                     {isCreating ? 'Create New Work Order' : `Work Order ${displayNumber}`}
                 </h2>
-                <p className="text-gray-400 text-xs sm:text-sm">
+                <p className="text-muted-foreground dark:text-gray-400 text-xs sm:text-sm">
                     {isCreating 
                         ? 'Fill out the details to create a new work order.'
                         : 'Manage work order details and customer information.'
@@ -38,7 +38,7 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="text-gray-400 hover:text-white hover:bg-zinc-800"
+                    className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-zinc-800"
                     onClick={onClose}
                 >
                     <X className="h-6 w-6" />

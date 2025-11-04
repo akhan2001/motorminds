@@ -33,8 +33,8 @@ export const MiaOnboarding = ({
     return (
         <div className="w-full mb-6">
             <div className="px-4 mb-4">
-                <h2 className="text-xl font-semibold text-white mb-1">How can I help diagnose your vehicle?</h2>
-                <p className="text-gray-400 text-sm">
+                <h2 className="text-xl font-semibold text-foreground mb-1">How can I help diagnose your vehicle?</h2>
+                <p className="text-muted-foreground text-sm">
                     Describe your vehicle issue and I'll provide comprehensive diagnostic insights with technical references and visual aids.
                 </p>
             </div>
@@ -49,19 +49,19 @@ export const MiaOnboarding = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full justify-start text-left h-auto py-3 px-4 bg-[#1a1a1a] hover:bg-[#222222] border border-[#333333] text-gray-300 hover:text-white"
+                            className="w-full justify-start text-left h-auto py-3 px-4 bg-slate-50 dark:bg-card hover:bg-slate-100 dark:hover:bg-muted border border-border hover:border-red-300 dark:hover:border-red-500 text-muted-foreground hover:text-foreground transition-colors"
                             onClick={() => {
                                 onValueChange(item.prompt)
                                 onFocusInput?.()
                             }}
                         >
                             <div className="flex items-start gap-3 w-full">
-                                <div className="mt-0.5 text-gray-400">
+                                <div className="mt-0.5 text-red-600 dark:text-gray-400">
                                     {item.icon}
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className="font-medium text-sm">{item.title}</div>
-                                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                    <div className="font-medium text-sm text-foreground">{item.title}</div>
+                                    <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                         {item.prompt.length > 80 ? `${item.prompt.substring(0, 80)}...` : item.prompt}
                                     </div>
                                 </div>

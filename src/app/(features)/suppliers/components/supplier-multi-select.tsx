@@ -84,9 +84,9 @@ export default function SupplierMultiSelect({
     if (loading) {
         return (
             <div className="space-y-2">
-                {label && <Label className="text-gray-300 text-sm">{label}</Label>}
-                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-md p-3">
-                    <p className="text-gray-400 text-sm">Loading suppliers...</p>
+                {label && <Label className="text-foreground dark:text-gray-300 text-sm">{label}</Label>}
+                <div className="bg-card dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md p-3">
+                    <p className="text-muted-foreground dark:text-gray-400 text-sm">Loading suppliers...</p>
                 </div>
             </div>
         )
@@ -95,9 +95,9 @@ export default function SupplierMultiSelect({
     if (error) {
         return (
             <div className="space-y-2">
-                {label && <Label className="text-gray-300 text-sm">{label}</Label>}
-                <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-md p-3">
-                    <p className="text-red-400 text-sm">{error}</p>
+                {label && <Label className="text-foreground dark:text-gray-300 text-sm">{label}</Label>}
+                <div className="bg-card dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md p-3">
+                    <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
                 </div>
             </div>
         )
@@ -106,9 +106,9 @@ export default function SupplierMultiSelect({
     return (
         <div className={`space-y-3 ${className}`}>
             {label && (
-                <Label className="text-gray-300 text-sm">
+                <Label className="text-foreground dark:text-gray-300 text-sm">
                     {label}
-                    {required && <span className="text-red-400 ml-1">*</span>}
+                    {required && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
                 </Label>
             )}
 
@@ -119,20 +119,20 @@ export default function SupplierMultiSelect({
                         <div key={supplier.id} className="flex items-center justify-between bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-medium text-white">{supplier.name}</span>
+                                    <span className="font-medium text-foreground dark:text-white">{supplier.name}</span>
                                     {supplier.isCustom && (
-                                        <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-1 rounded">Custom</span>
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-500/20 px-2 py-1 rounded">Custom</span>
                                     )}
                                     {supplier.phone_number && (
-                                        <span className="text-green-400 text-sm">📞</span>
+                                        <span className="text-green-600 dark:text-green-400 text-sm">📞</span>
                                     )}
                                 </div>
                                 <div className="space-y-1 mt-1">
                                     {supplier.contact_person && (
-                                        <p className="text-xs text-gray-400">Contact: {supplier.contact_person}</p>
+                                        <p className="text-xs text-muted-foreground dark:text-gray-400">Contact: {supplier.contact_person}</p>
                                     )}
                                     {supplier.phone_number && (
-                                        <p className="text-xs text-gray-400">Phone: {supplier.phone_number}</p>
+                                        <p className="text-xs text-muted-foreground dark:text-gray-400">Phone: {supplier.phone_number}</p>
                                     )}
                                 </div>
                             </div>
@@ -140,7 +140,7 @@ export default function SupplierMultiSelect({
                                 onClick={() => removeSupplier(supplier.id)}
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                className="h-6 w-6 p-0 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-500/10"
                                 disabled={disabled}
                             >
                                 <X className="h-4 w-4" />
@@ -156,7 +156,7 @@ export default function SupplierMultiSelect({
                     <Button
                         onClick={() => setShowDropdown(!showDropdown)}
                         variant="outline"
-                        className="w-full justify-start border-[#2a2a2a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white"
+                        className="w-full justify-start border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-400 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Supplier
@@ -164,7 +164,7 @@ export default function SupplierMultiSelect({
 
                     {/* Supplier Selection Dropdown */}
                     {showDropdown && (
-                        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                        <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                             <CardContent className="p-3 space-y-2">
                                 <div className="max-h-48 overflow-y-auto space-y-1">
                                     {activeSuppliers.map((supplier) => {
@@ -176,34 +176,34 @@ export default function SupplierMultiSelect({
                                                 className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
                                                     isSelected 
                                                         ? 'bg-blue-500/20 border border-blue-500/30' 
-                                                        : 'hover:bg-[#2a2a2a]'
+                                                        : 'hover:bg-accent dark:hover:bg-[#2a2a2a]'
                                                 }`}
                                             >
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-medium text-white text-sm">{supplier.name}</span>
+                                                        <span className="font-medium text-foreground dark:text-white text-sm">{supplier.name}</span>
                                                         {supplier.phone_number && (
-                                                            <span className="text-green-400 text-xs">📞</span>
+                                                            <span className="text-green-600 dark:text-green-400 text-xs">📞</span>
                                                         )}
                                                     </div>
                                                     {supplier.contact_person && (
-                                                        <p className="text-xs text-gray-400">{supplier.contact_person}</p>
+                                                        <p className="text-xs text-muted-foreground dark:text-gray-400">{supplier.contact_person}</p>
                                                     )}
                                                 </div>
                                                 {isSelected && (
-                                                    <Check className="h-4 w-4 text-blue-400" />
+                                                    <Check className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                                                 )}
                                             </div>
                                         )
                                     })}
                                 </div>
                                 
-                                <div className="border-t border-[#2a2a2a] pt-2">
+                                <div className="border-t border-border dark:border-[#2a2a2a] pt-2">
                                     <Button
                                         onClick={() => setShowCustomForm(!showCustomForm)}
                                         variant="ghost"
                                         size="sm"
-                                        className="w-full text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                        className="w-full text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-500/10"
                                     >
                                         <Plus className="h-4 w-4 mr-2" />
                                         Add Custom Supplier
@@ -215,9 +215,9 @@ export default function SupplierMultiSelect({
 
                     {/* Custom Supplier Dialog */}
                     <Dialog open={showCustomForm} onOpenChange={setShowCustomForm} >
-                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden bg-[#111111] border-[#2a2a2a]">
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
                             <DialogHeader>
-                                <DialogTitle className="text-white">Add New Supplier</DialogTitle>
+                                <DialogTitle className="text-foreground dark:text-white">Add New Supplier</DialogTitle>
                             </DialogHeader>
                             <div className="overflow-y-auto">
                                 <SupplierIntakeForm

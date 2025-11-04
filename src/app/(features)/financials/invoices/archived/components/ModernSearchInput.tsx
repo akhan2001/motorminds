@@ -28,19 +28,19 @@ export function ModernSearchInput() {
   return (
     <div className="relative flex items-center gap-2">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
         <Input
           placeholder="Search invoices by number, customer, title..."
           value={localValue}
           onChange={(e) => handleInputChange(e.target.value)}
-          className="pl-10 pr-10 bg-[#131313] border-[#3a3a3a] text-white placeholder:text-gray-500 focus:border-red-500"
+          className="pl-10 pr-10 bg-background dark:bg-[#131313] border-border dark:border-[#3a3a3a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500 focus:border-red-500"
         />
         {localValue && (
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClear}
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-700"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-accent dark:hover:bg-gray-700"
           >
             <X className="h-3 w-3" />
           </Button>

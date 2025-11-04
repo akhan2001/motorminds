@@ -87,70 +87,70 @@ export default function EditOneTimeCostModal({
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-50">
+            <DialogContent className="bg-slate-50 dark:bg-card border-border text-foreground">
                 <DialogHeader>
-                    <DialogTitle>Edit One-Time Cost</DialogTitle>
+                    <DialogTitle className="text-foreground">Edit One-Time Cost</DialogTitle>
                      <DialogDescription className="sr-only">A dialog to edit an existing one-time cost in your financials.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div>
-                        <Label htmlFor="costName">Cost Name</Label>
+                        <Label htmlFor="costName" className="text-foreground">Cost Name</Label>
                         <Input
                             id="costName"
                             value={costName}
                             onChange={(e) => setCostName(e.target.value)}
-                            className="bg-zinc-800 border-zinc-700"
+                            className="bg-white dark:bg-background border-border text-foreground"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="amount">Amount ($)</Label>
+                            <Label htmlFor="amount" className="text-foreground">Amount ($)</Label>
                             <Input
                                 id="amount"
                                 type="number"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="bg-zinc-800 border-zinc-700"
+                                className="bg-white dark:bg-background border-border text-foreground"
                             />
                         </div>
                          <div>
-                            <Label htmlFor="costDate">Date</Label>
+                            <Label htmlFor="costDate" className="text-foreground">Date</Label>
                             <Input
                                 id="costDate"
                                 type="date"
                                 value={costDate}
                                 onChange={(e) => setCostDate(e.target.value)}
-                                className="bg-zinc-800 border-zinc-700"
+                                className="bg-white dark:bg-background border-border text-foreground"
                             />
                         </div>
                     </div>
                     <div className="grid grid-cols-1">
                         <div>
-                            <Label htmlFor="category">Category</Label>
+                            <Label htmlFor="category" className="text-foreground">Category</Label>
                             <Select value={category} onValueChange={setCategory}>
-                                <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                                <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                    <SelectItem value="Tools/Equipment" className="hover:bg-zinc-800">Tools/Equipment</SelectItem>
-                                    <SelectItem value="Repairs/Maintenance" className="hover:bg-zinc-800">Repairs/Maintenance</SelectItem>
-                                    <SelectItem value="Office Supplies" className="hover:bg-zinc-800">Office Supplies</SelectItem>
-                                    <SelectItem value="Training/Certification" className="hover:bg-zinc-800">Training/Certification</SelectItem>
-                                    <SelectItem value="Other" className="hover:bg-zinc-800">Other</SelectItem>
+                                <SelectContent className="bg-popover text-popover-foreground border-border">
+                                    <SelectItem value="Tools/Equipment" className="hover:bg-muted">Tools/Equipment</SelectItem>
+                                    <SelectItem value="Repairs/Maintenance" className="hover:bg-muted">Repairs/Maintenance</SelectItem>
+                                    <SelectItem value="Office Supplies" className="hover:bg-muted">Office Supplies</SelectItem>
+                                    <SelectItem value="Training/Certification" className="hover:bg-muted">Training/Certification</SelectItem>
+                                    <SelectItem value="Other" className="hover:bg-muted">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
-                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" onClick={() => setIsOpen(false)} className="border-border text-muted-foreground hover:bg-muted hover:text-foreground">
                         Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                     >
                         {loading ? "Saving..." : "Save Changes"}
                     </Button>

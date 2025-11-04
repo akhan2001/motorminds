@@ -68,13 +68,13 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-[#111111] border-[#2a2a2a] text-white">
+            <DialogContent className="max-w-2xl bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
+                    <DialogTitle className="text-xl font-semibold text-foreground dark:text-white flex items-center gap-2">
                         <Car className="h-5 w-5 text-green-500" />
                         Work Order Completed
                     </DialogTitle>
-                    <DialogDescription className="text-md text-gray-400">
+                    <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
                         Complete the work order and send a completion message to the customer.
                     </DialogDescription>
                 </DialogHeader>
@@ -82,16 +82,16 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                 <div className="space-y-6">
                     {/* Work Order Summary */}
                     <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-gray-300">Work Order Summary</h3>
-                        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
+                        <h3 className="text-sm font-medium text-foreground dark:text-gray-300">Work Order Summary</h3>
+                        <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-semibold text-white">{workOrder.title}</span>
-                                <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20">
+                                <span className="text-lg font-semibold text-foreground dark:text-white">{workOrder.title}</span>
+                                <Badge variant="outline" className="bg-green-500/10 text-green-500 dark:text-green-400 border-green-500/20">
                                     Completed
                                 </Badge>
                             </div>
                             {workOrder.description && (
-                                <p className="text-sm text-gray-400">{workOrder.description}</p>
+                                <p className="text-sm text-muted-foreground dark:text-gray-400">{workOrder.description}</p>
                             )}
                         </div>
                     </div>
@@ -99,14 +99,14 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                     {/* Customer & Vehicle Info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <User className="h-4 w-4" />
                                 Customer
                             </h4>
-                            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">{workOrder.customer?.customer_name || 'Unknown'}</p>
+                            <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-3 border border-border dark:border-[#2a2a2a]">
+                                <p className="text-foreground dark:text-white font-medium">{workOrder.customer?.customer_name || 'Unknown'}</p>
                                 {workOrder.customer?.customer_phone && (
-                                    <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 mt-1">
                                         <Phone className="h-3 w-3" />
                                         {formatPhoneNumber(workOrder.customer.customer_phone)}
                                     </div>
@@ -115,14 +115,14 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <Car className="h-4 w-4" />
                                 Vehicle
                             </h4>
-                            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">{vehicleInfo}</p>
+                            <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-3 border border-border dark:border-[#2a2a2a]">
+                                <p className="text-foreground dark:text-white font-medium">{vehicleInfo}</p>
                                 {workOrder.vehicle?.license_plate && (
-                                    <p className="text-sm text-gray-400 mt-1">
+                                    <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
                                         License: {workOrder.vehicle.license_plate}
                                     </p>
                                 )}
@@ -130,46 +130,46 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         </div>
                     </div>
 
-                    <Separator className="bg-[#2a2a2a]" />
+                    <Separator className="bg-border dark:bg-[#2a2a2a]" />
 
                     {/* Messaging Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Send Completion Message
                             </h3>
                             {messagingAvailability.isLoading && (
-                                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground dark:text-gray-400" />
                             )}
                         </div>
 
                         {!customerHasPhone ? (
                             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                                <p className="text-yellow-400 text-sm">
+                                <p className="text-yellow-500 dark:text-yellow-400 text-sm">
                                     No phone number available for this customer.
                                 </p>
                             </div>
                         ) : !messagingAvailability.isAvailable ? (
                             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
                                 <div className="flex items-center gap-2">
-                                    <Lock className="h-4 w-4 text-red-400" />
-                                    <p className="text-red-400 text-sm">
+                                    <Lock className="h-4 w-4 text-red-500 dark:text-red-400" />
+                                    <p className="text-red-500 dark:text-red-400 text-sm">
                                         Messaging is not available. Contact admin to set up Twilio.
                                     </p>
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                                    <div className="p-3 border-b border-[#2a2a2a]">
+                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg border border-border dark:border-[#2a2a2a]">
+                                    <div className="p-3 border-b border-border dark:border-[#2a2a2a]">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-300">Message to send:</span>
+                                            <span className="text-sm text-foreground dark:text-gray-300">Message to send:</span>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setIsEditing(!isEditing)}
-                                                className="text-blue-400 hover:text-blue-300"
+                                                className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300"
                                             >
                                                 {isEditing ? 'Done' : 'Edit'}
                                             </Button>
@@ -180,12 +180,12 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                             <Textarea
                                                 value={customMessage}
                                                 onChange={(e) => setCustomMessage(e.target.value)}
-                                                className="bg-[#0a0a0a] border-[#2a2a2a] text-white resize-none"
+                                                className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white resize-none"
                                                 rows={3}
                                                 placeholder="Enter your completion message..."
                                             />
                                         ) : (
-                                            <p className="text-white text-sm leading-relaxed">
+                                            <p className="text-foreground dark:text-white text-sm leading-relaxed">
                                                 {customMessage}
                                             </p>
                                         )}
@@ -201,7 +201,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         variant="outline"
                         onClick={handleSkipMessage}
                         disabled={isLoading}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
+                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
                     >
                         Complete Without Message
                     </Button>
@@ -230,7 +230,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                 </div>
                             </TooltipTrigger>
                             {(!customerHasPhone || !messagingAvailability.isAvailable) && (
-                                <TooltipContent>
+                                <TooltipContent className="bg-popover text-popover-foreground border-border">
                                     <p>
                                         {!customerHasPhone 
                                             ? "Customer phone number required" 

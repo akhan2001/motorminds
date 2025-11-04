@@ -27,19 +27,18 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
     searchValue = '',
     onSearchChange
 }) => {
-
     return (
-        <div className={cn("bg-[#0d0d0d] border-b border-[#2a2a2a] flex-shrink-0", className)}>
+        <div className={cn("bg-background border-b border-border flex-shrink-0", className)}>
             {/* Main Header */}
             <div className="px-6 py-3">
                 <div className="flex items-center justify-between">
                     {/* Left Section - Title */}
                     <div className="flex items-center gap-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                                 Appointments
                             </h1>
-                            <p className="text-sm text-gray-400 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 Schedule and manage customer appointments, create them into work orders as well.
                             </p>
                         </div>

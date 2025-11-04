@@ -67,10 +67,10 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
 
     if (isLoading || generateInsights.isPending) {
         return (
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6">
+            <div className="bg-slate-50 dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-6">
                 <div className="flex items-center justify-center space-x-3">
                     <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                    <span className="text-gray-300">Generating MIA insights...</span>
+                    <span className="text-foreground dark:text-gray-300">Generating MIA insights...</span>
                 </div>
             </div>
         )
@@ -79,13 +79,13 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     if (error || generateInsights.isError) {
         const errorMessage = generateInsights.error?.message || 'Failed to load insights'
         return (
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6">
-                <div className="flex items-center space-x-2 text-red-400">
+            <div className="bg-slate-50 dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-6">
+                <div className="flex items-center space-x-2 text-red-500 dark:text-red-400">
                     <AlertTriangle className="h-5 w-5" />
                     <span>{errorMessage}</span>
                 </div>
                 {errorMessage.includes('not found') && (
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-xs text-muted-foreground dark:text-gray-400 mt-2">
                         Make sure the work order exists and you have access to it.
                     </p>
                 )}
@@ -95,7 +95,7 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
 
     if (!insights?.analysis) {
         return (
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6">
+            <div className="bg-slate-50 dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-6">
                 {/* <div className="flex items-center space-x-2 text-gray-400">
                     <Brain className="h-5 w-5" />
                     <span>MIA insights not available (for now)</span>
@@ -127,7 +127,7 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
                             </>
                         )}
                     </Button>
-                    <p className="text-xs text-gray-500 mt-2 text-center">
+                    <p className="text-xs text-muted-foreground dark:text-gray-500 mt-2 text-center">
                         Generate AI-powered insights for this work order
                     </p>
                     </>
@@ -140,19 +140,19 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     const analysis = insights.analysis
 
     return (
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 space-y-6">
+        <div className="bg-slate-50 dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                     <Brain className="h-6 w-6 text-blue-500" />
-                    <h3 className="text-lg font-semibold text-white">MIA Insights</h3>
+                    <h3 className="text-lg font-semibold text-foreground dark:text-white">MIA Insights</h3>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-gray-400">
                     <span>Priority:</span>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        insights.priority === 'high' ? 'bg-red-900 text-red-300' :
-                        insights.priority === 'medium' ? 'bg-yellow-900 text-yellow-300' :
-                        'bg-green-900 text-green-300'
+                        insights.priority === 'high' ? 'bg-red-900 dark:bg-red-900 text-red-300 dark:text-red-300' :
+                        insights.priority === 'medium' ? 'bg-yellow-900 dark:bg-yellow-900 text-yellow-300 dark:text-yellow-300' :
+                        'bg-green-900 dark:bg-green-900 text-green-300 dark:text-green-300'
                     }`}>
                         {insights.priority || 'medium'}
                     </span>
@@ -161,12 +161,12 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
 
             {/* Summary */}
             {analysis.summary && (
-                <div className="bg-[#131313] border border-[#2a2a2a] rounded-lg p-4">
+                <div className="bg-white dark:bg-[#131313] border border-border dark:border-[#2a2a2a] rounded-lg p-4">
                     <div className="flex items-start space-x-2">
-                        <FileText className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <FileText className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                         <div>
-                            <h4 className="text-sm font-medium text-gray-300 mb-2">Summary</h4>
-                            <p className="text-gray-400 text-sm leading-relaxed">{analysis.summary}</p>
+                            <h4 className="text-sm font-medium text-foreground dark:text-gray-300 mb-2">Summary</h4>
+                            <p className="text-muted-foreground dark:text-gray-400 text-sm leading-relaxed">{analysis.summary}</p>
                         </div>
                     </div>
                 </div>

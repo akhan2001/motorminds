@@ -40,8 +40,8 @@ interface ShopDetailsTabProps {
 // Loading component for lazy-loaded sections
 const SectionLoader = () => (
     <div className="flex items-center justify-center py-4">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        <span className="text-sm text-gray-400">Loading...</span>
+        <Loader2 className="h-4 w-4 animate-spin mr-2 text-foreground" />
+        <span className="text-sm text-muted-foreground">Loading...</span>
     </div>
 )
 
@@ -58,7 +58,7 @@ export function ShopDetailsTab({
 }: ShopDetailsTabProps) {
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-medium">Shop Details</h3>
+            <h3 className="text-xl font-medium text-foreground">Shop Details</h3>
             
             {/* Shop Information Section */}
             <div className="space-y-6">
@@ -72,7 +72,7 @@ export function ShopDetailsTab({
                                 <FormControl>
                                     <Input 
                                         placeholder="Quality Service You Can Trust" 
-                                        className="bg-[#292929] border-[#626262] text-white" 
+                                        className="bg-white dark:bg-background border-border text-foreground" 
                                         {...field} 
                                     />
                                 </FormControl>
@@ -94,7 +94,7 @@ export function ShopDetailsTab({
                                     <FormControl>
                                         <Input 
                                             placeholder="1234567890"
-                                            className="bg-[#292929] border-[#626262] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             {...field}
                                         />
                                     </FormControl>
@@ -115,7 +115,7 @@ export function ShopDetailsTab({
                                     <FormControl>
                                         <Input 
                                             placeholder="1234567890"
-                                            className="bg-[#292929] border-[#626262] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             {...field}
                                         />
                                     </FormControl>
@@ -138,7 +138,7 @@ export function ShopDetailsTab({
                             <FormControl>
                                 <Textarea 
                                     placeholder="We provide quality auto repair services with a focus on customer satisfaction." 
-                                    className="resize-none min-h-[200px] bg-[#292929] border-[#626262] text-white"
+                                    className="resize-none min-h-[200px] bg-white dark:bg-background border-border text-foreground"
                                     {...field} 
                                 />
                             </FormControl>

@@ -99,47 +99,47 @@ export function CustomerForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="bg-[#131313] text-white border-[#333] sm:max-w-md">
+        <DialogContent className="bg-slate-50 dark:bg-card text-foreground border-border sm:max-w-md">
             <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Create New Customer</DialogTitle>
-            <DialogDescription className="text-sm text-gray-400">Enter customer details below to create a new customer</DialogDescription>
+            <DialogTitle className="text-xl font-semibold text-foreground">Create New Customer</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">Enter customer details below to create a new customer</DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
             <div className="space-y-2">
-                <Label htmlFor="customer_name">Customer Name</Label>
+                <Label htmlFor="customer_name" className="text-foreground">Customer Name</Label>
                 <Input
                 id="customer_name"
                 name="customer_name"
                 value={customerData.customer_name}
                 onChange={handleChange}
-                className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                className="bg-white dark:bg-background text-foreground border-border focus:border-border"
                 placeholder="Enter customer name"
                 required
                 />
             </div>
             
             <div className="space-y-2">
-                <Label htmlFor="customer_email">Email</Label>
+                <Label htmlFor="customer_email" className="text-foreground">Email</Label>
                 <Input
                 id="customer_email"
                 name="customer_email"
                 type="email"
                 value={customerData.customer_email}
                 onChange={handleChange}
-                className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                className="bg-white dark:bg-background text-foreground border-border focus:border-border"
                 placeholder="Enter customer email"
                 />
             </div>
             
             <div className="space-y-2">
-                <Label htmlFor="customer_phone">Phone</Label>
+                <Label htmlFor="customer_phone" className="text-foreground">Phone</Label>
                 <Input
                 id="customer_phone"
                 name="customer_phone"
                 value={customerData.customer_phone}
                 onChange={handleChange}
-                className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                className="bg-white dark:bg-background text-foreground border-border focus:border-border"
                 placeholder="Enter customer phone number"
                 maxLength={10}
                 required
@@ -147,13 +147,13 @@ export function CustomerForm({
             </div>
             
             <div className="space-y-2">
-                <Label htmlFor="customer_address">Address</Label>
+                <Label htmlFor="customer_address" className="text-foreground">Address</Label>
                 <Input
                 id="customer_address"
                 name="customer_address"
                 value={customerData.customer_address}
                 onChange={handleChange}
-                className="bg-[#292929] text-white border-[#444] focus:border-[#666]"
+                className="bg-white dark:bg-background text-foreground border-border focus:border-border"
                 placeholder="Enter customer address"
                 />
             </div>
@@ -163,14 +163,14 @@ export function CustomerForm({
                 type="button" 
                 variant="outline" 
                 onClick={onClose}
-                className="border-[#444] text-gray-300 hover:bg-[#333] hover:text-white"
+                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                 disabled={isSubmitting}
                 >
                 Cancel
                 </Button>
                 <Button 
                     type="submit"
-                    className="bg-[#ef4444] hover:bg-[#ef4444]/90 text-white"
+                    className="bg-red-600 hover:bg-red-700 text-white"
                     disabled={isSubmitting}
                     >
                     {isSubmitting ? "Creating..." : "Save Customer"}

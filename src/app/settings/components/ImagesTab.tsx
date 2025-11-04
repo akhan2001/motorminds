@@ -9,7 +9,7 @@ interface ImagesTabProps {
 export function ImagesTab({ form }: ImagesTabProps) {
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-medium">Images</h3>
+            <h3 className="text-xl font-medium text-foreground">Images</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
@@ -20,7 +20,7 @@ export function ImagesTab({ form }: ImagesTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://example.com/logo.png" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -41,7 +41,7 @@ export function ImagesTab({ form }: ImagesTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://example.com/banner.png" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>

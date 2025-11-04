@@ -265,8 +265,8 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
 
     return (
         <div className={`space-y-4 ${className}`}>
-        <h3 className="text-lg font-medium text-white">Vehicle Information</h3>
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
+        <h3 className="text-lg font-medium text-foreground dark:text-white">Vehicle Information</h3>
+            <div className="bg-slate-50 dark:bg-[#1A1A1A] rounded-xl p-6">
                 {/* Vehicle Selection Dropdown (only for creation mode) */}
                 {isCreating && isEditing && customerId && customerId !== "new" && (
                     <div className="mb-4">
@@ -281,10 +281,10 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     </div>
                 )}
                 {/* Vehicle Information Fields */}
-                <div className="space-y-2 mt-2 p-3 border border-[#2a2a2a] rounded-md">
+                <div className="space-y-2 mt-2 p-3 border border-border dark:border-[#2a2a2a] rounded-md">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="space-y-1.5">
-                            <Label htmlFor="vehicle_year" className="text-gray-400">Year *</Label>
+                            <Label htmlFor="vehicle_year" className="text-muted-foreground dark:text-gray-400">Year *</Label>
                             <Input
                                 id="vehicle_year"
                                 type="number"
@@ -295,7 +295,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     if (errors.vehicleYear) setErrors(prev => ({ ...prev, vehicleYear: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleYear', vehicleYear)}
-                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
+                                className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="2020"
@@ -303,14 +303,14 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 max={new Date().getFullYear() + 1}
                             />
                             {errors.vehicleYear && (
-                                <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
                                     {errors.vehicleYear}
                                 </div>
                             )}
                         </div>
                         <div className="space-y-1.5">
-                            <Label htmlFor="vehicle_make" className="text-gray-400">Make *</Label>
+                            <Label htmlFor="vehicle_make" className="text-muted-foreground dark:text-gray-400">Make *</Label>
                             <Select
                                 value={vehicleMake}
                                 onValueChange={(value) => {
@@ -322,27 +322,27 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             >
                                 <SelectTrigger 
                                     id="vehicle_make"
-                                    className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
+                                    className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
                                 >
                                     <SelectValue placeholder="Select make" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                                <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                     {VEHICLE_MAKES.map((make) => (
-                                        <SelectItem key={make} value={make} className="text-white hover:bg-[#2a2a2a]">
+                                        <SelectItem key={make} value={make} className="text-popover-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]">
                                             {make}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                             {errors.vehicleMake && (
-                                <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
                                     {errors.vehicleMake}
                                 </div>
                             )}
                         </div>
                         <div className="space-y-1.5">
-                            <Label htmlFor="vehicle_model" className="text-gray-400">Model *</Label>
+                            <Label htmlFor="vehicle_model" className="text-muted-foreground dark:text-gray-400">Model *</Label>
                             <Input
                                 id="vehicle_model"
                                 value={vehicleModel}
@@ -352,24 +352,24 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleModel', vehicleModel)}
-                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
+                                className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Civic"
                             />
                             {errors.vehicleModel && (
-                                <div className="mt-1 text-red-400 text-xs flex items-center gap-1">
+                                <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
                                     {errors.vehicleModel}
                                 </div>
                             )}
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Color</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Color</Label>
                             <Input
                                 value={vehicleColor}
                                 onChange={(e) => isEditing && onFieldChange('vehicleColor', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="e.g. Blue"
                             />
@@ -377,14 +377,14 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400 flex items-center gap-2">
+                            <Label className="text-muted-foreground dark:text-gray-400 flex items-center gap-2">
                                 VIN
                             </Label>
                             <div className="relative">
                                 <Input
                                     value={vehicleVin}
                                     onChange={(e) => isEditing && onFieldChange('vehicleVin', e.target.value.toUpperCase())}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 pr-20"
+                                    className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 pr-20"
                                     readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                     placeholder="17-character VIN"
                                     maxLength={17}
@@ -409,21 +409,21 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">License Plate</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">License Plate</Label>
                             <Input
                                 value={vehicleLicensePlate}
                                 onChange={(e) => isEditing && onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="ABC123"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-gray-400">Mileage</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Mileage</Label>
                             <Input
                                 value={vehicleMileage}
                                 onChange={(e) => isEditing && onFieldChange('vehicleMileage', e.target.value)}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
                                 readOnly={!isEditing}
                                 placeholder="Current mileage"
                                 type="number"

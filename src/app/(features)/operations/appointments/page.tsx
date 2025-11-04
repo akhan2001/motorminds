@@ -210,15 +210,15 @@ export default function AppointmentsPage() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
                             <LoadingSpinner size="md" className="text-blue-500" />
                             <div>
-                                <p className="text-white font-medium">Loading Appointments</p>
-                                <p className="text-gray-400 text-sm">Fetching calendar data...</p>
+                                <p className="text-foreground font-medium">Loading Appointments</p>
+                                <p className="text-muted-foreground text-sm">Fetching calendar data...</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -230,15 +230,15 @@ export default function AppointmentsPage() {
     // Error state
     if (error) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
                             <AlertCircle className="h-6 w-6 text-red-500" />
                             <div>
-                                <p className="text-white font-medium">Failed to Load Appointments</p>
-                                <p className="text-gray-400 text-sm mb-3">
+                                <p className="text-foreground font-medium">Failed to Load Appointments</p>
+                                <p className="text-muted-foreground text-sm mb-3">
                                     {error && typeof error === 'object' && 'message' in error ? (error as Error).message : 'Unknown error occurred'}
                                 </p>
                                 <Button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
@@ -255,15 +255,15 @@ export default function AppointmentsPage() {
     // Don't render main content if we don't have authentication data
     if (!shopId || !user) {
         return (
-            <div className="h-screen flex flex-col bg-[#0d0d0d]">
+            <div className="h-screen flex flex-col bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
                             <AlertCircle className="h-6 w-6 text-yellow-500" />
                             <div>
-                                <p className="text-white font-medium">Authentication Required</p>
-                                <p className="text-gray-400 text-sm">
+                                <p className="text-foreground font-medium">Authentication Required</p>
+                                <p className="text-muted-foreground text-sm">
                                     Unable to access appointments. Please ensure you are logged in.
                                 </p>
                             </div>
@@ -275,7 +275,7 @@ export default function AppointmentsPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             
             <AppointmentHeader
@@ -339,14 +339,14 @@ export default function AppointmentsPage() {
                                 />
                             ) : (
                                 // State 1: Empty Panel - No Appointments
-                                <Card className="bg-[#1a1a1a] border-[#2a2a2a] h-full">
+                                <Card className="bg-slate-50 dark:bg-card border-border h-full">
                                     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                                         <div className="mb-6">
-                                            <CalendarDays className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                                            <h3 className="text-lg font-medium text-white mb-2">
+                                            <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                                            <h3 className="text-lg font-medium text-foreground mb-2">
                                                 No Appointments
                                             </h3>
-                                            <p className="text-gray-400 text-sm max-w-xs">
+                                            <p className="text-muted-foreground text-sm max-w-xs">
                                                 No appointments scheduled for {format(selectedDate, 'MMMM d, yyyy')}. 
                                                 Click below to create one.
                                             </p>

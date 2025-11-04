@@ -17,15 +17,15 @@ interface UpsellSuggestionCardProps {
 const getCategoryIcon = (category: string) => {
     switch (category) {
         case 'immediate':
-            return <Clock className="h-4 w-4 text-red-400" />
+            return <Clock className="h-4 w-4 text-red-500 dark:text-red-400" />
         case 'preventive':
-            return <Shield className="h-4 w-4 text-blue-400" />
+            return <Shield className="h-4 w-4 text-blue-500 dark:text-blue-400" />
         case 'safety':
-            return <Shield className="h-4 w-4 text-red-400" />
+            return <Shield className="h-4 w-4 text-red-500 dark:text-red-400" />
         case 'seasonal':
-            return <Star className="h-4 w-4 text-yellow-400" />
+            return <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
         default:
-            return <Wrench className="h-4 w-4 text-gray-400" />
+            return <Wrench className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
     }
 }
 
@@ -122,7 +122,7 @@ export const UpsellSuggestionCard: React.FC<UpsellSuggestionCardProps> = ({
             <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-2">
                     {getCategoryIcon(suggestion.category)}
-                    <h5 className="text-sm font-medium text-white">
+                    <h5 className="text-sm font-medium text-foreground dark:text-white">
                         {suggestion.title}
                     </h5>
                 </div>
@@ -130,7 +130,7 @@ export const UpsellSuggestionCard: React.FC<UpsellSuggestionCardProps> = ({
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityBadge(suggestion.priority)}`}>
                         {suggestion.priority}
                     </span>
-                    <div className="flex items-center space-x-1 text-green-400">
+                    <div className="flex items-center space-x-1 text-green-500 dark:text-green-400">
                         <DollarSign className="h-3 w-3" />
                         <span className="text-sm font-medium">
                             ${suggestion.estimatedValue}
@@ -138,7 +138,7 @@ export const UpsellSuggestionCard: React.FC<UpsellSuggestionCardProps> = ({
                     </div>
                 </div>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">
+            <p className="text-sm text-muted-foreground dark:text-gray-400 leading-relaxed">
                 {suggestion.description}
             </p>
         </div>

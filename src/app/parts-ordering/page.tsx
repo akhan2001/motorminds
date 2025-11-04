@@ -641,34 +641,34 @@ export default function PartsOrdering() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 overflow-hidden">
                 <ResizablePanelGroup direction="horizontal" className="h-full">
                     <ResizablePanel defaultSize={60} minSize={55} maxSize={65}>
-                        <div className="h-full bg-[#1a1a1a] border-r border-[#2a2a2a] overflow-y-auto">
+                        <div className="h-full bg-slate-50 dark:bg-card border-r border-border overflow-y-auto">
                             <div className="p-6">
                                 {/* Header */}
                                 <div className="text-center mb-8">
-                                    <h1 className="text-3xl font-bold text-[#b22222] mb-2">Auto Parts Catalog</h1>
-                                    <p className="text-[#979797]">Find the right parts for your vehicle</p>
+                                    <h1 className="text-3xl font-bold text-red-600 mb-2">Auto Parts Catalog</h1>
+                                    <p className="text-muted-foreground">Find the right parts for your vehicle</p>
                             </div>
 
                                 {/* VIN Decode Section */}
-                                <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 mb-6">
+                                <div className="bg-white dark:bg-card border border-border rounded-lg p-6 mb-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-xl font-semibold text-[#b22222]">
+                                        <h2 className="text-xl font-semibold text-red-600">
                                             Quick Start with VIN
                                         </h2>
                                         <button
                                             onClick={() => setShowVinInput(!showVinInput)}
-                                            className="px-3 py-1 bg-[#b22222] hover:bg-[#a01e1e] text-white text-sm rounded transition-colors"
+                                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
                                         >
                                             {showVinInput ? 'Hide VIN' : 'Use VIN'}
                                         </button>
                                     </div>
                                     
-                                    <p className="text-[#979797] text-sm mb-4">
+                                    <p className="text-muted-foreground text-sm mb-4">
                                         Have your vehicle's VIN? We can automatically fill in your vehicle details.
                                     </p>
 
@@ -687,30 +687,30 @@ export default function PartsOrdering() {
                                                     placeholder="Enter VIN (17 characters)"
                                                     maxLength={17}
                                                     disabled={vinDecoding}
-                                                    className="flex-1 px-3 py-2 bg-[#3a3a3a] border border-[#4a4a4a] rounded text-white placeholder-[#979797] focus:outline-none focus:border-[#b22222] transition-colors disabled:opacity-50"
+                                                    className="flex-1 px-3 py-2 bg-white dark:bg-background border border-border rounded text-foreground placeholder-muted-foreground focus:outline-none focus:border-red-600 transition-colors disabled:opacity-50"
                                                 />
                                                 <button
                                                     onClick={handleVinDecode}
                                                     disabled={vinDecoding || !vinInput.trim()}
-                                                    className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded transition-colors"
+                                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded transition-colors"
                                                 >
                                                     {vinDecoding ? 'Decoding...' : 'Decode VIN'}
                                                 </button>
                                             </div>
 
                                             {vinDecodeError && (
-                                                <div className="p-3 bg-red-900/20 border border-red-700 rounded text-red-300 text-sm">
+                                                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded text-red-600 dark:text-red-300 text-sm">
                                                     {vinDecodeError}
                                                 </div>
                                             )}
 
                                             {vinDecodeSuccess && (
-                                                <div className="p-3 bg-green-900/20 border border-green-700 rounded text-green-300 text-sm">
+                                                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded text-green-600 dark:text-green-300 text-sm">
                                                     {vinDecodeSuccess}
                                                 </div>
                                             )}
 
-                                            <div className="text-xs text-[#979797]">
+                                            <div className="text-xs text-muted-foreground">
                                                 <p>VIN should be 17 characters and contain both letters and numbers.</p>
                                                 <p>VIN Decoding is only available for vehicles made in the North American region. If there is no match, please manually select your vehicle.</p>
                                             </div>
@@ -719,8 +719,8 @@ export default function PartsOrdering() {
                             </div>
 
                                 {/* Step 1: Vehicle Selection */}
-                                <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 mb-6">
-                                    <h2 className="text-xl font-semibold text-[#b22222] mb-4">
+                                <div className="bg-white dark:bg-card border border-border rounded-lg p-6 mb-6">
+                                    <h2 className="text-xl font-semibold text-red-600 mb-4">
                                         Step 1: Select Your Vehicle
                                     </h2>
                                     
@@ -738,27 +738,27 @@ export default function PartsOrdering() {
 
                                 {/* Step 2: Engine Selection */}
                                 {selection.make && selection.model && selection.year && (
-                                    <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 mb-6">
-                                        <h2 className="text-xl font-semibold text-[#b22222] mb-4">
+                                    <div className="bg-white dark:bg-card border border-border rounded-lg p-6 mb-6">
+                                        <h2 className="text-xl font-semibold text-red-600 mb-4">
                                             Step 2: Select Engine Type
                                         </h2>
                                         
                                         {enginesLoading ? (
-                                            <div className="text-center py-8 text-[#979797]">Loading engines...</div>
+                                            <div className="text-center py-8 text-muted-foreground">Loading engines...</div>
                                         ) : engines.length > 0 ? (
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 {engines.map((engine, index) => (
                                                     <div
                                                         key={engine.uniqueKey || `${engine.vehicleId}-${index}`}
                                                         onClick={() => handleEngineChange(engine.vehicleId.toString())}
-                                                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-[#b22222] ${
+                                                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-red-600 ${
                                                             selectedEngine?.vehicleId === engine.vehicleId
-                                                                ? 'border-[#b22222] bg-[#b22222]/10'
-                                                                : 'border-[#3a3a3a] hover:bg-[#3a3a3a]'
+                                                                ? 'border-red-600 bg-red-50 dark:bg-red-900/20'
+                                                                : 'border-border hover:bg-muted/50'
                                                         }`}
                                                     >
-                                                        <div className="font-semibold text-white mb-2">{engine.engineName}</div>
-                                                        <div className="text-sm text-[#979797] space-y-1">
+                                                        <div className="font-semibold text-foreground mb-2">{engine.engineName}</div>
+                                                        <div className="text-sm text-muted-foreground space-y-1">
                                                             <div>Displacement: {engine.capacityLt}L</div>
                                                             <div>Cylinders: {engine.numberOfCylinders}</div>
                                                             {engine.power && <div>Power: {engine.power}</div>}
@@ -768,20 +768,20 @@ export default function PartsOrdering() {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-8 text-[#979797]">No engines available for this model</div>
+                                            <div className="text-center py-8 text-muted-foreground">No engines available for this model</div>
                                         )}
                                 </div>
                                 )}
 
                                 {/* Step 3: Category Selection */}
                                 {selectedEngine && (
-                                    <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6 mb-6">
-                                        <h2 className="text-xl font-semibold text-[#b22222] mb-4">
+                                    <div className="bg-white dark:bg-card border border-border rounded-lg p-6 mb-6">
+                                        <h2 className="text-xl font-semibold text-red-600 mb-4">
                                             Step 3: Select Parts Category
                                         </h2>
                                         
                                         {categoriesLoading ? (
-                                            <div className="text-center py-8 text-[#979797]">Loading categories...</div>
+                                            <div className="text-center py-8 text-muted-foreground">Loading categories...</div>
                                         ) : categories.length > 0 ? (
                                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
                                                 {categories.map(category => (
@@ -790,8 +790,8 @@ export default function PartsOrdering() {
                                                         onClick={() => handleCategoryChange(category.categoryId.toString())}
                                                         className={`p-3 rounded-lg text-sm font-medium transition-all ${
                                                             selectedCategory?.categoryId === category.categoryId
-                                                                ? 'bg-[#b22222] text-white'
-                                                                : 'bg-[#3a3a3a] text-[#979797] hover:bg-[#4a4a4a] hover:text-white'
+                                                                ? 'bg-red-600 text-white'
+                                                                : 'bg-slate-50 dark:bg-muted text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-500 border border-border'
                                                         }`}
                                                     >
                                                         {category.categoryName}
@@ -799,16 +799,16 @@ export default function PartsOrdering() {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-8 text-[#979797]">No categories available for this engine</div>
+                                            <div className="text-center py-8 text-muted-foreground">No categories available for this engine</div>
                                         )}
 
                                         {/* Show selected category status */}
                                         {selectedCategory && (
-                                            <div className="mt-4 p-3 bg-[#b22222]/10 border border-[#b22222]/20 rounded-lg">
-                                                <div className="text-sm text-[#b22222] font-medium">
+                                            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-500/30 rounded-lg">
+                                                <div className="text-sm text-red-600 dark:text-red-400 font-medium">
                                                     Selected: {selectedCategory.categoryName}
                                                 </div>
-                                                <div className="text-xs text-[#979797] mt-1">
+                                                <div className="text-xs text-muted-foreground mt-1">
                                                     Parts will load automatically below
                                 </div>
                             </div>
@@ -818,20 +818,20 @@ export default function PartsOrdering() {
 
                                 {/* Step 4: Parts Display */}
                                 {selectedCategory && (
-                                    <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-6">
-                                        <h2 className="text-xl font-semibold text-[#b22222] mb-4">
+                                    <div className="bg-white dark:bg-card border border-border rounded-lg p-6">
+                                        <h2 className="text-xl font-semibold text-red-600 mb-4">
                                             Step 4: Available Parts
                                         </h2>
                                         
                                         {partsLoading ? (
-                                            <div className="text-center py-8 text-[#979797]">Loading parts...</div>
+                                            <div className="text-center py-8 text-muted-foreground">Loading parts...</div>
                                         ) : partsError ? (
-                                            <div className="text-center py-8 text-red-400">Error: {partsError}</div>
+                                            <div className="text-center py-8 text-red-600 dark:text-red-400">Error: {partsError}</div>
                                         ) : parts.length > 0 ? (
                                             <div className="space-y-4">
-                                                <div className="text-sm text-[#979797] mb-4">Found {parts.length} parts</div>
+                                                <div className="text-sm text-muted-foreground mb-4">Found {parts.length} parts</div>
                                                 {parts.map((part) => (
-                                                    <div key={part.id} className="bg-[#3a3a3a] border border-[#4a4a4a] rounded-lg p-4 hover:bg-[#4a4a4a] transition-colors">
+                                                    <div key={part.id} className="bg-slate-50 dark:bg-background border border-border rounded-lg p-4 hover:bg-muted/50 hover:border-red-300 dark:hover:border-red-500 transition-colors">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <div className="flex items-start gap-4">
                                                                 {part.imageUrl && (
@@ -846,30 +846,30 @@ export default function PartsOrdering() {
                                                                     />
                                                                 )}
                                                                 <div>
-                                                                    <h3 className="font-semibold text-white text-lg">{part.name}</h3>
-                                                                    <div className="text-sm text-[#979797]">Article ID: {part.articleId}</div>
+                                                                    <h3 className="font-semibold text-foreground text-lg">{part.name}</h3>
+                                                                    <div className="text-sm text-muted-foreground">Article ID: {part.articleId}</div>
                                 </div>
                                 </div>
                                                             {part.price > 0 && (
-                                                                <span className="text-[#b22222] font-bold text-lg">${part.price.toFixed(2)}</span>
+                                                                <span className="text-red-600 font-bold text-lg">${part.price.toFixed(2)}</span>
                                                     )}
                                                 </div>
                                                         
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-[#979797] mb-3">
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-3">
                                                             <div>
-                                                                <span className="font-medium">Article No:</span>
+                                                                <span className="font-medium text-foreground">Article No:</span>
                                                                 <div>{part.articleNo}</div>
                                                             </div>
                                                             <div>
-                                                                <span className="font-medium">Supplier:</span>
+                                                                <span className="font-medium text-foreground">Supplier:</span>
                                                                 <div>{part.supplier}</div>
                                                             </div>
                                                             <div>
-                                                                <span className="font-medium">Supplier ID:</span>
+                                                                <span className="font-medium text-foreground">Supplier ID:</span>
                                                                 <div>{part.supplierId}</div>
                                                             </div>
                                                             <div>
-                                                                <span className="font-medium">Availability:</span>
+                                                                <span className="font-medium text-foreground">Availability:</span>
                                                                 <div>{part.availability}</div>
                                                             </div>
                                                     </div>
@@ -877,7 +877,7 @@ export default function PartsOrdering() {
                                                         <div className="flex justify-end">
                                                     <button 
                                                                 onClick={() => addToCartFromCatalog(part)}
-                                                                className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] text-white text-sm rounded transition-colors"
+                                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
                                                     >
                                                         Add to Cart
                                                     </button>
@@ -886,7 +886,7 @@ export default function PartsOrdering() {
                                     ))}
                                             </div>
                                         ) : selectedCategory ? (
-                                            <div className="text-center py-8 text-[#979797]">No parts available for this category</div>
+                                            <div className="text-center py-8 text-muted-foreground">No parts available for this category</div>
                                         ) : null}
                                 </div>
                             )}
@@ -897,23 +897,23 @@ export default function PartsOrdering() {
                     <ResizableHandle withHandle />
 
                     <ResizablePanel defaultSize={40} minSize={35} maxSize={45}>
-                        <div className="h-full bg-[#1a1a1a] flex flex-col">
+                        <div className="h-full bg-slate-50 dark:bg-card flex flex-col">
                             {/* Chat Header */}
-                            <div className="border-b border-[#2a2a2a] p-4">
+                            <div className="border-b border-border p-4 bg-white dark:bg-background">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-[#b22222] rounded-full flex items-center justify-center">
+                                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                                             <span className="text-white font-semibold text-sm">M</span>
                                         </div>
                                         <div>
-                                            <h3 className="text-white font-semibold">Mia AI</h3>
-                                            <p className="text-[#979797] text-xs">Parts Advisor</p>
+                                            <h3 className="text-foreground font-semibold">Mia AI</h3>
+                                            <p className="text-muted-foreground text-xs">Parts Advisor</p>
                                         </div>
                                     </div>
                                     {cart.length > 0 && (
                                         <button
                                             onClick={() => setCartVisible(!cartVisible)}
-                                            className="px-3 py-1 bg-[#b22222] hover:bg-[#a01e1e] text-white text-xs rounded transition-colors"
+                                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
                                         >
                                             Cart ({cart.length})
                                         </button>
@@ -923,28 +923,28 @@ export default function PartsOrdering() {
 
                             {/* Cart Panel */}
                             {cartVisible && (
-                                <div className="border-b border-[#2a2a2a] bg-[#0d0d0d] max-h-48 overflow-y-auto">
+                                <div className="border-b border-border bg-white dark:bg-background max-h-48 overflow-y-auto">
                                     <div className="p-3">
-                                        <h4 className="text-white font-medium text-sm mb-2">Cart Items</h4>
+                                        <h4 className="text-foreground font-medium text-sm mb-2">Cart Items</h4>
                                         {cart.length === 0 ? (
-                                            <p className="text-[#979797] text-xs">No items in cart</p>
+                                            <p className="text-muted-foreground text-xs">No items in cart</p>
                                         ) : (
                                             <div className="space-y-2">
                                                 {cart.map(item => (
-                                                    <div key={item.id} className="flex justify-between items-start bg-[#2a2a2a] p-2 rounded text-xs">
+                                                    <div key={item.id} className="flex justify-between items-start bg-slate-50 dark:bg-card p-2 rounded text-xs border border-border">
                                                         <div className="flex-1">
-                                                            <div className="text-white font-medium">{item.name}</div>
-                                                            <div className="text-[#979797]">{item.partNumber}</div>
-                                                            <div className="text-[#979797]">{item.supplier}</div>
+                                                            <div className="text-foreground font-medium">{item.name}</div>
+                                                            <div className="text-muted-foreground">{item.partNumber}</div>
+                                                            <div className="text-muted-foreground">{item.supplier}</div>
                                                             {item.price > 0 && (
-                                                                <div className="text-[#b22222] font-semibold">${item.price.toFixed(2)}</div>
+                                                                <div className="text-red-600 font-semibold">${item.price.toFixed(2)}</div>
                                                             )}
                                                             {item.fullInfo?.link && (
                                                                 <a
                                                                     href={item.fullInfo.link}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    className="text-blue-400 hover:text-blue-300 text-xs underline"
+                                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs underline"
                                                                 >
                                                                     View at supplier
                                                                 </a>
@@ -952,7 +952,7 @@ export default function PartsOrdering() {
                                                         </div>
                                                         <button
                                                             onClick={() => removeFromCart(item.id)}
-                                                            className="text-red-400 hover:text-red-300 ml-2"
+                                                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 ml-2"
                                                         >
                                                             ×
                                                         </button>
@@ -966,23 +966,23 @@ export default function PartsOrdering() {
 
                             {/* Cart Submission Section */}
                             {cart.length > 0 && (
-                                <div className="border-b border-[#2a2a2a] bg-[#0d0d0d] p-3">
+                                <div className="border-b border-border bg-white dark:bg-background p-3">
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-white text-sm font-medium mb-2">
+                                            <label className="block text-foreground text-sm font-medium mb-2">
                                                 Additional Notes (Optional)
                                             </label>
                                             <textarea
                                                 value={customerNotes}
                                                 onChange={(e) => setCustomerNotes(e.target.value)}
                                                 placeholder="Any specific requirements, urgency notes, or questions..."
-                                                className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded text-white text-sm resize-none"
+                                                className="w-full px-3 py-2 bg-white dark:bg-background border border-border rounded text-foreground text-sm resize-none"
                                                 rows={3}
                                             />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <div className="text-xs text-[#979797]">
+                                            <div className="text-xs text-muted-foreground">
                                                 Total Items: {cart.length} | 
                                                 Est. Total: ${cart.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)} CAD
                                             </div>
@@ -990,19 +990,19 @@ export default function PartsOrdering() {
                                             <button
                                                 onClick={submitCart}
                                                 disabled={isSubmittingCart || cart.length === 0}
-                                                className="w-full px-4 py-2 bg-[#b22222] hover:bg-[#cc2222] disabled:bg-[#666] disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                                                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-muted disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
                                             >
                                                 {isSubmittingCart ? 'Submitting...' : 'Submit Parts Request'}
                                             </button>
 
                                             {submissionSuccess && (
-                                                <div className="p-3 bg-green-900/20 border border-green-700 rounded text-green-300 text-xs">
+                                                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded text-green-600 dark:text-green-300 text-xs">
                                                     {submissionSuccess}
                                                 </div>
                                             )}
 
                                             {submissionError && (
-                                                <div className="p-3 bg-red-900/20 border border-red-700 rounded text-red-300 text-xs">
+                                                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded text-red-600 dark:text-red-300 text-xs">
                                                     {submissionError}
                                                 </div>
                                             )}
@@ -1014,14 +1014,14 @@ export default function PartsOrdering() {
                             {/* Chat Messages */}
                             <div 
                                 ref={chatScrollRef}
-                                className="flex-1 overflow-y-auto p-4 space-y-4"
+                                className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-background"
                             >
                                 {chatMessages.map(message => (
                                     <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[80%] ${
                                             message.role === 'user' 
-                                                ? 'bg-[#b22222] text-white' 
-                                                : 'bg-[#2a2a2a] text-white'
+                                                ? 'bg-red-600 text-white' 
+                                                : 'bg-white dark:bg-card text-foreground border border-border'
                                         } rounded-lg p-3`}>
                                             <div className="text-sm">{message.content}</div>
                                             
@@ -1029,12 +1029,12 @@ export default function PartsOrdering() {
                                             {message.products && message.products.length > 0 && (
                                                 <div className="mt-3 space-y-2">
                                                     {message.products.map((product, index) => (
-                                                        <div key={index} className="bg-[#3a3a3a] rounded-lg p-3 border border-[#4a4a4a]">
+                                                        <div key={index} className="bg-slate-50 dark:bg-background rounded-lg p-3 border border-border">
                                                             <div className="flex justify-between items-start mb-2">
-                                                                <h4 className="font-semibold text-white text-sm">{product.partName}</h4>
-                                                                <span className="text-[#b22222] font-semibold text-sm">{product.price}</span>
+                                                                <h4 className="font-semibold text-foreground text-sm">{product.partName}</h4>
+                                                                <span className="text-red-600 font-semibold text-sm">{product.price}</span>
                                                             </div>
-                                                            <div className="text-xs text-[#979797] space-y-1">
+                                                            <div className="text-xs text-muted-foreground space-y-1">
                                                                 <div>Part #: {product.partNumber}</div>
                                                                 <div>Compatible: {product.compatible}</div>
                                                                 {product.supplier && (
@@ -1042,9 +1042,9 @@ export default function PartsOrdering() {
                                                                 )}
                                                                 {product.availability && (
                                                                     <div className={`font-medium ${
-                                                                        product.availability.toLowerCase().includes('in stock') ? 'text-green-400' :
-                                                                        product.availability.toLowerCase().includes('out of stock') ? 'text-red-400' :
-                                                                        'text-yellow-400'
+                                                                        product.availability.toLowerCase().includes('in stock') ? 'text-green-600 dark:text-green-400' :
+                                                                        product.availability.toLowerCase().includes('out of stock') ? 'text-red-600 dark:text-red-400' :
+                                                                        'text-yellow-600 dark:text-yellow-400'
                                                                     }`}>
                                                                         {product.availability}
                                                                     </div>
@@ -1053,7 +1053,7 @@ export default function PartsOrdering() {
                                                             <div className="mt-2 flex gap-2">
                                                                 <button
                                                                     onClick={() => addToCartFromMia(product)}
-                                                                    className="flex-1 px-3 py-1 bg-[#b22222] hover:bg-[#a01e1e] text-white text-xs rounded transition-colors"
+                                                                    className="flex-1 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
                                                                 >
                                                                     Add to Cart
                                                                 </button>
@@ -1062,7 +1062,7 @@ export default function PartsOrdering() {
                                                                         href={product.link}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="px-3 py-1 bg-[#4a4a4a] hover:bg-[#5a5a5a] text-white text-xs rounded transition-colors"
+                                                                        className="px-3 py-1 bg-muted hover:bg-muted/80 text-foreground text-xs rounded transition-colors border border-border"
                                                                     >
                                                                         View
                                                                     </a>
@@ -1075,8 +1075,8 @@ export default function PartsOrdering() {
 
                                             {/* Sources and references */}
                                             {message.sources && message.sources.length > 0 && (
-                                                <div className="mt-3 border-t border-[#4a4a4a] pt-2">
-                                                    <div className="text-xs text-[#979797] font-medium mb-2">Sources & References:</div>
+                                                <div className="mt-3 border-t border-border pt-2">
+                                                    <div className="text-xs text-muted-foreground font-medium mb-2">Sources & References:</div>
                                                     <div className="space-y-1">
                                                         {message.sources.slice(0, 3).map((source, index) => (
                                                             <div key={index} className="text-xs">
@@ -1084,12 +1084,12 @@ export default function PartsOrdering() {
                                                                     href={source.url}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
-                                                                    className="text-blue-400 hover:text-blue-300 underline"
+                                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
                                                                 >
                                                                     {source.title}
                                                                 </a>
                                                                 {source.description && (
-                                                                    <div className="text-[#979797] mt-0.5">{source.description.slice(0, 100)}...</div>
+                                                                    <div className="text-muted-foreground mt-0.5">{source.description.slice(0, 100)}...</div>
                                                                 )}
                                                             </div>
                                                         ))}
@@ -1097,7 +1097,7 @@ export default function PartsOrdering() {
                                                 </div>
                                             )}
                                             
-                                            <div className="text-xs text-gray-400 mt-2">
+                                            <div className="text-xs text-muted-foreground mt-2">
                                                 {message.timestamp.toLocaleTimeString()}
                                             </div>
                                         </div>
@@ -1106,14 +1106,14 @@ export default function PartsOrdering() {
                                 
                                 {chatLoading && (
                                     <div className="flex justify-start">
-                                        <div className="bg-[#2a2a2a] rounded-lg p-3">
+                                        <div className="bg-white dark:bg-card rounded-lg p-3 border border-border">
                                             <div className="flex items-center space-x-2">
                                                 <div className="flex space-x-1">
-                                                    <div className="w-2 h-2 bg-[#b22222] rounded-full animate-bounce"></div>
-                                                    <div className="w-2 h-2 bg-[#b22222] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                                    <div className="w-2 h-2 bg-[#b22222] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                                    <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce"></div>
+                                                    <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                                    <div className="w-2 h-2 bg-red-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                                                 </div>
-                                                <span className="text-[#979797] text-sm">Mia is thinking...</span>
+                                                <span className="text-muted-foreground text-sm">Mia is thinking...</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1121,7 +1121,7 @@ export default function PartsOrdering() {
                             </div>
 
                             {/* Chat Input */}
-                            <div className="border-t border-[#2a2a2a] p-4">
+                            <div className="border-t border-border p-4 bg-white dark:bg-background">
                                 <div className="flex space-x-2">
                                     <input
                                         type="text"
@@ -1130,12 +1130,12 @@ export default function PartsOrdering() {
                                         onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
                                         placeholder="Ask Mia about parts..."
                                         disabled={chatLoading}
-                                        className="flex-1 px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#979797] focus:outline-none focus:border-[#b22222] transition-colors disabled:opacity-50"
+                                        className="flex-1 px-3 py-2 bg-white dark:bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-red-600 transition-colors disabled:opacity-50"
                                     />
                                     <button
                                         onClick={clearChatSession}
                                         disabled={chatLoading}
-                                        className="px-3 py-2 bg-[#4a4a4a] hover:bg-[#5a5a5a] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+                                        className="px-3 py-2 bg-muted hover:bg-muted/80 disabled:bg-muted disabled:cursor-not-allowed text-foreground rounded-lg transition-colors text-sm border border-border"
                                         title="Clear chat and start over"
                                     >
                                         Clear
@@ -1143,7 +1143,7 @@ export default function PartsOrdering() {
                                     <button
                                         onClick={sendChatMessage}
                                         disabled={!chatInput.trim() || chatLoading}
-                                        className="px-4 py-2 bg-[#b22222] hover:bg-[#a01e1e] disabled:bg-[#666] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                                     >
                                         Send
                                     </button>
@@ -1151,10 +1151,10 @@ export default function PartsOrdering() {
                                 
                                 {/* Current vehicle context */}
                                 {(selection.year || selection.make || selection.model) && (
-                                    <div className="mt-2 text-xs text-[#979797]">
+                                    <div className="mt-2 text-xs text-muted-foreground">
                                         Current vehicle: {selection.year && `${selection.year} `}{selection.make && `${selection.make} `}{selection.model && selection.model}{selectedEngine && ` (${selectedEngine.engineName})`}
                                         {vinDecodeSuccess && (
-                                            <span className="text-green-400 ml-2">✓ VIN Decoded</span>
+                                            <span className="text-green-600 dark:text-green-400 ml-2">✓ VIN Decoded</span>
                                         )}
                                     </div>
                                 )}

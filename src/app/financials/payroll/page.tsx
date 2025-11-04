@@ -120,17 +120,17 @@ export default function PayrollPage() {
   // Skeleton loader
   if (isLoading || !data) {
     return (
-      <div className="flex flex-col min-h-screen bg-black text-white">
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
         <Nav activeLink="Financials" />
         <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
           <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-[#1a1a1a] rounded w-1/3"></div>
+            <div className="h-8 bg-slate-50 dark:bg-muted rounded w-1/3"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-28 bg-[#1a1a1a] rounded-xl"></div>
+                <div key={i} className="h-28 bg-slate-50 dark:bg-muted rounded-xl"></div>
               ))}
             </div>
-            <div className="h-96 bg-[#1a1a1a] rounded-xl"></div>
+            <div className="h-96 bg-slate-50 dark:bg-muted rounded-xl"></div>
           </div>
         </main>
       </div>
@@ -138,7 +138,7 @@ export default function PayrollPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Nav activeLink="Financials" />
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
@@ -146,22 +146,22 @@ export default function PayrollPage() {
         {/* Header */}
         <div className="flex items-center justify-between my-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Payroll Analytics</h1>
-            <p className="text-gray-400">Analyze payroll costs and workforce efficiency.</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Payroll Analytics</h1>
+            <p className="text-muted-foreground">Analyze payroll costs and workforce efficiency.</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button onClick={() => setAddModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={() => setAddModalOpen(true)} className="bg-red-600 hover:bg-red-700 text-white">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Add Employee
             </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button disabled={isGeneratingReport} className="bg-[#E53935] hover:bg-[#c62828] text-white">
+                    <Button disabled={isGeneratingReport} className="bg-red-600 hover:bg-red-700 text-white">
                         <FileText className="w-4 h-4 mr-2" />
                         {isGeneratingReport ? 'Generating...' : 'Export Report'}
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-[#1a1a1a] border-[#333] text-white">
+                <DropdownMenuContent className="bg-popover text-popover-foreground border-border">
                     <DropdownMenuItem onClick={() => handleExport('pdf')}>Export Summary (PDF)</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExport('csv')}>Export Detail (CSV)</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -193,7 +193,7 @@ export default function PayrollPage() {
         />
 
         <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
-            <DialogContent className="bg-[#1a1a1a] border-[#333] text-white">
+            <DialogContent className="bg-white dark:bg-card border-border text-foreground">
                 <DialogHeader>
                     <DialogTitle>Add New Employee</DialogTitle>
                 </DialogHeader>

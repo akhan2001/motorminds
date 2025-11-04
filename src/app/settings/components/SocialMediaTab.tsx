@@ -9,7 +9,7 @@ interface SocialMediaTabProps {
 export function SocialMediaTab({ form }: SocialMediaTabProps) {
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-medium">Social Media</h3>
+            <h3 className="text-xl font-medium text-foreground">Social Media</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
@@ -20,7 +20,7 @@ export function SocialMediaTab({ form }: SocialMediaTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://facebook.com/motorminds" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -38,7 +38,7 @@ export function SocialMediaTab({ form }: SocialMediaTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://twitter.com/motorminds" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -56,7 +56,7 @@ export function SocialMediaTab({ form }: SocialMediaTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://instagram.com/motorminds" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>
@@ -74,7 +74,7 @@ export function SocialMediaTab({ form }: SocialMediaTabProps) {
                             <FormControl>
                                 <Input 
                                     placeholder="https://youtube.com/motorminds" 
-                                    className="bg-[#292929] border-[#626262] text-white" 
+                                    className="bg-white dark:bg-background border-border text-foreground" 
                                     {...field} 
                                 />
                             </FormControl>

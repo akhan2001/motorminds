@@ -113,8 +113,8 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
 
     return (
         <div className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-300 flex items-center space-x-2">
-                <TrendingUp className="h-4 w-4 text-green-400" />
+            <h4 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center space-x-2">
+                <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400" />
                 <span>Upsell Opportunities</span>
             </h4>
             <div className="space-y-3">

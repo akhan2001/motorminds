@@ -40,15 +40,15 @@ interface EfficiencyData {
 const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange: (value: string) => void }) => (
     <div className="flex items-center justify-between my-8">
         <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Efficiency Analysis</h1>
-            <p className="text-gray-400">Analyze your shop's revenue, costs, and overall profitability.</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Efficiency Analysis</h1>
+            <p className="text-muted-foreground">Analyze your shop's revenue, costs, and overall profitability.</p>
         </div>
         <div className="w-40">
            <Select value={value} onValueChange={onTimeRangeChange}>
-                <SelectTrigger className="bg-black text-white">
+                <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                     <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#131313] border-[#222] text-white">
+                <SelectContent className="bg-popover text-popover-foreground border-border">
                     <SelectItem value="today">Today</SelectItem>
                     <SelectItem value="7d">Last 7 Days</SelectItem>
                     <SelectItem value="30d">Last 30 Days</SelectItem>
@@ -93,7 +93,7 @@ export default function EfficiencyClient() {
             data = breakdown.revenue;
             columns = [
                 { key: 'paid_at', header: 'Date', render: (d: any) => new Date(d).toLocaleDateString("en-US", { timeZone: "UTC" }) },
-                { key: 'invoice_number', header: 'Invoice #', render: (v: any) => <span className="text-blue-400 font-medium">{v}</span> },
+                { key: 'invoice_number', header: 'Invoice #', render: (v: any) => <span className="text-blue-600 dark:text-blue-400 font-medium">{v}</span> },
                 { key: 'amount', header: 'Amount', render: (v: any) => `$${(v || 0).toFixed(2)}` },
             ];
             break;
@@ -194,7 +194,7 @@ export default function EfficiencyClient() {
 
   if (isLoading) {
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
             <Nav />
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                 <BreadcrumbNav />
@@ -205,7 +205,7 @@ export default function EfficiencyClient() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
       <Nav />
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
@@ -225,19 +225,19 @@ export default function EfficiencyClient() {
             </div>
           </>
         ) : (
-            <div className="text-center py-16 bg-[#0A0A0A] border border-[#222] rounded-lg">
-                <h2 className="text-xl font-semibold">Could not load efficiency data.</h2>
-                <p className="text-gray-400 mt-2">There might be an issue with the server or your connection.</p>
+            <div className="text-center py-16 bg-slate-50 dark:bg-card border border-border rounded-lg">
+                <h2 className="text-xl font-semibold text-foreground">Could not load efficiency data.</h2>
+                <p className="text-muted-foreground mt-2">There might be an issue with the server or your connection.</p>
             </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-            <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6">
+            <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white">Recurring Fixed Costs</h2>
+                <h2 className="text-xl font-semibold text-foreground">Recurring Fixed Costs</h2>
                 {shopId && (
                   <AddFixedCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
-                    <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    <Button className="bg-red-600 hover:bg-red-700 text-white">
                       <PlusCircle className="w-4 h-4 mr-2" />
                       Add Fixed Cost
                     </Button>
@@ -247,12 +247,12 @@ export default function EfficiencyClient() {
               <FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} onCostDeleted={() => fetchData(timeRange)} />
             </div>
 
-            <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6">
+            <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white">One-Time Costs</h2>
+                <h2 className="text-xl font-semibold text-foreground">One-Time Costs</h2>
                 {shopId && (
                   <AddOneTimeCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
-                    <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    <Button className="bg-red-600 hover:bg-red-700 text-white">
                       <PlusCircle className="w-4 h-4 mr-2" />
                       Add Cost
                     </Button>

@@ -66,24 +66,24 @@ export default function Messages() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Nav />
             <div className="flex items-center justify-center py-4 sm:py-8 px-4 sm:px-6">
                 <div className="container mx-auto max-w-[1300px]">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
                         <div className="flex flex-col w-full">
-                            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2">Messages</h1>
-                            <p className="text-gray-400 mb-6">
+                            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2 text-foreground">Messages</h1>
+                            <p className="text-muted-foreground mb-6">
                                 Communicate with your customers through SMS and social media platforms.
                             </p>
                                     
                             <Tabs defaultValue="sms" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 bg-[#222]">
-                                    <TabsTrigger value="sms" className="data-[state=active]:bg-[#333]">
+                                <TabsList className="grid w-full grid-cols-2 bg-slate-50 dark:bg-muted">
+                                    <TabsTrigger value="sms" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
                                         <Phone className="h-4 w-4 mr-2" />
                                         SMS Messages
                                     </TabsTrigger>
-                                    <TabsTrigger value="social" className="data-[state=active]:bg-[#333]">
+                                    <TabsTrigger value="social" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
                                         <MessageSquare className="h-4 w-4 mr-2" />
                                         Social Media
                                     </TabsTrigger>
@@ -96,8 +96,8 @@ export default function Messages() {
                                 <TabsContent value="social" className="mt-6">
                                     <div className="space-y-4">
                                         <div>
-                                            <h3 className="text-lg font-medium mb-2 text-white">Social Media Messaging</h3>
-                                            <p className="text-gray-400 mb-4">
+                                            <h3 className="text-lg font-medium mb-2 text-foreground">Social Media Messaging</h3>
+                                            <p className="text-muted-foreground mb-4">
                                                 Connect your Facebook and Instagram accounts to receive and reply to customer messages in one place.
                                                 Your Instagram profile must be a Professional account (Business/Creator) and connected to a Facebook Page.
                                             </p>
@@ -106,11 +106,11 @@ export default function Messages() {
                                         {isConnected ? (
                                             <Inbox shopId={shopId} />
                                         ) : (
-                                            <Card className="bg-[#111] border-[#222]">
+                                            <Card className="bg-slate-50 dark:bg-card border-border">
                                                 <CardContent className="p-6 flex justify-between items-center">
                                                     <div>
-                                                        <h3 className="text-lg font-medium mb-1 text-white">Connect your Facebook / Instagram account</h3>
-                                                        <p className="text-gray-400">
+                                                        <h3 className="text-lg font-medium mb-1 text-foreground">Connect your Facebook / Instagram account</h3>
+                                                        <p className="text-muted-foreground">
                                                             Link your shop's Facebook Page and Instagram Business profile to MotorMinds so you can receive and reply to customer messages in one place.
                                                         </p>
                                                     </div>

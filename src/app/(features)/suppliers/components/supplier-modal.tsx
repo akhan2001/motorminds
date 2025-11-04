@@ -42,9 +42,9 @@ export default function SupplierModal({
             <DialogTrigger asChild>
                 {trigger || defaultTrigger}
             </DialogTrigger>
-            <DialogContent className="bg-[#111111] border-[#2a2a2a] text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className="bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
-                    <DialogTitle className="text-white flex items-center gap-2">
+                    <DialogTitle className="text-foreground dark:text-white flex items-center gap-2">
                         <Building2 className="h-5 w-5" />
                         {supplier ? 'Edit Supplier' : 'Add New Supplier'}
                     </DialogTitle>

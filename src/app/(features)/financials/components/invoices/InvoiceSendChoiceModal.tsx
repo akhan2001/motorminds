@@ -24,41 +24,41 @@ export const InvoiceSendChoiceModal: React.FC<InvoiceSendChoiceModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-md bg-[#111111] border-[#2a2a2a] text-white">
+            <DialogContent className="max-w-md bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-blue-500" />
+                    <DialogTitle className="text-xl font-semibold text-foreground dark:text-white flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                         Send Invoice
                     </DialogTitle>
-                    <DialogDescription className="text-md text-gray-400">
+                    <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
                         Choose how you'd like to send the invoice to {invoice.customer.customer_name}.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-3 py-4">
                     <Button 
-                        className="h-24 bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed" 
+                        className="h-24 bg-slate-50 dark:bg-[#1f1f1f] hover:bg-slate-100 dark:hover:bg-[#2a2a2a] text-foreground dark:text-white border border-border dark:border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed" 
                         onClick={onEmailChoice}
                         disabled={!customerHasEmail}
                     >
                         <span className="grid gap-1 text-center">
-                            <Mail size="28" className={`mx-auto ${customerHasEmail ? 'text-blue-400' : 'text-gray-500'}`} />
+                            <Mail size="28" className={`mx-auto ${customerHasEmail ? 'text-blue-500 dark:text-blue-400' : 'text-muted-foreground dark:text-gray-500'}`} />
                             <span className="text-base">Email</span>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-muted-foreground dark:text-gray-400">
                                 {customerHasEmail ? invoice.customer.customer_email : 'No email address'}
                             </span>
                         </span>
                     </Button>
                     
                     <Button 
-                        className="h-24 bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-24 bg-slate-50 dark:bg-[#1f1f1f] hover:bg-slate-100 dark:hover:bg-[#2a2a2a] text-foreground dark:text-white border border-border dark:border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={onSmsChoice}
                         disabled={!customerHasPhone}
                     >
                         <span className="grid gap-1 text-center">
-                            <MessageSquare size="28" className={`mx-auto ${customerHasPhone ? 'text-green-400' : 'text-gray-500'}`} />
+                            <MessageSquare size="28" className={`mx-auto ${customerHasPhone ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground dark:text-gray-500'}`} />
                             <span className="text-base">SMS</span>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-muted-foreground dark:text-gray-400">
                                 {customerHasPhone ? invoice.customer.customer_phone : 'No phone number'}
                             </span>
                         </span>
@@ -69,7 +69,7 @@ export const InvoiceSendChoiceModal: React.FC<InvoiceSendChoiceModalProps> = ({
                     <Button 
                         onClick={onClose}
                         variant="outline"
-                        className="border-[#333333] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        className="border-border dark:border-[#333333] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                     >
                         Cancel
                     </Button>

@@ -47,11 +47,6 @@ export const navigationConfig: NavItem[] = [
         requiredRoles: ['admin', 'super', 'user']
     },
     {
-        name: "Invoices",
-        href: "/invoices",
-        requiredRoles: ['admin', 'super', 'user']
-    },
-    {
         name: "Mia AI",
         href: "/mia-ai",
         requiredRoles: ['admin', 'super', 'demo', 'user']

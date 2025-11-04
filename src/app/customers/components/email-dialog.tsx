@@ -58,33 +58,33 @@ export function EmailDialog({ isOpen, onOpenChange, emailToSend, recipient_name 
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-[#131313] text-white border border-[#222]">
+            <DialogContent className="bg-slate-50 dark:bg-card text-foreground border border-border">
                 <DialogHeader>
-                    <DialogTitle>Send Email to Customer</DialogTitle>
-                    <DialogDescription className="text-gray-400">
+                    <DialogTitle className="text-foreground">Send Email to Customer</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
                         Send an email to {recipient_name}
                     </DialogDescription>
                 </DialogHeader>
                 
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="subject" className="text-left text-gray-300">Subject</Label>
+                        <Label htmlFor="subject" className="text-left text-foreground">Subject</Label>
                         <Input
                             id="subject"
                             value={emailSubject}
                             onChange={(e) => setEmailSubject(e.target.value)}
-                            className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                            className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                             placeholder="Email subject"
                         />
                     </div>
 
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="body" className="text-left text-gray-300">Message</Label>
+                        <Label htmlFor="body" className="text-left text-foreground">Message</Label>
                         <textarea
                             id="body"
                             value={emailBody}
                             onChange={(e) => setEmailBody(e.target.value)}
-                            className="col-span-3 bg-[#292929] text-white border-[#626262] min-h-[100px] p-2 rounded-md"
+                            className="col-span-3 bg-white dark:bg-background text-foreground border border-border min-h-[100px] p-2 rounded-md placeholder:text-muted-foreground"
                             placeholder="Email message"
                         />
                     </div>
@@ -93,14 +93,14 @@ export function EmailDialog({ isOpen, onOpenChange, emailToSend, recipient_name 
                 <DialogFooter>
                     <Button
                         variant="outline"
-                        className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                        className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                         onClick={() => onOpenChange(false)}
                         disabled={isSending}
                     >
                         Cancel
                     </Button>
                     <Button
-                        className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
+                        className="bg-red-600 text-white hover:bg-red-700"
                         onClick={handleSendEmail}
                         disabled={isSending}
                     >

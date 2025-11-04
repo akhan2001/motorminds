@@ -54,11 +54,11 @@ export function OperatingHoursSection({
                                             onCheckedChange={(checked) => 
                                                 updateDaySchedule(day, 'closed', checked === true)
                                             }
-                                            className="bg-[#292929] border-[#626262]"
+                                            className="border-border"
                                         />
                                         <label 
                                             htmlFor={`${day}-closed`}
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground"
                                         >
                                             {day}
                                         </label>
@@ -69,15 +69,15 @@ export function OperatingHoursSection({
                                     <>
                                         <div className="col-span-4">
                                             <div className="flex items-center">
-                                                <span className="text-xs mr-2">Opens at</span>
+                                                <span className="text-xs mr-2 text-muted-foreground">Opens at</span>
                                                 <Select
                                                     value={operatingHours[day].openTime}
                                                     onValueChange={(value) => updateDaySchedule(day, 'openTime', value)}
                                                 >
-                                                    <SelectTrigger className="bg-[#292929] border-[#626262] text-white">
+                                                    <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                                                         <SelectValue placeholder="Select time" />
                                                     </SelectTrigger>
-                                                    <SelectContent className="bg-[#292929] border-[#626262] text-white max-h-[300px]">
+                                                    <SelectContent className="bg-popover text-popover-foreground border-border max-h-[300px]">
                                                         {times.map((time) => (
                                                             <SelectItem key={`${day}-open-${time}`} value={time}>
                                                                 {time}
@@ -89,15 +89,15 @@ export function OperatingHoursSection({
                                         </div>
                                         <div className="col-span-4">
                                             <div className="flex items-center">
-                                                <span className="text-xs mr-2">Closes at</span>
+                                                <span className="text-xs mr-2 text-muted-foreground">Closes at</span>
                                                 <Select
                                                     value={operatingHours[day].closeTime}
                                                     onValueChange={(value) => updateDaySchedule(day, 'closeTime', value)}
                                                 >
-                                                    <SelectTrigger className="bg-[#292929] border-[#626262] text-white">
+                                                    <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                                                         <SelectValue placeholder="Select time" />
                                                     </SelectTrigger>
-                                                    <SelectContent className="bg-[#292929] border-[#626262] text-white max-h-[300px]">
+                                                    <SelectContent className="bg-popover text-popover-foreground border-border max-h-[300px]">
                                                         {times.map((time) => (
                                                             <SelectItem key={`${day}-close-${time}`} value={time}>
                                                                 {time}
@@ -109,7 +109,7 @@ export function OperatingHoursSection({
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="col-span-8 text-gray-500 italic">
+                                    <div className="col-span-8 text-muted-foreground italic">
                                         Closed
                                     </div>
                                 )}

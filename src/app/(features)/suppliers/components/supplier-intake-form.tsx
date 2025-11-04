@@ -122,72 +122,72 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 			<form onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
 				{/* Basic Information */}
 				<div className="space-y-4">
-					<h3 className="text-lg font-medium text-white">Basic Information</h3>
+					<h3 className="text-lg font-medium text-foreground dark:text-white">Basic Information</h3>
 
 					<div className="space-y-2">
-						<Label htmlFor="name" className="text-gray-300">
+						<Label htmlFor="name" className="text-foreground dark:text-gray-300">
 							Supplier Name *
 						</Label>
 						<div className="relative">
-							<Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+							<Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 							<Input
 								id="name"
 								value={formData.name}
 								onChange={(e) => handleInputChange('name', e.target.value)}
 								placeholder="NAPA Auto Parts"
-								className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+								className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 								required
 							/>
 						</div>
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="contact_person" className="text-gray-300">
+						<Label htmlFor="contact_person" className="text-foreground dark:text-gray-300">
 							Contact Person
 						</Label>
 						<div className="relative">
-							<User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+							<User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 							<Input
 								id="contact_person"
 								value={formData.contact_person}
 								onChange={(e) => handleInputChange('contact_person', e.target.value)}
 								placeholder="John Smith"
-								className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+								className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 							/>
 						</div>
 					</div>
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="phone_number" className="text-gray-300">
+							<Label htmlFor="phone_number" className="text-foreground dark:text-gray-300">
 								Phone Number
 							</Label>
 							<div className="relative">
-								<Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+								<Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 								<Input
 									id="phone_number"
 									type="tel"
 									value={formData.phone_number}
 									onChange={(e) => handlePhoneNumberChange(e.target.value)}
 									placeholder="(555) 123-4567"
-									className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+									className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 								/>
 							</div>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="email" className="text-gray-300">
+							<Label htmlFor="email" className="text-foreground dark:text-gray-300">
 								Email
 							</Label>
 							<div className="relative">
-								<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+								<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 								<Input
 									id="email"
 									type="email"
 									value={formData.email}
 									onChange={(e) => handleInputChange('email', e.target.value)}
 									placeholder="contact@supplier.com"
-									className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+									className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 								/>
 							</div>
 						</div>
@@ -196,27 +196,27 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 
 				{/* Address */}
 				<div className="space-y-4">
-					<h3 className="text-lg font-medium text-white">Address</h3>
+					<h3 className="text-lg font-medium text-foreground dark:text-white">Address</h3>
 
 					<div className="space-y-2">
-						<Label htmlFor="street" className="text-gray-300">
+						<Label htmlFor="street" className="text-foreground dark:text-gray-300">
 							Street Address
 						</Label>
 						<div className="relative">
-							<MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+							<MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 							<Input
 								id="street"
 								value={formData.address?.street || ''}
 								onChange={(e) => handleAddressChange('street', e.target.value)}
 								placeholder="123 Main Street"
-								className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+								className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 							/>
 						</div>
 					</div>
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="city" className="text-gray-300">
+							<Label htmlFor="city" className="text-foreground dark:text-gray-300">
 								City
 							</Label>
 							<Input
@@ -224,12 +224,12 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 								value={formData.address?.city || ''}
 								onChange={(e) => handleAddressChange('city', e.target.value)}
 								placeholder="Toronto"
-								className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+								className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 							/>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="province" className="text-gray-300">
+							<Label htmlFor="province" className="text-foreground dark:text-gray-300">
 								Province
 							</Label>
 							<Input
@@ -237,12 +237,12 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 								value={formData.address?.province || ''}
 								onChange={(e) => handleAddressChange('province', e.target.value)}
 								placeholder="ON"
-								className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+								className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 							/>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="postal_code" className="text-gray-300">
+							<Label htmlFor="postal_code" className="text-foreground dark:text-gray-300">
 								Postal Code
 							</Label>
 							<Input
@@ -250,7 +250,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 								value={formData.address?.postal_code || ''}
 								onChange={(e) => handleAddressChange('postal_code', e.target.value)}
 								placeholder="M5V 3A8"
-								className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+								className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 							/>
 						</div>
 					</div>
@@ -258,10 +258,10 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 
 				{/* Additional Information */}
 				<div className="space-y-4">
-					<h3 className="text-lg font-medium text-white">Additional Information</h3>
+					<h3 className="text-lg font-medium text-foreground dark:text-white">Additional Information</h3>
 
 					<div className="space-y-2">
-						<Label htmlFor="account_number" className="text-gray-300">
+						<Label htmlFor="account_number" className="text-foreground dark:text-gray-300">
 							Account Number
 						</Label>
 						<Input
@@ -269,35 +269,35 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 							value={formData.account_number}
 							onChange={(e) => handleInputChange('account_number', e.target.value)}
 							placeholder="Your account number with this supplier"
-							className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+							className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 						/>
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="notes" className="text-gray-300">
+						<Label htmlFor="notes" className="text-foreground dark:text-gray-300">
 							Notes
 						</Label>
 						<div className="relative">
-							<FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+							<FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 							<Textarea
 								id="notes"
 								value={formData.notes}
 								onChange={(e) => handleInputChange('notes', e.target.value)}
 								placeholder="Any additional notes about this supplier..."
-								className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px] max-h-[200px]"
+								className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white min-h-[80px] max-h-[200px]"
 							/>
 						</div>
 					</div>
 				</div>
 
 				{/* Form Actions */}
-				<div className="flex gap-3 pt-4 border-t border-[#2a2a2a] mt-4">
+				<div className="flex gap-3 pt-4 border-t border-border dark:border-[#2a2a2a] mt-4">
 					{onCancel && (
 						<Button
 							type="button"
 							onClick={onCancel}
 							variant="outline"
-							className="flex-1 border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+							className="flex-1 border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a]"
 						>
 							Cancel
 						</Button>
@@ -315,9 +315,9 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 	}
 
 	return (
-		<Card className="bg-[#111111] border-[#2a2a2a] max-w-2xl mx-auto max-h-[85vh] flex flex-col">
+		<Card className="bg-card dark:bg-[#111111] border-border dark:border-[#2a2a2a] max-w-2xl mx-auto max-h-[85vh] flex flex-col">
 			<CardHeader className="flex-shrink-0">
-				<CardTitle className="text-white flex items-center gap-2">
+				<CardTitle className="text-foreground dark:text-white flex items-center gap-2">
 					<Building2 className="h-5 w-5" />
 					Add New Supplier
 				</CardTitle>
@@ -327,72 +327,72 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 					<div className="flex-1 overflow-y-auto space-y-6 pr-2 pb-4">
 						{/* Basic Information */}
 						<div className="space-y-4">
-							<h3 className="text-lg font-medium text-white">Basic Information</h3>
+							<h3 className="text-lg font-medium text-foreground dark:text-white">Basic Information</h3>
 
 							<div className="space-y-2">
-								<Label htmlFor="name" className="text-gray-300">
+								<Label htmlFor="name" className="text-foreground dark:text-gray-300">
 									Supplier Name *
 								</Label>
 								<div className="relative">
-									<Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+									<Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 									<Input
 										id="name"
 										value={formData.name}
 										onChange={(e) => handleInputChange('name', e.target.value)}
 										placeholder="NAPA Auto Parts"
-										className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+										className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 										required
 									/>
 								</div>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="contact_person" className="text-gray-300">
+								<Label htmlFor="contact_person" className="text-foreground dark:text-gray-300">
 									Contact Person
 								</Label>
 								<div className="relative">
-									<User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+									<User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 									<Input
 										id="contact_person"
 										value={formData.contact_person}
 										onChange={(e) => handleInputChange('contact_person', e.target.value)}
 										placeholder="John Smith"
-										className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+										className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 									/>
 								</div>
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<Label htmlFor="phone_number" className="text-gray-300">
+									<Label htmlFor="phone_number" className="text-foreground dark:text-gray-300">
 										Phone Number
 									</Label>
 									<div className="relative">
-										<Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+										<Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 										<Input
 											id="phone_number"
 											type="tel"
 											value={formData.phone_number}
 											onChange={(e) => handlePhoneNumberChange(e.target.value)}
 											placeholder="(555) 123-4567"
-											className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+											className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 										/>
 									</div>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="email" className="text-gray-300">
+									<Label htmlFor="email" className="text-foreground dark:text-gray-300">
 										Email
 									</Label>
 									<div className="relative">
-										<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+										<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 										<Input
 											id="email"
 											type="email"
 											value={formData.email}
 											onChange={(e) => handleInputChange('email', e.target.value)}
 											placeholder="contact@supplier.com"
-											className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+											className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 										/>
 									</div>
 								</div>
@@ -401,27 +401,27 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 
 						{/* Address */}
 						<div className="space-y-4">
-							<h3 className="text-lg font-medium text-white">Address</h3>
+							<h3 className="text-lg font-medium text-foreground dark:text-white">Address</h3>
 
 							<div className="space-y-2">
-								<Label htmlFor="street" className="text-gray-300">
+								<Label htmlFor="street" className="text-foreground dark:text-gray-300">
 									Street Address
 								</Label>
 								<div className="relative">
-									<MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+									<MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 									<Input
 										id="street"
 										value={formData.address?.street || ''}
 										onChange={(e) => handleAddressChange('street', e.target.value)}
 										placeholder="123 Main Street"
-										className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+										className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 									/>
 								</div>
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								<div className="space-y-2">
-									<Label htmlFor="city" className="text-gray-300">
+									<Label htmlFor="city" className="text-foreground dark:text-gray-300">
 										City
 									</Label>
 									<Input
@@ -429,12 +429,12 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 										value={formData.address?.city || ''}
 										onChange={(e) => handleAddressChange('city', e.target.value)}
 										placeholder="Toronto"
-										className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+										className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 									/>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="province" className="text-gray-300">
+									<Label htmlFor="province" className="text-foreground dark:text-gray-300">
 										Province
 									</Label>
 									<Input
@@ -442,12 +442,12 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 										value={formData.address?.province || ''}
 										onChange={(e) => handleAddressChange('province', e.target.value)}
 										placeholder="ON"
-										className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+										className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 									/>
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="postal_code" className="text-gray-300">
+									<Label htmlFor="postal_code" className="text-foreground dark:text-gray-300">
 										Postal Code
 									</Label>
 									<Input
@@ -455,7 +455,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 										value={formData.address?.postal_code || ''}
 										onChange={(e) => handleAddressChange('postal_code', e.target.value)}
 										placeholder="M5V 3A8"
-										className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+										className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 									/>
 								</div>
 							</div>
@@ -463,10 +463,10 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 
 						{/* Additional Information */}
 						<div className="space-y-4">
-							<h3 className="text-lg font-medium text-white">Additional Information</h3>
+							<h3 className="text-lg font-medium text-foreground dark:text-white">Additional Information</h3>
 
 							<div className="space-y-2">
-								<Label htmlFor="account_number" className="text-gray-300">
+								<Label htmlFor="account_number" className="text-foreground dark:text-gray-300">
 									Account Number
 								</Label>
 								<Input
@@ -474,22 +474,22 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 									value={formData.account_number}
 									onChange={(e) => handleInputChange('account_number', e.target.value)}
 									placeholder="Your account number with this supplier"
-									className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+									className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
 								/>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="notes" className="text-gray-300">
+								<Label htmlFor="notes" className="text-foreground dark:text-gray-300">
 									Notes
 								</Label>
 								<div className="relative">
-									<FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+									<FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground dark:text-gray-400" />
 									<Textarea
 										id="notes"
 										value={formData.notes}
 										onChange={(e) => handleInputChange('notes', e.target.value)}
 										placeholder="Any additional notes about this supplier..."
-										className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white min-h-[80px] max-h-[200px]"
+										className="pl-10 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white min-h-[80px] max-h-[200px]"
 									/>
 								</div>
 							</div>
@@ -497,13 +497,13 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 					</div>
 
 					{/* Form Actions - Fixed at bottom */}
-					<div className="flex-shrink-0 flex gap-3 pt-6 border-t border-[#2a2a2a] mt-4">
+					<div className="flex-shrink-0 flex gap-3 pt-6 border-t border-border dark:border-[#2a2a2a] mt-4">
 						{onCancel && (
 							<Button
 								type="button"
 								onClick={onCancel}
 								variant="outline"
-								className="flex-1 border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+								className="flex-1 border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a]"
 							>
 								Cancel
 							</Button>

@@ -20,35 +20,35 @@ export function FinancialSummaryCard({ data }: FinancialSummaryCardProps) {
   }
 
   return (
-    <div className="h-full rounded-lg border border-[#222] bg-[#131313] p-6">
-      <h2 className="mb-4 text-lg font-semibold text-white">
+    <div className="h-full rounded-lg border border-border bg-white dark:bg-card p-6">
+      <h2 className="mb-4 text-lg font-semibold text-foreground">
         Cash Flow Summary
       </h2>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Total Revenue</span>
-          <span className="font-medium text-green-500">
+          <span className="text-muted-foreground">Total Revenue</span>
+          <span className="font-medium text-green-600 dark:text-green-500">
             {formatCurrency(data.totalRevenue)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Parts & Labor Costs (COGS)</span>
-          <span className="font-medium text-red-500">
+          <span className="text-muted-foreground">Parts & Labor Costs (COGS)</span>
+          <span className="font-medium text-red-600 dark:text-red-500">
             ({formatCurrency(data.totalCogs)})
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Fixed Costs</span>
-          <span className="font-medium text-red-500">
+          <span className="text-muted-foreground">Fixed Costs</span>
+          <span className="font-medium text-red-600 dark:text-red-500">
             ({formatCurrency(data.totalFixedCosts)})
           </span>
         </div>
-        <hr className="my-3 border-gray-700" />
+        <hr className="my-3 border-border" />
         <div className="flex items-center justify-between text-lg">
-          <span className="font-semibold text-white">Net Cashflow</span>
+          <span className="font-semibold text-foreground">Net Cashflow</span>
           <span
             className={`font-bold ${
-              data.netCashflow >= 0 ? "text-green-500" : "text-red-500"
+              data.netCashflow >= 0 ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"
             }`}
           >
             {formatCurrency(data.netCashflow)}

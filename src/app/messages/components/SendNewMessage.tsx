@@ -84,16 +84,16 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
 
 
     return (
-        <Card className="bg-[#111] border-[#222]">
+        <Card className="bg-slate-50 dark:bg-card border-border">
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+                <CardTitle className="text-foreground flex items-center gap-2">
                     <Plus className="h-5 w-5" />
                     Send New Message
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                    <label className="text-sm font-medium text-white mb-2 block">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
                         Select Customer
                     </label>
                     <CustomerSelection
@@ -105,8 +105,8 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                 </div>
 
                 {/* Manual Phone Number Entry */}
-                <div className="pt-4 border-t border-[#333]">
-                    <label className="text-sm font-medium text-white mb-2 block">
+                <div className="pt-4 border-t border-border">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
                         Or Enter Phone Number Manually
                     </label>
                     <Input
@@ -119,7 +119,7 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                                 setSelectedCustomer(null);
                             }
                         }}
-                        className="bg-[#222] border-[#333] text-white"
+                        className="bg-white dark:bg-background border-border text-foreground"
                     />
                     <div className="mt-2">
                         <Input
@@ -132,23 +132,23 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                                     setSelectedCustomer(null);
                                 }
                             }}
-                            className="bg-[#222] border-[#333] text-white"
+                            className="bg-white dark:bg-background border-border text-foreground"
                         />
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                         Enter phone number in international format (e.g., +1234567890)
                     </p>
                 </div>
                 
                 <div>
-                    <label className="text-sm font-medium text-white mb-2 block">
+                    <label className="text-sm font-medium text-foreground mb-2 block">
                         Message
                     </label>
                     <Textarea
                         placeholder="Type your message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="bg-[#222] border-[#333] text-white min-h-[120px]"
+                        className="bg-white dark:bg-background border-border text-foreground min-h-[120px]"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -156,7 +156,7 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                             }
                         }}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                         {newMessage.length}/1600 characters
                     </p>
                 </div>
@@ -164,7 +164,7 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                 <Button
                     onClick={sendNewMessage}
                     disabled={isLoading || !newMessage.trim() || !newPhoneNumber.trim()}
-                    className="w-full bg-red-600 hover:bg-red-700"
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
                 >
                     <Send className="h-4 w-4 mr-2" />
                     Send Message

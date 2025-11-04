@@ -10,15 +10,15 @@ interface DataPoint {
 
 export default function RevenueChart({ data }: { data: DataPoint[] }) {
   if (!data || data.length === 0) return (
-    <div className="text-gray-400">No data</div>
+    <div className="text-muted-foreground">No data</div>
   );
 
   return (
     <ResponsiveContainer width="100%" height={250}>
       <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <CartesianGrid stroke="#333" strokeDasharray="3 3" />
-        <XAxis dataKey="period" stroke="#888" />
-        <YAxis stroke="#888" tickFormatter={(v)=>`$${v}`} />
+        <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
+        <XAxis dataKey="period" stroke="hsl(var(--muted-foreground))" />
+        <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v)=>`$${v}`} />
         <Tooltip formatter={(v) => `$${v}`} />
         <Legend />
         <Line type="monotone" dataKey="revenue" stroke="#10b981" name="Revenue" />

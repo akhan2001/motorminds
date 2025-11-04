@@ -47,9 +47,9 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
 
     if (isLoading) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                 <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground dark:text-white flex items-center gap-2">
                         <Archive className="h-5 w-5" />
                         Archived Invoices
                     </CardTitle>
@@ -57,7 +57,7 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                 <CardContent>
                     <div className="space-y-4">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <Skeleton key={i} className="h-32 w-full bg-[#2a2a2a]" />
+                            <Skeleton key={i} className="h-32 w-full bg-secondary dark:bg-[#2a2a2a]" />
                         ))}
                     </div>
                 </CardContent>
@@ -67,11 +67,11 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
 
     if (error) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+            <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                 <CardContent className="p-8 text-center">
-                    <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white mb-2">Error Loading Archived Invoices</h3>
-                    <p className="text-red-400">
+                    <AlertCircle className="h-12 w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground dark:text-white mb-2">Error Loading Archived Invoices</h3>
+                    <p className="text-red-500 dark:text-red-400">
                         {error instanceof Error ? error.message : 'Failed to load archived invoices'}
                     </p>
                 </CardContent>
@@ -80,14 +80,14 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
     }
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+        <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
             <CardHeader>
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground dark:text-white flex items-center gap-2">
                         <Archive className="h-5 w-5" />
                         Archived Invoices
                         {totalCount > 0 && (
-                            <Badge variant="secondary" className="bg-[#2a2a2a] text-gray-300 ml-2">
+                            <Badge variant="secondary" className="bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-300 ml-2">
                                 {totalCount.toLocaleString()} invoices
                             </Badge>
                         )}
@@ -98,9 +98,9 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                 {/* Results */}
                 {!invoices || invoices.length === 0 ? (
                     <div className="p-8 text-center">
-                        <Archive className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-white mb-2">No archived invoices</h3>
-                        <p className="text-gray-400">Archived invoices will appear here</p>
+                        <Archive className="h-12 w-12 text-muted-foreground dark:text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-foreground dark:text-white mb-2">No archived invoices</h3>
+                        <p className="text-muted-foreground dark:text-gray-400">Archived invoices will appear here</p>
                     </div>
                 ) : (
                     <>
@@ -118,8 +118,8 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
 
                         {/* Pagination */}
                         {totalPages > 1 && (
-                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-800">
-                                <div className="text-sm text-gray-400">
+                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border dark:border-gray-800">
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">
                                     Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount.toLocaleString()} invoices
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                                         size="sm"
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white disabled:opacity-50"
+                                        className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white disabled:opacity-50"
                                     >
                                         <ChevronLeft className="h-4 w-4 mr-1" />
                                         Previous
@@ -157,7 +157,7 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                                                     className={
                                                         currentPage === pageNum
                                                             ? "bg-red-600 hover:bg-red-700 text-white"
-                                                            : "bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                                                            : "bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
                                                     }
                                                 >
                                                     {pageNum}
@@ -171,7 +171,7 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                                         size="sm"
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages}
-                                        className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white disabled:opacity-50"
+                                        className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white disabled:opacity-50"
                                     >
                                         Next
                                         <ChevronRight className="h-4 w-4 ml-1" />

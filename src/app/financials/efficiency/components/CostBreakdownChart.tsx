@@ -3,15 +3,15 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface EfficiencyData {
-  totalOperatingExpenses: number;
-  costBreakdown: {
-    recurring: number;
-    oneTime: number;
-  };
-  breakdown?: {
-    fixedCosts: { amount: number; category?: string }[];
-    oneTimeCosts: { amount: number; category?: string }[];
-  };
+    totalOperatingExpenses: number;
+    costBreakdown: {
+        recurring: number;
+        oneTime: number;
+    };
+    breakdown?: {
+        fixedCosts: { amount: number; category?: string }[];
+        oneTimeCosts: { amount: number; category?: string }[];
+    };
 }
 // Extend palette for multiple categories (up to 10)
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF6699', '#33CCCC', '#FF9933', '#66FF66', '#FF6666'];
@@ -20,9 +20,9 @@ const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         const { name, value, color } = payload[0].payload;
         return (
-            <div style={{ backgroundColor: '#131313', border: '1px solid #222', padding: '6px', color: 'white' }}>
-                <span style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ width: 10, height: 10, backgroundColor: color, borderRadius: '50%', marginRight: 6 }} />
+            <div className="bg-white dark:bg-card border border-border rounded p-2 text-foreground shadow-lg">
+                <span className="flex items-center">
+                    <span className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: color }} />
                     {name}: ${value.toFixed(2)}
                 </span>
             </div>
@@ -35,7 +35,7 @@ export default function CostBreakdownChart({ data }: { data: EfficiencyData }) {
     if (!data || !data.costBreakdown) {
         return <div>No data available</div>;
     }
-    
+
     // If detailed cost arrays are available, break down by category for richer insight
     let chartData: { name: string; value: number; color?: string }[] = [];
 
@@ -56,19 +56,19 @@ export default function CostBreakdownChart({ data }: { data: EfficiencyData }) {
             { name: 'One-Time Costs', value: data.costBreakdown.oneTime, color: COLORS[1] },
         ];
     }
-    
+
     if (data.totalOperatingExpenses === 0) {
         return (
-             <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 h-full flex flex-col items-center justify-center">
-                 <h2 className="text-xl font-semibold text-white mb-4">Cost Breakdown</h2>
-                 <p className="text-gray-400">No cost data available for this period.</p>
+            <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6 h-full flex flex-col items-center justify-center">
+                <h2 className="text-xl font-semibold text-foreground mb-4">Cost Breakdown</h2>
+                <p className="text-muted-foreground">No cost data available for this period.</p>
             </div>
         )
     }
 
     return (
-        <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 h-full flex flex-col">
-            <h2 className="text-xl font-semibold text-white mb-4">Cost Breakdown</h2>
+        <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6 h-full flex flex-col">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Cost Breakdown</h2>
             <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                     <Pie
