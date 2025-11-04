@@ -5,10 +5,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Car, User, Phone, MessageSquare, Lock, Loader2 } from 'lucide-react'
 import { formatPhoneNumber } from '@/lib/utils/text'
 import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
-import { DEFAULT_COMPLETION_MESSAGE, formatMessage } from '../Messages/MessagePrompts'
+import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
 
 export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> = ({
@@ -18,10 +19,11 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     onConfirm
 }) => {
     const [customMessage, setCustomMessage] = useState('')
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('ready_for_pickup')
     const [isEditing, setIsEditing] = useState(false)
     const { sendCompletionMessage, isLoading, messagingAvailability } = useWorkOrderMessaging()
 
-    // Format the default message with actual work order data
+    // Format the selected template with actual work order data
     useEffect(() => {
         if (workOrder && isOpen) {
             const customerName = workOrder.customer?.customer_name || 'Customer'
@@ -30,8 +32,9 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                 undefined
             const serviceDescription = workOrder.title
 
+            const template = MESSAGE_TEMPLATES.find(t => t.id === selectedTemplate)?.template || MESSAGE_TEMPLATES[0].template
             const formattedMessage = formatMessage(
-                DEFAULT_COMPLETION_MESSAGE,
+                template,
                 customerName,
                 vehicleInfo,
                 serviceDescription
@@ -39,7 +42,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
             setCustomMessage(formattedMessage)
         }
-    }, [workOrder, isOpen])
+    }, [workOrder, isOpen, selectedTemplate])
 
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
@@ -68,8 +71,8 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
-                <DialogHeader>
+            <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle className="text-xl font-semibold text-foreground dark:text-white flex items-center gap-2">
                         <Car className="h-5 w-5 text-green-500" />
                         Work Order Completed
@@ -79,7 +82,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-y-auto flex-1 min-h-0 pr-1">
                     {/* Work Order Summary */}
                     <div className="space-y-3">
                         <h3 className="text-sm font-medium text-foreground dark:text-gray-300">Work Order Summary</h3>
@@ -161,6 +164,32 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                             </div>
                         ) : (
                             <div className="space-y-3">
+                                {/* Template Selection */}
+                                <div className="space-y-2">
+                                    <span className="text-sm text-foreground dark:text-gray-300">Choose a message template:</span>
+                                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                                        <SelectTrigger className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
+                                            <SelectValue placeholder="Select a message template" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
+                                            {MESSAGE_TEMPLATES.map((template) => (
+                                                <SelectItem 
+                                                    key={template.id} 
+                                                    value={template.id}
+                                                    className="text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] focus:bg-accent dark:focus:bg-[#1a1a1a]"
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium">{template.name}</span>
+                                                        <span className="text-xs text-muted-foreground dark:text-gray-400">
+                                                            {template.description}
+                                                        </span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
                                 <div className="bg-card dark:bg-[#1a1a1a] rounded-lg border border-border dark:border-[#2a2a2a]">
                                     <div className="p-3 border-b border-border dark:border-[#2a2a2a]">
                                         <div className="flex items-center justify-between">
@@ -196,7 +225,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                     </div>
                 </div>
 
-                <DialogFooter className="flex gap-3">
+                <DialogFooter className="flex-shrink-0 flex gap-3 pt-4 border-t border-border dark:border-[#2a2a2a]">
                     <Button
                         variant="outline"
                         onClick={handleSkipMessage}
