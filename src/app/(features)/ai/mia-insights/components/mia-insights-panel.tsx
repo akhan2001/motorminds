@@ -35,8 +35,9 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     }, [generateInsights.isSuccess])
 
     // Check if work order is eligible for insights generation
-    const isEligibleForInsights = workOrderStatus && 
-        ['pending', 'in_progress', 'in progress', 'in-progress'].includes(workOrderStatus.toLowerCase()) &&
+    const isEligibleForInsights = !insights?.analysis && 
+        workOrderStatus && 
+        ['pending', 'approved', 'in_progress', 'in progress', 'in-progress'].includes(workOrderStatus.toLowerCase()) &&
         !workOrderStatus.toLowerCase().includes('completed')
 
     // Check if work order is completed (disable adding upsell items)
@@ -57,7 +58,7 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
         }
         
         try {
-            const workOrderItemData = await UpsellToWorkItemService.addUpsellAsWorkOrderItem(suggestion, workOrderId)
+            const workOrderItemData = await UpsellToWorkItemService.addUpsellAsWorkOrderItem(suggestion, workOrderId, shopId)
             await createWorkOrderItem.mutateAsync(workOrderItemData)
         } catch (error) {
             console.error('Failed to add upsell to work order:', error)

@@ -42,37 +42,22 @@ export async function POST(req: Request) {
             );
         }
 
-        // Debug logging
-        console.log('MIA Insights API - Request:', { workOrderId, shopId });
-
-        // Let's see what work orders exist in the table
-        const { data: allWorkOrders, error: allError } = await supabase
-            .from('work_orders')
-            .select('id, shop_id, status, title')
+        // Check if insights already exist to avoid regeneration
+        const { data: existingInsights } = await supabase
+            .from('mia_insights')
+            .select('id')
+            .eq('work_order_id', workOrderId)
             .eq('shop_id', shopId)
-            .limit(5);
-
-        console.log('MIA Insights API - All work orders in shop:', { 
-            allWorkOrders, 
-            allError,
-            shopId
-        });
-
-        // First, let's check if the work order exists at all
-        const { data: simpleWorkOrder, error: simpleError } = await supabase
-            .from('work_orders')
-            .select('id, shop_id, status')
-            .eq('id', workOrderId)
             .maybeSingle();
 
-        console.log('MIA Insights API - Simple query result:', { 
-            simpleWorkOrder, 
-            simpleError,
-            workOrderId,
-            shopId
-        });
+        if (existingInsights) {
+            return NextResponse.json({
+                success: false,
+                error: 'Insights already exist for this work order'
+            }, { status: 409 });
+        }
 
-        // Get work order data from work_orders table with complete schema
+        // Get work order data with conditional customer join based on customer_type
         const { data: workOrder, error: workOrderError } = await supabase
             .from('work_orders')
             .select(`
@@ -94,6 +79,8 @@ export async function POST(req: Request) {
                 attachments,
                 tags,
                 notes,
+                customer_type,
+                walk_in_vehicle_info,
                 customers(
                     id,
                     customer_name,
@@ -138,13 +125,6 @@ export async function POST(req: Request) {
             .eq('shop_id', shopId)
             .maybeSingle();
 
-        console.log('MIA Insights API - work_orders query result:', { 
-            workOrder: !!workOrder, 
-            error: workOrderError,
-            workOrderId,
-            shopId
-        });
-
         if (workOrderError) {
             console.error('Error fetching work order:', workOrderError);
             return NextResponse.json(
@@ -154,18 +134,40 @@ export async function POST(req: Request) {
         }
 
         if (!workOrder) {
-            console.error('Work order not found:', { workOrderId, shopId });
             return NextResponse.json(
                 { success: false, error: 'Work order not found' },
                 { status: 404 }
             );
         }
 
-        // Extract vehicle and work details from work_orders table
-        // Find the specific vehicle associated with this work order
-        const vehicle = workOrder.customers?.customer_vehicles?.find(
-            (v: any) => v.id === workOrder.vehicle_id
-        ) || {};
+        // Extract vehicle and customer info based on customer_type
+        let vehicle: any = {};
+        let customerName = 'Unknown Customer';
+        let customerPhone = '';
+        let customerEmail = '';
+
+        if (workOrder.customer_type === 'walk_in') {
+            // Use walk_in_vehicle_info for walk-in customers
+            vehicle = workOrder.walk_in_vehicle_info || {};
+            customerName = 'Walk-in Customer';
+        } else {
+            // Use customer relationship for registered customers
+            const customer = Array.isArray(workOrder.customers) 
+                ? workOrder.customers[0] 
+                : workOrder.customers;
+            
+            if (customer) {
+                customerName = customer.customer_name || 'Unknown Customer';
+                customerPhone = customer.customer_phone || '';
+                customerEmail = customer.customer_email || '';
+                
+                // Find vehicle from customer_vehicles array
+                vehicle = customer.customer_vehicles?.find(
+                    (v: any) => v.id === workOrder.vehicle_id
+                ) || {};
+            }
+        }
+
         const workItems = workOrder.work_order_items || [];
         
         const year = vehicle.year || 'Unknown';
@@ -187,22 +189,7 @@ export async function POST(req: Request) {
         const workOrderStatus = workOrder.status || 'unknown';
         const workOrderPriority = workOrder.priority || 'medium';
         const workOrderTags = workOrder.tags || [];
-        const customerName = workOrder.customers?.customer_name || 'Unknown Customer';
-        const customerPhone = workOrder.customers?.customer_phone || '';
-        const customerEmail = workOrder.customers?.customer_email || '';
         const assignedTechnician = workOrder.assigned_technician_id || null;
-
-        console.log('MIA Insights API - Extracted data:', {
-            workOrderNumber,
-            workOrderTitle,
-            workOrderStatus,
-            workOrderPriority,
-            customerName,
-            year, make, model, engine, vin, mileage,
-            workDescription, symptoms, laborDescription,
-            workOrderTags,
-            assignedTechnician
-        });
 
         // Enhanced technical prompt with complete work order context
         const prompt = `You are an expert automotive diagnostician. Analyze this work order for a specific vehicle and provide highly technical, actionable insights.
@@ -353,6 +340,14 @@ export async function POST(req: Request) {
             }
             
             insights = parsedResponse as ImmediateInsights;
+            
+            // Validate the final insights structure
+            if (!validateInsights(insights)) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Invalid insights structure from AI service'
+                }, { status: 500 });
+            }
         } else {
             return NextResponse.json({
                 success: false,
@@ -362,7 +357,7 @@ export async function POST(req: Request) {
 
         // Save insights to database
         try {
-            const { error: saveError } = await supabase
+            const { data: savedInsight, error: saveError } = await supabase
                 .from('mia_insights')
                 .insert({
                     work_order_id: workOrderId,
@@ -374,19 +369,33 @@ export async function POST(req: Request) {
                     priority: insights.flags?.some(f => f.type === 'urgent') ? 'high' : 'medium',
                     status: 'active',
                     timeframe: 'immediate'
-                });
+                })
+                .select()
+                .single();
 
             if (saveError) {
                 console.error('Error saving insights:', saveError);
+                // Still return insights but warn about save failure
+                return NextResponse.json({
+                    success: true,
+                    insights,
+                    warning: 'Insights generated but failed to save to database'
+                });
             }
+
+            return NextResponse.json({
+                success: true,
+                insights
+            });
         } catch (saveError) {
             console.error('Error saving insights to database:', saveError);
+            // Return insights even if save fails
+            return NextResponse.json({
+                success: true,
+                insights,
+                warning: 'Insights generated but failed to save to database'
+            });
         }
-
-        return NextResponse.json({
-            success: true,
-            insights
-        });
 
     } catch (error: any) {
         console.error('Error generating work order insights:', error);

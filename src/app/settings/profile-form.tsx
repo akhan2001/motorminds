@@ -60,6 +60,11 @@ const shopFormSchema = z.object({
     shop_tagline: z.string().max(100).min(5, {
         message: "Tagline must be at least 5 characters.",
     }),
+    default_hourly_rate: z.coerce.number().min(1, {
+        message: "Hourly rate must be at least $1.00.",
+    }).max(1000, {
+        message: "Hourly rate must be less than $1000.00.",
+    }).optional(),
     operating_hours: z.string().optional().or(z.literal("")),
     services_offered: z.string().optional().or(z.literal("")),
     website: z.string().url().optional().or(z.literal("")),
@@ -189,6 +194,7 @@ export function ProfileForm({ shopId }: { shopId: string }) {
             shop_owner: "",
             shop_about: "",
             shop_tagline: "",
+            default_hourly_rate: 99.99,
             operating_hours: "",
             services_offered: "",
             website: "",
@@ -243,6 +249,7 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                 shop_owner: shop.shop_owner || "",
                 shop_about: shop.shop_about || "",
                 shop_tagline: shop.shop_tagline || "",
+                default_hourly_rate: shop.default_hourly_rate || 99.99,
                 operating_hours: shop.operating_hours || "",
                 services_offered: shop.services_offered || "",
                 website: shop.website || "",

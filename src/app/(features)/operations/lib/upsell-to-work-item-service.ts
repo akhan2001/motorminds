@@ -2,21 +2,26 @@
 import { UpsellSuggestion } from '../../ai/mia-insights/types/mia-insights'
 import { WorkOrderItemsService } from './work-order-items-service'
 import type { WorkOrderItemCreateData, WorkOrderItemType } from '../types/work-order-items'
+import { createClient } from '@/utils/supabase/client'
 
 export class UpsellToWorkItemService {
     /**
      * Convert an upsell suggestion to work order item data
      * Always creates labor items with the specified structure
      */
-    static convertUpsellToWorkOrderItem(
+    static async convertUpsellToWorkOrderItem(
         suggestion: UpsellSuggestion,
-        workOrderId: string
-    ): WorkOrderItemCreateData {
+        workOrderId: string,
+        shopId?: string
+    ): Promise<WorkOrderItemCreateData> {
         // Always create as labor item
         const itemType: WorkOrderItemType = 'labor'
         
+        // Get shop-specific hourly rate
+        const hourlyRate = shopId ? await this.getShopHourlyRate(shopId) : 99.99
+        
         // Calculate labor hours and rate based on estimated value
-        const laborHours = this.estimateLaborHours(suggestion.estimatedValue)
+        const laborHours = this.estimateLaborHours(suggestion.estimatedValue, hourlyRate)
         const ratePerHour = suggestion.estimatedValue / laborHours
         
         const result = {
@@ -64,14 +69,38 @@ export class UpsellToWorkItemService {
 
     /**
      * Estimate labor hours based on estimated value
-     * Uses a standard rate of $129.99/hour to match the example structure
+     * Uses a standard rate of $99.99/hour as fallback
      */
-    private static estimateLaborHours(estimatedValue: number): number {
-        const standardHourlyRate = 129.99 // Standard rate as per example
-        const estimatedHours = estimatedValue / standardHourlyRate
+    private static estimateLaborHours(estimatedValue: number, hourlyRate: number = 99.99): number {
+        const estimatedHours = estimatedValue / hourlyRate
         
         // Round to nearest 0.25 hour and ensure minimum of 0.25
         return Math.max(0.25, Math.round(estimatedHours * 4) / 4)
+    }
+
+    /**
+     * Get shop-specific hourly rate from shop settings
+     */
+    private static async getShopHourlyRate(shopId: string): Promise<number> {
+        try {
+            const supabase = createClient()
+            const { data, error } = await supabase
+                .from('shops')
+                .select('default_hourly_rate')
+                .eq('id', shopId)
+                .single()
+
+            if (error) {
+                console.warn('Failed to fetch shop hourly rate:', error)
+                return 99.99 // Fallback to default
+            }
+
+            // Return shop rate or default if not set
+            return data?.default_hourly_rate || 99.99
+        } catch (error) {
+            console.warn('Error fetching shop hourly rate:', error)
+            return 99.99 // Fallback to default
+        }
     }
 
     /**
@@ -80,9 +109,10 @@ export class UpsellToWorkItemService {
      */
     static async addUpsellAsWorkOrderItem(
         suggestion: UpsellSuggestion,
-        workOrderId: string
+        workOrderId: string,
+        shopId?: string
     ): Promise<WorkOrderItemCreateData> {
-        const workOrderItemData = this.convertUpsellToWorkOrderItem(suggestion, workOrderId)
+        const workOrderItemData = await this.convertUpsellToWorkOrderItem(suggestion, workOrderId, shopId)
         return workOrderItemData
     }
 }
