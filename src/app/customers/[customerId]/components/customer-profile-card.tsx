@@ -14,9 +14,9 @@ const copyToClipboard = (text: string) => {
 
 export function CustomerProfileCard({ customer }: CustomerProfileCardProps) {
     return (
-        <Card className="bg-[#1A1A1A] border-[#333] text-white">
+        <Card className="bg-white dark:bg-card border-border text-foreground">
             <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-foreground">
                     <User className="h-5 w-5 mr-2" />
                     Customer Information
                 </CardTitle>
@@ -24,18 +24,18 @@ export function CustomerProfileCard({ customer }: CustomerProfileCardProps) {
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
                     <div className="flex items-start">
-                        <Home className="h-5 w-5 text-gray-400 mt-0.5 mr-3" />
+                        <Home className="h-5 w-5 text-muted-foreground mt-0.5 mr-3" />
                         <div>
-                            <p className="text-gray-400 text-sm">Name</p>
-                            <p>{customer.customer_name}</p>
+                            <p className="text-muted-foreground text-sm">Name</p>
+                            <p className="text-foreground">{customer.customer_name}</p>
                         </div>
                     </div>
                     <div className="flex items-start">
-                        <Mail className="h-5 w-5 text-gray-400 mt-0.5 mr-3" />
+                        <Mail className="h-5 w-5 text-muted-foreground mt-0.5 mr-3" />
                         <div className="flex items-start">
                             <div>
-                                <p className="text-gray-400 text-sm">Email</p>
-                                <p>{customer.customer_email || 'Not provided'}</p>
+                                <p className="text-muted-foreground text-sm">Email</p>
+                                <p className="text-foreground">{customer.customer_email || 'Not provided'}</p>
                             </div>
                             {customer.customer_email && (
                                 <button
@@ -44,25 +44,25 @@ export function CustomerProfileCard({ customer }: CustomerProfileCardProps) {
                                             .then(() => toast.success("Email copied to clipboard"))
                                             .catch(() => toast.error("Failed to copy email"));
                                     }}
-                                    className="p-1.5 hover:bg-gray-800 rounded-md transition-colors"
+                                    className="p-1.5 hover:bg-muted rounded-md transition-colors"
                                 >
-                                    <Copy className="h-4 w-4 text-gray-400" />
+                                    <Copy className="h-4 w-4 text-muted-foreground" />
                                 </button>
                             )}
                         </div>
                     </div>
                     <div className="flex items-start">
-                        <Phone className="h-5 w-5 text-gray-400 mt-0.5 mr-3" />
+                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5 mr-3" />
                         <div>
-                            <p className="text-gray-400 text-sm">Phone</p>
-                            <p>{formatPhoneNumber(customer.customer_phone) || 'Not provided'}</p>
+                            <p className="text-muted-foreground text-sm">Phone</p>
+                            <p className="text-foreground">{formatPhoneNumber(customer.customer_phone) || 'Not provided'}</p>
                         </div>
                     </div>
                     <div className="flex items-start">
-                        <MapPin className="h-5 w-5 text-gray-400 mt-0.5 mr-3" />
+                        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 mr-3" />
                         <div>
-                            <p className="text-gray-400 text-sm">Address</p>
-                            <p>{customer.customer_address || 'Not provided'}</p>
+                            <p className="text-muted-foreground text-sm">Address</p>
+                            <p className="text-foreground">{customer.customer_address || 'Not provided'}</p>
                         </div>
                     </div>
                     {/* <div className="flex items-start">

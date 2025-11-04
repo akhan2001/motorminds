@@ -96,33 +96,33 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
         <div className="space-y-4">
             {workOrders.length > 0 ? (
                 workOrders.map((order) => (
-                    <Card key={order.id} className="bg-[#1A1A1A] border-[#333] text-white overflow-hidden hover:border-[#444] transition-colors">
+                    <Card key={order.id} className="bg-white dark:bg-card border-border text-foreground overflow-hidden hover:border-border transition-colors">
                         <div className={`h-1 ${getStatusColor(order.status)}`}></div>
                         <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
-                                    <CardTitle className="text-lg flex items-center mb-2">
+                                    <CardTitle className="text-lg flex items-center mb-2 text-foreground">
                                         <Wrench className="h-5 w-5 mr-2 text-blue-400" />
                                         {order.title || 'Work Order'}
                                     </CardTitle>
-                                    <CardDescription className="text-gray-300 mb-2">
+                                    <CardDescription className="text-muted-foreground mb-2">
                                         {order.customer_vehicles?.year} {order.customer_vehicles?.make} {order.customer_vehicles?.model}
                                     </CardDescription>
-                                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1">
-                                            <span className="text-gray-500">Created:</span>
-                                            <span>{formatDate(order.created_at)}</span>
+                                            <span className="text-muted-foreground">Created:</span>
+                                            <span className="text-foreground">{formatDate(order.created_at)}</span>
                                         </div>
                                         {order.completed_at && (
                                             <div className="flex items-center gap-1">
-                                                <span className="text-gray-500">Completed:</span>
-                                                <span>{formatDate(order.completed_at)}</span>
+                                                <span className="text-muted-foreground">Completed:</span>
+                                                <span className="text-foreground">{formatDate(order.completed_at)}</span>
                                             </div>
                                         )}
                                         {order.work_order_number && (
                                             <div className="flex items-center gap-1">
-                                                <span className="text-gray-500">Order #:</span>
-                                                <span>{order.work_order_number}</span>
+                                                <span className="text-muted-foreground">Order #:</span>
+                                                <span className="text-foreground">{order.work_order_number}</span>
                                             </div>
                                         )}
                                     </div>
@@ -133,8 +133,8 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
                                     </Badge>
                                     {order.priority && (
                                         <div className="text-right">
-                                            <div className="text-xs text-gray-500">Priority</div>
-                                            <div className="text-sm font-semibold text-orange-400 capitalize">
+                                            <div className="text-xs text-muted-foreground">Priority</div>
+                                            <div className="text-sm font-semibold text-orange-500 capitalize">
                                                 {order.priority}
                                             </div>
                                         </div>
@@ -144,17 +144,17 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
                         </CardHeader>
                         <CardContent className="py-0">
                             {order.description && (
-                                <div className="bg-[#0f0f0f] rounded-md p-3 mb-3">
-                                    <div className="text-xs text-gray-500 mb-1">Description:</div>
-                                    <div className="text-sm text-gray-300 line-clamp-2">
+                                <div className="bg-slate-50 dark:bg-muted rounded-md p-3 mb-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Description:</div>
+                                    <div className="text-sm text-foreground line-clamp-2">
                                         {order.description}
                                     </div>
                                 </div>
                             )}
                             {order.notes && (
-                                <div className="bg-[#0f0f0f] rounded-md p-3 mb-3">
-                                    <div className="text-xs text-gray-500 mb-1">Notes:</div>
-                                    <div className="text-sm text-gray-300 line-clamp-2">
+                                <div className="bg-slate-50 dark:bg-muted rounded-md p-3 mb-3">
+                                    <div className="text-xs text-muted-foreground mb-1">Notes:</div>
+                                    <div className="text-sm text-foreground line-clamp-2">
                                         {order.notes}
                                     </div>
                                 </div>
@@ -162,24 +162,24 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 {order.assigned_technician_id && order.employees && (
                                     <div>
-                                        <div className="text-gray-500 text-xs">Technician</div>
-                                        <div className="text-gray-300">
+                                        <div className="text-muted-foreground text-xs">Technician</div>
+                                        <div className="text-foreground">
                                             {order.employees.first_name} {order.employees.last_name}
                                         </div>
                                     </div>
                                 )}
                                 {order.started_at && (
                                     <div>
-                                        <div className="text-gray-500 text-xs">Started</div>
-                                        <div className="text-gray-300">{formatDate(order.started_at)}</div>
+                                        <div className="text-muted-foreground text-xs">Started</div>
+                                        <div className="text-foreground">{formatDate(order.started_at)}</div>
                                     </div>
                                 )}
                                 {order.tags && order.tags.length > 0 && (
                                     <div>
-                                        <div className="text-gray-500 text-xs">Tags</div>
-                                        <div className="text-gray-300">
+                                        <div className="text-muted-foreground text-xs">Tags</div>
+                                        <div className="text-foreground">
                                             {order.tags.map((tag: string, index: number) => (
-                                                <span key={index} className="inline-block bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs mr-1 mb-1">
+                                                <span key={index} className="inline-block bg-muted text-foreground px-2 py-1 rounded text-xs mr-1 mb-1">
                                                     {tag}
                                                 </span>
                                             ))}
@@ -188,16 +188,16 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
                                 )}
                                 {order.attachments && order.attachments.length > 0 && (
                                     <div>
-                                        <div className="text-gray-500 text-xs">Attachments</div>
-                                        <div className="text-gray-300">{order.attachments.length} file(s)</div>
+                                        <div className="text-muted-foreground text-xs">Attachments</div>
+                                        <div className="text-foreground">{order.attachments.length} file(s)</div>
                                     </div>
                                 )}
                             </div>
                         </CardContent>
-                        <CardFooter className="border-t border-[#333] pt-4">
+                        <CardFooter className="border-t border-border pt-4">
                             <Button 
                                 variant="outline" 
-                                className="border border-[#444] text-gray-300 hover:bg-[#333] hover:text-white w-full"
+                                className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground w-full"
                                 onClick={() => handleViewDetails(order.id)}
                             >
                                 View Details
@@ -206,11 +206,11 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
                     </Card>
                 ))
             ) : (
-                <div className="flex flex-col items-center justify-center p-8 bg-[#1A1A1A] rounded-lg border border-[#333]">
-                    <History className="h-12 w-12 text-gray-500 mb-3" />
-                    <h3 className="text-xl font-semibold mb-2">No Work History</h3>
-                    <p className="text-gray-400 text-center mb-4">This customer doesn't have any work orders yet.</p>
-                    <Button className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white">
+                <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-card rounded-lg border border-border">
+                    <History className="h-12 w-12 text-muted-foreground mb-3" />
+                    <h3 className="text-xl font-semibold mb-2 text-foreground">No Work History</h3>
+                    <p className="text-muted-foreground text-center mb-4">This customer doesn't have any work orders yet.</p>
+                    <Button className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground">
                         <Plus className="h-4 w-4 mr-2" />
                         Create Work Order
                     </Button>

@@ -143,17 +143,17 @@ export default function CustomerPage() {
     // Loading state
     if (isLoading || !customer) {
         return (
-            <div className="flex flex-col min-h-screen bg-black text-white">
+            <div className="flex flex-col min-h-screen bg-background text-foreground">
                 <Nav />
                 <main className="flex items-center justify-center flex-grow">
-                    <div className="animate-pulse">Loading customer profile...</div>
+                    <div className="animate-pulse text-foreground">Loading customer profile...</div>
                 </main>
             </div>
         );
     }
     
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Nav />
             {/* Main Content */}
             <main className="flex-grow container mx-auto px-4 py-6 mb-16 md:mb-0 max-w-[1300px]">
@@ -168,13 +168,13 @@ export default function CustomerPage() {
                             <Slash className="h-4 w-4" />
                         </BreadcrumbSeparator>
                         <BreadcrumbItem>
-                            <BreadcrumbLink href="/customers" className="text-gray-400 hover:text-gray-300">Customers</BreadcrumbLink>
+                            <BreadcrumbLink href="/customers" className="text-muted-foreground hover:text-foreground">Customers</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator>
                             <Slash className="h-4 w-4" />
                         </BreadcrumbSeparator>
                         <BreadcrumbItem>
-                            <BreadcrumbLink className="text-gray-400 hover:text-gray-300">{customer?.customer_name || 'Customer Details'}</BreadcrumbLink>
+                            <BreadcrumbLink className="text-muted-foreground hover:text-foreground">{customer?.customer_name || 'Customer Details'}</BreadcrumbLink>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
@@ -189,8 +189,8 @@ export default function CustomerPage() {
                             </AvatarFallback>
                         </Avatar>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold">{customer?.customer_name}</h1>
-                            <p className="text-gray-400">Customer since {new Date(customer?.created_at).toLocaleDateString()}</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{customer?.customer_name}</h1>
+                            <p className="text-muted-foreground">Customer since {new Date(customer?.created_at).toLocaleDateString()}</p>
                         </div>
                     </div>  
                     {/* <div className="flex gap-2">
@@ -212,11 +212,11 @@ export default function CustomerPage() {
                 
                 {/* Tabs */}
                 <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="bg-[#1A1A1A] border-b border-[#333] p-0 w-full flex justify-between md:justify-start">
+                    <TabsList className="bg-slate-50 dark:bg-muted border-b border-border p-0 w-full flex justify-between md:justify-start">
                         <TabsTrigger 
                             value="profile" 
                             id="profile"
-                            className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
+                            className="py-3 px-4 data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
                         >
                             <User className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">Profile</span>
@@ -224,35 +224,35 @@ export default function CustomerPage() {
                         <TabsTrigger 
                             value="vehicles"
                             id="vehicles"
-                            className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
+                            className="py-3 px-4 data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
                         >
                             <Car className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">Vehicles</span>
                         </TabsTrigger>
                         <TabsTrigger 
                             value="history" 
-                            className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
+                            className="py-3 px-4 data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
                         >
                             <History className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">History</span>
                         </TabsTrigger>
                         {/* <TabsTrigger 
                             value="messages" 
-                            className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222]"
+                            className="py-3 px-4 data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222]"
                         >
                             <MessageCircle className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">Messages</span>
                         </TabsTrigger> */}
                         {/* <TabsTrigger 
                             value="appointments" 
-                            className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222]"
+                            className="py-3 px-4 data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222]"
                         >
                             <Calendar className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">Appointments</span>
                         </TabsTrigger> */}
                         <TabsTrigger 
                             value="invoices" 
-                            className="py-3 px-4 data-[state=active]:bg-[#292929] data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
+                            className="py-3 px-4 data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-[#b22222] w-[25%]"
                         >
                             <File className="h-4 w-4 mr-2" />
                             <span className="hidden md:inline">Invoices</span>

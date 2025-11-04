@@ -119,7 +119,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 					<PaginationLink 
 						onClick={() => handlePageChange(page)}
 						isActive={currentPage === page}
-						className={`${currentPage === page ? "bg-[#333] text-white" : "text-gray-400 hover:text-white hover:bg-[#222]"} border-[#444]`}
+						className={`${currentPage === page ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted"} border-border`}
 					>
 						{page}
 					</PaginationLink>
@@ -147,7 +147,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		if (currentPage > 3) {
 			items.push(
 				<PaginationItem key="ellipsis-1">
-					<PaginationEllipsis className="text-gray-500" />
+									<PaginationEllipsis className="text-muted-foreground" />
 				</PaginationItem>
 			);
 		}
@@ -174,7 +174,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		if (currentPage < totalPages - 2) {
 			items.push(
 				<PaginationItem key="ellipsis-2">
-					<PaginationEllipsis className="text-gray-500" />
+									<PaginationEllipsis className="text-muted-foreground" />
 				</PaginationItem>
 			);
 		}
@@ -201,31 +201,31 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		<div className="space-y-4">
 			<div className="relative mb-4">
 				<div className="relative">
-					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
 					<Input
-						className="pl-10 bg-[#131313] border-[#222] hover:border-[#444] focus:border-[#555] text-white w-full"
+						className="pl-10 bg-background border-border hover:border-border focus:border-border text-foreground w-full"
 						placeholder="Search by name, email, phone, license plate, or address..."
 						value={searchQuery}
 						onChange={handleSearchChange}
 					/>
 				</div>
 				{searchQuery && (
-					<p className="text-sm text-gray-400 mt-2">
+					<p className="text-sm text-muted-foreground mt-2">
 						Found {customers.length} {customers.length === 1 ? 'customer' : 'customers'}
 					</p>
 				)}
 			</div>
 
-			<div className="rounded-md border border-[#222] overflow-hidden">
+			<div className="rounded-md border border-border overflow-hidden bg-white dark:bg-card">
 				<div className="overflow-x-auto">
 					<Table>
-						<TableHeader className="bg-[#222] border-none">
-							<TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
-								<TableHead className="text-white font-medium">Name</TableHead>
-								<TableHead className="text-white font-medium hidden sm:table-cell">Email</TableHead>
-								<TableHead className="text-white font-medium hidden md:table-cell">Phone</TableHead>
-								<TableHead className="text-white font-medium hidden lg:table-cell">License Plate</TableHead>
-								<TableHead className="text-white font-medium hidden xl:table-cell">Address</TableHead>
+						<TableHeader className="bg-slate-50 dark:bg-muted/50 border-none">
+							<TableRow className="hover:bg-muted/50 border-b border-border">
+								<TableHead className="text-foreground font-medium">Name</TableHead>
+								<TableHead className="text-foreground font-medium hidden sm:table-cell">Email</TableHead>
+								<TableHead className="text-foreground font-medium hidden md:table-cell">Phone</TableHead>
+								<TableHead className="text-foreground font-medium hidden lg:table-cell">License Plate</TableHead>
+								<TableHead className="text-foreground font-medium hidden xl:table-cell">Address</TableHead>
 							</TableRow>
 						</TableHeader>
 
@@ -233,7 +233,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 							{currentCustomers.length > 0 ? (
 								currentCustomers.map((customer) => (
 									<TableRow
-										className="hover:bg-[#1a1a1a] border-b border-[#222] cursor-pointer"
+										className="hover:bg-muted/50 border-b border-border cursor-pointer"
 										key={customer.id}
 										onClick={() => handleRowClick(customer)}
 									>
@@ -256,7 +256,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 								))
 							) : (
 								<TableRow>
-									<TableCell colSpan={5} className="text-center py-8 text-gray-400">
+									<TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
 										{isLoading ? "Loading customers..." : searchQuery ? "No matching customers found" : "No customers found"}
 									</TableCell>
 								</TableRow>
@@ -266,7 +266,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 				</div>
 
 				{customers.length > 0 && (
-					<div className="py-4 bg-[#181818] border-t border-[#222]">
+					<div className="py-4 bg-slate-50 dark:bg-muted/30 border-t border-border">
 						<Pagination>
 							<PaginationContent>
 								{/* Show shorter content on mobile */}
@@ -274,7 +274,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 									<PaginationItem>
 										<PaginationPrevious 
 											onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-											className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "text-gray-400 hover:text-white hover:bg-[#222] cursor-pointer"} border-[#444]`}
+											className={`${currentPage === 1 ? "pointer-events-none opacity-50" : "text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"} border-border`}
 										/>
 									</PaginationItem>
 									
@@ -283,7 +283,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 									<PaginationItem>
 										<PaginationNext 
 											onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-											className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "text-gray-400 hover:text-white hover:bg-[#222] cursor-pointer"} border-[#444]`}
+											className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : "text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"} border-border`}
 										/>
 									</PaginationItem>
 								</div>
@@ -293,26 +293,26 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 									<button
 										onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
 										disabled={currentPage === 1}
-										className={`px-3 py-2 rounded border border-[#444] ${
+										className={`px-3 py-2 rounded border border-border ${
 											currentPage === 1 
 												? "opacity-50 cursor-not-allowed" 
-												: "text-gray-300 hover:bg-[#222]"
+												: "text-foreground hover:bg-muted"
 										}`}
 									>
 										<ChevronLeft className="h-4 w-4" />
 									</button>
 
-									<span className="text-sm text-gray-400">
+									<span className="text-sm text-muted-foreground">
 										Page {currentPage} of {totalPages}
 									</span>
 
 									<button
 										onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
 										disabled={currentPage === totalPages}
-										className={`px-3 py-2 rounded border border-[#444] ${
+										className={`px-3 py-2 rounded border border-border ${
 											currentPage === totalPages 
 												? "opacity-50 cursor-not-allowed" 
-												: "text-gray-300 hover:bg-[#222]"
+												: "text-foreground hover:bg-muted"
 										}`}
 									>
 										<ChevronRight className="h-4 w-4" />

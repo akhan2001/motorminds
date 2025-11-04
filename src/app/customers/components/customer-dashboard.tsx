@@ -20,8 +20,8 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
             <div className="container mx-auto max-w-[1300px]">
                 <div className="flex flex-row justify-between items-center mb-10">
                     <div className="flex flex-col">
-                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Customers</h1>
-                        <p className="text-gray-400">
+                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-foreground">Customers</h1>
+                        <p className="text-muted-foreground">
                             Manage your customer base and track their activity. Add new customers, edit their information, and view their activity.
                         </p>
                     </div>

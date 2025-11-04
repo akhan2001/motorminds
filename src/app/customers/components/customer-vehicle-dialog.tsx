@@ -103,37 +103,25 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle, init
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-[#131313] text-white border border-[#222]">
+            <DialogContent className="bg-slate-50 dark:bg-card text-foreground border border-border">
                     <DialogHeader>
-                        <DialogTitle>{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
-                        <DialogDescription className="text-gray-400">
+                        <DialogTitle className="text-foreground">{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
                             {isEditing ? 'Update vehicle information' : 'Add a new vehicle to the customer\'s profile'}
                         </DialogDescription>
                     </DialogHeader>
                     
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            {/* <Label htmlFor="year" className="text-left text-gray-300">Year</Label> */}
-                            {/* <Input
-                                id="year"
-                                value={newVehicle.year}
-                                onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
-                                placeholder="YYYY"
-                                type="number"
-                                min="1960"
-                                max={new Date().getFullYear()}
-                            /> */}
-
-                            <Label htmlFor="year" className="text-left text-gray-300">Year</Label>
+                            <Label htmlFor="year" className="text-left text-foreground">Year</Label>
                             <Select
                                 value={newVehicle.year}
                                 onValueChange={(value) => setNewVehicle({ ...newVehicle, year: value })}
                             >
-                                <SelectTrigger className="w-full bg-[#292929] text-white border-[#626262]">
+                                <SelectTrigger className="w-full bg-white dark:bg-background text-foreground border-border">
                                     <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#292929] text-white border-[#626262] max-h-[200px]">
+                                <SelectContent className="bg-popover text-popover-foreground border-border max-h-[200px]">
                                     {YEARS.map((year) => (
                                         <SelectItem 
                                             key={year} 
@@ -147,64 +135,64 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle, init
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="make" className="text-left text-gray-300">Make</Label>
+                            <Label htmlFor="make" className="text-left text-foreground">Make</Label>
                             <Input
                                 id="make"
                                 value={newVehicle.make}
                                 onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                 placeholder="Make"
                             />
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="model" className="text-left text-gray-300">Model</Label>
+                            <Label htmlFor="model" className="text-left text-foreground">Model</Label>
                             <Input
                                 id="model"
                                 value={newVehicle.model}
                                 onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                 placeholder="Model"
                             />
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="engine" className="text-left text-gray-300">Engine</Label>
+                            <Label htmlFor="engine" className="text-left text-foreground">Engine</Label>
                             <Input
                                 id="engine"
                                 value={newVehicle.engine}
                                 onChange={(e) => setNewVehicle({ ...newVehicle, engine: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                 placeholder="Engine"
                             />
                         </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="color" className="text-left text-gray-300">Color</Label>
+                            <Label htmlFor="color" className="text-left text-foreground">Color</Label>
                             <Input
                                 id="color"
                                 value={newVehicle.color}
                                 onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
-                                className="col-span-3 bg-[#292929] text-white border-[#626262]"
+                                className="col-span-3 bg-white dark:bg-background text-foreground border-border"
                                 placeholder="Color"
                             />
                         </div>
 
-                        <Separator />
+                        <Separator className="bg-border" />
 
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="vin" className="text-left text-gray-300">VIN</Label>
+                            <Label htmlFor="vin" className="text-left text-foreground">VIN</Label>
                             <div className="col-span-3 flex items-center gap-2">
                                 <Input
                                     id="vin"
                                     value={newVehicle.vin}
                                     onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value })}
-                                    className="flex-1 bg-[#292929] text-white border-[#626262]"
+                                    className="flex-1 bg-white dark:bg-background text-foreground border-border"
                                     placeholder="VIN"
                                 />
                                 <Button 
                                     variant="outline" 
-                                    className="bg-[#292929] text-white border-[#626262]"
+                                    className="bg-white dark:bg-background text-foreground border-border hover:bg-muted"
                                     onClick={handleVinLookup}
                                 >
                                     <SearchIcon className="w-4 h-4" />
@@ -216,13 +204,13 @@ export function CustomerVehicleDialog({ isOpen, onOpenChange, onAddVehicle, init
                     <DialogFooter>
                         <Button
                             variant="outline"
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                            className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                             onClick={() => onOpenChange(false)}
                         >
                             Cancel
                         </Button>
                         <Button
-                            className="bg-[#EF4444] text-white hover:bg-[#EF4444]/80"
+                            className="bg-red-600 text-white hover:bg-red-700"
                             onClick={handleAddVehicle}
                         >
                             {isEditing ? 'Save Changes' : 'Add Vehicle'}

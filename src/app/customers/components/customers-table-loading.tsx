@@ -9,8 +9,8 @@ export function CustomersTableLoading() {
             <div className="container mx-auto max-w-[1300px]">
                 <div className="flex flex-row justify-between items-center mb-10">
                     <div className="flex flex-col">
-                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">Customers</h1>
-                        <p className="text-gray-400">
+                        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-foreground">Customers</h1>
+                        <p className="text-muted-foreground">
                             Manage your customer base and track their activity. Add new customers, edit their information, and view their activity.
                         </p>
                     </div>
@@ -21,19 +21,19 @@ export function CustomersTableLoading() {
                         </Button>
                     </div>
                 </div>
-                <div className="rounded-md border border-[#222] overflow-hidden">
+                <div className="rounded-md border border-border overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-[#222] border-none">
-                            <TableRow className="hover:bg-[#222] border-b-1 border-[#333]">
-                                <TableHead className="text-white font-medium">Name</TableHead>
-                                <TableHead className="text-white font-medium">Email</TableHead>
-                                <TableHead className="text-white font-medium">Phone</TableHead>
-                                <TableHead className="text-white font-medium">Address</TableHead>
+                        <TableHeader className="bg-muted/50 border-none">
+                            <TableRow className="hover:bg-muted/50 border-b border-border">
+                                <TableHead className="text-foreground font-medium">Name</TableHead>
+                                <TableHead className="text-foreground font-medium">Email</TableHead>
+                                <TableHead className="text-foreground font-medium">Phone</TableHead>
+                                <TableHead className="text-foreground font-medium">Address</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {Array(5).fill(0).map((_, index) => (
-                                <TableRow key={index} className="hover:bg-[#1a1a1a] border-b border-[#222]">
+                                <TableRow key={index} className="hover:bg-muted/50 border-b border-border">
                                     <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-60" /></TableCell>
                                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
