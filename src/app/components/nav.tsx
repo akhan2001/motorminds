@@ -109,7 +109,7 @@ export function Nav() {
 	// Show loading state while fetching role and shop info
 	if (isLoadingRole || isLoadingShop) {
 		return (
-			<header className="bg-background px-4 pt-2 border-b border-border z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+			<header className="bg-gradient-to-b from-white to-slate-50 dark:from-background dark:to-background px-4 pt-2 border-b border-border z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 					<div className="flex items-center gap-4 py-3">
 						<div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export function Nav() {
 	}
 
 	return (
-		<header className="bg-background px-4 pt-2 border-b border-border z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
+		<header className="bg-gradient-to-b from-white to-slate-50 dark:from-background dark:to-background px-4 pt-2 border-b border-border z-50 sticky top-0 bg-opacity-90 backdrop-blur-sm">
 			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}

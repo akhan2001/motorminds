@@ -273,10 +273,10 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
 
     if (isInitialLoading) {
         return (
-            <Card className="bg-[#111] border-[#222]">
+            <Card className="bg-slate-50 dark:bg-card border-border">
                 <CardContent className="p-6 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading messaging...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading messaging...</p>
                 </CardContent>
             </Card>
         );
@@ -284,14 +284,14 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
 
     if (phoneNumbers.length === 0) {
         return (
-            <Card className="bg-[#111] border-[#222]">
+            <Card className="bg-slate-50 dark:bg-card border-border">
                 <CardContent className="p-6 text-center">
-                    <Phone className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-medium mb-2 text-white">No SMS Phone Numbers</h3>
-                    <p className="text-gray-400 mb-4">
+                    <Phone className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-medium mb-2 text-foreground">No SMS Phone Numbers</h3>
+                    <p className="text-muted-foreground mb-4">
                         You need to have a Twilio phone number assigned to start SMS messaging.
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                         Contact your administrator to assign a SMS-enabled phone number to your shop.
                     </p>
                 </CardContent>
@@ -302,12 +302,12 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
     return (
         <div className="space-y-6">
             <Tabs defaultValue="conversations" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-[#222]">
-                    <TabsTrigger value="conversations" className="data-[state=active]:bg-[#333]">
+                <TabsList className="grid w-full grid-cols-2 bg-slate-50 dark:bg-muted">
+                    <TabsTrigger value="conversations" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Conversations
                     </TabsTrigger>
-                    <TabsTrigger value="compose" className="data-[state=active]:bg-[#333]">
+                    <TabsTrigger value="compose" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
                         <Plus className="h-4 w-4 mr-2" />
                         New Message
                     </TabsTrigger>
@@ -317,10 +317,10 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
                         {/* Conversations List */}
                         <div className="lg:col-span-1">
-                            <Card className="bg-[#111] border-[#222] h-full">
+                            <Card className="bg-slate-50 dark:bg-card border-border h-full">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-white flex items-center gap-2">
+                                        <CardTitle className="text-foreground flex items-center gap-2">
                                             <MessageCircle className="h-5 w-5" />
                                             Conversations
                                         </CardTitle>
@@ -328,7 +328,7 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                             onClick={loadConversations}
                                             size="sm"
                                             variant="outline"
-                                            className="text-xs text-white"
+                                            className="text-xs border-red-300 text-muted-foreground hover:bg-red-50 hover:text-red-600 hover:border-red-600 dark:hover:bg-red-950/20"
                                         >
                                             Refresh
                                         </Button>
@@ -342,14 +342,14 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                     key={conversation.id}
                                                     className={`p-3 rounded-lg cursor-pointer transition-colors ${
                                                         selectedPhone === conversation.customer_phone
-                                                            ? 'bg-[#222] border border-[#333]'
-                                                            : 'hover:bg-[#1a1a1a]'
+                                                            ? 'bg-muted border-l-4 border-l-red-600 border border-border'
+                                                            : 'hover:bg-muted/50 hover:border-l-4 hover:border-l-red-300'
                                                     }`}
                                                     onClick={() => setSelectedPhone(conversation.customer_phone)}
                                                 >
                                                     <div className="flex items-start justify-between mb-2">
                                                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                            <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                                            <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                                             <div className="min-w-0 flex-1">
                                                                 {conversation.customer_id ? (
                                                                     <button
@@ -357,24 +357,24 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                                             e.stopPropagation();
                                                                             navigateToCustomer(conversation.customer_id!);
                                                                         }}
-                                                                        className="text-white font-medium truncate block hover:text-red-400 transition-colors text-left flex items-center gap-1"
+                                                                        className="text-foreground font-medium truncate block hover:text-red-600 transition-colors text-left flex items-center gap-1"
                                                                     >
                                                                         {conversation.customer?.customer_name || conversation.customer_name || conversation.customer_phone}
                                                                         <ExternalLink className="h-3 w-3 opacity-60" />
                                                                     </button>
                                                                 ) : (
-                                                                    <span className="text-white font-medium truncate block">
+                                                                    <span className="text-foreground font-medium truncate block">
                                                                         {conversation.customer?.customer_name || conversation.customer_name || conversation.customer_phone}
                                                                     </span>
                                                                 )}
                                                                 {conversation.customer?.customer_email && (
-                                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                                                                         <Mail className="h-3 w-3" />
                                                                         {conversation.customer.customer_email}
                                                                     </span>
                                                                 )}
                                                                 {conversation.customer?.license_plate && (
-                                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
                                                                         <Car className="h-3 w-3" />
                                                                         {conversation.customer.license_plate}
                                                                     </span>
@@ -382,13 +382,13 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <p className="text-sm text-gray-400 truncate mb-1">
+                                                    <p className="text-sm text-muted-foreground truncate mb-1">
                                                         {conversation.recent_message?.direction === 'outbound' && 'You: '}
                                                         {conversation.recent_message?.message_body || 'No messages yet'}
                                                     </p>
                                                     <div className="flex items-center justify-between">
-                                                        <p className="text-xs text-gray-500">{conversation.customer_phone}</p>
-                                                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                        <p className="text-xs text-muted-foreground">{conversation.customer_phone}</p>
+                                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
                                                             <Clock className="h-3 w-3" />
                                                             {formatTime(conversation.last_message_at)}
                                                         </span>
@@ -397,8 +397,8 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                             ))}
                                             {conversations.length === 0 && (
                                                 <div className="text-center py-8">
-                                                    <MessageCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                                                    <p className="text-gray-400 text-sm">No conversations yet</p>
+                                                    <MessageCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                                                    <p className="text-muted-foreground text-sm">No conversations yet</p>
                                                 </div>
                                             )}
                                         </div>
@@ -409,7 +409,7 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
 
                         {/* Chat Area */}
                         <div className="lg:col-span-2">
-                            <Card className="bg-[#111] border-[#222] h-full">
+                            <Card className="bg-slate-50 dark:bg-card border-border h-full">
                                 {selectedPhone ? (
                                     <>
                                         <CardHeader>
@@ -419,34 +419,34 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                         {selectedCustomer?.id ? (
                                                             <button
                                                                 onClick={() => navigateToCustomer(selectedCustomer.id)}
-                                                                className="text-white font-bold text-lg hover:text-red-400 transition-colors flex items-center gap-2"
+                                                                className="text-foreground font-bold text-lg hover:text-red-600 transition-colors flex items-center gap-2"
                                                             >
                                                                 {selectedCustomer.customer_name || conversations.find(c => c.customer_phone === selectedPhone)?.customer_name || selectedPhone}
                                                                 <ExternalLink className="h-4 w-4 opacity-60" />
                                                             </button>
                                                         ) : (
-                                                            <CardTitle className="text-white">
+                                                            <CardTitle className="text-foreground">
                                                                 {selectedCustomer?.customer_name || conversations.find(c => c.customer_phone === selectedPhone)?.customer_name || selectedPhone}
                                                             </CardTitle>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm text-gray-400">{selectedPhone}</p>
+                                                    <p className="text-sm text-muted-foreground">{selectedPhone}</p>
                                                     {selectedCustomer && (
                                                         <div className="mt-2 space-y-1">
                                                             {selectedCustomer.customer_email && (
-                                                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
                                                                     <Mail className="h-3 w-3" />
                                                                     {selectedCustomer.customer_email}
                                                                 </p>
                                                             )}
                                                             {selectedCustomer.license_plate && (
-                                                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
                                                                     <Car className="h-3 w-3" />
                                                                     {selectedCustomer.license_plate}
                                                                 </p>
                                                             )}
                                                             {selectedCustomer.customer_address && (
-                                                                <p className="text-xs text-gray-500 truncate">
+                                                                <p className="text-xs text-muted-foreground truncate">
                                                                     {selectedCustomer.customer_address}
                                                                 </p>
                                                             )}
@@ -455,7 +455,7 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                 </div>
                                             </div>
                                         </CardHeader>
-                                        <Separator className="bg-[#222]" />
+                                        <Separator className="bg-border" />
                                         <CardContent className="p-0 flex flex-col h-[450px]">
                                             {/* Messages */}
                                             <ScrollArea className="flex-1 p-4">
@@ -469,13 +469,13 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                                 className={`max-w-[70%] p-3 rounded-lg ${
                                                                     message.direction === 'outbound'
                                                                         ? 'bg-red-600 text-white'
-                                                                        : 'bg-[#222] text-white'
+                                                                        : 'bg-muted text-foreground border border-border'
                                                                 }`}
                                                             >
                                                                 <p className="text-sm whitespace-pre-wrap">{message.message_body}</p>
                                                                 <div className="mt-2">
                                                                     <span className={`text-xs ${
-                                                                        message.direction === 'outbound' ? 'text-red-100' : 'text-gray-400'
+                                                                        message.direction === 'outbound' ? 'text-red-100' : 'text-muted-foreground'
                                                                     }`}>
                                                                         {formatTime(message.created_at)}
                                                                     </span>
@@ -487,13 +487,13 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                             </ScrollArea>
 
                                             {/* Message Input */}
-                                            <div className="p-4 border-t border-[#222]">
+                                            <div className="p-4 border-t border-border">
                                                 <div className="flex gap-2">
                                                     <Textarea
                                                         placeholder="Type your message..."
                                                         value={newMessage}
                                                         onChange={(e) => setNewMessage(e.target.value)}
-                                                        className="bg-[#222] border-[#333] text-white resize-none"
+                                                        className="bg-white dark:bg-background border-border text-foreground resize-none"
                                                         rows={2}
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -506,7 +506,7 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                                         onClick={() => sendMessage(selectedPhone, selectedCustomer?.customer_name)}
                                                         disabled={isLoading || !newMessage.trim()}
                                                         size="sm"
-                                                        className="self-end bg-red-600 hover:bg-red-700"
+                                                        className="self-end bg-red-600 hover:bg-red-700 text-white"
                                                     >
                                                         <Send className="h-4 w-4" />
                                                     </Button>
@@ -517,9 +517,9 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                                 ) : (
                                     <CardContent className="flex-1 flex items-center justify-center">
                                         <div className="text-center">
-                                            <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                                            <h3 className="text-lg font-medium text-white mb-2">Select a Conversation</h3>
-                                            <p className="text-gray-400">
+                                            <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                            <h3 className="text-lg font-medium text-foreground mb-2">Select a Conversation</h3>
+                                            <p className="text-muted-foreground">
                                                 Choose a conversation from the sidebar to start messaging
                                             </p>
                                         </div>
