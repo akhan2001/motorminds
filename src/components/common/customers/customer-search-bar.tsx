@@ -87,29 +87,29 @@ export function CustomerSearchBar({
                     onClick={() => setOpen(!open)}
                     className={cn(
                         "w-full justify-start text-left font-normal h-10 px-3 py-2",
-                        "bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-sm",
-                        "hover:bg-[#2a2a2a] hover:border-gray-400 focus:border-red-500 focus:ring-2 focus:ring-red-200",
-                        "transition-all duration-200 text-white",
-                        !selectedCustomer && "text-gray-500"
+                        "bg-white dark:bg-background border border-border rounded-lg shadow-sm",
+                        "hover:bg-muted/50 hover:border-red-600 dark:hover:border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800",
+                        "transition-all duration-200 text-foreground",
+                        !selectedCustomer && "text-muted-foreground"
                     )}
                     disabled={disabled}
                 >
-                    <Search className="mr-2 h-4 w-4 text-gray-400" />
+                    <Search className="mr-2 h-4 w-4 text-muted-foreground" />
                     {displayText || placeholder}
-                    <ChevronDown className={cn("ml-auto h-4 w-4 text-gray-400 transition-transform", open && "rotate-180")} />
+                    <ChevronDown className={cn("ml-auto h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
                 </Button>
 
                 {/* Customer Dropdown */}
                 {open && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-slate-50 dark:bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {/* Search Input */}
-                        <div className="p-3 border-b border-[#3a3a3a]">
+                        <div className="p-3 border-b border-border">
                             <Input
                                 placeholder="Search customers by name, phone, or email..."
                                 value={searchQuery}
                                 onChange={(e) => handleInputChange(e.target.value)}
                                 ref={inputRef}
-                                className="bg-[#1a1a1a] text-white border-[#3a3a3a] focus:border-red-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:border-red-600"
                                 autoFocus
                             />
                         </div>
@@ -117,12 +117,12 @@ export function CustomerSearchBar({
                         {/* Customer List */}
                         <div className="py-1">
                             {customersLoading && (
-                                <div className="p-4 text-center text-sm text-gray-400">
+                                <div className="p-4 text-center text-sm text-muted-foreground">
                                     Searching...
                                 </div>
                             )}
                             {!customersLoading && customers.length === 0 && searchQuery.trim() && (
-                                <div className="p-4 text-center text-sm text-gray-400">
+                                <div className="p-4 text-center text-sm text-muted-foreground">
                                     No customers found.
                                 </div>
                             )}
@@ -132,7 +132,7 @@ export function CustomerSearchBar({
                                         <div
                                             key={customer.id}
                                             onClick={() => handleCustomerSelect(customer)}
-                                            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-[#2a2a2a] text-white"
+                                            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 text-foreground transition-colors"
                                         >
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage src="" />
@@ -141,10 +141,10 @@ export function CustomerSearchBar({
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-white truncate">
+                                                <div className="font-medium text-foreground truncate">
                                                     {customer.customer_name}
                                                 </div>
-                                                <div className="text-sm text-gray-400 truncate">
+                                                <div className="text-sm text-muted-foreground truncate">
                                                     {customer.customer_phone && formatPhoneNumber(customer.customer_phone)}
                                                     {customer.customer_email && ` • ${customer.customer_email}`}
                                                 </div>
@@ -158,18 +158,18 @@ export function CustomerSearchBar({
                             {showCreateOption && onCreateNew && (
                                 <>
                                     {customers.length > 0 && (
-                                        <div className="border-t border-[#3a3a3a] my-1" />
+                                        <div className="border-t border-border my-1" />
                                     )}
                                     <div
                                         onClick={handleCreateNew}
-                                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-green-600/10 text-green-400 hover:text-green-300 transition-colors"
+                                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-green-50 dark:hover:bg-green-600/10 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
                                     >
-                                        <div className="h-8 w-8 rounded-full bg-green-600/20 flex items-center justify-center">
-                                            <Plus className="h-4 w-4" />
+                                        <div className="h-8 w-8 rounded-full bg-green-50 dark:bg-green-600/20 flex items-center justify-center">
+                                            <Plus className="h-4 w-4 text-green-600 dark:text-green-400" />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="font-medium">Add New Customer</div>
-                                            <div className="text-xs text-gray-400">Create a new customer</div>
+                                            <div className="font-medium text-foreground">Add New Customer</div>
+                                            <div className="text-xs text-muted-foreground">Create a new customer</div>
                                         </div>
                                     </div>
                                 </>

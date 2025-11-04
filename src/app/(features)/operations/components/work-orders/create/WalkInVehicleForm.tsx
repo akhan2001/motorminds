@@ -177,11 +177,11 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
     return (
         <div className={`space-y-4 ${className}`}>
-            <h3 className="text-lg font-medium text-white">Walk-in Vehicle Information</h3>
+            <h3 className="text-lg font-medium text-foreground">Walk-in Vehicle Information</h3>
             
             {/* Vehicle Search */}
             {isEditing && (
-                <div className="bg-[#1A1A1A] rounded-xl p-6">
+                <div className="bg-slate-50 dark:bg-card rounded-xl p-6 border border-border">
                     <VehicleSearchByPlate
                         shopId={shopId}
                         onVehicleSelected={handleVehicleSelected}
@@ -191,11 +191,11 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                 </div>
             )}
             
-            <div className="bg-[#1A1A1A] rounded-xl p-6">
+            <div className="bg-slate-50 dark:bg-card rounded-xl p-6 border border-border">
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label htmlFor="year" className="text-gray-400">Year *</Label>
+                            <Label htmlFor="year" className="text-foreground">Year *</Label>
                             <Input
                                 id="year"
                                 type="number"
@@ -204,14 +204,14 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                 onBlur={() => handleBlur('year')}
                                 placeholder="2020"
                                 disabled={!isEditing}
-                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${
-                                    errors.year ? 'border-red-500 focus:border-red-500' : ''
+                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                    errors.year ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
                                 }`}
                                 min="1900"
                                 max={new Date().getFullYear() + 1}
                             />
                             {errors.year && (
-                                <div className="flex items-center gap-1 text-red-400 text-xs">
+                                <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                     <AlertCircle className="h-3 w-3" />
                                     {errors.year}
                                 </div>
@@ -219,7 +219,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="make" className="text-gray-400">Make *</Label>
+                            <Label htmlFor="make" className="text-foreground">Make *</Label>
                             <Input
                                 id="make"
                                 value={data.make || ''}
@@ -227,12 +227,12 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                 onBlur={() => handleBlur('make')}
                                 placeholder="Toyota"
                                 disabled={!isEditing}
-                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${
-                                    errors.make ? 'border-red-500 focus:border-red-500' : ''
+                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                    errors.make ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
                                 }`}
                             />
                             {errors.make && (
-                                <div className="flex items-center gap-1 text-red-400 text-xs">
+                                <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                     <AlertCircle className="h-3 w-3" />
                                     {errors.make}
                                 </div>
@@ -242,7 +242,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label htmlFor="model" className="text-gray-400">Model *</Label>
+                            <Label htmlFor="model" className="text-foreground">Model *</Label>
                             <Input
                                 id="model"
                                 value={data.model || ''}
@@ -250,12 +250,12 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                 onBlur={() => handleBlur('model')}
                                 placeholder="Camry"
                                 disabled={!isEditing}
-                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${
-                                    errors.model ? 'border-red-500 focus:border-red-500' : ''
+                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                    errors.model ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
                                 }`}
                             />
                             {errors.model && (
-                                <div className="flex items-center gap-1 text-red-400 text-xs">
+                                <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                     <AlertCircle className="h-3 w-3" />
                                     {errors.model}
                                 </div>
@@ -263,7 +263,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="license_plate" className="text-gray-400">License Plate *</Label>
+                            <Label htmlFor="license_plate" className="text-foreground">License Plate *</Label>
                             <Input
                                 id="license_plate"
                                 value={data.license_plate || ''}
@@ -271,13 +271,13 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                 onBlur={() => handleBlur('license_plate')}
                                 placeholder="ABC123"
                                 disabled={!isEditing}
-                                className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${
-                                    errors.license_plate ? 'border-red-500 focus:border-red-500' : ''
+                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                    errors.license_plate ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
                                 }`}
                                 maxLength={10}
                             />
                             {errors.license_plate && (
-                                <div className="flex items-center gap-1 text-red-400 text-xs">
+                                <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                     <AlertCircle className="h-3 w-3" />
                                     {errors.license_plate}
                                 </div>
@@ -287,19 +287,19 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label htmlFor="color" className="text-gray-400">Color</Label>
+                            <Label htmlFor="color" className="text-foreground">Color</Label>
                             <Input
                                 id="color"
                                 value={data.color || ''}
                                 onChange={(e) => handleFieldChange('color', e.target.value)}
                                 placeholder="Silver"
                                 disabled={!isEditing}
-                                className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500"
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="vin" className="text-gray-400">VIN</Label>
+                            <Label htmlFor="vin" className="text-foreground">VIN</Label>
                             <div className="relative">
                                 <Input
                                     id="vin"
@@ -307,7 +307,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                     onChange={(e) => handleFieldChange('vin', e.target.value.toUpperCase())}
                                     placeholder="1HGBH41JXMN109186"
                                     disabled={!isEditing}
-                                    className="bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 pr-20"
+                                    className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 pr-20"
                                     maxLength={17}
                                 />
                                 {/* VIN Decoder Button */}
@@ -318,7 +318,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                         variant="ghost"
                                         onClick={handleVinDecode}
                                         disabled={vinDecoding}
-                                        className="absolute right-1 top-1 h-8 px-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                                        className="absolute right-1 top-1 h-8 px-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
                                         {vinDecoding ? (
                                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -332,7 +332,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="mileage" className="text-gray-400">Mileage</Label>
+                        <Label htmlFor="mileage" className="text-foreground">Mileage</Label>
                         <Input
                             id="mileage"
                             type="number"
@@ -341,13 +341,13 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                             onBlur={() => handleBlur('mileage')}
                             placeholder="45000"
                             disabled={!isEditing}
-                            className={`bg-[#1a1a1a] text-white border-[#2a2a2a] focus:ring-gray-500 ${
-                                errors.mileage ? 'border-red-500 focus:border-red-500' : ''
+                            className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                errors.mileage ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
                             }`}
                             min="0"
                         />
                         {errors.mileage && (
-                            <div className="flex items-center gap-1 text-red-400 text-xs">
+                            <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                 <AlertCircle className="h-3 w-3" />
                                 {errors.mileage}
                             </div>

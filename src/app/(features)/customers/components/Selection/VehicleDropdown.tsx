@@ -75,19 +75,19 @@ export const VehicleDropdown: React.FC<VehicleDropdownProps> = ({
             onValueChange={handleVehicleChange}
             disabled={isDisabled}
         >
-            <SelectTrigger className={`bg-[#292929] text-white text-sm border-[#626262] focus:ring-gray-500 ${className}`}>
+            <SelectTrigger className={`bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 focus:border-red-600 ${className}`}>
                 <SelectValue placeholder={getPlaceholder()} />
             </SelectTrigger>
-            <SelectContent className="bg-[#292929] text-white border-[#626262]">
+            <SelectContent className="bg-popover text-popover-foreground border-border">
                 {!isLoading && customerId && customerId !== "new" && (
                     <>
-                        <SelectItem value="new">+ Add New Vehicle</SelectItem>
+                        <SelectItem value="new" className="hover:bg-muted">+ Add New Vehicle</SelectItem>
                         {vehicleOptions.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>
+                            <SelectItem key={option.id} value={option.id} className="hover:bg-muted">
                                 <div className="flex flex-col">
-                                    <span>{option.displayName}</span>
+                                    <span className="text-foreground">{option.displayName}</span>
                                     {option.color && (
-                                        <span className="text-gray-400 text-xs">{option.color}</span>
+                                        <span className="text-muted-foreground text-xs">{option.color}</span>
                                     )}
                                 </div>
                             </SelectItem>
