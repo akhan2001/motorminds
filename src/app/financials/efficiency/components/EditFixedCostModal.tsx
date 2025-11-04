@@ -90,87 +90,87 @@ export default function EditFixedCostModal({
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-50">
+            <DialogContent className="bg-slate-50 dark:bg-card border-border text-foreground">
                 <DialogHeader>
-                    <DialogTitle>Edit Fixed Cost</DialogTitle>
+                    <DialogTitle className="text-foreground">Edit Fixed Cost</DialogTitle>
                     <DialogDescription className="sr-only">A dialog to edit an existing recurring fixed cost in your financials.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div>
-                        <Label htmlFor="costName">Cost Name</Label>
+                        <Label htmlFor="costName" className="text-foreground">Cost Name</Label>
                         <Input
                             id="costName"
                             value={costName}
                             onChange={(e) => setCostName(e.target.value)}
-                            className="bg-zinc-800 border-zinc-700"
+                            className="bg-white dark:bg-background border-border text-foreground"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="amount">Amount ($)</Label>
+                            <Label htmlFor="amount" className="text-foreground">Amount ($)</Label>
                             <Input
                                 id="amount"
                                 type="number"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="bg-zinc-800 border-zinc-700"
+                                className="bg-white dark:bg-background border-border text-foreground"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="frequency">Frequency</Label>
+                            <Label htmlFor="frequency" className="text-foreground">Frequency</Label>
                             <Select value={frequency} onValueChange={setFrequency}>
-                                <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                                <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                    <SelectItem value="daily" className="hover:bg-zinc-800">Daily</SelectItem>
-                                    <SelectItem value="weekly" className="hover:bg-zinc-800">Weekly</SelectItem>
-                                    <SelectItem value="monthly" className="hover:bg-zinc-800">Monthly</SelectItem>
-                                    <SelectItem value="quarterly" className="hover:bg-zinc-800">Quarterly</SelectItem>
-                                    <SelectItem value="yearly" className="hover:bg-zinc-800">Yearly</SelectItem>
+                                <SelectContent className="bg-popover text-popover-foreground border-border">
+                                    <SelectItem value="daily" className="hover:bg-muted">Daily</SelectItem>
+                                    <SelectItem value="weekly" className="hover:bg-muted">Weekly</SelectItem>
+                                    <SelectItem value="monthly" className="hover:bg-muted">Monthly</SelectItem>
+                                    <SelectItem value="quarterly" className="hover:bg-muted">Quarterly</SelectItem>
+                                    <SelectItem value="yearly" className="hover:bg-muted">Yearly</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="category">Category</Label>
+                            <Label htmlFor="category" className="text-foreground">Category</Label>
                             <Select value={category} onValueChange={setCategory}>
-                                <SelectTrigger className="bg-zinc-800 border-zinc-700">
+                                <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                                    <SelectItem value="Rent/Mortgage" className="hover:bg-zinc-800">Rent/Mortgage</SelectItem>
-                                    <SelectItem value="Utilities" className="hover:bg-zinc-800">Utilities</SelectItem>
-                                    <SelectItem value="Software" className="hover:bg-zinc-800">Software</SelectItem>
-                                    <SelectItem value="Insurance" className="hover:bg-zinc-800">Insurance</SelectItem>
-                                    <SelectItem value="Salaries" className="hover:bg-zinc-800">Salaries</SelectItem>
-                                    <SelectItem value="Marketing" className="hover:bg-zinc-800">Marketing</SelectItem>
-                                    <SelectItem value="Other" className="hover:bg-zinc-800">Other</SelectItem>
+                                <SelectContent className="bg-popover text-popover-foreground border-border">
+                                    <SelectItem value="Rent/Mortgage" className="hover:bg-muted">Rent/Mortgage</SelectItem>
+                                    <SelectItem value="Utilities" className="hover:bg-muted">Utilities</SelectItem>
+                                    <SelectItem value="Software" className="hover:bg-muted">Software</SelectItem>
+                                    <SelectItem value="Insurance" className="hover:bg-muted">Insurance</SelectItem>
+                                    <SelectItem value="Salaries" className="hover:bg-muted">Salaries</SelectItem>
+                                    <SelectItem value="Marketing" className="hover:bg-muted">Marketing</SelectItem>
+                                    <SelectItem value="Other" className="hover:bg-muted">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div>
-                            <Label htmlFor="startDate">Start Date</Label>
+                            <Label htmlFor="startDate" className="text-foreground">Start Date</Label>
                             <Input
                                 id="startDate"
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="bg-zinc-800 border-zinc-700"
+                                className="bg-white dark:bg-background border-border text-foreground"
                             />
                         </div>
                     </div>
-                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" onClick={() => setIsOpen(false)} className="border-border text-muted-foreground hover:bg-muted hover:text-foreground">
                         Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-red-600 hover:bg-red-700 text-white"
                     >
                         {loading ? "Saving..." : "Save Changes"}
                     </Button>

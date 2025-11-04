@@ -16,12 +16,12 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
-    const { 
-        unlock, 
-        isLocked, 
-        lockoutTimeRemaining, 
-        attemptCount 
+
+    const {
+        unlock,
+        isLocked,
+        lockoutTimeRemaining,
+        attemptCount
     } = useFinancialsAuth();
 
     // Clear error when password changes
@@ -38,7 +38,7 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
 
         try {
             const result = await unlock(password);
-            
+
             if (result.success) {
                 setPassword('');
                 onClose?.();
@@ -72,18 +72,18 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
     return (
         <div className="fixed top-20 left-0 right-0 bottom-0 z-40 flex items-center justify-center">
             {/* Backdrop - only covers area below navbar */}
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-xs" />
-            
+            <div className="absolute inset-0 bg-black/70 dark:bg-black/70 backdrop-blur-xs" />
+
             {/* Modal */}
-            <div className="relative bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg p-8 w-full max-w-md mx-4 shadow-2xl">
+            <div className="relative bg-slate-50 dark:bg-card border border-border rounded-lg p-8 w-full max-w-md mx-4 shadow-2xl">
                 <div className="text-center mb-6">
-                    <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-                        <Shield className="w-8 h-8 text-red-400" />
+                    <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                        <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className="text-2xl font-bold text-foreground mb-2">
                         Financial Data Access
                     </h2>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground text-sm">
                         This section requires additional authentication for security.
                     </p>
                 </div>
@@ -91,18 +91,18 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
                 {/* Lockout Screen */}
                 {isLocked && (
                     <div className="text-center py-6">
-                        <Timer className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-white mb-2">
+                        <Timer className="w-12 h-12 text-yellow-600 dark:text-yellow-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-foreground mb-2">
                             Temporarily Locked
                         </h3>
-                        <p className="text-gray-400 mb-4">
+                        <p className="text-muted-foreground mb-4">
                             Too many failed attempts. Please wait before trying again.
                         </p>
-                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                            <div className="text-2xl font-mono text-yellow-400 mb-1">
+                        <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-300 dark:border-yellow-500/20 rounded-lg p-4">
+                            <div className="text-2xl font-mono text-yellow-600 dark:text-yellow-400 mb-1">
                                 {formatTime(lockoutTimeRemaining)}
                             </div>
-                            <div className="text-sm text-yellow-300">
+                            <div className="text-sm text-yellow-700 dark:text-yellow-300">
                                 remaining
                             </div>
                         </div>
@@ -114,15 +114,15 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Error Message */}
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                <p className="text-red-400 text-sm">{error}</p>
+                            <div className="bg-red-50 dark:bg-red-500/10 border border-red-300 dark:border-red-500/20 rounded-lg p-3">
+                                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
                             </div>
                         )}
 
                         {/* Attempt Warning */}
                         {attemptCount > 0 && (
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                                <p className="text-yellow-400 text-sm">
+                            <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-300 dark:border-yellow-500/20 rounded-lg p-3">
+                                <p className="text-yellow-700 dark:text-yellow-400 text-sm">
                                     {getAttemptMessage()}
                                 </p>
                             </div>
@@ -130,11 +130,11 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
 
                         {/* Password Input */}
                         <div>
-                            <Label htmlFor="financial-password" className="text-gray-300 mb-2 block">
+                            <Label htmlFor="financial-password" className="text-foreground mb-2 block">
                                 Financial Access Password
                             </Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
                                     id="financial-password"
                                     type={showPassword ? 'text' : 'password'}
@@ -143,13 +143,13 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
                                     placeholder="Enter your financial password"
                                     required
                                     disabled={isLoading}
-                                    className="pl-10 pr-12 bg-[#222222] border-[#333333] text-white placeholder-gray-500 focus:border-red-500 focus:ring-red-500"
+                                    className="pl-10 pr-12 bg-white dark:bg-background border-border text-foreground placeholder-muted-foreground focus:border-red-600 focus:ring-red-600"
                                     autoFocus
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     disabled={isLoading}
                                 >
                                     {showPassword ? (
@@ -180,8 +180,8 @@ export function FinancialsPasswordModal({ onClose }: FinancialsPasswordModalProp
                 )}
 
                 {/* Help Text */}
-                <div className="mt-6 pt-6 border-t border-[#333333]">
-                    <p className="text-xs text-gray-500 text-center">
+                <div className="mt-6 pt-6 border-t border-border">
+                    <p className="text-xs text-muted-foreground text-center">
                         Contact your administrator if you've forgotten your financial password.
                     </p>
                 </div>

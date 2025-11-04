@@ -18,14 +18,14 @@ interface SummaryCardProps {
 
 const SummaryCard = ({ title, value, icon, onClick, className }: SummaryCardProps) => (
     <div 
-        className={`bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 ${onClick ? 'cursor-pointer hover:bg-[#1a1a1a]' : ''}`}
+        className={`bg-slate-50 dark:bg-card border border-border rounded-xl p-6 ${onClick ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-muted hover:border-red-600 dark:hover:border-red-500 transition-colors' : ''}`}
         onClick={onClick}
     >
         <div className="flex items-center justify-between">
-            <h3 className="text-md font-medium text-gray-400">{title}</h3>
+            <h3 className="text-md font-medium text-muted-foreground">{title}</h3>
             {icon}
         </div>
-        <p className={`text-3xl font-bold mt-2 ${className}`}>
+        <p className={`text-3xl font-bold mt-2 ${className || 'text-foreground'}`}>
             {value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
         </p>
     </div>
@@ -47,26 +47,26 @@ export default function SummaryCards({ data, onCardClick }: { data: EfficiencyDa
             <SummaryCard 
                 title="Total Revenue"
                 value={data.totalRevenue}
-                icon={<DollarSign className="h-5 w-5 text-gray-500" />}
+                icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
                 onClick={() => onCardClick('revenue')}
             />
             <SummaryCard 
                 title="Cost of Goods Sold"
                 value={data.costBreakdown?.cogs || 0}
-                icon={<TrendingDown className="h-5 w-5 text-gray-500" />}
+                icon={<TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />}
                 onClick={() => onCardClick('cogs')}
             />
             <SummaryCard 
                 title="Operating Expenses"
                 value={operatingExpenses}
-                icon={<TrendingDown className="h-5 w-5 text-gray-500" />}
+                icon={<TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />}
                 onClick={() => onCardClick('costs')}
             />
             <SummaryCard 
                 title="Net Profit"
                 value={data.netProfit}
-                icon={data.netProfit >= 0 ? <TrendingUp className="h-5 w-5 text-green-500" /> : <TrendingDown className="h-5 w-5 text-red-500" />}
-                className={data.netProfit >= 0 ? 'text-green-500' : 'text-red-500'}
+                icon={data.netProfit >= 0 ? <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" /> : <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />}
+                className={data.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}
             />
         </div>
     );

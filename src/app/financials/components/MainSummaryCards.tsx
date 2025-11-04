@@ -47,15 +47,15 @@ function SummaryCard({
   className?: string;
 }) {
   return (
-    <div className={`relative bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 hover:border-[#333] transition-colors ${className}`}>
+    <div className={`relative bg-white dark:bg-card border border-border rounded-xl p-6 hover:border-red-600 dark:hover:border-red-500 transition-colors ${className}`}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 text-gray-400" />
-            <p className="text-sm text-gray-400 font-medium">{title}</p>
+            <Icon className="w-4 h-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground font-medium">{title}</p>
           </div>
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-gray-500">{subtitle}</p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
       </div>
       <Sparkline data={sparklineData} positive={positive} />

@@ -47,19 +47,19 @@ export function BreakdownDialog({ open, onOpenChange, title, data, columns }: Br
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl bg-[#131313] border-zinc-800 text-white shadow-lg">
+            <DialogContent className="max-w-4xl bg-slate-50 dark:bg-card border-border text-foreground shadow-lg">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
-                    <DialogDescription className="text-zinc-400">
+                    <DialogTitle className="text-xl font-semibold text-foreground">{title}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
                         A detailed breakdown of the items contributing to this metric.
                     </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="h-[450px] border border-zinc-800 rounded-lg">
+                <ScrollArea className="h-[450px] border border-border rounded-lg">
                     <Table>
                         <TableHeader>
-                            <TableRow className="border-b-zinc-800">
+                            <TableRow className="border-b-border">
                                 {columns.map((col) => (
-                                    <TableHead key={col.key} className="bg-[#1a1a1a] text-zinc-300 font-semibold sticky top-0 z-10">
+                                    <TableHead key={col.key} className="bg-muted/50 text-foreground font-semibold sticky top-0 z-10">
                                         {col.header}
                                     </TableHead>
                                 ))}
@@ -70,11 +70,11 @@ export function BreakdownDialog({ open, onOpenChange, title, data, columns }: Br
                                 data.map((item, index) => (
                                     <TableRow
                                         key={index}
-                                        className="border-b-zinc-800 hover:bg-zinc-800 transition-colors"
+                                        className="border-b-border hover:bg-muted/50 transition-colors cursor-pointer"
                                         onClick={() => handleRowClick(item)}
                                     >
                                         {columns.map((col) => (
-                                            <TableCell key={col.key} className="py-3">
+                                            <TableCell key={col.key} className="py-3 text-foreground">
                                                 {col.render ? col.render(item[col.key], item) : item[col.key]}
                                             </TableCell>
                                         ))}
@@ -82,7 +82,7 @@ export function BreakdownDialog({ open, onOpenChange, title, data, columns }: Br
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={columns.length} className="text-center text-zinc-500 py-8">
+                                    <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-8">
                                         No breakdown data available.
                                     </TableCell>
                                 </TableRow>
@@ -91,7 +91,7 @@ export function BreakdownDialog({ open, onOpenChange, title, data, columns }: Br
                     </Table>
                 </ScrollArea>
                 <DialogFooter className="mt-4">
-                    <Button variant="outline" className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700" onClick={() => onOpenChange(false)}>Close</Button>
+                    <Button variant="outline" className="border-border text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => onOpenChange(false)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -24,43 +24,43 @@ const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', { style
 export default function EmployeeCostTable({ employees, onEdit, onDeactivate }: EmployeeCostTableProps) {
     if (employees.length === 0) {
         return (
-            <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-10 text-center">
-                <p className="text-gray-400">No active employees found.</p>
+            <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-10 text-center">
+                <p className="text-muted-foreground">No active employees found.</p>
             </div>
         );
     }
     
     return (
-        <div className="bg-[#1a1a1a] rounded-xl p-4">
-            <h3 className="text-lg font-semibold text-white mb-4">Employee Breakdown</h3>
+        <div className="bg-slate-50 dark:bg-card rounded-xl p-4 border border-border">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Employee Breakdown</h3>
             <Table>
                 <TableHeader>
-                    <TableRow className="border-b border-gray-700 hover:bg-transparent">
-                        <TableHead className="text-gray-400">Employee</TableHead>
-                        <TableHead className="text-gray-400">Role</TableHead>
-                        <TableHead className="text-gray-400">Pay</TableHead>
-                        <TableHead className="text-gray-400 text-right">Actions</TableHead>
+                    <TableRow className="border-b border-border hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">Employee</TableHead>
+                        <TableHead className="text-muted-foreground">Role</TableHead>
+                        <TableHead className="text-muted-foreground">Pay</TableHead>
+                        <TableHead className="text-muted-foreground text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {employees.map((emp) => (
-                        <TableRow key={emp.id} className="border-b border-gray-800 hover:bg-[#222]">
-                            <TableCell className="font-medium text-white">{emp.full_name}</TableCell>
-                            <TableCell className="text-gray-300">{emp.role}</TableCell>
-                            <TableCell className="text-gray-300">{`${formatCurrency(emp.salary_or_wage)} / ${emp.pay_frequency}`}</TableCell>
+                        <TableRow key={emp.id} className="border-b border-border hover:bg-muted/50">
+                            <TableCell className="font-medium text-foreground">{emp.full_name}</TableCell>
+                            <TableCell className="text-muted-foreground">{emp.role}</TableCell>
+                            <TableCell className="text-muted-foreground">{`${formatCurrency(emp.salary_or_wage)} / ${emp.pay_frequency}`}</TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0">
                                             <span className="sr-only">Open menu</span>
-                                            <MoreHorizontal className="h-4 w-4" />
+                                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="bg-[#131313] border-[#333] text-white">
+                                    <DropdownMenuContent align="end" className="bg-popover text-popover-foreground border-border">
                                         <DropdownMenuItem onClick={() => onEdit(emp)}>
                                             Edit
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onDeactivate(emp.id)} className="text-red-500">
+                                        <DropdownMenuItem onClick={() => onDeactivate(emp.id)} className="text-red-600 dark:text-red-400">
                                             Deactivate
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>

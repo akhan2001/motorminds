@@ -20,10 +20,10 @@ export default function SummaryCard({ title, value, isCurrency = false, unit }: 
     }
 
     return (
-        <div className="relative bg-[#0A0A0A] border border-[#1a1a1a] rounded-xl p-6 hover:border-[#333] transition-colors">
+        <div className="relative bg-slate-50 dark:bg-card border border-border rounded-xl p-6 hover:border-red-600 dark:hover:border-red-500 transition-colors">
             <div className="space-y-2">
-                <p className="text-sm text-gray-400 font-medium">{title}</p>
-                <p className="text-2xl font-bold text-white">{formattedValue}</p>
+                <p className="text-sm text-muted-foreground font-medium">{title}</p>
+                <p className="text-2xl font-bold text-foreground">{formattedValue}</p>
             </div>
         </div>
     );

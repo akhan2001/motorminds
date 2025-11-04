@@ -67,10 +67,10 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     // Loading state
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-gray-400">Loading financial section...</p>
+                    <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading financial section...</p>
                 </div>
             </div>
         );
@@ -79,7 +79,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     // First-time setup
     if (needsPasswordSetup) {
         return (
-            <div className="min-h-screen bg-black">
+            <div className="min-h-screen bg-slate-50 dark:bg-background">
                 {/* Navigation */}
                 <Nav />
                 
@@ -97,7 +97,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     // User is locked out or needs to authenticate
     if (!isUnlocked) {
         return (
-            <div className="min-h-screen bg-black">
+            <div className="min-h-screen bg-slate-50 dark:bg-background">
                 {/* Navigation - NOT blurred so users can navigate away */}
                 <div className="relative z-50 pointer-events-auto">
                     <Nav />
@@ -106,12 +106,12 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
                 {/* Blurred background content - completely separate from navbar */}
                 <div className="relative">
                     <div className="filter blur-[2px] pointer-events-none">
-                        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black p-8">
+                        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-50 dark:from-gray-900 dark:to-black p-8">
                             <div className="max-w-7xl mx-auto">
-                                <h1 className="text-3xl font-bold text-white mb-8">Financial Dashboard</h1>
+                                <h1 className="text-3xl font-bold text-foreground mb-8">Financial Dashboard</h1>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                                        <div key={i} className="bg-zinc-800 rounded-lg p-6 h-40" />
+                                        <div key={i} className="bg-slate-50 dark:bg-zinc-800 rounded-lg p-6 h-40" />
                                     ))}
                                 </div>
                             </div>
@@ -127,12 +127,12 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
 
     // User is authenticated - show content
     return (
-        <div className="min-h-screen bg-black">
+        <div className="min-h-screen bg-slate-50 dark:bg-background">
             {/* Session indicator */}
-            <div className="bg-green-600/10 border-b border-green-600/20 p-2">
+            <div className="bg-green-50 dark:bg-green-600/10 border-b border-green-300 dark:border-green-600/20 p-2">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center text-green-400 text-sm">
-                        <div className="w-2 h-2 bg-green-400 rounded-full mr-2" />
+                    <div className="flex items-center text-green-600 dark:text-green-400 text-sm">
+                        <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full mr-2" />
                         Financial session active
                     </div>
                     <button
@@ -140,7 +140,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
                             // This will be handled by the context
                             window.location.reload();
                         }}
-                        className="text-green-400 hover:text-green-300 text-sm underline"
+                        className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm underline"
                     >
                         Lock section
                     </button>

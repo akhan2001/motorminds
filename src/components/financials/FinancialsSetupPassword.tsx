@@ -66,15 +66,15 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
 
     if (success) {
         return (
-            <div className="bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg p-8 w-full max-w-md">
+            <div className="bg-slate-50 dark:bg-card border border-border rounded-lg p-8 w-full max-w-md">
                 <div className="text-center">
-                    <div className="mx-auto w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
-                        <Check className="w-8 h-8 text-green-400" />
+                    <div className="mx-auto w-16 h-16 bg-green-50 dark:bg-green-500/10 rounded-full flex items-center justify-center mb-4">
+                        <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
                         Password Set Successfully
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-muted-foreground text-sm">
                         Your financial data is now protected with an additional layer of security.
                     </p>
                 </div>
@@ -83,15 +83,15 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
     }
 
     return (
-        <div className="bg-[#0d0d0d] border border-[#1f1f1f] rounded-lg p-8 w-full max-w-md">
+        <div className="bg-slate-50 dark:bg-card border border-border rounded-lg p-8 w-full max-w-md">
             <div className="text-center mb-6">
-                <div className="mx-auto w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
-                    <Shield className="w-8 h-8 text-blue-400" />
+                <div className="mx-auto w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                    <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                     Set Financial Password
                 </h2>
-                <p className="text-gray-400 text-sm">
+                <p className="text-muted-foreground text-sm">
                     Add an extra layer of security to your financial data.
                 </p>
             </div>
@@ -99,14 +99,14 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Error Message */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                        <p className="text-red-400 text-sm">{error}</p>
+                    <div className="bg-red-50 dark:bg-red-500/10 border border-red-300 dark:border-red-500/20 rounded-lg p-3">
+                        <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
                     </div>
                 )}
 
                 {/* Password Input */}
                 <div>
-                    <Label htmlFor="new-financial-password" className="text-gray-300 mb-2 block">
+                    <Label htmlFor="new-financial-password" className="text-foreground mb-2 block">
                         New Financial Password
                     </Label>
                     <div className="relative">
@@ -118,12 +118,12 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                             placeholder="Enter a strong password"
                             required
                             disabled={isLoading}
-                            className="pr-12 bg-[#222222] border-[#333333] text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                            className="pr-12 bg-white dark:bg-background border-border text-foreground placeholder-muted-foreground focus:border-red-600 focus:ring-red-600"
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             disabled={isLoading}
                         >
                             {showPassword ? (
@@ -138,18 +138,18 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                 {/* Password Requirements */}
                 {password && (
                     <div className="space-y-2">
-                        <Label className="text-gray-300 text-sm">Password Requirements:</Label>
+                        <Label className="text-foreground text-sm">Password Requirements:</Label>
                         <div className="space-y-1">
                             {passwordRequirements.map((req, index) => {
                                 const isValid = req.test(password);
                                 return (
                                     <div key={index} className="flex items-center text-sm">
                                         {isValid ? (
-                                            <Check className="w-4 h-4 text-green-400 mr-2" />
+                                            <Check className="w-4 h-4 text-green-600 dark:text-green-400 mr-2" />
                                         ) : (
-                                            <X className="w-4 h-4 text-red-400 mr-2" />
+                                            <X className="w-4 h-4 text-red-600 dark:text-red-400 mr-2" />
                                         )}
-                                        <span className={isValid ? 'text-green-400' : 'text-gray-400'}>
+                                        <span className={isValid ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
                                             {req.label}
                                         </span>
                                     </div>
@@ -162,7 +162,7 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                 {/* Confirm Password Input */}
                 {isPasswordValid && (
                     <div>
-                        <Label htmlFor="confirm-financial-password" className="text-gray-300 mb-2 block">
+                        <Label htmlFor="confirm-financial-password" className="text-foreground mb-2 block">
                             Confirm Password
                         </Label>
                         <div className="relative">
@@ -174,12 +174,12 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                                 placeholder="Confirm your password"
                                 required
                                 disabled={isLoading}
-                                className="pr-12 bg-[#222222] border-[#333333] text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                                className="pr-12 bg-white dark:bg-background border-border text-foreground placeholder-muted-foreground focus:border-red-600 focus:ring-red-600"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 disabled={isLoading}
                             >
                                 {showConfirmPassword ? (
@@ -190,7 +190,7 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                             </button>
                         </div>
                         {confirmPassword && !passwordsMatch && (
-                            <p className="text-red-400 text-sm mt-1">Passwords do not match</p>
+                            <p className="text-red-600 dark:text-red-400 text-sm mt-1">Passwords do not match</p>
                         )}
                     </div>
                 )}
@@ -203,7 +203,7 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                             variant="outline"
                             onClick={onCancel}
                             disabled={isLoading}
-                            className="flex-1 border-[#333333] text-gray-300 hover:bg-[#222222]"
+                            className="flex-1 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
                             Cancel
                         </Button>
@@ -211,7 +211,7 @@ export function FinancialsSetupPassword({ onComplete, onCancel }: FinancialsSetu
                     <Button
                         type="submit"
                         disabled={!canSubmit}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? (
                             <div className="flex items-center justify-center">

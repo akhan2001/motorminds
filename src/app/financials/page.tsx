@@ -56,7 +56,7 @@ export default function Financials() {
             }
             const start = startDate.toISOString().split('T')[0];
             const end = endDate.toISOString().split('T')[0];
-            
+
             try {
                 const [payrollRes, efficiencyRes] = await Promise.all([
                     fetch(`/api/financials/payroll?shop_id=${shopId}`),
@@ -90,14 +90,14 @@ export default function Financials() {
 
         fetchFinancials();
     }, [shopId, timeRange]);
-    
+
     if (isLoading) {
         return (
-            <div className="flex flex-col min-h-screen bg-black text-white">
+            <div className="flex flex-col min-h-screen bg-white dark:bg-background text-foreground">
                 <Nav />
                 <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-                    <nav className="flex items-center space-x-2 text-sm text-gray-400 mb-6">
-                        <span className="font-semibold text-white">Financials Dashboard</span>
+                    <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
+                        <span className="font-semibold text-foreground">Financials Dashboard</span>
                     </nav>
                     <LoadingSkeleton />
                 </main>
@@ -106,28 +106,17 @@ export default function Financials() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-white dark:bg-background text-foreground">
             <Nav />
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-                <nav className="flex items-center space-x-2 text-sm text-gray-400 mb-6">
-                    <span className="font-semibold text-white">Financials Dashboard</span>
-                </nav>
-				
-				<div className="flex items-center justify-between mb-8">
-					<div>
-						<h1 className="text-3xl font-bold text-white mb-2">Financial Dashboard</h1>
-						<p className="text-gray-400">Complete overview of your shop's financial performance</p>
-					</div>
-				</div>
-
-                {/* <FinancialsHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} /> */}
+                <FinancialsHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
 
                 <MainSummaryCards
                     cashflowData={cashflowData}
                     payrollData={payrollData}
                     trendData={trendData}
                 />
-                
+
                 <QuickActions />
 
             </main>

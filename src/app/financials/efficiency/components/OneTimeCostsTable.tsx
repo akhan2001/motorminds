@@ -57,7 +57,7 @@ const CostActions = ({ cost, onCostUpdated, onCostDeleted }: { cost: any, onCost
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#131313] border-[#222] text-white">
+            <DropdownMenuContent align="end" className="bg-popover text-popover-foreground border-border">
                 <EditOneTimeCostModal cost={cost} onCostUpdated={onCostUpdated}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         Edit
@@ -72,7 +72,7 @@ const CostActions = ({ cost, onCostUpdated, onCostDeleted }: { cost: any, onCost
                     trigger={
                         <DropdownMenuItem
                             onSelect={(e) => e.preventDefault()}
-                            className="text-red-500"
+                            className="text-red-600 dark:text-red-400"
                         >
                             Delete
                         </DropdownMenuItem>
@@ -86,27 +86,27 @@ const CostActions = ({ cost, onCostUpdated, onCostDeleted }: { cost: any, onCost
 
 export default function OneTimeCostsTable({ costs, onCostUpdated, onCostDeleted }: OneTimeCostsTableProps) {
     if (!costs || costs.length === 0) {
-        return <p className="text-center text-gray-400 py-4">No one-time costs have been added yet.</p>;
+        return <p className="text-center text-muted-foreground py-4">No one-time costs have been added yet.</p>;
     }
     return (
         <div className="overflow-x-auto max-h-96">
             <Table>
-                <TableHeader className="sticky top-0 z-10 bg-[#0A0A0A]">
+                <TableHeader className="sticky top-0 z-10 bg-muted/50">
                     <TableRow>
-                        <TableHead>Cost Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="text-foreground">Cost Name</TableHead>
+                        <TableHead className="text-foreground">Category</TableHead>
+                        <TableHead className="text-right text-foreground">Amount</TableHead>
+                        <TableHead className="text-foreground">Date</TableHead>
+                        <TableHead className="text-foreground">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {costs.map((cost, idx) => (
-                        <TableRow key={cost.id} className={idx % 2 === 0 ? "bg-[#0F0F0F]" : "bg-[#131313]"}>
-                            <TableCell>{cost.cost_name}</TableCell>
-                            <TableCell>{cost.category}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(cost.amount)}</TableCell>
-                            <TableCell>{formatDate(cost.cost_date)}</TableCell>
+                        <TableRow key={cost.id} className={idx % 2 === 0 ? "bg-white dark:bg-background" : "bg-slate-50 dark:bg-muted/30"}>
+                            <TableCell className="text-foreground">{cost.cost_name}</TableCell>
+                            <TableCell className="text-foreground">{cost.category}</TableCell>
+                            <TableCell className="text-right text-foreground">{formatCurrency(cost.amount)}</TableCell>
+                            <TableCell className="text-foreground">{formatDate(cost.cost_date)}</TableCell>
                             <TableCell>
                                 <CostActions cost={cost} onCostUpdated={onCostUpdated} onCostDeleted={onCostDeleted} />
                             </TableCell>
