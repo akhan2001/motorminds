@@ -40,19 +40,11 @@ export const UpsellSuggestions: React.FC<UpsellSuggestionsProps> = ({
     const isSuggestionAlreadyAdded = React.useCallback((suggestion: UpsellSuggestion) => {
         if (!workOrderId || !existingItems.length) return false
         
-        try {
-            // Convert suggestion to work order item format to compare
-            const convertedItem = UpsellToWorkItemService.convertUpsellToWorkOrderItem(suggestion, workOrderId)
-            
-            // Check if any existing item matches this suggestion
-            return existingItems.some(item => 
-                item.description.toLowerCase().trim() === convertedItem.description.toLowerCase().trim() &&
-                Math.abs(item.unit_price - convertedItem.unit_price) < 0.01 // Allow small floating point differences
-            )
-        } catch (error) {
-            console.error('Error checking if suggestion already added:', error)
-            return false
-        }
+        // Simple check based on title/description match
+        // More accurate than trying to calculate exact pricing async
+        return existingItems.some(item => 
+            item.description.toLowerCase().trim() === suggestion.title.toLowerCase().trim()
+        )
     }, [workOrderId, existingItems])
 
     // Initialize added items based on existing work order items

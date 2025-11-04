@@ -27,6 +27,7 @@ export interface ShopInfo {
     youtube_url: string
     hst_number: string
     business_number: string
+    default_hourly_rate?: number  // Add hourly rate field
     created_at: string
     updated_at: string
 }

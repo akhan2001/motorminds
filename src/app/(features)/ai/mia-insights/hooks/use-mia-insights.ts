@@ -40,7 +40,8 @@ export const useGenerateMiaInsights = () => {
             })
 
             if (!response.ok) {
-                throw new Error('Failed to generate insights')
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.error || `Failed to generate insights: ${response.status}`)
             }
 
             return response.json()
