@@ -1,7 +1,7 @@
 "use client"
 
 import { createClient } from "@/utils/supabase/client"
-import { Settings, ChevronDown, MessageCircle, Sparkles } from "lucide-react"
+import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
@@ -237,7 +237,7 @@ export function Nav() {
 								} hover:text-foreground transition-colors`} 
 								onClick={() => router.push("/messages")}
 							>
-								<MessageCircle className="inline-block w-5 h-5" />
+								<MessageCircleMore className="inline-block w-5 h-5" />
 							</button>
 							{/* Feedback Dropdown */}
 							<FeedbackDropdown />

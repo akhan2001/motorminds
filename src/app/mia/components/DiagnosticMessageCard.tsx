@@ -42,7 +42,7 @@ export default function DiagnosticMessageCard({ message, isLoading }: Diagnostic
     if (message.role === 'user') {
         return (
             <div className="flex justify-end mb-4">
-                <Card className="max-w-2xl bg-blue-600 border-blue-500">
+                <Card className="max-w-2xl bg-red-600 border-red-500">
                     <CardContent className="p-4">
                         <p className="text-white">{message.content}</p>
                     </CardContent>
@@ -63,13 +63,13 @@ export default function DiagnosticMessageCard({ message, isLoading }: Diagnostic
         <div className="flex justify-start mb-6">
             <div className="max-w-4xl w-full space-y-4">
                 {/* Main Response Card */}
-                <Card className="bg-[#111111] border-[#2a2a2a]">
+                <Card className="bg-slate-50 dark:bg-card border-border">
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <Wrench className="h-5 w-5 text-blue-400" />
+                        <CardTitle className="text-foreground flex items-center gap-2">
+                            <Wrench className="h-5 w-5 text-red-600" />
                             MIA Diagnostic Analysis
                             {message.metadata?.diagnosticMode && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-border">
                                     {message.metadata.diagnosticMode}
                                 </Badge>
                             )}
@@ -88,10 +88,10 @@ export default function DiagnosticMessageCard({ message, isLoading }: Diagnostic
                     return citation.url && 
                         (citation.url.startsWith('http://') || citation.url.startsWith('https://'))
                 }).length > 0 && (
-                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                    <Card className="bg-slate-50 dark:bg-card border-border">
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-white flex items-center gap-2 text-sm">
-                                <ExternalLink className="h-4 w-4 text-green-400" />
+                            <CardTitle className="text-foreground flex items-center gap-2 text-sm">
+                                <ExternalLink className="h-4 w-4 text-green-600 dark:text-green-400" />
                                 Sources & References
                             </CardTitle>
                         </CardHeader>
@@ -108,7 +108,7 @@ export default function DiagnosticMessageCard({ message, isLoading }: Diagnostic
                                             key={index}
                                             variant="outline"
                                             size="sm"
-                                            className="justify-start h-auto p-2 border-[#2a2a2a] text-gray-300 hover:text-white"
+                                            className="justify-start h-auto p-2 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                                             onClick={() => window.open(citation.url, '_blank')}
                                         >
                                             <ExternalLink className="h-3 w-3 mr-2 flex-shrink-0" />
@@ -128,10 +128,10 @@ export default function DiagnosticMessageCard({ message, isLoading }: Diagnostic
                     return result.url && 
                         (result.url.startsWith('http://') || result.url.startsWith('https://'))
                 }).length > 0 && (
-                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                    <Card className="bg-slate-50 dark:bg-card border-border">
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-white flex items-center gap-2 text-sm">
-                                <Info className="h-4 w-4 text-blue-400" />
+                            <CardTitle className="text-foreground flex items-center gap-2 text-sm">
+                                <Info className="h-4 w-4 text-red-600 dark:text-blue-400" />
                                 Additional Resources
                             </CardTitle>
                         </CardHeader>
@@ -147,16 +147,16 @@ export default function DiagnosticMessageCard({ message, isLoading }: Diagnostic
                                     .map((result, index) => (
                                         <div 
                                             key={index}
-                                            className="p-3 border border-[#2a2a2a] rounded-lg hover:border-[#3a3a3a] transition-colors cursor-pointer"
+                                            className="p-3 border border-border rounded-lg hover:border-red-300 dark:hover:border-red-500 transition-colors cursor-pointer bg-white dark:bg-background"
                                             onClick={() => window.open(result.url, '_blank')}
                                         >
                                             <div className="flex items-start gap-2">
-                                                <ExternalLink className="h-3 w-3 text-gray-400 mt-1 flex-shrink-0" />
+                                                <ExternalLink className="h-3 w-3 text-muted-foreground mt-1 flex-shrink-0" />
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-medium text-white truncate">
+                                                    <h4 className="text-sm font-medium text-foreground truncate">
                                                         {result.title}
                                                     </h4>
-                                                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                                         {result.snippet}
                                                     </p>
                                                 </div>
@@ -193,23 +193,23 @@ function DiagnosticSection({ section }: { section: DiagnosticSection }) {
 
     const getBorderColor = (type: string) => {
         switch (type) {
-            case 'analysis': return 'border-l-green-400'
-            case 'causes': return 'border-l-yellow-400'
-            case 'actions': return 'border-l-blue-400'
-            case 'cost': return 'border-l-green-400'
-            case 'safety': return 'border-l-red-400'
-            case 'resources': return 'border-l-purple-400'
-            default: return 'border-l-gray-400'
+            case 'analysis': return 'border-l-green-600 dark:border-l-green-400'
+            case 'causes': return 'border-l-yellow-600 dark:border-l-yellow-400'
+            case 'actions': return 'border-l-red-600 dark:border-l-blue-400'
+            case 'cost': return 'border-l-green-600 dark:border-l-green-400'
+            case 'safety': return 'border-l-red-600 dark:border-l-red-400'
+            case 'resources': return 'border-l-purple-600 dark:border-l-purple-400'
+            default: return 'border-l-gray-600 dark:border-l-gray-400'
         }
     }
 
     return (
-        <div className={`border-l-2 ${getBorderColor(section.type)} pl-4 py-2`}>
+        <div className={`border-l-4 ${getBorderColor(section.type)} pl-4 py-2`}>
             <div className="flex items-center gap-2 mb-2">
                 {getIcon(section.type)}
-                <h3 className="text-white font-medium text-sm">{section.title}</h3>
+                <h3 className="text-foreground font-medium text-sm">{section.title}</h3>
             </div>
-            <div className="text-gray-300 text-sm prose prose-sm prose-invert max-w-none">
+            <div className="text-muted-foreground text-sm prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {section.content}
                 </ReactMarkdown>

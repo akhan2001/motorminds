@@ -241,12 +241,12 @@ export default function MiaPage() {
     // Show loading screen while session is initializing
     if (sessionLoading) {
         return (
-            <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+            <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p className="text-gray-400">Initializing MIA session...</p>
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-red-600 mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Initializing MIA session...</p>
                     </div>
                 </div>
             </div>
@@ -256,15 +256,15 @@ export default function MiaPage() {
     // Show error screen if session failed to initialize
     if (error && !currentSessionId) {
         return (
-            <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+            <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md">
-                        <div className="text-red-400 mb-4">
+                        <div className="text-red-600 mb-4">
                             <AlertTriangle className="h-12 w-12 mx-auto mb-2" />
-                            <h2 className="text-lg font-semibold">Session Error</h2>
+                            <h2 className="text-lg font-semibold text-foreground">Session Error</h2>
                         </div>
-                        <p className="text-gray-400 text-sm mb-4">
+                        <p className="text-muted-foreground text-sm mb-4">
                             {error.message}
                         </p>
                         <button 
@@ -272,7 +272,7 @@ export default function MiaPage() {
                                 setError(undefined)
                                 initializeSession()
                             }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                         >
                             Retry
                         </button>
@@ -283,11 +283,11 @@ export default function MiaPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
+        <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
             <Nav />
 
             {/* Header controls */}
-            <div className="px-4 py-3 border-b border-[#1f1f1f]">
+            <div className="px-4 py-3 border-b border-border bg-slate-50 dark:bg-card">
                 <MiaDiagnosticsHeader
                     isChatLoading={isLoading}
                     onClearMessages={handleClearMessages}
@@ -318,13 +318,13 @@ export default function MiaPage() {
                                             )}
                                             
                                             {error && (
-                                                <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-                                                    <p className="text-red-400 text-sm">
+                                                <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-500/30 rounded-lg">
+                                                    <p className="text-red-600 dark:text-red-400 text-sm">
                                                         <strong>Error:</strong> {error.message}
                                                     </p>
                                                     <button
                                                         onClick={() => reload()}
-                                                        className="mt-2 text-xs text-red-300 hover:text-red-200 underline"
+                                                        className="mt-2 text-xs text-red-600 dark:text-red-300 hover:text-red-700 dark:hover:text-red-200 underline"
                                                     >
                                                         Try again
                                                     </button>
@@ -350,7 +350,7 @@ export default function MiaPage() {
                             </div>
 
                             {/* Chat Input Form - Fixed at bottom */}
-                            <div className="border-t border-[#444444] p-4 bg-black">
+                            <div className="border-t border-border p-4 bg-slate-50 dark:bg-card">
                                 <div className="max-w-4xl mx-auto">
                                     <DiagnosticChatForm
                                         loading={isLoading}
@@ -363,7 +363,7 @@ export default function MiaPage() {
                                     
                                     {/* Disclaimer Footer */}
                                     <div className="mt-3 text-center">
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-muted-foreground">
 											MIA may not be perfect. Please verify important information.
                                         </p>
                                     </div>
