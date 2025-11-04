@@ -43,17 +43,17 @@ export default function SettingsProfilePage() {
 
     if (!shopId) {
         return (
-            <div className="flex flex-col min-h-screen bg-black text-white">
+            <div className="flex flex-col min-h-screen bg-background text-foreground">
                 <Nav />
                 <div className="flex justify-center items-center h-[80vh]">
-                    <p>No shop found for this user.</p>
+                    <p className="text-foreground">No shop found for this user.</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Nav />
             <div className="p-4 space-y-6">
                 {shopId && <ProfileForm shopId={shopId} />}
