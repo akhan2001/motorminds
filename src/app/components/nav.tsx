@@ -36,14 +36,6 @@ export function Nav() {
 	// Get filtered navigation items based on user role and admin type
 	const navItems = useMemo(() => {
 		const items = getFilteredNavItems(userRole ?? null, adminType || undefined);
-		// Debug: Log Admin item specifically
-		const adminItem = items.find(item => item.name === 'Admin');
-		if (adminItem) {
-			console.log('Admin item:', { 
-				subItems: adminItem.subItems?.length || 0,
-				subItemNames: adminItem.subItems?.map(s => s.name) || []
-			});
-		}
 		return items;
 	}, [userRole, adminType]);
 
