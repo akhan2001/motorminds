@@ -86,7 +86,6 @@ export async function POST(req: Request) {
                 customer_id,
                 vehicle_id,
                 appointment_id,
-                invoice_id,
                 assigned_technician_id,
                 title,
                 description,
@@ -285,7 +284,7 @@ export async function POST(req: Request) {
                     stream: false
                 }),
                 new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('API timeout')), 12000)
+                    setTimeout(() => reject(new Error('API timeout')), 30000)
                 )
             ]);
         } catch (error) {
