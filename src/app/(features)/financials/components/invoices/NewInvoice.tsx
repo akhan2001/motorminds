@@ -18,6 +18,9 @@ import { CustomerInformation } from '../../../operations/components/work-orders/
 import { VehicleInformation } from '../../../operations/components/work-orders/shared/vehicle-information'
 import { InvoiceLaborItems } from './InvoiceLaborItems'
 import { InvoicePartsItems } from './InvoicePartsItems'
+import { InvoiceServicesItems } from './InvoiceServicesItems'
+import { InvoicePackagesItems } from './InvoicePackagesItems'
+import { InvoiceDiscountsItems } from './InvoiceDiscountsItems'
 
 interface NewInvoiceProps {
     isOpen: boolean
@@ -340,8 +343,32 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                 </div>
 
                                 {/* Parts Items */}
-                                <div>
+                                <div className="mb-6">
                                     <InvoicePartsItems
+                                        items={formData.invoice_items}
+                                        onItemsChange={handleItemsChange}
+                                    />
+                                </div>
+
+                                {/* Service Items */}
+                                <div className="mb-6">
+                                    <InvoiceServicesItems
+                                        items={formData.invoice_items}
+                                        onItemsChange={handleItemsChange}
+                                    />
+                                </div>
+
+                                {/* Package Items */}
+                                <div className="mb-6">
+                                    <InvoicePackagesItems
+                                        items={formData.invoice_items}
+                                        onItemsChange={handleItemsChange}
+                                    />
+                                </div>
+
+                                {/* Discount Items */}
+                                <div>
+                                    <InvoiceDiscountsItems
                                         items={formData.invoice_items}
                                         onItemsChange={handleItemsChange}
                                     />

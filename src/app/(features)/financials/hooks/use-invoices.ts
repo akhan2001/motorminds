@@ -191,7 +191,7 @@ export function useUpdateInvoice() {
                     subtotal,
                     tax_amount,
                     total_amount,
-                    labor_total: data.invoice_items.filter(i => i.item_type === 'labor' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
+                    labor_total: data.invoice_items.filter(i => i.item_type === 'labor' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
                     parts_total: data.invoice_items.filter(i => i.item_type === 'part' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
                     services_total: data.invoice_items.filter(i => i.item_type === 'service' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),
                     fees_total: data.invoice_items.filter(i => i.item_type === 'fee' && (i as any).active !== false).reduce((sum, i) => sum + i.total_price, 0),

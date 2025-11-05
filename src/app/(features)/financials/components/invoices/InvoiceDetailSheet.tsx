@@ -221,8 +221,16 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                                                     {item.part_number && ` • Part #: ${item.part_number}`}
                                                 </div>
                                             </div>
-                                            <div className="text-foreground dark:text-white text-sm font-medium">
-                                                {formatCurrency(item.total_price || 0)}
+                                            <div className={`text-sm font-medium ${
+                                                item.item_type === 'discount' 
+                                                    ? 'text-red-600 dark:text-red-400' 
+                                                    : 'text-foreground dark:text-white'
+                                            }`}>
+                                                {item.item_type === 'discount' ? (
+                                                    <>-{formatCurrency(Math.abs(item.total_price || 0))}</>
+                                                ) : (
+                                                    formatCurrency(item.total_price || 0)
+                                                )}
                                             </div>
                                         </div>
                                         {item.unit_price && (
