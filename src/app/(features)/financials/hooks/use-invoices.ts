@@ -119,6 +119,9 @@ export function useCreateInvoice() {
 
     return useMutation({
         mutationFn: async (data: InvoiceFormData & { shop_id: string }) => {
+            // Generate invoice number
+            const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+            
             // Calculate totals - discounts subtract from subtotal
             const subtotal = data.invoice_items.reduce((sum, item) => {
                 if (item.item_type === 'discount') {
@@ -131,6 +134,8 @@ export function useCreateInvoice() {
 
             const invoiceData = {
                 ...data,
+                invoice_number: invoiceNumber,
+                display_id: invoiceNumber,
                 subtotal,
                 tax_amount,
                 total_amount,
@@ -146,7 +151,10 @@ export function useCreateInvoice() {
                 .select()
                 .single()
 
-            if (error) throw error
+            if (error) {
+                console.error('Error creating invoice:', error)
+                throw error
+            }
             return invoice as Invoice
         },
         onSuccess: (data) => {
