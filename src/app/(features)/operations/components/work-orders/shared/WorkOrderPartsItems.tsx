@@ -190,32 +190,32 @@ export function WorkOrderPartsItems({
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-green-400" />
-                <h3 className="text-lg font-semibold text-white">Parts Items</h3>
+                <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <h3 className="text-lg font-semibold text-foreground">Parts Items</h3>
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 border border-dashed border-[#2a2a2a] rounded-lg">
+                <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg bg-slate-50 dark:bg-card">
                     No parts items added yet. Click "Add Part" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div key={item.id} className={`bg-[#1a1a1a] border rounded-lg p-4 ${
-                            item.active === true ? 'border-green-500/30 bg-green-500/5' : 
-                            item.active === false ? 'border-red-500/30 bg-red-500/5' : 
-                            'border-[#2a2a2a]'
+                        <div key={item.id} className={`bg-white dark:bg-card border rounded-lg p-4 ${
+                            item.active === true ? 'border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/5' : 
+                            item.active === false ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' : 
+                            'border-border'
                         }`}>
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <h4 className="text-sm font-medium text-green-400">Part Item {index + 1}</h4>
+                                    <h4 className="text-sm font-medium text-green-600 dark:text-green-400">Part Item {index + 1}</h4>
                                     {item.active === true && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
+                                        <span className="text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-500/20">
                                             Accepted
                                         </span>
                                     )}
                                     {item.active === false && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400">
+                                        <span className="text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-500/20">
                                             Declined
                                         </span>
                                     )}
@@ -229,7 +229,7 @@ export function WorkOrderPartsItems({
                                                 onClick={() => acceptItem(item.id)}
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-green-400 hover:text-green-300 hover:bg-green-900/20 h-7 w-7 p-0"
+                                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 h-7 w-7 p-0"
                                                 title="Accept"
                                             >
                                                 <CheckCircle className="h-4 w-4" />
@@ -241,7 +241,7 @@ export function WorkOrderPartsItems({
                                                 onClick={() => declineItem(item.id)}
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
+                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 w-7 p-0"
                                                 title="Decline"
                                             >
                                                 <XCircle className="h-4 w-4" />
@@ -252,7 +252,7 @@ export function WorkOrderPartsItems({
                                             onClick={() => removeItem(item.id)}
                                             variant="ghost"
                                             size="sm"
-                                            className="text-gray-400 hover:text-gray-300 hover:bg-gray-900/20 h-7 w-7 p-0"
+                                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
                                             title="Delete"
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -265,27 +265,27 @@ export function WorkOrderPartsItems({
                                 {/* Description and Part Number */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <Label htmlFor={`part_description_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_description_${index}`} className="text-muted-foreground text-xs">
                                             Description *
                                         </Label>
                                         <Input
                                             id={`part_description_${index}`}
                                             value={item.description}
                                             onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             placeholder="e.g., Brake pads, Oil filter"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`part_number_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_number_${index}`} className="text-muted-foreground text-xs">
                                             Part Number
                                         </Label>
                                         <Input
                                             id={`part_number_${index}`}
                                             value={item.part_number || ''}
                                             onChange={(e) => updateItem(item.id, 'part_number', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             placeholder="P/N"
                                         />
@@ -295,7 +295,7 @@ export function WorkOrderPartsItems({
                                 {/* Quantity, Unit Price, Total */}
                                 <div className="grid grid-cols-3 gap-3">
                                     <div>
-                                        <Label htmlFor={`part_quantity_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_quantity_${index}`} className="text-muted-foreground text-xs">
                                             Quantity *
                                         </Label>
                                         <Input
@@ -303,14 +303,14 @@ export function WorkOrderPartsItems({
                                             type="number"
                                             value={item.quantity || ''}
                                             onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             min="1"
                                             placeholder="1"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`part_unit_price_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_unit_price_${index}`} className="text-muted-foreground text-xs">
                                             Unit Price *
                                         </Label>
                                         <Input
@@ -318,7 +318,7 @@ export function WorkOrderPartsItems({
                                             type="number"
                                             value={item.unit_price || ''}
                                             onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             min="0"
                                             step="0.01"
@@ -326,7 +326,7 @@ export function WorkOrderPartsItems({
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`part_total_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_total_${index}`} className="text-muted-foreground text-xs">
                                             Total Price
                                         </Label>
                                         <Input
@@ -334,7 +334,7 @@ export function WorkOrderPartsItems({
                                             type="number"
                                             value={item.total_price.toFixed(2)}
                                             disabled
-                                            className="bg-[#0a0a0a] border-[#2a2a2a] text-white font-semibold"
+                                            className="bg-slate-50 dark:bg-muted border-border text-foreground font-semibold"
                                         />
                                     </div>
                                 </div>
@@ -342,40 +342,40 @@ export function WorkOrderPartsItems({
                                 {/* Supplier, Category, Warranty */}
                                 <div className="grid grid-cols-3 gap-3">
                                     <div>
-                                        <Label htmlFor={`part_supplier_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_supplier_${index}`} className="text-muted-foreground text-xs">
                                             Supplier
                                         </Label>
                                         <Input
                                             id={`part_supplier_${index}`}
                                             value={item.supplier || ''}
                                             onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             placeholder="Supplier name"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`part_category_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_category_${index}`} className="text-muted-foreground text-xs">
                                             Category
                                         </Label>
                                         <Input
                                             id={`part_category_${index}`}
                                             value={item.category || ''}
                                             onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             placeholder="Category"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`part_warranty_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_warranty_${index}`} className="text-muted-foreground text-xs">
                                             Warranty
                                         </Label>
                                         <Input
                                             id={`part_warranty_${index}`}
                                             value={item.warranty_period || ''}
                                             onChange={(e) => updateItem(item.id, 'warranty_period', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             placeholder="12 months"
                                         />
@@ -385,14 +385,14 @@ export function WorkOrderPartsItems({
                                 {/* Notes */}
                                 {item.notes !== undefined && (
                                     <div>
-                                        <Label htmlFor={`part_notes_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`part_notes_${index}`} className="text-muted-foreground text-xs">
                                             Notes (Optional)
                                         </Label>
                                         <Textarea
                                             id={`part_notes_${index}`}
                                             value={item.notes || ''}
                                             onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
                                             placeholder="Additional notes..."
                                             rows={2}
@@ -407,12 +407,12 @@ export function WorkOrderPartsItems({
 
             {/* Add Part Button at Bottom - Only show when editing */}
             {isEditing && (
-                <div className="pt-3 border-t border-[#2a2a2a]">
+                <div className="pt-3 border-t border-border">
                     <Button
                         type="button"
                         onClick={addItem}
                         size="sm"
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full bg-red-600 hover:bg-red-700 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Part
