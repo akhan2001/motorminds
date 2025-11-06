@@ -44,33 +44,33 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
             }}
         >
             {/* TOP SECTION - Grid Layout */}
-            <div className="mb-1 flex-shrink-0">
+            <div className="mb-0.5 flex-shrink-0">
                 {/* Row 1: Logo | Empty | Tagline+Address | Business Info */}
-                <div className="flex items-center min-h-[45px] px-2 py-2">
-                    <div className="w-[33%] pl-1 bg-black flex items-center justify-center py-2 px-2">
+                <div className="flex items-center min-h-[40px] px-1.5 py-1">
+                    <div className="w-[33%] pl-0.5 bg-black flex items-center justify-center py-1 px-1">
                         <div className="text-center">
-                            <div className="text-[18pt] font-bold text-blue-900 tracking-wider leading-tight">GOOD</div>
-                            <div className="text-[18pt] font-bold text-blue-900 tracking-wider leading-tight">GUYZ</div>
-                            <div className="text-[10pt] text-blue-900 tracking-wide mt-0.5 leading-tight">G A R A G E</div>
+                            <div className="text-[16pt] font-bold text-blue-900 tracking-wider leading-tight">GOOD</div>
+                            <div className="text-[16pt] font-bold text-blue-900 tracking-wider leading-tight">GUYZ</div>
+                            <div className="text-[9pt] text-blue-900 tracking-wide mt-0 leading-tight">G A R A G E</div>
                         </div>
                     </div>
                     <div className="w-[33%] px-1 flex flex-col text-center">
-                        <div className="text-blue-900 text-[12pt] italic mb-1">"By Name. By Reputation."</div>
-                        <div className="text-blue-900 text-[12pt] leading-tight font-bold">
+                        <div className="text-blue-900 text-[11pt] italic mb-0.5">"By Name. By Reputation."</div>
+                        <div className="text-blue-900 text-[11pt] leading-tight font-bold">
                             75 LODGE ST.,<br />
                             WATERLOO, ON N2J 2V5<br />
                             (519) 885-1321
                         </div>
                     </div>
-                    <div className="w-[30%] text-left text-blue-900">
-                        <div className="text-[8pt] font-bold mb-1">BUSINESS NO.: 894510635RT</div>
+                    <div className="w-[30%] text-left text-blue-900 pl-1">
+                        <div className="text-[8pt] font-bold mb-0.5">BUSINESS NO.: 894510635RT</div>
                         <div className="text-[8pt]">INVOICE NO.: {invoice.display_id || invoice.invoice_number}</div>
                         <div className="text-[8pt]">DATE: {formatDate(invoice.issue_date)}</div>
                     </div>
                 </div>
 
                 {/* Row 2: Customer | Vehicle | Payment Method - Horizontal Format */}
-                <div className="flex p-2">
+                <div className="flex p-1.5">
                     <div className="w-[40%] pr-2">
                         <div className="text-[10pt] text-blue-900 mb-1 uppercase">Customer Information</div>
                         <div className="flex flex-row">
@@ -135,16 +135,16 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
             </div>
 
             {/* Canadian Owned Banner */}
-            <div className="text-center py-1 mb-1.5 flex-shrink-0">
-                <span className="text-[9pt] font-bold text-blue-900">
-                    <span className="text-[#e53e3e] text-[12pt] mr-1">🍁</span>
+            <div className="text-center py-0.5 mb-1 flex-shrink-0">
+                <span className="text-[8pt] font-bold text-blue-900">
+                    <span className="text-[#e53e3e] text-[10pt] mr-0.5">🍁</span>
                     100% CANADIAN OWNED & OPERATED!
                 </span>
             </div>
 
             {/* MIDDLE SECTION - Items Table */}
-            <div className="flex-1 mb-1.5 flex flex-col min-h-0">
-                <div className="flex-1 flex flex-col mb-1.5">
+            <div className="flex-1 mb-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="flex-1 flex flex-col mb-1">
                     {/* Table */}
                     <div className="flex-1 flex flex-col min-h-0">
                         <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
@@ -157,26 +157,26 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                             </colgroup>
                             <thead>
                                 <tr className="bg-indigo-200 border border-indigo-300">
-                                    <th className="text-center text-blue-900 text-[11pt] font-bold p-1.5 border-r border-indigo-300">Item No.</th>
-                                    <th className="text-center text-blue-900 text-[11pt] font-bold p-1.5 border-r border-indigo-300">Quantity</th>
-                                    <th className="text-center text-blue-900 text-[11pt] font-bold p-1.5 border-r border-indigo-300">Description</th>
-                                    <th className="text-center text-blue-900 text-[11pt] font-bold p-1.5 border-r border-indigo-300">Unit Price</th>
-                                    <th className="text-center text-blue-900 text-[11pt] font-bold p-1.5">Amount</th>
+                                    <th className="text-center text-blue-900 text-[10pt] font-bold p-1 border-r border-indigo-300">Item No.</th>
+                                    <th className="text-center text-blue-900 text-[10pt] font-bold p-1 border-r border-indigo-300">Quantity</th>
+                                    <th className="text-center text-blue-900 text-[10pt] font-bold p-1 border-r border-indigo-300">Description</th>
+                                    <th className="text-center text-blue-900 text-[10pt] font-bold p-1 border-r border-indigo-300">Unit Price</th>
+                                    <th className="text-center text-blue-900 text-[10pt] font-bold p-1">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {/* Invoice Items */}
                                 {displayedItems.map((item, index) => (
-                                    <tr key={item.id} className="border-l border-r border-[#cbd5e0]" style={{ height: '24px' }}>
-                                        <td className="text-center text-[9pt] text-blue-900 px-1 py-1 border-r border-[#cbd5e0]">{item.item_type || ''}</td>
-                                        <td className="text-center text-[9pt] text-blue-900 px-1 py-1 border-r border-[#cbd5e0]">{item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}</td>
-                                        <td className="text-left text-[9pt] text-blue-900 px-1 py-1 border-r border-[#cbd5e0]">
+                                    <tr key={item.id} className="border-l border-r border-[#cbd5e0]" style={{ height: '20px' }}>
+                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type || ''}</td>
+                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}</td>
+                                        <td className="text-left text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
                                             {item.description}
                                         </td>
-                                        <td className="text-center text-[9pt] text-blue-900 px-1 py-1 border-r border-[#cbd5e0]">
+                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
                                             {formatCurrency(item.unit_price)}
                                         </td>
-                                        <td className="text-center text-[9pt] text-blue-900 px-1 py-1">
+                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5">
                                             {formatCurrency(item.total_price)}
                                         </td>
                                     </tr>
@@ -184,12 +184,12 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
 
                                 {/* Empty Rows */}
                                 {emptyRows.map((_, index) => (
-                                    <tr key={`empty-${index}`} className="border-l border-r border-[#cbd5e0]" style={{ height: '24px' }}>
-                                        <td className="text-center text-[9pt] px-1 py-1 border-r border-[#cbd5e0]"></td>
-                                        <td className="text-center text-[9pt] px-1 py-1 border-r border-[#cbd5e0]"></td>
-                                        <td className="text-left text-[9pt] px-1 py-1 border-r border-[#cbd5e0]"></td>
-                                        <td className="text-center text-[9pt] px-1 py-1 border-r border-[#cbd5e0]"></td>
-                                        <td className="text-center text-[9pt] px-1 py-1"></td>
+                                    <tr key={`empty-${index}`} className="border-l border-r border-[#cbd5e0]" style={{ height: '20px' }}>
+                                        <td className="text-center text-[8pt] px-0.5 py-0.5 border-r border-[#cbd5e0]"></td>
+                                        <td className="text-center text-[8pt] px-0.5 py-0.5 border-r border-[#cbd5e0]"></td>
+                                        <td className="text-left text-[8pt] px-0.5 py-0.5 border-r border-[#cbd5e0]"></td>
+                                        <td className="text-center text-[8pt] px-0.5 py-0.5 border-r border-[#cbd5e0]"></td>
+                                        <td className="text-center text-[8pt] px-0.5 py-0.5"></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -198,7 +198,7 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                 </div>
 
                 {/* Unified Grid Layout - Comments, Totals, Invoice Comments, and Signature */}
-                <div className="grid grid-rows-[auto_auto_auto] grid-cols-[70%_30%] gap-2 mt-2 flex-shrink-0">
+                <div className="grid grid-rows-[auto_auto_auto] grid-cols-[70%_30%] gap-1 mt-1 flex-shrink-0">
                     {/* Row 1: Comments */}
                     <div className="row-span-1">
                         <div className="border border-[#cbd5e0] h-full p-1.5 flex flex-col">
