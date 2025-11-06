@@ -44,7 +44,7 @@ export default function InvoicesPage() {
 
     if (!shopId) {
         return (
-            <div className="flex flex-col min-h-screen bg-black text-white">
+            <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
                 <Nav />
                 <div className="flex justify-center items-center h-[80vh]">
                     <p>No shop found for this user.</p>
@@ -54,7 +54,7 @@ export default function InvoicesPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-black text-white">
+        <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
             <Nav />
             <NewInvoicesBanner />
             <InvoiceDashboardClient shopId={shopId} />

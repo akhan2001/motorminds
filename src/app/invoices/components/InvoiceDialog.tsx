@@ -218,80 +218,80 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-0 w-[95vw] max-w-[95vw] sm:max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogContent className="bg-white dark:bg-background text-foreground border border-border rounded-lg shadow-lg p-0 w-[95vw] max-w-[95vw] sm:max-w-4xl max-h-[90vh] flex flex-col">
                 {/* Fixed Header */}
-                <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#333333] rounded-t-lg">
+                <DialogHeader className="sticky top-0 bg-slate-50 dark:bg-card z-10 p-4 sm:p-6 border-b border-border rounded-t-lg">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                            <DialogTitle className="text-xl font-semibold text-white">
+                            <DialogTitle className="text-xl font-semibold text-foreground">
                                 Invoice # {invoice.displayNumber}
-                                <div className="text-gray-400 text-sm">
+                                <div className="text-muted-foreground text-sm">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                        <div className="text-gray-500 text-sm">
+                                        <div className="text-muted-foreground text-sm">
                                             {invoice.invoiceNumber}
                                         </div>
                                     </div>
                                 </div>
                             </DialogTitle>
-                            <DialogDescription className="text-gray-400 text-sm">
+                            <DialogDescription className="text-muted-foreground text-sm">
                                 Issued on: {formatDateString(invoice.issueDate)}
                             </DialogDescription>
                         </div>
                     </DialogHeader>
                 
                 {/* Scrollable Content */}
-                <div id="invoice-container" className="bg-[#1A1A1A] text-white p-4 sm:p-6 rounded-lg border border-[#333333] flex-1 overflow-y-auto">
+                <div id="invoice-container" className="bg-slate-50 dark:bg-card text-foreground p-4 sm:p-6 rounded-lg border border-border flex-1 overflow-y-auto">
                     
                     <div className="space-y-4">
-                        <Separator className="my-2 bg-gray-700" />
+                        <Separator className="my-2 bg-border" />
                         
                         {/* Shop and Client Information side by side on larger screens */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-white">Shop Information</h3>
-                                <p className="text-white font-medium">{invoice.shopName}</p>
-                                <p className="text-gray-400 text-sm">{invoice.shopAddress}</p>
-                                <p className="text-gray-400 text-sm">{invoice.shopEmail}</p>
-                                <p className="text-gray-400 text-sm">{formatPhoneNumber(invoice.shopPhone)}</p>
+                                <h3 className="text-lg font-semibold text-foreground">Shop Information</h3>
+                                <p className="text-foreground font-medium">{invoice.shopName}</p>
+                                <p className="text-muted-foreground text-sm">{invoice.shopAddress}</p>
+                                <p className="text-muted-foreground text-sm">{invoice.shopEmail}</p>
+                                <p className="text-muted-foreground text-sm">{formatPhoneNumber(invoice.shopPhone)}</p>
                             </div>
                     
                             <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-white">Client Information</h3>
-                                <p className="text-white font-medium">{invoice.clientName}</p>
-                                <p className="text-gray-400 text-sm">{invoice.clientAddress}</p>
-                                <p className="text-gray-400 text-sm">{invoice.clientEmail}</p>
-                                <p className="text-gray-400 text-sm">{formatPhoneNumber(invoice.clientPhone)}</p>
+                                <h3 className="text-lg font-semibold text-foreground">Client Information</h3>
+                                <p className="text-foreground font-medium">{invoice.clientName}</p>
+                                <p className="text-muted-foreground text-sm">{invoice.clientAddress}</p>
+                                <p className="text-muted-foreground text-sm">{invoice.clientEmail}</p>
+                                <p className="text-muted-foreground text-sm">{formatPhoneNumber(invoice.clientPhone)}</p>
                             </div>
                         </div>
                         
-                        <Separator className="my-2 bg-gray-700" />
+                        <Separator className="my-2 bg-border" />
                         
                         {/* Vehicle Information */}
                         {invoice.vehicleInfo && (
                             <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-white">Vehicle Information</h3>
-                                <p className="text-white">
+                                <h3 className="text-lg font-semibold text-foreground">Vehicle Information</h3>
+                                <p className="text-foreground">
                                     {invoice.vehicleInfo.year} {invoice.vehicleInfo.make} {invoice.vehicleInfo.model}
                                     {invoice.vehicleInfo.license_plate=='NULL' || invoice.vehicleInfo.license_plate==null ? '' : ` - ${invoice.vehicleInfo.license_plate}`}
                                 </p>
                                 {invoice.mileage && (
-                                    <p className="text-gray-400 text-sm">Mileage: {invoice.mileage}</p>
+                                    <p className="text-muted-foreground text-sm">Mileage: {invoice.mileage}</p>
                                 )}
                             </div>
                         )}
             
-                        <Separator className="my-2 bg-gray-700" />
+                        <Separator className="my-2 bg-border" />
                         
                         {/* Work Order Details */}
                         <div className="space-y-2">
                             {invoice.description && (
                                 <div className="mb-2">
-                                    <p className="text-lg font-semibold text-white">{invoice.description}</p>
+                                    <p className="text-lg font-semibold text-foreground">{invoice.description}</p>
                                 </div>
                             )}
 
                             {/* --- Line Items Table --- */}
                             <div className="space-y-2">
-                                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-400 border-b border-gray-700 pb-2">
+                                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground border-b border-border pb-2">
                                     <div className="col-span-5">DESCRIPTION</div>
                                     <div className="col-span-2 text-center">QTY</div>
                                     <div className="col-span-2 text-right">SHOP COST</div>
@@ -301,16 +301,16 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                                 {/* Labour Items */}
                                 {(!invoice.labour_items || invoice.labour_items.length === 0) && invoice.labour_total_price > 0 ? (
                                     <div className="grid grid-cols-12 gap-2 items-center text-sm">
-                                        <div className="col-span-10 text-white">{invoice.labour || 'General Labour'}</div>
-                                        <div className="col-span-2 text-right text-white">{formatCurrency(invoice.labour_total_price)}</div>
+                                        <div className="col-span-10 text-foreground">{invoice.labour || 'General Labour'}</div>
+                                        <div className="col-span-2 text-right text-foreground">{formatCurrency(invoice.labour_total_price)}</div>
                                     </div>
                                 ) : (
                                     invoice.labour_items && invoice.labour_items.map((item, index) => (
                                         <div key={`labour-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
-                                            <div className="col-span-5 text-white">{item.description}</div>
-                                            <div className="col-span-2 text-center text-gray-400">-</div>
-                                            <div className="col-span-2 text-right text-gray-400">-</div>
-                                            <div className="col-span-3 text-right text-white">{formatCurrency(item.cost)}</div>
+                                            <div className="col-span-5 text-foreground">{item.description}</div>
+                                            <div className="col-span-2 text-center text-muted-foreground">-</div>
+                                            <div className="col-span-2 text-right text-muted-foreground">-</div>
+                                            <div className="col-span-3 text-right text-foreground">{formatCurrency(item.cost)}</div>
                                         </div>
                                     ))
                                 )}
@@ -318,20 +318,20 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                                 {/* Parts Items */}
                                 {(!invoice.parts_items || invoice.parts_items.length === 0) && invoice.parts_total_price > 0 ? (
                                     <div className="grid grid-cols-12 gap-2 items-center text-sm">
-                                        <div className="col-span-10 text-white">{invoice.parts || 'General Parts'}</div>
-                                        <div className="col-span-2 text-right text-white">{formatCurrency(invoice.parts_total_price)}</div>
+                                        <div className="col-span-10 text-foreground">{invoice.parts || 'General Parts'}</div>
+                                        <div className="col-span-2 text-right text-foreground">{formatCurrency(invoice.parts_total_price)}</div>
                                     </div>
                                 ) : (
                                     invoice.parts_items && invoice.parts_items.map((item, index) => (
                                         <div key={`parts-${index}`} className="grid grid-cols-12 gap-2 items-center text-sm">
-                                            <div className="col-span-5 text-white">{item.description}</div>
-                                            <div className="col-span-2 text-center text-white">{item.quantity}</div>
-                                            <div className="col-span-2 text-right text-red-400">{formatCurrency(item.shop_cost)}</div>
-                                            <div className="col-span-3 text-right text-white">
+                                            <div className="col-span-5 text-foreground">{item.description}</div>
+                                            <div className="col-span-2 text-center text-foreground">{item.quantity}</div>
+                                            <div className="col-span-2 text-right text-red-600 dark:text-red-400">{formatCurrency(item.shop_cost)}</div>
+                                            <div className="col-span-3 text-right text-foreground">
                                                 {item.quantity && item.quantity > 1 ? (
                                                     <span>
                                                         {formatCurrency(item.cost * item.quantity)}
-                                                        <span className="text-gray-400 text-xs ml-1">({formatCurrency(item.cost)}/ea)</span>
+                                                        <span className="text-muted-foreground text-xs ml-1">({formatCurrency(item.cost)}/ea)</span>
                                                     </span>
                                                 ) : (
                                                     formatCurrency(item.cost)
@@ -345,47 +345,47 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                             {/* Customer Notes - Only show for customer-generated invoices */}
                             {isCustomerGenerated && invoice.customer_notes && (
                                 <div className="mb-2 pt-4">
-                                    <p className="text-blue-400 font-medium">Customer's Original Request:</p>
-                                    <div className="bg-blue-900/20 border border-blue-800 rounded-md p-3 mt-2">
-                                        <p className="text-blue-100 italic">"{invoice.customer_notes}"</p>
+                                    <p className="text-blue-600 dark:text-blue-400 font-medium">Customer's Original Request:</p>
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-800 rounded-md p-3 mt-2">
+                                        <p className="text-blue-700 dark:text-blue-100 italic">"{invoice.customer_notes}"</p>
                                     </div>
                                 </div>
                             )}
                             
                             {invoice.notes && (
                                 <div className="mb-2 pt-4">
-                                    <p className="text-white font-medium">Shop Notes:</p>
-                                    <p className="text-gray-400">{invoice.notes}</p>
+                                    <p className="text-foreground font-medium">Shop Notes:</p>
+                                    <p className="text-muted-foreground">{invoice.notes}</p>
                                 </div>
                             )}
                         </div>
 
-                        <Separator className="my-2 bg-gray-700" />
+                        <Separator className="my-2 bg-border" />
                         
                         {/* Amount and Status */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 bg-[#222222] p-4 rounded-lg border border-[#333333]">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 bg-white dark:bg-card p-4 rounded-lg border border-border">
                             <div className="space-y-2 w-full sm:w-auto">
                                 <div className="flex justify-between items-center gap-8">
-                                    <p className="text-gray-400 text-sm">Labour Total:</p>
-                                    <p className="text-white font-medium">{formatCurrency(invoice.labour_total_price || 0)}</p>
+                                    <p className="text-muted-foreground text-sm">Labour Total:</p>
+                                    <p className="text-foreground font-medium">{formatCurrency(invoice.labour_total_price || 0)}</p>
                                 </div>
                                 <div className="flex justify-between items-center gap-8">
-                                    <p className="text-gray-400 text-sm">Parts Total:</p>
-                                    <p className="text-white font-medium">{formatCurrency(invoice.parts_total_price || 0)}</p>
+                                    <p className="text-muted-foreground text-sm">Parts Total:</p>
+                                    <p className="text-foreground font-medium">{formatCurrency(invoice.parts_total_price || 0)}</p>
                                 </div>
-                                <Separator className="my-1 bg-gray-700" />
+                                <Separator className="my-1 bg-border" />
                                 <div className="flex justify-between items-center gap-8">
-                                    <p className="text-gray-400 font-medium">Subtotal:</p>
-                                    <p className="text-white font-semibold">{formatAmount(invoice.amount)}</p>
+                                    <p className="text-muted-foreground font-medium">Subtotal:</p>
+                                    <p className="text-foreground font-semibold">{formatAmount(invoice.amount)}</p>
                                 </div>
                                 <div className="flex justify-between items-center gap-8">
-                                    <p className="text-gray-400 font-medium">Tax (13% HST):</p>
-                                    <p className="text-white font-semibold">{formatCurrency(parseFloat(invoice.amount) * 0.13)}</p>
+                                    <p className="text-muted-foreground font-medium">Tax (13% HST):</p>
+                                    <p className="text-foreground font-semibold">{formatCurrency(parseFloat(invoice.amount) * 0.13)}</p>
                                 </div>
-                                <Separator className="my-1 bg-blue-700" />
+                                <Separator className="my-1 bg-border" />
                                 <div className="flex justify-between items-center gap-8">
-                                    <p className="text-blue-400 font-bold text-lg">Total:</p>
-                                    <p className="text-xl font-bold text-blue-400">{formatCurrency(parseFloat(invoice.amount) * 1.13)}</p>
+                                    <p className="text-green-600 dark:text-green-400 font-bold text-lg">Total:</p>
+                                    <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(parseFloat(invoice.amount) * 1.13)}</p>
                                 </div>
                             </div>
                             
@@ -400,7 +400,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                                 >
                                     {status === "PAID" ? "PAID" : "UNPAID"}
                                 </Button>
-                                <span className="text-xs text-gray-500 text-center">
+                                <span className="text-xs text-muted-foreground text-center">
                                     Click to mark as {status === "PAID" ? "unpaid" : "paid"}
                                 </span>
                             </div>
@@ -408,7 +408,7 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                     </div>
                 </div>
         
-                <DialogFooter className=" bottom-0 bg-[#131313] border-t border-[#333333] mt-4 p-4 sm:p-6 flex flex-col sm:flex-row justify-end gap-1">
+                <DialogFooter className=" bottom-0 bg-slate-50 dark:bg-card border-t border-border mt-4 p-4 sm:p-6 flex flex-col sm:flex-row justify-end gap-1">
                     {/* Customer-Generated Invoice Actions */}
                     {isCustomerGenerated && invoice.clientEmail && (
                         <Button 
@@ -455,14 +455,14 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                         <TrashIcon className="w-4 h-4" />
                     </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="bg-white dark:bg-background border-border text-foreground">
                             <AlertDialog
                                 open={showDeleteDialog}
                                 onOpenChange={setShowDeleteDialog}
                             >
                                 <AlertDialogTrigger asChild>
                                     <DropdownMenuItem
-                                        className="text-red-600 cursor-pointer"
+                                        className="text-red-600 dark:text-red-400 cursor-pointer"
                                         onSelect={(event) => {
                                             event.preventDefault();
                                             setShowDeleteDialog(true);
@@ -472,15 +472,15 @@ export function InvoiceDialog({ isOpen, onClose, shopId, invoice, onEdit, onInvo
                                         Delete Invoice
                                     </DropdownMenuItem>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="bg-[#131313] text-white border-[#333333]">
+                                <AlertDialogContent className="bg-white dark:bg-background text-foreground border-border">
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle className="text-white">Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription className="text-gray-400">
+                                        <AlertDialogTitle className="text-foreground">Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription className="text-muted-foreground">
                                             This action cannot be undone. This will permanently delete invoice #{invoice.displayNumber} and all associated data.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel className="bg-gray-600 text-white hover:bg-gray-700 border-gray-600">
+                                        <AlertDialogCancel className="bg-white dark:bg-background border-border text-foreground hover:bg-muted">
                                             Cancel
                                         </AlertDialogCancel>
                                         <Button
