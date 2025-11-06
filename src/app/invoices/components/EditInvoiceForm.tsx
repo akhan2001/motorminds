@@ -569,15 +569,15 @@ export default function  EditInvoiceForm({
 
     return (
         <Dialog open={isOpen}>
-            <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-0 max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] flex flex-col">
+            <DialogContent className="bg-white dark:bg-background text-foreground border border-border rounded-lg shadow-lg p-0 max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[75vw] md:max-w-[65vw] flex flex-col">
                 {/* Sticky Header */}
-                <DialogHeader className="sticky top-0 bg-[#131313] z-10 p-4 sm:p-6 border-b border-[#222222] rounded-t-lg">
+                <DialogHeader className="sticky top-0 bg-slate-50 dark:bg-card z-10 p-4 sm:p-6 border-b border-border rounded-t-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <DialogTitle className="text-white text-xl sm:text-2xl">
+                            <DialogTitle className="text-foreground text-xl sm:text-2xl">
                                 Edit Invoice #{existingInvoice?.displayNumber}
                             </DialogTitle>
-                            <DialogDescription className="text-gray-400 text-xs sm:text-sm">
+                            <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
                                 Update the details below to edit this invoice.
                             </DialogDescription>
                         </div>
@@ -585,7 +585,7 @@ export default function  EditInvoiceForm({
                             variant="ghost"
                             size="sm"
                             onClick={onClose}
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -596,39 +596,43 @@ export default function  EditInvoiceForm({
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                     <div className="space-y-4 sm:space-y-6">
                     {/* Shop information */}
-                    <h3 className="text-lg font-medium pl-6">Shop Information</h3>
-                    <div className="space-y-4 bg-[#1A1A1A] rounded-xl px-6 py-4">
+                    <h3 className="text-lg font-medium pl-6 text-foreground">Shop Information</h3>
+                    <div className="space-y-4 bg-slate-50 dark:bg-card rounded-xl px-6 py-4 border border-border">
                         <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="shopName">Shop Name</Label>
+                            <Label htmlFor="shopName" className="text-foreground">Shop Name</Label>
                             <Input
                                 id="shopName"
                                 value={shopName}
                                 disabled
+                                className="bg-white dark:bg-background text-foreground border-border"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="shopAddress">Address</Label>
+                            <Label htmlFor="shopAddress" className="text-foreground">Address</Label>
                             <Input
                                 id="shopAddress"
                                 value={shopAddress}
                                 disabled
+                                className="bg-white dark:bg-background text-foreground border-border"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="shopEmail">Email</Label>
+                            <Label htmlFor="shopEmail" className="text-foreground">Email</Label>
                             <Input
                                 id="shopEmail"
                                 value={shopEmail}
                                 disabled
+                                className="bg-white dark:bg-background text-foreground border-border"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="shopPhone">Phone</Label>
+                            <Label htmlFor="shopPhone" className="text-foreground">Phone</Label>
                             <Input
                                 id="shopPhone"
                                 value={formatPhoneNumber(shopPhone)}
                                 disabled
+                                className="bg-white dark:bg-background text-foreground border-border"
                             />
                         </div>
                     </div>
@@ -670,11 +674,11 @@ export default function  EditInvoiceForm({
                     />
 
                     {/* Invoice details */}
-                    <h3 className="text-lg font-medium pl-6">Invoice Details</h3>
-                    <div className="space-y-3 bg-[#1A1A1A] rounded-xl p-6">
-                        <label className="text-gray-300 text-sm font-medium mb-1 block">Invoice Date</label>
+                    <h3 className="text-lg font-medium pl-6 text-foreground">Invoice Details</h3>
+                    <div className="space-y-3 bg-slate-50 dark:bg-card rounded-xl p-6 border border-border">
+                        <label className="text-muted-foreground text-sm font-medium mb-1 block">Invoice Date</label>
                         <Input
-                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500"
+                            className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500"
                             type="date"
                             value={invoiceDate}
                             onChange={(e) => setInvoiceDate(e.target.value)}
@@ -682,10 +686,10 @@ export default function  EditInvoiceForm({
                         />
                         
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-x-4 gap-y-3">
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Title</label>
+                            <label className="text-muted-foreground text-sm self-center sm:col-span-1">Title</label>
                             <div className="sm:col-span-3">
                                 <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                                     placeholder="Enter a title for the invoice"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -693,75 +697,75 @@ export default function  EditInvoiceForm({
                                 />
                             </div>
                             
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">PO Number</label>
+                            <label className="text-muted-foreground text-sm self-center sm:col-span-1">PO Number</label>
                             <div className="sm:col-span-3">
                                 <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                                     placeholder="Enter PO number (optional)"
                                     value={poNumber}
                                     onChange={(e) => setPoNumber(e.target.value)}
                                 />
                             </div>
                             
-                            <label className="text-gray-300 text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Labour</label>
+                            <label className="text-muted-foreground text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Labour</label>
                             <InvoiceLineItems
                                 title="Labour"
                                 items={labourItems}
                                 onItemsChange={setLabourItems}
                             />
 
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Assigned To</label>
+                            <label className="text-muted-foreground text-sm self-center sm:col-span-1">Assigned To</label>
                             <div className="sm:col-span-3">
                                 <Select
                                     value={assignedTo}
                                     onValueChange={handleAssignedToChange}
                                 >
-                                    <SelectTrigger className="bg-[#1a1a1a] border-[#333] text-white w-full">
+                                    <SelectTrigger className="bg-white dark:bg-background border-border text-foreground w-full">
                                         <SelectValue placeholder="Select a staff member" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#1a1a1a] border-[#333] text-white">
+                                    <SelectContent className="bg-white dark:bg-background border-border text-foreground">
                                         <SelectItem value="none">
                                             Unassigned
                                         </SelectItem>
                                         {staffNames.map((staff) => (
                                             <SelectItem key={staff.id} value={staff.full_name}>
-                                                {staff.full_name} <span className="text-gray-400 text-xs">({staff.role})</span>
+                                                {staff.full_name} <span className="text-muted-foreground text-xs">({staff.role})</span>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
-                            <label className="text-gray-300 text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Parts</label>
+                            <label className="text-muted-foreground text-sm self-start sm:self-center sm:col-span-1 mt-1 sm:mt-0">Parts</label>
                             <InvoiceLineItems
                                 title="Parts"
                                 items={partsItems}
                                 onItemsChange={setPartsItems}
                             />
 
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Notes</label>
+                            <label className="text-muted-foreground text-sm self-center sm:col-span-1">Notes</label>
                             <div className="sm:col-span-3">
                                 <Textarea
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                                     placeholder="Enter any notes"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                 />
                             </div>
                             
-                            <label className="text-gray-300 text-sm self-center sm:col-span-1">Total Amount</label>
+                            <label className="text-muted-foreground text-sm self-center sm:col-span-1">Total Amount</label>
                             <div className="flex flex-col gap-1 items-start sm:col-span-3">
                                 <div className="flex flex-row justify-between w-full">
-                                    <span className="text-white text-base font-medium">Subtotal:</span>
-                                    <span className="text-white text-base font-medium">$ {parseFloat(total).toFixed(2)}</span>
+                                    <span className="text-foreground text-base font-medium">Subtotal:</span>
+                                    <span className="text-foreground text-base font-medium">$ {parseFloat(total).toFixed(2)}</span>
                                 </div>
                                 <div className="flex flex-row justify-between w-full">
-                                    <span className="text-gray-400 text-sm">Tax (13%):</span>
-                                    <span className="text-gray-300 text-sm">$ {(parseFloat(total) * 0.13).toFixed(2)}</span>
+                                    <span className="text-muted-foreground text-sm">Tax (13%):</span>
+                                    <span className="text-foreground text-sm">$ {(parseFloat(total) * 0.13).toFixed(2)}</span>
                                 </div>
-                                <div className="flex flex-row justify-between w-full border-t border-[#333] pt-1 mt-1">
-                                    <span className="text-white text-xl font-medium">Total:</span>
-                                    <span className="text-white text-xl">$ {(parseFloat(total) + (parseFloat(total) * 0.13)).toFixed(2)}</span>
+                                <div className="flex flex-row justify-between w-full border-t border-border pt-1 mt-1">
+                                    <span className="text-foreground text-xl font-medium">Total:</span>
+                                    <span className="text-green-600 dark:text-green-400 text-xl">$ {(parseFloat(total) + (parseFloat(total) * 0.13)).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -769,18 +773,18 @@ export default function  EditInvoiceForm({
                     </div>
                 </div>
                 
-                <DialogFooter className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:justify-between w-full px-6 py-4">
+                <DialogFooter className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:justify-between w-full px-6 py-4 bg-slate-50 dark:bg-card border-t border-border">
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto order-1 sm:order-2">
                         <Button 
                             variant="outline" 
                             onClick={onClose} 
-                            className="border border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white w-full sm:w-auto order-2 sm:order-1"
+                            className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground w-full sm:w-auto order-2 sm:order-1"
                             disabled={isSubmitting}
                         >
                             Cancel
                         </Button>
                         <Button 
-                            className="bg-[#22C55E] text-white hover:bg-[#22C55E]/80 w-full sm:w-auto order-1 sm:order-2" 
+                            className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto order-1 sm:order-2" 
                             onClick={handleSave}
                             disabled={isSubmitting}
                         >

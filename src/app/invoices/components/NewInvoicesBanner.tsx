@@ -13,16 +13,16 @@ export function NewInvoicesBanner() {
     }
 
     return (
-        <div className="bg-gradient-to-r from-red-600/20 to-orange-600/20 border-b border-red-500/30">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-600/20 dark:to-orange-600/20 border-b border-red-300 dark:border-red-500/30">
             <div className="max-w-7xl mx-auto px-6 py-3">
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1">
-                        <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                        <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                         <div className="flex-1">
-                            <p className="text-white font-medium text-sm">
+                            <p className="text-foreground font-medium text-sm">
                                 Checkout the new refreshed invoices
                             </p>
-                            <p className="text-gray-300 text-xs mt-0.5">
+                            <p className="text-muted-foreground text-xs mt-0.5">
                                 Experience our improved invoice management system
                             </p>
                         </div>

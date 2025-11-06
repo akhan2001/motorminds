@@ -46,13 +46,13 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
 
     return (
         <div className="sm:col-span-3 space-y-4">
-            <h3 className="text-lg font-medium">{title}</h3>
+            <h3 className="text-lg font-medium text-foreground">{title}</h3>
             {items.map((item, index) => (
                 <div key={item.id} className="flex items-end gap-2">
                     <div className="flex-grow">
-                        {index === 0 && <Label className="text-xs text-gray-400">Description</Label>}
+                        {index === 0 && <Label className="text-xs text-muted-foreground">Description</Label>}
                         <Input
-                            className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full"
+                            className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full"
                             placeholder={`Enter ${title.toLowerCase()} description`}
                             value={item.description}
                             onChange={(e) => updateItem(item.id, 'description', e.target.value)}
@@ -60,9 +60,9 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                     </div>
                      {title === 'Parts' && (
                         <div className="w-20">
-                            {index === 0 && <Label className="text-xs text-gray-400">Qty</Label>}
+                            {index === 0 && <Label className="text-xs text-muted-foreground">Qty</Label>}
                             <Input
-                                className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full text-center"
+                                className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full text-center"
                                 placeholder="1"
                                 type="number"
                                 value={item.quantity ?? '1'}
@@ -75,11 +75,11 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                     )}
                     {title === 'Parts' && (
                          <div className="w-32">
-                            {index === 0 && <Label className="text-xs text-gray-400">Shop Cost</Label>}
+                            {index === 0 && <Label className="text-xs text-muted-foreground">Shop Cost</Label>}
                             <div className="relative">
-                                <span className="text-gray-300 text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
+                                <span className="text-muted-foreground text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
                                 <Input
-                                    className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full pl-6"
+                                    className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full pl-6"
                                     placeholder="0.00"
                                     type="number"
                                     value={item.shop_cost ?? '0'}
@@ -92,11 +92,11 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                         </div>
                     )}
                     <div className="w-32">
-                        {index === 0 && <Label className="text-xs text-gray-400">Price</Label>}
+                        {index === 0 && <Label className="text-xs text-muted-foreground">Price</Label>}
                         <div className="relative">
-                            <span className="text-gray-300 text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
+                            <span className="text-muted-foreground text-md self-center absolute left-2 top-1/2 -translate-y-1/2">$</span>
                             <Input
-                                className="bg-[#0000] text-white text-sm border-[#626262] focus:ring-gray-500 w-full pl-6"
+                                className="bg-white dark:bg-background text-foreground text-sm border-border focus:ring-red-600 dark:focus:ring-red-500 w-full pl-6"
                                 placeholder="0.00"
                                 type="number"
                                 value={item.cost}
@@ -112,7 +112,7 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="bg-[#292929] border-[#626262] text-red-400 hover:bg-red-600 hover:text-white"
+                            className="bg-white dark:bg-background border-border text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-600 hover:text-red-700 dark:hover:text-white"
                             onClick={() => removeItem(item.id)}
                         >
                             <MinusIcon className="h-4 w-4" />
@@ -125,7 +125,7 @@ export function InvoiceLineItems({ title, items, onItemsChange }: InvoiceLineIte
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="bg-[#292929] border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                    className="bg-white dark:bg-background border-border text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted hover:text-foreground"
                     onClick={addItem}
                 >
                     <PlusIcon className="h-4 w-4 mr-2" />
