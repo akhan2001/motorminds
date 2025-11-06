@@ -219,7 +219,7 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                             </div>
                             <div className="flex justify-between p-1.5 flex-1 bg-indigo-200">
                                 <span className="text-[9pt] font-bold text-blue-900 ">TOTAL</span>
-                                <span className="text-[10pt] font-bold text-blue-900">{formatCurrency(invoice.total_amount)}</span>
+                                <span className="text-[10pt] font-bold text-blue-900">{formatCurrency(total)}</span>
                             </div>
                         </div>
                     </div>

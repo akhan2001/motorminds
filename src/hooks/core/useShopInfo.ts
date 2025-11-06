@@ -11,6 +11,7 @@ interface ShopInfo {
     shop_address?: string
     shop_city?: string
     shop_province?: string
+    business_number?: string
 }
 
 export function useShopInfo() {
@@ -36,7 +37,7 @@ export function useShopInfo() {
                 // Get shop information
                 const { data: shopData, error: shopError } = await supabase
                     .from('shops')
-                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province')
+                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
                     .eq('id', userData.shop_id)
                     .single()
 

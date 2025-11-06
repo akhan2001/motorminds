@@ -10,6 +10,7 @@ export interface ShopBranding {
     shop_address?: string
     shop_city?: string
     shop_province?: string
+    business_number?: string
 }
 
 export interface InvoicePDFData {
