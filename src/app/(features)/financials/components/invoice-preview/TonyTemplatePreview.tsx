@@ -18,14 +18,24 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
 
     // Calculate totals - only active items
     const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false)
+    
+    // Calculate subtotal - discounts subtract from subtotal, all other items add
     const subtotal = activeItems.reduce((sum, item) => {
+        if ((item as any).item_type === 'discount') {
+            return sum - item.total_price
+        }
         return sum + item.total_price
     }, 0)
 
-    // Calculate tax (assuming 13% HST for Ontario)
-    const taxRate = 0.13
-    const taxAmount = subtotal * taxRate
-    const total = subtotal + taxAmount
+    // Calculate tax - tax_rate can be 0 or null if tax is disabled
+    const taxRate = invoice.tax_rate ?? 0
+    const taxAmount = taxRate > 0 ? subtotal * taxRate : 0
+    
+    // Get discount amount from invoice (separate from discount items)
+    const discountAmount = invoice.discount_amount || 0
+    
+    // Calculate total: subtotal + tax - discount
+    const total = subtotal + taxAmount - discountAmount
 
     // Create empty rows to fill the table (max 20 rows)  
     const maxRows = 20
@@ -170,14 +180,15 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                                     <tr key={item.id} className="border-l border-r border-[#cbd5e0]" style={{ height: '20px' }}>
                                         <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type || ''}</td>
                                         <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}</td>
-                                        <td className="text-left text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
+                                        <td className="text-left text-[10pt] text-blue-900 py-0.5 px-2 border-r border-[#cbd5e0]">
                                             {item.description}
                                         </td>
                                         <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
+                                            {/* If item is discount show - in red */}
                                             {formatCurrency(item.unit_price)}
                                         </td>
                                         <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5">
-                                            {formatCurrency(item.total_price)}
+                                            {item.item_type === 'discount' ? <span className="text-red-600">-{formatCurrency(item.total_price)}</span> : formatCurrency(item.total_price)}
                                         </td>
                                     </tr>
                                 ))}
@@ -213,10 +224,12 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                                 <span className="text-[9pt] font-bold text-blue-900">SUBTOTAL</span>
                                 <span className="text-[10pt] font-bold text-blue-900">{formatCurrency(subtotal)}</span>
                             </div>
-                            <div className="flex justify-between p-1.5 border-b border-[#cbd5e0]">
-                                <span className="text-[9pt] font-bold text-blue-900">TAX (HST)</span>
-                                <span className="text-[10pt] font-bold text-blue-900">{formatCurrency(taxAmount)}</span>
-                            </div>
+                            {taxRate > 0 && (
+                                <div className="flex justify-between p-1.5 border-b border-[#cbd5e0]">
+                                    <span className="text-[9pt] font-bold text-blue-900">TAX (HST)</span>
+                                    <span className="text-[10pt] font-bold text-blue-900">{formatCurrency(taxAmount)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between p-1.5 flex-1 bg-indigo-200">
                                 <span className="text-[9pt] font-bold text-blue-900 ">TOTAL</span>
                                 <span className="text-[10pt] font-bold text-blue-900">{formatCurrency(total)}</span>

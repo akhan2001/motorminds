@@ -339,14 +339,24 @@ export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
 
     // Calculate totals - only active items
     const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false)
+    
+    // Calculate subtotal - discounts subtract from subtotal, all other items add
     const subtotal = activeItems.reduce((sum, item) => {
+        if ((item as any).item_type === 'discount') {
+            return sum - item.total_price
+        }
         return sum + item.total_price
     }, 0)
 
-    // Calculate tax (assuming 13% HST for Ontario)
-    const taxRate = 0.13
-    const taxAmount = subtotal * taxRate
-    const total = subtotal + taxAmount
+    // Calculate tax - tax_rate can be 0 or null if tax is disabled
+    const taxRate = invoice.tax_rate ?? 0
+    const taxAmount = taxRate > 0 ? subtotal * taxRate : 0
+    
+    // Get discount amount from invoice (separate from discount items)
+    const discountAmount = invoice.discount_amount || 0
+    
+    // Calculate total: subtotal + tax - discount
+    const total = subtotal + taxAmount - discountAmount
 
     // Create empty rows to fill the table (max 20 rows)
     const maxRows = 20
@@ -538,13 +548,21 @@ export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
                                         <Text style={styles.totalLabel}>SUBTOTAL</Text>
                                         <Text style={styles.totalAmount}>{formatCurrency(subtotal)}</Text>
                                     </View>
-                                    <View style={styles.totalRow}>
-                                        <Text style={styles.totalLabel}>TAX (HST)</Text>
-                                        <Text style={styles.totalAmount}>{formatCurrency(taxAmount)}</Text>
-                                    </View>
+                                    {taxRate > 0 && (
+                                        <View style={styles.totalRow}>
+                                            <Text style={styles.totalLabel}>TAX (HST)</Text>
+                                            <Text style={styles.totalAmount}>{formatCurrency(taxAmount)}</Text>
+                                        </View>
+                                    )}
+                                    {discountAmount > 0 && (
+                                        <View style={styles.totalRow}>
+                                            <Text style={styles.totalLabel}>DISCOUNT</Text>
+                                            <Text style={styles.totalAmount}>-{formatCurrency(discountAmount)}</Text>
+                                        </View>
+                                    )}
                                     <View style={[styles.totalRow, styles.totalRowLast]}>
                                         <Text style={styles.totalLabel}>TOTAL</Text>
-                                        <Text style={styles.totalAmount}>{formatCurrency(invoice.total_amount)}</Text>
+                                        <Text style={styles.totalAmount}>{formatCurrency(total)}</Text>
                                     </View>
                                 </View>
                             </View>
