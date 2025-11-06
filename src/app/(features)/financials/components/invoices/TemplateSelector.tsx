@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { getAvailableTemplates } from '../../lib/pdf/template-registry'
 import type { TemplateId } from '../../types/invoice-pdf'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
 
 interface TemplateSelectorProps {
     selectedTemplateId: TemplateId
@@ -29,8 +30,16 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     size = 'sm',
     className,
 }) => {
-    const templates = getAvailableTemplates()
+    const { data: shopInfo } = useShopInfo()
+    const templates = getAvailableTemplates(shopInfo?.shop_name)
     const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
+    
+    // If selected template is not available (e.g., user switched shops), reset to professional
+    React.useEffect(() => {
+        if (selectedTemplateId && !templates.find(t => t.id === selectedTemplateId)) {
+            onTemplateChange('professional')
+        }
+    }, [selectedTemplateId, templates, onTemplateChange])
 
     return (
         <DropdownMenu>

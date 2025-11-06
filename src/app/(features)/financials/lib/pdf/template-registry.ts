@@ -50,7 +50,19 @@ export const getTemplate = (templateId: string) => {
 }
 
 // Helper to get all available templates
-export const getAvailableTemplates = () => {
-    return Object.values(TEMPLATE_METADATA)
+// Filters templates based on shop restrictions
+export const getAvailableTemplates = (shopName?: string | null) => {
+    const allTemplates = Object.values(TEMPLATE_METADATA)
+    
+    // Filter out restricted templates
+    return allTemplates.filter(template => {
+        // Tony template is only available for Good Guyz Garage
+        if (template.id === 'tony') {
+            return shopName?.toLowerCase() === 'good guyz garage'
+        }
+        
+        // All other templates are available to everyone
+        return true
+    })
 }
 

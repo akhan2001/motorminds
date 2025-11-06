@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Loader2, AlertCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/common/feedback/loading-states";
+import { useAuth } from "../../operations/hooks/use-auth";
 import InvoiceHeader from "../components/invoices/InvoiceHeader";
 import InvoiceList from "../components/invoices/InvoiceList";
 import InvoiceDashboard from "../components/invoices/InvoiceDashboard";
@@ -17,6 +18,9 @@ function InvoicesContent() {
     // Navigation
     const router = useRouter()
     const searchParams = useSearchParams()
+    
+    // Auth state
+    const { isLoading: isAuthLoading } = useAuth()
     
     // State
     const [searchValue, setSearchValue] = useState('')
@@ -50,6 +54,26 @@ function InvoicesContent() {
         // Refresh the invoice list or handle the created invoice
         setShowNewInvoiceDialog(false)
         // You might want to refresh the list here
+    }
+
+    // Show loading spinner while auth is loading
+    if (isAuthLoading) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                <Nav />
+                <div className="flex-1 flex items-center justify-center">
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <LoadingSpinner size="md" className="text-red-500" />
+                            <div>
+                                <p className="text-foreground dark:text-white font-medium">Loading Invoices</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm">Please wait...</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
     }
 
     return (

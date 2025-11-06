@@ -3,16 +3,36 @@ import { createElement } from 'react'
 import { getTemplate } from './template-registry'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import type { ShopBranding, InvoicePDFData } from '../../types/invoice-pdf'
+import { generateInvoicePDFFromHTML } from './html-pdf-generator'
 
 /**
  * Generate PDF blob from invoice data
+ * For 'tony' template, uses HTML-to-PDF conversion for exact match with preview
+ * For other templates, uses @react-pdf/renderer
  * Optimized for performance - generates on-demand, no caching
  */
 export async function generateInvoicePDF(
     invoice: InvoiceWithDetails,
     shop: ShopBranding,
-    templateId: string = 'professional'
+    templateId: string = 'professional',
+    htmlElement?: HTMLElement // Optional HTML element for HTML-to-PDF conversion (tony template)
 ): Promise<Blob> {
+    // Validate template access restrictions
+    if (templateId === 'tony') {
+        // Tony template is only available for Good Guyz Garage
+        if (shop.shop_name.toLowerCase() !== 'good guyz garage') {
+            throw new Error('Tony template is only available for Good Guyz Garage')
+        }
+    }
+    
+    // Special handling for tony template - use HTML-to-PDF
+    if (templateId === 'tony' && htmlElement) {
+        // For HTML-to-PDF, we need to generate the PDF directly (not return a blob)
+        // This is handled differently - see generateInvoicePDFFromHTMLElement
+        throw new Error('Use generateInvoicePDFFromHTMLElement for tony template')
+    }
+
+    // Standard React-PDF generation for other templates
     const template = getTemplate(templateId)
     const TemplateComponent = template.component
 
@@ -25,6 +45,18 @@ export async function generateInvoicePDF(
     const blob = await doc.toBlob()
 
     return blob
+}
+
+/**
+ * Generate PDF from HTML element (specifically for tony template)
+ * This ensures the PDF matches the preview exactly
+ */
+export async function generateInvoicePDFFromHTMLElement(
+    htmlElement: HTMLElement,
+    invoice: InvoiceWithDetails
+): Promise<void> {
+    const filename = getInvoiceFilename(invoice)
+    await generateInvoicePDFFromHTML(htmlElement, filename)
 }
 
 /**

@@ -21,7 +21,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
     onInvoiceClick,
     selectedInvoiceId
 }) => {
-    const { shopId } = useAuth()
+    const { shopId, isLoading: isAuthLoading } = useAuth()
     const { data: invoices, isLoading, error } = useInvoices(shopId || '')
 
     // Filter invoices based on search
@@ -39,7 +39,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
         )
     }, [invoices, searchValue])
 
-    if (isLoading) {
+    // Show loading if auth is loading or if shopId is not available yet
+    if (isAuthLoading || !shopId || isLoading) {
         return (
             <div className="h-full space-y-4">
                 <div className="flex items-center justify-between mb-4">
@@ -69,7 +70,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
         )
     }
 
-    if (filteredInvoices.length === 0) {
+    // Only show "no invoices" if we have successfully loaded data (even if empty) - not while loading or before shopId is available
+    if (!isAuthLoading && shopId && !isLoading && invoices !== undefined && filteredInvoices.length === 0) {
         return (
             <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                 <div className="flex flex-col items-center justify-center text-center">

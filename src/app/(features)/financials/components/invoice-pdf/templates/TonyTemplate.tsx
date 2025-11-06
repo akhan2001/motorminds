@@ -1,313 +1,324 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
 
 const styles = StyleSheet.create({
     page: {
-        padding: 15, // ~12-15mm margins on all sides
+        padding: 12,
         fontSize: 10,
         fontFamily: 'Helvetica',
         backgroundColor: '#ffffff',
-        width: '100%',
-        height: '100%',
     },
-    header: {
-        backgroundColor: '#4a5568',
-        padding: 12,
-        paddingTop: 10,
-        paddingBottom: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+    // Top section container
+    topSection: {
         marginBottom: 8,
-        minHeight: 45, // ~45-50mm header height
     },
-    logoSection: {
+    // Top row: logo | tagline+address | business info
+    topRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        minHeight: 45,
+        paddingHorizontal: 8,
+        paddingVertical: 8,
     },
-    logoBox: {
-        backgroundColor: '#ffffff',
-        padding: 8,
-        marginRight: 15,
-        borderRadius: 4,
+    topCol1: {
+        width: '33%',
+        paddingLeft: 4,
+        backgroundColor: '#000000',
+    },
+    topCol2: {
+        width: '33%',
+        paddingHorizontal: 4,
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    topCol3: {
+        width: '30%',
+        textAlign: 'left',
     },
     logoText: {
-        fontSize: 14, // ~14pt for "GOOD GUYZ GARAGE"
+        fontSize: 14,
         fontWeight: 'bold',
-        color: '#2d3748',
+        color: '#1e40af',
         letterSpacing: 2,
     },
     logoSubtext: {
         fontSize: 8,
-        color: '#2d3748',
+        color: '#1e40af',
         letterSpacing: 1,
         marginTop: 2,
     },
     tagline: {
-        color: '#ffffff',
+        color: '#1e40af',
         fontSize: 12,
         fontStyle: 'italic',
-        marginLeft: 10,
+        marginBottom: 4,
     },
-    headerRight: {
-        color: '#ffffff',
-        textAlign: 'right',
-        fontSize: 9,
+    address: {
+        color: '#1e40af',
+        fontSize: 12,
+        lineHeight: 1.4,
+        fontWeight: 'bold',
     },
     businessNumber: {
         fontSize: 8,
-        marginBottom: 2,
+        color: '#1e40af',
+        fontWeight: 'bold',
+        marginBottom: 4,
     },
     invoiceNumber: {
-        fontSize: 11, // 10-11pt bold for Invoice No./Date
-        fontWeight: 'bold',
-        marginBottom: 2,
+        fontSize: 8,
+        color: '#1e40af',
     },
     date: {
-        fontSize: 11,
-        fontWeight: 'bold',
+        fontSize: 8,
+        color: '#1e40af',
     },
-    contactInfo: {
-        backgroundColor: '#e2e8f0',
-        padding: 10,
+    // Customer/Vehicle/Payment row
+    infoRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        borderBottom: 1,
-        borderBottomColor: '#cbd5e0',
-        marginBottom: 8,
+        padding: 8,
+        marginBottom: 6,
     },
-    address: {
-        fontSize: 10, // ~10pt for address/phone
-        fontWeight: 'bold',
-        color: '#2d3748',
-        lineHeight: 1.3,
+    infoCol1: {
+        width: '40%',
+        paddingRight: 8,
     },
-    phone: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#2d3748',
-        marginTop: 4,
+    infoCol2: {
+        width: '35%',
+        paddingHorizontal: 8,
     },
-    customerSection: {
-        padding: 12,
-        paddingTop: 10,
-        paddingBottom: 10,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        borderBottom: 1,
-        borderBottomColor: '#e2e8f0',
-        marginBottom: 8,
-    },
-    customerInfo: {
-        flex: 1,
-    },
-    vehicleInfo: {
-        flex: 1,
-        marginLeft: 30,
-    },
-    paymentInfo: {
-        flex: 1,
-        marginLeft: 30,
+    infoCol3: {
+        width: '25%',
+        paddingLeft: 8,
     },
     sectionLabel: {
-        fontSize: 10, // ~10pt bold labels
-        color: '#4a5568',
-        fontWeight: 'bold',
+        fontSize: 8,
+        color: '#1e40af',
         marginBottom: 4,
         textTransform: 'uppercase',
     },
+    fieldRow: {
+        flexDirection: 'row',
+        marginBottom: 4,
+    },
     fieldLabel: {
-        fontSize: 10,
-        color: '#4a5568',
-        marginBottom: 2,
-        fontWeight: 'bold',
+        fontSize: 8,
+        color: '#1e40af',
     },
     fieldValue: {
-        fontSize: 10, // ~10pt for input fields
-        color: '#2d3748',
-        marginBottom: 6,
-        borderBottom: 1,
-        borderBottomColor: '#e2e8f0',
-        paddingBottom: 2,
-        minHeight: 14,
+        fontSize: 8,
+        color: '#1e40af',
+        flex: 1,
+        minHeight: 12,
+        marginLeft: 4,
     },
-    canadianOwned: {
+    checkboxRow: {
+        flexDirection: 'column',
+        marginBottom: 4,
+    },
+    checkbox: {
+        fontSize: 8,
+        color: '#1e40af',
+    },
+    // Canadian banner
+    canadianBanner: {
         textAlign: 'center',
-        padding: 8,
-        backgroundColor: '#f7fafc',
-        borderBottom: 1,
-        borderBottomColor: '#e2e8f0',
+        paddingVertical: 4,
+        marginBottom: 6,
     },
     canadianText: {
         fontSize: 9,
-        color: '#4a5568',
         fontWeight: 'bold',
+        color: '#1e40af',
     },
     maple: {
         color: '#e53e3e',
         fontSize: 12,
         marginRight: 4,
     },
+    // Middle section - Items table
+    middleSection: {
+        flex: 1,
+        marginBottom: 6,
+        flexDirection: 'column',
+    },
     itemsTable: {
-        margin: 12,
-        marginTop: 8,
-        marginBottom: 0,
-        flex: 1, // Table fills ~60% of page height
+        marginBottom: 6,
+        flex: 1,
+        flexDirection: 'column',
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: '#4a5568',
-        padding: 8,
-        paddingTop: 6,
-        paddingBottom: 6,
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
+        backgroundColor: '#c7d2fe',
+        padding: 6,
+        borderWidth: 1,
+        borderColor: '#a5b4fc',
     },
     tableHeaderText: {
-        color: '#ffffff',
-        fontSize: 11, // ~11pt bold for headers
+        color: '#1e3a8a',
+        fontSize: 11,
         fontWeight: 'bold',
         textAlign: 'center',
+        paddingHorizontal: 6,
+    },
+    tableHeaderCell: {
+        borderRightWidth: 1,
+        borderRightColor: '#a5b4fc',
     },
     itemNoHeader: {
-        width: '12%', // Exact: Item No. 12%
+        width: '12%',
     },
     quantityHeader: {
-        width: '10%', // Updated: Quantity 10%
+        width: '10%',
     },
     descriptionHeader: {
-        width: '48%', // Updated: Description 48%
-        textAlign: 'left',
+        width: '48%',
+        textAlign: 'center',
     },
     unitPriceHeader: {
-        width: '15%', // Unit Price 15%
+        width: '15%',
     },
     amountHeader: {
-        width: '15%', // Amount 15%
+        width: '15%',
     },
     tableRow: {
         flexDirection: 'row',
-        borderLeft: 1,
+        borderLeftWidth: 1,
         borderLeftColor: '#cbd5e0',
-        borderRight: 1,
+        borderRightWidth: 1,
         borderRightColor: '#cbd5e0',
-        borderBottom: 1,
-        borderBottomColor: '#cbd5e0',
-        minHeight: 20, // ~18-20mm row height (20pt ≈ 18mm)
+        height: 24,
         alignItems: 'center',
         padding: 4,
-        paddingTop: 6,
-        paddingBottom: 6,
     },
     tableCell: {
-        fontSize: 10, // ~10pt regular for table rows
-        color: '#2d3748',
+        fontSize: 9,
+        color: '#1e40af',
         textAlign: 'center',
+    },
+    tableCellBorder: {
+        borderRightWidth: 1,
+        borderRightColor: '#cbd5e0',
         paddingHorizontal: 4,
+        paddingVertical: 4,
     },
     descriptionCell: {
         textAlign: 'left',
     },
     emptyRow: {
-        height: 20, // Match row height
+        height: 24,
     },
-    commentsSection: {
-        margin: 15,
-        marginTop: 0,
-        marginBottom: 10,
+    // Unified grid layout for comments, totals, invoice comments, signature
+    unifiedGrid: {
+        marginTop: 8,
+        flexDirection: 'column',
+    },
+    // Row 1: Comments and Totals
+    commentsTotalsRow: {
+        flexDirection: 'row',
+        marginBottom: 8,
+    },
+    commentsCol: {
+        width: '70%',
+        paddingRight: 8,
+    },
+    totalsCol: {
+        width: '30%',
     },
     commentsBox: {
-        borderTop: 1,
-        borderTopColor: '#cbd5e0',
-        borderRight: 1,
-        borderRightColor: '#cbd5e0',
-        borderBottom: 1,
-        borderBottomColor: '#cbd5e0',
-        borderLeft: 1,
-        borderLeftColor: '#cbd5e0',
-        minHeight: 30, // ~25-30mm height for comments area
-        padding: 8,
-        backgroundColor: '#f7fafc',
+        borderWidth: 1,
+        borderColor: '#cbd5e0',
+        padding: 6,
+        flexDirection: 'column',
+        minHeight: 40,
     },
     commentsLabel: {
         fontSize: 8,
-        color: '#4a5568',
         fontWeight: 'bold',
+        color: '#1e40af',
         marginBottom: 4,
     },
-    totalSection: {
-        margin: 15,
-        marginTop: 0,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
+    commentsText: {
+        fontSize: 7,
+        color: '#1e40af',
+        lineHeight: 1.2,
+        fontStyle: 'italic',
+        flex: 1,
     },
-    totalBox: {
-        width: 150,
-        borderTop: 1,
-        borderTopColor: '#cbd5e0',
-        borderRight: 1,
-        borderRightColor: '#cbd5e0',
-        borderBottom: 1,
-        borderBottomColor: '#cbd5e0',
-        borderLeft: 1,
-        borderLeftColor: '#cbd5e0',
+    totalsBox: {
+        borderWidth: 1,
+        borderColor: '#cbd5e0',
+        flexDirection: 'column',
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         padding: 6,
-        borderBottom: 1,
-        borderBottomColor: '#e2e8f0',
+        borderBottomWidth: 1,
+        borderBottomColor: '#cbd5e0',
+    },
+    totalRowLast: {
+        flex: 1,
+        backgroundColor: '#c7d2fe',
     },
     totalLabel: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: 'bold',
-        color: '#2d3748',
+        color: '#1e40af',
     },
     totalAmount: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: 'bold',
-        color: '#2d3748',
+        color: '#1e40af',
     },
-    terms: {
-        margin: 15,
-        marginTop: 10,
-        padding: 10,
-        backgroundColor: '#f7fafc',
-        borderTop: 1,
-        borderTopColor: '#e2e8f0',
-        borderRight: 1,
-        borderRightColor: '#e2e8f0',
-        borderBottom: 1,
-        borderBottomColor: '#e2e8f0',
-        borderLeft: 1,
-        borderLeftColor: '#e2e8f0',
+    // Row 2: Invoice Comments
+    invoiceCommentsBox: {
+        padding: 6,
+        borderWidth: 1,
+        borderColor: '#cbd5e0',
+        marginBottom: 8,
     },
-    termsText: {
-        fontSize: 9, // ~9pt italic/small for disclaimers
-        color: '#4a5568',
-        lineHeight: 1.3,
-        marginBottom: 3,
+    invoiceCommentsText: {
+        fontSize: 9,
+        color: '#1e40af',
+        lineHeight: 1.2,
         fontStyle: 'italic',
+        marginBottom: 4,
     },
-    signature: {
-        margin: 15,
-        marginTop: 10,
+    invoiceCommentsTextRegular: {
+        fontSize: 8,
+        color: '#1e40af',
+        lineHeight: 1.2,
+        marginBottom: 4,
+    },
+    // Row 3: Signature and Date - 4 columns
+    signatureRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'flex-end',
+        marginTop: 8,
     },
-    signatureBox: {
-        width: '45%',
-        borderBottom: 1,
+    signatureCol1: {
+        // Customer Acceptance text - auto width
+    },
+    signatureCol2: {
+        width: '50%',
+        borderBottomWidth: 1,
+        borderBottomColor: '#2d3748',
+        paddingBottom: 2,
+    },
+    signatureCol3: {
+        // Date text - auto width
+    },
+    signatureCol4: {
+        flex: 1,
+        borderBottomWidth: 1,
         borderBottomColor: '#2d3748',
         paddingBottom: 2,
     },
     signatureLabel: {
         fontSize: 8,
-        color: '#4a5568',
+        color: '#1e40af',
         textAlign: 'center',
         marginTop: 4,
     },
@@ -319,10 +330,10 @@ export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
     }
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-CA', { 
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit' 
+        return new Date(dateString).toLocaleDateString('en-CA', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
         })
     }
 
@@ -332,177 +343,240 @@ export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
         return sum + item.total_price
     }, 0)
 
-    // Create empty rows to fill the table (minimum 10 rows)
-    const minRows = 10
-    const emptyRowsNeeded = Math.max(0, minRows - activeItems.length)
+    // Calculate tax (assuming 13% HST for Ontario)
+    const taxRate = 0.13
+    const taxAmount = subtotal * taxRate
+    const total = subtotal + taxAmount
+
+    // Create empty rows to fill the table (max 20 rows)
+    const maxRows = 20
+    const rowsToShow = Math.min(activeItems.length, maxRows)
+    const emptyRowsNeeded = Math.max(0, maxRows - rowsToShow)
     const emptyRows = Array(emptyRowsNeeded).fill(null)
+    const displayedItems = activeItems.slice(0, maxRows)
 
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Header with logo and business info */}
-                <View style={styles.header}>
-                    <View style={styles.logoSection}>
-                        <View style={styles.logoBox}>
+                {/* TOP SECTION */}
+                <View style={styles.topSection}>
+                    {/* Row 1: Logo | Tagline+Address | Business Info */}
+                    <View style={styles.topRow}>
+                        <View style={styles.topCol1}>
                             <Text style={styles.logoText}>GOOD</Text>
                             <Text style={styles.logoText}>GUYZ</Text>
                             <Text style={styles.logoSubtext}>G A R A G E</Text>
                         </View>
-                        <Text style={styles.tagline}>"By Name. By Reputation."</Text>
-                    </View>
-                    <View style={styles.headerRight}>
-                        <Text style={styles.businessNumber}>BUSINESS NO.: 894510635RT</Text>
-                        <Text style={styles.invoiceNumber}>INVOICE NO.: {invoice.display_id || invoice.invoice_number}</Text>
-                        <Text style={styles.date}>DATE: {formatDate(invoice.issue_date)}</Text>
-                    </View>
-                </View>
-
-                {/* Contact Information */}
-                <View style={styles.contactInfo}>
-                    <Text style={styles.address}>
-                        75 LODGE ST.,{'\n'}
-                        WATERLOO, ON N2J 2V5
-                    </Text>
-                    <Text style={styles.phone}>(519) 885-1321</Text>
-                </View>
-
-                {/* Customer, Vehicle, and Payment Info */}
-                <View style={styles.customerSection}>
-                    <View style={styles.customerInfo}>
-                        <Text style={styles.sectionLabel}>Customer Name</Text>
-                        <Text style={styles.fieldValue}>{invoice.customer?.customer_name || ''}</Text>
-                        
-                        <Text style={styles.fieldLabel}>Address</Text>
-                        <Text style={styles.fieldValue}>{invoice.customer?.customer_address || ''}</Text>
-                        
-                        <Text style={styles.fieldLabel}>City, Prov</Text>
-                        <Text style={styles.fieldValue}></Text>
-                        
-                        <Text style={styles.fieldLabel}>Postal Code</Text>
-                        <Text style={styles.fieldValue}></Text>
-                        
-                        <Text style={styles.fieldLabel}>Telephone</Text>
-                        <Text style={styles.fieldValue}>{invoice.customer?.customer_phone || ''}</Text>
+                        <View style={styles.topCol2}>
+                            <Text style={styles.tagline}>"By Name. By Reputation."</Text>
+                            <Text style={styles.address}>
+                                75 LODGE ST.,{'\n'}
+                                WATERLOO, ON N2J 2V5{'\n'}
+                                (519) 885-1321
+                            </Text>
+                        </View>
+                        <View style={styles.topCol3}>
+                            <Text style={styles.businessNumber}>BUSINESS NO.: 894510635RT</Text>
+                            <Text style={styles.invoiceNumber}>INVOICE NO.: {invoice.display_id || invoice.invoice_number}</Text>
+                            <Text style={styles.date}>DATE: {formatDate(invoice.issue_date)}</Text>
+                        </View>
                     </View>
 
-                    <View style={styles.vehicleInfo}>
-                        <Text style={styles.sectionLabel}>Make</Text>
-                        <Text style={styles.fieldValue}>{invoice.vehicle?.make || ''}</Text>
-                        
-                        <Text style={styles.fieldLabel}>Model</Text>
-                        <Text style={styles.fieldValue}>{invoice.vehicle?.model || ''}</Text>
-                        
-                        <Text style={styles.fieldLabel}>Year</Text>
-                        <Text style={styles.fieldValue}>{invoice.vehicle?.year || ''}</Text>
-                        
-                        <Text style={styles.fieldLabel}>Plate</Text>
-                        <Text style={styles.fieldValue}>{invoice.vehicle?.license_plate || ''}</Text>
-                        
-                        <Text style={styles.fieldLabel}>Odometer</Text>
-                        <Text style={styles.fieldValue}></Text>
-                    </View>
+                    {/* Row 2: Customer | Vehicle | Payment Method */}
+                    <View style={styles.infoRow}>
+                        <View style={styles.infoCol1}>
+                            <Text style={styles.sectionLabel}>Customer Information</Text>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>CUSTOMER NAME:</Text>
+                                <Text style={styles.fieldValue}>{invoice.customer?.customer_name || ''}</Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>ADDRESS:</Text>
+                                <Text style={styles.fieldValue}>{invoice.customer?.customer_address || ''}</Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>CITY, PROV:</Text>
+                                <Text style={styles.fieldValue}></Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>POSTAL CODE:</Text>
+                                <Text style={styles.fieldValue}></Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>TELEPHONE:</Text>
+                                <Text style={styles.fieldValue}>{invoice.customer?.customer_phone || ''}</Text>
+                            </View>
+                        </View>
 
-                    <View style={styles.paymentInfo}>
-                        <Text style={styles.sectionLabel}>Method of Payment</Text>
-                        <Text style={styles.fieldLabel}>Cash ☐</Text>
-                        <Text style={styles.fieldLabel}>Charge ☐</Text>
-                        <Text style={styles.fieldLabel}>Debit ☐</Text>
+                        <View style={styles.infoCol2}>
+                            <Text style={styles.sectionLabel}>Vehicle Information</Text>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>MAKE:</Text>
+                                <Text style={styles.fieldValue}> {invoice.vehicle?.make || ''}</Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>MODEL:</Text>
+                                <Text style={styles.fieldValue}> {invoice.vehicle?.model || ''}</Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>YEAR:</Text>
+                                <Text style={styles.fieldValue}> {invoice.vehicle?.year || ''}</Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>PLATE:</Text>
+                                <Text style={styles.fieldValue}> {invoice.vehicle?.license_plate || ''}</Text>
+                            </View>
+                            <View style={styles.fieldRow}>
+                                <Text style={styles.fieldLabel}>ODOMETER:</Text>
+                                <Text style={styles.fieldValue}></Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.infoCol3}>
+                            <Text style={styles.sectionLabel}>Method of Payment</Text>
+                            <View style={styles.checkboxRow}>
+                                <Text style={styles.checkbox}>☐     Cash</Text>
+                            </View>
+                            <View style={styles.checkboxRow}>
+                                <Text style={styles.checkbox}>☐     Charge</Text>
+                            </View>
+                            <View style={styles.checkboxRow}>
+                                <Text style={styles.checkbox}>☐     Debit</Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 
                 {/* Canadian Owned Banner */}
-                <View style={styles.canadianOwned}>
+                <View style={styles.canadianBanner}>
                     <Text style={styles.canadianText}>
                         <Text style={styles.maple}>🍁</Text>
                         100% CANADIAN OWNED & OPERATED!
                     </Text>
                 </View>
 
-                {/* Items Table */}
-                <View style={styles.itemsTable}>
-                    {/* Table Header */}
-                    <View style={styles.tableHeader}>
-                        <Text style={[styles.tableHeaderText, styles.itemNoHeader]}>Item No.</Text>
-                        <Text style={[styles.tableHeaderText, styles.quantityHeader]}>Quantity</Text>
-                        <Text style={[styles.tableHeaderText, styles.descriptionHeader]}>Description</Text>
-                        <Text style={[styles.tableHeaderText, styles.unitPriceHeader]}>Unit Price</Text>
-                        <Text style={[styles.tableHeaderText, styles.amountHeader]}>Amount</Text>
+                {/* MIDDLE SECTION - Items Table */}
+                <View style={styles.middleSection}>
+                    <View style={styles.itemsTable}>
+                        {/* Table Header */}
+                        <View style={styles.tableHeader}>
+                            <View style={[styles.itemNoHeader, styles.tableHeaderCell]}>
+                                <Text style={styles.tableHeaderText}>Item No.</Text>
+                            </View>
+                            <View style={[styles.quantityHeader, styles.tableHeaderCell]}>
+                                <Text style={styles.tableHeaderText}>Quantity</Text>
+                            </View>
+                            <View style={[styles.descriptionHeader, styles.tableHeaderCell]}>
+                                <Text style={styles.tableHeaderText}>Description</Text>
+                            </View>
+                            <View style={[styles.unitPriceHeader, styles.tableHeaderCell]}>
+                                <Text style={styles.tableHeaderText}>Unit Price</Text>
+                            </View>
+                            <View style={styles.amountHeader}>
+                                <Text style={styles.tableHeaderText}>Amount</Text>
+                            </View>
+                        </View>
+
+                        {/* Invoice Items */}
+                        {displayedItems.map((item, index) => (
+                            <View key={item.id} style={styles.tableRow}>
+                                <View style={[styles.itemNoHeader, styles.tableCellBorder]}>
+                                    <Text style={styles.tableCell}>{item.item_type || ''}</Text>
+                                </View>
+                                <View style={[styles.quantityHeader, styles.tableCellBorder]}>
+                                    <Text style={styles.tableCell}>
+                                        {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
+                                    </Text>
+                                </View>
+                                <View style={[styles.descriptionHeader, styles.tableCellBorder]}>
+                                    <Text style={[styles.tableCell, styles.descriptionCell]}>{item.description}</Text>
+                                </View>
+                                <View style={[styles.unitPriceHeader, styles.tableCellBorder]}>
+                                    <Text style={styles.tableCell}>{formatCurrency(item.unit_price)}</Text>
+                                </View>
+                                <View style={styles.amountHeader}>
+                                    <Text style={styles.tableCell}>{formatCurrency(item.total_price)}</Text>
+                                </View>
+                            </View>
+                        ))}
+
+                        {/* Empty Rows */}
+                        {emptyRows.map((_, index) => (
+                            <View key={`empty-${index}`} style={[styles.tableRow, styles.emptyRow]}>
+                                <View style={[styles.itemNoHeader, styles.tableCellBorder]}>
+                                    <Text style={styles.tableCell}></Text>
+                                </View>
+                                <View style={[styles.quantityHeader, styles.tableCellBorder]}>
+                                    <Text style={styles.tableCell}></Text>
+                                </View>
+                                <View style={[styles.descriptionHeader, styles.tableCellBorder]}>
+                                    <Text style={[styles.tableCell, styles.descriptionCell]}></Text>
+                                </View>
+                                <View style={[styles.unitPriceHeader, styles.tableCellBorder]}>
+                                    <Text style={styles.tableCell}></Text>
+                                </View>
+                                <View style={styles.amountHeader}>
+                                    <Text style={styles.tableCell}></Text>
+                                </View>
+                            </View>
+                        ))}
                     </View>
 
-                    {/* Invoice Items */}
-                    {activeItems.map((item, index) => (
-                        <View key={item.id} style={styles.tableRow}>
-                            <Text style={[styles.tableCell, styles.itemNoHeader]}>{index + 1}</Text>
-                            <Text style={[styles.tableCell, styles.quantityHeader]}>{item.quantity}</Text>
-                            <Text style={[styles.tableCell, styles.descriptionHeader, styles.descriptionCell]}>
-                                {item.description}
+                    {/* Unified Grid Layout - Comments, Totals, Invoice Comments, Signature */}
+                    <View style={styles.unifiedGrid}>
+                        {/* Row 1: Comments and Totals */}
+                        <View style={styles.commentsTotalsRow}>
+                            <View style={styles.commentsCol}>
+                                <View style={styles.commentsBox}>
+                                    <Text style={styles.commentsLabel}>COMMENTS</Text>
+                                    <Text style={styles.commentsText}>{invoice.notes || ''}</Text>
+                                </View>
+                            </View>
+                            <View style={styles.totalsCol}>
+                                <View style={styles.totalsBox}>
+                                    <View style={styles.totalRow}>
+                                        <Text style={styles.totalLabel}>SUBTOTAL</Text>
+                                        <Text style={styles.totalAmount}>{formatCurrency(subtotal)}</Text>
+                                    </View>
+                                    <View style={styles.totalRow}>
+                                        <Text style={styles.totalLabel}>TAX (HST)</Text>
+                                        <Text style={styles.totalAmount}>{formatCurrency(taxAmount)}</Text>
+                                    </View>
+                                    <View style={[styles.totalRow, styles.totalRowLast]}>
+                                        <Text style={styles.totalLabel}>TOTAL</Text>
+                                        <Text style={styles.totalAmount}>{formatCurrency(invoice.total_amount)}</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Row 2: Invoice Comments */}
+                        <View style={styles.invoiceCommentsBox}>
+                            <Text style={styles.invoiceCommentsText}>
+                                INVOICE COMMENTS: ALL WHEELS THAT ARE REMOVED ARE HAND TORQUED TO MANUFACTURER'S SPECIFICATIONS & SHOULD BE RE-TORQUED AFTER APPROXIMATELY 100KM.
                             </Text>
-                            <Text style={[styles.tableCell, styles.unitPriceHeader]}>
-                                {formatCurrency(item.unit_price)}
+                            <Text style={styles.invoiceCommentsTextRegular}>
+                                I hereby authorize the above work to be completed along with necessary materials as permitted by law. Good Guyz Garage Inc. is not held responsible for any delays caused by delayed delivery of parts or materials required to complete the above repairs. I hereby authorize Good Guyz Garage Inc. and its employees to test drive my vehicle for the purpose of testing and/or inspection.
                             </Text>
-                            <Text style={[styles.tableCell, styles.amountHeader]}>
-                                {formatCurrency(item.total_price)}
+                            <Text style={styles.invoiceCommentsTextRegular}>
+                                I understand that the loss of theft of service or theft while left in the above. Good Guyz Garage Inc. cannot be held responsible for any delays caused by delayed delivery of parts or materials required to complete the above repairs. I acknowledge my indebtedness to Good Guyz Garage Inc. and the existence of a lien payment in full is received for the above charges. I acknowledge my indebtedness to Good Guyz Garage Inc. and the existence of a lien upon my vehicle in the amount listed above including, but not limited to labour costs, part costs, taxes, court costs and storage etc.
                             </Text>
+                            <Text style={styles.invoiceCommentsTextRegular}>
+                                I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of Good Guyz Garage Inc.
+                            </Text>
+
+                            {/* Row 3: Signature and Date - 4 Column Grid */}
+                            <View style={styles.signatureRow}>
+                                <View style={styles.signatureCol1}>
+                                    <Text style={styles.signatureLabel}>Customer Acceptance</Text>
+                                </View>
+                                <View style={styles.signatureCol2}></View>
+                                <View style={styles.signatureCol3}>
+                                    <Text style={styles.signatureLabel}>Date</Text>
+                                </View>
+                                <View style={styles.signatureCol4}></View>
+                            </View>
                         </View>
-                    ))}
-
-                    {/* Empty Rows */}
-                    {emptyRows.map((_, index) => (
-                        <View key={`empty-${index}`} style={[styles.tableRow, styles.emptyRow]}>
-                            <Text style={[styles.tableCell, styles.itemNoHeader]}></Text>
-                            <Text style={[styles.tableCell, styles.quantityHeader]}></Text>
-                            <Text style={[styles.tableCell, styles.descriptionHeader]}></Text>
-                            <Text style={[styles.tableCell, styles.unitPriceHeader]}></Text>
-                            <Text style={[styles.tableCell, styles.amountHeader]}></Text>
-                        </View>
-                    ))}
-                </View>
-
-                {/* Comments Section */}
-                <View style={styles.commentsSection}>
-                    <View style={styles.commentsBox}>
-                        <Text style={styles.commentsLabel}>COMMENTS</Text>
-                        <Text style={styles.termsText}>{invoice.notes || ''}</Text>
-                    </View>
-                </View>
-
-                {/* Total Section */}
-                <View style={styles.totalSection}>
-                    <View style={styles.totalBox}>
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>TOTAL</Text>
-                            <Text style={styles.totalAmount}>{formatCurrency(invoice.total_amount)}</Text>
-                        </View>
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>AMOUNT</Text>
-                            <Text style={styles.totalAmount}></Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Terms and Conditions */}
-                <View style={styles.terms}>
-                    <Text style={styles.termsText}>
-                        INVOICE COMMENTS: ALL WHEELS THAT ARE REMOVED ARE HAND TORQUED TO MANUFACTURER'S SPECIFICATIONS & SHOULD BE RE-TORQUED AFTER APPROXIMATELY 100KM.
-                    </Text>
-                    <Text style={styles.termsText}>
-                        I hereby authorize the above work to be completed along with necessary materials as permitted by law. Good Guyz Garage Inc. is not held responsible for any delays caused by delayed delivery of parts or materials required to complete the above repairs. I hereby authorize Good Guyz Garage Inc. and its employees to test drive my vehicle for the purpose of testing and/or inspection.
-                    </Text>
-                    <Text style={styles.termsText}>
-                        I understand that the loss of theft of service or theft while left in the above. Good Guyz Garage Inc. cannot be held responsible for any delays caused by delayed delivery of parts or materials required to complete the above repairs. I acknowledge my indebtedness to Good Guyz Garage Inc. and the existence of a lien payment in full is received for the above charges. I acknowledge my indebtedness to Good Guyz Garage Inc. and the existence of a lien upon my vehicle in the amount listed above including, but not limited to labour costs, part costs, taxes, court costs and storage etc.
-                    </Text>
-                    <Text style={styles.termsText}>
-                        I further acknowledge that the said lien shall continue at all times, whether the vehicle is in my possession or that of Good Guyz Garage Inc.
-                    </Text>
-                </View>
-
-                {/* Signature Section */}
-                <View style={styles.signature}>
-                    <View style={styles.signatureBox}>
-                        <Text style={styles.signatureLabel}>Customer Acceptance</Text>
-                    </View>
-                    <View style={styles.signatureBox}>
-                        <Text style={styles.signatureLabel}>Date</Text>
                     </View>
                 </View>
             </Page>
