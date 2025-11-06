@@ -27,7 +27,7 @@ function mapDatabaseRoleToUserRole(dbRole: string | null | undefined): UserRole 
     return null;
 }
 
-export function getFilteredNavItems(userRole: UserRole | string | null, adminType?: AdminType) {
+export function getFilteredNavItems(userRole: UserRole | string | null, adminType?: AdminType, shopId?: string | null) {
     // Map database role to valid UserRole type
     const mappedRole = typeof userRole === 'string' ? mapDatabaseRoleToUserRole(userRole) : userRole;
     
@@ -38,6 +38,13 @@ export function getFilteredNavItems(userRole: UserRole | string | null, adminTyp
     if (!mappedRole && !adminType && !isAdminRole) return [];
     
     return navigationConfig.filter(item => {
+        // Check shop ID restriction
+        if (item.shopIds && item.shopIds.length > 0) {
+            if (!shopId || !item.shopIds.includes(shopId)) {
+                return false;
+            }
+        }
+        
         // Special handling for Admin items - show ONLY if role suggests admin AND (adminType is present OR might be loading)
         if (item.name === 'Admin') {
             // Only show Admin dropdown if:
@@ -58,13 +65,20 @@ export function getFilteredNavItems(userRole: UserRole | string | null, adminTyp
         
         return hasRole;
     }).map(item => {
-        // Filter subitems based on admin type
+        // Filter subitems based on admin type and shop ID
         if (item.subItems) {
             // For Admin items: if adminType is still loading, show all subitems temporarily
             // Otherwise, filter based on adminType
             const shouldShowAll = item.name === 'Admin' && !adminType && isAdminRole;
             
             const filteredSubItems = item.subItems.filter(subItem => {
+                // Check shop ID restriction for subitems
+                if (subItem.shopIds && subItem.shopIds.length > 0) {
+                    if (!shopId || !subItem.shopIds.includes(shopId)) {
+                        return false;
+                    }
+                }
+                
                 // If subitem has adminTypes restriction
                 if (subItem.adminTypes) {
                     // If Admin item and adminType still loading, show all temporarily
@@ -87,7 +101,7 @@ export function getFilteredNavItems(userRole: UserRole | string | null, adminTyp
     });
 }
 
-export function hasNavAccess(route: string, userRole: UserRole | string | null, adminType?: AdminType): boolean {
+export function hasNavAccess(route: string, userRole: UserRole | string | null, adminType?: AdminType, shopId?: string | null): boolean {
     // Map database role to valid UserRole type
     const mappedRole = typeof userRole === 'string' ? mapDatabaseRoleToUserRole(userRole) : userRole;
     if (!mappedRole && !adminType) return false;
@@ -99,12 +113,20 @@ export function hasNavAccess(route: string, userRole: UserRole | string | null, 
     
     if (!navItem) return false;
     
+    // Check shop ID restriction
+    if (navItem.shopIds && navItem.shopIds.length > 0) {
+        if (!shopId || !navItem.shopIds.includes(shopId)) {
+            return false;
+        }
+    }
+    
     // Special handling for Admin routes - check adminType
     if (navItem.name === 'Admin' && adminType) {
         // Check if any subitem matches the route and adminType
         const matchingSubItem = navItem.subItems?.find(sub => 
             route.startsWith(sub.href) && 
-            (!sub.adminTypes || sub.adminTypes.includes(adminType))
+            (!sub.adminTypes || sub.adminTypes.includes(adminType)) &&
+            (!sub.shopIds || (shopId && sub.shopIds.includes(shopId)))
         );
         return !!matchingSubItem;
     }
@@ -119,10 +141,17 @@ export function hasNavAccess(route: string, userRole: UserRole | string | null, 
         return navItem.adminTypes.includes(adminType);
     }
     
-    // Check subitem admin type access
+    // Check subitem admin type access and shop ID
     const subItem = navItem.subItems?.find(sub => route.startsWith(sub.href));
-    if (subItem?.adminTypes && adminType) {
-        return subItem.adminTypes.includes(adminType);
+    if (subItem) {
+        if (subItem.shopIds && subItem.shopIds.length > 0) {
+            if (!shopId || !subItem.shopIds.includes(shopId)) {
+                return false;
+            }
+        }
+        if (subItem.adminTypes && adminType) {
+            return subItem.adminTypes.includes(adminType);
+        }
     }
     
     return true;
