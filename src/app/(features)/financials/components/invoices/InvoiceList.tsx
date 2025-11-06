@@ -22,7 +22,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
     selectedInvoiceId
 }) => {
     const { shopId, isLoading: isAuthLoading } = useAuth()
-    const { data: invoices, isLoading, error } = useInvoices(shopId || '')
+    const { data: invoices, isLoading, isFetching, error } = useInvoices(shopId || '')
 
     // Filter invoices based on search
     const filteredInvoices = useMemo(() => {
@@ -39,8 +39,14 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
         )
     }, [invoices, searchValue])
 
-    // Show loading if auth is loading or if shopId is not available yet
-    if (isAuthLoading || !shopId || isLoading) {
+    // Show loading if:
+    // - Auth is loading
+    // - No shopId yet
+    // - Invoices are loading/fetching
+    // - ShopId exists but invoices haven't been loaded yet (undefined means query hasn't completed)
+    const isDataLoading = isAuthLoading || !shopId || isLoading || isFetching || (shopId && invoices === undefined)
+
+    if (isDataLoading) {
         return (
             <div className="h-full space-y-4">
                 <div className="flex items-center justify-between mb-4">
@@ -71,7 +77,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
     }
 
     // Only show "no invoices" if we have successfully loaded data (even if empty) - not while loading or before shopId is available
-    if (!isAuthLoading && shopId && !isLoading && invoices !== undefined && filteredInvoices.length === 0) {
+    // invoices will be an array (even if empty) when the query has completed successfully
+    if (!isDataLoading && shopId && invoices !== undefined && Array.isArray(invoices) && filteredInvoices.length === 0) {
         return (
             <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] p-8">
                 <div className="flex flex-col items-center justify-center text-center">

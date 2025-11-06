@@ -8,6 +8,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Loader2, AlertCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/common/feedback/loading-states";
 import { useAuth } from "../../operations/hooks/use-auth";
+import { useInvoices } from "../hooks/use-invoices";
 import InvoiceHeader from "../components/invoices/InvoiceHeader";
 import InvoiceList from "../components/invoices/InvoiceList";
 import InvoiceDashboard from "../components/invoices/InvoiceDashboard";
@@ -20,7 +21,10 @@ function InvoicesContent() {
     const searchParams = useSearchParams()
     
     // Auth state
-    const { isLoading: isAuthLoading } = useAuth()
+    const { shopId, isLoading: isAuthLoading } = useAuth()
+    
+    // Invoice loading state
+    const { isLoading: isInvoicesLoading } = useInvoices(shopId || '')
     
     // State
     const [searchValue, setSearchValue] = useState('')
@@ -56,8 +60,8 @@ function InvoicesContent() {
         // You might want to refresh the list here
     }
 
-    // Show loading spinner while auth is loading
-    if (isAuthLoading) {
+    // Show loading spinner while auth is loading or invoices are loading
+    if (isAuthLoading || (shopId && isInvoicesLoading)) {
         return (
             <div className="h-screen flex flex-col bg-background">
                 <Nav />
@@ -67,7 +71,9 @@ function InvoicesContent() {
                             <LoadingSpinner size="md" className="text-red-500" />
                             <div>
                                 <p className="text-foreground dark:text-white font-medium">Loading Invoices</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm">Please wait...</p>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm">
+                                    {isAuthLoading ? 'Authenticating...' : 'Loading invoice data...'}
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
