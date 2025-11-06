@@ -128,24 +128,24 @@ export function WorkOrderGenericItems({
     };
 
     const getItemStatusColor = (item: GenericFormItem) => {
-        if (item.active === true) return 'border-green-500/50 bg-green-500/10';
-        if (item.active === false) return 'border-red-500/50 bg-red-500/10';
-        return 'border-yellow-500/50 bg-yellow-500/10';
+        if (item.active === true) return 'border-green-300 dark:border-green-500/50 bg-green-50 dark:bg-green-500/10';
+        if (item.active === false) return 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10';
+        return 'border-yellow-300 dark:border-yellow-500/50 bg-yellow-50 dark:bg-yellow-500/10';
     };
 
     const getItemStatusBadge = (item: GenericFormItem) => {
-        if (item.active === true) return <span className="text-xs text-green-400 font-medium">✓ Approved</span>;
-        if (item.active === false) return <span className="text-xs text-red-400 font-medium">✗ Declined</span>;
-        return <span className="text-xs text-yellow-400 font-medium">⏳ Pending</span>;
+        if (item.active === true) return <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Approved</span>;
+        if (item.active === false) return <span className="text-xs text-red-600 dark:text-red-400 font-medium">✗ Declined</span>;
+        return <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">⏳ Pending</span>;
     };
 
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Icon className="h-5 w-5 text-blue-400" />
-                    <h4 className="text-base font-medium text-white">{title}</h4>
-                    <span className="text-sm text-gray-400">({items.length})</span>
+                    <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <h4 className="text-base font-medium text-foreground">{title}</h4>
+                    <span className="text-sm text-muted-foreground">({items.length})</span>
                 </div>
                 {isEditing && (
                     <Button
@@ -153,7 +153,7 @@ export function WorkOrderGenericItems({
                         onClick={addItem}
                         variant="outline"
                         size="sm"
-                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
+                        className="border-red-300 dark:border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                         <Plus className="h-4 w-4 mr-1" />
                         Add {title}
@@ -162,7 +162,7 @@ export function WorkOrderGenericItems({
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-6 text-gray-500 text-sm border border-dashed border-gray-600 rounded-lg">
+                <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border rounded-lg bg-slate-50 dark:bg-card">
                     No {itemType} items added yet
                 </div>
             ) : (
@@ -174,7 +174,7 @@ export function WorkOrderGenericItems({
                         >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-400">#{index + 1}</span>
+                                    <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
                                     {getItemStatusBadge(item)}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export function WorkOrderGenericItems({
                                                 onClick={() => declineItem(item.id)}
                                                 size="sm"
                                                 variant="outline"
-                                                className="border-red-500/50 text-red-400 hover:bg-red-500/10 h-8 px-3"
+                                                className="border-red-300 dark:border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 h-8 px-3"
                                             >
                                                 <XCircle className="h-4 w-4 mr-1" />
                                                 Decline
@@ -207,7 +207,7 @@ export function WorkOrderGenericItems({
                                             onClick={() => removeItem(item.id)}
                                             variant="outline"
                                             size="sm"
-                                            className="border-red-500/50 text-red-400 hover:bg-red-500/10 h-8 px-3"
+                                            className="border-border text-muted-foreground hover:text-foreground hover:bg-muted h-8 px-3"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -217,57 +217,57 @@ export function WorkOrderGenericItems({
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="md:col-span-2">
-                                    <Label className="text-gray-300 text-xs">Description *</Label>
+                                    <Label className="text-muted-foreground text-xs">Description *</Label>
                                     <Input
                                         value={item.description}
                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                                         placeholder={`Enter ${itemType} description`}
-                                        className="bg-[#292929] text-white border-[#626262] mt-1"
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
                                         disabled={!isEditing || item.active !== undefined}
                                     />
                                 </div>
 
                                 <div>
-                                    <Label className="text-gray-300 text-xs">Quantity</Label>
+                                    <Label className="text-muted-foreground text-xs">Quantity</Label>
                                     <Input
                                         type="number"
                                         value={item.quantity}
                                         onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                                         min="0"
                                         step="1"
-                                        className="bg-[#292929] text-white border-[#626262] mt-1"
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
                                         disabled={!isEditing || item.active !== undefined}
                                     />
                                 </div>
 
                                 <div>
-                                    <Label className="text-gray-300 text-xs">Unit Price</Label>
+                                    <Label className="text-muted-foreground text-xs">Unit Price</Label>
                                     <Input
                                         type="number"
                                         value={item.unit_price}
                                         onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
                                         min="0"
                                         step="0.01"
-                                        className="bg-[#292929] text-white border-[#626262] mt-1"
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
                                         disabled={!isEditing || item.active !== undefined}
                                     />
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <Label className="text-gray-300 text-xs">Notes</Label>
+                                    <Label className="text-muted-foreground text-xs">Notes</Label>
                                     <Textarea
                                         value={item.notes || ''}
                                         onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
                                         placeholder="Additional notes..."
-                                        className="bg-[#292929] text-white border-[#626262] mt-1 min-h-[60px]"
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1 min-h-[60px]"
                                         disabled={!isEditing || item.active !== undefined}
                                     />
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <div className="flex justify-between items-center p-3 bg-[#1a1a1a] rounded-lg">
-                                        <span className="text-gray-400 text-sm">Total:</span>
-                                        <span className="text-white font-semibold text-lg">
+                                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-card rounded-lg border border-border">
+                                        <span className="text-muted-foreground text-sm">Total:</span>
+                                        <span className="text-foreground font-semibold text-lg">
                                             ${item.total_price.toFixed(2)}
                                         </span>
                                     </div>

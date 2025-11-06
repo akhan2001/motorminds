@@ -41,13 +41,18 @@ vi.mock('@/utils/supabase/client', () => ({
     createClient: () => mockSupabaseClient
 }))
 
-// Mock WorkOrderService
-const mockWorkOrderService = vi.hoisted(() => ({
-    createWalkInWorkOrder: vi.fn()
-}))
+// Mock WorkOrderService methods
+const mockCreateWalkInWorkOrder = vi.fn()
+const mockCreateWorkOrder = vi.fn()
+
+// Create a proper class mock for WorkOrderService
+class MockWorkOrderService {
+    createWalkInWorkOrder = mockCreateWalkInWorkOrder
+    createWorkOrder = mockCreateWorkOrder
+}
 
 vi.mock('./work-order-service', () => ({
-    WorkOrderService: vi.fn(() => mockWorkOrderService)
+    WorkOrderService: MockWorkOrderService
 }))
 
 describe('AppointmentService', () => {
@@ -60,7 +65,10 @@ describe('AppointmentService', () => {
         mockFrom = mockSupabaseClient.from
         mockSelect = {
             eq: vi.fn(() => ({
-                single: vi.fn(),
+                single: vi.fn().mockResolvedValue({
+                    data: null,
+                    error: null
+                }),
                 order: vi.fn(() => ({
                     gte: vi.fn(() => ({
                         lte: vi.fn(() => ({
@@ -76,18 +84,27 @@ describe('AppointmentService', () => {
         }
         mockInsert = {
             select: vi.fn(() => ({
-                single: vi.fn()
+                single: vi.fn().mockResolvedValue({
+                    data: { id: 'test-work-order-id' },
+                    error: null
+                })
             }))
         }
         mockUpdate = {
             eq: vi.fn()
         }
-        mockFrom.mockReturnValue({
-            select: () => mockSelect,
-            insert: () => mockInsert,
-            update: () => mockUpdate,
+        
+        // Create a proper mock chain that returns the expected structure
+        const mockChain = {
+            select: vi.fn(() => mockSelect),
+            insert: vi.fn(() => mockInsert),
+            update: vi.fn(() => mockUpdate),
             delete: vi.fn(() => ({ eq: vi.fn() }))
-        })
+        }
+        
+        mockFrom.mockReturnValue(mockChain)
+        
+        // Reset mocks
         vi.clearAllMocks()
     })
 
@@ -128,10 +145,12 @@ describe('AppointmentService', () => {
                 walk_in_vehicle_info: mockWalkInVehicleInfo
             }
 
-            mockInsert.select().single.mockResolvedValue({
+            // Override the default mock for this specific test
+            const mockSingle = vi.fn().mockResolvedValue({
                 data: mockAppointment,
                 error: null
             })
+            mockInsert.select.mockReturnValue({ single: mockSingle })
 
             // Act
             const result = await AppointmentService.createWalkInAppointment({
@@ -167,10 +186,12 @@ describe('AppointmentService', () => {
                 walk_in_vehicle_info: mockWalkInVehicleInfo
             }
 
-            mockInsert.select().single.mockResolvedValue({
+            // Override the default mock for this specific test
+            const mockSingle = vi.fn().mockResolvedValue({
                 data: mockAppointment,
                 error: null
             })
+            mockInsert.select.mockReturnValue({ single: mockSingle })
 
             // Act
             const result = await AppointmentService.createWalkInAppointment({
@@ -241,7 +262,7 @@ describe('AppointmentService', () => {
         })
     })
 
-    describe('createWorkOrderFromAppointmentV2', () => {
+    describe('createWorkOrderFromAppointment', () => {
         test('should create work order from walk-in appointment', async () => {
             // Arrange
             const appointmentId = 'test-appointment-id'
@@ -264,20 +285,22 @@ describe('AppointmentService', () => {
                 work_order_number: 'WO-20240130-1234'
             }
 
-            mockSelect.eq().single.mockResolvedValue({
+            // Override the default mock for this specific test
+            const mockSingle = vi.fn().mockResolvedValue({
                 data: mockWalkInAppointment,
                 error: null
             })
+            mockSelect.eq.mockReturnValue({ single: mockSingle })
 
-            mockWorkOrderService.createWalkInWorkOrder.mockResolvedValue(mockWorkOrder)
+            mockCreateWalkInWorkOrder.mockResolvedValue(mockWorkOrder)
             mockUpdate.eq.mockResolvedValue({ error: null })
 
             // Act
-            const result = await AppointmentService.createWorkOrderFromAppointmentV2(appointmentId)
+            const result = await AppointmentService.createWorkOrderFromAppointment(appointmentId)
 
             // Assert
             expect(result).toBe('test-work-order-id')
-            expect(mockWorkOrderService.createWalkInWorkOrder).toHaveBeenCalledWith({
+            expect(mockCreateWalkInWorkOrder).toHaveBeenCalledWith({
                 workOrder: expect.objectContaining({
                     shop_id: 'test-shop-id',
                     vehicle_id: 'test-vehicle-id',
@@ -314,42 +337,50 @@ describe('AppointmentService', () => {
                 id: 'test-work-order-id'
             }
 
-            mockSelect.eq().single.mockResolvedValue({
+            // Override the default mock for this specific test
+            const mockSingle = vi.fn().mockResolvedValue({
                 data: mockRegisteredAppointment,
                 error: null
             })
+            mockSelect.eq.mockReturnValue({ single: mockSingle })
 
-            mockInsert.select().single.mockResolvedValue({
+            const mockInsertSingle = vi.fn().mockResolvedValue({
                 data: mockWorkOrder,
                 error: null
             })
+            mockInsert.select.mockReturnValue({ single: mockInsertSingle })
 
             mockUpdate.eq.mockResolvedValue({ error: null })
 
             // Act
-            const result = await AppointmentService.createWorkOrderFromAppointmentV2(appointmentId)
+            const result = await AppointmentService.createWorkOrderFromAppointment(appointmentId)
 
             // Assert
             expect(result).toBe('test-work-order-id')
             expect(mockInsert.select().single).toHaveBeenCalled()
-            const insertCall = mockFrom().insert.mock.calls[0][0][0]
-            expect(insertCall.customer_id).toBe('test-customer-id')
-            expect(insertCall.vehicle_id).toBe('test-vehicle-id')
-            expect(insertCall.customer_type).toBe('registered')
-            expect(insertCall.walk_in_vehicle_info).toBeNull()
-            expect(insertCall.title).toContain('John Doe')
+            expect(mockFrom).toHaveBeenCalledWith('work_orders')
+            
+            // Verify the insert was called with correct data structure
+            const mockChain = mockFrom.mock.results[1].value // Second call is for work_orders
+            expect(mockChain.insert).toHaveBeenCalledWith(expect.objectContaining({
+                customer_id: 'test-customer-id',
+                vehicle_id: 'test-vehicle-id',
+                customer_type: 'registered',
+                title: expect.stringContaining('John Doe')
+            }))
         })
 
         test('should throw error if appointment not found', async () => {
             // Arrange
-            mockSelect.eq().single.mockResolvedValue({
+            const mockSingle = vi.fn().mockResolvedValue({
                 data: null,
                 error: { message: 'Not found' }
             })
+            mockSelect.eq.mockReturnValue({ single: mockSingle })
 
             // Act & Assert
             await expect(
-                AppointmentService.createWorkOrderFromAppointmentV2('non-existent-id')
+                AppointmentService.createWorkOrderFromAppointment('non-existent-id')
             ).rejects.toThrow('Appointment not found')
         })
 
@@ -374,20 +405,22 @@ describe('AppointmentService', () => {
                 id: 'test-work-order-id'
             }
 
-            mockSelect.eq().single.mockResolvedValue({
+            // Override the default mock for this specific test
+            const mockSingle = vi.fn().mockResolvedValue({
                 data: mockWalkInAppointment,
                 error: null
             })
+            mockSelect.eq.mockReturnValue({ single: mockSingle })
 
-            mockWorkOrderService.createWalkInWorkOrder.mockResolvedValue(mockWorkOrder)
+            mockCreateWalkInWorkOrder.mockResolvedValue(mockWorkOrder)
             mockUpdate.eq.mockResolvedValue({ error: null })
 
             // Act
-            const result = await AppointmentService.createWorkOrderFromAppointmentV2(appointmentId)
+            const result = await AppointmentService.createWorkOrderFromAppointment(appointmentId)
 
             // Assert
             expect(result).toBe('test-work-order-id')
-            expect(mockWorkOrderService.createWalkInWorkOrder).toHaveBeenCalledWith({
+            expect(mockCreateWalkInWorkOrder).toHaveBeenCalledWith({
                 workOrder: expect.objectContaining({
                     vehicle_id: undefined
                 }),

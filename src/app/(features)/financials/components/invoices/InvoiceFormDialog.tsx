@@ -53,7 +53,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     const [customerInfo, setCustomerInfo] = useState({
         name: '',
         phone: '',
-        email: ''
+        email: '',
+        address: ''
     })
 
     const [vehicleInfo, setVehicleInfo] = useState({
@@ -160,7 +161,8 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                 setCustomerInfo({
                     name: invoice.customer.customer_name || '',
                     phone: invoice.customer.customer_phone || '',
-                    email: invoice.customer.customer_email || ''
+                    email: invoice.customer.customer_email || '',
+                    address: invoice.customer.customer_address || ''
                 })
             }
 
@@ -407,13 +409,14 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                         customerName={customerInfo.name}
                                         customerEmail={customerInfo.email}
                                         customerPhone={customerInfo.phone}
-                                        customerAddress=""
+                                        customerAddress={customerInfo.address}
                                         isEditing={true}
                                         isCreating={!invoiceId}
                                         onFieldChange={(field, value) => {
                                             if (field === 'customer') setCustomerInfo(prev => ({ ...prev, name: value }))
                                             if (field === 'customerEmail') setCustomerInfo(prev => ({ ...prev, email: value }))
                                             if (field === 'customerPhone') setCustomerInfo(prev => ({ ...prev, phone: value }))
+                                            if (field === 'customerAddress') setCustomerInfo(prev => ({ ...prev, address: value }))
                                         }}
                                         onCustomerChange={(customerId) => setFormData(prev => ({ ...prev, customer_id: customerId }))}
                                     />

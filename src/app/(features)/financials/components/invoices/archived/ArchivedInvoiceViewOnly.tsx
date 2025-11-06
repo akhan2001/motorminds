@@ -212,7 +212,11 @@ const ArchivedInvoiceViewOnly: React.FC<ArchivedInvoiceViewOnlyProps> = ({ invoi
                                                 {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
                                             </div>
                                             <div className="col-span-3 text-right text-foreground dark:text-white">
-                                                {item.item_type === 'labor' ? (
+                                                {item.item_type === 'discount' ? (
+                                                    <span className="text-red-600 dark:text-red-400 font-semibold">
+                                                        -{formatCurrency(Math.abs(item.total_price))}
+                                                    </span>
+                                                ) : item.item_type === 'labor' ? (
                                                     <span>
                                                         {formatCurrency(item.total_price)}
                                                         <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">

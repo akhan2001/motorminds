@@ -418,27 +418,46 @@ describe('WorkOrderService', () => {
         describe('deleteWorkOrder', () => {
             test('should delete work order successfully', async () => {
                 // Arrange
-                const mockQuery = {
+                const mockSelectQuery = {
+                    eq: vi.fn(() => ({
+                        single: vi.fn().mockResolvedValue({
+                            data: { appointment_id: null },
+                            error: null
+                        })
+                    }))
+                }
+                const mockDeleteQuery = {
                     eq: vi.fn().mockResolvedValue({ error: null })
                 }
                 mockFrom.mockReturnValue({
-                    delete: vi.fn().mockReturnValue(mockQuery)
+                    select: vi.fn(() => mockSelectQuery),
+                    delete: vi.fn(() => mockDeleteQuery)
                 })
 
                 // Act
                 await service.deleteWorkOrder('1')
 
                 // Assert
-                expect(mockQuery.eq).toHaveBeenCalledWith('id', '1')
+                expect(mockSelectQuery.eq).toHaveBeenCalledWith('id', '1')
+                expect(mockDeleteQuery.eq).toHaveBeenCalledWith('id', '1')
             })
 
             test('should handle delete error', async () => {
                 // Arrange
-                const mockQuery = {
+                const mockSelectQuery = {
+                    eq: vi.fn(() => ({
+                        single: vi.fn().mockResolvedValue({
+                            data: { appointment_id: null },
+                            error: null
+                        })
+                    }))
+                }
+                const mockDeleteQuery = {
                     eq: vi.fn().mockResolvedValue({ error: { message: 'Delete failed' } })
                 }
                 mockFrom.mockReturnValue({
-                    delete: vi.fn().mockReturnValue(mockQuery)
+                    select: vi.fn(() => mockSelectQuery),
+                    delete: vi.fn(() => mockDeleteQuery)
                 })
 
                 // Act & Assert

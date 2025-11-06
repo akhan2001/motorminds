@@ -37,9 +37,11 @@ export const InvoiceLaborItems: React.FC<InvoiceLaborItemsProps> = ({ items, onI
         const updatedItems = [...items]
         updatedItems[laborIndex] = { ...updatedItems[laborIndex], [field]: value }
         
-        // Recalculate total_price
-        if (field === 'quantity' || field === 'unit_price') {
-            updatedItems[laborIndex].total_price = updatedItems[laborIndex].quantity * updatedItems[laborIndex].unit_price
+        // Recalculate total_price for labor items: labor_hours * unit_price
+        if (field === 'labor_hours' || field === 'unit_price') {
+            const laborHours = updatedItems[laborIndex].labor_hours || 0
+            const unitPrice = updatedItems[laborIndex].unit_price || 0
+            updatedItems[laborIndex].total_price = laborHours * unitPrice
         }
         
         onItemsChange(updatedItems)

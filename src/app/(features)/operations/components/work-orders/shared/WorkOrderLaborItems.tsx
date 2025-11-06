@@ -184,32 +184,32 @@ export function WorkOrderLaborItems({
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-blue-400" />
-                <h3 className="text-lg font-semibold text-white">Labor Items</h3>
+                <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-lg font-semibold text-foreground">Labor Items</h3>
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 border border-dashed border-[#2a2a2a] rounded-lg">
+                <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg bg-slate-50 dark:bg-card">
                     No labor items added yet. Click "Add Labor" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div key={item.id} className={`bg-[#1a1a1a] border rounded-lg p-4 ${
-                            item.active === true ? 'border-green-500/30 bg-green-500/5' : 
-                            item.active === false ? 'border-red-500/30 bg-red-500/5' : 
-                            'border-[#2a2a2a]'
+                        <div key={item.id} className={`bg-white dark:bg-card border rounded-lg p-4 ${
+                            item.active === true ? 'border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/5' : 
+                            item.active === false ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' : 
+                            'border-border'
                         }`}>
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <h4 className="text-sm font-medium text-blue-400">Labor Item {index + 1}</h4>
+                                    <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Labor Item {index + 1}</h4>
                                     {item.active === true && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
+                                        <span className="text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-500/20">
                                             Accepted
                                         </span>
                                     )}
                                     {item.active === false && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400">
+                                        <span className="text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-500/20">
                                             Declined
                                         </span>
                                     )}
@@ -223,7 +223,7 @@ export function WorkOrderLaborItems({
                                                 onClick={() => acceptItem(item.id)}
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-green-400 hover:text-green-300 hover:bg-green-900/20 h-7 w-7 p-0"
+                                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 h-7 w-7 p-0"
                                                 title="Accept"
                                             >
                                                 <CheckCircle className="h-4 w-4" />
@@ -235,7 +235,7 @@ export function WorkOrderLaborItems({
                                                 onClick={() => declineItem(item.id)}
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-7 w-7 p-0"
+                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 w-7 p-0"
                                                 title="Decline"
                                             >
                                                 <XCircle className="h-4 w-4" />
@@ -246,7 +246,7 @@ export function WorkOrderLaborItems({
                                             onClick={() => removeItem(item.id)}
                                             variant="ghost"
                                             size="sm"
-                                            className="text-gray-400 hover:text-gray-300 hover:bg-gray-900/20 h-7 w-7 p-0"
+                                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
                                             title="Delete"
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -258,14 +258,14 @@ export function WorkOrderLaborItems({
                             <div className="space-y-3">
                                 {/* Description */}
                                 <div>
-                                    <Label htmlFor={`labor_description_${index}`} className="text-gray-400 text-xs">
+                                    <Label htmlFor={`labor_description_${index}`} className="text-muted-foreground text-xs">
                                         Description *
                                     </Label>
                                     <Input
                                         id={`labor_description_${index}`}
                                         value={item.description}
                                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                        className="bg-[#111111] border-[#2a2a2a] text-white"
+                                        className="bg-white dark:bg-background border-border text-foreground"
                                         placeholder="e.g., Oil change, Brake repair"
                                         disabled={!isEditing}
                                     />
@@ -274,7 +274,7 @@ export function WorkOrderLaborItems({
                                 {/* Labor Hours and Rate */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <Label htmlFor={`labor_hours_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`labor_hours_${index}`} className="text-muted-foreground text-xs">
                                             Labor Hours
                                         </Label>
                                         <Input
@@ -282,7 +282,7 @@ export function WorkOrderLaborItems({
                                             type="number"
                                             value={item.labor_hours || ''}
                                             onChange={(e) => updateItem(item.id, 'labor_hours', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             placeholder="2.5"
                                             min="0"
                                             step="0.25"
@@ -290,7 +290,7 @@ export function WorkOrderLaborItems({
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`labor_rate_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`labor_rate_${index}`} className="text-muted-foreground text-xs">
                                             Rate per Hour *
                                         </Label>
                                         <Input
@@ -298,7 +298,7 @@ export function WorkOrderLaborItems({
                                             type="number"
                                             value={item.unit_price || ''}
                                             onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             min="0"
                                             step="0.01"
                                             disabled={!isEditing}
@@ -310,7 +310,7 @@ export function WorkOrderLaborItems({
                                 {/* Technician and Total */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <Label htmlFor={`technician_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`technician_${index}`} className="text-muted-foreground text-xs">
                                             Technician (Optional)
                                         </Label>
                                         <TechnicianDropdown
@@ -318,13 +318,13 @@ export function WorkOrderLaborItems({
                                             selectedTechnicianId={item.technician_id || ''}
                                             onTechnicianSelect={(technicianId) => updateItem(item.id, 'technician_id', technicianId === 'none' ? '' : technicianId)}
                                             placeholder="Select Technician"
-                                            className="bg-[#111111] border-[#2a2a2a]"
+                                            className="w-full"
                                             showNoneOption={true}
                                             disabled={!isEditing}
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor={`labor_total_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`labor_total_${index}`} className="text-muted-foreground text-xs">
                                             Total Price
                                         </Label>
                                         <Input
@@ -332,7 +332,7 @@ export function WorkOrderLaborItems({
                                             type="number"
                                             value={item.total_price.toFixed(2)}
                                             disabled
-                                            className="bg-[#0a0a0a] border-[#2a2a2a] text-white font-semibold"
+                                            className="bg-slate-50 dark:bg-muted border-border text-foreground font-semibold"
                                         />
                                     </div>
                                 </div>
@@ -340,14 +340,14 @@ export function WorkOrderLaborItems({
                                 {/* Notes */}
                                 {item.notes !== undefined && (
                                     <div>
-                                        <Label htmlFor={`labor_notes_${index}`} className="text-gray-400 text-xs">
+                                        <Label htmlFor={`labor_notes_${index}`} className="text-muted-foreground text-xs">
                                             Notes (Optional)
                                         </Label>
                                         <Textarea
                                             id={`labor_notes_${index}`}
                                             value={item.notes || ''}
                                             onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                                            className="bg-[#111111] border-[#2a2a2a] text-white"
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                             placeholder="Additional notes..."
                                             rows={2}
                                             disabled={!isEditing}
@@ -362,12 +362,12 @@ export function WorkOrderLaborItems({
 
             {/* Add Labor Button at Bottom - Only show when editing */}
             {isEditing && (
-                <div className="pt-3 border-t border-[#2a2a2a]">
+                <div className="pt-3 border-t border-border">
                     <Button
                         type="button"
                         onClick={addItem}
                         size="sm"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className="w-full bg-red-600 hover:bg-red-700 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Labor

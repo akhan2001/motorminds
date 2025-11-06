@@ -14,7 +14,8 @@ describe('Invoice Calculations', () => {
                 total_price: 59.99,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: true
+                active: true,
+                created_at: '2024-01-30T10:00:00Z'
             },
             {
                 id: '2',
@@ -25,7 +26,8 @@ describe('Invoice Calculations', () => {
                 total_price: 10,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: true
+                active: true,
+                created_at: '2024-01-30T10:00:00Z'
             }
         ]
 
@@ -47,7 +49,8 @@ describe('Invoice Calculations', () => {
                 total_price: 50,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: true
+                active: true,
+                created_at: '2024-01-30T10:00:00Z'
             },
             {
                 id: '2',
@@ -58,7 +61,8 @@ describe('Invoice Calculations', () => {
                 total_price: 30,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: false
+                active: false,
+                created_at: '2024-01-30T10:00:00Z'
             }
         ]
 
@@ -76,12 +80,13 @@ describe('Invoice Calculations', () => {
                 description: 'Labor',
                 item_type: 'labor',
                 quantity: 1,
-                unit_price: 100,
+                unit_price: 50, // Changed from 100 to 50 so labor_hours * unit_price = 2 * 50 = 100
                 total_price: 100,
                 labor_hours: 2,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: true
+                active: true,
+                created_at: '2024-01-30T10:00:00Z'
             },
             {
                 id: '2',
@@ -92,7 +97,8 @@ describe('Invoice Calculations', () => {
                 total_price: 50,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: true
+                active: true,
+                created_at: '2024-01-30T10:00:00Z'
             },
             {
                 id: '3',
@@ -103,15 +109,16 @@ describe('Invoice Calculations', () => {
                 total_price: 10,
                 work_order_id: 'wo-1',
                 shop_id: 'shop-1',
-                active: true
+                active: true,
+                created_at: '2024-01-30T10:00:00Z'
             }
         ]
 
         const result = calculateInvoiceTotals(items)
 
-        // Subtotal = 100 + 50 - 10 = 140 (discount subtracts)
+        // Subtotal = (2 hours * 50/hour) + (2 * 25) - 10 = 100 + 50 - 10 = 140
         expect(result.subtotal).toBe(140.00)
-        expect(result.labourTotal).toBe(100.00)
+        expect(result.labourTotal).toBe(100.00) // 2 hours * 50 per hour
         expect(result.partsTotal).toBe(50.00)
         expect(result.discountsTotal).toBe(10.00)
     })

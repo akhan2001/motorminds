@@ -25,12 +25,12 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
 
     if (isLoading) {
         return (
-            <Card className={`bg-[#1a1a1a] border-[#2a2a2a] ${className}`}>
+            <Card className={`bg-slate-50 dark:bg-card border-border ${className}`}>
                 <CardContent className="p-4">
                     <div className="space-y-3">
-                        <div className="h-4 bg-[#2a2a2a] rounded animate-pulse"></div>
-                        <div className="h-4 bg-[#2a2a2a] rounded animate-pulse w-3/4"></div>
-                        <div className="h-4 bg-[#2a2a2a] rounded animate-pulse w-1/2"></div>
+                        <div className="h-4 bg-white dark:bg-muted rounded animate-pulse"></div>
+                        <div className="h-4 bg-white dark:bg-muted rounded animate-pulse w-3/4"></div>
+                        <div className="h-4 bg-white dark:bg-muted rounded animate-pulse w-1/2"></div>
                     </div>
                 </CardContent>
             </Card>
@@ -39,9 +39,9 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
 
     if (error || !summary) {
         return (
-            <Card className={`bg-[#1a1a1a] border-[#2a2a2a] ${className}`}>
+            <Card className={`bg-slate-50 dark:bg-card border-border ${className}`}>
                 <CardContent className="p-4">
-                    <p className="text-red-400 text-sm">Failed to load summary</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm">Failed to load summary</p>
                 </CardContent>
             </Card>
         )
@@ -52,40 +52,40 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
             type: 'Labor',
             value: summary.totalLabor,
             icon: Wrench,
-            color: 'text-blue-400'
+            color: 'text-blue-600 dark:text-blue-400'
         },
         {
             type: 'Parts',
             value: summary.totalParts,
             icon: Package,
-            color: 'text-green-400'
+            color: 'text-green-600 dark:text-green-400'
         },
         {
             type: 'Services',
             value: summary.totalServices,
             icon: Star,
-            color: 'text-purple-400'
+            color: 'text-purple-600 dark:text-purple-400'
         },
         {
             type: 'Fees',
             value: summary.totalFees,
             icon: DollarSign,
-            color: 'text-orange-400'
+            color: 'text-orange-600 dark:text-orange-400'
         }
     ]
 
     return (
-        <Card className={`bg-[#1a1a1a] border-[#2a2a2a] ${className}`}>
+        <Card className={`bg-slate-50 dark:bg-card border-border ${className}`}>
             <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-white flex items-center gap-2">
-                    <Calculator className="h-4 w-4" />
+                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Calculator className="h-4 w-4 text-muted-foreground" />
                     Cost Summary
                     <div className="ml-auto flex gap-2">
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                        <Badge variant="outline" className="bg-white dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/20">
                             {summary.itemCount} approved
                         </Badge>
                         {rejectedItemsCount > 0 && (
-                            <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20">
+                            <Badge variant="outline" className="bg-white dark:bg-red-500/10 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20">
                                 {rejectedItemsCount} rejected
                             </Badge>
                         )}
@@ -103,9 +103,9 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
                             <div key={item.type} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <IconComponent className={`h-3 w-3 ${item.color}`} />
-                                    <span className="text-xs text-gray-400">{item.type}</span>
+                                    <span className="text-xs text-muted-foreground">{item.type}</span>
                                 </div>
-                                <span className="text-xs text-gray-300 font-medium">
+                                <span className="text-xs text-foreground font-medium">
                                     {formatCurrency(item.value)}
                                 </span>
                             </div>
@@ -114,20 +114,20 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
 
                     {/* Separator if there are individual items */}
                     {summary.itemCount > 0 && (
-                        <hr className="border-[#2a2a2a] my-3" />
+                        <hr className="border-border my-3" />
                     )}
 
                     {/* Grand Total */}
                     <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-white">Total (Approved Items Only)</span>
-                        <span className="text-sm font-semibold text-green-400">
+                        <span className="text-sm font-medium text-foreground">Total (Approved Items Only)</span>
+                        <span className="text-sm font-semibold text-green-600 dark:text-green-400">
                             {formatCurrency(summary.grandTotal)}
                         </span>
                     </div>
                     
                     {/* Rejected items notice */}
                     {rejectedItemsCount > 0 && (
-                        <div className="text-xs text-red-400 pt-1">
+                        <div className="text-xs text-red-600 dark:text-red-400 pt-1">
                             {rejectedItemsCount} rejected item(s) excluded from total
                         </div>
                     )}
@@ -135,7 +135,7 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
                     {/* Empty state */}
                     {summary.itemCount === 0 && (
                         <div className="text-center py-4">
-                            <p className="text-xs text-gray-500">No items added yet</p>
+                            <p className="text-xs text-muted-foreground">No items added yet</p>
                         </div>
                     )}
                 </div>

@@ -115,6 +115,8 @@ export type ItemType =
     | 'part'
     | 'service'
     | 'fee'
+    | 'discount'
+    | 'package'
 
 export interface InvoiceFilters {
     status?: InvoiceStatus[]

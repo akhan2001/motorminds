@@ -33,11 +33,15 @@ export function Nav() {
 	// Use cached admin context
 	const { adminType } = useAdminContextWithRole(userRole ?? null)
 
-	// Get filtered navigation items based on user role and admin type
+	// Get filtered navigation items based on user role, admin type, and shop ID
 	const navItems = useMemo(() => {
-		const items = getFilteredNavItems(userRole ?? null, adminType || undefined);
+		const items = getFilteredNavItems(
+			userRole ?? null, 
+			adminType || undefined,
+			shopInfo?.id || undefined
+		);
 		return items;
-	}, [userRole, adminType]);
+	}, [userRole, adminType, shopInfo?.id]);
 
 	let activeLink = ""
 	let longestMatch = 0
