@@ -33,7 +33,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const router = useRouter()
     const { shopId } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
-    const { data: shopInfo } = useShopInfo()
+    const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
     const [isLandscape, setIsLandscape] = useState(false)
@@ -56,8 +56,21 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     }
 
     const handleDownload = async () => {
-        if (!invoice || !shopInfo) {
-            toast.error('Invoice or shop information not available')
+        if (!invoice) {
+            toast.error('Invoice information not available')
+            return
+        }
+
+        if (!shopInfo) {
+            if (isLoadingShopInfo) {
+                toast.info('Loading shop information...')
+                return
+            }
+            if (shopInfoError) {
+                toast.error('Failed to load shop information. Please refresh the page and try again.')
+                return
+            }
+            toast.error('Shop information not available')
             return
         }
 
@@ -421,10 +434,11 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     size="sm"
                     className="bg-gray-600 text-white hover:bg-gray-700" 
                     onClick={handleDownload}
-                    disabled={isDownloading || !shopInfo}
+                    disabled={isDownloading || isLoadingShopInfo || !shopInfo}
+                    title={shopInfoError ? 'Shop information failed to load. Please refresh the page.' : isLoadingShopInfo ? 'Loading shop information...' : !shopInfo ? 'Shop information not available' : undefined}
                 >
                     <Download className="w-4 h-4 mr-2" />
-                    {isDownloading ? 'Generating...' : 'PDF'}
+                    {isDownloading ? 'Generating...' : isLoadingShopInfo ? 'Loading...' : 'PDF'}
                 </Button>
                 <Button 
                     size="sm"
