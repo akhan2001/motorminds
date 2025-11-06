@@ -4,6 +4,7 @@ import { getTemplate } from './template-registry'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import type { ShopBranding, InvoicePDFData } from '../../types/invoice-pdf'
 import { generateInvoicePDFFromHTML } from './html-pdf-generator'
+import { hasTemplateAccess } from './template-restrictions'
 
 /**
  * Generate PDF blob from invoice data
@@ -17,12 +18,9 @@ export async function generateInvoicePDF(
     templateId: string = 'professional',
     htmlElement?: HTMLElement // Optional HTML element for HTML-to-PDF conversion (tony template)
 ): Promise<Blob> {
-    // Validate template access restrictions
-    if (templateId === 'tony') {
-        // Tony template is only available for Good Guyz Garage
-        if (shop.shop_name.toLowerCase() !== 'good guyz garage') {
-            throw new Error('Tony template is only available for Good Guyz Garage')
-        }
+    // Validate template access restrictions using shop_id
+    if (!hasTemplateAccess(templateId, shop.id)) {
+        throw new Error(`Template "${templateId}" is not available for this shop`)
     }
     
     // Special handling for tony template - use HTML-to-PDF

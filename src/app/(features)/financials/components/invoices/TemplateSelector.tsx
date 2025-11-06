@@ -14,6 +14,7 @@ import {
 import { getAvailableTemplates } from '../../lib/pdf/template-registry'
 import type { TemplateId } from '../../types/invoice-pdf'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { useAuth } from '../../../operations/hooks/use-auth'
 
 interface TemplateSelectorProps {
     selectedTemplateId: TemplateId
@@ -30,8 +31,8 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     size = 'sm',
     className,
 }) => {
-    const { data: shopInfo } = useShopInfo()
-    const templates = getAvailableTemplates(shopInfo?.shop_name)
+    const { shopId } = useAuth()
+    const templates = getAvailableTemplates(shopId)
     const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
     
     // If selected template is not available (e.g., user switched shops), reset to professional

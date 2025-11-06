@@ -47,7 +47,7 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
             <div className="mb-0.5 flex-shrink-0">
                 {/* Row 1: Logo | Empty | Tagline+Address | Business Info */}
                 <div className="flex items-center min-h-[40px] px-1.5 py-1">
-                    <div className="w-[33%] pl-0.5 bg-black flex items-center justify-center py-1 px-1">
+                    <div className="w-[33%] pl-0.5 bg-indigo-200 flex items-center justify-center py-1 px-1">
                         <div className="text-center">
                             <div className="text-[16pt] font-bold text-blue-900 tracking-wider leading-tight">GOOD</div>
                             <div className="text-[16pt] font-bold text-blue-900 tracking-wider leading-tight">GUYZ</div>
@@ -63,7 +63,7 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                         </div>
                     </div>
                     <div className="w-[30%] text-left text-blue-900 pl-1">
-                        <div className="text-[8pt] font-bold mb-0.5">BUSINESS NO.: 894510635RT</div>
+                        <div className="text-[8pt] font-bold mb-0.5">BUSINESS NO.: {shop?.business_number || '894510635RT'}</div>
                         <div className="text-[8pt]">INVOICE NO.: {invoice.display_id || invoice.invoice_number}</div>
                         <div className="text-[8pt]">DATE: {formatDate(invoice.issue_date)}</div>
                     </div>
@@ -168,15 +168,15 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                                 {/* Invoice Items */}
                                 {displayedItems.map((item, index) => (
                                     <tr key={item.id} className="border-l border-r border-[#cbd5e0]" style={{ height: '20px' }}>
-                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type || ''}</td>
-                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}</td>
-                                        <td className="text-left text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
+                                        <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type || ''}</td>
+                                        <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">{item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}</td>
+                                        <td className="text-left text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
                                             {item.description}
                                         </td>
-                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
+                                        <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5 border-r border-[#cbd5e0]">
                                             {formatCurrency(item.unit_price)}
                                         </td>
-                                        <td className="text-center text-[8pt] text-blue-900 px-0.5 py-0.5">
+                                        <td className="text-center text-[10pt] text-blue-900 px-0.5 py-0.5">
                                             {formatCurrency(item.total_price)}
                                         </td>
                                     </tr>
