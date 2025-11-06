@@ -248,10 +248,22 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             if (decodedVehicle) {
                 // Populate fields with decoded data
                 onFieldChange('vehicleYear', decodedVehicle.year || '')
-                onFieldChange('vehicleMake', decodedVehicle.make || '')
+                
+                // Handle make with case-insensitive matching
+                let matchedMake = decodedVehicle.make || ''
+                if (matchedMake) {
+                    // Find matching make from VEHICLE_MAKES (case-insensitive)
+                    const foundMake = VEHICLE_MAKES.find(
+                        make => make.toLowerCase() === matchedMake.toLowerCase()
+                    )
+                    if (foundMake) {
+                        matchedMake = foundMake // Use the exact case from VEHICLE_MAKES
+                    }
+                }
+                onFieldChange('vehicleMake', matchedMake)
                 onFieldChange('vehicleModel', decodedVehicle.model || '')
                 
-                toast.success(`VIN decoded: ${decodedVehicle.year} ${decodedVehicle.make} ${decodedVehicle.model}`)
+                toast.success(`VIN decoded: ${decodedVehicle.year} ${matchedMake} ${decodedVehicle.model}`)
             } else {
                 toast.error('No vehicle data found for this VIN')
             }

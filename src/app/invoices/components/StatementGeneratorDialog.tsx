@@ -166,13 +166,13 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-[#131313] text-white border-none rounded-lg shadow-lg p-0 max-w-2xl">
-                <DialogHeader className="p-6 border-b border-[#222222]">
+            <DialogContent className="bg-white dark:bg-background text-foreground border border-border rounded-lg shadow-lg p-0 max-w-2xl">
+                <DialogHeader className="p-6 border-b border-border bg-slate-50 dark:bg-card">
                     <div className="flex items-center gap-3">
-                        <FileText className="h-6 w-6 text-blue-500" />
+                        <FileText className="h-6 w-6 text-blue-600 dark:text-blue-500" />
                         <div>
-                            <DialogTitle className="text-white text-xl">Generate Customer Statement</DialogTitle>
-                            <DialogDescription className="text-gray-400 text-sm">
+                            <DialogTitle className="text-foreground text-xl">Generate Customer Statement</DialogTitle>
+                            <DialogDescription className="text-muted-foreground text-sm">
                                 Create an account statement for bank purposes
                             </DialogDescription>
                         </div>
@@ -182,16 +182,16 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                 <div className="p-6 space-y-6">
                     {/* Customer Selection */}
                     <div className="space-y-2">
-                        <label className="text-gray-300 text-sm font-medium">Customer</label>
+                        <label className="text-muted-foreground text-sm font-medium">Customer</label>
                         <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                            <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500">
+                            <SelectTrigger className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500">
                                 <SelectValue placeholder="Select a customer" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                            <SelectContent className="bg-white dark:bg-background text-foreground border-border">
                                 {customers.map((customer) => (
                                     <SelectItem key={customer.id} value={customer.id}>
                                         {customer.customer_name}
-                                        <span className="text-gray-400 text-xs ml-2">
+                                        <span className="text-muted-foreground text-xs ml-2">
                                             ({customer.customer_phone})
                                         </span>
                                     </SelectItem>
@@ -202,12 +202,12 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
 
                     {/* Date Range Preset */}
                     <div className="space-y-2">
-                        <label className="text-gray-300 text-sm font-medium">Date Range</label>
+                        <label className="text-muted-foreground text-sm font-medium">Date Range</label>
                         <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                            <SelectTrigger className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500">
+                            <SelectTrigger className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500">
                                 <SelectValue placeholder="Select date range" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#292929] text-white border-[#626262]">
+                            <SelectContent className="bg-white dark:bg-background text-foreground border-border">
                                 {datePresets.map((preset) => (
                                     <SelectItem 
                                         key={preset.label} 
@@ -235,23 +235,23 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                         <div className="grid grid-cols-2 gap-4">
                             {/* Start Date */}
                             <div className="space-y-2">
-                                <label className="text-gray-300 text-sm font-medium">Start Date</label>
+                                <label className="text-muted-foreground text-sm font-medium">Start Date</label>
                                 <Input
                                     type="date"
                                     value={customStartDate ? format(customStartDate, "yyyy-MM-dd") : ""}
                                     onChange={(e) => setCustomStartDate(e.target.value ? new Date(e.target.value) : undefined)}
-                                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100"
+                                    className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500"
                                 />
                             </div>
 
                             {/* End Date */}
                             <div className="space-y-2">
-                                <label className="text-gray-300 text-sm font-medium">End Date</label>
+                                <label className="text-muted-foreground text-sm font-medium">End Date</label>
                                 <Input
                                     type="date"
                                     value={customEndDate ? format(customEndDate, "yyyy-MM-dd") : ""}
                                     onChange={(e) => setCustomEndDate(e.target.value ? new Date(e.target.value) : undefined)}
-                                    className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:contrast-100"
+                                    className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 dark:focus:ring-red-500"
                                 />
                             </div>
                         </div>
@@ -259,12 +259,12 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
 
                     {/* Preview Info */}
                     {selectedCustomer && (
-                        <div className="bg-[#1A1A1A] p-4 rounded-lg border border-[#333]">
-                            <h4 className="text-sm font-medium text-gray-300 mb-2">Statement Preview</h4>
-                            <div className="text-xs text-gray-400 space-y-1">
-                                <p><span className="font-medium">Customer:</span> {selectedCustomer.customer_name}</p>
-                                <p><span className="font-medium">Period:</span> {format(dateRange.start, "PPP")} to {format(dateRange.end, "PPP")}</p>
-                                <p className="text-yellow-400 mt-2">
+                        <div className="bg-slate-50 dark:bg-card p-4 rounded-lg border border-border">
+                            <h4 className="text-sm font-medium text-foreground mb-2">Statement Preview</h4>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                                <p><span className="font-medium text-foreground">Customer:</span> {selectedCustomer.customer_name}</p>
+                                <p><span className="font-medium text-foreground">Period:</span> {format(dateRange.start, "PPP")} to {format(dateRange.end, "PPP")}</p>
+                                <p className="text-yellow-600 dark:text-yellow-400 mt-2">
                                     ⚠️ This statement will include all invoices within the selected date range
                                 </p>
                             </div>
@@ -272,11 +272,11 @@ export function StatementGeneratorDialog({ isOpen, onClose, shopId }: StatementG
                     )}
                 </div>
 
-                <DialogFooter className="flex flex-row justify-between p-6 border-t border-[#222222]">
+                <DialogFooter className="flex flex-row justify-between p-6 border-t border-border bg-slate-50 dark:bg-card">
                     <Button 
                         variant="outline" 
                         onClick={onClose}
-                        className="border-[#626262] text-gray-300 hover:bg-[#626262] hover:text-white"
+                        className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                         disabled={isGenerating}
                     >
                         Cancel

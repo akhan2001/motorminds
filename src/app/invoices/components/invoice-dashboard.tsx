@@ -292,8 +292,8 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
             <div className="container mx-auto max-w-[1300px]">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
                     <div className="flex flex-col">
-                        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2">Invoices</h1>
-                        <p className="text-gray-400 text-sm sm:text-base">
+                        <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2 text-foreground">Invoices</h1>
+                        <p className="text-muted-foreground text-sm sm:text-base">
                             Keep track of all your invoices in one place. Create, manage, and download PDF invoices effortlessly.
                         </p>
                     </div>
@@ -315,12 +315,12 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 {/* Search input for invoice number, client name, and description */}
                 <div className="relative mb-4">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Search className="h-4 w-4 text-gray-400" />
+                        <Search className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <Input
                         type="text"
                         placeholder="Search by invoice number, client name, or title..."
-                        className="pl-10 bg-[#131313] border border-[#222] text-white"
+                        className="pl-10 bg-white dark:bg-background border border-border text-foreground"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -329,7 +329,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                 {/* Status Filter Boxes */}
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-start mb-4">
                     <div className="w-full sm:w-auto">
-                        <h4 className="text-sm text-gray-400 mb-2">Filter by Status</h4>
+                        <h4 className="text-sm text-muted-foreground mb-2">Filter by Status</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:min-w-[600px]">
                         <InvoiceFilter
                             title="All"
@@ -358,22 +358,22 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
 
                 {/* Source Tabs */}
                 <Tabs value={activeSourceTab} onValueChange={(value) => setActiveSourceTab(value as any)} className="mb-6 sm:mb-8">
-                    <TabsList className="bg-[#131313] border border-[#333] h-12">
+                    <TabsList className="bg-slate-50 dark:bg-card border border-border h-12">
                         <TabsTrigger 
                             value="all" 
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                            className="data-[state=active]:bg-red-600 data-[state=active]:text-white px-4 py-2"
                         >
                             All Invoices ({allMonthCount})
                         </TabsTrigger>
                         <TabsTrigger 
                             value="shop_generated" 
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                            className="data-[state=active]:bg-red-600 data-[state=active]:text-white px-4 py-2"
                         >
                             Shop Generated ({shopMonthCount})
                         </TabsTrigger>
                         <TabsTrigger 
                             value="customer_generated" 
-                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2"
+                            className="data-[state=active]:bg-red-600 data-[state=active]:text-white px-4 py-2"
                         >
                             Customer Requests ({customerMonthCount})
                         </TabsTrigger>
@@ -386,7 +386,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
-                                    className={`bg-[#131313] border text-xs sm:text-sm ${isDateFilterActive ? "border-red-500" : "border-[#222]"} hover:border-gray-500`}
+                                    className={`bg-white dark:bg-background border text-xs sm:text-sm text-foreground ${isDateFilterActive ? "border-red-600 dark:border-red-500" : "border-border"} hover:border-red-600 dark:hover:border-red-500`}
                                     disabled={!isDateFilterActive}
                                 >
                                     <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
@@ -396,7 +396,7 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                                     <span className="xs:hidden">Date</span>
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="text-white w-[280px] sm:w-[350px] p-0 bg-[#131313] border border-[#222]">
+                            <PopoverContent className="text-foreground w-[280px] sm:w-[350px] p-0 bg-white dark:bg-background border border-border">
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
@@ -405,25 +405,28 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                                         setIsDateFilterActive(true);
                                     }}
                                     initialFocus
-                                    className="bg-[#131313]"
+                                    className="bg-white dark:bg-background"
                                 />
                             </PopoverContent>
                         </Popover>
                         <Button
-                            className={`bg-[#131313] border text-xs sm:text-sm ${isDateFilterActive ? "border-[#222]" : "border-red-500"} hover:border-gray-500`}
+                            variant="outline"
+                            className={`bg-white dark:bg-background border text-xs sm:text-sm text-foreground ${isDateFilterActive ? "border-border" : "border-red-600 dark:border-red-500"} hover:border-red-600 dark:hover:border-red-500`}
                             onClick={() => setIsDateFilterActive(false)}
                         >
                             View All
                         </Button>
                         <Button
-                            className="bg-[#131313] border border-[#222] hover:border-gray-500 text-xs sm:text-sm"
+                            variant="outline"
+                            className="bg-white dark:bg-background border border-border hover:border-red-600 dark:hover:border-red-500 text-xs sm:text-sm text-foreground"
                             onClick={() => setIsDateFilterActive(true)}
                         >
                             Today
                         </Button>
                         <Button
+                            variant="outline"
                             onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                            className="bg-[#131313] border border-[#222] hover:border-gray-500 text-xs sm:text-sm"
+                            className="bg-white dark:bg-background border border-border hover:border-red-600 dark:hover:border-red-500 text-xs sm:text-sm text-foreground"
                         >
                             <span className="hidden xs:inline">Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
                             <span className="xs:hidden">Sort</span>
@@ -464,9 +467,9 @@ export default function InvoiceDashboard({ shopId, searchParams }: { shopId: str
                             />
                         ))
                     ) : (
-                        <div className="flex flex-col items-center justify-center p-6 sm:p-10 bg-[#131313] border border-[#222] rounded-lg">
+                        <div className="flex flex-col items-center justify-center p-6 sm:p-10 bg-slate-50 dark:bg-card border border-border rounded-lg">
                             <div className="text-center space-y-2 sm:space-y-3">
-                                <p className="text-gray-400 text-lg sm:text-xl">
+                                <p className="text-muted-foreground text-lg sm:text-xl">
                                     No {selectedFilter === "all" ? "" : selectedFilter === "paid" ? "paid" : "unpaid"} invoices 
                                     {isDateFilterActive ? ` for ${format(selectedDate, "MMMM d, yyyy")}` : ""}
                                     {searchQuery ? ` matching "${searchQuery}"` : ""}

@@ -87,7 +87,7 @@ export function InvoiceCard({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className="bg-[#131313] rounded-lg p-4 sm:p-6 w-full cursor-pointer hover:bg-[#1a1a1a]"
+                className="bg-white dark:bg-card rounded-lg p-4 sm:p-6 w-full cursor-pointer hover:bg-slate-50 dark:hover:bg-muted border border-border"
                 whileHover={{ scale: 1.005 }}
                 onClick={handleCardClick}
             >
@@ -95,56 +95,56 @@ export function InvoiceCard({
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                     {/* Invoice Number and Status - Top Left */}
                     <div>
-                        <h3 className="text-lg sm:text-xl font-bold flex flex-wrap items-center gap-2 text-white">
+                        <h3 className="text-lg sm:text-xl font-bold flex flex-wrap items-center gap-2 text-foreground">
                             {description || workOrder || "No description available"} Invoice
-                            <span className={`${status === 'PAID' ? 'text-green-500' : 'text-red-500'} text-sm px-2 py-0.5 rounded-full border ${status === 'PAID' ? 'border-green-800' : 'border-red-800'}`}>
+                            <span className={`${status === 'PAID' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} text-sm px-2 py-0.5 rounded-full border ${status === 'PAID' ? 'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20' : 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20'}`}>
                                 {status}
                             </span>
                             {source === 'customer_generated' && (
-                                <span className="text-blue-400 text-xs px-2 py-0.5 rounded-full border border-blue-800 bg-blue-900/20">
+                                <span className="text-blue-600 dark:text-blue-400 text-xs px-2 py-0.5 rounded-full border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
                                     Customer Request
                                 </span>
                             )}
                         </h3>
                     </div>
                     {/* Description/Title - Top Right */}
-                    <div className="text-right text-gray-400">
-                        {/* <p className="font-medium text-white">{description || workOrder || "No description available"}</p> */}
+                    <div className="text-right text-muted-foreground">
+                        {/* <p className="font-medium text-foreground">{description || workOrder || "No description available"}</p> */}
                         Invoice #{displayNumber || invoiceNumber}
                         {poNumber && (
-                            <p className="text-xs text-gray-400 mt-1">PO: {poNumber}</p>
+                            <p className="text-xs text-muted-foreground mt-1">PO: {poNumber}</p>
                         )}
                         {source === 'customer_generated' && estimatedAmount && estimatedAmount > 0 && (
-                            <p className="text-xs text-blue-400 mt-1">Est. Budget: ${estimatedAmount.toFixed(2)}</p>
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Est. Budget: ${estimatedAmount.toFixed(2)}</p>
                         )}
                     </div>
                 </div>
                 
-                <Separator className="my-4 bg-gray-800" />
+                <Separator className="my-4 bg-border" />
                 
                 {/* Bottom Section */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Customer Info - Bottom Left */}
                     <div>
-                        <p className="text-xs uppercase mb-1 text-gray-400">CUSTOMER</p>
-                        <p className="font-medium text-white">{clientName}</p>
-                        <p className="text-sm text-gray-400">{clientAddress}</p>
-                        <p className="text-sm text-gray-400">{clientEmail}</p>
+                        <p className="text-xs uppercase mb-1 text-muted-foreground">CUSTOMER</p>
+                        <p className="font-medium text-foreground">{clientName}</p>
+                        <p className="text-sm text-muted-foreground">{clientAddress}</p>
+                        <p className="text-sm text-muted-foreground">{clientEmail}</p>
                     </div>
                     {/* Vehicle Info - Bottom Middle */}
                     <div>
-                        <p className="text-xs uppercase mb-1 text-gray-400">VEHICLE</p>
-                        <p className="font-medium text-white">{vehicleDisplay}</p>
+                        <p className="text-xs uppercase mb-1 text-muted-foreground">VEHICLE</p>
+                        <p className="font-medium text-foreground">{vehicleDisplay}</p>
                         {vehicleInfo.license_plate && vehicleInfo.license_plate !== "NULL" && 
-                            <p className="text-sm text-gray-400">Plate: {vehicleInfo.license_plate}</p>
+                            <p className="text-sm text-muted-foreground">Plate: {vehicleInfo.license_plate}</p>
                         }
                     </div>
                     {/* Amount - Bottom Right */}
                     <div className="text-right">
-                        <p className="text-xs text-gray-400 uppercase mb-1">
+                        <p className="text-xs text-muted-foreground uppercase mb-1">
                             {status === "PAID" ? "AMOUNT PAID" : "AMOUNT DUE"}
                         </p>
-                        <p className={`text-2xl font-bold ${status === "PAID" ? "text-green-500" : "text-red-500"}`}>
+                        <p className={`text-2xl font-bold ${status === "PAID" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                             {(() => {
                                 // Extract numeric value from amount string (remove $ and commas)
                                 const numericAmount = parseFloat(amount.replace(/[$,]/g, ''))
@@ -153,15 +153,15 @@ export function InvoiceCard({
                                 return `$${amountWithTax.toFixed(2)}`
                             })()}
                         </p>
-                        <p className="text-sm text-gray-400 mt-1">Issued on: {issueDate}</p>
+                        <p className="text-sm text-muted-foreground mt-1">Issued on: {issueDate}</p>
                     </div>
                 </div>
                 
                 {/* Customer Notes - Only show for customer-generated invoices */}
                 {source === 'customer_generated' && customerNotes && (
-                    <div className="mt-4 p-3 bg-blue-900/20 border border-blue-800 rounded-md">
-                        <p className="text-xs text-blue-300 font-medium mb-1">Customer Request:</p>
-                        <p className="text-sm text-blue-100">{customerNotes}</p>
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-800 rounded-md">
+                        <p className="text-xs text-blue-600 dark:text-blue-300 font-medium mb-1">Customer Request:</p>
+                        <p className="text-sm text-blue-700 dark:text-blue-100">{customerNotes}</p>
                     </div>
                 )}
             </motion.div>
