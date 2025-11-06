@@ -54,7 +54,8 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
     const [customerInfo, setCustomerInfo] = useState({
         name: '',
         phone: '',
-        email: ''
+        email: '',
+        address: ''
     })
 
     const [vehicleInfo, setVehicleInfo] = useState({
@@ -62,7 +63,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         make: '',
         model: '',
         licensePlate: '',
-        vin: ''
+        vin: '',
+        mileage: '',
+        color: ''
     })
     
     // Tax toggle state
@@ -97,7 +100,8 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         setCustomerInfo({
             name: '',
             phone: '',
-            email: ''
+            email: '',
+            address: ''
         })
         
         setVehicleInfo({
@@ -105,7 +109,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
             make: '',
             model: '',
             licensePlate: '',
-            vin: ''
+            vin: '',
+            mileage: '',
+            color: ''
         })
     }
 
@@ -166,11 +172,8 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
     
     const handleTaxToggle = (checked: boolean) => {
         setIncludeTax(checked)
-        if (!checked) {
-            setFormData(prev => ({ ...prev, tax_rate: 0 }))
-        } else {
-            setFormData(prev => ({ ...prev, tax_rate: 0.13 })) // Default tax rate
-        }
+        // Tax rate is always 13% when enabled, 0 when disabled
+        setFormData(prev => ({ ...prev, tax_rate: checked ? 0.13 : 0 }))
     }
 
     return (
@@ -209,13 +212,14 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                     customerName={customerInfo.name}
                                     customerEmail={customerInfo.email}
                                     customerPhone={customerInfo.phone}
-                                    customerAddress=""
+                                    customerAddress={customerInfo.address}
                                     isEditing={true}
                                     isCreating={true}
                                     onFieldChange={(field, value) => {
                                         if (field === 'customer') setCustomerInfo(prev => ({ ...prev, name: value }))
                                         if (field === 'customerEmail') setCustomerInfo(prev => ({ ...prev, email: value }))
                                         if (field === 'customerPhone') setCustomerInfo(prev => ({ ...prev, phone: value }))
+                                        if (field === 'customerAddress') setCustomerInfo(prev => ({ ...prev, address: value }))
                                     }}
                                     onCustomerChange={(customerId) => setFormData(prev => ({ ...prev, customer_id: customerId }))}
                                 />
@@ -232,10 +236,10 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                     vehicleYear={vehicleInfo.year}
                                     vehicleMake={vehicleInfo.make}
                                     vehicleModel={vehicleInfo.model}
-                                    vehicleColor=""
+                                    vehicleColor={vehicleInfo.color}
                                     vehicleVin={vehicleInfo.vin}
                                     vehicleLicensePlate={vehicleInfo.licensePlate}
-                                    vehicleMileage=""
+                                    vehicleMileage={vehicleInfo.mileage}
                                     isEditing={true}
                                     isCreating={true}
                                     onFieldChange={(field, value) => {
@@ -244,6 +248,8 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                         if (field === 'vehicleModel') setVehicleInfo(prev => ({ ...prev, model: value }))
                                         if (field === 'vehicleVin') setVehicleInfo(prev => ({ ...prev, vin: value }))
                                         if (field === 'vehicleLicensePlate') setVehicleInfo(prev => ({ ...prev, licensePlate: value }))
+                                        if (field === 'vehicleMileage') setVehicleInfo(prev => ({ ...prev, mileage: value }))
+                                        if (field === 'vehicleColor') setVehicleInfo(prev => ({ ...prev, color: value }))
                                     }}
                                     onVehicleSelect={(vehicleId) => setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))}
                                 />
@@ -384,32 +390,16 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                 </div>
                                 
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                id="include-tax"
-                                                checked={includeTax}
-                                                onCheckedChange={handleTaxToggle}
-                                                className="border-border dark:border-gray-500"
-                                            />
-                                            <Label htmlFor="include-tax" className="text-sm text-foreground dark:text-gray-300 cursor-pointer">
-                                                Include Tax
-                                            </Label>
-                                        </div>
-                                        {includeTax && (
-                                            <Input
-                                                type="number"
-                                                value={(formData.tax_rate * 100).toFixed(0)}
-                                                onChange={(e) => {
-                                                    const rate = Number(e.target.value) / 100
-                                                    setFormData(prev => ({ ...prev, tax_rate: rate }))
-                                                }}
-                                                className="w-20 h-8 bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white text-right text-sm"
-                                                min="0"
-                                                max="100"
-                                                step="0.1"
-                                            />
-                                        )}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Checkbox
+                                            id="include-tax"
+                                            checked={includeTax}
+                                            onCheckedChange={handleTaxToggle}
+                                            className="border-border dark:border-gray-500"
+                                        />
+                                        <Label htmlFor="include-tax" className="text-sm text-foreground dark:text-gray-300 cursor-pointer">
+                                            Include Tax (13% HST)
+                                        </Label>
                                     </div>
                                     <div className="flex justify-between text-muted-foreground dark:text-gray-400">
                                         <span>Subtotal:</span>
@@ -417,7 +407,7 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                     </div>
                                     {includeTax && (
                                         <div className="flex justify-between text-muted-foreground dark:text-gray-400">
-                                            <span>Tax ({(formData.tax_rate * 100).toFixed(0)}%):</span>
+                                            <span>Tax (13% HST):</span>
                                             <span>${calculateTax().toFixed(2)}</span>
                                         </div>
                                     )}
