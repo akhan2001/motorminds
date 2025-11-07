@@ -118,15 +118,15 @@ export function NewVehicleForm({
     }
 
     return (
-        <Card className="bg-[#0d0d0d] border-[#2a2a2a] p-4 mt-4">
+        <Card className="bg-slate-50 dark:bg-card border-border p-4 mt-4">
             <CardHeader className="pb-3">
-                <CardTitle className="text-md font-medium text-white flex items-center justify-between">
+                <CardTitle className="text-md font-medium text-foreground flex items-center justify-between">
                     New Vehicle Details
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={onCancel}
-                        className="text-gray-400 hover:text-white"
+                        className="text-muted-foreground hover:text-foreground"
                         disabled={isSaving}
                     >
                         <X className="h-4 w-4" />
@@ -138,7 +138,7 @@ export function NewVehicleForm({
                 {/* Year, Make, Model Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                        <Label className="text-gray-300 text-xs">Year *</Label>
+                        <Label className="text-muted-foreground text-xs">Year *</Label>
                         <Input
                             type="number"
                             value={formData.year}
@@ -146,101 +146,101 @@ export function NewVehicleForm({
                             placeholder="2023"
                             min="1970"
                             max={new Date().getFullYear() + 1}
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                             disabled={isSaving}
                         />
                         {errors.year && (
-                            <p className="text-red-400 text-xs mt-1">{errors.year}</p>
+                            <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.year}</p>
                         )}
                     </div>
 
                     <div>
-                        <Label className="text-gray-300 text-xs">Make *</Label>
+                        <Label className="text-muted-foreground text-xs">Make *</Label>
                         <Select
                             value={formData.make}
                             onValueChange={(value) => handleInputChange('make', value)}
                             disabled={isSaving}
                         >
-                            <SelectTrigger className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm">
+                            <SelectTrigger className="bg-white dark:bg-background text-foreground border-border text-sm">
                                 <SelectValue placeholder="Select make" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            <SelectContent className="bg-white dark:bg-background border-border text-foreground">
                                 {VEHICLE_MAKES.map((make) => (
-                                    <SelectItem key={make} value={make} className="text-white hover:bg-[#2a2a2a]">
+                                    <SelectItem key={make} value={make} className="hover:bg-muted">
                                         {make}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                         {errors.make && (
-                            <p className="text-red-400 text-xs mt-1">{errors.make}</p>
+                            <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.make}</p>
                         )}
                     </div>
 
                     <div>
-                        <Label className="text-gray-300 text-xs">Model *</Label>
+                        <Label className="text-muted-foreground text-xs">Model *</Label>
                         <Input
                             value={formData.model}
                             onChange={(e) => handleInputChange('model', e.target.value)}
                             placeholder="Camry"
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                             disabled={isSaving}
                         />
                         {errors.model && (
-                            <p className="text-red-400 text-xs mt-1">{errors.model}</p>
+                            <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.model}</p>
                         )}
                     </div>
                 </div>
 
                 {/* Color */}
                 <div>
-                    <Label className="text-gray-300 text-xs">Color</Label>
+                    <Label className="text-muted-foreground text-xs">Color</Label>
                     <Input
                         value={formData.color}
                         onChange={(e) => handleInputChange('color', e.target.value)}
                         placeholder="Red"
-                        className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                        className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                         disabled={isSaving}
                     />
                 </div>
 
                 {/* VIN */}
                 <div>
-                    <Label className="text-gray-300 text-xs">VIN</Label>
+                    <Label className="text-muted-foreground text-xs">VIN</Label>
                     <Input
                         value={formData.vin}
                         onChange={(e) => handleInputChange('vin', e.target.value.toUpperCase())}
                         placeholder="17-digit VIN"
                         maxLength={17}
-                        className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                        className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                         disabled={isSaving}
                     />
                     {errors.vin && (
-                        <p className="text-red-400 text-xs mt-1">{errors.vin}</p>
+                        <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.vin}</p>
                     )}
                 </div>
 
                 {/* License Plate and Mileage */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <Label className="text-gray-300 text-xs">License Plate</Label>
+                        <Label className="text-muted-foreground text-xs">License Plate</Label>
                         <Input
                             value={formData.licensePlate}
                             onChange={(e) => handleInputChange('licensePlate', e.target.value.toUpperCase())}
                             placeholder="ABC-123"
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                             disabled={isSaving}
                         />
                     </div>
 
                     <div>
-                        <Label className="text-gray-300 text-xs">Mileage</Label>
+                        <Label className="text-muted-foreground text-xs">Mileage</Label>
                         <Input
                             type="number"
                             value={formData.mileage}
                             onChange={(e) => handleInputChange('mileage', e.target.value)}
                             placeholder="50000"
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                             disabled={isSaving}
                         />
                     </div>
@@ -252,7 +252,7 @@ export function NewVehicleForm({
                         variant="outline"
                         onClick={onCancel}
                         disabled={isSaving}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                        className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                         Cancel
                     </Button>
