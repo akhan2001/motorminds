@@ -5,6 +5,15 @@
         },
         "src/app/api/mia/route.ts": {
             "maxDuration": 30
+        },
+        "src/app/api/messaging/ai/process-queue/route.ts": {
+            "maxDuration": 300
         }
-    }
+    },
+    "crons": [
+        {
+            "path": "/api/messaging/ai/process-queue",
+            "schedule": "*/5 * * * *"
+        }
+    ]
 }

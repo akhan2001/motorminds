@@ -44,6 +44,7 @@ export interface CampaignRecipient {
     status: 'pending' | 'sent' | 'failed'
     sent_at?: string | null
     error_message?: string | null
+    sms_message_id?: string | null
     created_at: string
     updated_at: string
 }
