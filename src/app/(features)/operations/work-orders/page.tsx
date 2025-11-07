@@ -10,7 +10,7 @@ import { WorkOrderCompletionModal } from "../components/work-orders/complete";
 import { WorkOrderItemTemplatesModal } from "../components/work-order-items/templates/work-order-item-templates-modal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
-import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useDeleteWorkOrder } from "../hooks/use-work-orders";
+import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from "../hooks/use-work-orders";
 import { useAuth } from "../hooks/use-auth";
 import { WorkOrderItemsService } from "../lib/work-order-items-service";
 import type { WorkOrderItemCreateData } from "../types/work-order-items";
@@ -144,6 +144,7 @@ function WorkOrdersContent() {
     const createWorkOrderMutation = useCreateWorkOrderWithDependencies()
     const createWalkInWorkOrderMutation = useCreateWalkInWorkOrder()
     const updateWorkOrderMutation = useUpdateWorkOrder()
+    const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
     const deleteWorkOrderMutation = useDeleteWorkOrder()
 
     // Combined loading state
@@ -278,16 +279,11 @@ function WorkOrdersContent() {
     const handleCompletionModalConfirm = async (sendMessage: boolean, customMessage?: string) => {
         if (completionWorkOrder) {
             try {
-                // Update work order status to completed
-                const updateData: Partial<WorkOrder> = {
-                    status: 'completed',
-                    updated_at: new Date().toISOString(),
-                    completed_at: new Date().toISOString()
-                }
-
-                await updateWorkOrderMutation.mutateAsync({
+                // Use updateWorkOrderStatus to trigger automated messaging
+                // This will automatically trigger the work-order-completed webhook
+                await updateWorkOrderStatusMutation.mutateAsync({
                     id: completionWorkOrder.id,
-                    data: updateData
+                    status: 'completed'
                 })
 
                 // Refetch work orders

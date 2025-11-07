@@ -180,6 +180,31 @@ export class WorkOrderService {
             console.error('Error updating work order status:', error)
             throw new Error(`Failed to update work order status: ${error.message}`)
         }
+
+        // After work order status set to 'completed', trigger automated messages
+        if (status === 'completed') {
+            try {
+                // Get work order details for the trigger
+                const workOrder = await this.getWorkOrderById(id)
+                if (workOrder) {
+                    // Trigger automated messaging (fire and forget - don't block completion)
+                    // The trigger endpoint only needs work_order_id and will fetch all other data
+                    fetch('/api/messaging/ai/triggers/work-order-completed', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            work_order_id: workOrder.id
+                        })
+                    }).catch((error) => {
+                        // Silently handle fetch errors (network issues, etc.)
+                        console.error('Failed to trigger automated messages:', error)
+                    })
+                }
+            } catch (error) {
+                // Don't fail the work order completion if messaging fails
+                console.error('Failed to trigger automated messages:', error)
+            }
+        }
     }
     
     // DELETE operations
