@@ -872,6 +872,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                             <WorkOrderStatusBar 
                                 priority={formData.priority}
                                 date={formData.date}
+                                startedAt={workOrderDetails.started_at}
                                 assignee={formData.assignee}
                                 status={workOrderDetails.status}
                             />
