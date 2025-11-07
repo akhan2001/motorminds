@@ -157,14 +157,14 @@ export function CustomerForm({
     if (!showNewCustomerForm) return null
 
     return (
-        <Card className="bg-[#0d0d0d] border-[#2a2a2a] p-4 mt-4">
-            <CardTitle className="text-md font-medium text-white mb-3 flex items-center justify-between">
+        <Card className="bg-slate-50 dark:bg-card border-border p-4 mt-4">
+            <CardTitle className="text-md font-medium text-foreground mb-3 flex items-center justify-between">
                 New Customer Details
                 <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setShowNewCustomerForm(false)} 
-                    className="text-gray-400 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground"
                 >
                     <X className="h-4 w-4" />
                 </Button>
@@ -172,64 +172,64 @@ export function CustomerForm({
             
             <div className="space-y-3">
                 <div>
-                    <Label className="text-gray-300 text-xs">Name *</Label>
+                    <Label className="text-muted-foreground text-xs">Name *</Label>
                     <Input
                         value={newCustomerData.name}
                         onChange={(e) => handleNewCustomerChange('name', e.target.value)}
                         placeholder="John Doe"
-                        className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                        className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                     />
                     {errors['newCustomer.name'] && (
-                        <p className="text-red-400 text-xs mt-1">{errors['newCustomer.name']}</p>
+                        <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors['newCustomer.name']}</p>
                     )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <Label className="text-gray-300 text-xs">Email</Label>
+                        <Label className="text-muted-foreground text-xs">Email</Label>
                         <Input
                             type="email"
                             value={newCustomerData.email}
                             onChange={(e) => handleNewCustomerChange('email', e.target.value)}
                             placeholder="john@example.com"
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                         />
                         {errors['newCustomer.email'] && (
-                            <p className="text-red-400 text-xs mt-1">{errors['newCustomer.email']}</p>
+                            <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors['newCustomer.email']}</p>
                         )}
                     </div>
                     <div>
-                        <Label className="text-gray-300 text-xs">Phone *</Label>
+                        <Label className="text-muted-foreground text-xs">Phone *</Label>
                         <Input
                             type="tel"
                             value={newCustomerData.phone}
                             onChange={(e) => handleNewCustomerChange('phone', e.target.value)}
                             placeholder="555-123-4567"
-                            className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                         />
                         {errors['newCustomer.phone'] && (
-                            <p className="text-red-400 text-xs mt-1">{errors['newCustomer.phone']}</p>
+                            <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors['newCustomer.phone']}</p>
                         )}
                     </div>
                 </div>
                 
                 <div>
-                    <Label className="text-gray-300 text-xs">Address</Label>
+                    <Label className="text-muted-foreground text-xs">Address</Label>
                     <Input
                         value={newCustomerData.address}
                         onChange={(e) => handleNewCustomerChange('address', e.target.value)}
                         placeholder="123 Main St"
-                        className="bg-[#1a1a1a] text-white border-[#2a2a2a] text-sm"
+                        className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
                     />
                 </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-[#2a2a2a]">
+            <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowNewCustomerForm(false)}
-                    className="text-gray-400 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted"
                     disabled={isSubmitting}
                 >
                     Cancel
@@ -238,7 +238,7 @@ export function CustomerForm({
                     size="sm"
                     onClick={handleSaveNewCustomer}
                     disabled={!newCustomerData.name || !newCustomerData.phone || isSubmitting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                 >
                     {isSubmitting ? 'Saving...' : 'Save Customer'}
                 </Button>

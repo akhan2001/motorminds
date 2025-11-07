@@ -94,10 +94,10 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-[#111111] border-[#2a2a2a]">
+            <DialogContent className="max-w-2xl bg-white dark:bg-background border-border">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-white flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-blue-500" />
+                    <DialogTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                         Send Appointment Message
                     </DialogTitle>
                 </DialogHeader>
@@ -105,15 +105,15 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                 <div className="space-y-6">
                     {/* Appointment Summary */}
                     <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-gray-300">Appointment Details</h3>
-                        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#2a2a2a]">
+                        <h3 className="text-sm font-medium text-muted-foreground">Appointment Details</h3>
+                        <div className="bg-slate-50 dark:bg-card rounded-lg p-4 border border-border">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-lg font-semibold text-white">{appointment.service_type}</span>
-                                <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                                <span className="text-lg font-semibold text-foreground">{appointment.service_type}</span>
+                                <Badge variant="outline" className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20">
                                     {appointment.status || 'Scheduled'}
                                 </Badge>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="h-3 w-3" />
                                     {appointmentDate}
@@ -129,18 +129,18 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                     {/* Customer & Vehicle Info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                 <User className="h-4 w-4" />
                                 Customer
                             </h4>
-                            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">
+                            <div className="bg-slate-50 dark:bg-card rounded-lg p-3 border border-border">
+                                <p className="text-foreground font-medium">
                                     {appointment.customer_type === 'walk_in' 
                                         ? 'Walk-in Customer' 
                                         : appointment.customer?.customer_name || 'Unknown'}
                                 </p>
                                 {appointment.customer_type === 'registered' && appointment.customer?.customer_phone && (
-                                    <div className="flex items-center gap-1 text-sm text-gray-400 mt-1">
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                                         <Phone className="h-3 w-3" />
                                         {formatPhoneNumber(appointment.customer.customer_phone)}
                                     </div>
@@ -149,14 +149,14 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                 <Car className="h-4 w-4" />
                                 Vehicle
                             </h4>
-                            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
-                                <p className="text-white font-medium">{vehicleInfo}</p>
+                            <div className="bg-slate-50 dark:bg-card rounded-lg p-3 border border-border">
+                                <p className="text-foreground font-medium">{vehicleInfo}</p>
                                 {(appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.license_plate) || appointment.vehicle?.license_plate ? (
-                                    <p className="text-sm text-gray-400 mt-1">
+                                    <p className="text-sm text-muted-foreground mt-1">
                                         License: {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.license_plate
                                             ? appointment.walk_in_vehicle_info.license_plate
                                             : appointment.vehicle?.license_plate}
@@ -166,21 +166,21 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                         </div>
                     </div>
 
-                    <Separator className="bg-[#2a2a2a]" />
+                    <Separator className="bg-border" />
 
                     {/* Message Template Selection */}
                     <div className="space-y-3">
-                        <h3 className="text-sm font-medium text-gray-300">Message Template</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">Message Template</h3>
                         <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
-                            <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                            <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
                                 <SelectValue placeholder="Choose a message template" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            <SelectContent className="bg-white dark:bg-background border-border text-foreground">
                                 {APPOINTMENT_MESSAGE_TEMPLATES.map((template) => (
                                     <SelectItem 
                                         key={template.id} 
                                         value={template.type}
-                                        className="text-white hover:bg-[#2a2a2a]"
+                                        className="hover:bg-muted"
                                     >
                                         {template.name}
                                     </SelectItem>
@@ -192,41 +192,41 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                     {/* Messaging Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                                 <MessageSquare className="h-4 w-4" />
                                 Message Content
                             </h3>
                             {messagingAvailability.isLoading && (
-                                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                             )}
                         </div>
 
                         {!customerHasPhone ? (
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                                <p className="text-yellow-400 text-sm">
+                            <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-lg p-3">
+                                <p className="text-yellow-600 dark:text-yellow-400 text-sm">
                                     No phone number available for this customer.
                                 </p>
                             </div>
                         ) : !messagingAvailability.isAvailable ? (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg p-3">
                                 <div className="flex items-center gap-2">
-                                    <Lock className="h-4 w-4 text-red-400" />
-                                    <p className="text-red-400 text-sm">
+                                    <Lock className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                    <p className="text-red-600 dark:text-red-400 text-sm">
                                         Messaging is not available. Contact admin to set up Twilio.
                                     </p>
                                 </div>
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                                    <div className="p-3 border-b border-[#2a2a2a]">
+                                <div className="bg-slate-50 dark:bg-card rounded-lg border border-border">
+                                    <div className="p-3 border-b border-border">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-300">Message to send:</span>
+                                            <span className="text-sm text-muted-foreground">Message to send:</span>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => setIsEditing(!isEditing)}
-                                                className="text-blue-400 hover:text-blue-300"
+                                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                                             >
                                                 {isEditing ? 'Done' : 'Edit'}
                                             </Button>
@@ -237,12 +237,12 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                                             <Textarea
                                                 value={customMessage}
                                                 onChange={(e) => setCustomMessage(e.target.value)}
-                                                className="bg-[#0a0a0a] border-[#2a2a2a] text-white resize-none"
+                                                className="bg-white dark:bg-background border-border text-foreground resize-none focus:ring-red-600 dark:focus:ring-red-500"
                                                 rows={4}
                                                 placeholder="Enter your message..."
                                             />
                                         ) : (
-                                            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
+                                            <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
                                                 {customMessage}
                                             </p>
                                         )}
@@ -253,12 +253,12 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                     </div>
                 </div>
 
-                <DialogFooter className="flex gap-3">
+                <DialogFooter className="flex gap-3 bg-slate-50 dark:bg-card border-t border-border -mx-6 -mb-6 px-6 py-4 mt-6">
                     <Button
                         variant="outline"
                         onClick={handleCancel}
                         disabled={isLoading}
-                        className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
+                        className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                         Cancel
                     </Button>
@@ -287,7 +287,7 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                                 </div>
                             </TooltipTrigger>
                             {(!customerHasPhone || !messagingAvailability.isAvailable) && (
-                                <TooltipContent>
+                                <TooltipContent className="bg-popover text-popover-foreground border-border">
                                     <p>
                                         {!customerHasPhone 
                                             ? "Customer phone number required" 
