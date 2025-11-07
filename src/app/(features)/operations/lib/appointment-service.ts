@@ -451,12 +451,20 @@ export class AppointmentService {
 
             const vehicleDisplay = `${walkInVehicleInfo.year} ${walkInVehicleInfo.make} ${walkInVehicleInfo.model}${walkInVehicleInfo.license_plate ? ` (${walkInVehicleInfo.license_plate})` : ''}`
 
+            // Convert appointment_date to timestamp for started_at
+            // Combine appointment_date with start_time if available, otherwise use midnight
+            const appointmentDateTime = appointment.start_time
+                ? `${appointment.appointment_date}T${appointment.start_time}`
+                : `${appointment.appointment_date}T00:00:00`
+            const startedAt = new Date(appointmentDateTime).toISOString()
+
             console.log('Creating walk-in work order with:', {
                 workOrderNumber,
                 shop_id: appointment.shop_id,
                 vehicle_id: appointment.vehicle_id,
                 appointment_id: appointmentId,
-                walkInVehicleInfo
+                walkInVehicleInfo,
+                started_at: startedAt
             })
 
             const workOrder = await workOrderService.createWalkInWorkOrder({
@@ -471,6 +479,7 @@ export class AppointmentService {
                     priority: 'medium',
                     tags: [],
                     attachments: [],
+                    started_at: startedAt,
                 },
                 walkInVehicleInfo: walkInVehicleInfo,
             })
@@ -482,6 +491,13 @@ export class AppointmentService {
             const customer = Array.isArray(appointment.customer) ? appointment.customer[0] : appointment.customer
             const customerName = customer?.customer_name || 'Customer'
 
+            // Convert appointment_date to timestamp for started_at
+            // Combine appointment_date with start_time if available, otherwise use midnight
+            const appointmentDateTime = appointment.start_time
+                ? `${appointment.appointment_date}T${appointment.start_time}`
+                : `${appointment.appointment_date}T00:00:00`
+            const startedAt = new Date(appointmentDateTime).toISOString()
+
             const { data: workOrder, error } = await supabase
                 .from('work_orders')
                 .insert({
@@ -490,11 +506,12 @@ export class AppointmentService {
                     customer_id: appointment.customer_id,
                     vehicle_id: appointment.vehicle_id,
                     appointment_id: appointmentId,
-                    title: `${appointment.service_type} - ${customerName}`,
+                    title: `${appointment.service_type}`,
                     notes: appointment.notes,
                     status: 'pending',
                     priority: 'medium',
                     customer_type: 'registered',
+                    started_at: startedAt,
                 })
                 .select()
                 .single()

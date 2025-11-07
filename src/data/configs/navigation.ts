@@ -26,17 +26,7 @@ const customerSubItems = [
     { name: "Customer Contracts", href: "/customer-contracts" },
 ];
 
-const financialsSubItems = [
-    { name: "Analytics", href: "/financials" },
-    { name: "Invoices", href: "/financials/invoices" },
-];
-
 export const navigationConfig: NavItem[] = [
-    // {
-    //     name: "Dashboard",
-    //     href: "/",
-    //     requiredRoles: ['admin', 'super', 'user']
-    // },
     {
         name: "Appointments",
         href: "/operations/appointments",
@@ -48,15 +38,15 @@ export const navigationConfig: NavItem[] = [
         requiredRoles: ['admin', 'super', 'user']
     },
     {
+        name: "Invoices",
+        href: "/financials/invoices",
+        requiredRoles: ['admin', 'super', 'user']
+    },
+    {
         name: "Mia AI",
         href: "/mia-ai",
         requiredRoles: ['admin', 'super', 'demo', 'user']
     },
-    // {
-    //     name: "Parts",
-    //     href: "/parts",
-    //     requiredRoles: ['user', 'admin', 'super', 'demo']
-    // },
     {
         name: "Customers",
         href: "/customers",
@@ -64,21 +54,9 @@ export const navigationConfig: NavItem[] = [
         subItems: customerSubItems,
         requiredRoles: ['admin', 'super', 'user']
     },
-    // {
-    //     name: "Suppliers",
-    //     href: "/suppliers",
-    //     requiredRoles: ['user', 'admin', 'super', 'demo']
-    // },
-    // {
-    //     name: "Migrations",
-    //     href: "/migrations",
-    //     requiredRoles: ['admin', 'super', 'user']
-    // },
     {
         name: "Financials",
         href: "/financials",
-        hasDropdown: true,
-        subItems: financialsSubItems,
         requiredRoles: ['admin', 'super', 'user']
     },
     {
