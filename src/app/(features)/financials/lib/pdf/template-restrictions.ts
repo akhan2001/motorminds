@@ -18,6 +18,7 @@ export const TEMPLATE_RESTRICTIONS: Record<string, string[]> = {
     tony: [
         '84b608af-c5ee-4d0c-b47c-29fd497734b2', // Good Guyz Garage shop_id
         '850e8400-e29b-41d4-a716-446655440006', // Sapling shop_id
+        '85457c04-34f9-4a53-89cf-bc8576baea29' // Demo shop_id
     ],
 }
 

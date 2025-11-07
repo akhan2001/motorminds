@@ -57,12 +57,12 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
             <div className="mb-0.5 flex-shrink-0">
                 {/* Row 1: Logo | Empty | Tagline+Address | Business Info */}
                 <div className="flex items-center min-h-[40px] px-1.5 py-1">
-                    <div className="w-[33%] pl-0.5 bg-indigo-200 flex items-center justify-center py-1 px-1">
-                        <div className="text-center">
-                            <div className="text-[16pt] font-bold text-blue-900 tracking-wider leading-tight">GOOD</div>
-                            <div className="text-[16pt] font-bold text-blue-900 tracking-wider leading-tight">GUYZ</div>
-                            <div className="text-[9pt] text-blue-900 tracking-wide mt-0 leading-tight">G A R A G E</div>
-                        </div>
+                    <div className="w-[33%] pl-0.5 bg-white flex items-center justify-start py-1 px-1">
+                        <img 
+                            src="/client_logos/good_guyz/good-guyz-garage_logo.png" 
+                            alt="Good Guyz Garage Logo" 
+                            className="max-w-full max-h-[100px] object-contain"
+                        />
                     </div>
                     <div className="w-[33%] px-1 flex flex-col text-center">
                         <div className="text-blue-900 text-[11pt] italic mb-0.5">"By Name. By Reputation."</div>

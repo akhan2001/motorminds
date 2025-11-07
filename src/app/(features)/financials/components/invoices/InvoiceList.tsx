@@ -42,9 +42,10 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
     // Show loading if:
     // - Auth is loading
     // - No shopId yet
-    // - Invoices are loading/fetching
+    // - Invoices are loading (initial load only, not background refetches)
     // - ShopId exists but invoices haven't been loaded yet (undefined means query hasn't completed)
-    const isDataLoading = isAuthLoading || !shopId || isLoading || isFetching || (shopId && invoices === undefined)
+    // Note: isFetching is excluded to prevent loading state during background refetches (e.g., when tabbing back in)
+    const isDataLoading = isAuthLoading || !shopId || isLoading || (shopId && invoices === undefined)
 
     if (isDataLoading) {
         return (
