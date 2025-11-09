@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Car, User, Phone, MessageSquare, Lock, Loader2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link } from 'lucide-react'
 import { formatPhoneNumber } from '@/lib/utils/text'
 import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
 import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
@@ -21,7 +23,8 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     const [customMessage, setCustomMessage] = useState('')
     const [selectedTemplate, setSelectedTemplate] = useState<string>('ready_for_pickup')
     const [isEditing, setIsEditing] = useState(false)
-    const { sendCompletionMessage, isLoading, messagingAvailability } = useWorkOrderMessaging()
+    const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
+    const { sendCompletionMessage, isLoading, messagingAvailability} = useWorkOrderMessaging()
 
     // Format the selected template with actual work order data
     useEffect(() => {
@@ -46,6 +49,10 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
+            // If automated messaging is enabled, queue it
+            if (enableAutomatedMessage) {
+                await queueAutomatedMessage()
+            }
             onConfirm(false)
             return
         }
@@ -56,11 +63,38 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
             customerName: workOrder.customer.customer_name
         })
 
+        // If automated messaging is enabled, queue it
+        if (enableAutomatedMessage) {
+            await queueAutomatedMessage()
+        }
+
         onConfirm(true, customMessage)
     }
 
-    const handleSkipMessage = () => {
+    const handleSkipMessage = async () => {
+        // If automated messaging is enabled, queue it
+        if (enableAutomatedMessage) {
+            await queueAutomatedMessage()
+        }
         onConfirm(false)
+    }
+
+    const queueAutomatedMessage = async () => {
+        try {
+            // Queue automated follow-up messages based on active templates
+            await fetch('/api/messaging/queue-automated', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    work_order_id: workOrder.id,
+                    customer_id: workOrder.customer_id,
+                    customer_phone: workOrder.customer?.customer_phone
+                })
+            })
+        } catch (error) {
+            console.error('Error queuing automated message:', error)
+            // Don't fail the completion if automated messaging fails
+        }
     }
 
     const vehicleInfo = workOrder.vehicle ? 
@@ -130,6 +164,34 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                     </p>
                                 )}
                             </div>
+                        </div>
+                    </div>
+
+                    <Separator className="bg-border dark:bg-[#2a2a2a]" />
+
+                    {/* Automated Follow-Up Toggle */}
+                    <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                                <div>
+                                    <Label htmlFor="automated-message" className="text-sm font-medium text-foreground dark:text-white cursor-pointer">
+                                        Send automated follow-up message
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">
+                                        Automatically sends a follow-up message based on your <a href="/messaging/ai-messaging/templates">
+                                            <span className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline">
+                                                message templates
+                                            </span>
+                                        </a> after the work order is completed.
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                id="automated-message"
+                                checked={enableAutomatedMessage}
+                                onCheckedChange={setEnableAutomatedMessage}
+                            />
                         </div>
                     </div>
 

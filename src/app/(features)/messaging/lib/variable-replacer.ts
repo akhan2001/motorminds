@@ -48,6 +48,12 @@ export const AVAILABLE_VARIABLES = {
         shop_address: 'Shop address',
         shop_email: 'Shop email',
     },
+    // Re-engagement variables (for customer_re_engagement trigger)
+    re_engagement: {
+        days_since_last_visit: 'Number of days since customer last visited',
+        last_visit_date: 'Date of last visit (formatted)',
+        last_visit_relative: 'Relative time since last visit (e.g., "3 months ago")',
+    },
     // Service variables
     service: {
         service_type: 'Type of service performed',
@@ -135,17 +141,18 @@ function formatCurrencyValue(value: string | number | null): string {
 /**
  * Replace variables in template string with actual values
  * 
- * @param template - Template string with [variable_name] placeholders
+ * @param template - Template string with {{variable_name}} or [variable_name] placeholders
  * @param data - Data object containing values (can be nested)
  * @param options - Options for replacement behavior
  * @returns Processed string with variables replaced
  * 
  * @example
  * replaceVariables(
- *   "Hi [customer_name], your [vehicle.make] [vehicle.model] service is complete!",
+ *   "Hi {{customer_name}}, your {{vehicle_make}} {{vehicle_model}} service is complete!",
  *   {
  *     customer_name: "John Doe",
- *     vehicle: { make: "Toyota", model: "Camry" }
+ *     vehicle_make: "Toyota",
+ *     vehicle_model: "Camry"
  *   }
  * )
  * // Returns: "Hi John Doe, your Toyota Camry service is complete!"
@@ -163,41 +170,50 @@ export function replaceVariables(
         return ''
     }
     
-    // Match [variable_name] or [nested.path] patterns
-    const variablePattern = /\[([^\]]+)\]/g
+    // Match {{variable_name}} or [variable_name] patterns
+    const patterns = [
+        /\{\{([^}]+)\}\}/g,  // {{variable_name}}
+        /\[([^\]]+)\]/g       // [variable_name]
+    ]
     
-    return template.replace(variablePattern, (match, variablePath) => {
-        // Trim whitespace from variable path
-        const path = variablePath.trim()
-        
-        // Get value from data (supports nested paths like "customer.customer_name")
-        let value = getNestedValue(data, path)
-        
-        // If not found, try common aliases
-        if (value === null) {
-            value = tryCommonAliases(data, path)
-        }
-        
-        // Format value based on field type
-        if (value !== null) {
-            value = formatValue(value, path)
-        }
-        
-        // Handle missing variables
-        if (value === null || value === '') {
-            switch (missingVariableBehavior) {
-                case 'placeholder':
-                    return `[${path}]`
-                case 'keep':
-                    return match
-                case 'empty':
-                default:
-                    return ''
+    let result = template
+    
+    for (const pattern of patterns) {
+        result = result.replace(pattern, (match, variablePath) => {
+            // Trim whitespace from variable path
+            const path = variablePath.trim()
+            
+            // Get value from data (supports nested paths like "vehicle.make")
+            let value = getNestedValue(data, path)
+            
+            // If not found, try common aliases
+            if (value === null) {
+                value = tryCommonAliases(data, path)
             }
-        }
-        
-        return value
-    })
+            
+            // Format value based on field type
+            if (value !== null) {
+                value = formatValue(value, path)
+            }
+            
+            // Handle missing variables
+            if (value === null || value === '') {
+                switch (missingVariableBehavior) {
+                    case 'placeholder':
+                        return match.startsWith('{{') ? `{{${path}}}` : `[${path}]`
+                    case 'keep':
+                        return match
+                    case 'empty':
+                    default:
+                        return ''
+                }
+            }
+            
+            return value
+        })
+    }
+    
+    return result
 }
 
 /**
@@ -261,20 +277,27 @@ function formatValue(value: string | number, fieldName: string): string {
 /**
  * Extract all variables from a template
  * Useful for validation and preview
+ * Supports both {{variable}} and [variable] syntax
  */
 export function extractVariables(template: string): string[] {
     if (!template || typeof template !== 'string') {
         return []
     }
     
-    const variablePattern = /\[([^\]]+)\]/g
-    const variables: string[] = []
-    let match
+    const patterns = [
+        /\{\{([^}]+)\}\}/g,  // {{variable_name}}
+        /\[([^\]]+)\]/g       // [variable_name]
+    ]
     
-    while ((match = variablePattern.exec(template)) !== null) {
-        const variable = match[1].trim()
-        if (variable && !variables.includes(variable)) {
-            variables.push(variable)
+    const variables: string[] = []
+    
+    for (const pattern of patterns) {
+        let match
+        while ((match = pattern.exec(template)) !== null) {
+            const variable = match[1].trim()
+            if (variable && !variables.includes(variable)) {
+                variables.push(variable)
+            }
         }
     }
     
