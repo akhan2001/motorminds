@@ -100,8 +100,10 @@ export async function POST(request: NextRequest) {
                 scheduledDate.setHours(scheduledDate.getHours() + template.delay_hours)
 
                 // Prepare data for variable replacement
+                // Support both flat (vehicle_make) and nested (vehicle.make) syntax
                 const vehicle = workOrder.vehicle
-                const templateData = {
+                const templateData: any = {
+                    // Flat syntax (for backward compatibility)
                     customer_name: workOrder.customer?.customer_name || 'Customer',
                     shop_name: workOrder.shop?.shop_name || 'Your Auto Shop',
                     shop_phone: workOrder.shop?.shop_phone || '',
@@ -113,7 +115,29 @@ export async function POST(request: NextRequest) {
                         : '',
                     work_order_title: workOrder.title || '',
                     service_type: service_type || workOrder.title || '',
-                    delay_time: formatDelayTime(template.delay_hours)
+                    delay_time: formatDelayTime(template.delay_hours),
+                    // Nested syntax (for [vehicle.make] style templates)
+                    vehicle: vehicle ? {
+                        make: vehicle.make || '',
+                        model: vehicle.model || '',
+                        year: vehicle.year?.toString() || '',
+                        license_plate: vehicle.license_plate || '',
+                        vin: vehicle.vin || ''
+                    } : null,
+                    customer: {
+                        customer_name: workOrder.customer?.customer_name || 'Customer',
+                        customer_phone: workOrder.customer?.customer_phone || '',
+                        customer_email: workOrder.customer?.customer_email || ''
+                    },
+                    shop: {
+                        shop_name: workOrder.shop?.shop_name || 'Your Auto Shop',
+                        shop_phone: workOrder.shop?.shop_phone || '',
+                        shop_address: workOrder.shop?.shop_address || ''
+                    },
+                    work_order: {
+                        title: workOrder.title || '',
+                        work_order_number: workOrder.work_order_number || ''
+                    }
                 }
 
                 // Replace variables in template

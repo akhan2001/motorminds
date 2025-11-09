@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { TIME_PERIODS } from '../types/message-template'
 import { useState } from 'react'
+import { SAMPLE_DATA } from './sample_data'
 
 interface DelaySelectorProps {
     value: number // delay in hours

@@ -234,8 +234,10 @@ export async function POST(request: NextRequest) {
                             }
                             
                             // Build template data with all available information
+                            // Support both flat (vehicle_make) and nested (vehicle.make) syntax
                             const vehicle = workOrderData?.vehicle || null;
-                            const templateData = {
+                            const templateData: any = {
+                                // Flat syntax (for backward compatibility)
                                 customer_name: (queueItem.customer as any)?.customer_name || 'Customer',
                                 shop_name: (queueItem.shop as any)?.shop_name || 'Your Auto Shop',
                                 shop_phone: (queueItem.shop as any)?.shop_phone || '',
@@ -249,7 +251,29 @@ export async function POST(request: NextRequest) {
                                 service_type: queueItem.trigger_data?.service_type || workOrderData?.title || '',
                                 delay_time: queueItem.template?.delay_hours 
                                     ? formatDelayTime(queueItem.template.delay_hours)
-                                    : ''
+                                    : '',
+                                // Nested syntax (for [vehicle.make] style templates)
+                                vehicle: vehicle ? {
+                                    make: vehicle.make || '',
+                                    model: vehicle.model || '',
+                                    year: vehicle.year?.toString() || '',
+                                    license_plate: vehicle.license_plate || '',
+                                    vin: vehicle.vin || ''
+                                } : null,
+                                customer: {
+                                    customer_name: (queueItem.customer as any)?.customer_name || 'Customer',
+                                    customer_phone: (queueItem.customer as any)?.customer_phone || '',
+                                    customer_email: (queueItem.customer as any)?.customer_email || ''
+                                },
+                                shop: {
+                                    shop_name: (queueItem.shop as any)?.shop_name || 'Your Auto Shop',
+                                    shop_phone: (queueItem.shop as any)?.shop_phone || '',
+                                    shop_address: (queueItem.shop as any)?.shop_address || ''
+                                },
+                                work_order: {
+                                    title: workOrderData?.title || queueItem.trigger_data?.work_order_title || '',
+                                    work_order_number: workOrderData?.work_order_number || ''
+                                }
                             };
                             
                             messageBody = replaceVariables(
