@@ -8,11 +8,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link } from 'lucide-react'
+import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link, CheckCircle2 } from 'lucide-react'
 import { formatPhoneNumber } from '@/lib/utils/text'
 import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
 import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
+import type { MessageTemplate } from '@/app/(features)/messaging/types/message-template'
 
 export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> = ({
     workOrder,
@@ -24,6 +25,8 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     const [selectedTemplate, setSelectedTemplate] = useState<string>('ready_for_pickup')
     const [isEditing, setIsEditing] = useState(false)
     const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
+    const [automatedTemplates, setAutomatedTemplates] = useState<MessageTemplate[]>([])
+    const [loadingTemplates, setLoadingTemplates] = useState(false)
     const { sendCompletionMessage, isLoading, messagingAvailability} = useWorkOrderMessaging()
 
     // Format the selected template with actual work order data
@@ -46,6 +49,33 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
             setCustomMessage(formattedMessage)
         }
     }, [workOrder, isOpen, selectedTemplate])
+
+    // Fetch automated templates that will be triggered
+    useEffect(() => {
+        const fetchAutomatedTemplates = async () => {
+            if (!isOpen || !enableAutomatedMessage) {
+                setAutomatedTemplates([])
+                return
+            }
+
+            setLoadingTemplates(true)
+            try {
+                const response = await fetch('/api/messaging/templates?trigger_type=work_order_complete')
+                if (response.ok) {
+                    const templates = await response.json()
+                    // Filter active templates
+                    const activeTemplates = templates.filter((t: MessageTemplate) => t.is_active)
+                    setAutomatedTemplates(activeTemplates)
+                }
+            } catch (error) {
+                console.error('Error fetching automated templates:', error)
+            } finally {
+                setLoadingTemplates(false)
+            }
+        }
+
+        fetchAutomatedTemplates()
+    }, [isOpen, enableAutomatedMessage])
 
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
@@ -81,20 +111,68 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     const queueAutomatedMessage = async () => {
         try {
+            // Extract service type from work order title or description
+            const serviceType = extractServiceType(workOrder.title)
+            
             // Queue automated follow-up messages based on active templates
-            await fetch('/api/messaging/queue-automated', {
+            const response = await fetch('/api/messaging/queue-automated', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     work_order_id: workOrder.id,
                     customer_id: workOrder.customer_id,
-                    customer_phone: workOrder.customer?.customer_phone
+                    service_type: serviceType
                 })
             })
+
+            if (response.ok) {
+                const data = await response.json()
+                console.log(`✅ Queued ${data.queued} automated message(s)`)
+            }
         } catch (error) {
             console.error('Error queuing automated message:', error)
             // Don't fail the completion if automated messaging fails
         }
+    }
+
+    // Helper to extract service type from work order title
+    const extractServiceType = (title: string): string | null => {
+        if (!title) return null
+        
+        const lowerTitle = title.toLowerCase()
+        
+        // Map common service names to service types
+        if (lowerTitle.includes('oil change')) return 'oil_change'
+        if (lowerTitle.includes('brake')) return 'brake_service'
+        if (lowerTitle.includes('tire rotation')) return 'tire_rotation'
+        if (lowerTitle.includes('tire replacement') || lowerTitle.includes('new tire')) return 'tire_replacement'
+        if (lowerTitle.includes('alignment') || lowerTitle.includes('wheel align')) return 'wheel_alignment'
+        if (lowerTitle.includes('diagnostic') || lowerTitle.includes('check engine')) return 'engine_diagnostic'
+        if (lowerTitle.includes('transmission')) return 'transmission_service'
+        if (lowerTitle.includes('battery')) return 'battery_service'
+        if (lowerTitle.includes('air filter')) return 'air_filter_replacement'
+        if (lowerTitle.includes('coolant') || lowerTitle.includes('radiator flush')) return 'coolant_flush'
+        if (lowerTitle.includes('spark plug')) return 'spark_plug_replacement'
+        if (lowerTitle.includes('brake fluid')) return 'brake_fluid_flush'
+        if (lowerTitle.includes('power steering')) return 'power_steering_flush'
+        if (lowerTitle.includes('inspection')) return 'general_inspection'
+        
+        return 'other'
+    }
+
+    // Helper to format delay hours into human-readable string
+    const formatDelayHours = (hours: number): string => {
+        if (hours === 0) return 'immediately'
+        if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''}`
+        
+        const days = Math.floor(hours / 24)
+        if (days < 7) return `${days} day${days !== 1 ? 's' : ''}`
+        
+        const weeks = Math.floor(days / 7)
+        if (weeks < 4) return `${weeks} week${weeks !== 1 ? 's' : ''}`
+        
+        const months = Math.floor(days / 30)
+        return `${months} month${months !== 1 ? 's' : ''}`
     }
 
     const vehicleInfo = workOrder.vehicle ? 
@@ -171,19 +249,15 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
                     {/* Automated Follow-Up Toggle */}
                     <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
                                 <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                                 <div>
                                     <Label htmlFor="automated-message" className="text-sm font-medium text-foreground dark:text-white cursor-pointer">
-                                        Send automated follow-up message
+                                        Send automated follow-up messages
                                     </Label>
                                     <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">
-                                        Automatically sends a follow-up message based on your <a href="/messaging/ai-messaging/templates">
-                                            <span className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 underline">
-                                                message templates
-                                            </span>
-                                        </a> after the work order is completed.
+                                        Automatically schedules follow-up messages based on your active templates
                                     </p>
                                 </div>
                             </div>
@@ -193,6 +267,56 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                 onCheckedChange={setEnableAutomatedMessage}
                             />
                         </div>
+
+                        {/* Show which templates will be triggered */}
+                        {enableAutomatedMessage && (
+                            <div className="mt-3 pt-3 border-t border-blue-500/20">
+                                {loadingTemplates ? (
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Loading templates...
+                                    </div>
+                                ) : automatedTemplates.length > 0 ? (
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-medium text-foreground dark:text-gray-300">
+                                            {automatedTemplates.length} message{automatedTemplates.length !== 1 ? 's' : ''} will be scheduled:
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            {automatedTemplates.map((template) => (
+                                                <div 
+                                                    key={template.id} 
+                                                    className="flex items-start gap-2 text-xs bg-blue-500/5 rounded px-2 py-1.5"
+                                                >
+                                                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                                    <div className="flex-1">
+                                                        <span className="font-medium text-foreground dark:text-white">
+                                                            {template.name}
+                                                        </span>
+                                                        <span className="text-muted-foreground dark:text-gray-400">
+                                                            {' '}• Sends in {formatDelayHours(template.delay_hours)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+                                        <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                                        <p>
+                                            No active templates found. Create templates in{' '}
+                                            <a 
+                                                href="/messaging/templates" 
+                                                className="underline hover:text-amber-700 dark:hover:text-amber-300"
+                                                target="_blank"
+                                            >
+                                                Messaging Settings
+                                            </a>
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <Separator className="bg-border dark:bg-[#2a2a2a]" />
