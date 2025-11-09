@@ -7,6 +7,7 @@ export interface CustomerSegment {
     // Date filters
     last_service_date_from?: string // ISO date
     last_service_date_to?: string // ISO date
+    last_visit_days?: number // Filter by days since last visit
     
     // Service filters
     service_types?: string[] // Filter by service type received

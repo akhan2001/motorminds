@@ -43,7 +43,7 @@ export default function CampaignsPage() {
     }
 
     const handleSend = (campaign: MassCampaign) => {
-        if (!confirm(`Send "${campaign.name}" to ${campaign.total_recipients || 'all matching'} customers?`)) return
+        if (!confirm(`Schedule "${campaign.name}" to ${campaign.total_recipients || 'all matching'} customers?`)) return
         sendCampaign(campaign.id)
         // Refetch after a short delay to see updated status
         setTimeout(() => refetch(), 1000)
@@ -259,7 +259,7 @@ export default function CampaignsPage() {
                                                                     variant="ghost"
                                                                     size="sm"
                                                                     onClick={() => handleSend(campaign)}
-                                                                    title="Send Campaign"
+                                                                    title="Schedule Now"
                                                                 >
                                                                     <Send className="h-4 w-4" />
                                                                 </Button>

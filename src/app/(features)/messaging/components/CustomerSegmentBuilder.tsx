@@ -8,9 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon, Users, Loader2, X } from 'lucide-react'
+import { Users, Loader2, X } from 'lucide-react'
 import { format } from 'date-fns'
 import type { CustomerSegment } from '../types/mass-campaign'
 
@@ -126,49 +124,44 @@ export function CustomerSegmentBuilder({ value, onChange, onPreview }: CustomerS
                     <div className="space-y-2">
                         <Label className="text-foreground dark:text-gray-300">Last Service Date Range</Label>
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" disabled={isAllCustomers} className="w-full justify-start text-left font-normal bg-background dark:bg-[#0a0a0a]">
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {localSegment.last_service_date_from ? (
-                                                format(new Date(localSegment.last_service_date_from), 'PP')
-                                            ) : (
-                                                <span className="text-muted-foreground">From date</span>
-                                            )}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={localSegment.last_service_date_from ? new Date(localSegment.last_service_date_from) : undefined}
-                                            onSelect={(date) => updateSegment({ last_service_date_from: date?.toISOString() })}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                            <div className="space-y-1">
+                                <Label htmlFor="date-from" className="text-xs text-muted-foreground">From</Label>
+                                <Input
+                                    id="date-from"
+                                    type="date"
+                                    disabled={isAllCustomers}
+                                    value={localSegment.last_service_date_from ? format(new Date(localSegment.last_service_date_from), 'yyyy-MM-dd') : ''}
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            const date = new Date(e.target.value)
+                                            date.setUTCHours(0, 0, 0, 0)
+                                            updateSegment({ last_service_date_from: date.toISOString() })
+                                        } else {
+                                            updateSegment({ last_service_date_from: undefined })
+                                        }
+                                    }}
+                                    className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]"
+                                />
                             </div>
-                            <div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" disabled={isAllCustomers} className="w-full justify-start text-left font-normal bg-background dark:bg-[#0a0a0a]">
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {localSegment.last_service_date_to ? (
-                                                format(new Date(localSegment.last_service_date_to), 'PP')
-                                            ) : (
-                                                <span className="text-muted-foreground">To date</span>
-                                            )}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={localSegment.last_service_date_to ? new Date(localSegment.last_service_date_to) : undefined}
-                                            onSelect={(date) => updateSegment({ last_service_date_to: date?.toISOString() })}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
+                            <div className="space-y-1">
+                                <Label htmlFor="date-to" className="text-xs text-muted-foreground">To</Label>
+                                <Input
+                                    id="date-to"
+                                    type="date"
+                                    disabled={isAllCustomers}
+                                    value={localSegment.last_service_date_to ? format(new Date(localSegment.last_service_date_to), 'yyyy-MM-dd') : ''}
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            const date = new Date(e.target.value)
+                                            date.setUTCHours(0, 0, 0, 0)
+                                            updateSegment({ last_service_date_to: date.toISOString() })
+                                        } else {
+                                            updateSegment({ last_service_date_to: undefined })
+                                        }
+                                    }}
+                                    min={localSegment.last_service_date_from ? format(new Date(localSegment.last_service_date_from), 'yyyy-MM-dd') : undefined}
+                                    className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]"
+                                />
                             </div>
                         </div>
                     </div>
@@ -228,33 +221,6 @@ export function CustomerSegmentBuilder({ value, onChange, onPreview }: CustomerS
                             }}
                             className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]"
                         />
-                    </div>
-
-                    {/* Total Spent Filter */}
-                    <div className="space-y-2">
-                        <Label className="text-foreground dark:text-gray-300">Total Spent ($)</Label>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Input
-                                type="number"
-                                disabled={isAllCustomers}
-                                placeholder="Min"
-                                value={localSegment.total_spent_min || ''}
-                                onChange={(e) => updateSegment({
-                                    total_spent_min: e.target.value ? Number(e.target.value) : undefined
-                                })}
-                                className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]"
-                            />
-                            <Input
-                                type="number"
-                                disabled={isAllCustomers}
-                                placeholder="Max"
-                                value={localSegment.total_spent_max || ''}
-                                onChange={(e) => updateSegment({
-                                    total_spent_max: e.target.value ? Number(e.target.value) : undefined
-                                })}
-                                className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]"
-                            />
-                        </div>
                     </div>
 
                     {/* Last Visit Days */}

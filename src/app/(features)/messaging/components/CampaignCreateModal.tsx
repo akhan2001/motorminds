@@ -76,12 +76,32 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
             name: campaignName,
             message,
             customer_segment: customerSegment,
-            status: isDraft ? 'draft' : 'scheduled',
+            status: isDraft ? 'draft' : (scheduledFor ? 'scheduled' : 'draft'), // Create as draft if sending immediately, we'll send it next
             scheduled_send_at: scheduledFor?.toISOString() || null
         }, {
-            onSuccess: () => {
-                toast.success(isDraft ? 'Campaign saved as draft' : 'Campaign created and scheduled')
-                onOpenChange(false)
+            onSuccess: async (createdCampaign) => {
+                if (isDraft) {
+                    toast.success('Campaign saved as draft')
+                    onOpenChange(false)
+                } else {
+                    // If not a draft, immediately send the campaign
+                    try {
+                        const sendResponse = await fetch(`/api/messaging/campaigns/${createdCampaign.id}/send`, {
+                            method: 'POST'
+                        })
+                        const sendData = await sendResponse.json()
+                        
+                        if (sendResponse.ok) {
+                            toast.success(sendData.message || `Campaign sent to ${sendData.total_recipients || 0} recipients`)
+                        } else {
+                            toast.error(sendData.error || 'Failed to send campaign')
+                        }
+                    } catch (error: any) {
+                        toast.error(`Failed to send campaign: ${error.message}`)
+                    }
+                    onOpenChange(false)
+                }
+                
                 // Reset form
                 setCampaignName('')
                 setMessage('')
@@ -187,9 +207,11 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
                                         value={scheduledFor ? format(scheduledFor, 'yyyy-MM-dd') : ''}
                                         onChange={(e) => {
                                             if (e.target.value) {
-                                                const selectedDate = new Date(e.target.value)
-                                                // Set to start of day
-                                                selectedDate.setHours(0, 0, 0, 0)
+                                                // Create date at local midnight to preserve the selected date
+                                                const dateString = e.target.value // YYYY-MM-DD format
+                                                const [year, month, day] = dateString.split('-').map(Number)
+                                                // Create date in local time at midnight
+                                                const selectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
                                                 setScheduledFor(selectedDate)
                                             } else {
                                                 setScheduledFor(undefined)
@@ -242,7 +264,7 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-foreground dark:text-white">
-                                    Ready to {scheduledFor ? 'schedule' : 'send'} your campaign?
+                                    Ready to schedule your campaign?
                                 </p>
                                 {recipientCount !== null && (
                                     <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
@@ -275,7 +297,7 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
                                     ) : (
                                         <Send className="h-4 w-4 mr-2" />
                                     )}
-                                    {scheduledFor ? 'Schedule' : 'Send Now'}
+                                    {scheduledFor ? 'Schedule' : 'Schedule Now'}
                                 </Button>
                             </div>
                         </div>

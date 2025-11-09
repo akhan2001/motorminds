@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
-import { formatPhoneNumberE164 } from '@/utils/format-phone'
+import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 import { replaceVariables } from '@/app/(features)/messaging/lib/variable-replacer'
 
 // Use service role client to bypass RLS (this endpoint may be called by cron jobs)
@@ -263,8 +263,43 @@ export async function POST(request: NextRequest) {
                             missingVariableBehavior: 'empty'
                         })
 
+                        // Validate and format phone number
+                        const rawPhone = recipient.customer_phone || ''
+                        
+                        // Check for invalid characters (like XXXX in test numbers)
+                        if (rawPhone.toUpperCase().includes('X') || rawPhone.includes('*') || rawPhone.length < 10) {
+                            console.warn(`⚠️ [PROCESS] Invalid phone number format: ${rawPhone} (contains invalid characters or too short)`)
+                            await supabase
+                                .from('ai_mass_campaign_recipients')
+                                .update({
+                                    status: 'failed',
+                                    error_message: `Invalid phone number format: ${rawPhone}`,
+                                    retry_count: (recipient.retry_count || 0) + 1
+                                })
+                                .eq('id', recipient.id)
+                            totalFailed++
+                            continue
+                        }
+
                         // Format phone number
-                        const formattedPhone = formatPhoneNumberE164(recipient.customer_phone)
+                        const formattedPhone = formatPhoneNumberE164(rawPhone)
+                        
+                        // Validate E.164 format
+                        if (!isValidE164(formattedPhone)) {
+                            console.warn(`⚠️ [PROCESS] Invalid E.164 format: ${formattedPhone} (from ${rawPhone})`)
+                            await supabase
+                                .from('ai_mass_campaign_recipients')
+                                .update({
+                                    status: 'failed',
+                                    error_message: `Invalid phone number format: ${rawPhone}`,
+                                    retry_count: (recipient.retry_count || 0) + 1
+                                })
+                                .eq('id', recipient.id)
+                            totalFailed++
+                            continue
+                        }
+
+                        console.log(`📱 [PROCESS] Sending to ${formattedPhone} (from ${rawPhone})`)
 
                         // Send via Twilio
                         const twilioMessage = await twilioClient.messages.create({
