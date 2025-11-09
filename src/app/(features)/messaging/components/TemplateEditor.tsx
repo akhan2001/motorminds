@@ -17,6 +17,7 @@ import { TriggerTypeSelector } from './TriggerTypeSelector'
 import { ServiceTypeSelector } from './ServiceTypeSelector'
 import { DelaySelector } from './DelaySelector'
 import { VariablePicker } from './VariablePicker'
+import { SAMPLE_DATA } from './sample_data'
 
 interface TemplateEditorProps {
     template?: MessageTemplate | null

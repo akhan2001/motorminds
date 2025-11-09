@@ -110,7 +110,21 @@ export function CampaignDetailSheet({ open, onOpenChange, campaignId }: Campaign
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="sm:max-w-3xl w-full p-0 bg-background dark:bg-[#0a0a0a]">
+            <SheetContent className="sm:max-w-3xl w-full p-0 bg-white dark:bg-[#0a0a0a]">
+                <SheetHeader className="px-6 pt-6 pb-4 border-b border-border dark:border-[#2a2a2a]">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <SheetTitle className="text-xl">
+                                {isLoading ? 'Loading Campaign...' : campaign ? campaign.name : 'Campaign Not Found'}
+                            </SheetTitle>
+                            <SheetDescription className="mt-1">
+                                {isLoading ? 'Please wait...' : campaign ? 'Campaign details and recipient status' : 'The requested campaign could not be found'}
+                            </SheetDescription>
+                        </div>
+                        {campaign && getCampaignStatusBadge(campaign.status)}
+                    </div>
+                </SheetHeader>
+                
                 {isLoading ? (
                     <div className="flex items-center justify-center h-full">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -121,17 +135,6 @@ export function CampaignDetailSheet({ open, onOpenChange, campaignId }: Campaign
                     </div>
                 ) : (
                     <>
-                        <SheetHeader className="px-6 pt-6 pb-4 border-b border-border dark:border-[#2a2a2a]">
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                    <SheetTitle className="text-xl">{campaign.name}</SheetTitle>
-                                    <SheetDescription className="mt-1">
-                                        Campaign details and recipient status
-                                    </SheetDescription>
-                                </div>
-                                {getCampaignStatusBadge(campaign.status)}
-                            </div>
-                        </SheetHeader>
 
                         <ScrollArea className="h-[calc(100vh-120px)] px-6 py-4">
                             <div className="space-y-6">
