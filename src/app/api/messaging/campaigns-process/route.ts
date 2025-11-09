@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { formatPhoneNumberE164 } from '@/utils/format-phone'
+import { replaceVariables } from '@/app/(features)/messaging/lib/variable-replacer'
 
 // Use service role client to bypass RLS (this endpoint may be called by cron jobs)
 const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -145,10 +146,23 @@ export async function POST(request: NextRequest) {
 
                 const shopPhoneNumber = phoneNumbers[0]
 
-                // Get pending recipients (batch of 50)
+                // Get pending recipients (batch of 50) with customer and vehicle data
                 const { data: recipients, error: recipientsError } = await supabase
                     .from('ai_mass_campaign_recipients')
-                    .select('*')
+                    .select(`
+                        *,
+                        customer:customers(
+                            id,
+                            customer_name,
+                            customer_phone,
+                            customer_email,
+                            customer_vehicles(
+                                make,
+                                model,
+                                year
+                            )
+                        )
+                    `)
                     .eq('campaign_id', campaign.id)
                     .eq('status', 'pending')
                     .limit(50)
@@ -181,6 +195,13 @@ export async function POST(request: NextRequest) {
                     continue
                 }
 
+                // Get shop info for variable replacement
+                const { data: shop } = await supabase
+                    .from('shops')
+                    .select('shop_name, shop_phone, shop_address')
+                    .eq('id', campaign.shop_id)
+                    .single()
+
                 // Process recipients
                 for (const recipient of recipients) {
                     try {
@@ -190,6 +211,58 @@ export async function POST(request: NextRequest) {
                             break
                         }
 
+                        // Generate message with variable replacement
+                        const customer = (recipient as any).customer
+                        if (!customer) {
+                            console.error(`❌ Customer not found for recipient ${recipient.id}`)
+                            await supabase
+                                .from('ai_mass_campaign_recipients')
+                                .update({
+                                    status: 'failed',
+                                    error_message: 'Customer not found',
+                                    retry_count: (recipient.retry_count || 0) + 1
+                                })
+                                .eq('id', recipient.id)
+                            totalFailed++
+                            continue
+                        }
+
+                        // Prepare template data
+                        const templateData: any = {
+                            customer_name: customer.customer_name,
+                            shop_name: shop?.shop_name || 'Your Auto Shop',
+                            shop_phone: shop?.shop_phone || '',
+                            customer: {
+                                customer_name: customer.customer_name,
+                                customer_phone: customer.customer_phone,
+                                customer_email: customer.customer_email
+                            },
+                            shop: {
+                                shop_name: shop?.shop_name || 'Your Auto Shop',
+                                shop_phone: shop?.shop_phone || '',
+                                shop_address: shop?.shop_address || ''
+                            },
+                            vehicle: null as any
+                        }
+
+                        // Add vehicle data if available
+                        if (customer.customer_vehicles && customer.customer_vehicles.length > 0) {
+                            const vehicle = customer.customer_vehicles[0]
+                            templateData.vehicle = {
+                                make: vehicle.make || '',
+                                model: vehicle.model || '',
+                                year: vehicle.year?.toString() || ''
+                            }
+                            templateData.vehicle_make = vehicle.make || ''
+                            templateData.vehicle_model = vehicle.model || ''
+                            templateData.vehicle_year = vehicle.year?.toString() || ''
+                        }
+
+                        // Replace variables in message
+                        const messageBody = replaceVariables(campaign.message, templateData, {
+                            missingVariableBehavior: 'empty'
+                        })
+
                         // Format phone number
                         const formattedPhone = formatPhoneNumberE164(recipient.customer_phone)
 
@@ -197,7 +270,7 @@ export async function POST(request: NextRequest) {
                         const twilioMessage = await twilioClient.messages.create({
                             to: formattedPhone,
                             from: shopPhoneNumber.phone_number,
-                            body: recipient.interpolated_message
+                            body: messageBody
                         })
 
                         // Store in sms_messages
@@ -208,7 +281,7 @@ export async function POST(request: NextRequest) {
                                 customer_id: recipient.customer_id,
                                 from_number: shopPhoneNumber.phone_number,
                                 to_number: formattedPhone,
-                                message_body: recipient.interpolated_message,
+                                message_body: messageBody,
                                 direction: 'outbound',
                                 status: 'sent',
                                 twilio_sid: twilioMessage.sid,

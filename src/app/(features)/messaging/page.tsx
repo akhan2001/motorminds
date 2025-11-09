@@ -68,9 +68,9 @@ export default function MessagingDashboard() {
     }
 
     if (authLoading) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                <Nav />
+    return (
+        <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
+            <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
@@ -79,7 +79,7 @@ export default function MessagingDashboard() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background dark:bg-[#0a0a0a]">
+        <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
             <Nav />
             
             <MessagingHeader 
@@ -272,9 +272,9 @@ export default function MessagingDashboard() {
                                         <Button 
                                             variant="outline" 
                                             onClick={() => router.push('/messaging/automated')}
-                                            className="h-auto p-4 flex flex-col items-center gap-2"
+                                            className="h-auto p-4 flex flex-col items-center gap-2 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/20"
                                         >
-                                            <Zap className="h-6 w-6 text-blue-600" />
+                                            <Zap className="h-6 w-6 text-red-600" />
                                             <div className="text-center">
                                                 <p className="font-medium">Create Template</p>
                                                 <p className="text-xs text-muted-foreground">New automated message</p>
@@ -284,9 +284,9 @@ export default function MessagingDashboard() {
                                         <Button 
                                             variant="outline" 
                                             onClick={() => router.push('/messaging/campaigns')}
-                                            className="h-auto p-4 flex flex-col items-center gap-2"
+                                            className="h-auto p-4 flex flex-col items-center gap-2 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/20"
                                         >
-                                            <Users className="h-6 w-6 text-purple-600" />
+                                            <Users className="h-6 w-6 text-red-600" />
                                             <div className="text-center">
                                                 <p className="font-medium">New Campaign</p>
                                                 <p className="text-xs text-muted-foreground">Target customer segments</p>
@@ -296,9 +296,9 @@ export default function MessagingDashboard() {
                                         <Button 
                                             variant="outline" 
                                             onClick={() => router.push('/messaging/queue')}
-                                            className="h-auto p-4 flex flex-col items-center gap-2"
+                                            className="h-auto p-4 flex flex-col items-center gap-2 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/20"
                                         >
-                                            <MessageSquare className="h-6 w-6 text-green-600" />
+                                            <MessageSquare className="h-6 w-6 text-red-600" />
                                             <div className="text-center">
                                                 <p className="font-medium">View Queue</p>
                                                 <p className="text-xs text-muted-foreground">Check message status</p>

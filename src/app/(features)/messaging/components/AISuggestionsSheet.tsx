@@ -84,12 +84,12 @@ export function AISuggestionsSheet({ open, onOpenChange, onSelectSuggestion }: A
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="sm:max-w-2xl w-full p-0 bg-background dark:bg-[#0a0a0a]">
+            <SheetContent className="sm:max-w-2xl w-full p-0 bg-white dark:bg-[#0a0a0a]">
                 <SheetHeader className="px-6 pt-6 pb-4 border-b border-border dark:border-[#2a2a2a]">
                     <SheetTitle className="flex items-center gap-2">
                         <div className="h-6 w-6 rounded-full bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center p-1">
                             <Image 
-                                src="/red-motorminds-logo-svg.svg" 
+                                src="/motorminds-logo-white.png" 
                                 alt="Mia AI" 
                                 width={16} 
                                 height={16}
@@ -114,7 +114,7 @@ export function AISuggestionsSheet({ open, onOpenChange, onSelectSuggestion }: A
                                             <div className="flex justify-center">
                                                 <div className="h-12 w-12 rounded-full bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center p-2">
                                                     <Image 
-                                                        src="/red-motorminds-logo-svg.svg" 
+                                                        src="/motorminds-logo-white.png" 
                                                         alt="Mia AI" 
                                                         width={32} 
                                                         height={32}

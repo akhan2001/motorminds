@@ -7,11 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { Loader2, CalendarIcon, Send, Clock, Save } from 'lucide-react'
+import { Loader2, Send, Clock, Save } from 'lucide-react'
 import Image from 'next/image'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -135,7 +133,7 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
                                     <Button 
                                         variant="outline"
                                         onClick={() => setIsAISheetOpen(true)}
-                                        className="bg-background dark:bg-[#0a0a0a]"
+                                        className="bg-background dark:bg-[#0a0a0a] border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                                     >
                                         Get Suggestions
                                     </Button>
@@ -180,29 +178,26 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-foreground dark:text-gray-300">
+                                    <Label htmlFor="schedule-date" className="text-foreground dark:text-gray-300">
                                         Schedule (optional)
                                     </Label>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="outline" className="w-full justify-start text-left font-normal bg-background dark:bg-[#0a0a0a]">
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {scheduledFor ? (
-                                                    format(scheduledFor, 'PPP p')
-                                                ) : (
-                                                    <span className="text-muted-foreground">Send immediately</span>
-                                                )}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={scheduledFor}
-                                                onSelect={setScheduledFor}
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                    <Input
+                                        id="schedule-date"
+                                        type="date"
+                                        value={scheduledFor ? format(scheduledFor, 'yyyy-MM-dd') : ''}
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                const selectedDate = new Date(e.target.value)
+                                                // Set to start of day
+                                                selectedDate.setHours(0, 0, 0, 0)
+                                                setScheduledFor(selectedDate)
+                                            } else {
+                                                setScheduledFor(undefined)
+                                            }
+                                        }}
+                                        min={format(new Date(), 'yyyy-MM-dd')}
+                                        className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]"
+                                    />
                                     {scheduledFor && (
                                         <Button
                                             variant="ghost"
@@ -271,6 +266,7 @@ export function CampaignCreateModal({ open, onOpenChange, shopId, prefillData }:
                                 <Button
                                     onClick={() => handleSubmit(false)}
                                     disabled={isPending || recipientCount === 0}
+                                    className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
                                 >
                                     {isPending ? (
                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />

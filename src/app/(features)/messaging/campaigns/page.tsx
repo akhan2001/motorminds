@@ -45,6 +45,27 @@ export default function CampaignsPage() {
     const handleSend = (campaign: MassCampaign) => {
         if (!confirm(`Send "${campaign.name}" to ${campaign.total_recipients || 'all matching'} customers?`)) return
         sendCampaign(campaign.id)
+        // Refetch after a short delay to see updated status
+        setTimeout(() => refetch(), 1000)
+    }
+
+    const handleProcessNow = async (campaign: MassCampaign) => {
+        try {
+            const response = await fetch('/api/messaging/campaigns-process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            const result = await response.json()
+            
+            if (response.ok) {
+                toast.success(`Processed ${result.total_sent || 0} messages, ${result.total_failed || 0} failed`)
+            } else {
+                toast.error(result.error || 'Failed to process campaign')
+            }
+            refetch()
+        } catch (error: any) {
+            toast.error(`Failed to process: ${error.message}`)
+        }
     }
 
     const handleViewCampaign = (campaignId: string) => {
@@ -85,7 +106,7 @@ export default function CampaignsPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background dark:bg-[#0a0a0a]">
+        <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
             <Nav />
             
             <MessagingHeader 
@@ -153,7 +174,10 @@ export default function CampaignsPage() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                        <Button onClick={() => setIsCreateModalOpen(true)} variant="default">
+                        <Button 
+                            onClick={() => setIsCreateModalOpen(true)} 
+                            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+                        >
                             <Plus className="h-4 w-4 mr-2" />
                             Create Campaign
                         </Button>
@@ -188,9 +212,6 @@ export default function CampaignsPage() {
                                     <div className="text-center py-12">
                                         <Megaphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                                         <p className="text-muted-foreground dark:text-gray-400">No campaigns yet</p>
-                                        <p className="text-sm text-muted-foreground dark:text-gray-500 mt-1">
-                                            Get started with AI suggestions or create your first campaign
-                                        </p>
                                     </div>
                                 ) : (
                                     <Table>
@@ -238,8 +259,19 @@ export default function CampaignsPage() {
                                                                     variant="ghost"
                                                                     size="sm"
                                                                     onClick={() => handleSend(campaign)}
+                                                                    title="Send Campaign"
                                                                 >
                                                                     <Send className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                            {campaign.status === 'in_progress' && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleProcessNow(campaign)}
+                                                                    title="Process Now"
+                                                                >
+                                                                    <Clock className="h-4 w-4" />
                                                                 </Button>
                                                             )}
                                                             {['draft', 'failed'].includes(campaign.status) && (

@@ -205,20 +205,23 @@ export function useCampaignSend() {
                 method: 'POST'
             })
 
+            const data = await response.json()
+
             if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to send campaign')
+                throw new Error(data.details || data.error || 'Failed to send campaign')
             }
 
-            return await response.json()
+            return data
         },
-        onSuccess: (_, campaignId) => {
+        onSuccess: (data, campaignId) => {
             queryClient.invalidateQueries({ queryKey: campaignKeys.detail(campaignId) })
             queryClient.invalidateQueries({ queryKey: campaignKeys.lists() })
-            toast.success('Campaign sent successfully')
+            // Invalidate all campaign queries to refresh stats
+            queryClient.invalidateQueries({ queryKey: campaignKeys.all })
+            toast.success(data.message || `Campaign sent to ${data.total_recipients || 0} recipients`)
         },
         onError: (error: Error) => {
-            toast.error(`Failed to send campaign: ${error.message}`)
+            toast.error(error.message || 'Failed to send campaign')
         }
     })
 }

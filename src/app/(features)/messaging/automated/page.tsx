@@ -90,7 +90,7 @@ export default function AutomatedMessagesPage() {
 
     if (authLoading || isLoading) {
         return (
-            <div className="h-screen flex flex-col bg-background">
+            <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
                 <Nav />
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -100,7 +100,7 @@ export default function AutomatedMessagesPage() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background dark:bg-[#0a0a0a]">
+        <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
             <Nav />
             
             <MessagingHeader 
