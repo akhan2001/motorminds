@@ -127,7 +127,8 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         customer: customerDisplay,
         vehicle: vehicleDisplay,
         tags: workOrder.tags || [],
-        shop_id: workOrder.shop_id
+        shop_id: workOrder.shop_id,
+        status_tracker: workOrder.status_tracker || null
     }
 }
 

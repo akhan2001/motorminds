@@ -19,9 +19,14 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
     onClick,
     className = ""
 }) => {
+    // Get border color from status tracker if available
+    const borderColor = item.status_tracker?.color || undefined
+    const borderStyle = borderColor ? { borderLeftColor: borderColor, borderLeftWidth: '4px' } : {}
+
     return (
         <Card 
             className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all cursor-pointer ${className}`}
+            style={borderStyle}
             onClick={() => onClick?.(item)}
         >
             <CardHeader className="pb-2">
