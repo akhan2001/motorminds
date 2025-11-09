@@ -1,30 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
-import { getShopIdForUser } from "@/utils/get-shop-id";
-import { getActiveTemplatesByTrigger } from "@/app/(features)/messaging/lib/message-template-service";
-import { addToQueue } from "@/app/(features)/messaging/lib/message-queue-service";
-import { replaceVariables } from "@/app/(features)/messaging/lib/variable-replacer";
-import type { ServiceType } from "@/app/(features)/messaging/types/message-template";
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
+import { getShopIdForUser } from '@/utils/get-shop-id'
+import { getActiveTemplatesByTrigger } from '@/app/(features)/messaging/lib/message-template-service'
+import { addToQueue } from '@/app/(features)/messaging/lib/message-queue-service'
+import { replaceVariables } from '@/app/(features)/messaging/lib/variable-replacer'
+import type { ServiceType } from '@/app/(features)/messaging/types/message-template'
 
-// POST - Queue automated follow-up messages based on active templates
 export async function POST(request: NextRequest) {
+    console.log('🚀 Queue-automated endpoint called!')
+    
     try {
-        const shopId = await getShopIdForUser();
+        const shopId = await getShopIdForUser()
+        console.log('🔑 Shop ID:', shopId)
+        
         if (!shopId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const body = await request.json();
-        const { work_order_id, customer_id, service_type } = body;
+        const body = await request.json()
+        console.log('📦 Request body:', body)
+        
+        const { work_order_id, customer_id, service_type } = body
 
         if (!work_order_id || !customer_id) {
             return NextResponse.json(
                 { error: 'Missing required fields: work_order_id, customer_id' },
                 { status: 400 }
-            );
+            )
         }
 
-        const supabase = await createClient();
+        const supabase = await createClient()
 
         // Get work order details with customer, vehicle, and shop info
         const { data: workOrder, error: woError } = await supabase
@@ -32,72 +37,89 @@ export async function POST(request: NextRequest) {
             .select(`
                 *,
                 customer:customers(*),
-                vehicle:vehicles(*),
+                vehicle:customer_vehicles(*),
                 shop:shops(*)
             `)
             .eq('id', work_order_id)
-            .single();
+            .single()
 
         if (woError || !workOrder) {
+            console.error('❌ Work order not found:', woError)
             return NextResponse.json(
                 { error: 'Work order not found' },
                 { status: 404 }
-            );
+            )
+        }
+
+        console.log('📋 Work order customer type:', workOrder.customer_type)
+
+        // For walk-in customers, we don't send automated messages (no long-term customer relationship)
+        if (workOrder.customer_type === 'walk_in') {
+            console.log('⚠️  Walk-in customer - skipping automated messages')
+            return NextResponse.json({
+                success: true,
+                queued: 0,
+                message: 'Automated messages not sent for walk-in customers'
+            })
         }
 
         // Check if customer has phone number
         if (!workOrder.customer?.customer_phone) {
+            console.log('⚠️  No customer phone number')
             return NextResponse.json({
                 success: true,
                 queued: 0,
                 message: 'No customer phone number available'
-            });
+            })
         }
 
-        // Get active templates for work_order_complete trigger with optional service type filtering
+        // Get active templates for work_order_complete trigger
         const templates = await getActiveTemplatesByTrigger(
             shopId, 
             'work_order_complete',
             service_type as ServiceType || undefined
-        );
+        )
+
+        console.log(`📋 Found ${templates.length} active templates`)
 
         if (templates.length === 0) {
             return NextResponse.json({
                 success: true,
                 queued: 0,
                 message: 'No active templates found for this trigger'
-            });
+            })
         }
 
-        let queuedCount = 0;
+        let queuedCount = 0
 
         // Queue a message for each matching template
         for (const template of templates) {
             try {
-                // Calculate scheduled send time (delay_hours from now)
-                const scheduledDate = new Date();
-                scheduledDate.setHours(scheduledDate.getHours() + template.delay_hours);
+                // Calculate scheduled send time
+                const scheduledDate = new Date()
+                scheduledDate.setHours(scheduledDate.getHours() + template.delay_hours)
 
                 // Prepare data for variable replacement
+                const vehicle = workOrder.vehicle
                 const templateData = {
                     customer_name: workOrder.customer?.customer_name || 'Customer',
                     shop_name: workOrder.shop?.shop_name || 'Your Auto Shop',
                     shop_phone: workOrder.shop?.shop_phone || '',
-                    vehicle_make: workOrder.vehicle?.make || '',
-                    vehicle_model: workOrder.vehicle?.model || '',
-                    vehicle_year: workOrder.vehicle?.year || '',
-                    vehicle_info: workOrder.vehicle 
-                        ? `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}`.trim()
+                    vehicle_make: vehicle?.make || '',
+                    vehicle_model: vehicle?.model || '',
+                    vehicle_year: vehicle?.year?.toString() || '',
+                    vehicle_info: vehicle 
+                        ? `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim()
                         : '',
                     work_order_title: workOrder.title || '',
                     service_type: service_type || workOrder.title || '',
                     delay_time: formatDelayTime(template.delay_hours)
-                };
+                }
 
                 // Replace variables in template
                 const messageBody = replaceVariables(template.message_template, templateData, {
                     missingVariableBehavior: 'empty'
-                });
+                })
 
                 // Add to queue
                 await addToQueue({
@@ -114,35 +136,36 @@ export async function POST(request: NextRequest) {
                     scheduled_send_at: scheduledDate.toISOString(),
                     status: 'pending',
                     retry_count: 0
-                });
+                })
 
-                queuedCount++;
+                queuedCount++
+                console.log(`✅ Queued message for template: ${template.name}`)
             } catch (error) {
-                console.error(`Error queuing message for template ${template.id}:`, error);
-                // Continue with other templates even if one fails
+                console.error(`❌ Error queuing message for template ${template.id}:`, error)
             }
         }
+
+        console.log(`🎉 Successfully queued ${queuedCount} messages`)
 
         return NextResponse.json({
             success: true,
             queued: queuedCount,
             templates: templates.length,
             message: `Queued ${queuedCount} automated message(s)`
-        });
+        })
 
     } catch (error: any) {
-        console.error('Error queuing automated messages:', error);
+        console.error('💥 Error in queue-automated:', error)
         return NextResponse.json(
             {
                 error: 'Failed to queue automated messages',
                 details: error.message || 'Unknown error'
             },
             { status: 500 }
-        );
+        )
     }
 }
 
-// Helper to format delay time in human-readable format
 function formatDelayTime(hours: number): string {
     if (hours === 0) return 'immediately'
     if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''}`

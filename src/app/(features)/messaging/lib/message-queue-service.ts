@@ -64,8 +64,7 @@ export async function markAsSent(queueId: string, smsMessageId: string): Promise
         .update({
             status: 'sent',
             sms_message_id: smsMessageId,
-            sent_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            sent_at: new Date().toISOString()
         })
         .eq('id', queueId)
         .select()
@@ -82,8 +81,7 @@ export async function markAsFailed(queueId: string, errorMessage: string): Promi
         .from('ai_message_queue')
         .update({
             status: 'failed',
-            error_message: errorMessage,
-            updated_at: new Date().toISOString()
+            error_message: errorMessage
         })
         .eq('id', queueId)
         .select()

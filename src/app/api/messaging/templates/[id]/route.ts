@@ -6,7 +6,7 @@ import type { MessageTemplateUpdateData } from "@/app/(features)/messaging/types
 // GET - Get single template
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -14,7 +14,7 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Template ID required' }, { status: 400 });
@@ -45,7 +45,7 @@ export async function GET(
 // PUT - Update template
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -53,7 +53,7 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Template ID required' }, { status: 400 });
@@ -103,7 +103,7 @@ export async function PUT(
 // DELETE - Delete template
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -111,7 +111,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Template ID required' }, { status: 400 });

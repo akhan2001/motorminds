@@ -5,7 +5,7 @@ import { getShopIdForUser } from "@/utils/get-shop-id";
 // POST - Send pending message immediately
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -13,7 +13,7 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Queue item ID required' }, { status: 400 });
@@ -44,34 +44,59 @@ export async function POST(
             );
         }
 
-        // Update scheduled_send_at to now
+        // Update scheduled_send_at to now to make it eligible for immediate processing
         const { error: updateError } = await supabase
             .from('ai_message_queue')
             .update({
-                scheduled_send_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                scheduled_send_at: new Date().toISOString()
             })
             .eq('id', id);
 
         if (updateError) throw updateError;
 
-        // Trigger the process-queue endpoint to send immediately
+        // Trigger the process-queue endpoint synchronously to send immediately
+        console.log('🚀 Triggering process-queue for immediate send...');
+        
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/messaging/process-queue`, {
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                           (request.headers.get('host')?.includes('localhost') 
+                               ? `http://${request.headers.get('host')}` 
+                               : `https://${request.headers.get('host')}`);
+            
+            const processResponse = await fetch(`${baseUrl}/api/messaging/process-queue`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
-        } catch (error) {
-            console.error('Error triggering process-queue:', error);
-            // Don't fail the request if trigger fails - cron will pick it up
-        }
 
-        return NextResponse.json({
-            success: true,
-            message: 'Message scheduled for immediate sending'
-        });
+            if (!processResponse.ok) {
+                const errorData = await processResponse.json();
+                console.error('❌ Process queue failed:', errorData);
+                throw new Error(errorData.error || 'Failed to process queue');
+            }
+
+            const result = await processResponse.json();
+            console.log('✅ Process queue result:', result);
+
+            return NextResponse.json({
+                success: true,
+                message: result.processed > 0 
+                    ? `Message sent successfully!` 
+                    : 'Message queued for sending',
+                details: result
+            });
+
+        } catch (error: any) {
+            console.error('❌ Error triggering process-queue:', error);
+            
+            // Return success but indicate it's queued (cron will pick it up)
+            return NextResponse.json({
+                success: true,
+                message: 'Message scheduled for sending (will be processed by cron job)',
+                warning: error.message
+            });
+        }
 
     } catch (error: any) {
         console.error('Error sending message now:', error);

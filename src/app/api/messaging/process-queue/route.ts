@@ -1,16 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
 import { markAsSent, markAsFailed } from "@/app/(features)/messaging/lib/message-queue-service";
 import { replaceVariables } from "@/app/(features)/messaging/lib/variable-replacer";
 import { createOrFindCustomerByPhone } from "@/utils/phone-number";
 import { formatPhoneNumberE164 } from "@/utils/format-phone";
 
+// Helper to format delay time in human-readable format
+function formatDelayTime(hours: number): string {
+    if (hours === 0) return 'immediately'
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''}`
+    
+    const days = Math.floor(hours / 24)
+    if (days < 7) return `${days} day${days !== 1 ? 's' : ''}`
+    
+    const weeks = Math.floor(days / 7)
+    if (weeks < 4) return `${weeks} week${weeks !== 1 ? 's' : ''}`
+    
+    const months = Math.floor(days / 30)
+    return `${months} month${months !== 1 ? 's' : ''}`
+}
+
 // Initialize Twilio client
-const twilioClient = twilio(
-    process.env.TWILIO_ACCOUNT_SID!,
-    process.env.TWILIO_AUTH_TOKEN!
-);
+const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+
+if (!twilioAccountSid || !twilioAuthToken) {
+    console.warn('⚠️ Twilio credentials not configured. SMS sending will fail.');
+}
+
+const twilioClient = twilioAccountSid && twilioAuthToken 
+    ? twilio(twilioAccountSid, twilioAuthToken)
+    : null;
 
 // Rate limiter: 100 messages per minute (Twilio limit)
 const RATE_LIMIT = 100;
@@ -54,7 +76,14 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const supabase = await createClient();
+        // Use service role client for process-queue to bypass RLS (this endpoint may be called by cron jobs)
+        const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+            ? createServiceClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            )
+            : await createClient();
+        
         const now = new Date().toISOString();
 
         // Get all pending messages ready to send with related data
@@ -79,12 +108,25 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        console.log(`📬 Found ${allPendingMessages?.length || 0} pending messages to process`);
+
         if (!allPendingMessages || allPendingMessages.length === 0) {
             return NextResponse.json({
                 success: true,
                 processed: 0,
                 message: 'No pending messages to process'
             });
+        }
+
+        // Check if Twilio is configured
+        if (!twilioClient) {
+            console.error('❌ Twilio not configured');
+            return NextResponse.json({
+                success: false,
+                error: 'Twilio not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.',
+                processed: 0,
+                failed: allPendingMessages.length
+            }, { status: 500 });
         }
 
         // Group messages by shop_id for efficient processing
@@ -106,6 +148,16 @@ export async function POST(request: NextRequest) {
                 if (pendingMessages.length === 0) continue;
 
                 // Get shop's Twilio phone number
+                console.log(`🔍 Looking for phone number for shop: ${shopId} (type: ${typeof shopId})`);
+                
+                // Try querying all phone numbers first to see what we get
+                const { data: allPhones, error: allPhonesError } = await supabase
+                    .from('twilio_phone_numbers')
+                    .select('*')
+                    .eq('shop_id', shopId);
+                
+                console.log(`📋 All phones for shop ${shopId}:`, allPhones?.length || 0, allPhones);
+                
                 const { data: phoneNumbers, error: phoneError } = await supabase
                     .from('twilio_phone_numbers')
                     .select('*')
@@ -113,13 +165,24 @@ export async function POST(request: NextRequest) {
                     .eq('status', 'active')
                     .limit(1);
 
+                if (phoneError) {
+                    console.error(`❌ Error fetching phone numbers:`, phoneError);
+                }
+
+                console.log(`📞 Phone numbers found:`, phoneNumbers?.length || 0, phoneNumbers);
+
                 if (phoneError || !phoneNumbers || phoneNumbers.length === 0) {
-                    console.error(`No active phone number for shop ${shopId}`);
+                    console.error(`❌ No active phone number for shop ${shopId}`);
                     // Mark all messages as failed for this shop
                     for (const msg of pendingMessages) {
-                        await markAsFailed(msg.id, 'No active Twilio phone number configured for shop');
-                        failed++;
+                        try {
+                            await markAsFailed(msg.id, 'No active Twilio phone number configured for shop. Please add a phone number in Settings.');
+                            failed++;
+                        } catch (markError) {
+                            console.error(`Failed to mark message ${msg.id} as failed:`, markError);
+                        }
                     }
+                    errors.push(`Shop ${shopId}: No active Twilio phone number configured`);
                     continue;
                 }
 
@@ -149,12 +212,44 @@ export async function POST(request: NextRequest) {
                         let messageBody: string;
                         
                         if (queueItem.template && (queueItem.template as any)?.message_template) {
-                            // Re-render template with trigger_data
+                            // Fetch work order details if available for better variable replacement
+                            let workOrderData: any = null;
+                            if (queueItem.trigger_data?.work_order_id) {
+                                try {
+                                    const { data: workOrder } = await supabase
+                                        .from('work_orders')
+                                        .select(`
+                                            *,
+                                            customer:customers(*),
+                                            vehicle:customer_vehicles(*),
+                                            shop:shops(*)
+                                        `)
+                                        .eq('id', queueItem.trigger_data.work_order_id)
+                                        .single();
+                                    
+                                    workOrderData = workOrder;
+                                } catch (err) {
+                                    console.warn('Could not fetch work order for variable replacement:', err);
+                                }
+                            }
+                            
+                            // Build template data with all available information
+                            const vehicle = workOrderData?.vehicle || null;
                             const templateData = {
                                 customer_name: (queueItem.customer as any)?.customer_name || 'Customer',
                                 shop_name: (queueItem.shop as any)?.shop_name || 'Your Auto Shop',
                                 shop_phone: (queueItem.shop as any)?.shop_phone || '',
-                                ...queueItem.trigger_data // Includes work_order_id, service_type, vehicle_info, etc.
+                                vehicle_make: vehicle?.make || '',
+                                vehicle_model: vehicle?.model || '',
+                                vehicle_year: vehicle?.year?.toString() || '',
+                                vehicle_info: vehicle 
+                                    ? `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim()
+                                    : '',
+                                work_order_title: workOrderData?.title || queueItem.trigger_data?.work_order_title || '',
+                                service_type: queueItem.trigger_data?.service_type || workOrderData?.title || '',
+                                delay_time: queueItem.template?.delay_hours 
+                                    ? formatDelayTime(queueItem.template.delay_hours)
+                                    : ''
                             };
                             
                             messageBody = replaceVariables(
@@ -171,13 +266,17 @@ export async function POST(request: NextRequest) {
                         const customerName = (queueItem.customer as any)?.customer_name;
 
                         // Send message via Twilio
-                        const twilioMessage = await twilioClient.messages.create({
+                        console.log(`📤 Sending SMS to ${formattedPhone} from ${shopPhoneNumber.phone_number}`);
+                        
+                        const twilioMessage = await twilioClient!.messages.create({
                             to: formattedPhone,
                             from: shopPhoneNumber.phone_number,
                             body: messageBody,
                         });
 
-                        // Store message in sms_messages
+                        console.log(`✅ Twilio message sent: ${twilioMessage.sid}`);
+
+                        // Store message in sms_messages (required for foreign key)
                         const { data: storedMessage, error: messageError } = await supabase
                             .from('sms_messages')
                             .insert({
@@ -194,11 +293,23 @@ export async function POST(request: NextRequest) {
                             .single();
 
                         if (messageError) {
-                            console.error('Failed to store SMS message:', messageError);
+                            console.error('❌ Failed to store SMS message:', messageError);
+                            // Mark as failed if we can't store the message (required for foreign key)
+                            await markAsFailed(queueItem.id, `SMS sent but failed to store: ${messageError.message}`);
+                            failed++;
+                            continue;
                         }
 
-                        // Update queue with sms_message_id
-                        await markAsSent(queueItem.id, storedMessage?.id || twilioMessage.sid);
+                        if (!storedMessage?.id) {
+                            console.error('❌ SMS message stored but no ID returned');
+                            await markAsFailed(queueItem.id, 'SMS sent but failed to get message ID');
+                            failed++;
+                            continue;
+                        }
+
+                        // Update queue with sms_message_id (UUID from sms_messages table)
+                        await markAsSent(queueItem.id, storedMessage.id);
+                        console.log(`✅ Linked queue item to SMS message: ${storedMessage.id}`);
 
                         // Update sms_conversations
                         await supabase

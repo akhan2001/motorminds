@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { getShopIdForUser } from "@/utils/get-shop-id";
+import { replaceVariables } from "@/app/(features)/messaging/lib/variable-replacer";
 
 // GET - List queue items (with filters: status, date range)
 export async function GET(request: NextRequest) {
@@ -18,10 +19,14 @@ export async function GET(request: NextRequest) {
 
         const supabase = await createClient();
 
-        // Build query
+        // Build query with joins to get customer and template info
         let query = supabase
             .from('ai_message_queue')
-            .select('*')
+            .select(`
+                *,
+                customer:customers(customer_name, customer_phone),
+                template:ai_message_templates(name, message_template)
+            `)
             .eq('shop_id', shopId)
             .order('scheduled_send_at', { ascending: false })
             .limit(limit);
@@ -49,9 +54,61 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        // Enrich queue items with generated message body
+        const enrichedItems = await Promise.all((queueItems || []).map(async (item: any) => {
+            let messageBody = '';
+            
+            // Generate message body from template if available
+            if (item.template?.message_template && item.trigger_data) {
+                try {
+                    // Fetch work order details if needed for variable replacement
+                    const { data: workOrder } = await supabase
+                        .from('work_orders')
+                        .select(`
+                            *,
+                            customer:customers(*),
+                            vehicle:customer_vehicles(*),
+                            shop:shops(*)
+                        `)
+                        .eq('id', item.trigger_data.work_order_id)
+                        .single();
+
+                    if (workOrder) {
+                        const vehicle = workOrder.vehicle;
+                        const templateData = {
+                            customer_name: workOrder.customer?.customer_name || 'Customer',
+                            shop_name: workOrder.shop?.shop_name || 'Your Auto Shop',
+                            shop_phone: workOrder.shop?.shop_phone || '',
+                            vehicle_make: vehicle?.make || '',
+                            vehicle_model: vehicle?.model || '',
+                            vehicle_year: vehicle?.year?.toString() || '',
+                            vehicle_info: vehicle 
+                                ? `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim()
+                                : '',
+                            work_order_title: workOrder.title || '',
+                            service_type: item.trigger_data.service_type || workOrder.title || ''
+                        };
+
+                        messageBody = replaceVariables(item.template.message_template, templateData, {
+                            missingVariableBehavior: 'empty'
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error generating message body:', err);
+                    messageBody = item.template.message_template; // Fallback to template without replacement
+                }
+            }
+
+            return {
+                ...item,
+                phone_number: item.customer?.customer_phone || 'N/A',
+                message_body: messageBody || 'Message template not found'
+            };
+        }));
+
         return NextResponse.json({
-            items: queueItems || [],
-            count: queueItems?.length || 0
+            items: enrichedItems,
+            count: enrichedItems.length
         });
 
     } catch (error) {

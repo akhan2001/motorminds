@@ -98,48 +98,23 @@ export default function Messages() {
                                 </TabsContent>
 
                                 <TabsContent value="automated" className="mt-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h3 className="text-lg font-medium mb-2 text-foreground">Automated Follow-Up Messages</h3>
-                                            <p className="text-muted-foreground mb-4">
-                                                Set up automated follow-up messages that are sent to customers after work order completion.
-                                            </p>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Card className="bg-slate-50 dark:bg-card border-border">
-                                                <CardContent className="p-6">
-                                                    <h4 className="text-md font-medium mb-2 text-foreground">Message Templates</h4>
-                                                    <p className="text-sm text-muted-foreground mb-4">
-                                                        Create and manage automated message templates with custom delays
-                                                    </p>
-                                                    <Link href="/messaging/templates">
-                                                        <Button className="w-full">
-                                                            Manage Templates
-                                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                                        </Button>
-                                                    </Link>
-                                                </CardContent>
-                                            </Card>
-
-                                            <Card className="bg-slate-50 dark:bg-card border-border">
-                                                <CardContent className="p-6">
-                                                    <h4 className="text-md font-medium mb-2 text-foreground">Message Queue</h4>
-                                                    <p className="text-sm text-muted-foreground mb-4">
-                                                        View and manage scheduled follow-up messages
-                                                    </p>
-                                                    <Link href="/messaging/queue">
-                                                        <Button variant="outline" className="w-full">
-                                                            View Queue
-                                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                                        </Button>
-                                                    </Link>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    </div>
+                                    <Card className="bg-slate-50 dark:bg-card border-border">
+                                        <CardContent className="p-8 text-center">
+                                            <div className="max-w-md mx-auto space-y-4">
+                                                <h3 className="text-xl font-medium text-foreground">Automated Follow-Up Messages</h3>
+                                                <p className="text-muted-foreground">
+                                                    Set up automated messages that send to customers after service completion
+                                                </p>
+                                                <Link href="/messaging">
+                                                    <Button className="w-full" size="lg">
+                                                        Go to Automated Messaging
+                                                        <ArrowRight className="h-4 w-4 ml-2" />
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 </TabsContent>
-
                                 <TabsContent value="social" className="mt-6">
                                     <div className="space-y-4">
                                         <div>

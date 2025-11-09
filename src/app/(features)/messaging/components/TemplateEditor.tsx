@@ -173,7 +173,7 @@ export function TemplateEditor({ template, shopId, onSuccess, onCancel }: Templa
 
     return (
         <Dialog open onOpenChange={(open) => !open && onCancel()}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a]">
                 <DialogHeader>
                     <DialogTitle className="text-foreground dark:text-white">
                         {template ? 'Edit Template' : 'Create New Template'}

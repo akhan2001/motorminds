@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 // POST - Retry failed message
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -14,7 +14,7 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Queue item ID required' }, { status: 400 });

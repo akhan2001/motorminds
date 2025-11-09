@@ -5,7 +5,7 @@ import { getShopIdForUser } from "@/utils/get-shop-id";
 // GET - Get single queue item
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -13,7 +13,7 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Queue item ID required' }, { status: 400 });
@@ -49,7 +49,7 @@ export async function GET(
 // DELETE - Cancel pending message
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const shopId = await getShopIdForUser();
@@ -57,7 +57,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await context.params;
 
         if (!id) {
             return NextResponse.json({ error: 'Queue item ID required' }, { status: 400 });
@@ -88,17 +88,17 @@ export async function DELETE(
             );
         }
 
-        // Update status to cancelled
-        const { error: updateError } = await supabase
+        // Delete the queue item (since it's pending, we can safely delete it)
+        const { error: deleteError } = await supabase
             .from('ai_message_queue')
-            .update({
-                status: 'failed',
-                error_message: 'Cancelled by user',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id);
+            .delete()
+            .eq('id', id)
+            .eq('shop_id', shopId);
 
-        if (updateError) throw updateError;
+        if (deleteError) {
+            console.error('Error deleting queue item:', deleteError);
+            throw deleteError;
+        }
 
         return NextResponse.json({
             success: true,
