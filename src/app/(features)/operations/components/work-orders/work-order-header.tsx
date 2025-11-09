@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers } from 'lucide-react'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useMessagingAvailability } from '../../hooks/use-work-order-messaging'
 
@@ -15,6 +15,7 @@ interface WorkOrderHeaderProps {
     onToggleView?: () => void
     onNewWorkOrder?: () => void
     onTemplatesClick?: () => void
+    onStatusTrackersClick?: () => void
 }
 
 export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
@@ -22,7 +23,8 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     isCompactView = false,
     onToggleView,
     onNewWorkOrder,
-    onTemplatesClick
+    onTemplatesClick,
+    onStatusTrackersClick
 }) => {
     const router = useRouter()
     const messagingAvailability = useMessagingAvailability()
@@ -118,6 +120,17 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Layers className="h-4 w-4 mr-2" />
                         Items Templates
+                    </Button>
+
+                    {/* Status Trackers Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onStatusTrackersClick}
+                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                        <Palette className="h-4 w-4 mr-2" />
+                        Status Trackers
                     </Button>
                     
                     <Button
