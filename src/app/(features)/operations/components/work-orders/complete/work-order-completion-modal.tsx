@@ -79,10 +79,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
-            // If automated messaging is enabled, queue it
-            if (enableAutomatedMessage) {
-                await queueAutomatedMessage()
-            }
+            // Automated messaging is handled by work-order-service.ts when status is updated
             onConfirm(false)
             return
         }
@@ -93,72 +90,17 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
             customerName: workOrder.customer.customer_name
         })
 
-        // If automated messaging is enabled, queue it
-        if (enableAutomatedMessage) {
-            await queueAutomatedMessage()
-        }
-
+        // Automated messaging is handled by work-order-service.ts when status is updated
+        // No need to call it here to avoid duplicates
         onConfirm(true, customMessage)
     }
 
     const handleSkipMessage = async () => {
-        // If automated messaging is enabled, queue it
-        if (enableAutomatedMessage) {
-            await queueAutomatedMessage()
-        }
+        // Automated messaging is handled by work-order-service.ts when status is updated
+        // No need to call it here to avoid duplicates
         onConfirm(false)
     }
 
-    const queueAutomatedMessage = async () => {
-        try {
-            // Extract service type from work order title or description
-            const serviceType = extractServiceType(workOrder.title)
-            
-            // Queue automated follow-up messages based on active templates
-            const response = await fetch('/api/messaging/queue-automated', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    work_order_id: workOrder.id,
-                    customer_id: workOrder.customer_id,
-                    service_type: serviceType
-                })
-            })
-
-            if (response.ok) {
-                const data = await response.json()
-                console.log(`✅ Queued ${data.queued} automated message(s)`)
-            }
-        } catch (error) {
-            console.error('Error queuing automated message:', error)
-            // Don't fail the completion if automated messaging fails
-        }
-    }
-
-    // Helper to extract service type from work order title
-    const extractServiceType = (title: string): string | null => {
-        if (!title) return null
-        
-        const lowerTitle = title.toLowerCase()
-        
-        // Map common service names to service types
-        if (lowerTitle.includes('oil change')) return 'oil_change'
-        if (lowerTitle.includes('brake')) return 'brake_service'
-        if (lowerTitle.includes('tire rotation')) return 'tire_rotation'
-        if (lowerTitle.includes('tire replacement') || lowerTitle.includes('new tire')) return 'tire_replacement'
-        if (lowerTitle.includes('alignment') || lowerTitle.includes('wheel align')) return 'wheel_alignment'
-        if (lowerTitle.includes('diagnostic') || lowerTitle.includes('check engine')) return 'engine_diagnostic'
-        if (lowerTitle.includes('transmission')) return 'transmission_service'
-        if (lowerTitle.includes('battery')) return 'battery_service'
-        if (lowerTitle.includes('air filter')) return 'air_filter_replacement'
-        if (lowerTitle.includes('coolant') || lowerTitle.includes('radiator flush')) return 'coolant_flush'
-        if (lowerTitle.includes('spark plug')) return 'spark_plug_replacement'
-        if (lowerTitle.includes('brake fluid')) return 'brake_fluid_flush'
-        if (lowerTitle.includes('power steering')) return 'power_steering_flush'
-        if (lowerTitle.includes('inspection')) return 'general_inspection'
-        
-        return 'other'
-    }
 
     // Helper to format delay hours into human-readable string
     const formatDelayHours = (hours: number): string => {
