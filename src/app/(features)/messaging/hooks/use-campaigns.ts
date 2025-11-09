@@ -1,174 +1,206 @@
-import { useState } from 'react'
+'use client'
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createClient } from '@/utils/supabase/client'
 import { toast } from 'sonner'
-import type { 
-    MassCampaign, 
-    MassCampaignCreateData, 
-    MassCampaignUpdateData,
-    CampaignStats 
-} from '../types/mass-campaign'
+import type { MassCampaign, MassCampaignCreateData, MassCampaignUpdateData, CampaignStats } from '../types/mass-campaign'
 
-export function useCampaigns() {
-    const [isLoading, setIsLoading] = useState(false)
-    const [campaigns, setCampaigns] = useState<MassCampaign[]>([])
-    const [stats, setStats] = useState<CampaignStats | null>(null)
+const supabase = createClient()
 
-    // Fetch all campaigns
-    const fetchCampaigns = async (includeStats = false) => {
-        setIsLoading(true)
-        try {
-            const url = includeStats 
-                ? '/api/messaging/campaigns?include_stats=true'
-                : '/api/messaging/campaigns'
-            
-            const response = await fetch(url)
-            if (!response.ok) throw new Error('Failed to fetch campaigns')
-            
-            const data = await response.json()
-            
-            if (includeStats) {
-                setCampaigns(data.campaigns)
-                setStats(data.stats)
-            } else {
-                setCampaigns(data)
+// Query keys
+export const campaignKeys = {
+    all: ['campaigns'] as const,
+    lists: () => [...campaignKeys.all, 'list'] as const,
+    list: (shopId: string, filters?: any) => [...campaignKeys.lists(), shopId, filters] as const,
+    details: () => [...campaignKeys.all, 'detail'] as const,
+    detail: (id: string) => [...campaignKeys.details(), id] as const,
+    stats: (shopId: string) => [...campaignKeys.all, 'stats', shopId] as const,
+}
+
+// Hook: List all campaigns
+export function useCampaigns(
+    shopId: string,
+    filters?: { status?: string; search?: string }
+) {
+    return useQuery({
+        queryKey: campaignKeys.list(shopId, filters),
+        queryFn: async () => {
+            let query = supabase
+                .from('ai_mass_campaigns')
+                .select('*')
+                .eq('shop_id', shopId)
+                .order('created_at', { ascending: false })
+
+            if (filters?.status && filters.status !== 'all') {
+                query = query.eq('status', filters.status)
             }
-            
-            return data
-        } catch (error: any) {
-            console.error('Error fetching campaigns:', error)
-            toast.error('Failed to load campaigns')
-            throw error
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    // Fetch single campaign
-    const fetchCampaign = async (campaignId: string): Promise<MassCampaign | null> => {
-        setIsLoading(true)
-        try {
-            const response = await fetch(`/api/messaging/campaigns/${campaignId}`)
-            if (!response.ok) {
-                if (response.status === 404) return null
-                throw new Error('Failed to fetch campaign')
+            if (filters?.search) {
+                query = query.ilike('name', `%${filters.search}%`)
             }
-            
-            const data = await response.json()
-            return data
-        } catch (error: any) {
-            console.error('Error fetching campaign:', error)
-            toast.error('Failed to load campaign')
-            throw error
-        } finally {
-            setIsLoading(false)
-        }
-    }
 
-    // Create campaign
-    const createCampaign = async (data: Omit<MassCampaignCreateData, 'shop_id'>): Promise<MassCampaign> => {
-        setIsLoading(true)
-        try {
-            const response = await fetch('/api/messaging/campaigns', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+            const { data, error } = await query
+            if (error) throw error
+            return (data || []) as MassCampaign[]
+        },
+        enabled: !!shopId,
+        staleTime: 30 * 1000, // 30 seconds
+    })
+}
+
+// Hook: Single campaign
+export function useCampaign(campaignId: string | undefined) {
+    return useQuery({
+        queryKey: campaignKeys.detail(campaignId || ''),
+        queryFn: async () => {
+            if (!campaignId) return null
+
+            const { data, error } = await supabase
+                .from('ai_mass_campaigns')
+                .select('*')
+                .eq('id', campaignId)
+                .single()
+
+            if (error) {
+                if (error.code === 'PGRST116') return null
+                throw error
+            }
+            return data as MassCampaign
+        },
+        enabled: !!campaignId,
+    })
+}
+
+// Hook: Campaign stats
+export function useCampaignStats(shopId: string) {
+    return useQuery({
+        queryKey: campaignKeys.stats(shopId),
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('ai_mass_campaigns')
+                .select('status')
+                .eq('shop_id', shopId)
+
+            if (error) throw error
+
+            const stats: CampaignStats = {
+                total: data?.length || 0,
+                draft: 0,
+                scheduled: 0,
+                in_progress: 0,
+                completed: 0,
+                failed: 0,
+                cancelled: 0
+            }
+
+            data?.forEach(campaign => {
+                if (campaign.status) {
+                    stats[campaign.status as keyof Omit<CampaignStats, 'total'>]++
+                }
             })
 
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to create campaign')
-            }
+            return stats
+        },
+        enabled: !!shopId,
+        staleTime: 60 * 1000, // 1 minute
+    })
+}
 
-            const result = await response.json()
+// Hook: Create campaign
+export function useCampaignCreate() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (data: MassCampaignCreateData): Promise<MassCampaign> => {
+            const { data: campaign, error } = await supabase
+                .from('ai_mass_campaigns')
+                .insert({
+                    shop_id: data.shop_id,
+                    name: data.name,
+                    message: data.message,
+                    customer_segment: data.customer_segment ?? {},
+                    scheduled_send_at: data.scheduled_send_at ?? null,
+                    status: data.status ?? 'draft',
+                    total_recipients: 0,
+                    sent_count: 0,
+                    failed_count: 0,
+                    created_by: data.created_by ?? null
+                })
+                .select()
+                .single()
+
+            if (error) throw error
+            return campaign
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.list(data.shop_id) })
+            queryClient.invalidateQueries({ queryKey: campaignKeys.stats(data.shop_id) })
             toast.success('Campaign created successfully')
-            
-            // Refresh campaigns list
-            await fetchCampaigns()
-            
-            return result.campaign
-        } catch (error: any) {
-            console.error('Error creating campaign:', error)
-            toast.error(error.message || 'Failed to create campaign')
-            throw error
-        } finally {
-            setIsLoading(false)
+        },
+        onError: (error: Error) => {
+            toast.error(`Failed to create campaign: ${error.message}`)
         }
-    }
+    })
+}
 
-    // Update campaign
-    const updateCampaign = async (
-        campaignId: string, 
-        data: MassCampaignUpdateData
-    ): Promise<MassCampaign> => {
-        setIsLoading(true)
-        try {
-            const response = await fetch(`/api/messaging/campaigns/${campaignId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
+// Hook: Update campaign
+export function useCampaignUpdate() {
+    const queryClient = useQueryClient()
 
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to update campaign')
-            }
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: MassCampaignUpdateData }): Promise<MassCampaign> => {
+            const { data: campaign, error } = await supabase
+                .from('ai_mass_campaigns')
+                .update(data)
+                .eq('id', id)
+                .select()
+                .single()
 
-            const result = await response.json()
+            if (error) throw error
+            return campaign
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.list(data.shop_id) })
+            queryClient.invalidateQueries({ queryKey: campaignKeys.detail(data.id) })
+            queryClient.invalidateQueries({ queryKey: campaignKeys.stats(data.shop_id) })
             toast.success('Campaign updated successfully')
-            
-            // Refresh campaigns list
-            await fetchCampaigns()
-            
-            return result.campaign
-        } catch (error: any) {
-            console.error('Error updating campaign:', error)
-            toast.error(error.message || 'Failed to update campaign')
-            throw error
-        } finally {
-            setIsLoading(false)
+        },
+        onError: (error: Error) => {
+            toast.error(`Failed to update campaign: ${error.message}`)
         }
-    }
+    })
+}
 
-    // Delete campaign
-    const deleteCampaign = async (campaignId: string): Promise<void> => {
-        setIsLoading(true)
-        try {
-            const response = await fetch(`/api/messaging/campaigns/${campaignId}`, {
-                method: 'DELETE'
-            })
+// Hook: Delete campaign
+export function useCampaignDelete() {
+    const queryClient = useQueryClient()
 
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Failed to delete campaign')
-            }
+    return useMutation({
+        mutationFn: async ({ id, shopId }: { id: string; shopId: string }) => {
+            const { error } = await supabase
+                .from('ai_mass_campaigns')
+                .delete()
+                .eq('id', id)
 
+            if (error) throw error
+            return { id, shopId }
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.list(data.shopId) })
+            queryClient.invalidateQueries({ queryKey: campaignKeys.stats(data.shopId) })
             toast.success('Campaign deleted successfully')
-            
-            // Refresh campaigns list
-            await fetchCampaigns()
-        } catch (error: any) {
-            console.error('Error deleting campaign:', error)
-            toast.error(error.message || 'Failed to delete campaign')
-            throw error
-        } finally {
-            setIsLoading(false)
+        },
+        onError: (error: Error) => {
+            toast.error(`Failed to delete campaign: ${error.message}`)
         }
-    }
+    })
+}
 
-    // Schedule campaign
-    const scheduleCampaign = async (
-        campaignId: string, 
-        scheduledSendAt: string | null
-    ): Promise<MassCampaign> => {
-        return updateCampaign(campaignId, {
-            scheduled_send_at: scheduledSendAt,
-            status: scheduledSendAt ? 'scheduled' : 'draft'
-        })
-    }
+// Hook: Send campaign
+export function useCampaignSend() {
+    const queryClient = useQueryClient()
 
-    // Send campaign immediately
-    const sendCampaign = async (campaignId: string): Promise<void> => {
-        setIsLoading(true)
-        try {
+    return useMutation({
+        mutationFn: async (campaignId: string) => {
             const response = await fetch(`/api/messaging/campaigns/${campaignId}/send`, {
                 method: 'POST'
             })
@@ -178,30 +210,16 @@ export function useCampaigns() {
                 throw new Error(error.error || 'Failed to send campaign')
             }
 
+            return await response.json()
+        },
+        onSuccess: (_, campaignId) => {
+            queryClient.invalidateQueries({ queryKey: campaignKeys.detail(campaignId) })
+            queryClient.invalidateQueries({ queryKey: campaignKeys.lists() })
             toast.success('Campaign sent successfully')
-            
-            // Refresh campaigns list
-            await fetchCampaigns()
-        } catch (error: any) {
-            console.error('Error sending campaign:', error)
-            toast.error(error.message || 'Failed to send campaign')
-            throw error
-        } finally {
-            setIsLoading(false)
+        },
+        onError: (error: Error) => {
+            toast.error(`Failed to send campaign: ${error.message}`)
         }
-    }
-
-    return {
-        campaigns,
-        stats,
-        isLoading,
-        fetchCampaigns,
-        fetchCampaign,
-        createCampaign,
-        updateCampaign,
-        deleteCampaign,
-        scheduleCampaign,
-        sendCampaign
-    }
+    })
 }
 
