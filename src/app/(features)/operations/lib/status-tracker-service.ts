@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase'
 import type { StatusTrackerPreset, StatusTrackerPresetCreateData } from '../types/status-tracker'
 import { v4 as uuidv4 } from 'uuid'
+import { MAX_STATUS_TRACKERS } from './status-tracker-constants'
 
 export class StatusTrackerService {
     private supabase = createClient()
@@ -31,6 +32,11 @@ export class StatusTrackerService {
     async addStatusTrackerPreset(shopId: string, presetData: StatusTrackerPresetCreateData): Promise<StatusTrackerPreset> {
         // Get current presets
         const currentPresets = await this.getStatusTrackerPresets(shopId)
+
+        // Check if limit is reached
+        if (currentPresets.length >= MAX_STATUS_TRACKERS) {
+            throw new Error(`Maximum of ${MAX_STATUS_TRACKERS} status trackers allowed. Please delete one before creating a new one.`)
+        }
 
         // Create new preset with ID
         const newPreset: StatusTrackerPreset = {

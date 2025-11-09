@@ -10,6 +10,8 @@ import { useStatusTrackerPresets, useAddStatusTrackerPreset, useUpdateStatusTrac
 import { useAuth } from '../../hooks/use-auth'
 import type { StatusTrackerPreset } from '../../types/status-tracker'
 import { Loader2 } from 'lucide-react'
+import { MAX_STATUS_TRACKERS } from '../../lib/status-tracker-constants'
+import { toast } from 'sonner'
 
 interface StatusTrackerManagementModalProps {
     isOpen: boolean
@@ -55,6 +57,12 @@ export const StatusTrackerManagementModal: React.FC<StatusTrackerManagementModal
     const handleCreate = async () => {
         if (!shopId || !newPresetName.trim()) return
 
+        // Check if limit is reached
+        if (presets.length >= MAX_STATUS_TRACKERS) {
+            toast.error(`Maximum of ${MAX_STATUS_TRACKERS} status trackers allowed. Please delete one before creating a new one.`)
+            return
+        }
+
         try {
             await createMutation.mutateAsync({
                 shopId,
@@ -69,6 +77,8 @@ export const StatusTrackerManagementModal: React.FC<StatusTrackerManagementModal
             console.error('Failed to create preset:', error)
         }
     }
+
+    const isLimitReached = presets.length >= MAX_STATUS_TRACKERS
 
     const handleStartEdit = (preset: StatusTrackerPreset) => {
         setEditingPreset(preset)
@@ -136,7 +146,14 @@ export const StatusTrackerManagementModal: React.FC<StatusTrackerManagementModal
                     <div className="space-y-6">
                         {/* Create New Tracker */}
                         <div className="space-y-4 p-4 border rounded-lg border-border dark:border-[#2a2a2a]">
-                            <h3 className="font-semibold text-foreground dark:text-white">Create New Tracker</h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-foreground dark:text-white">Create New Tracker</h3>
+                                {isLimitReached && (
+                                    <span className="text-xs text-muted-foreground dark:text-gray-400">
+                                        Limit reached ({MAX_STATUS_TRACKERS}/{MAX_STATUS_TRACKERS})
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex gap-2">
                                 <Input
                                     placeholder="Tracker name (e.g., Oil Change)"
@@ -160,9 +177,9 @@ export const StatusTrackerManagementModal: React.FC<StatusTrackerManagementModal
                                     </div>
                                     <Button
                                         onClick={handleCreate}
-                                        disabled={!newPresetName.trim() || createMutation.isPending}
+                                        disabled={!newPresetName.trim() || createMutation.isPending || isLimitReached}
                                         size="sm"
-                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                        className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {createMutation.isPending ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
