@@ -1,4 +1,6 @@
 // Work order type definitions - matches actual database schema
+import type { StatusTracker } from './status-tracker'
+import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 
 export interface WorkOrder {
     id: string
@@ -24,6 +26,7 @@ export interface WorkOrder {
     tags?: string[]
     attachments?: any[]
     notes?: string
+    status_tracker?: StatusTracker | null // JSONB column
     
     // Timestamps
     created_at: string
@@ -64,15 +67,13 @@ export type WorkOrderStatus =
     | 'in_progress'
     | 'waiting_parts'
     | 'waiting_customer'
+    | 'ready'
     | 'completed'
     | 'invoiced'
     | 'cancelled'
     | 'on_hold'
 
 export type WorkOrderPriority = 'low' | 'medium' | 'high' | 'urgent'
-
-// Import WalkInVehicleInfo from customers types
-import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 
 export interface WorkOrderItem {
     id: string
@@ -114,6 +115,7 @@ export interface WorkOrderKanbanItem {
     vehicle?: string
     tags?: string[]
     shop_id?: string
+    status_tracker?: StatusTracker | null // For display with border color
 }
 
 export interface WorkOrderKanbanColumn {
