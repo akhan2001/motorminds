@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
             }
 
             // Count vehicle makes
-            if (wo.vehicle?.make) {
-                vehicleMakes.set(wo.vehicle.make, (vehicleMakes.get(wo.vehicle.make) || 0) + 1)
+            const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle
+            if (vehicle?.make) {
+                vehicleMakes.set(vehicle.make, (vehicleMakes.get(vehicle.make) || 0) + 1)
             }
 
             // Track customer frequency

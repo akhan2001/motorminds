@@ -13,13 +13,11 @@ export async function POST(request: NextRequest) {
 
         const segment: CustomerSegment = await request.json()
 
-        // Get matching customers
+        // Get all matching customers
         const customers = await getSegmentCustomers(shopId, segment)
 
-        // Return count and sample
         return NextResponse.json({
-            count: customers.length,
-            sample_customers: customers.slice(0, 10).map(c => ({
+            customers: customers.map(c => ({
                 id: c.id,
                 customer_name: c.customer_name,
                 customer_phone: c.customer_phone,
@@ -28,9 +26,9 @@ export async function POST(request: NextRequest) {
         })
 
     } catch (error: any) {
-        console.error('Error previewing segment:', error)
+        console.error('Error fetching segment customers:', error)
         return NextResponse.json(
-            { error: 'Failed to preview segment', details: error.message },
+            { error: 'Failed to fetch customers', details: error.message },
             { status: 500 }
         )
     }
