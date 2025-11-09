@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
                 title,
                 status,
                 completed_at,
-                total_amount,
                 customer_id,
                 customer:customers(id, customer_name),
                 vehicle:customer_vehicles(make, model, year)
@@ -43,7 +42,6 @@ export async function POST(request: NextRequest) {
         const serviceTypes = new Map<string, number>()
         const vehicleMakes = new Map<string, number>()
         const customerFrequency = new Map<string, number>()
-        const revenueByService = new Map<string, number>()
 
         workOrders?.forEach(wo => {
             // Count service types
@@ -60,11 +58,6 @@ export async function POST(request: NextRequest) {
             else if (title.includes('diagnostic')) serviceType = 'diagnostic'
 
             serviceTypes.set(serviceType, (serviceTypes.get(serviceType) || 0) + 1)
-
-            // Track revenue by service
-            if (wo.total_amount) {
-                revenueByService.set(serviceType, (revenueByService.get(serviceType) || 0) + wo.total_amount)
-            }
 
             // Count vehicle makes
             const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle
@@ -88,13 +81,12 @@ export async function POST(request: NextRequest) {
                 .slice(0, 5)
                 .map(([make, count]) => ({ make, count })),
             repeat_customers: Array.from(customerFrequency.values())
-                .filter(count => count > 1).length,
-            revenue_by_service: Object.fromEntries(revenueByService)
+                .filter(count => count > 1).length
         }
 
         // Call OpenAI for suggestions
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
+            model: 'gpt-4o', // gpt-4o supports JSON mode
             messages: [
                 { role: 'system', content: CAMPAIGN_SUGGESTION_SYSTEM_PROMPT },
                 { role: 'user', content: buildAnalysisPrompt(analysisData) }

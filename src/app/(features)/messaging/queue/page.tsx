@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Clock, Send, XCircle, CheckCircle, Loader2, RefreshCw } from 'lucide-react'
+import { Clock, Send, XCircle, CheckCircle, Loader2, RefreshCw, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/core/useAuth'
 import type { MessageQueueItem } from '../types/message-queue'
@@ -136,6 +136,11 @@ export default function QueuePage() {
 
             <div className="flex-1 overflow-auto">
                 <div className="container mx-auto p-6 space-y-6">
+                    {/* Back Button */}
+                    <Button variant="ghost" onClick={() => router.push('/messaging')}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Messaging Hub
+                    </Button>
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <Card className="border-border dark:border-[#2a2a2a] bg-card dark:bg-[#0f0f0f]">
