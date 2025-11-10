@@ -7,7 +7,7 @@
             "maxDuration": 30
         },
         "src/app/api/messaging/ai/process-queue/route.ts": {
-            "maxDuration": 300
+            "maxDuration": 290
         }
     },
     "crons": [
