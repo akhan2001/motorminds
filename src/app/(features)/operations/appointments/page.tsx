@@ -6,19 +6,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
 import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointment } from '../hooks/appointments/useAppointments'
 import { MonthCard } from '../components/appointments/Calendar/MonthCard'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
 import { AppointmentHeader } from '../components/appointments/appointment-header'
+import { DayAppointmentsDialog } from '../components/appointments/DayAppointmentsDialog'
+import { AppointmentDetailsSheet } from '../components/appointments/AppointmentDetailsSheet'
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
-    // Navigation
-    const router = useRouter()
-    
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
@@ -46,45 +44,25 @@ export default function AppointmentsPage() {
     // Cancel appointment
     const cancelAppointment = useCancelAppointment()
     
-    // Fetch appointments for the selected date
-    const selectedDateString = useMemo(() => {
-        const year = selectedDate.getFullYear()
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
-        const day = String(selectedDate.getDate()).padStart(2, '0')
-        return `${year}-${month}-${day}`
-    }, [selectedDate])
-    
-    const { data: selectedDateAppointments, isLoading: appointmentsLoading } = useAppointments(shopId || '', {
-        start: selectedDateString,
-        end: selectedDateString
-    })
+    // Fetch appointments for the selected day dialog
+    const { data: dayDialogAppointments } = useAppointments(shopId || '', selectedDayForDialog ? {
+        start: selectedDayForDialog,
+        end: selectedDayForDialog
+    } : undefined)
     
     // Combined loading state
-    const isLoading = authLoading // dashboardLoading disabled
+    const isLoading = authLoading
     const error = authError
 
-    // Calculate stats - disabled for now, using mock data
-    const stats = useMemo(() => {
-        // Mock stats data since operations dashboard is disabled
-        return {
-            todayCount: 0,
-            weekCount: 0,
-            pendingWorkOrders: 0,
-            inProgressWorkOrders: 0,
-            todayRevenue: 0,
-            weekRevenue: 0
-        }
-    }, [])
-
-    // Sort appointments for selected date by time
-    const sortedSelectedDateAppointments = useMemo(() => {
-        if (!selectedDateAppointments) return []
-        return [...selectedDateAppointments].sort((a, b) => {
+    // Sort appointments for day dialog by time
+    const sortedDayDialogAppointments = useMemo(() => {
+        if (!dayDialogAppointments) return []
+        return [...dayDialogAppointments].sort((a, b) => {
             const timeA = a.start_time || '09:00'
             const timeB = b.start_time || '09:00'
             return timeA.localeCompare(timeB)
         })
-    }, [selectedDateAppointments])
+    }, [dayDialogAppointments])
 
     // Handlers
     const handleDateSelect = (date: string) => {
@@ -281,6 +259,41 @@ export default function AppointmentsPage() {
                     onMonthChange={setSelectedDate}
                 />
             </div>
+
+            {/* Modals */}
+            <DayAppointmentsDialog
+                isOpen={isDayDialogOpen}
+                onClose={() => {
+                    setIsDayDialogOpen(false)
+                    setSelectedDayForDialog(null)
+                }}
+                selectedDate={selectedDayForDialog || ''}
+                appointments={sortedDayDialogAppointments}
+                onAppointmentClick={handleAppointmentClick}
+                onCreateAppointment={handleCreateAppointment}
+            />
+
+            {selectedAppointmentForSheet && (
+                <AppointmentDetailsSheet
+                    isOpen={isAppointmentSheetOpen}
+                    onClose={handleCloseAppointmentDetails}
+                    appointment={selectedAppointmentForSheet}
+                    onEdit={handleEditAppointment}
+                    onCancel={handleCancelAppointment}
+                    onMessageCustomer={handleMessageCustomer}
+                    onCreateWorkOrder={handleCreateWorkOrder}
+                    isCreatingWorkOrder={createWorkOrder.isPending}
+                />
+            )}
+
+            <AppointmentForm
+                isOpen={isAppointmentFormOpen}
+                onClose={() => setIsAppointmentFormOpen(false)}
+                shopId={shopId}
+                selectedDate={selectedDateForForm}
+                selectedTime={selectedTimeForForm}
+                onSuccess={handleAppointmentSuccess}
+            />
         </div>
     )
 }
