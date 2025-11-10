@@ -70,3 +70,6 @@ src/app/(features)/operations/mock-work-orders.json
 /scripts/*.csv
 /scripts/temp/
 /scripts/*.log
+
+# Invoice preview page (hidden from users)
+src/app/(features)/financials/invoices/preview/

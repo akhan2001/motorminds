@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,8 @@ import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
-import { generateInvoicePDF, downloadPDF, getInvoiceFilename } from '../../lib/pdf/pdf-generator'
+import { generateInvoicePDF, downloadPDF, getInvoiceFilename, generateInvoicePDFFromHTMLElement } from '../../lib/pdf/pdf-generator'
+import { TonyTemplatePreview } from '../invoice-preview/TonyTemplatePreview'
 
 interface InvoiceViewOnlyProps {
     invoiceId: string
@@ -40,6 +41,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false)
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
+    const pdfElementRef = useRef<HTMLDivElement>(null)
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -74,10 +76,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
 
         setIsDownloading(true)
         try {
-            const blob = await generateInvoicePDF(invoice, shopInfo, templateId)
-            const filename = getInvoiceFilename(invoice)
-            downloadPDF(blob, filename)
-            toast.success('Invoice PDF downloaded successfully')
+            // For tony template, use HTML-to-PDF conversion
+            if (templateId === 'tony' && pdfElementRef.current) {
+                await generateInvoicePDFFromHTMLElement(pdfElementRef.current, invoice)
+                toast.success('Invoice PDF downloaded successfully')
+            } else {
+                // For other templates, use React-PDF
+                const blob = await generateInvoicePDF(invoice, shopInfo, templateId)
+                const filename = getInvoiceFilename(invoice)
+                downloadPDF(blob, filename)
+                toast.success('Invoice PDF downloaded successfully')
+            }
         } catch (error) {
             console.error('PDF generation error:', error)
             toast.error('Failed to generate PDF')
@@ -480,6 +489,23 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     onClose={() => setIsSendSmsModalOpen(false)}
                     onConfirm={handleSendSmsConfirm}
                 />
+            )}
+
+            {/* Hidden PDF element for HTML-to-PDF conversion (Tony template only) */}
+            {invoice && shopInfo && templateId === 'tony' && (
+                <div
+                    ref={pdfElementRef}
+                    data-pdf-element="true"
+                    className="fixed -left-[9999px] top-0"
+                    style={{
+                        width: '210mm',
+                        height: '297mm',
+                        transform: 'scale(1)',
+                        transformOrigin: 'top left',
+                    }}
+                >
+                    <TonyTemplatePreview invoice={invoice} shop={shopInfo} />
+                </div>
             )}
         </div>
     )
