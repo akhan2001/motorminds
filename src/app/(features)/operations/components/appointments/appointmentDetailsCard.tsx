@@ -255,7 +255,7 @@ export function AppointmentDetailsCard({
                                     <span className="text-foreground text-sm">
                                         {appointment.customer_type === 'walk_in' && appointment.walk_in_vehicle_info?.mileage
                                             ? appointment.walk_in_vehicle_info.mileage.toLocaleString()
-                                            : appointment.vehicle?.mileage?.toLocaleString()} miles
+                                            : appointment.vehicle?.mileage?.toLocaleString()} kms
                                     </span>
                                 </div>
                             ) : null}
