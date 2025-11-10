@@ -153,7 +153,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         
         // Work order specifics
         notes: "",
-        statusTracker: initialWorkOrder.status_tracker || null,
+        // Normalize status_tracker to array (handle both old format single object and new format array)
+        statusTracker: (() => {
+            const tracker = initialWorkOrder.status_tracker
+            if (!tracker) return null
+            if (Array.isArray(tracker)) return tracker
+            // Handle old format: single object
+            if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                return [tracker]
+            }
+            return null
+        })(),
     })
 
     // Update form when work order details are fetched
@@ -209,7 +219,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 
                 // Work order notes
                 notes: workOrderDetails.notes || "",
-                statusTracker: workOrderDetails.status_tracker || null,
+                // Normalize status_tracker to array (handle both old format single object and new format array)
+                statusTracker: (() => {
+                    const tracker = workOrderDetails.status_tracker
+                    if (!tracker) return null
+                    if (Array.isArray(tracker)) return tracker
+                    // Handle old format: single object
+                    if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                        return [tracker]
+                    }
+                    return null
+                })(),
             }))
         }
     }, [workOrderDetails])

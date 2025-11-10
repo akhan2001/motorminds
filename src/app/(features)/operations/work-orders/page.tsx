@@ -116,6 +116,17 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         ? `${workOrder.technician.first_name} ${workOrder.technician.last_name || ''}`
         : workOrder.assigned_technician_id || 'Unassigned'
 
+    // Normalize status_tracker to array (handle both old format single object and new format array)
+    const normalizeStatusTracker = (tracker: any): any[] | null => {
+        if (!tracker) return null
+        if (Array.isArray(tracker)) return tracker
+        // Handle old format: single object
+        if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            return [tracker]
+        }
+        return null
+    }
+
     return {
         id: workOrder.id,
         title: workOrder.title,
@@ -128,7 +139,7 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         vehicle: vehicleDisplay,
         tags: workOrder.tags || [],
         shop_id: workOrder.shop_id,
-        status_tracker: workOrder.status_tracker || null
+        status_tracker: normalizeStatusTracker(workOrder.status_tracker)
     }
 }
 

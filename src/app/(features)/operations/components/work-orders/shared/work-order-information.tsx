@@ -20,7 +20,7 @@ export interface WorkOrderInformationProps {
     assigneeId?: string
     date: string
     tags: string[]
-    statusTracker?: StatusTracker | null
+    statusTracker?: StatusTracker[] | null // Changed to array
     isEditing: boolean
     isCreating?: boolean
     onFieldChange: (field: string, value: any) => void
