@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Calendar, Palette } from 'lucide-react'
 import { truncateText, getInitials } from '@/lib/utils/text'
 import { getPriorityColor } from '@/lib/utils/status'
@@ -15,10 +16,12 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useStatusTrackerPresets } from '../../hooks/use-status-trackers'
 import { useAuth } from '../../hooks/use-auth'
 import { useUpdateWorkOrder } from '../../hooks/use-work-orders'
 import type { StatusTracker } from '../../types/status-tracker'
+import { MAX_WORK_ORDER_STATUS_TRACKERS } from '../../lib/status-tracker-constants'
 import { toast } from 'sonner'
 
 export interface WorkOrderCardProps {
@@ -37,9 +40,20 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
     const updateWorkOrderMutation = useUpdateWorkOrder()
     const [isUpdating, setIsUpdating] = useState(false)
 
-    // Get border color from status tracker if available
-    const borderColor = item.status_tracker?.color || undefined
-    const borderStyle = borderColor ? { borderLeftColor: borderColor, borderLeftWidth: '4px' } : {}
+    // Get status trackers array (normalize to array)
+    // Handle both old format (single object) and new format (array)
+    const normalizeTrackers = (tracker: any): StatusTracker[] => {
+        if (!tracker) return []
+        if (Array.isArray(tracker)) return tracker
+        // Handle old format: single object
+        if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            return [tracker]
+        }
+        return []
+    }
+    const statusTrackers = normalizeTrackers(item.status_tracker)
+    const trackerCount = statusTrackers.length
+    const isMaxReached = trackerCount >= MAX_WORK_ORDER_STATUS_TRACKERS
 
     // Sort presets by display_order
     const sortedPresets = [...presets].sort((a, b) => {
@@ -48,19 +62,59 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
         return orderA - orderB
     })
 
-    const handleStatusTrackerSelect = async (tracker: StatusTracker | null, e: React.MouseEvent) => {
+    // Check if a preset is selected
+    const isPresetSelected = (presetId: string): boolean => {
+        const preset = sortedPresets.find(p => p.id === presetId)
+        if (!preset) return false
+        return statusTrackers.some(
+            tracker => tracker.name === preset.name && tracker.color === preset.color
+        )
+    }
+
+    // Toggle tracker selection
+    const handleStatusTrackerToggle = async (presetId: string, e: React.MouseEvent) => {
         e.stopPropagation() // Prevent card click
         if (isUpdating) return
+
+        const preset = sortedPresets.find(p => p.id === presetId)
+        if (!preset) return
+
+        const tracker: StatusTracker = {
+            name: preset.name,
+            color: preset.color,
+        }
+
+        const isSelected = isPresetSelected(presetId)
+        let newTrackers: StatusTracker[] | null
+
+        if (isSelected) {
+            // Remove tracker
+            newTrackers = statusTrackers.filter(
+                t => !(t.name === tracker.name && t.color === tracker.color)
+            )
+            newTrackers = newTrackers.length > 0 ? newTrackers : null
+        } else {
+            // Add tracker (if not at max)
+            if (!isMaxReached) {
+                newTrackers = [...statusTrackers, tracker]
+            } else {
+                return // Can't add more
+            }
+        }
 
         try {
             setIsUpdating(true)
             await updateWorkOrderMutation.mutateAsync({
                 id: item.id,
                 data: {
-                    status_tracker: tracker,
+                    status_tracker: newTrackers,
                 },
             })
-            toast.success(tracker ? `Status tracker set to ${tracker.name}` : 'Status tracker removed')
+            if (isSelected) {
+                toast.success(`Status tracker "${tracker.name}" removed`)
+            } else {
+                toast.success(`Status tracker "${tracker.name}" added`)
+            }
         } catch (error) {
             console.error('Failed to update status tracker:', error)
             toast.error('Failed to update status tracker')
@@ -69,17 +123,66 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
         }
     }
 
+    // Clear all trackers
+    const handleClearAll = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (isUpdating || statusTrackers.length === 0) return
+
+        try {
+            setIsUpdating(true)
+            await updateWorkOrderMutation.mutateAsync({
+                id: item.id,
+                data: {
+                    status_tracker: null,
+                },
+            })
+            toast.success('All status trackers removed')
+        } catch (error) {
+            console.error('Failed to clear status trackers:', error)
+            toast.error('Failed to clear status trackers')
+        } finally {
+            setIsUpdating(false)
+        }
+    }
+
     return (
         <Card 
             className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all cursor-pointer relative ${className}`}
-            style={borderStyle}
             onClick={() => onClick?.(item)}
         >
             <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                    <CardTitle className="text-sm font-medium text-foreground dark:text-white line-clamp-2 flex-1 pr-2">
-                        {truncateText(item.title, 50)}
-                    </CardTitle>
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm font-medium text-foreground dark:text-white line-clamp-2">
+                            {truncateText(item.title, 50)}
+                        </CardTitle>
+                        {/* Status Tracker Badges */}
+                        {statusTrackers.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                {statusTrackers.map((tracker, index) => (
+                                    <TooltipProvider key={index}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="text-xs px-1.5 py-0.5 h-5 bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 cursor-default"
+                                                >
+                                                    <div
+                                                        className="w-2 h-2 rounded mr-1 flex-shrink-0"
+                                                        style={{ backgroundColor: tracker.color }}
+                                                    />
+                                                    <span className="truncate max-w-[60px]">{tracker.name}</span>
+                                                </Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top" className="bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#1f1f1f] text-popover-foreground dark:text-white">
+                                                <span className="text-sm">{tracker.name}</span>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(item.priority)} flex-shrink-0 mt-1`} />
                         <DropdownMenu>
@@ -98,34 +201,62 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                                 className="w-56 bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]"
                                 onClick={(e) => e.stopPropagation()}
                             >
+                                {/* Header with count */}
                                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground dark:text-gray-400">
-                                    Status Tracker
+                                    Status Trackers {trackerCount > 0 && `(${trackerCount}/${MAX_WORK_ORDER_STATUS_TRACKERS})`}
                                 </div>
                                 <DropdownMenuSeparator className="bg-border dark:bg-[#2a2a2a]" />
-                                <DropdownMenuItem
-                                    onClick={(e) => handleStatusTrackerSelect(null, e)}
-                                    className="text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a] cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-2 w-full">
-                                        <div className="w-4 h-4 rounded border border-border dark:border-[#2a2a2a] bg-transparent" />
-                                        <span>None</span>
-                                    </div>
-                                </DropdownMenuItem>
-                                {sortedPresets.map((preset) => (
-                                    <DropdownMenuItem
-                                        key={preset.id}
-                                        onClick={(e) => handleStatusTrackerSelect({ name: preset.name, color: preset.color }, e)}
-                                        className="text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a] cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-2 w-full">
-                                            <div
-                                                className="w-4 h-4 rounded border border-border dark:border-[#2a2a2a] flex-shrink-0"
-                                                style={{ backgroundColor: preset.color }}
-                                            />
-                                            <span>{preset.name}</span>
+                                
+                                {/* Preset list with checkboxes */}
+                                <div className="max-h-[300px] overflow-y-auto">
+                                    {sortedPresets.length === 0 ? (
+                                        <div className="px-2 py-3 text-xs text-muted-foreground dark:text-gray-400 text-center">
+                                            No presets available
                                         </div>
-                                    </DropdownMenuItem>
-                                ))}
+                                    ) : (
+                                        sortedPresets.map((preset) => {
+                                            const isSelected = isPresetSelected(preset.id)
+                                            const isDisabled = !isSelected && isMaxReached
+
+                                            return (
+                                                <DropdownMenuItem
+                                                    key={preset.id}
+                                                    onClick={(e) => !isDisabled && handleStatusTrackerToggle(preset.id, e)}
+                                                    disabled={isDisabled}
+                                                    className={`text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a] cursor-pointer ${
+                                                        isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2 w-full">
+                                                        <Checkbox
+                                                            checked={isSelected}
+                                                            disabled={isDisabled}
+                                                            className="h-4 w-4 data-[state=checked]:bg-primary data-[state=checked]:border-primary pointer-events-none flex-shrink-0"
+                                                        />
+                                                        <div
+                                                            className="w-4 h-4 rounded border border-border dark:border-[#2a2a2a] flex-shrink-0"
+                                                            style={{ backgroundColor: preset.color }}
+                                                        />
+                                                        <span className="flex-1 text-sm">{preset.name}</span>
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            )
+                                        })
+                                    )}
+                                </div>
+
+                                {/* Clear All option */}
+                                {statusTrackers.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator className="bg-border dark:bg-[#2a2a2a]" />
+                                        <DropdownMenuItem
+                                            onClick={handleClearAll}
+                                            className="text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a] cursor-pointer text-sm"
+                                        >
+                                            Clear All
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
