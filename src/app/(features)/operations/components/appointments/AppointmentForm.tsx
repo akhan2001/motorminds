@@ -1,7 +1,12 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TimeSelect } from '@/components/ui/time-select'
@@ -38,9 +43,10 @@ import { createClient } from '@/utils/supabase/client'
 
 interface AppointmentFormProps {
     shopId: string
+    isOpen: boolean
+    onClose: () => void
     selectedDate?: string
     selectedTime?: string
-    onClose?: () => void
     onSuccess?: () => void
 }
 
@@ -80,9 +86,10 @@ const SERVICE_TYPES = [
 
 export function AppointmentForm({
     shopId,
+    isOpen,
+    onClose,
     selectedDate,
     selectedTime,
-    onClose,
     onSuccess
 }: AppointmentFormProps) {
     const supabase = createClient()
@@ -349,29 +356,18 @@ export function AppointmentForm({
     }, [])
 
     return (
-        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
-            <CardHeader className="pb-4 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-foreground flex items-center gap-2">
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-2xl max-h-[90vh]">
+                <DialogHeader>
+                    <DialogTitle className="text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         New Appointment
-                    </CardTitle>
-                    {onClose && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClose}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-            </CardHeader>
+                    </DialogTitle>
+                </DialogHeader>
 
-            <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full">
-                    <CardContent className="pt-2 pb-12 px-6">
+                <div className="mt-4">
+                    <ScrollArea className="max-h-[calc(90vh-8rem)]">
+                        <div className="pr-4 pb-4">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Submit Error */}
                             {errors.submit && (
@@ -718,9 +714,10 @@ export function AppointmentForm({
                             </Button>
                         </div>
                     </form>
-                </CardContent>
-            </ScrollArea>
-        </div>
-    </Card>
+                        </div>
+                    </ScrollArea>
+                </div>
+            </DialogContent>
+        </Dialog>
     )
 }
