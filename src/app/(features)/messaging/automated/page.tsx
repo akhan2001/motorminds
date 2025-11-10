@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Switch } from '@/components/ui/switch'
-import { Edit, Trash2, Loader2, Zap, Hand, Clock, Plus, ArrowLeft } from 'lucide-react'
+import { Edit, Trash2, Loader2, Zap, Hand, Clock, Plus, ArrowLeft, MessageSquare, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/core/useAuth'
 import type { MessageTemplate } from '../types/message-template'
@@ -126,10 +126,21 @@ export default function AutomatedMessagesPage() {
                                 Create automated messages that send after work orders are completed
                             </p>
                         </div>
-                        <Button onClick={handleCreateTemplate}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            New Template
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline"
+                                onClick={() => router.push('/messaging/automated/queue')}
+                                className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                            >
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                View Queue
+                                <ArrowRight className="h-4 w-4 ml-2" />
+                            </Button>
+                            <Button onClick={handleCreateTemplate}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                New Template
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Templates Table */}

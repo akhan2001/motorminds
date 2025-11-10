@@ -295,7 +295,7 @@ export default function MessagingDashboard() {
 
                                         <Button 
                                             variant="outline" 
-                                            onClick={() => router.push('/messaging/queue')}
+                                            onClick={() => router.push('/messaging/automated/queue')}
                                             className="h-auto p-4 flex flex-col items-center gap-2 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/20"
                                         >
                                             <MessageSquare className="h-6 w-6 text-red-600" />

@@ -12,8 +12,8 @@ import { Label } from '@/components/ui/label'
 import { Clock, Send, XCircle, CheckCircle, Loader2, RefreshCw, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/core/useAuth'
-import type { MessageQueueItem } from '../types/message-queue'
-import { MessagingHeader } from '../components/MessagingHeader'
+import type { MessageQueueItem } from '../../types/message-queue'
+import { MessagingHeader } from '../../components/MessagingHeader'
 
 export default function QueuePage() {
     const router = useRouter()
@@ -137,9 +137,9 @@ export default function QueuePage() {
             <div className="flex-1 overflow-auto">
                 <div className="container mx-auto p-6 space-y-6">
                     {/* Back Button */}
-                    <Button variant="ghost" onClick={() => router.push('/messaging')}>
+                    <Button variant="ghost" onClick={() => router.push('/messaging/automated')}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Messaging Hub
+                        Back to Automated Messages
                     </Button>
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
