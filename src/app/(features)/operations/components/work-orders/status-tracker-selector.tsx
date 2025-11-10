@@ -28,8 +28,17 @@ export const StatusTrackerSelector: React.FC<StatusTrackerSelectorProps> = ({
     const { shopId } = useAuth()
     const { data: presets = [], isLoading } = useStatusTrackerPresets(shopId || '')
 
-    // Normalize value to array
-    const selectedTrackers = value || []
+    // Normalize value to array (handle both old format single object and new format array)
+    const normalizeTrackers = (tracker: any): StatusTracker[] => {
+        if (!tracker) return []
+        if (Array.isArray(tracker)) return tracker
+        // Handle old format: single object
+        if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            return [tracker]
+        }
+        return []
+    }
+    const selectedTrackers = normalizeTrackers(value)
     const selectedCount = selectedTrackers.length
     const isMaxReached = selectedCount >= maxTrackers
 
