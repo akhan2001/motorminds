@@ -8,6 +8,7 @@ import { WorkOrderCreateModal } from "../components/work-orders/create";
 import { WorkOrderEditModal } from "../components/work-orders/manage/work-order-edit-modal";
 import { WorkOrderCompletionModal } from "../components/work-orders/complete";
 import { WorkOrderItemTemplatesModal } from "../components/work-order-items/templates/work-order-item-templates-modal";
+import { StatusTrackerManagementModal } from "../components/work-orders/status-tracker-management-modal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useDeleteWorkOrder } from "../hooks/use-work-orders";
@@ -115,6 +116,17 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         ? `${workOrder.technician.first_name} ${workOrder.technician.last_name || ''}`
         : workOrder.assigned_technician_id || 'Unassigned'
 
+    // Normalize status_tracker to array (handle both old format single object and new format array)
+    const normalizeStatusTracker = (tracker: any): any[] | null => {
+        if (!tracker) return null
+        if (Array.isArray(tracker)) return tracker
+        // Handle old format: single object
+        if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            return [tracker]
+        }
+        return null
+    }
+
     return {
         id: workOrder.id,
         title: workOrder.title,
@@ -126,7 +138,8 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         customer: customerDisplay,
         vehicle: vehicleDisplay,
         tags: workOrder.tags || [],
-        shop_id: workOrder.shop_id
+        shop_id: workOrder.shop_id,
+        status_tracker: normalizeStatusTracker(workOrder.status_tracker)
     }
 }
 
@@ -199,6 +212,9 @@ function WorkOrdersContent() {
     // Templates modal state
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
 
+    // Status trackers modal state
+    const [isStatusTrackersModalOpen, setIsStatusTrackersModalOpen] = useState(false)
+
     // Handle URL parameter changes to open/close modal
     useEffect(() => {
         const workOrderId = searchParams?.get('id')
@@ -246,6 +262,15 @@ function WorkOrdersContent() {
 
     const handleTemplatesModalClose = () => {
         setIsTemplatesModalOpen(false)
+    }
+
+    // Handle status trackers modal
+    const handleStatusTrackersClick = () => {
+        setIsStatusTrackersModalOpen(true)
+    }
+
+    const handleStatusTrackersModalClose = () => {
+        setIsStatusTrackersModalOpen(false)
     }
 
     // Handle work order items
@@ -574,6 +599,7 @@ function WorkOrdersContent() {
                         onToggleView={handleToggleView}
                         onNewWorkOrder={handleNewWorkOrder}
                         onTemplatesClick={handleTemplatesClick}
+                        onStatusTrackersClick={handleStatusTrackersClick}
                     />
                     <div className="flex-1 overflow-hidden">
                         <WorkOrderKanban
@@ -621,6 +647,12 @@ function WorkOrdersContent() {
                         shopId={shopId}
                     />
                 )}
+
+                {/* Status Tracker Management Modal */}
+                <StatusTrackerManagementModal
+                    isOpen={isStatusTrackersModalOpen}
+                    onClose={handleStatusTrackersModalClose}
+                />
             </div>
         </DragDropProvider>
     )

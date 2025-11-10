@@ -153,6 +153,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         
         // Work order specifics
         notes: "",
+        // Normalize status_tracker to array (handle both old format single object and new format array)
+        statusTracker: (() => {
+            const tracker = initialWorkOrder.status_tracker
+            if (!tracker) return null
+            if (Array.isArray(tracker)) return tracker
+            // Handle old format: single object
+            if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                return [tracker]
+            }
+            return null
+        })(),
     })
 
     // Update form when work order details are fetched
@@ -208,6 +219,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 
                 // Work order notes
                 notes: workOrderDetails.notes || "",
+                // Normalize status_tracker to array (handle both old format single object and new format array)
+                statusTracker: (() => {
+                    const tracker = workOrderDetails.status_tracker
+                    if (!tracker) return null
+                    if (Array.isArray(tracker)) return tracker
+                    // Handle old format: single object
+                    if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                        return [tracker]
+                    }
+                    return null
+                })(),
             }))
         }
     }, [workOrderDetails])
@@ -570,6 +592,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             priority: formData.priority,
             notes: formData.notes,
             tags: formData.tags,
+            status_tracker: formData.statusTracker,
         }
 
         try {
@@ -593,6 +616,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 customer: formData.customer,
                 vehicle: formData.vehicle,
                 tags: formData.tags,
+                status_tracker: formData.statusTracker,
             }
             updatedWorkOrder.id = workOrderId
             
@@ -934,6 +958,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                     assigneeId={workOrderDetails?.assigned_technician_id || ""}
                                     date={formData.date}
                                     tags={formData.tags}
+                                    statusTracker={formData.statusTracker}
                                     isEditing={isEditing}
                                     isCreating={false}
                                     onFieldChange={handleFieldChange}
