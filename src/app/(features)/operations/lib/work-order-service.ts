@@ -180,6 +180,53 @@ export class WorkOrderService {
             console.error('Error updating work order status:', error)
             throw new Error(`Failed to update work order status: ${error.message}`)
         }
+
+        // After work order status set to 'completed', trigger automated messages
+        if (status === 'completed') {
+            try {
+                // Get work order details for the trigger
+                const workOrder = await this.getWorkOrderById(id)
+                if (workOrder && workOrder.customer_id) {
+                    // Extract service type from work order title
+                    const extractServiceType = (title: string): string | null => {
+                        if (!title) return null
+                        const lowerTitle = title.toLowerCase()
+                        
+                        if (lowerTitle.includes('oil change')) return 'oil_change'
+                        if (lowerTitle.includes('brake')) return 'brake_service'
+                        if (lowerTitle.includes('tire')) return 'tire_service'
+                        if (lowerTitle.includes('inspection')) return 'inspection'
+                        if (lowerTitle.includes('battery')) return 'battery_service'
+                        if (lowerTitle.includes('alignment')) return 'alignment'
+                        if (lowerTitle.includes('transmission')) return 'transmission_service'
+                        if (lowerTitle.includes('engine')) return 'engine_service'
+                        if (lowerTitle.includes('diagnostic')) return 'diagnostic'
+                        if (lowerTitle.includes('ac') || lowerTitle.includes('air conditioning')) return 'ac_service'
+                        
+                        return null
+                    }
+                    
+                    const serviceType = extractServiceType(workOrder.title)
+                    
+                    // Trigger automated messaging (fire and forget - don't block completion)
+                    fetch('/api/messaging/queue-automated', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            work_order_id: workOrder.id,
+                            customer_id: workOrder.customer_id,
+                            service_type: serviceType
+                        })
+                    }).catch((error) => {
+                        // Silently handle fetch errors (network issues, etc.)
+                        console.error('Failed to trigger automated messages:', error)
+                    })
+                }
+            } catch (error) {
+                // Don't fail the work order completion if messaging fails
+                console.error('Failed to trigger automated messages:', error)
+            }
+        }
     }
     
     // DELETE operations

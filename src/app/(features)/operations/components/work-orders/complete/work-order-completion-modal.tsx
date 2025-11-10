@@ -6,11 +6,14 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Car, User, Phone, MessageSquare, Lock, Loader2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link, CheckCircle2 } from 'lucide-react'
 import { formatPhoneNumber } from '@/lib/utils/text'
 import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
 import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
+import type { MessageTemplate } from '@/app/(features)/messaging/types/message-template'
 
 export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> = ({
     workOrder,
@@ -21,7 +24,10 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     const [customMessage, setCustomMessage] = useState('')
     const [selectedTemplate, setSelectedTemplate] = useState<string>('ready_for_pickup')
     const [isEditing, setIsEditing] = useState(false)
-    const { sendCompletionMessage, isLoading, messagingAvailability } = useWorkOrderMessaging()
+    const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
+    const [automatedTemplates, setAutomatedTemplates] = useState<MessageTemplate[]>([])
+    const [loadingTemplates, setLoadingTemplates] = useState(false)
+    const { sendCompletionMessage, isLoading, messagingAvailability} = useWorkOrderMessaging()
 
     // Format the selected template with actual work order data
     useEffect(() => {
@@ -44,8 +50,36 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
         }
     }, [workOrder, isOpen, selectedTemplate])
 
+    // Fetch automated templates that will be triggered
+    useEffect(() => {
+        const fetchAutomatedTemplates = async () => {
+            if (!isOpen || !enableAutomatedMessage) {
+                setAutomatedTemplates([])
+                return
+            }
+
+            setLoadingTemplates(true)
+            try {
+                const response = await fetch('/api/messaging/templates?trigger_type=work_order_complete')
+                if (response.ok) {
+                    const templates = await response.json()
+                    // Filter active templates
+                    const activeTemplates = templates.filter((t: MessageTemplate) => t.is_active)
+                    setAutomatedTemplates(activeTemplates)
+                }
+            } catch (error) {
+                console.error('Error fetching automated templates:', error)
+            } finally {
+                setLoadingTemplates(false)
+            }
+        }
+
+        fetchAutomatedTemplates()
+    }, [isOpen, enableAutomatedMessage])
+
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
+            // Automated messaging is handled by work-order-service.ts when status is updated
             onConfirm(false)
             return
         }
@@ -56,11 +90,31 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
             customerName: workOrder.customer.customer_name
         })
 
+        // Automated messaging is handled by work-order-service.ts when status is updated
+        // No need to call it here to avoid duplicates
         onConfirm(true, customMessage)
     }
 
-    const handleSkipMessage = () => {
+    const handleSkipMessage = async () => {
+        // Automated messaging is handled by work-order-service.ts when status is updated
+        // No need to call it here to avoid duplicates
         onConfirm(false)
+    }
+
+
+    // Helper to format delay hours into human-readable string
+    const formatDelayHours = (hours: number): string => {
+        if (hours === 0) return 'immediately'
+        if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''}`
+        
+        const days = Math.floor(hours / 24)
+        if (days < 7) return `${days} day${days !== 1 ? 's' : ''}`
+        
+        const weeks = Math.floor(days / 7)
+        if (weeks < 4) return `${weeks} week${weeks !== 1 ? 's' : ''}`
+        
+        const months = Math.floor(days / 30)
+        return `${months} month${months !== 1 ? 's' : ''}`
     }
 
     const vehicleInfo = workOrder.vehicle ? 
@@ -131,6 +185,80 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    <Separator className="bg-border dark:bg-[#2a2a2a]" />
+
+                    {/* Automated Follow-Up Toggle */}
+                    <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                                <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                                <div>
+                                    <Label htmlFor="automated-message" className="text-sm font-medium text-foreground dark:text-white cursor-pointer">
+                                        Send automated follow-up messages
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">
+                                        Automatically schedules follow-up messages based on your active templates
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                id="automated-message"
+                                checked={enableAutomatedMessage}
+                                onCheckedChange={setEnableAutomatedMessage}
+                            />
+                        </div>
+
+                        {/* Show which templates will be triggered */}
+                        {enableAutomatedMessage && (
+                            <div className="mt-3 pt-3 border-t border-blue-500/20">
+                                {loadingTemplates ? (
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Loading templates...
+                                    </div>
+                                ) : automatedTemplates.length > 0 ? (
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-medium text-foreground dark:text-gray-300">
+                                            {automatedTemplates.length} message{automatedTemplates.length !== 1 ? 's' : ''} will be scheduled:
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            {automatedTemplates.map((template) => (
+                                                <div 
+                                                    key={template.id} 
+                                                    className="flex items-start gap-2 text-xs bg-blue-500/5 rounded px-2 py-1.5"
+                                                >
+                                                    <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                                    <div className="flex-1">
+                                                        <span className="font-medium text-foreground dark:text-white">
+                                                            {template.name}
+                                                        </span>
+                                                        <span className="text-muted-foreground dark:text-gray-400">
+                                                            {' '}• Sends in {formatDelayHours(template.delay_hours)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+                                        <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                                        <p>
+                                            No active templates found. Create templates in{' '}
+                                            <a 
+                                                href="/messaging/templates" 
+                                                className="underline hover:text-amber-700 dark:hover:text-amber-300"
+                                                target="_blank"
+                                            >
+                                                Messaging Settings
+                                            </a>
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <Separator className="bg-border dark:bg-[#2a2a2a]" />
