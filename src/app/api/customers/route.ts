@@ -29,16 +29,9 @@ export async function GET(request: NextRequest) {
         const phone = searchParams.get('phone');
         const limit = parseInt(searchParams.get('limit') || '20');
 
-        // Search both customers and staging_customers tables
+        // Search customers table only
         let query = supabase
             .from('customers')
-            .select('*')
-            .eq('shop_id', shopId)
-            .order('updated_at', { ascending: false })
-            .limit(limit);
-
-        let stagingQuery = supabase
-            .from('staging_customers')
             .select('*')
             .eq('shop_id', shopId)
             .order('updated_at', { ascending: false })
@@ -47,39 +40,19 @@ export async function GET(request: NextRequest) {
         if (phone) {
             // Search by exact phone number
             query = query.eq('customer_phone', phone);
-            stagingQuery = stagingQuery.eq('customer_phone', phone);
         } else if (search) {
             // Use ILIKE search for name, email, and phone (works without special indexes)
             query = query.or(`customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`);
-            stagingQuery = stagingQuery.or(`customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`);
         }
 
-        // Execute both queries in parallel
-        const [regularResult, stagingResult] = await Promise.all([
-            query,
-            stagingQuery
-        ]);
-
-        const { data: customers, error } = regularResult;
-        const { data: stagingCustomers, error: stagingError } = stagingResult;
+        const { data: customers, error } = await query;
 
         if (error) {
             console.error('Database error:', error);
             return NextResponse.json({ error: 'Failed to fetch customers' }, { status: 500 });
         }
 
-        if (stagingError) {
-            console.error('Staging customers error:', stagingError);
-            // Continue with regular customers only if staging search fails
-        }
-
-        // Combine results from both tables, marking staging customers
-        const allCustomers = [
-            ...(customers || []).map(c => ({ ...c, _isStaging: false })),
-            ...(stagingCustomers || []).map(c => ({ ...c, _isStaging: true }))
-        ];
-
-        return NextResponse.json({ customers: allCustomers });
+        return NextResponse.json({ customers: customers || [] });
 
     } catch (error) {
         console.error('GET /api/customers error:', error);
