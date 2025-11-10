@@ -116,6 +116,12 @@ export function TemplateEditor({ template, shopId, onSuccess, onCancel }: Templa
             return
         }
 
+        // Only allow work_order_complete trigger for now
+        if (formData.trigger_type !== 'work_order_complete') {
+            toast.error('Only "Work Order Complete" trigger is currently available. Other triggers are coming soon.')
+            return
+        }
+
         setIsSubmitting(true)
 
         try {

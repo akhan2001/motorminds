@@ -81,7 +81,7 @@ export function DelaySelector({ value, onChange, disabled }: DelaySelectorProps)
                 )}
             </div>
             <p className="text-xs text-muted-foreground">
-                Message will be scheduled to send after this delay from the trigger event
+                When would you like to send this message?
             </p>
         </div>
     )
