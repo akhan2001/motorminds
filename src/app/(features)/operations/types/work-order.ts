@@ -26,7 +26,7 @@ export interface WorkOrder {
     tags?: string[]
     attachments?: any[]
     notes?: string
-    status_tracker?: StatusTracker | null // JSONB column
+    status_tracker?: StatusTracker[] | null // JSONB column - array of status trackers (max 5)
     
     // Timestamps
     created_at: string
@@ -115,7 +115,7 @@ export interface WorkOrderKanbanItem {
     vehicle?: string
     tags?: string[]
     shop_id?: string
-    status_tracker?: StatusTracker | null // For display with border color
+    status_tracker?: StatusTracker[] | null // For display with border color - array of status trackers (max 5)
 }
 
 export interface WorkOrderKanbanColumn {
