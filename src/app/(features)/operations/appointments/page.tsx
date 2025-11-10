@@ -4,13 +4,8 @@ import { useState, useMemo } from 'react'
 import { Nav } from '@/app/components/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { 
-    Calendar,
-    AlertCircle
-} from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
-import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
@@ -29,12 +24,16 @@ export default function AppointmentsPage() {
     
     // State
     const [selectedDate, setSelectedDate] = useState(new Date())
-    const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null)
     const [selectedDateForForm, setSelectedDateForForm] = useState<string>()
     const [selectedTimeForForm, setSelectedTimeForForm] = useState<string>()
-    const [showForm, setShowForm] = useState(false)
-    const [showAppointmentDetails, setShowAppointmentDetails] = useState(false)
     const [searchValue, setSearchValue] = useState('')
+    
+    // Modal state
+    const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
+    const [selectedDayForDialog, setSelectedDayForDialog] = useState<string | null>(null)
+    const [isAppointmentSheetOpen, setIsAppointmentSheetOpen] = useState(false)
+    const [selectedAppointmentForSheet, setSelectedAppointmentForSheet] = useState<AppointmentWithDetails | null>(null)
+    const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false)
     
     // Data fetching - operations dashboard disabled for now
     // const { data: dashboardData, isLoading: dashboardLoading } = useOperationsDashboard(shopId || '')
@@ -92,15 +91,15 @@ export default function AppointmentsPage() {
         // Create date without timezone conversion by parsing the components
         const [year, month, day] = date.split('-').map(Number)
         setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
-        setSelectedDateForForm(date)
-        setShowForm(false) // Don't show form automatically when date is selected
-        setShowAppointmentDetails(false) // Hide appointment details when date changes
+        // Open day dialog
+        setSelectedDayForDialog(date)
+        setIsDayDialogOpen(true)
     }
 
     const handleAppointmentClick = (appointment: AppointmentWithDetails) => {
-        setSelectedAppointment(appointment)
-        setShowAppointmentDetails(true)
-        setShowForm(false) // Hide form if it's open
+        // Open appointment sheet
+        setSelectedAppointmentForSheet(appointment)
+        setIsAppointmentSheetOpen(true)
     }
 
     const handleCreateAppointment = (date: string, time?: string) => {
@@ -109,8 +108,8 @@ export default function AppointmentsPage() {
         // Create date without timezone conversion by parsing the components
         const [year, month, day] = date.split('-').map(Number)
         setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
-        setShowForm(true) // Show form when creating appointment
-        setShowAppointmentDetails(false) // Hide appointment details if open
+        // Open form dialog
+        setIsAppointmentFormOpen(true)
     }
 
     const handleShowNewAppointmentForm = () => {
@@ -121,43 +120,38 @@ export default function AppointmentsPage() {
         const dateString = `${year}-${month}-${day}`
         setSelectedDateForForm(dateString)
         setSelectedTimeForForm(undefined)
-        setShowForm(true)
-        setShowAppointmentDetails(false) // Hide appointment details if open
-    }
-
-    const handleHideForm = () => {
-        setShowForm(false)
-        setSelectedDateForForm(undefined)
-        setSelectedTimeForForm(undefined)
+        // Open form dialog
+        setIsAppointmentFormOpen(true)
     }
 
     const handleAppointmentSuccess = () => {
         // Clear form selections and refresh data
         setSelectedDateForForm(undefined)
         setSelectedTimeForForm(undefined)
-        setShowForm(false) // Hide form after successful creation
+        setIsAppointmentFormOpen(false) // Close form dialog after successful creation
         // The queries will automatically refetch due to cache invalidation
     }
 
     const handleCancelAppointment = (appointmentId: string) => {
         cancelAppointment.mutate(appointmentId)
-        // Close appointment details if this appointment is being viewed
-        if (selectedAppointment?.id === appointmentId) {
-            setSelectedAppointment(null)
-            setShowAppointmentDetails(false)
+        // Close appointment sheet if this appointment is being viewed
+        if (selectedAppointmentForSheet?.id === appointmentId) {
+            setSelectedAppointmentForSheet(null)
+            setIsAppointmentSheetOpen(false)
         }
     }
 
     const handleCloseAppointmentDetails = () => {
-        setShowAppointmentDetails(false)
-        setSelectedAppointment(null)
+        setIsAppointmentSheetOpen(false)
+        setSelectedAppointmentForSheet(null)
     }
 
     const handleEditAppointment = (appointment: AppointmentWithDetails) => {
         // TODO: Implement edit appointment functionality
         console.log('Edit appointment:', appointment)
-        // For now, close details and could open form in edit mode
-        setShowAppointmentDetails(false)
+        // For now, close sheet and could open form in edit mode
+        setIsAppointmentSheetOpen(false)
+        setSelectedAppointmentForSheet(null)
     }
 
     const handleMessageCustomer = (customer: AppointmentWithDetails['customer']) => {
@@ -170,9 +164,9 @@ export default function AppointmentsPage() {
             const workOrderId = await createWorkOrder.mutateAsync(appointmentId)
             
             // Refetch the appointment to get the updated data with work order
-            if (selectedAppointment) {
+            if (selectedAppointmentForSheet) {
                 // Update the local state with work order info
-                setSelectedAppointment(prev => prev ? {
+                setSelectedAppointmentForSheet(prev => prev ? {
                     ...prev,
                     status: 'in_progress',
                     work_order: {
