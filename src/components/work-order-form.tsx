@@ -717,7 +717,7 @@ return (
 													setWorkOrderData(prev => ({ ...prev, mileage: e.target.value }))
 													}
 													className="bg-[#292929] text-white border-[#626262] focus:ring-gray-500"
-													placeholder="e.g. 45,000 miles"
+													placeholder="e.g. 45,000 kms"
 													disabled={!workOrderData.customerId}
 												/>
 											</div>
