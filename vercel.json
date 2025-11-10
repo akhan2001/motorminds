@@ -6,18 +6,14 @@
         "src/app/api/mia/route.ts": {
             "maxDuration": 30
         },
-        "src/app/api/messaging/ai/process-queue/route.ts": {
-            "maxDuration": 290
+        "src/app/api/messaging/process-queue/route.ts": {
+            "maxDuration": 300
         }
     },
     "crons": [
         {
-            "path": "/api/messaging/ai/process-queue",
+            "path": "/api/messaging/process-queue",
             "schedule": "*/5 * * * *"
-        },
-        {
-            "path": "/api/messaging/ai/triggers/customer-re-engagement",
-            "schedule": "0 10 * * *"
         }
     ]
 }
