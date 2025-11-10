@@ -114,7 +114,7 @@ export function AppointmentDetailsSheet({
     return (
         <>
             <Sheet open={isOpen} onOpenChange={onClose}>
-                <SheetContent className="sm:max-w-lg md:max-w-xl">
+                <SheetContent className="sm:max-w-lg md:max-w-xl bg-white dark:bg-[#1a1a1a]">
                     <SheetHeader>
                         <SheetTitle className="text-foreground flex items-center gap-2">
                             <Calendar className="h-5 w-5" />

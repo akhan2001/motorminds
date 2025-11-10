@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +15,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
     Calendar,
@@ -357,17 +357,19 @@ export function AppointmentForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh]">
-                <DialogHeader>
+            <DialogContent className="max-w-2xl h-[90vh] bg-white dark:bg-[#1a1a1a] !grid-cols-1 flex flex-col !p-0 overflow-hidden">
+                <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
                     <DialogTitle className="text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         New Appointment
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Create a new appointment for a customer
+                    </DialogDescription>
                 </DialogHeader>
 
-                <div className="mt-4">
-                    <ScrollArea className="max-h-[calc(90vh-8rem)]">
-                        <div className="pr-4 pb-4">
+                <div className="flex-1 min-h-0 overflow-y-auto px-6">
+                    <div className="pr-4 pb-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Submit Error */}
                             {errors.submit && (
@@ -714,8 +716,7 @@ export function AppointmentForm({
                             </Button>
                         </div>
                     </form>
-                        </div>
-                    </ScrollArea>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

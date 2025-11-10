@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -63,11 +64,14 @@ export function DayAppointmentsDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-white dark:bg-[#1a1a1a]">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold text-foreground">
                         {formattedDate}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        View and manage appointments for {formattedDate}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {sortedAppointments.length === 0 ? (

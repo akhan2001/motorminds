@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -94,12 +94,15 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-white dark:bg-background border-border">
+            <DialogContent className="max-w-2xl bg-white dark:bg-[#1a1a1a] border-border">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                         Send Appointment Message
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Send a message to the customer about their appointment
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">
