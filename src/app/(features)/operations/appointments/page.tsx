@@ -4,17 +4,10 @@ import { useState, useMemo } from 'react'
 import { Nav } from '@/app/components/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Skeleton } from '@/components/ui/skeleton'
 import { 
     Calendar,
-    CalendarDays, 
-    Clock, 
-    AlertCircle,
-    Plus,
-    Users,
-    TrendingUp,
-    FileText
+    AlertCircle
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 import { format } from 'date-fns'
@@ -25,8 +18,6 @@ import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointmen
 import { MonthCard } from '../components/appointments/Calendar/MonthCard'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
 import { AppointmentHeader } from '../components/appointments/appointment-header'
-import { AppointmentDetailsCard } from '../components/appointments/appointmentDetailsCard'
-import { AppointmentsList } from '../components/appointments/AppointmentsList'
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
@@ -285,87 +276,16 @@ export default function AppointmentsPage() {
                 onSearchChange={handleSearchChange}
             />
 
-            {/* Main Content - Resizable Layout */}
-            <div className="flex-1 overflow-hidden">
-                <ResizablePanelGroup direction="horizontal" className="h-full">
-                    {/* Calendar Panel - 70% */}
-                    <ResizablePanel defaultSize={70} minSize={60} maxSize={80}>
-                        <div className="h-full p-4">
-                            <MonthCard
-                                selectedDate={selectedDate}
-                                shopId={shopId}
-                                onDateSelect={handleDateSelect}
-                                onAppointmentClick={handleAppointmentClick}
-                                onCreateAppointment={handleCreateAppointment}
-                                onMonthChange={setSelectedDate}
-                            />
-                        </div>
-                    </ResizablePanel>
-
-                    <ResizableHandle withHandle />
-
-                    {/* Right Panel - 30% */}
-                    <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-                        <div className="h-full p-4">
-                            {showAppointmentDetails && selectedAppointment ? (
-                                // State 4: Appointment Details
-                                <AppointmentDetailsCard
-                                    appointment={selectedAppointment}
-                                    onClose={handleCloseAppointmentDetails}
-                                    onEdit={handleEditAppointment}
-                                    onCancel={handleCancelAppointment}
-                                    onMessageCustomer={handleMessageCustomer}
-                                    onCreateWorkOrder={handleCreateWorkOrder}
-                                    isCreatingWorkOrder={createWorkOrder.isPending}
-                                />
-                            ) : showForm ? (
-                                // State 3: New Appointment Form
-                                <AppointmentForm
-                                    shopId={shopId}
-                                    selectedDate={selectedDateForForm}
-                                    selectedTime={selectedTimeForForm}
-                                    onSuccess={handleAppointmentSuccess}
-                                    onClose={handleHideForm}
-                                />
-                            ) : sortedSelectedDateAppointments.length > 0 ? (
-                                // State 2: Appointments List for Selected Date
-                                <AppointmentsList
-                                    selectedDate={selectedDate}
-                                    appointments={sortedSelectedDateAppointments}
-                                    onAddAppointment={handleShowNewAppointmentForm}
-                                    onAppointmentClick={handleAppointmentClick}
-                                    onCancelAppointment={handleCancelAppointment}
-                                    cancellingAppointmentId={cancelAppointment.isPending ? cancelAppointment.variables : undefined}
-                                />
-                            ) : (
-                                // State 1: Empty Panel - No Appointments
-                                <Card className="bg-slate-50 dark:bg-card border-border h-full">
-                                    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                                        <div className="mb-6">
-                                            <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                                            <h3 className="text-lg font-medium text-foreground mb-2">
-                                                No Appointments
-                                            </h3>
-                                            <p className="text-muted-foreground text-sm max-w-xs">
-                                                No appointments scheduled for {format(selectedDate, 'MMMM d, yyyy')}. 
-                                                Click below to create one.
-                                            </p>
-                                        </div>
-                                        
-                                        <Button 
-                                            onClick={handleShowNewAppointmentForm}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white mb-6"
-                                            size="lg"
-                                        >
-                                            <Plus className="h-5 w-5 mr-2" />
-                                            Add New Appointment
-                                        </Button>
-                                    </div>
-                                </Card>
-                            )}
-                        </div>
-                    </ResizablePanel>
-                </ResizablePanelGroup>
+            {/* Main Content - Calendar with Large Horizontal Padding */}
+            <div className="flex-1 overflow-hidden px-12">
+                <MonthCard
+                    selectedDate={selectedDate}
+                    shopId={shopId}
+                    onDateSelect={handleDateSelect}
+                    onAppointmentClick={handleAppointmentClick}
+                    onCreateAppointment={handleCreateAppointment}
+                    onMonthChange={setSelectedDate}
+                />
             </div>
         </div>
     )
