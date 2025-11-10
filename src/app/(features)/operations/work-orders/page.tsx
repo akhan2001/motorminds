@@ -159,6 +159,7 @@ function WorkOrdersContent() {
 
         const pending = workOrders.filter(wo => wo.status === 'pending' || wo.status === 'approved')
         const inProgress = workOrders.filter(wo => wo.status === 'in_progress' || wo.status === 'waiting_parts' || wo.status === 'waiting_customer')
+        const ready = workOrders.filter(wo => wo.status === 'ready')
         const completed = workOrders.filter(wo => wo.status === 'completed' || wo.status === 'invoiced')
 
         return [
@@ -173,6 +174,12 @@ function WorkOrdersContent() {
                 title: 'In Progress',
                 color: 'bg-blue-500',
                 items: inProgress.map(transformWorkOrderToKanbanItem)
+            },
+            {
+                id: 'ready',
+                title: 'Ready',
+                color: 'bg-purple-500',
+                items: ready.map(transformWorkOrderToKanbanItem)
             },
             {
                 id: 'completed',
@@ -197,7 +204,7 @@ function WorkOrdersContent() {
     // Completion modal state
     const [completionWorkOrder, setCompletionWorkOrder] = useState<WorkOrderWithDetails | null>(null)
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
-
+    
     // Templates modal state
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
 

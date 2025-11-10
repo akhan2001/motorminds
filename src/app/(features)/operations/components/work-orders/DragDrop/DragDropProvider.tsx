@@ -51,6 +51,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
         const statusMap: Record<string, WorkOrderStatus> = {
             'pending': 'pending',
             'in-progress': 'in_progress',
+            'ready': 'ready',
             'completed': 'completed'
         }
         
@@ -93,6 +94,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
             const statusNames: Record<string, string> = {
                 'pending': 'Estimates',
                 'in_progress': 'In Progress',
+                'ready': 'Ready',
                 'completed': 'Completed'
             }
             
