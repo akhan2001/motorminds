@@ -26,26 +26,23 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Check if customer is in staging or regular table
-        const [regularCustomer, stagingCustomer] = await Promise.all([
-            supabase
-                .from('customers')
-                .select('id')
-                .eq('id', customerId)
-                .maybeSingle(),
-            supabase
-                .from('staging_customers')
-                .select('id')
-                .eq('id', customerId)
-                .maybeSingle()
-        ]);
+        // Check if customer exists in customers table
+        const { data: customer, error: customerError } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('id', customerId)
+            .maybeSingle();
 
-        const isStaging = !regularCustomer.data && stagingCustomer.data;
+        if (customerError || !customer) {
+            return NextResponse.json(
+                { error: 'Customer not found' },
+                { status: 404 }
+            )
+        }
 
-        // Get vehicles from the appropriate table
-        const vehiclesTable = isStaging ? 'staging_customer_vehicles' : 'customer_vehicles';
+        // Get vehicles from customer_vehicles table
         const { data: vehicles, error } = await supabase
-            .from(vehiclesTable)
+            .from('customer_vehicles')
             .select('*')
             .eq('customer_id', customerId)
             .order('created_at', { ascending: false })
