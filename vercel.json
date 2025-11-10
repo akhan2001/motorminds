@@ -5,6 +5,9 @@
         },
         "src/app/api/mia/route.ts": {
             "maxDuration": 30
+        },
+        "src/app/api/messaging/process-queue/route.ts": {
+            "maxDuration": 60
         }
     }
 }

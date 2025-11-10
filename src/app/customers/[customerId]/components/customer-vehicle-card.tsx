@@ -59,7 +59,7 @@ export function CustomerVehicleCard({ customerVehicles }: CustomerVehicleCardPro
                                     <p className="text-muted-foreground text-sm">Mileage</p>
                                     <div className="flex items-center">
                                         <Gauge className="h-4 w-4 mr-1 text-muted-foreground" />
-                                        <p className="text-foreground">{vehicle.mileage ? `${vehicle.mileage} mi` : 'Not recorded'}</p>
+                                        <p className="text-foreground">{vehicle.mileage ? `${vehicle.mileage} kms` : 'Not recorded'}</p>
                                     </div>
                                 </div>
                                 <div>

@@ -9,6 +9,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 export interface WorkOrderStatusBarProps {
     priority: WorkOrderPriority
     date: string
+    startedAt?: string | null
     assignee?: string
     status?: string
     className?: string
@@ -17,10 +18,26 @@ export interface WorkOrderStatusBarProps {
 export const WorkOrderStatusBar: React.FC<WorkOrderStatusBarProps> = ({
     priority,
     date,
+    startedAt,
     assignee,
     status = "pending",
     className = ""
 }) => {
+    // Format started_at for display (date only, YYYY-MM-DD format)
+    const formatStartedAt = (startedAt: string | null | undefined) => {
+        if (!startedAt) return null
+        try {
+            const date = new Date(startedAt)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
+        } catch {
+            return null
+        }
+    }
+
+    const formattedStartedAt = formatStartedAt(startedAt)
     return (
         <div className={`flex items-center justify-between p-4 bg-slate-50 dark:bg-[#1A1A1A] border-b border-border dark:border-[#222222] ${className}`}>
             <div className="flex items-center gap-4">
@@ -32,6 +49,12 @@ export const WorkOrderStatusBar: React.FC<WorkOrderStatusBarProps> = ({
                     <Calendar className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                     <span className="text-sm text-foreground dark:text-gray-300">{date}</span>
                 </div>
+                {formattedStartedAt && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground dark:text-gray-500">•</span>
+                        <span className="text-sm text-foreground dark:text-gray-300">Appointment Date: {formattedStartedAt}</span>
+                    </div>
+                )}
                 {assignee && (
                     <div className="flex items-center gap-2">
                         <TooltipProvider>

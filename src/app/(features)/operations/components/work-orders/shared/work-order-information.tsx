@@ -9,6 +9,8 @@ import { getPriorityColor } from "@/lib/utils/status"
 import { WorkOrderPriority } from "../../../types/work-order"
 import { TechnicianDropdown } from "@/app/(features)/technician"
 import { useAuth } from "../../../hooks/use-auth"
+import { StatusTrackerSelector } from "../status-tracker-selector"
+import type { StatusTracker } from "../../../types/status-tracker"
 
 export interface WorkOrderInformationProps {
     title: string
@@ -18,6 +20,7 @@ export interface WorkOrderInformationProps {
     assigneeId?: string
     date: string
     tags: string[]
+    statusTracker?: StatusTracker[] | null // Changed to array
     isEditing: boolean
     isCreating?: boolean
     onFieldChange: (field: string, value: any) => void
@@ -35,6 +38,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
     assigneeId,
     date,
     tags,
+    statusTracker,
     isEditing,
     isCreating = false,
     onFieldChange,
@@ -163,6 +167,13 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                             />
                         </div>
                     </div>
+
+                    {/* Status Tracker */}
+                    <StatusTrackerSelector
+                        value={statusTracker}
+                        onChange={(tracker) => onFieldChange('statusTracker', tracker)}
+                        disabled={!isEditing}
+                    />
 
                     {/* Tags */}
                     {/* <div className="space-y-1.5">

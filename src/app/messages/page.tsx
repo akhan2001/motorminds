@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { getShopId } from "@/utils/supabase/supabase-shop"
-import { ArrowRight, Facebook, Instagram } from "lucide-react"
+import { ArrowRight, Facebook, Instagram, MessageSquare, Phone, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -15,7 +15,7 @@ import Inbox from "./components/Inbox"
 import FacebookConnect from "./components/FacebookConnect"
 import TwilioMessaging from "./components/TwilioMessaging"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MessageSquare, Phone } from "lucide-react"
+import Link from "next/link"
 import FacebookSdk from "@/app/components/FacebookSdk"
 
 export default function Messages() {
@@ -78,7 +78,7 @@ export default function Messages() {
                             </p>
                                     
                             <Tabs defaultValue="sms" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 bg-slate-50 dark:bg-muted">
+                                <TabsList className="grid w-full grid-cols-3 bg-slate-50 dark:bg-muted">
                                     <TabsTrigger value="sms" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
                                         <Phone className="h-4 w-4 mr-2" />
                                         SMS Messages
@@ -87,12 +87,34 @@ export default function Messages() {
                                         <MessageSquare className="h-4 w-4 mr-2" />
                                         Social Media
                                     </TabsTrigger>
+                                    <TabsTrigger value="automated" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
+                                        <Sparkles className="h-4 w-4 mr-2" />
+                                        Automated
+                                    </TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="sms" className="mt-6">
                                     {shopId && <TwilioMessaging shopId={shopId} />}
                                 </TabsContent>
 
+                                <TabsContent value="automated" className="mt-6">
+                                    <Card className="bg-slate-50 dark:bg-card border-border">
+                                        <CardContent className="p-8 text-center">
+                                            <div className="max-w-md mx-auto space-y-4">
+                                                <h3 className="text-xl font-medium text-foreground">Automated Follow-Up Messages</h3>
+                                                <p className="text-muted-foreground">
+                                                    Set up automated messages that send to customers after service completion
+                                                </p>
+                                                <Link href="/messaging">
+                                                    <Button className="w-full" size="lg">
+                                                        Go to Automated Messaging
+                                                        <ArrowRight className="h-4 w-4 ml-2" />
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
                                 <TabsContent value="social" className="mt-6">
                                     <div className="space-y-4">
                                         <div>
@@ -135,6 +157,32 @@ export default function Messages() {
                                             </Card>
                                         )}
                                     </div>
+                                </TabsContent>
+
+                                <TabsContent value="ai" className="mt-6">
+                                    <Card className="bg-slate-50 dark:bg-card border-border">
+                                        <CardContent className="p-6">
+                                            <div className="flex flex-col items-center justify-center text-center space-y-4">
+                                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-2">
+                                                    <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-semibold mb-2 text-foreground">AI Messaging</h3>
+                                                    <p className="text-muted-foreground mb-6 max-w-md">
+                                                        Automate your customer communications with AI-powered messaging. Set up automated messages 
+                                                        based on triggers like work order completion or appointment scheduling, and create 
+                                                        mass send campaigns to reach multiple customers at once.
+                                                    </p>
+                                                </div>
+                                                <Link href="/messaging/ai-messaging">
+                                                    <Button className="gap-2">
+                                                        Go to AI Messaging
+                                                        <ArrowRight className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 </TabsContent>
                             </Tabs>
                         </div>
