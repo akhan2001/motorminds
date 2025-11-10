@@ -1,7 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState, useMemo, useEffect } from 'react'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogClose,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TimeSelect } from '@/components/ui/time-select'
@@ -9,7 +16,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
     Calendar,
@@ -35,12 +41,14 @@ import { WalkInVehicleForm } from '../work-orders/create/WalkInVehicleForm'
 import type { AppointmentCreateData } from '../../types/appointment'
 import type { WalkInVehicleInfo } from '../../../customers/types/vehicle'
 import { createClient } from '@/utils/supabase/client'
+import { cn } from '@/lib/utils'
 
 interface AppointmentFormProps {
     shopId: string
+    isOpen: boolean
+    onClose: () => void
     selectedDate?: string
     selectedTime?: string
-    onClose?: () => void
     onSuccess?: () => void
 }
 
@@ -80,9 +88,10 @@ const SERVICE_TYPES = [
 
 export function AppointmentForm({
     shopId,
+    isOpen,
+    onClose,
     selectedDate,
     selectedTime,
-    onClose,
     onSuccess
 }: AppointmentFormProps) {
     const supabase = createClient()
@@ -96,6 +105,41 @@ export function AppointmentForm({
         serviceType: [] as string[],
         notes: '',
     })
+
+    // Calculate end time (standard 60 minutes)
+    const calculateEndTime = (startTime: string) => {
+        if (!startTime) return ''
+
+        const [hours, minutes] = startTime.split(':').map(Number)
+        const startMinutes = hours * 60 + minutes
+        const endMinutes = startMinutes + 60 // Standard 60-minute appointment
+
+        const endHours = Math.floor(endMinutes / 60)
+        const endMins = endMinutes % 60
+
+        return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`
+    }
+
+    // Update form data when selectedDate prop changes
+    useEffect(() => {
+        if (selectedDate && isOpen) {
+            setFormData(prev => ({
+                ...prev,
+                appointmentDate: selectedDate
+            }))
+        }
+    }, [selectedDate, isOpen])
+
+    // Update form data when selectedTime prop changes
+    useEffect(() => {
+        if (selectedTime && isOpen) {
+            setFormData(prev => ({
+                ...prev,
+                startTime: selectedTime,
+                endTime: calculateEndTime(selectedTime)
+            }))
+        }
+    }, [selectedTime, isOpen])
 
     // Customer type selection
     const [customerType, setCustomerType] = useState<'registered' | 'walk_in'>('registered')
@@ -122,6 +166,9 @@ export function AppointmentForm({
     const [showNewCustomerForm, setShowNewCustomerForm] = useState(false)
     const [showNewVehicleForm, setShowNewVehicleForm] = useState(false)
     const [vehicleRefreshTrigger, setVehicleRefreshTrigger] = useState(0)
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+    const [customServiceType, setCustomServiceType] = useState('')
+    const [showCustomServiceInput, setShowCustomServiceInput] = useState(false)
 
 
 
@@ -134,20 +181,6 @@ export function AppointmentForm({
     // Create appointment mutations
     const createAppointment = useCreateAppointment()
     const createWalkInAppointment = useCreateWalkInAppointment()
-
-    // Calculate end time (standard 60 minutes)
-    const calculateEndTime = (startTime: string) => {
-        if (!startTime) return ''
-
-        const [hours, minutes] = startTime.split(':').map(Number)
-        const startMinutes = hours * 60 + minutes
-        const endMinutes = startMinutes + 60 // Standard 60-minute appointment
-
-        const endHours = Math.floor(endMinutes / 60)
-        const endMins = endMinutes % 60
-
-        return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`
-    }
 
     // Handle form field changes
     const handleInputChange = (field: string, value: string) => {
@@ -162,6 +195,9 @@ export function AppointmentForm({
             return updated
         })
 
+        // Mark as having unsaved changes
+        setHasUnsavedChanges(true)
+
         // Clear field error when user starts typing
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }))
@@ -170,6 +206,12 @@ export function AppointmentForm({
 
     // Handle service type multi-select
     const handleServiceTypeToggle = (serviceType: string) => {
+        if (serviceType === 'Other') {
+            // Show custom input for "Other"
+            setShowCustomServiceInput(true)
+            return
+        }
+
         setFormData(prev => {
             const currentServices = prev.serviceType as string[]
             const isSelected = currentServices.includes(serviceType)
@@ -181,9 +223,33 @@ export function AppointmentForm({
             return { ...prev, serviceType: updatedServices }
         })
 
+        // Mark as having unsaved changes
+        setHasUnsavedChanges(true)
+
         // Clear field error when user makes selection
         if (errors.serviceType) {
             setErrors(prev => ({ ...prev, serviceType: '' }))
+        }
+    }
+
+    // Handle custom service type addition
+    const handleAddCustomServiceType = () => {
+        if (customServiceType.trim()) {
+            setFormData(prev => {
+                const currentServices = prev.serviceType as string[]
+                if (!currentServices.includes(customServiceType.trim())) {
+                    return { ...prev, serviceType: [...currentServices, customServiceType.trim()] }
+                }
+                return prev
+            })
+            setCustomServiceType('')
+            setShowCustomServiceInput(false)
+            setHasUnsavedChanges(true)
+            
+            // Clear field error
+            if (errors.serviceType) {
+                setErrors(prev => ({ ...prev, serviceType: '' }))
+            }
         }
     }
 
@@ -330,6 +396,7 @@ export function AppointmentForm({
             setWalkInVehicleId(null)
             setShowNewCustomerForm(false)
             setShowNewVehicleForm(false)
+            setHasUnsavedChanges(false)
         } catch (error) {
             console.error('Failed to create appointment:', error)
             setErrors({ submit: error instanceof Error ? error.message : 'Failed to create appointment' })
@@ -348,30 +415,85 @@ export function AppointmentForm({
         })
     }, [])
 
+    // Handle dialog close - only allow via X button, not outside clicks
+    const handleDialogClose = (open: boolean) => {
+        // Prevent closing on outside click - only allow via X button
+        if (!open) {
+            return // Don't close on outside click
+        }
+    }
+
+    // Handle explicit close (X button click)
+    const handleExplicitClose = () => {
+        if (hasUnsavedChanges) {
+            const confirmed = window.confirm('You have unsaved changes. Are you sure you want to close?')
+            if (!confirmed) {
+                return
+            }
+        }
+        // Reset form when closing
+        setFormData({
+            appointmentDate: selectedDate || format(new Date(), 'yyyy-MM-dd'),
+            startTime: '',
+            endTime: '',
+            serviceType: [],
+            notes: '',
+        })
+        setCustomerType('registered')
+        setSelectedCustomer(null)
+        setSelectedCustomerId('')
+        setSelectedVehicleId('')
+        setSelectedVehicle(null)
+        setWalkInVehicleInfo({
+            year: new Date().getFullYear(),
+            make: '',
+            model: '',
+            license_plate: '',
+            color: '',
+            vin: '',
+            mileage: 0
+        })
+        setWalkInVehicleId(null)
+        setShowNewCustomerForm(false)
+        setShowNewVehicleForm(false)
+        setErrors({})
+        setHasUnsavedChanges(false)
+        setShowCustomServiceInput(false)
+        setCustomServiceType('')
+        onClose()
+    }
+
     return (
-        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
-            <CardHeader className="pb-4 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-foreground flex items-center gap-2">
+        <Dialog open={isOpen} onOpenChange={handleDialogClose}>
+            <DialogContent 
+                className="max-w-4xl h-[90vh] bg-white dark:bg-[#1a1a1a] !grid-cols-1 flex flex-col !p-0 overflow-hidden [&>button]:!hidden"
+                onInteractOutside={(e) => {
+                    e.preventDefault() // Prevent closing on outside click
+                }}
+                onEscapeKeyDown={(e) => {
+                    e.preventDefault() // Prevent closing on ESC key
+                }}
+            >
+                <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 relative">
+                    <DialogTitle className="text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         New Appointment
-                    </CardTitle>
-                    {onClose && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClose}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-            </CardHeader>
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Create a new appointment for a customer
+                    </DialogDescription>
+                    <button
+                        type="button"
+                        onClick={handleExplicitClose}
+                        className="custom-close-btn absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+                    >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
+                    </button>
+                </DialogHeader>
 
-            <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full">
-                    <CardContent className="pt-2 pb-12 px-6">
+                <div className="flex-1 min-h-0 overflow-y-auto px-6">
+                    <div className="pr-4 pb-6">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Submit Error */}
                             {errors.submit && (
@@ -434,16 +556,16 @@ export function AppointmentForm({
 
                                     {/* Selected Services Display */}
                                     {formData.serviceType.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mb-2">
+                                        <div className="flex flex-wrap gap-2 mb-3">
                                             {formData.serviceType.map((service) => (
                                                 <Badge
                                                     key={service}
                                                     variant="secondary"
-                                                    className="bg-blue-600 text-white text-xs px-2 py-1 flex items-center gap-1"
+                                                    className="bg-blue-600 text-white text-sm px-3 py-1.5 flex items-center gap-2 h-8"
                                                 >
                                                     {service}
                                                     <X
-                                                        className="h-3 w-3 cursor-pointer hover:text-red-300"
+                                                        className="h-4 w-4 cursor-pointer hover:text-red-300"
                                                         onClick={() => handleServiceTypeToggle(service)}
                                                     />
                                                 </Badge>
@@ -451,19 +573,82 @@ export function AppointmentForm({
                                         </div>
                                     )}
 
-                                    {/* Service Type Selection */}
-                                    <Select onValueChange={handleServiceTypeToggle}>
-                                        <SelectTrigger className="bg-background text-foreground border-border text-sm">
-                                            <SelectValue placeholder="Add service type" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-popover text-popover-foreground border-border">
-                                            {SERVICE_TYPES.filter(service => !formData.serviceType.includes(service)).map((service) => (
-                                                <SelectItem key={service} value={service} className="hover:bg-accent hover:text-accent-foreground">
-                                                    {service}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    {/* Service Type Selection - Dropdown */}
+                                    <div className="space-y-2">
+                                        <Select 
+                                            onValueChange={handleServiceTypeToggle}
+                                            value=""
+                                        >
+                                            <SelectTrigger className="bg-white dark:bg-[#1a1a1a] text-foreground border-border text-sm">
+                                                <SelectValue placeholder="Add service type" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white dark:bg-[#1a1a1a] border-border text-foreground">
+                                                {SERVICE_TYPES.filter(service => service !== 'Other' && !formData.serviceType.includes(service)).map((service) => (
+                                                    <SelectItem 
+                                                        key={service} 
+                                                        value={service}
+                                                        className="hover:bg-accent dark:hover:bg-[#2a2a2a] cursor-pointer"
+                                                    >
+                                                        {service}
+                                                    </SelectItem>
+                                                ))}
+                                                {!showCustomServiceInput && (
+                                                    <SelectItem 
+                                                        key="other-option"
+                                                        value="Other"
+                                                        className="hover:bg-accent dark:hover:bg-[#2a2a2a] cursor-pointer"
+                                                    >
+                                                        Other
+                                                    </SelectItem>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+
+                                        {/* Custom Service Type Input (shown when "Other" is selected) */}
+                                        {showCustomServiceInput && (
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    type="text"
+                                                    value={customServiceType}
+                                                    onChange={(e) => setCustomServiceType(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault()
+                                                            handleAddCustomServiceType()
+                                                        }
+                                                        if (e.key === 'Escape') {
+                                                            setShowCustomServiceInput(false)
+                                                            setCustomServiceType('')
+                                                        }
+                                                    }}
+                                                    placeholder="Enter custom service type..."
+                                                    className="bg-white dark:bg-[#1a1a1a] text-foreground border-border text-sm"
+                                                    autoFocus
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    onClick={handleAddCustomServiceType}
+                                                    disabled={!customServiceType.trim()}
+                                                    size="sm"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                                                >
+                                                    Add
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowCustomServiceInput(false)
+                                                        setCustomServiceType('')
+                                                    }}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-white dark:bg-[#1a1a1a] text-foreground border-border"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
                                     {errors.serviceType && (
                                         <p className="text-red-400 text-xs mt-1">{errors.serviceType}</p>
                                     )}
@@ -658,14 +843,19 @@ export function AppointmentForm({
                                     {showNewVehicleForm && (
                                         <NewVehicleForm
                                             customerId={selectedCustomerId}
-                                            onVehicleCreated={(vehicle) => {
+                                            onVehicleCreated={async (vehicle) => {
+                                                // Trigger vehicle list refresh first
+                                                setVehicleRefreshTrigger(prev => prev + 1)
+                                                // Small delay to ensure dropdown has refreshed
+                                                await new Promise(resolve => setTimeout(resolve, 100))
+                                                // Auto-select the newly created vehicle
                                                 setSelectedVehicle(vehicle)
                                                 setSelectedVehicleId(vehicle.id)
                                                 setShowNewVehicleForm(false)
-                                                // Trigger vehicle list refresh
-                                                setVehicleRefreshTrigger(prev => prev + 1)
                                                 // Clear any vehicle errors
                                                 setErrors(prev => ({ ...prev, vehicle: '' }))
+                                                // Mark as having unsaved changes
+                                                setHasUnsavedChanges(true)
                                             }}
                                             onCancel={() => setShowNewVehicleForm(false)}
                                         />
@@ -718,9 +908,9 @@ export function AppointmentForm({
                             </Button>
                         </div>
                     </form>
-                </CardContent>
-            </ScrollArea>
-        </div>
-    </Card>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     )
 }

@@ -4,46 +4,34 @@ import { useState, useMemo } from 'react'
 import { Nav } from '@/app/components/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
-import { Skeleton } from '@/components/ui/skeleton'
-import { 
-    Calendar,
-    CalendarDays, 
-    Clock, 
-    AlertCircle,
-    Plus,
-    Users,
-    TrendingUp,
-    FileText
-} from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
-import { format } from 'date-fns'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
 import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointment } from '../hooks/appointments/useAppointments'
 import { MonthCard } from '../components/appointments/Calendar/MonthCard'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
 import { AppointmentHeader } from '../components/appointments/appointment-header'
-import { AppointmentDetailsCard } from '../components/appointments/appointmentDetailsCard'
-import { AppointmentsList } from '../components/appointments/AppointmentsList'
+import { DayAppointmentsDialog } from '../components/appointments/DayAppointmentsDialog'
+import { AppointmentDetailsSheet } from '../components/appointments/AppointmentDetailsSheet'
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
-    // Navigation
-    const router = useRouter()
-    
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
     // State
     const [selectedDate, setSelectedDate] = useState(new Date())
-    const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null)
     const [selectedDateForForm, setSelectedDateForForm] = useState<string>()
     const [selectedTimeForForm, setSelectedTimeForForm] = useState<string>()
-    const [showForm, setShowForm] = useState(false)
-    const [showAppointmentDetails, setShowAppointmentDetails] = useState(false)
     const [searchValue, setSearchValue] = useState('')
+    
+    // Modal state
+    const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
+    const [selectedDayForDialog, setSelectedDayForDialog] = useState<string | null>(null)
+    const [isAppointmentSheetOpen, setIsAppointmentSheetOpen] = useState(false)
+    const [selectedAppointmentForSheet, setSelectedAppointmentForSheet] = useState<AppointmentWithDetails | null>(null)
+    const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false)
     
     // Data fetching - operations dashboard disabled for now
     // const { data: dashboardData, isLoading: dashboardLoading } = useOperationsDashboard(shopId || '')
@@ -56,60 +44,40 @@ export default function AppointmentsPage() {
     // Cancel appointment
     const cancelAppointment = useCancelAppointment()
     
-    // Fetch appointments for the selected date
-    const selectedDateString = useMemo(() => {
-        const year = selectedDate.getFullYear()
-        const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
-        const day = String(selectedDate.getDate()).padStart(2, '0')
-        return `${year}-${month}-${day}`
-    }, [selectedDate])
-    
-    const { data: selectedDateAppointments, isLoading: appointmentsLoading } = useAppointments(shopId || '', {
-        start: selectedDateString,
-        end: selectedDateString
-    })
+    // Fetch appointments for the selected day dialog
+    const { data: dayDialogAppointments } = useAppointments(shopId || '', selectedDayForDialog ? {
+        start: selectedDayForDialog,
+        end: selectedDayForDialog
+    } : undefined)
     
     // Combined loading state
-    const isLoading = authLoading // dashboardLoading disabled
+    const isLoading = authLoading
     const error = authError
 
-    // Calculate stats - disabled for now, using mock data
-    const stats = useMemo(() => {
-        // Mock stats data since operations dashboard is disabled
-        return {
-            todayCount: 0,
-            weekCount: 0,
-            pendingWorkOrders: 0,
-            inProgressWorkOrders: 0,
-            todayRevenue: 0,
-            weekRevenue: 0
-        }
-    }, [])
-
-    // Sort appointments for selected date by time
-    const sortedSelectedDateAppointments = useMemo(() => {
-        if (!selectedDateAppointments) return []
-        return [...selectedDateAppointments].sort((a, b) => {
+    // Sort appointments for day dialog by time
+    const sortedDayDialogAppointments = useMemo(() => {
+        if (!dayDialogAppointments) return []
+        return [...dayDialogAppointments].sort((a, b) => {
             const timeA = a.start_time || '09:00'
             const timeB = b.start_time || '09:00'
             return timeA.localeCompare(timeB)
         })
-    }, [selectedDateAppointments])
+    }, [dayDialogAppointments])
 
     // Handlers
     const handleDateSelect = (date: string) => {
         // Create date without timezone conversion by parsing the components
         const [year, month, day] = date.split('-').map(Number)
         setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
-        setSelectedDateForForm(date)
-        setShowForm(false) // Don't show form automatically when date is selected
-        setShowAppointmentDetails(false) // Hide appointment details when date changes
+        // Open day dialog
+        setSelectedDayForDialog(date)
+        setIsDayDialogOpen(true)
     }
 
     const handleAppointmentClick = (appointment: AppointmentWithDetails) => {
-        setSelectedAppointment(appointment)
-        setShowAppointmentDetails(true)
-        setShowForm(false) // Hide form if it's open
+        // Open appointment sheet
+        setSelectedAppointmentForSheet(appointment)
+        setIsAppointmentSheetOpen(true)
     }
 
     const handleCreateAppointment = (date: string, time?: string) => {
@@ -118,8 +86,8 @@ export default function AppointmentsPage() {
         // Create date without timezone conversion by parsing the components
         const [year, month, day] = date.split('-').map(Number)
         setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
-        setShowForm(true) // Show form when creating appointment
-        setShowAppointmentDetails(false) // Hide appointment details if open
+        // Open form dialog
+        setIsAppointmentFormOpen(true)
     }
 
     const handleShowNewAppointmentForm = () => {
@@ -130,43 +98,38 @@ export default function AppointmentsPage() {
         const dateString = `${year}-${month}-${day}`
         setSelectedDateForForm(dateString)
         setSelectedTimeForForm(undefined)
-        setShowForm(true)
-        setShowAppointmentDetails(false) // Hide appointment details if open
-    }
-
-    const handleHideForm = () => {
-        setShowForm(false)
-        setSelectedDateForForm(undefined)
-        setSelectedTimeForForm(undefined)
+        // Open form dialog
+        setIsAppointmentFormOpen(true)
     }
 
     const handleAppointmentSuccess = () => {
         // Clear form selections and refresh data
         setSelectedDateForForm(undefined)
         setSelectedTimeForForm(undefined)
-        setShowForm(false) // Hide form after successful creation
+        setIsAppointmentFormOpen(false) // Close form dialog after successful creation
         // The queries will automatically refetch due to cache invalidation
     }
 
     const handleCancelAppointment = (appointmentId: string) => {
         cancelAppointment.mutate(appointmentId)
-        // Close appointment details if this appointment is being viewed
-        if (selectedAppointment?.id === appointmentId) {
-            setSelectedAppointment(null)
-            setShowAppointmentDetails(false)
+        // Close appointment sheet if this appointment is being viewed
+        if (selectedAppointmentForSheet?.id === appointmentId) {
+            setSelectedAppointmentForSheet(null)
+            setIsAppointmentSheetOpen(false)
         }
     }
 
     const handleCloseAppointmentDetails = () => {
-        setShowAppointmentDetails(false)
-        setSelectedAppointment(null)
+        setIsAppointmentSheetOpen(false)
+        setSelectedAppointmentForSheet(null)
     }
 
     const handleEditAppointment = (appointment: AppointmentWithDetails) => {
         // TODO: Implement edit appointment functionality
         console.log('Edit appointment:', appointment)
-        // For now, close details and could open form in edit mode
-        setShowAppointmentDetails(false)
+        // For now, close sheet and could open form in edit mode
+        setIsAppointmentSheetOpen(false)
+        setSelectedAppointmentForSheet(null)
     }
 
     const handleMessageCustomer = (customer: AppointmentWithDetails['customer']) => {
@@ -179,9 +142,9 @@ export default function AppointmentsPage() {
             const workOrderId = await createWorkOrder.mutateAsync(appointmentId)
             
             // Refetch the appointment to get the updated data with work order
-            if (selectedAppointment) {
+            if (selectedAppointmentForSheet) {
                 // Update the local state with work order info
-                setSelectedAppointment(prev => prev ? {
+                setSelectedAppointmentForSheet(prev => prev ? {
                     ...prev,
                     status: 'in_progress',
                     work_order: {
@@ -285,88 +248,52 @@ export default function AppointmentsPage() {
                 onSearchChange={handleSearchChange}
             />
 
-            {/* Main Content - Resizable Layout */}
-            <div className="flex-1 overflow-hidden">
-                <ResizablePanelGroup direction="horizontal" className="h-full">
-                    {/* Calendar Panel - 70% */}
-                    <ResizablePanel defaultSize={70} minSize={60} maxSize={80}>
-                        <div className="h-full p-4">
-                            <MonthCard
-                                selectedDate={selectedDate}
-                                shopId={shopId}
-                                onDateSelect={handleDateSelect}
-                                onAppointmentClick={handleAppointmentClick}
-                                onCreateAppointment={handleCreateAppointment}
-                                onMonthChange={setSelectedDate}
-                            />
-                        </div>
-                    </ResizablePanel>
-
-                    <ResizableHandle withHandle />
-
-                    {/* Right Panel - 30% */}
-                    <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-                        <div className="h-full p-4">
-                            {showAppointmentDetails && selectedAppointment ? (
-                                // State 4: Appointment Details
-                                <AppointmentDetailsCard
-                                    appointment={selectedAppointment}
-                                    onClose={handleCloseAppointmentDetails}
-                                    onEdit={handleEditAppointment}
-                                    onCancel={handleCancelAppointment}
-                                    onMessageCustomer={handleMessageCustomer}
-                                    onCreateWorkOrder={handleCreateWorkOrder}
-                                    isCreatingWorkOrder={createWorkOrder.isPending}
-                                />
-                            ) : showForm ? (
-                                // State 3: New Appointment Form
-                                <AppointmentForm
-                                    shopId={shopId}
-                                    selectedDate={selectedDateForForm}
-                                    selectedTime={selectedTimeForForm}
-                                    onSuccess={handleAppointmentSuccess}
-                                    onClose={handleHideForm}
-                                />
-                            ) : sortedSelectedDateAppointments.length > 0 ? (
-                                // State 2: Appointments List for Selected Date
-                                <AppointmentsList
-                                    selectedDate={selectedDate}
-                                    appointments={sortedSelectedDateAppointments}
-                                    onAddAppointment={handleShowNewAppointmentForm}
-                                    onAppointmentClick={handleAppointmentClick}
-                                    onCancelAppointment={handleCancelAppointment}
-                                    cancellingAppointmentId={cancelAppointment.isPending ? cancelAppointment.variables : undefined}
-                                />
-                            ) : (
-                                // State 1: Empty Panel - No Appointments
-                                <Card className="bg-slate-50 dark:bg-card border-border h-full">
-                                    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                                        <div className="mb-6">
-                                            <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                                            <h3 className="text-lg font-medium text-foreground mb-2">
-                                                No Appointments
-                                            </h3>
-                                            <p className="text-muted-foreground text-sm max-w-xs">
-                                                No appointments scheduled for {format(selectedDate, 'MMMM d, yyyy')}. 
-                                                Click below to create one.
-                                            </p>
-                                        </div>
-                                        
-                                        <Button 
-                                            onClick={handleShowNewAppointmentForm}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white mb-6"
-                                            size="lg"
-                                        >
-                                            <Plus className="h-5 w-5 mr-2" />
-                                            Add New Appointment
-                                        </Button>
-                                    </div>
-                                </Card>
-                            )}
-                        </div>
-                    </ResizablePanel>
-                </ResizablePanelGroup>
+            {/* Main Content - Calendar with Large Horizontal Padding */}
+            <div className="flex-1 overflow-hidden px-12">
+                <MonthCard
+                    selectedDate={selectedDate}
+                    shopId={shopId}
+                    onDateSelect={handleDateSelect}
+                    onAppointmentClick={handleAppointmentClick}
+                    onCreateAppointment={handleCreateAppointment}
+                    onMonthChange={setSelectedDate}
+                />
             </div>
+
+            {/* Modals */}
+            <DayAppointmentsDialog
+                isOpen={isDayDialogOpen}
+                onClose={() => {
+                    setIsDayDialogOpen(false)
+                    setSelectedDayForDialog(null)
+                }}
+                selectedDate={selectedDayForDialog || ''}
+                appointments={sortedDayDialogAppointments}
+                onAppointmentClick={handleAppointmentClick}
+                onCreateAppointment={handleCreateAppointment}
+            />
+
+            {selectedAppointmentForSheet && (
+                <AppointmentDetailsSheet
+                    isOpen={isAppointmentSheetOpen}
+                    onClose={handleCloseAppointmentDetails}
+                    appointment={selectedAppointmentForSheet}
+                    onEdit={handleEditAppointment}
+                    onCancel={handleCancelAppointment}
+                    onMessageCustomer={handleMessageCustomer}
+                    onCreateWorkOrder={handleCreateWorkOrder}
+                    isCreatingWorkOrder={createWorkOrder.isPending}
+                />
+            )}
+
+            <AppointmentForm
+                isOpen={isAppointmentFormOpen}
+                onClose={() => setIsAppointmentFormOpen(false)}
+                shopId={shopId}
+                selectedDate={selectedDateForForm}
+                selectedTime={selectedTimeForForm}
+                onSuccess={handleAppointmentSuccess}
+            />
         </div>
     )
 }

@@ -43,6 +43,19 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
                             </p>
                         </div>
                     </div>
+
+                    {/* Right Section - Actions */}
+                    <div className="flex items-center gap-3">
+                        {onNewAppointment && (
+                            <Button
+                                onClick={onNewAppointment}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add New Appointment
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -94,12 +94,15 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-white dark:bg-background border-border">
+            <DialogContent className="max-w-2xl bg-white dark:bg-[#1a1a1a] border-border">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-500" />
                         Send Appointment Message
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Send a message to the customer about their appointment
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">
@@ -172,10 +175,10 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                     <div className="space-y-3">
                         <h3 className="text-sm font-medium text-muted-foreground">Message Template</h3>
                         <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
-                            <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
+                            <SelectTrigger className="bg-white dark:bg-[#1a1a1a] border-border text-foreground">
                                 <SelectValue placeholder="Choose a message template" />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-background border-border text-foreground">
+                            <SelectContent className="bg-white dark:bg-[#1a1a1a] border-border text-foreground">
                                 {APPOINTMENT_MESSAGE_TEMPLATES.map((template) => (
                                     <SelectItem 
                                         key={template.id} 
@@ -253,7 +256,7 @@ export const AppointmentMessageModal: React.FC<AppointmentMessageModalProps> = (
                     </div>
                 </div>
 
-                <DialogFooter className="flex gap-3 bg-slate-50 dark:bg-card border-t border-border -mx-6 -mb-6 px-6 py-4 mt-6">
+                <DialogFooter className="flex gap-3 bg-slate-50 dark:bg-[#1a1a1a] border-t border-border -mx-6 -mb-6 px-6 py-4 mt-6">
                     <Button
                         variant="outline"
                         onClick={handleCancel}
