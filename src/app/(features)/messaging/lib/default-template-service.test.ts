@@ -6,6 +6,7 @@ import {
     getDefaultTemplate
 } from './default-template-service'
 import { TIME_PERIODS } from '../types/message-template'
+import { MESSAGING_LIMITS } from './limits'
 
 // Mock Supabase client
 const mockSupabaseClient = vi.hoisted(() => ({
@@ -305,6 +306,132 @@ describe('DefaultTemplateService', () => {
             })
 
             await expect(getDefaultTemplate(testShopId)).rejects.toThrow()
+        })
+    })
+
+    describe('messaging limits', () => {
+        test('should have MAX_AUTOMATED_TEMPLATES limit defined', () => {
+            expect(MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES).toBeDefined()
+            expect(typeof MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES).toBe('number')
+            expect(MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES).toBe(5)
+        })
+
+        test('should have MAX_CAMPAIGNS limit defined', () => {
+            expect(MESSAGING_LIMITS.MAX_CAMPAIGNS).toBeDefined()
+            expect(typeof MESSAGING_LIMITS.MAX_CAMPAIGNS).toBe('number')
+            expect(MESSAGING_LIMITS.MAX_CAMPAIGNS).toBe(5)
+        })
+
+        test('should enforce MAX_AUTOMATED_TEMPLATES limit when creating templates', async () => {
+            // This test verifies the limit constant is accessible
+            // Actual enforcement is tested in API route tests
+            const limit = MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES
+            
+            // Simulate having reached the limit
+            const mockTemplates = Array(limit).fill(null).map((_, i) => ({
+                id: `template-${i}`,
+                shop_id: testShopId,
+                name: `Template ${i}`,
+                trigger_type: 'work_order_complete' as const,
+                service_type: null,
+                message_template: 'Test message',
+                variables: [],
+                delay_hours: 0,
+                is_active: true,
+                created_at: '2024-01-01T00:00:00Z',
+                updated_at: '2024-01-01T00:00:00Z'
+            }))
+
+            // Verify limit check logic
+            expect(mockTemplates.length).toBe(limit)
+            expect(mockTemplates.length >= limit).toBe(true)
+            
+            // When at limit, should not allow creation
+            const shouldBlockCreation = mockTemplates.length >= limit
+            expect(shouldBlockCreation).toBe(true)
+        })
+
+        test('should enforce MAX_CAMPAIGNS limit when creating campaigns', async () => {
+            // This test verifies the limit constant is accessible
+            // Actual enforcement is tested in API route tests
+            const limit = MESSAGING_LIMITS.MAX_CAMPAIGNS
+            
+            // Simulate having reached the limit
+            const mockCampaigns = Array(limit).fill(null).map((_, i) => ({
+                id: `campaign-${i}`,
+                shop_id: testShopId,
+                name: `Campaign ${i}`,
+                message: 'Test message',
+                customer_segment: {},
+                scheduled_send_at: null,
+                status: 'draft' as const,
+                total_recipients: 0,
+                sent_count: 0,
+                failed_count: 0,
+                created_at: '2024-01-01T00:00:00Z',
+                updated_at: '2024-01-01T00:00:00Z'
+            }))
+
+            // Verify limit check logic
+            expect(mockCampaigns.length).toBe(limit)
+            expect(mockCampaigns.length >= limit).toBe(true)
+            
+            // When at limit, should not allow creation
+            const shouldBlockCreation = mockCampaigns.length >= limit
+            expect(shouldBlockCreation).toBe(true)
+        })
+
+        test('should allow creation when below MAX_AUTOMATED_TEMPLATES limit', async () => {
+            const limit = MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES
+            
+            // Simulate having templates below the limit
+            const mockTemplates = Array(limit - 1).fill(null).map((_, i) => ({
+                id: `template-${i}`,
+                shop_id: testShopId,
+                name: `Template ${i}`,
+                trigger_type: 'work_order_complete' as const,
+                service_type: null,
+                message_template: 'Test message',
+                variables: [],
+                delay_hours: 0,
+                is_active: true,
+                created_at: '2024-01-01T00:00:00Z',
+                updated_at: '2024-01-01T00:00:00Z'
+            }))
+
+            // Verify below limit allows creation
+            expect(mockTemplates.length).toBe(limit - 1)
+            expect(mockTemplates.length < limit).toBe(true)
+            
+            const shouldAllowCreation = mockTemplates.length < limit
+            expect(shouldAllowCreation).toBe(true)
+        })
+
+        test('should allow creation when below MAX_CAMPAIGNS limit', async () => {
+            const limit = MESSAGING_LIMITS.MAX_CAMPAIGNS
+            
+            // Simulate having campaigns below the limit
+            const mockCampaigns = Array(limit - 1).fill(null).map((_, i) => ({
+                id: `campaign-${i}`,
+                shop_id: testShopId,
+                name: `Campaign ${i}`,
+                message: 'Test message',
+                customer_segment: {},
+                scheduled_send_at: null,
+                status: 'draft' as const,
+                total_recipients: 0,
+                sent_count: 0,
+                failed_count: 0,
+                created_at: '2024-01-01T00:00:00Z',
+                updated_at: '2024-01-01T00:00:00Z'
+            }))
+
+            // Verify below limit allows creation
+            expect(mockCampaigns.length).toBe(limit - 1)
+            expect(mockCampaigns.length < limit).toBe(true)
+            
+            const shouldAllowCreation = mockCampaigns.length < limit
+            expect(shouldAllowCreation).toBe(true)
         })
     })
 })

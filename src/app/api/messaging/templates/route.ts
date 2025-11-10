@@ -3,6 +3,8 @@ import { getShopIdForUser } from "@/utils/get-shop-id";
 import { createTemplate, getTemplates, getTemplatesByTriggerType } from "@/app/(features)/messaging/lib/message-template-service";
 import type { MessageTemplateCreateData, TriggerType, ServiceType } from "@/app/(features)/messaging/types/message-template";
 
+import { MESSAGING_LIMITS } from "@/app/(features)/messaging/lib/limits";
+
 // GET - List all templates for shop (with optional filtering)
 export async function GET(request: NextRequest) {
     try {
@@ -38,6 +40,17 @@ export async function POST(request: NextRequest) {
         const shopId = await getShopIdForUser();
         if (!shopId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Check template count limit
+        const existingTemplates = await getTemplates(shopId);
+        if (existingTemplates.length >= MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES) {
+            return NextResponse.json({
+                error: `Maximum limit reached`,
+                message: `Only ${MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES} automated templates can be created for now. More templates can be added in the future.`,
+                limit: MESSAGING_LIMITS.MAX_AUTOMATED_TEMPLATES,
+                current: existingTemplates.length,
+            }, { status: 403 });
         }
 
         const body: MessageTemplateCreateData = await request.json();

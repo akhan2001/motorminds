@@ -3,6 +3,8 @@ import { getShopIdForUser } from "@/utils/get-shop-id";
 import { getCampaigns, createCampaign, getCampaignStats } from "@/app/(features)/messaging/lib/mass-campaign-service";
 import type { MassCampaignCreateData } from "@/app/(features)/messaging/types/mass-campaign";
 
+import { MESSAGING_LIMITS } from "@/app/(features)/messaging/lib/limits";
+
 // GET - List all campaigns for shop (with optional stats)
 export async function GET(request: NextRequest) {
     try {
@@ -39,6 +41,18 @@ export async function POST(request: NextRequest) {
         if (!shopId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        // Check template count limit
+        const existingCampaigns = await getCampaigns(shopId);
+        if (existingCampaigns.length >= MESSAGING_LIMITS.MAX_CAMPAIGNS) {
+            return NextResponse.json({
+                error: `Maximum limit reached`,
+                message: `Only ${MESSAGING_LIMITS.MAX_CAMPAIGNS} campaigns can be created for now. More campaigns can be added in the future.`,
+                limit: MESSAGING_LIMITS.MAX_CAMPAIGNS,
+                current: existingCampaigns.length,
+            }, { status: 403 });
+        }
+
 
         const body: MassCampaignCreateData = await request.json();
         const { name, message, customer_segment, scheduled_send_at, status } = body;
