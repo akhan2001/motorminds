@@ -190,7 +190,7 @@ export default function MessagingDashboard() {
                                 ) : (
                                     <Button 
                                         onClick={() => router.push('/messaging/automated')}
-                                        className="w-full"
+                                        className="w-full bg-red-500 hover:bg-red-600 text-white"
                                     >
                                         Manage Automated Messages
                                         <ArrowRight className="h-4 w-4 ml-2" />
@@ -241,7 +241,7 @@ export default function MessagingDashboard() {
                                 ) : (
                                     <Button 
                                         onClick={() => router.push('/messaging/campaigns')}
-                                        className="w-full"
+                                        className="w-full bg-red-500 hover:bg-red-600 text-white"
                                     >
                                         Manage Campaigns
                                         <ArrowRight className="h-4 w-4 ml-2" />
