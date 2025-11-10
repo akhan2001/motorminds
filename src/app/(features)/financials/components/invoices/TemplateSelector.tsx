@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Check, FileText } from 'lucide-react'
+import { Check, FileText, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -58,6 +58,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 <Button variant={variant} size={size} className={className || "gap-2"}>
                     <FileText className="h-4 w-4" />
                     {selectedTemplate?.name || 'Select Template'}
+                    <ChevronDown className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
