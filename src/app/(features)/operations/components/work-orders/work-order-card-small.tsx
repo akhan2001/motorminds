@@ -18,15 +18,20 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
     onClick,
     className = ""
 }) => {
+    // Get border color from status tracker if available
+    const borderColor = item.status_tracker?.color || undefined
+    const borderStyle = borderColor ? { borderLeftColor: borderColor, borderLeftWidth: '4px' } : {}
+
     return (
         <Card 
-            className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all cursor-pointer ${className}`}
+            className={`bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] hover:border-accent dark:hover:border-[#3a3a3a] transition-all cursor-pointer relative ${className}`}
+            style={borderStyle}
             onClick={() => onClick?.(item)}
         >
             <CardContent className="p-3">
                 {/* Header Row */}
                 <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pr-1">
                         <h4 className="text-xs font-medium text-foreground dark:text-white truncate">
                             {truncateText(item.title, 30)}
                         </h4>

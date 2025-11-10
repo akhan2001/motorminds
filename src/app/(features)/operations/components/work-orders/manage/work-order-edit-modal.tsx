@@ -153,6 +153,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         
         // Work order specifics
         notes: "",
+        statusTracker: initialWorkOrder.status_tracker || null,
     })
 
     // Update form when work order details are fetched
@@ -208,6 +209,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 
                 // Work order notes
                 notes: workOrderDetails.notes || "",
+                statusTracker: workOrderDetails.status_tracker || null,
             }))
         }
     }, [workOrderDetails])
@@ -570,6 +572,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             priority: formData.priority,
             notes: formData.notes,
             tags: formData.tags,
+            status_tracker: formData.statusTracker,
         }
 
         try {
@@ -593,6 +596,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 customer: formData.customer,
                 vehicle: formData.vehicle,
                 tags: formData.tags,
+                status_tracker: formData.statusTracker,
             }
             updatedWorkOrder.id = workOrderId
             
@@ -934,6 +938,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                     assigneeId={workOrderDetails?.assigned_technician_id || ""}
                                     date={formData.date}
                                     tags={formData.tags}
+                                    statusTracker={formData.statusTracker}
                                     isEditing={isEditing}
                                     isCreating={false}
                                     onFieldChange={handleFieldChange}
