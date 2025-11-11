@@ -21,8 +21,9 @@ export function useUserRole() {
             if (error) throw error;
             return data?.role || null;
         },
-        staleTime: 0, // No caching - always fetch fresh data
-        refetchOnWindowFocus: true, // Refetch when window regains focus
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: true,
+        retry: 1, // Retry once if the query fails
     });
 
     // Listen to auth state changes and refetch when user changes
