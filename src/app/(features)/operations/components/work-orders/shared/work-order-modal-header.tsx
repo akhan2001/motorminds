@@ -9,6 +9,7 @@ export interface WorkOrderModalHeaderProps {
     workOrderDetails?: WorkOrderWithDetails
     onClose: () => void
     isCreating?: boolean
+    onRevert?: () => void
     className?: string
 }
 
@@ -17,9 +18,11 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
     workOrderDetails,
     onClose,
     isCreating = false,
+    onRevert,
     className = ""
 }) => {
     const displayNumber = workOrderDetails?.work_order_number || workOrder.id
+    const isCompleted = workOrderDetails?.status === 'completed' || workOrder.status === 'completed'
     
     return (
         <div className={`flex items-center justify-between p-6 border-b border-border dark:border-[#222222] shrink-0 ${className}`}>
@@ -35,6 +38,16 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
                 </p>
             </div>
             <div className="flex items-center gap-2">
+                {isCompleted && onRevert && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onRevert}
+                        className="bg-white dark:bg-[#1a1a1a] text-foreground border-border hover:bg-accent dark:hover:bg-zinc-800"
+                    >
+                        Revert to In Progress
+                    </Button>
+                )}
                 <Button
                     variant="ghost"
                     size="icon"
