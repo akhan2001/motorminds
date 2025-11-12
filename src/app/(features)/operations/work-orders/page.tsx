@@ -301,14 +301,15 @@ function WorkOrdersContent() {
     }
 
     // Handle completion modal confirm
-    const handleCompletionModalConfirm = async (sendMessage: boolean, customMessage?: string) => {
+    const handleCompletionModalConfirm = async (sendMessage: boolean, customMessage?: string, enableAutomatedMessages: boolean = true) => {
         if (completionWorkOrder) {
             try {
                 // Use updateWorkOrderStatus to trigger automated messaging
-                // This will automatically trigger the work-order-completed webhook
+                // Pass enableAutomatedMessages flag to control whether automated messages are queued
                 await updateWorkOrderStatusMutation.mutateAsync({
                     id: completionWorkOrder.id,
-                    status: 'completed'
+                    status: 'completed',
+                    enableAutomatedMessages
                 })
 
                 // Refetch work orders

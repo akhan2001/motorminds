@@ -79,8 +79,8 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
-            // Automated messaging is handled by work-order-service.ts when status is updated
-            onConfirm(false)
+            // Pass enableAutomatedMessage flag to control automated messaging
+            onConfirm(false, undefined, enableAutomatedMessage)
             return
         }
 
@@ -90,15 +90,13 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
             customerName: workOrder.customer.customer_name
         })
 
-        // Automated messaging is handled by work-order-service.ts when status is updated
-        // No need to call it here to avoid duplicates
-        onConfirm(true, customMessage)
+        // Pass enableAutomatedMessage flag to control automated messaging
+        onConfirm(true, customMessage, enableAutomatedMessage)
     }
 
     const handleSkipMessage = async () => {
-        // Automated messaging is handled by work-order-service.ts when status is updated
-        // No need to call it here to avoid duplicates
-        onConfirm(false)
+        // Pass enableAutomatedMessage flag to control automated messaging
+        onConfirm(false, undefined, enableAutomatedMessage)
     }
 
 

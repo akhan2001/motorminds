@@ -14,7 +14,7 @@ export interface WorkOrderCompletionModalProps {
     workOrder: WorkOrderWithDetails
     isOpen: boolean
     onClose: () => void
-    onConfirm: (sendMessage: boolean, customMessage?: string) => void
+    onConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean) => void
 }
 
 // Messaging availability types

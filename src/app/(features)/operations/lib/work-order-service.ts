@@ -165,7 +165,7 @@ export class WorkOrderService {
         return updatedWorkOrder
     }
 
-    async updateWorkOrderStatus(id: string, status: WorkOrderStatus): Promise<void> {
+    async updateWorkOrderStatus(id: string, status: WorkOrderStatus, enableAutomatedMessages: boolean = true): Promise<void> {
         // Get current work order to check if we're reverting from completed
         const currentWorkOrder = await this.getWorkOrderById(id)
         const isRevertingFromCompleted = currentWorkOrder?.status === 'completed' && status !== 'completed'
@@ -205,8 +205,8 @@ export class WorkOrderService {
         }
 
         // After work order status set to 'completed', trigger automated messages
-        // Only trigger if NOT reverting (i.e., this is a new completion)
-        if (status === 'completed' && !isRevertingFromCompleted) {
+        // Only trigger if NOT reverting (i.e., this is a new completion) AND automated messages are enabled
+        if (status === 'completed' && !isRevertingFromCompleted && enableAutomatedMessages) {
             try {
                 // Get work order details for the trigger
                 const workOrder = await this.getWorkOrderById(id)
