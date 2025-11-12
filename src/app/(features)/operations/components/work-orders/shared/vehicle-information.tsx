@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -59,6 +59,19 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [vinDecoding, setVinDecoding] = useState(false)
     const [isSavingNewVehicle, setIsSavingNewVehicle] = useState(false)
     const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
+
+    // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
+    useEffect(() => {
+        if (vehicleMake && vehicleMake.trim()) {
+            const foundMake = VEHICLE_MAKES.find(
+                make => make.toLowerCase() === vehicleMake.toLowerCase()
+            )
+            if (foundMake && foundMake !== vehicleMake) {
+                // Normalize to match VEHICLE_MAKES case
+                onFieldChange('vehicleMake', foundMake)
+            }
+        }
+    }, [vehicleMake, onFieldChange])
 
     const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string): string | undefined => {
         switch (field) {
@@ -160,7 +173,19 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         } else if (vehicleData) {
             // Existing vehicle - populate data (handle null values from staging)
             onFieldChange('vehicleYear', vehicleData.year ? vehicleData.year.toString() : '')
-            onFieldChange('vehicleMake', vehicleData.make || '')
+            
+            // Normalize make to match VEHICLE_MAKES format (case-insensitive matching)
+            let normalizedMake = vehicleData.make || ''
+            if (normalizedMake) {
+                const foundMake = VEHICLE_MAKES.find(
+                    make => make.toLowerCase() === normalizedMake.toLowerCase()
+                )
+                if (foundMake) {
+                    normalizedMake = foundMake // Use the exact case from VEHICLE_MAKES
+                }
+            }
+            onFieldChange('vehicleMake', normalizedMake)
+            
             onFieldChange('vehicleModel', vehicleData.model || '')
             onFieldChange('vehicleColor', vehicleData.color || '')
             onFieldChange('vehicleVin', vehicleData.vin || '')
