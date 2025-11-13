@@ -366,7 +366,7 @@ describe('AppointmentService', () => {
                 customer_id: 'test-customer-id',
                 vehicle_id: 'test-vehicle-id',
                 customer_type: 'registered',
-                title: expect.stringContaining('John Doe')
+                title: 'Oil Change' // Title is set to service_type, not customer name
             }))
         })
 
