@@ -13,7 +13,8 @@ import {
     WorkOrderNotes,
     WorkOrderModalFooter,
     WorkOrderLaborItems,
-    WorkOrderPartsItems
+    WorkOrderPartsItems,
+    WorkOrderGenericItems
 } from "../shared"
 import { FinancialInformation } from "../manage/financial-information"
 import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
@@ -47,6 +48,16 @@ interface PartFormItem {
     supplier?: string;
     category?: string;
     warranty_period?: string;
+    notes?: string;
+}
+
+// Define the GenericFormItem interface for Services, Fees, Discounts, Packages
+interface GenericFormItem {
+    id: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
     notes?: string;
 }
 
@@ -102,6 +113,12 @@ interface NewWorkOrderFormData {
 
     // Parts items
     partsItems: PartFormItem[]
+
+    // Generic items (Services, Fees, Discounts, Packages)
+    serviceItems: GenericFormItem[]
+    feeItems: GenericFormItem[]
+    discountItems: GenericFormItem[]
+    packageItems: GenericFormItem[]
 }
 
 interface SelectedTemplate extends WorkOrderItemTemplate {
@@ -182,6 +199,12 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
         // Parts items
         partsItems: [],
+
+        // Generic items (Services, Fees, Discounts, Packages)
+        serviceItems: [],
+        feeItems: [],
+        discountItems: [],
+        packageItems: [],
     })
 
     // Calculate total cost when labor or parts change
@@ -332,6 +355,63 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         toast.success(`Part item "${item.description}" saved successfully`)
     }
 
+    // Generic items handlers (Services, Fees, Discounts, Packages)
+    const handleServiceItemsChange = (items: GenericFormItem[]) => {
+        setFormData(prev => ({
+            ...prev,
+            serviceItems: items
+        }))
+
+        // Update selected templates - remove any templates that no longer have corresponding items
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template =>
+            template.item_type !== 'service' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleFeeItemsChange = (items: GenericFormItem[]) => {
+        setFormData(prev => ({
+            ...prev,
+            feeItems: items
+        }))
+
+        // Update selected templates - remove any templates that no longer have corresponding items
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template =>
+            template.item_type !== 'fee' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleDiscountItemsChange = (items: GenericFormItem[]) => {
+        setFormData(prev => ({
+            ...prev,
+            discountItems: items
+        }))
+
+        // Update selected templates - remove any templates that no longer have corresponding items
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template =>
+            template.item_type !== 'discount' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handlePackageItemsChange = (items: GenericFormItem[]) => {
+        setFormData(prev => ({
+            ...prev,
+            packageItems: items
+        }))
+
+        // Update selected templates - remove any templates that no longer have corresponding items
+        const itemDescriptions = items.map(item => item.description)
+        setSelectedTemplates(prev => prev.filter(template =>
+            template.item_type !== 'package' || itemDescriptions.includes(template.name)
+        ))
+    }
+
+    const handleGenericItemSaved = (item: any) => {
+        toast.success(`${item.item_type} item "${item.description}" saved successfully`)
+    }
+
     // Template selection handlers
     const handleTemplateSelect = (template: WorkOrderItemTemplate) => {
         // Check if template is already selected
@@ -388,6 +468,66 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 partsItems: [...prev.partsItems, newPartItem]
             }))
             toast.success(`Part template "${template.name}" added to items`)
+        } else if (template.item_type === 'service') {
+            // Add to service items
+            const newServiceItem: GenericFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.quantity || 1) * (template.unit_price || 0),
+                notes: template.description || ''
+            }
+            setFormData(prev => ({
+                ...prev,
+                serviceItems: [...prev.serviceItems, newServiceItem]
+            }))
+            toast.success(`Service template "${template.name}" added to items`)
+        } else if (template.item_type === 'fee') {
+            // Add to fee items
+            const newFeeItem: GenericFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.quantity || 1) * (template.unit_price || 0),
+                notes: template.description || ''
+            }
+            setFormData(prev => ({
+                ...prev,
+                feeItems: [...prev.feeItems, newFeeItem]
+            }))
+            toast.success(`Fee template "${template.name}" added to items`)
+        } else if (template.item_type === 'discount') {
+            // Add to discount items
+            const newDiscountItem: GenericFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.quantity || 1) * (template.unit_price || 0),
+                notes: template.description || ''
+            }
+            setFormData(prev => ({
+                ...prev,
+                discountItems: [...prev.discountItems, newDiscountItem]
+            }))
+            toast.success(`Discount template "${template.name}" added to items`)
+        } else if (template.item_type === 'package') {
+            // Add to package items
+            const newPackageItem: GenericFormItem = {
+                id: uuidv4(),
+                description: template.name,
+                quantity: template.quantity || 1,
+                unit_price: template.unit_price || 0,
+                total_price: (template.quantity || 1) * (template.unit_price || 0),
+                notes: template.description || ''
+            }
+            setFormData(prev => ({
+                ...prev,
+                packageItems: [...prev.packageItems, newPackageItem]
+            }))
+            toast.success(`Package template "${template.name}" added to items`)
         }
     }
 
@@ -438,6 +578,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 // Don't pass selectedTemplates - items are already in laborItems/partsItems
                 laborItems: formData.laborItems, // Include labor items
                 partsItems: formData.partsItems, // Include parts items
+                serviceItems: formData.serviceItems, // Include service items
+                feeItems: formData.feeItems, // Include fee items
+                discountItems: formData.discountItems, // Include discount items
+                packageItems: formData.packageItems, // Include package items
             }
 
             await onSave?.(workOrderData)
@@ -625,12 +769,64 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 </div>
 
                                                 {/* Parts Items */}
-                                                <div>
+                                                <div className="mb-6">
                                                     <WorkOrderPartsItems
                                                         items={formData.partsItems}
                                                         onItemsChange={handlePartsItemsChange}
                                                         workOrderId={undefined} // No workOrderId for creation
                                                         onItemSaved={handlePartItemSaved}
+                                                    />
+                                                </div>
+
+                                                {/* Service Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderGenericItems
+                                                        items={formData.serviceItems}
+                                                        onItemsChange={handleServiceItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={true}
+                                                        itemType="service"
+                                                        title="Services"
+                                                    />
+                                                </div>
+
+                                                {/* Fee Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderGenericItems
+                                                        items={formData.feeItems}
+                                                        onItemsChange={handleFeeItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={true}
+                                                        itemType="fee"
+                                                        title="Fees"
+                                                    />
+                                                </div>
+
+                                                {/* Discount Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderGenericItems
+                                                        items={formData.discountItems}
+                                                        onItemsChange={handleDiscountItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={true}
+                                                        itemType="discount"
+                                                        title="Discounts"
+                                                    />
+                                                </div>
+
+                                                {/* Package Items */}
+                                                <div>
+                                                    <WorkOrderGenericItems
+                                                        items={formData.packageItems}
+                                                        onItemsChange={handlePackageItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={true}
+                                                        itemType="package"
+                                                        title="Packages"
                                                     />
                                                 </div>
                                             </div>

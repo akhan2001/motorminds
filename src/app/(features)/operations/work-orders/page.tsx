@@ -88,6 +88,24 @@ async function createWorkOrderItemsFromPartsItems(workOrderId: string, partsItem
     return Promise.all(itemPromises)
 }
 
+// Helper function to create work order items from generic items (services, fees, discounts, packages)
+async function createWorkOrderItemsFromGenericItems(workOrderId: string, genericItems: any[], itemType: 'service' | 'fee' | 'discount' | 'package') {
+    const itemPromises = genericItems.map(async (item) => {
+        const itemData: WorkOrderItemCreateData = {
+            work_order_id: workOrderId,
+            item_type: itemType,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            notes: item.notes,
+        }
+
+        return WorkOrderItemsService.createWorkOrderItem(itemData)
+    })
+
+    return Promise.all(itemPromises)
+}
+
 // Helper function to transform WorkOrderWithDetails to WorkOrderKanbanItem
 function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOrderKanbanItem {
     // Format customer display - handle walk-in customers
@@ -439,6 +457,50 @@ function WorkOrdersContent() {
                     totalItemsCreated += workOrderData.partsItems.length
                 } catch (error) {
                     console.error('Failed to create work order items from parts items:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+
+            // Create work order items from service items
+            if (workOrderData.serviceItems && workOrderData.serviceItems.length > 0) {
+                try {
+                    await createWorkOrderItemsFromGenericItems(newWorkOrder.id, workOrderData.serviceItems, 'service')
+                    totalItemsCreated += workOrderData.serviceItems.length
+                } catch (error) {
+                    console.error('Failed to create work order items from service items:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+
+            // Create work order items from fee items
+            if (workOrderData.feeItems && workOrderData.feeItems.length > 0) {
+                try {
+                    await createWorkOrderItemsFromGenericItems(newWorkOrder.id, workOrderData.feeItems, 'fee')
+                    totalItemsCreated += workOrderData.feeItems.length
+                } catch (error) {
+                    console.error('Failed to create work order items from fee items:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+
+            // Create work order items from discount items
+            if (workOrderData.discountItems && workOrderData.discountItems.length > 0) {
+                try {
+                    await createWorkOrderItemsFromGenericItems(newWorkOrder.id, workOrderData.discountItems, 'discount')
+                    totalItemsCreated += workOrderData.discountItems.length
+                } catch (error) {
+                    console.error('Failed to create work order items from discount items:', error)
+                    // Don't fail the entire operation if items creation fails
+                }
+            }
+
+            // Create work order items from package items
+            if (workOrderData.packageItems && workOrderData.packageItems.length > 0) {
+                try {
+                    await createWorkOrderItemsFromGenericItems(newWorkOrder.id, workOrderData.packageItems, 'package')
+                    totalItemsCreated += workOrderData.packageItems.length
+                } catch (error) {
+                    console.error('Failed to create work order items from package items:', error)
                     // Don't fail the entire operation if items creation fails
                 }
             }
