@@ -53,13 +53,19 @@ const shopFormSchema = z.object({
     }),
     shop_owner: z.string().min(2, {
         message: "Owner name must be at least 2 characters.",
-    }),
-    shop_about: z.string().max(500).min(10, {
-        message: "About section must be at least 10 characters.",
-    }),
-    shop_tagline: z.string().max(100).min(5, {
-        message: "Tagline must be at least 5 characters.",
-    }),
+    }).optional(),
+    shop_about: z.union([
+        z.string().max(500).min(10, {
+            message: "About section must be at least 10 characters.",
+        }),
+        z.literal('')
+    ]).optional(),
+    shop_tagline: z.union([
+        z.string().max(100).min(5, {
+            message: "Tagline must be at least 5 characters.",
+        }),
+        z.literal('')
+    ]).optional(),
     default_hourly_rate: z.coerce.number().min(1, {
         message: "Hourly rate must be at least $1.00.",
     }).max(1000, {

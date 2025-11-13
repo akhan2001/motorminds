@@ -41,7 +41,7 @@ const serviceOptions = [
 export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProps) {
     const [selectedServices, setSelectedServices] = useState<string[]>(shopForm.servicesOffered)
 
-    const handleInputChange = (field: keyof AdminShopFormData, value: string) => {
+    const handleInputChange = (field: keyof AdminShopFormData, value: string | number) => {
         setShopForm({
             ...shopForm,
             [field]: value
@@ -96,7 +96,7 @@ export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProp
                             />
                         </div>
                         <div>
-                            <Label className="text-gray-300">Shop Email</Label>
+                            <Label className="text-gray-300">Shop Email *</Label>
                             <Input
                                 type="email"
                                 value={shopForm.shopEmail}
@@ -106,7 +106,7 @@ export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProp
                             />
                         </div>
                         <div>
-                            <Label className="text-gray-300">Shop Phone</Label>
+                            <Label className="text-gray-300">Shop Phone *</Label>
                             <Input
                                 value={shopForm.shopPhone}
                                 onChange={(e) => handleInputChange('shopPhone', e.target.value)}
@@ -121,6 +121,31 @@ export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProp
                                 onChange={(e) => handleInputChange('website', e.target.value)}
                                 className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
                                 placeholder="Enter website URL"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-gray-300">Owner Name</Label>
+                            <Input
+                                value={shopForm.shopOwner || ''}
+                                onChange={(e) => handleInputChange('shopOwner', e.target.value)}
+                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                placeholder="Enter owner name"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-gray-300">Default Hourly Rate ($)</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                max="1000"
+                                step="0.01"
+                                value={shopForm.defaultHourlyRate || 99.99}
+                                onChange={(e) => {
+                                    const numValue = e.target.value ? parseFloat(e.target.value) : 99.99
+                                    handleInputChange('defaultHourlyRate', isNaN(numValue) ? 99.99 : numValue)
+                                }}
+                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                placeholder="99.99"
                             />
                         </div>
                     </div>
@@ -170,7 +195,7 @@ export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProp
                         <div>
                             <Label className="text-gray-300">Business Number</Label>
                             <Input
-                                value={shopForm.businessNumber}
+                                value={shopForm.businessNumber || ''}
                                 onChange={(e) => handleInputChange('businessNumber', e.target.value)}
                                 className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
                                 placeholder="Enter business number"
@@ -179,11 +204,41 @@ export default function ShopForm({ shopForm, setShopForm, errors }: ShopFormProp
                         <div>
                             <Label className="text-gray-300">HST Number</Label>
                             <Input
-                                value={shopForm.hstNumber}
+                                value={shopForm.hstNumber || ''}
                                 onChange={(e) => handleInputChange('hstNumber', e.target.value)}
                                 className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
                                 placeholder="Enter HST number"
                             />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="space-y-4">
+                    <h3 className="text-white font-medium">Additional Information</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="text-gray-300">Shop Tagline</Label>
+                            <Input
+                                value={shopForm.shopTagline || ''}
+                                onChange={(e) => handleInputChange('shopTagline', e.target.value)}
+                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                placeholder="Enter shop tagline (optional)"
+                                maxLength={100}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">A short tagline describing your shop (max 100 characters)</p>
+                        </div>
+                        <div>
+                            <Label className="text-gray-300">About Section</Label>
+                            <Textarea
+                                value={shopForm.shopAbout || ''}
+                                onChange={(e) => handleInputChange('shopAbout', e.target.value)}
+                                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                placeholder="Enter shop description (optional)"
+                                rows={4}
+                                maxLength={500}
+                            />
+                            <p className="text-xs text-gray-400 mt-1">A detailed description of your shop (max 500 characters)</p>
                         </div>
                     </div>
                 </div>
