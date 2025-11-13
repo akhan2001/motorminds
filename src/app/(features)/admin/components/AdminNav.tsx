@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Package, Settings, BarChart3, Users, FileText, Database, Building2, Wrench, UserPlus, UserSearch } from 'lucide-react'
+import { Package, Settings, BarChart3, Users, FileText, Database, Building2, UserPlus } from 'lucide-react'
 import { useAdminContext } from './admin-context/useAdminContext'
 import type { AdminType } from '@/types/core/user'
 
@@ -15,12 +15,14 @@ interface AdminNavItem {
 }
 
 const adminNavItems: AdminNavItem[] = [
+	// Dashboard - All admin types
 	{
 		name: 'Dashboard',
 		href: '/admin',
 		icon: BarChart3,
 		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
 	},
+	// Super Admin Only
 	{
 		name: 'Organizations',
 		href: '/admin/super-admin/organizations',
@@ -29,33 +31,9 @@ const adminNavItems: AdminNavItem[] = [
 	},
 	{
 		name: 'Shops',
-		href: '/admin/organization/shops',
+		href: '/admin/super-admin/shops',
 		icon: Building2,
-		adminTypes: ['organization-admin']
-	},
-	{
-		name: 'Users',
-		href: '/admin/users',
-		icon: Users,
-		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
-	},
-	{
-		name: 'Shop Users',
-		href: '/admin/shop/users',
-		icon: Users,
-		adminTypes: ['shop-admin']
-	},
-	{
-		name: 'Create User',
-		href: '/admin/create-user',
-		icon: UserPlus,
-		adminTypes: ['super-admin', 'organization-admin']
-	},
-	{
-		name: 'Customers',
-		href: '/admin/customers',
-		icon: UserSearch,
-		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+		adminTypes: ['super-admin']
 	},
 	{
 		name: 'Parts Requests',
@@ -75,6 +53,28 @@ const adminNavItems: AdminNavItem[] = [
 		icon: Database,
 		adminTypes: ['super-admin']
 	},
+	// Organization Admin Only
+	{
+		name: 'Shops',
+		href: '/admin/organization/shops',
+		icon: Building2,
+		adminTypes: ['organization-admin']
+	},
+	// All Admin Types - Users
+	{
+		name: 'Users',
+		href: '/admin/users',
+		icon: Users,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+	},
+	// Create User - Super Admin & Organization Admin
+	{
+		name: 'Create User',
+		href: '/admin/create-user',
+		icon: UserPlus,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+	},
+	// Settings - All admin types
 	{
 		name: 'Settings',
 		href: '/admin/settings',
