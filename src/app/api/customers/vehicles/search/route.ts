@@ -29,12 +29,17 @@ export async function GET(request: NextRequest) {
             .is('customer_id', null)
             .limit(limit)
 
-        // Search customer vehicles for this shop
+        // Search customer vehicles for this shop (include full customer data)
         const customerQuery = supabase
             .from('customer_vehicles')
             .select(`
                 *,
                 customers!inner (
+                    id,
+                    customer_name,
+                    customer_phone,
+                    customer_email,
+                    customer_address,
                     shop_id
                 )
             `)
@@ -53,12 +58,8 @@ export async function GET(request: NextRequest) {
         // Combine exact match results
         if (walkInExact.data) vehicles.push(...walkInExact.data)
         if (customerExact.data) {
-            // Clean up the customers join data
-            const cleanCustomerVehicles = customerExact.data.map(vehicle => {
-                const { customers, ...cleanVehicle } = vehicle as any
-                return cleanVehicle
-            })
-            vehicles.push(...cleanCustomerVehicles)
+            // Keep customer data in the vehicle object for customer selection
+            vehicles.push(...customerExact.data)
         }
 
         // If no exact matches and query is long enough, try fuzzy search
@@ -75,6 +76,11 @@ export async function GET(request: NextRequest) {
                     .select(`
                         *,
                         customers!inner (
+                            id,
+                            customer_name,
+                            customer_phone,
+                            customer_email,
+                            customer_address,
                             shop_id
                         )
                     `)
@@ -85,11 +91,8 @@ export async function GET(request: NextRequest) {
 
             if (walkInFuzzy.data) vehicles.push(...walkInFuzzy.data)
             if (customerFuzzy.data) {
-                const cleanFuzzyVehicles = customerFuzzy.data.map(vehicle => {
-                    const { customers, ...cleanVehicle } = vehicle as any
-                    return cleanVehicle
-                })
-                vehicles.push(...cleanFuzzyVehicles)
+                // Keep customer data in the vehicle object for customer selection
+                vehicles.push(...customerFuzzy.data)
             }
         }
 

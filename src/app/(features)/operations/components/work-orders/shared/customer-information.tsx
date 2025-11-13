@@ -9,9 +9,11 @@ import { getInitials, formatPhoneNumber } from "@/lib/utils/text"
 import { useAuth } from "../../../hooks/use-auth"
 import { CustomerDropdown } from "@/app/(features)/customers/components/Selection"
 import { CustomerSearchBar } from "@/components/common/customers/customer-search-bar"
+import { VehicleSearchForCustomer } from "@/components/common/customers/vehicle-search-for-customer"
 import { CustomerService, type CustomerFormData } from "@/app/(features)/customers/lib/customer-service"
 import { toast } from "sonner"
 import { Save, Loader2 } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 export interface CustomerInformationProps {
     customerId: string
@@ -156,10 +158,14 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-4">
-                        {/* Customer Selection - Use Search Bar for better UX */}
-                        {isCreating && isEditing && (
-                            <div className="flex flex-wrap gap-2">
-                                <div className="w-full sm:w-auto sm:flex-1">
+                        {/* Customer Selection - Tabs for Search by Customer or Vehicle */}
+                        {isCreating && isEditing && shopId && (
+                            <Tabs defaultValue="customer" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="customer">Search by Customer</TabsTrigger>
+                                    <TabsTrigger value="vehicle">Search by Vehicle</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="customer" className="mt-3">
                                     <CustomerSearchBar
                                         onSelect={(customer) => {
                                             // Handle customer selection from search bar
@@ -180,8 +186,23 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         placeholder="Search customers..."
                                         className="w-full"
                                     />
-                                </div>
-                            </div>
+                                </TabsContent>
+                                <TabsContent value="vehicle" className="mt-3">
+                                    <VehicleSearchForCustomer
+                                        shopId={shopId}
+                                        onCustomerSelect={(customer) => {
+                                            // Handle customer selection from vehicle search
+                                            onFieldChange('customer', customer.customer_name || '')
+                                            onFieldChange('customerEmail', customer.customer_email || '')
+                                            onFieldChange('customerPhone', customer.customer_phone || '')
+                                            onFieldChange('customerAddress', customer.customer_address || '')
+                                            onCustomerChange?.(customer.id)
+                                        }}
+                                        placeholder="Search by license plate..."
+                                        className="w-full"
+                                    />
+                                </TabsContent>
+                            </Tabs>
                         )}
 
                         {/* Customer Information Fields */}
