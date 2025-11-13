@@ -118,12 +118,16 @@ export async function POST(request: NextRequest) {
         }
 
         // Convert to CreateUserRequest format
-        const createUserRequest: CreateUserRequest = {
+        // Note: AdminUserFormData doesn't include shop_id/organization_id, 
+        // but UserCreationService.createUser will handle these separately
+        const createUserRequest: any = {
             user: {
                 email: body.email,
                 password: body.password,
-                full_name: body.full_name,
+                fullName: body.full_name,
+                phone: body.phone || '',
                 role: body.role,
+                plan: body.plan || 'DEFAULT',
                 status: body.status,
                 shop_id: body.shop_id || null,
                 organization_id: body.organization_id || null

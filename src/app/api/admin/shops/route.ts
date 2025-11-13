@@ -15,37 +15,61 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Check if super admin
-        const { searchParams } = new URL(request.url)
-        const isSuperAdmin = searchParams.get('super_admin') === 'true'
-        
-        if (isSuperAdmin) {
-            // Verify user is super admin
-            const { data: userData } = await supabase
-                .from('users')
-                .select('role')
-                .eq('id', user.id)
-                .single()
+        // Get user's role and context
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('role, organization_id, shop_id')
+            .eq('id', user.id)
+            .single()
 
-            const userRole = userData?.role?.toUpperCase()
-            const isSuperAdminUser = userRole === 'SUPER-ADMIN' || userRole === 'SUPER_ADMIN'
-            
-            if (!isSuperAdminUser) {
-                return NextResponse.json(
-                    { error: 'Forbidden - Super admin access required' },
-                    { status: 403 }
-                )
-            }
+        if (userError || !userData) {
+            return NextResponse.json(
+                { error: 'User not found' },
+                { status: 404 }
+            )
         }
+
+        const userRole = userData.role?.toUpperCase()
+        const isSuperAdmin = userRole === 'SUPER-ADMIN' || userRole === 'SUPER_ADMIN'
+        const isOrgAdmin = (userRole === 'ADMIN' || userRole === 'ORGANIZATION_ADMIN') && userData.organization_id
+        const isShopAdmin = (userRole === 'ADMIN' || userRole === 'SHOP_ADMIN') && userData.shop_id
+
+        // Check if super admin query param is set (for super admin pages)
+        const { searchParams } = new URL(request.url)
+        const superAdminParam = searchParams.get('super_admin') === 'true'
         
-        // Get all shops with organization info
-        const { data: shops, error } = await supabase
+        if (superAdminParam && !isSuperAdmin) {
+            return NextResponse.json(
+                { error: 'Forbidden - Super admin access required' },
+                { status: 403 }
+            )
+        }
+
+        let shopsQuery = supabase
             .from('shops')
             .select(`
                 *,
                 organizations:organizations(id, name)
             `)
-            .order('shop_name', { ascending: true });
+
+        // Filter based on admin context
+        if (isSuperAdmin && superAdminParam) {
+            // Super admin sees all shops
+            // No filter needed
+        } else if (isOrgAdmin && userData.organization_id) {
+            // Organization admin sees shops in their organization
+            shopsQuery = shopsQuery.eq('organization_id', userData.organization_id)
+        } else if (isShopAdmin && userData.shop_id) {
+            // Shop admin sees only their shop
+            shopsQuery = shopsQuery.eq('id', userData.shop_id)
+        } else {
+            return NextResponse.json(
+                { error: 'Forbidden - Admin access required' },
+                { status: 403 }
+            )
+        }
+
+        const { data: shops, error } = await shopsQuery.order('shop_name', { ascending: true });
         
         if (error) {
             console.error('Error fetching shops:', error);

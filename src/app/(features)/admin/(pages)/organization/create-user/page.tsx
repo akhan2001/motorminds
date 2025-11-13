@@ -13,7 +13,7 @@ import AdminNav from '../../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'
 import { Slash } from 'lucide-react'
 import { useAdminContext } from '../../../components/admin-context/useAdminContext'
-import { UserLimitIndicator } from '../../../components/user-creation/UserLimitIndicator'
+import { UserLimitIndicator } from '../../../components/shared/UserLimitIndicator'
 import { toast } from 'sonner'
 
 interface UserLimit {
