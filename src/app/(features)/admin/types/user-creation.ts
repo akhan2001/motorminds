@@ -1,11 +1,17 @@
+export type UserRole = 'customer' | 'mechanic' | 'shop_owner' | 'admin' | 'super-admin'
+export type UserPlan = 'DEFAULT' | 'PREMIUM' | 'ENTERPRISE'
+export type UserStatus = 'active' | 'inactive' | 'suspended'
+
 export interface AdminUserFormData {
     email: string
     password: string
     fullName: string
     phone: string
-    role: 'user' | 'admin' | 'demo' | 'super'
-    plan: 'DEFAULT' | 'PREMIUM' | 'ENTERPRISE'
-    status: 'active' | 'inactive' | 'suspended'
+    role: UserRole
+    plan: UserPlan
+    status: UserStatus
+    shop_id?: string | null
+    organization_id?: string | null
 }
 
 export interface AdminShopFormData {
@@ -45,4 +51,20 @@ export interface CreateUserResponse {
     userId?: string
     shopId?: string
     message: string
+}
+
+export interface UserCreationLimit {
+    limit: number
+    maxTotal?: number
+    current: number
+    remaining: number
+    canCreate: boolean
+}
+
+export interface UserCreationLimitResponse {
+    limit: number
+    maxTotal?: number
+    current: number
+    remaining: number
+    canCreate: boolean
 }

@@ -1,11 +1,66 @@
 // src/app/(features)/admin/lib/admin-service.ts
 
 import { createClient } from '@/lib/supabase'
-import type { Shop, AdminStats, UsersByShop, User, ShopWithUsers } from '../types/admin'
+import type { Shop, AdminStats, UsersByShop, User, ShopWithUsers, AdminType } from '../types/admin'
 import { findPrimaryUser, groupUsersByShop, countUsersByStatus, countUsersByPlan } from '@/lib/utils/users'
 
 export class AdminService {
     private supabase = createClient()
+
+    // Context-aware shop fetching
+    async getShops(context?: { adminType: AdminType; organizationId?: string; shopId?: string }): Promise<Shop[]> {
+        try {
+            const url = context 
+                ? `/api/admin/shops${context.adminType === 'super-admin' ? '?super_admin=true' : ''}`
+                : '/api/admin/shops'
+            
+            const response = await fetch(url)
+            const data = await response.json()
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch shops')
+            }
+            
+            return data.shops || []
+        } catch (error) {
+            console.error('Error fetching shops:', error)
+            throw error
+        }
+    }
+
+    // Context-aware user fetching
+    async getUsers(context?: { adminType: AdminType; organizationId?: string; shopId?: string }): Promise<User[]> {
+        try {
+            const response = await fetch('/api/admin/users')
+            const data = await response.json()
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch users')
+            }
+            
+            return data.users || []
+        } catch (error) {
+            console.error('Error fetching users:', error)
+            throw error
+        }
+    }
+
+    // Get shop by ID (context-aware)
+    async getShopById(id: string): Promise<Shop> {
+        try {
+            const response = await fetch(`/api/admin/shop/${id}`)
+            const data = await response.json()
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch shop')
+            }
+            
+            return data.shop
+        } catch (error) {
+            console.error('Error fetching shop:', error)
+            throw error
+        }
+    }
 
     async getAllShops(): Promise<Shop[]> {
         try {
