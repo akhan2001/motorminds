@@ -468,35 +468,65 @@ describe('WorkOrderService', () => {
 
     describe('Status Management', () => {
         test('should update work order status successfully', async () => {
-            // Arrange
-            const mockQuery = {
+            // Arrange - Mock getWorkOrderById call (select chain)
+            const mockSelectSingle = vi.fn().mockResolvedValue({
+                data: { id: '1', status: 'pending', started_at: null },
+                error: null
+            })
+            const mockSelectEq = vi.fn().mockReturnValue({
+                single: mockSelectSingle
+            })
+            const mockSelect = vi.fn().mockReturnValue({
+                eq: mockSelectEq
+            })
+
+            // Mock update chain
+            const mockUpdateQuery = {
                 eq: vi.fn().mockResolvedValue({ error: null })
             }
+            const mockUpdate = vi.fn().mockReturnValue(mockUpdateQuery)
+
             mockFrom.mockReturnValue({
-                update: vi.fn().mockReturnValue(mockQuery)
+                select: mockSelect,
+                update: mockUpdate
             })
 
             // Act
             await service.updateWorkOrderStatus('1', 'in_progress')
 
             // Assert
-            expect(mockQuery.eq).toHaveBeenCalledWith('id', '1')
+            expect(mockUpdateQuery.eq).toHaveBeenCalledWith('id', '1')
         })
 
         test('should set started_at when status is in_progress', async () => {
-            // Arrange
-            const mockQuery = {
+            // Arrange - Mock getWorkOrderById call (select chain)
+            const mockSelectSingle = vi.fn().mockResolvedValue({
+                data: { id: '1', status: 'pending', started_at: null },
+                error: null
+            })
+            const mockSelectEq = vi.fn().mockReturnValue({
+                single: mockSelectSingle
+            })
+            const mockSelect = vi.fn().mockReturnValue({
+                eq: mockSelectEq
+            })
+
+            // Mock update chain
+            const mockUpdateQuery = {
                 eq: vi.fn().mockResolvedValue({ error: null })
             }
+            const mockUpdate = vi.fn().mockReturnValue(mockUpdateQuery)
+
             mockFrom.mockReturnValue({
-                update: vi.fn().mockReturnValue(mockQuery)
+                select: mockSelect,
+                update: mockUpdate
             })
 
             // Act
             await service.updateWorkOrderStatus('1', 'in_progress')
 
             // Assert
-            expect(mockFrom().update).toHaveBeenCalledWith({
+            expect(mockUpdate).toHaveBeenCalledWith({
                 status: 'in_progress',
                 updated_at: expect.any(String),
                 started_at: expect.any(String)
@@ -504,19 +534,34 @@ describe('WorkOrderService', () => {
         })
 
         test('should set completed_at when status is completed', async () => {
-            // Arrange
-            const mockQuery = {
+            // Arrange - Mock getWorkOrderById call (select chain)
+            const mockSelectSingle = vi.fn().mockResolvedValue({
+                data: { id: '1', status: 'pending', started_at: '2024-01-01T00:00:00Z' },
+                error: null
+            })
+            const mockSelectEq = vi.fn().mockReturnValue({
+                single: mockSelectSingle
+            })
+            const mockSelect = vi.fn().mockReturnValue({
+                eq: mockSelectEq
+            })
+
+            // Mock update chain
+            const mockUpdateQuery = {
                 eq: vi.fn().mockResolvedValue({ error: null })
             }
+            const mockUpdate = vi.fn().mockReturnValue(mockUpdateQuery)
+
             mockFrom.mockReturnValue({
-                update: vi.fn().mockReturnValue(mockQuery)
+                select: mockSelect,
+                update: mockUpdate
             })
 
             // Act
             await service.updateWorkOrderStatus('1', 'completed')
 
             // Assert
-            expect(mockFrom().update).toHaveBeenCalledWith({
+            expect(mockUpdate).toHaveBeenCalledWith({
                 status: 'completed',
                 updated_at: expect.any(String),
                 completed_at: expect.any(String)
@@ -524,12 +569,27 @@ describe('WorkOrderService', () => {
         })
 
         test('should handle status update error', async () => {
-            // Arrange
-            const mockQuery = {
+            // Arrange - Mock getWorkOrderById call (select chain)
+            const mockSelectSingle = vi.fn().mockResolvedValue({
+                data: { id: '1', status: 'pending', started_at: null },
+                error: null
+            })
+            const mockSelectEq = vi.fn().mockReturnValue({
+                single: mockSelectSingle
+            })
+            const mockSelect = vi.fn().mockReturnValue({
+                eq: mockSelectEq
+            })
+
+            // Mock update chain with error
+            const mockUpdateQuery = {
                 eq: vi.fn().mockResolvedValue({ error: { message: 'Status update failed' } })
             }
+            const mockUpdate = vi.fn().mockReturnValue(mockUpdateQuery)
+
             mockFrom.mockReturnValue({
-                update: vi.fn().mockReturnValue(mockQuery)
+                select: mockSelect,
+                update: mockUpdate
             })
 
             // Act & Assert
