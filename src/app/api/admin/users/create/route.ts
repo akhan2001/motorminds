@@ -1,28 +1,146 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UserCreationService } from '@/app/(features)/admin/services/user-creation'
 import { CreateUserRequest } from '@/app/(features)/admin/types/user-creation'
+import { createClient } from '@/utils/supabase/server'
 
 export async function POST(request: NextRequest) {
     try {
-        const body: CreateUserRequest = await request.json()
+        const body: any = await request.json()
+
+        // Check user creation limits for organization admins
+        if (body.admin_type === 'organization-admin' && body.organization_id) {
+            const supabase = await createClient()
+            
+            // Get authenticated user
+            const { data: { user }, error: authError } = await supabase.auth.getUser()
+            
+            if (authError || !user) {
+                return NextResponse.json(
+                    { error: 'Unauthorized' },
+                    { status: 401 }
+                )
+            }
+
+            // Get user's organization_id
+            const { data: userData } = await supabase
+                .from('users')
+                .select('organization_id, role')
+                .eq('id', user.id)
+                .single()
+
+            // Verify user is organization admin and matches the organization_id
+            const userRole = userData?.role?.toUpperCase()
+            const isOrgAdmin = (userRole === 'ADMIN' || userRole === 'ORGANIZATION_ADMIN') && 
+                             userData?.organization_id === body.organization_id
+
+            if (!isOrgAdmin) {
+                return NextResponse.json(
+                    { error: 'Forbidden - Organization admin access required' },
+                    { status: 403 }
+                )
+            }
+
+            // Check user limit
+            const limitResponse = await fetch(`${request.nextUrl.origin}/api/admin/organization/user-limit`, {
+                headers: {
+                    'Cookie': request.headers.get('Cookie') || ''
+                }
+            })
+
+            if (limitResponse.ok) {
+                const limitData = await limitResponse.json()
+                if (!limitData.canCreate) {
+                    return NextResponse.json(
+                        { error: `User limit reached. Maximum ${limitData.limit} users allowed.` },
+                        { status: 403 }
+                    )
+                }
+            }
+        }
+
+        // Check user creation limits for shop admins
+        if (body.admin_type === 'shop-admin' && body.shop_id) {
+            const supabase = await createClient()
+            
+            // Get authenticated user
+            const { data: { user }, error: authError } = await supabase.auth.getUser()
+            
+            if (authError || !user) {
+                return NextResponse.json(
+                    { error: 'Unauthorized' },
+                    { status: 401 }
+                )
+            }
+
+            // Get user's shop_id
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id, role')
+                .eq('id', user.id)
+                .single()
+
+            // Verify user is shop admin and matches the shop_id
+            const userRole = userData?.role?.toUpperCase()
+            const isShopAdmin = (userRole === 'ADMIN' || userRole === 'SHOP_ADMIN') && 
+                              userData?.shop_id === body.shop_id
+
+            if (!isShopAdmin) {
+                return NextResponse.json(
+                    { error: 'Forbidden - Shop admin access required' },
+                    { status: 403 }
+                )
+            }
+
+            // Prevent shop admins from creating admin roles
+            if (body.role === 'admin' || body.role === 'super-admin') {
+                return NextResponse.json(
+                    { error: 'Shop admins cannot create admin roles' },
+                    { status: 403 }
+                )
+            }
+
+            // Check user limit
+            const limitResponse = await fetch(`${request.nextUrl.origin}/api/admin/shop/user-limit`, {
+                headers: {
+                    'Cookie': request.headers.get('Cookie') || ''
+                }
+            })
+
+            if (limitResponse.ok) {
+                const limitData = await limitResponse.json()
+                if (!limitData.canCreate) {
+                    return NextResponse.json(
+                        { error: `User limit reached. Maximum ${limitData.maxTotal} users allowed (shop admin + ${limitData.limit} additional).` },
+                        { status: 403 }
+                    )
+                }
+            }
+        }
+
+        // Convert to CreateUserRequest format
+        const createUserRequest: CreateUserRequest = {
+            user: {
+                email: body.email,
+                password: body.password,
+                full_name: body.full_name,
+                role: body.role,
+                status: body.status,
+                shop_id: body.shop_id || null,
+                organization_id: body.organization_id || null
+            },
+            createShop: false
+        }
 
         // Validate the request
-        if (!body.user) {
+        if (!createUserRequest.user) {
             return NextResponse.json(
                 { error: 'User data is required' },
                 { status: 400 }
             )
         }
 
-        if (body.createShop && !body.shop) {
-            return NextResponse.json(
-                { error: 'Shop data is required when createShop is true' },
-                { status: 400 }
-            )
-        }
-
         // Validate user data
-        const userErrors = await UserCreationService.validateUserData(body.user)
+        const userErrors = await UserCreationService.validateUserData(createUserRequest.user)
         if (userErrors.length > 0) {
             return NextResponse.json(
                 { error: 'User validation failed', details: userErrors },
@@ -30,19 +148,8 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Validate shop data if creating a shop
-        if (body.createShop && body.shop) {
-            const shopErrors = await UserCreationService.validateShopData(body.shop)
-            if (shopErrors.length > 0) {
-                return NextResponse.json(
-                    { error: 'Shop validation failed', details: shopErrors },
-                    { status: 400 }
-                )
-            }
-        }
-
         // Create the user
-        const result = await UserCreationService.createUser(body)
+        const result = await UserCreationService.createUser(createUserRequest)
 
         if (result.success) {
             return NextResponse.json({

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Building2, Users, TrendingUp, Package, Settings, BarChart3 } from 'lucide-react'
@@ -10,8 +11,50 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Slash } from 'lucide-react'
 import { useAdminContext } from '../admin-context/useAdminContext'
 
+interface OrganizationStats {
+    totalShops: number
+    totalUsers: number
+    organizationRevenue: number
+    activeWorkOrders: number
+}
+
 export function OrganizationDashboard() {
     const { organizationId } = useAdminContext()
+    const [stats, setStats] = useState<OrganizationStats | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (organizationId) {
+            fetchStats()
+        }
+    }, [organizationId])
+
+    const fetchStats = async () => {
+        try {
+            setLoading(true)
+            const response = await fetch('/api/admin/organization/stats')
+            const data = await response.json()
+            
+            if (response.ok) {
+                setStats(data.stats)
+            } else {
+                console.error('Error fetching stats:', data.error)
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount)
+    }
 
     return (
         <div className="h-screen flex flex-col bg-background">
@@ -60,7 +103,9 @@ export function OrganizationDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Total Shops</p>
-                                            <p className="text-2xl font-bold text-foreground">0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.totalShops || 0}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
                                             <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -74,7 +119,9 @@ export function OrganizationDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                                            <p className="text-2xl font-bold text-foreground">0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.totalUsers || 0}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
                                             <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -88,7 +135,9 @@ export function OrganizationDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Organization Revenue</p>
-                                            <p className="text-2xl font-bold text-foreground">$0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : formatCurrency(stats?.organizationRevenue || 0)}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
                                             <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -102,7 +151,9 @@ export function OrganizationDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Active Work Orders</p>
-                                            <p className="text-2xl font-bold text-foreground">0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.activeWorkOrders || 0}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
                                             <Package className="h-6 w-6 text-orange-600 dark:text-orange-400" />

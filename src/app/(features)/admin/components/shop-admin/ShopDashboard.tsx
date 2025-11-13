@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, TrendingUp, Package, Settings, BarChart3, Wrench } from 'lucide-react'
@@ -10,8 +11,50 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Slash } from 'lucide-react'
 import { useAdminContext } from '../admin-context/useAdminContext'
 
+interface ShopStats {
+    totalUsers: number
+    shopRevenue: number
+    activeWorkOrders: number
+    partsInventory: number
+}
+
 export function ShopDashboard() {
     const { shopId } = useAdminContext()
+    const [stats, setStats] = useState<ShopStats | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (shopId) {
+            fetchStats()
+        }
+    }, [shopId])
+
+    const fetchStats = async () => {
+        try {
+            setLoading(true)
+            const response = await fetch('/api/admin/shop/stats')
+            const data = await response.json()
+            
+            if (response.ok) {
+                setStats(data.stats)
+            } else {
+                console.error('Error fetching stats:', data.error)
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount)
+    }
 
     return (
         <div className="h-screen flex flex-col bg-background">
@@ -60,7 +103,9 @@ export function ShopDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Shop Users</p>
-                                            <p className="text-2xl font-bold text-foreground">0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.totalUsers || 0}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
                                             <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -74,7 +119,9 @@ export function ShopDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Shop Revenue</p>
-                                            <p className="text-2xl font-bold text-foreground">$0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : formatCurrency(stats?.shopRevenue || 0)}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
                                             <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -88,7 +135,9 @@ export function ShopDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Active Work Orders</p>
-                                            <p className="text-2xl font-bold text-foreground">0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.activeWorkOrders || 0}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
                                             <Wrench className="h-6 w-6 text-orange-600 dark:text-orange-400" />
@@ -102,7 +151,9 @@ export function ShopDashboard() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-muted-foreground">Parts Inventory</p>
-                                            <p className="text-2xl font-bold text-foreground">0</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.partsInventory || 0}
+                                            </p>
                                         </div>
                                         <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
                                             <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -125,7 +176,7 @@ export function ShopDashboard() {
                                     <p className="text-sm text-muted-foreground mb-4">
                                         Manage shop staff and permissions
                                     </p>
-                                    <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                                    <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
                                         <Link href="/admin/shop/users">
                                             Manage Users
                                         </Link>
@@ -144,7 +195,7 @@ export function ShopDashboard() {
                                     <p className="text-sm text-muted-foreground mb-4">
                                         View shop analytics and reports
                                     </p>
-                                    <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                                    <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
                                         <Link href="/admin/shop/performance">
                                             View Performance
                                         </Link>
@@ -163,7 +214,7 @@ export function ShopDashboard() {
                                     <p className="text-sm text-muted-foreground mb-4">
                                         Configure shop-specific settings
                                     </p>
-                                    <Button asChild className="w-full bg-gray-600 hover:bg-gray-700 text-white">
+                                    <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
                                         <Link href="/admin/shop/settings">
                                             Settings
                                         </Link>
