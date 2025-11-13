@@ -168,12 +168,14 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                         </div>
                     </div>
 
-                    {/* Status Tracker */}
-                    <StatusTrackerSelector
-                        value={statusTracker}
-                        onChange={(tracker) => onFieldChange('statusTracker', tracker)}
-                        disabled={!isEditing}
-                    />
+                    {/* Status Tracker - Only show when NOT creating */}
+                    {!isCreating && (
+                        <StatusTrackerSelector
+                            value={statusTracker}
+                            onChange={(tracker) => onFieldChange('statusTracker', tracker)}
+                            disabled={!isEditing}
+                        />
+                    )}
 
                     {/* Tags */}
                     {/* <div className="space-y-1.5">

@@ -1,14 +1,14 @@
 'use client'
 
-import React from 'react'
-import { Label } from '@/components/ui/label'
+import React, { useState, useRef, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useStatusTrackerPresets } from '../../hooks/use-status-trackers'
 import { useAuth } from '../../hooks/use-auth'
 import type { StatusTracker } from '../../types/status-tracker'
-import { Loader2, X } from 'lucide-react'
+import { Loader2, X, Plus } from 'lucide-react'
 import { MAX_WORK_ORDER_STATUS_TRACKERS } from '../../lib/status-tracker-constants'
+import { Button } from '@/components/ui/button'
 
 interface StatusTrackerSelectorProps {
     value: StatusTracker[] | null | undefined // Changed to array
@@ -96,117 +96,117 @@ export const StatusTrackerSelector: React.FC<StatusTrackerSelectorProps> = ({
         onChange(newTrackers.length > 0 ? newTrackers : null)
     }
 
-    // Clear all trackers
-    const handleClearAll = () => {
-        if (disabled) return
-        onChange(null)
-    }
+    const [isOpen, setIsOpen] = useState(false)
+    const popoverRef = useRef<HTMLDivElement>(null)
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     if (isLoading) {
         return (
-            <div className={`space-y-1.5 ${className}`}>
-                <Label className="text-muted-foreground dark:text-gray-400">Status Trackers</Label>
-                <div className="flex items-center gap-2 h-10 px-3 border rounded-md border-border dark:border-[#2a2a2a] bg-background dark:bg-[#1a1a1a]">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Loading trackers...</span>
-                </div>
+            <div className={`flex items-center gap-2 ${className}`}>
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Loading...</span>
             </div>
         )
     }
 
     return (
-        <div className={`space-y-2 ${className}`}>
-            <div className="flex items-center justify-between">
-                <Label className="text-muted-foreground dark:text-gray-400">Status Trackers</Label>
-                {selectedCount > 0 && (
-                    <span className="text-xs text-muted-foreground dark:text-gray-500">
-                        {selectedCount}/{maxTrackers} selected
-                    </span>
+        <div className={`relative ${className}`} ref={popoverRef}>
+            {/* Selected Trackers Display */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+                {selectedTrackers.map((tracker, index) => (
+                    <Badge
+                        key={index}
+                        variant="secondary"
+                        className="flex items-center gap-1 px-1.5 py-0.5 text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 h-6"
+                    >
+                        <div
+                            className="w-2 h-2 rounded flex-shrink-0"
+                            style={{ backgroundColor: tracker.color }}
+                        />
+                        <span className="truncate max-w-[80px]">{tracker.name}</span>
+                        {!disabled && (
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveTracker(tracker)}
+                                className="ml-0.5 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
+                                aria-label={`Remove ${tracker.name}`}
+                            >
+                                <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
+                            </button>
+                        )}
+                    </Badge>
+                ))}
+                
+                {/* Add/Select Button */}
+                {!disabled && !isMaxReached && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="h-6 px-2 text-xs border-dashed"
+                    >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                    </Button>
                 )}
             </div>
 
-            {/* Selected Trackers as Badges */}
-            {selectedTrackers.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-3 border rounded-md border-border dark:border-[#2a2a2a] bg-background dark:bg-[#1a1a1a]">
-                    {selectedTrackers.map((tracker, index) => (
-                        <Badge
-                            key={index}
-                            variant="secondary"
-                            className="flex items-center gap-1.5 px-2 py-1 text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a]"
-                        >
-                            <div
-                                className="w-3 h-3 rounded border border-border dark:border-[#2a2a2a] flex-shrink-0"
-                                style={{ backgroundColor: tracker.color }}
-                            />
-                            <span>{tracker.name}</span>
-                            {!disabled && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveTracker(tracker)}
-                                    className="ml-0.5 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
-                                    aria-label={`Remove ${tracker.name}`}
-                                >
-                                    <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                                </button>
-                            )}
-                        </Badge>
-                    ))}
-                    {!disabled && selectedTrackers.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={handleClearAll}
-                            className="text-xs text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors px-2"
-                        >
-                            Clear all
-                        </button>
+            {/* Dropdown for Presets */}
+            {isOpen && !disabled && (
+                <div className="absolute top-full left-0 mt-1 z-50 w-48 max-h-60 overflow-y-auto bg-popover dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md shadow-lg">
+                    {sortedPresets.length === 0 ? (
+                        <div className="p-2 text-xs text-muted-foreground text-center">
+                            No presets available
+                        </div>
+                    ) : (
+                        <div className="p-1">
+                            {sortedPresets.map((preset) => {
+                                const isSelected = isPresetSelected(preset.id)
+                                const isDisabled = !isSelected && isMaxReached
+
+                                return (
+                                    <label
+                                        key={preset.id}
+                                        className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${
+                                            isDisabled
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : 'hover:bg-accent dark:hover:bg-[#2a2a2a]'
+                                        }`}
+                                    >
+                                        <Checkbox
+                                            checked={isSelected}
+                                            onCheckedChange={() => {
+                                                handlePresetToggle(preset.id)
+                                                if (!isSelected) setIsOpen(false)
+                                            }}
+                                            disabled={isDisabled}
+                                            className="h-3 w-3"
+                                        />
+                                        <div
+                                            className="w-3 h-3 rounded flex-shrink-0"
+                                            style={{ backgroundColor: preset.color }}
+                                        />
+                                        <span className="text-foreground dark:text-white flex-1 truncate">
+                                            {preset.name}
+                                        </span>
+                                    </label>
+                                )
+                            })}
+                        </div>
                     )}
                 </div>
-            )}
-
-            {/* Available Presets as Checkboxes */}
-            <div className="space-y-2 p-3 border rounded-md border-border dark:border-[#2a2a2a] bg-background dark:bg-[#1a1a1a]">
-                {sortedPresets.length === 0 ? (
-                    <p className="text-sm text-muted-foreground dark:text-gray-400 text-center py-2">
-                        No status tracker presets available. Create some in Settings.
-                    </p>
-                ) : (
-                    sortedPresets.map((preset) => {
-                        const isSelected = isPresetSelected(preset.id)
-                        const isDisabled = disabled || (!isSelected && isMaxReached)
-
-                        return (
-                            <label
-                                key={preset.id}
-                                className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${
-                                    isDisabled
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : 'hover:bg-accent dark:hover:bg-[#2a2a2a]'
-                                }`}
-                            >
-                                <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={() => handlePresetToggle(preset.id)}
-                                    disabled={isDisabled}
-                                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                />
-                                <div
-                                    className="w-4 h-4 rounded border border-border dark:border-[#2a2a2a] flex-shrink-0"
-                                    style={{ backgroundColor: preset.color }}
-                                />
-                                <span className="text-sm text-foreground dark:text-white flex-1">
-                                    {preset.name}
-                                </span>
-                            </label>
-                        )
-                    })
-                )}
-            </div>
-
-            {/* Max Limit Message */}
-            {isMaxReached && (
-                <p className="text-xs text-muted-foreground dark:text-gray-500">
-                    Maximum of {maxTrackers} trackers reached. Remove one to add another.
-                </p>
             )}
         </div>
     )

@@ -1010,7 +1010,6 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                     assigneeId={workOrderDetails?.assigned_technician_id || ""}
                                     date={formData.date}
                                     tags={formData.tags}
-                                    statusTracker={formData.statusTracker}
                                     isEditing={isEditing}
                                     isCreating={false}
                                     onFieldChange={handleFieldChange}
