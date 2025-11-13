@@ -110,5 +110,32 @@ export class EmployeeService {
     static async reactivateEmployee(employeeId: string): Promise<Employee> {
         return this.updateEmployee(employeeId, { termination_date: null })
     }
+
+    /**
+     * Get work orders assigned to a specific technician
+     */
+    static async getWorkOrdersByTechnician(technicianId: string, shopId: string): Promise<any[]> {
+        if (!technicianId) {
+            throw new Error('Technician ID is required')
+        }
+
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        const params = new URLSearchParams({
+            shop_id: shopId
+        })
+
+        const response = await fetch(`/api/work-orders/by-technician/${technicianId}?${params.toString()}`)
+        
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Failed to fetch work orders' }))
+            throw new Error(error.error || 'Failed to fetch work orders')
+        }
+
+        const data = await response.json()
+        return data.workOrders || []
+    }
 }
 

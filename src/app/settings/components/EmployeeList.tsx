@@ -9,6 +9,7 @@ import { Loader2, Plus, Edit, Trash2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { EmployeeService } from "@/app/(features)/employees/lib/employee-service"
 import { Employee, EmployeeStatus } from "@/app/(features)/employees/types/employee"
+import { TechnicianWorkOrdersModal } from "./TechnicianWorkOrdersModal"
 
 interface EmployeeListProps {
     shopId: string
@@ -22,6 +23,8 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
     const [statusFilter, setStatusFilter] = useState<EmployeeStatus>("all")
     const [isLoading, setIsLoading] = useState(true)
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [selectedTechnician, setSelectedTechnician] = useState<Employee | null>(null)
+    const [isWorkOrdersModalOpen, setIsWorkOrdersModalOpen] = useState(false)
 
     const loadEmployees = async () => {
         setIsLoading(true)
@@ -97,6 +100,22 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
         return frequency.charAt(0).toUpperCase() + frequency.slice(1).replace("-", "-")
     }
 
+    const handleRowClick = (employee: Employee, e: React.MouseEvent) => {
+        // Don't trigger if clicking on action buttons
+        const target = e.target as HTMLElement
+        if (target.closest('button')) {
+            return
+        }
+        
+        setSelectedTechnician(employee)
+        setIsWorkOrdersModalOpen(true)
+    }
+
+    const handleCloseWorkOrdersModal = () => {
+        setIsWorkOrdersModalOpen(false)
+        setSelectedTechnician(null)
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -159,7 +178,11 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
                                 const fullName = `${employee.first_name} ${employee.last_name || ''}`.trim()
 
                                 return (
-                                    <TableRow key={employee.id}>
+                                    <TableRow 
+                                        key={employee.id}
+                                        className="cursor-pointer hover:bg-muted/50"
+                                        onClick={(e) => handleRowClick(employee, e)}
+                                    >
                                         <TableCell className="font-medium">{fullName}</TableCell>
                                         <TableCell>{employee.role}</TableCell>
                                         <TableCell>{formatCurrency(employee.salary_or_wage)}</TableCell>
@@ -177,7 +200,10 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => onEdit(employee)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onEdit(employee)
+                                                    }}
                                                     disabled={deletingId === employee.id}
                                                 >
                                                     <Edit className="h-4 w-4" />
@@ -186,7 +212,10 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleDelete(employee)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleDelete(employee)
+                                                        }}
                                                         disabled={deletingId === employee.id}
                                                         className="text-red-600 hover:text-red-700"
                                                     >
@@ -200,7 +229,10 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleReactivate(employee)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleReactivate(employee)
+                                                        }}
                                                         disabled={deletingId === employee.id}
                                                         className="text-green-600 hover:text-green-700"
                                                     >
@@ -219,6 +251,16 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
                         </TableBody>
                     </Table>
                 </div>
+            )}
+
+            {selectedTechnician && (
+                <TechnicianWorkOrdersModal
+                    technicianId={selectedTechnician.id}
+                    technicianName={`${selectedTechnician.first_name} ${selectedTechnician.last_name || ''}`.trim()}
+                    shopId={shopId}
+                    isOpen={isWorkOrdersModalOpen}
+                    onClose={handleCloseWorkOrdersModal}
+                />
             )}
         </div>
     )
