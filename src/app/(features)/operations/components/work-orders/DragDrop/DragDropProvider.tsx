@@ -57,6 +57,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
         const statusMap: Record<string, WorkOrderStatus> = {
             'pending': 'pending',
             'in-progress': 'in_progress',
+            'ready': 'ready',
             'completed': 'completed'
         }
         
@@ -125,6 +126,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
             const statusNames: Record<string, string> = {
                 'pending': 'Estimates',
                 'in_progress': 'In Progress',
+                'ready': 'Ready',
                 'completed': 'Completed'
             }
             
@@ -139,7 +141,13 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
         if (!pendingRevertItem) return
 
         try {
-            const targetStatus = (pendingRevertItem as any).targetStatus || 'in_progress'
+            // Get the target status from the pending revert item (set when dropped)
+            const targetStatus = (pendingRevertItem as any).targetStatus
+            
+            if (!targetStatus) {
+                toast.error('Invalid target status')
+                return
+            }
             
             // Use status update mutation which handles revert logic
             await updateWorkOrderStatusMutation.mutateAsync({
@@ -150,7 +158,15 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
             // Notify parent component to refetch data
             onWorkOrderUpdate?.(pendingRevertItem.id, targetStatus)
             
-            toast.success('Work order reverted to In Progress')
+            // Success feedback with proper status names
+            const statusNames: Record<string, string> = {
+                'pending': 'Estimates',
+                'in_progress': 'In Progress',
+                'ready': 'Ready',
+                'completed': 'Completed'
+            }
+            
+            toast.success(`Work order reverted to ${statusNames[targetStatus] || targetStatus}`)
             setRevertDialogOpen(false)
             setPendingRevertItem(null)
             setRevertWarning(undefined)

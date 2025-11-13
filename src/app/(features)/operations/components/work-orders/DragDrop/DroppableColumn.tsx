@@ -151,7 +151,7 @@ export const DroppableColumn: React.FC<DroppableColumnProps> = (props) => {
             style={{
                 minWidth: 0, // Prevent flex items from overflowing
                 flex: '1 1 0', // Equal width columns
-                maxWidth: '33.333%' // Strict 3-column grid
+                maxWidth: '25%' // Strict 4-column grid
             }}
         >
             <KanbanColumn {...props} />
