@@ -165,21 +165,174 @@ export class WorkOrderService {
         return updatedWorkOrder
     }
 
-    async updateWorkOrderStatus(id: string, status: WorkOrderStatus): Promise<void> {
+    async updateWorkOrderStatus(id: string, status: WorkOrderStatus, enableAutomatedMessages: boolean = true): Promise<void> {
+        // Get current work order to check if we're reverting from completed
+        const currentWorkOrder = await this.getWorkOrderById(id)
+        const isRevertingFromCompleted = currentWorkOrder?.status === 'completed' && status !== 'completed'
+        
+        // Prepare update data
+        const updateData: any = {
+            status,
+            updated_at: new Date().toISOString()
+        }
+
+        // Handle status-specific timestamps
+        if (status === 'in_progress') {
+            // Only set started_at if it doesn't exist (preserve original start time)
+            if (!currentWorkOrder?.started_at) {
+                updateData.started_at = new Date().toISOString()
+            }
+        } else if (status === 'completed') {
+            updateData.completed_at = new Date().toISOString()
+        }
+
+        // If reverting from completed, clear completed_at
+        if (isRevertingFromCompleted) {
+            updateData.completed_at = null
+            
+            // Cancel any pending automated messages for this work order
+            await this.cancelPendingMessagesForWorkOrder(id)
+        }
+
         const { error } = await this.supabase
             .from('work_orders')
-            .update({ 
-                status, 
-                updated_at: new Date().toISOString(),
-                ...(status === 'in_progress' && { started_at: new Date().toISOString() }),
-                ...(status === 'completed' && { completed_at: new Date().toISOString() })
-            })
+            .update(updateData)
             .eq('id', id)
 
         if (error) {
             console.error('Error updating work order status:', error)
             throw new Error(`Failed to update work order status: ${error.message}`)
         }
+
+        // After work order status set to 'completed', trigger automated messages
+        // Only trigger if NOT reverting (i.e., this is a new completion) AND automated messages are enabled
+        if (status === 'completed' && !isRevertingFromCompleted && enableAutomatedMessages) {
+            try {
+                // Get work order details for the trigger
+                const workOrder = await this.getWorkOrderById(id)
+                if (workOrder && workOrder.customer_id) {
+                    // Extract service type from work order title
+                    const extractServiceType = (title: string): string | null => {
+                        if (!title) return null
+                        const lowerTitle = title.toLowerCase()
+                        
+                        if (lowerTitle.includes('oil change')) return 'oil_change'
+                        if (lowerTitle.includes('brake')) return 'brake_service'
+                        if (lowerTitle.includes('tire')) return 'tire_service'
+                        if (lowerTitle.includes('inspection')) return 'inspection'
+                        if (lowerTitle.includes('battery')) return 'battery_service'
+                        if (lowerTitle.includes('alignment')) return 'alignment'
+                        if (lowerTitle.includes('transmission')) return 'transmission_service'
+                        if (lowerTitle.includes('engine')) return 'engine_service'
+                        if (lowerTitle.includes('diagnostic')) return 'diagnostic'
+                        if (lowerTitle.includes('ac') || lowerTitle.includes('air conditioning')) return 'ac_service'
+                        
+                        return null
+                    }
+                    
+                    const serviceType = extractServiceType(workOrder.title)
+                    
+                    // Trigger automated messaging (fire and forget - don't block completion)
+                    fetch('/api/messaging/queue-automated', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            work_order_id: workOrder.id,
+                            customer_id: workOrder.customer_id,
+                            service_type: serviceType
+                        })
+                    }).catch((error) => {
+                        // Silently handle fetch errors (network issues, etc.)
+                        console.error('Failed to trigger automated messages:', error)
+                    })
+                }
+            } catch (error) {
+                // Don't fail the work order completion if messaging fails
+                console.error('Failed to trigger automated messages:', error)
+            }
+        }
+    }
+
+    /**
+     * Cancel all pending automated messages for a work order
+     * @param workOrderId The work order ID
+     */
+    async cancelPendingMessagesForWorkOrder(workOrderId: string): Promise<void> {
+        try {
+            // Find all pending messages for this work order
+            // Fetch all pending work_order_complete messages and filter in memory
+            // (Supabase JS client doesn't directly support JSONB path queries in .eq())
+            const { data: allPendingMessages, error: fetchError } = await this.supabase
+                .from('ai_message_queue')
+                .select('id, trigger_data')
+                .eq('status', 'pending')
+                .eq('trigger_event', 'work_order_complete')
+
+            if (fetchError) {
+                console.error('Error fetching pending messages:', fetchError)
+                // Don't throw - this is a cleanup operation
+                return
+            }
+
+            if (!allPendingMessages || allPendingMessages.length === 0) {
+                return // No pending messages to cancel
+            }
+
+            // Filter messages that match this work order ID
+            const pendingMessages = allPendingMessages.filter((msg: any) => 
+                msg.trigger_data?.work_order_id === workOrderId
+            )
+
+            if (!pendingMessages || pendingMessages.length === 0) {
+                return // No pending messages to cancel for this work order
+            }
+
+            // Delete all pending messages
+            const messageIds = pendingMessages.map(msg => msg.id)
+            const { error: deleteError } = await this.supabase
+                .from('ai_message_queue')
+                .delete()
+                .in('id', messageIds)
+                .eq('status', 'pending')
+
+            if (deleteError) {
+                console.error('Error cancelling pending messages:', deleteError)
+                // Don't throw - this is a cleanup operation
+            } else {
+                console.log(`Cancelled ${messageIds.length} pending message(s) for work order ${workOrderId}`)
+            }
+        } catch (error) {
+            // Don't fail the revert if message cancellation fails
+            console.error('Failed to cancel pending messages:', error)
+        }
+    }
+
+    /**
+     * Check if a work order can be reverted from completed status
+     * @param workOrderId The work order ID to check
+     * @returns Object with canRevert boolean and optional reason string
+     */
+    async canRevertFromCompleted(workOrderId: string): Promise<{ canRevert: boolean, reason?: string }> {
+        const workOrder = await this.getWorkOrderById(workOrderId)
+        
+        if (!workOrder) {
+            return { canRevert: false, reason: 'Work order not found' }
+        }
+
+        // Cannot revert if status is not completed
+        if (workOrder.status !== 'completed') {
+            return { canRevert: false, reason: 'Work order is not in completed status' }
+        }
+
+        // Warn if invoice_id exists (but allow revert)
+        if (workOrder.invoice_id) {
+            return { 
+                canRevert: true, 
+                reason: 'This work order has an invoice. Reverting may require invoice adjustments.' 
+            }
+        }
+
+        return { canRevert: true }
     }
     
     // DELETE operations

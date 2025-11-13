@@ -198,8 +198,8 @@ export function useUpdateWorkOrderStatus() {
     const queryClient = useQueryClient()
     
     return useMutation({
-        mutationFn: ({ id, status }: { id: string; status: WorkOrderStatus }) =>
-            workOrderService.updateWorkOrderStatus(id, status),
+        mutationFn: ({ id, status, enableAutomatedMessages }: { id: string; status: WorkOrderStatus; enableAutomatedMessages?: boolean }) =>
+            workOrderService.updateWorkOrderStatus(id, status, enableAutomatedMessages),
         onSuccess: (_, { id }) => {
             // Invalidate all work order queries to refetch
             queryClient.invalidateQueries({ queryKey: workOrderKeys.all })

@@ -94,21 +94,53 @@ export class UserCreationService {
 
             // Create shop if requested
             if (request.createShop && request.shop) {
+                // Ensure servicesOffered is always an array
+                const servicesOffered = Array.isArray(request.shop.servicesOffered) 
+                    ? request.shop.servicesOffered 
+                    : []
+
+                // Ensure operatingHours is always an object
+                const operatingHours = request.shop.operatingHours && typeof request.shop.operatingHours === 'object'
+                    ? request.shop.operatingHours
+                    : {
+                        monday: { open: '09:00', close: '17:00', closed: false },
+                        tuesday: { open: '09:00', close: '17:00', closed: false },
+                        wednesday: { open: '09:00', close: '17:00', closed: false },
+                        thursday: { open: '09:00', close: '17:00', closed: false },
+                        friday: { open: '09:00', close: '17:00', closed: false },
+                        saturday: { open: '09:00', close: '15:00', closed: false },
+                        sunday: { open: '00:00', close: '00:00', closed: true }
+                    }
+
+                const shopDataToInsert: any = {
+                    shop_name: request.shop.shopName,
+                    shop_email: request.shop.shopEmail || null,
+                    shop_phone: request.shop.shopPhone || null,
+                    shop_address: request.shop.shopAddress,
+                    shop_city: request.shop.shopCity,
+                    shop_province: request.shop.shopProvince,
+                    website: request.shop.website || null,
+                    business_number: request.shop.businessNumber || null,
+                    hst_number: request.shop.hstNumber || null,
+                    services_offered: servicesOffered,
+                    operating_hours: operatingHours,
+                    default_hourly_rate: request.shop.defaultHourlyRate || 99.99
+                }
+
+                // Add optional fields only if they have values
+                if (request.shop.shopOwner && request.shop.shopOwner.trim().length > 0) {
+                    shopDataToInsert.shop_owner = request.shop.shopOwner.trim()
+                }
+                if (request.shop.shopAbout && request.shop.shopAbout.trim().length > 0) {
+                    shopDataToInsert.shop_about = request.shop.shopAbout.trim()
+                }
+                if (request.shop.shopTagline && request.shop.shopTagline.trim().length > 0) {
+                    shopDataToInsert.shop_tagline = request.shop.shopTagline.trim()
+                }
+
                 const { data: shopData, error: shopError } = await supabaseAdmin
                     .from('shops')
-                    .insert({
-                        shop_name: request.shop.shopName,
-                        shop_email: request.shop.shopEmail,
-                        shop_phone: request.shop.shopPhone,
-                        shop_address: request.shop.shopAddress,
-                        shop_city: request.shop.shopCity,
-                        shop_province: request.shop.shopProvince,
-                        website: request.shop.website,
-                        business_number: request.shop.businessNumber,
-                        hst_number: request.shop.hstNumber,
-                        services_offered: request.shop.servicesOffered,
-                        operating_hours: request.shop.operatingHours
-                    })
+                    .insert(shopDataToInsert)
                     .select('id')
                     .single()
 
@@ -175,20 +207,91 @@ export class UserCreationService {
 
         if (!shop) return errors
 
+        // Shop name: min 2, max 50
         if (!shop.shopName || shop.shopName.trim().length < 2) {
-            errors.push('Shop name is required')
+            errors.push('Shop name must be at least 2 characters')
+        } else if (shop.shopName.trim().length > 50) {
+            errors.push('Shop name must not be longer than 50 characters')
         }
 
+        // Shop email: required and must be valid email
+        if (!shop.shopEmail || shop.shopEmail.trim().length === 0) {
+            errors.push('Shop email is required')
+        } else if (!shop.shopEmail.includes('@')) {
+            errors.push('Please enter a valid email')
+        }
+
+        // Shop phone: required and min 10 digits
+        if (!shop.shopPhone || shop.shopPhone.trim().length === 0) {
+            errors.push('Shop phone is required')
+        } else if (shop.shopPhone.trim().length < 10) {
+            errors.push('Phone number must be at least 10 digits')
+        }
+
+        // Shop address: min 5
         if (!shop.shopAddress || shop.shopAddress.trim().length < 5) {
-            errors.push('Shop address is required')
+            errors.push('Address must be at least 5 characters')
         }
 
+        // Shop city: min 2
         if (!shop.shopCity || shop.shopCity.trim().length < 2) {
-            errors.push('Shop city is required')
+            errors.push('City must be at least 2 characters')
         }
 
+        // Shop province: min 2
         if (!shop.shopProvince || shop.shopProvince.trim().length < 2) {
-            errors.push('Shop province is required')
+            errors.push('Province/State must be at least 2 characters')
+        }
+
+        // Shop owner: optional, but if provided, min 2
+        if (shop.shopOwner && shop.shopOwner.trim().length > 0 && shop.shopOwner.trim().length < 2) {
+            errors.push('Owner name must be at least 2 characters')
+        }
+
+        // Shop about: optional, but if provided, min 10, max 500
+        if (shop.shopAbout && shop.shopAbout.trim().length > 0) {
+            if (shop.shopAbout.trim().length < 10) {
+                errors.push('About section must be at least 10 characters')
+            } else if (shop.shopAbout.trim().length > 500) {
+                errors.push('About section must not be longer than 500 characters')
+            }
+        }
+
+        // Shop tagline: optional, but if provided, min 5, max 100
+        if (shop.shopTagline && shop.shopTagline.trim().length > 0) {
+            if (shop.shopTagline.trim().length < 5) {
+                errors.push('Tagline must be at least 5 characters')
+            } else if (shop.shopTagline.trim().length > 100) {
+                errors.push('Tagline must not be longer than 100 characters')
+            }
+        }
+
+        // Default hourly rate: optional, but if provided, min 1, max 1000
+        if (shop.defaultHourlyRate !== undefined && shop.defaultHourlyRate !== null) {
+            if (shop.defaultHourlyRate < 1) {
+                errors.push('Hourly rate must be at least $1.00')
+            } else if (shop.defaultHourlyRate > 1000) {
+                errors.push('Hourly rate must be less than $1000.00')
+            }
+        }
+
+        // Website: optional, but if provided, must be valid URL
+        if (shop.website && shop.website.trim().length > 0) {
+            try {
+                new URL(shop.website)
+            } catch {
+                errors.push('Website must be a valid URL')
+            }
+        }
+
+        // Services offered: must be an array
+        if (!Array.isArray(shop.servicesOffered)) {
+            errors.push('Services offered must be an array')
+        }
+
+        // Operating hours: must be an object
+        if (!shop.operatingHours || typeof shop.operatingHours !== 'object' || Array.isArray(shop.operatingHours)) {
+            errors.push('Operating hours must be an object')
         }
 
         return errors

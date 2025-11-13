@@ -146,7 +146,7 @@ export function CustomerSearchBar({
                                                 </div>
                                                 <div className="text-sm text-muted-foreground truncate">
                                                     {customer.customer_phone && formatPhoneNumber(customer.customer_phone)}
-                                                    {customer.customer_email && ` • ${customer.customer_email}`}
+                                                    {customer.customer_email && customer.customer_email != 'NULL' ? ` • ${customer.customer_email}` : ''}
                                                 </div>
                                             </div>
                                         </div>

@@ -8,28 +8,36 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AdminContextProvider } from "@/contexts/admin-context"
 
 export default function Providers({
-  children,
+	children,
 }: {
-  children: React.ReactNode
+	children: React.ReactNode
 }) {
-  const [queryClient] = useState(() => new QueryClient())
+	const [queryClient] = useState(() => new QueryClient({
+		defaultOptions: {
+			queries: {
+				staleTime: 5 * 60 * 1000, // 5 minutes
+				retry: 1,
+				refetchOnWindowFocus: true,
+			},
+		},
+	}))
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <AdminContextProvider>
-          <TasksProvider>
-            <ConfirmationProvider>
-              {children}
-            </ConfirmationProvider>
-          </TasksProvider>
-        </AdminContextProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  )
+	return (
+		<QueryClientProvider client={queryClient}>
+			<ThemeProvider
+				attribute="class"
+				defaultTheme="system"
+				enableSystem
+				disableTransitionOnChange
+			>
+				<AdminContextProvider>
+					<TasksProvider>
+						<ConfirmationProvider>
+							{children}
+						</ConfirmationProvider>
+					</TasksProvider>
+				</AdminContextProvider>
+			</ThemeProvider>
+		</QueryClientProvider>
+	)
 } 

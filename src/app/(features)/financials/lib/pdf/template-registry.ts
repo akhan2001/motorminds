@@ -1,5 +1,7 @@
 import { ProfessionalTemplate } from '../../components/invoice-pdf/templates/ProfessionalTemplate'
+import { TonyTemplate } from '../../components/invoice-pdf/templates/TonyTemplate'
 import type { TemplateRegistry, TemplateMetadata } from '../../types/invoice-pdf'
+import { hasTemplateAccess } from './template-restrictions'
 
 // Template metadata for UI display
 export const TEMPLATE_METADATA: Record<string, TemplateMetadata> = {
@@ -7,6 +9,11 @@ export const TEMPLATE_METADATA: Record<string, TemplateMetadata> = {
         id: 'professional',
         name: 'Professional',
         description: 'Clean and professional layout with blue accents',
+    },
+    tony: {
+        id: 'tony',
+        name: 'Good Guyz Garage',
+        description: 'Classic automotive garage invoice with Canadian branding',
     },
     // Future templates can be added here:
     // modern: {
@@ -27,6 +34,10 @@ export const TEMPLATE_REGISTRY: TemplateRegistry = {
         component: ProfessionalTemplate,
         metadata: TEMPLATE_METADATA.professional,
     },
+    tony: {
+        component: TonyTemplate,
+        metadata: TEMPLATE_METADATA.tony,
+    },
     // Future templates:
     // modern: {
     //     component: ModernTemplate,
@@ -40,7 +51,13 @@ export const getTemplate = (templateId: string) => {
 }
 
 // Helper to get all available templates
-export const getAvailableTemplates = () => {
-    return Object.values(TEMPLATE_METADATA)
+// Filters templates based on shop restrictions using shop_id
+export const getAvailableTemplates = (shopId?: string | null) => {
+    const allTemplates = Object.values(TEMPLATE_METADATA)
+    
+    // Filter templates based on shop access
+    return allTemplates.filter(template => {
+        return hasTemplateAccess(template.id, shopId)
+    })
 }
 

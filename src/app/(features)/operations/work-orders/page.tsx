@@ -11,7 +11,7 @@ import { WorkOrderItemTemplatesModal } from "../components/work-order-items/temp
 import { StatusTrackerManagementModal } from "../components/work-orders/status-tracker-management-modal";
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
-import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useDeleteWorkOrder } from "../hooks/use-work-orders";
+import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from "../hooks/use-work-orders";
 import { useAuth } from "../hooks/use-auth";
 import { WorkOrderItemsService } from "../lib/work-order-items-service";
 import type { WorkOrderItemCreateData } from "../types/work-order-items";
@@ -116,6 +116,17 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         ? `${workOrder.technician.first_name} ${workOrder.technician.last_name || ''}`
         : workOrder.assigned_technician_id || 'Unassigned'
 
+    // Normalize status_tracker to array (handle both old format single object and new format array)
+    const normalizeStatusTracker = (tracker: any): any[] | null => {
+        if (!tracker) return null
+        if (Array.isArray(tracker)) return tracker
+        // Handle old format: single object
+        if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            return [tracker]
+        }
+        return null
+    }
+
     return {
         id: workOrder.id,
         title: workOrder.title,
@@ -128,7 +139,7 @@ function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails): WorkOr
         vehicle: vehicleDisplay,
         tags: workOrder.tags || [],
         shop_id: workOrder.shop_id,
-        status_tracker: workOrder.status_tracker || null
+        status_tracker: normalizeStatusTracker(workOrder.status_tracker)
     }
 }
 
@@ -146,6 +157,7 @@ function WorkOrdersContent() {
     const createWorkOrderMutation = useCreateWorkOrderWithDependencies()
     const createWalkInWorkOrderMutation = useCreateWalkInWorkOrder()
     const updateWorkOrderMutation = useUpdateWorkOrder()
+    const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
     const deleteWorkOrderMutation = useDeleteWorkOrder()
 
     // Combined loading state
@@ -296,19 +308,15 @@ function WorkOrdersContent() {
     }
 
     // Handle completion modal confirm
-    const handleCompletionModalConfirm = async (sendMessage: boolean, customMessage?: string) => {
+    const handleCompletionModalConfirm = async (sendMessage: boolean, customMessage?: string, enableAutomatedMessages: boolean = true) => {
         if (completionWorkOrder) {
             try {
-                // Update work order status to completed
-                const updateData: Partial<WorkOrder> = {
-                    status: 'completed',
-                    updated_at: new Date().toISOString(),
-                    completed_at: new Date().toISOString()
-                }
-
-                await updateWorkOrderMutation.mutateAsync({
+                // Use updateWorkOrderStatus to trigger automated messaging
+                // Pass enableAutomatedMessages flag to control whether automated messages are queued
+                await updateWorkOrderStatusMutation.mutateAsync({
                     id: completionWorkOrder.id,
-                    data: updateData
+                    status: 'completed',
+                    enableAutomatedMessages
                 })
 
                 // Refetch work orders

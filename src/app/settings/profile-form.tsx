@@ -9,7 +9,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
@@ -53,13 +54,19 @@ const shopFormSchema = z.object({
     }),
     shop_owner: z.string().min(2, {
         message: "Owner name must be at least 2 characters.",
-    }),
-    shop_about: z.string().max(500).min(10, {
-        message: "About section must be at least 10 characters.",
-    }),
-    shop_tagline: z.string().max(100).min(5, {
-        message: "Tagline must be at least 5 characters.",
-    }),
+    }).optional(),
+    shop_about: z.union([
+        z.string().max(500).min(10, {
+            message: "About section must be at least 10 characters.",
+        }),
+        z.literal('')
+    ]).optional(),
+    shop_tagline: z.union([
+        z.string().max(100).min(5, {
+            message: "Tagline must be at least 5 characters.",
+        }),
+        z.literal('')
+    ]).optional(),
     default_hourly_rate: z.coerce.number().min(1, {
         message: "Hourly rate must be at least $1.00.",
     }).max(1000, {
@@ -182,6 +189,9 @@ export function ProfileForm({ shopId }: { shopId: string }) {
     // State for active tab
     const [activeTab, setActiveTab] = useState("basic")
     
+    // State to track which tabs have errors
+    const [tabsWithErrors, setTabsWithErrors] = useState<Set<string>>(new Set())
+    
     const form = useForm<ShopFormValues>({
         resolver: zodResolver(shopFormSchema),
         defaultValues: {
@@ -269,8 +279,105 @@ export function ProfileForm({ shopId }: { shopId: string }) {
         }
     }, [shopInfo.data])
 
+    // Update tab errors based on form validation state
+    useEffect(() => {
+        const tabFields: Record<string, (keyof ShopFormValues)[]> = {
+            basic: ['shop_name', 'shop_email', 'shop_phone', 'shop_owner', 'default_hourly_rate'],
+            location: ['shop_address', 'shop_city', 'shop_province', 'website'],
+            details: ['shop_tagline', 'shop_about', 'hst_number', 'business_number'],
+            images: ['logo_image_url', 'banner_image_url'],
+            social: ['facebook_url', 'twitter_url', 'instagram_url', 'youtube_url']
+        }
+
+        const formErrors = form.formState.errors
+        
+        setTabsWithErrors(prev => {
+            const newSet = new Set<string>()
+            
+            // Check each tab - if any field has an error, add tab to error set
+            for (const [tab, fields] of Object.entries(tabFields)) {
+                const hasError = fields.some(field => formErrors[field as keyof typeof formErrors])
+                if (hasError) {
+                    newSet.add(tab)
+                }
+            }
+            
+            return newSet
+        })
+    }, [form.formState.errors])
+
+    // Function to validate all tabs and return which ones have errors
+    const validateAllTabs = async (): Promise<Set<string>> => {
+        const tabFields: Record<string, (keyof ShopFormValues)[]> = {
+            basic: ['shop_name', 'shop_email', 'shop_phone', 'shop_owner', 'default_hourly_rate'],
+            location: ['shop_address', 'shop_city', 'shop_province', 'website'],
+            details: ['shop_tagline', 'shop_about', 'hst_number', 'business_number'],
+            images: ['logo_image_url', 'banner_image_url'],
+            social: ['facebook_url', 'twitter_url', 'instagram_url', 'youtube_url']
+        }
+
+        const errors = new Set<string>()
+        
+        for (const [tab, fields] of Object.entries(tabFields)) {
+            const isValid = await form.trigger(fields as any)
+            if (!isValid) {
+                errors.add(tab)
+            }
+        }
+        
+        return errors
+    }
+
     async function onSubmit(data: ShopFormValues) {
         console.log('Form submitted with data:', data);
+        
+        // Validate all tabs first
+        const validationErrors = await validateAllTabs()
+        setTabsWithErrors(validationErrors)
+        
+        if (validationErrors.size > 0) {
+            // Switch to the first tab with errors
+            const firstErrorTab = Array.from(validationErrors)[0]
+            setActiveTab(firstErrorTab)
+            window.location.hash = `#${firstErrorTab}`
+            
+            // Show toast with error summary
+            const tabNames: Record<string, string> = {
+                basic: 'Basic Information',
+                location: 'Location',
+                details: 'Shop Details',
+                images: 'Images',
+                social: 'Social Media'
+            }
+            const errorTabs = Array.from(validationErrors).map(tab => tabNames[tab] || tab).join(', ')
+            toast.error(`Please fix errors in the following tabs: ${errorTabs}`)
+            
+            // Scroll to first error field
+            const firstErrorTabFields = {
+                basic: ['shop_name', 'shop_email', 'shop_phone', 'shop_owner', 'default_hourly_rate'],
+                location: ['shop_address', 'shop_city', 'shop_province', 'website'],
+                details: ['shop_tagline', 'shop_about', 'hst_number', 'business_number'],
+                images: ['logo_image_url', 'banner_image_url'],
+                social: ['facebook_url', 'twitter_url', 'instagram_url', 'youtube_url']
+            }[firstErrorTab] || []
+            
+            const formErrors = form.formState.errors
+            const firstErrorField = firstErrorTabFields.find(field => formErrors[field as keyof typeof formErrors])
+            if (firstErrorField) {
+                setTimeout(() => {
+                    const errorElement = document.querySelector(`[name="${firstErrorField}"]`)
+                    if (errorElement) {
+                        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        ;(errorElement as HTMLElement).focus()
+                    }
+                }, 100)
+            }
+            
+            return
+        }
+        
+        // Clear errors if validation passes
+        setTabsWithErrors(new Set())
         await updateShopProfile(data)
     }
 
@@ -446,38 +553,83 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                             <TabsList className="grid grid-cols-5 mb-8 bg-slate-50 dark:bg-muted border-none text-foreground">
                                 <TabsTrigger 
                                     value="basic" 
-                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
+                                    className={`data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative ${
+                                        tabsWithErrors.has('basic') ? 'border-2 border-destructive' : ''
+                                    }`}
                                     onClick={() => window.location.hash = '#basic'}
                                 >
-                                    Basic Info
+                                    <span className="flex items-center gap-2">
+                                        Basic Info
+                                        {tabsWithErrors.has('basic') && (
+                                            <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center rounded-full">
+                                                <AlertCircle className="h-2.5 w-2.5" />
+                                            </Badge>
+                                        )}
+                                    </span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="location" 
-                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
+                                    className={`data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative ${
+                                        tabsWithErrors.has('location') ? 'border-2 border-destructive' : ''
+                                    }`}
                                     onClick={() => window.location.hash = '#location'}
                                 >
-                                    Location
+                                    <span className="flex items-center gap-2">
+                                        Location
+                                        {tabsWithErrors.has('location') && (
+                                            <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center rounded-full">
+                                                <AlertCircle className="h-2.5 w-2.5" />
+                                            </Badge>
+                                        )}
+                                    </span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="details" 
-                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
+                                    className={`data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative ${
+                                        tabsWithErrors.has('details') ? 'border-2 border-destructive' : ''
+                                    }`}
                                     onClick={() => window.location.hash = '#details'}
                                 >
-                                    Shop Details
+                                    <span className="flex items-center gap-2">
+                                        Shop Details
+                                        {tabsWithErrors.has('details') && (
+                                            <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center rounded-full">
+                                                <AlertCircle className="h-2.5 w-2.5" />
+                                            </Badge>
+                                        )}
+                                    </span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="images" 
-                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
+                                    className={`data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative ${
+                                        tabsWithErrors.has('images') ? 'border-2 border-destructive' : ''
+                                    }`}
                                     onClick={() => window.location.hash = '#images'}
                                 >
-                                    Images
+                                    <span className="flex items-center gap-2">
+                                        Images
+                                        {tabsWithErrors.has('images') && (
+                                            <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center rounded-full">
+                                                <AlertCircle className="h-2.5 w-2.5" />
+                                            </Badge>
+                                        )}
+                                    </span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="social" 
-                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted"
+                                    className={`data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative ${
+                                        tabsWithErrors.has('social') ? 'border-2 border-destructive' : ''
+                                    }`}
                                     onClick={() => window.location.hash = '#social'}
                                 >
-                                    Social Media
+                                    <span className="flex items-center gap-2">
+                                        Social Media
+                                        {tabsWithErrors.has('social') && (
+                                            <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center rounded-full">
+                                                <AlertCircle className="h-2.5 w-2.5" />
+                                            </Badge>
+                                        )}
+                                    </span>
                                 </TabsTrigger>
                             </TabsList>
                             

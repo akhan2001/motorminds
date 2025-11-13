@@ -5,7 +5,9 @@ import { toast } from "sonner"
 import { v4 as uuidv4 } from 'uuid'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "../../../types/work-order"
-import { useWorkOrderWithDetails, useUpdateWorkOrder } from "../../../hooks/use-work-orders"
+import { useWorkOrderWithDetails, useUpdateWorkOrder, useUpdateWorkOrderStatus } from "../../../hooks/use-work-orders"
+import { RevertWorkOrderDialog } from "../revert-work-order-dialog"
+import { workOrderService } from "../../../lib/work-order-service"
 import { Loader2 } from "lucide-react"
 import {
     WorkOrderModalHeader,
@@ -99,6 +101,8 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
+    const [isRevertDialogOpen, setIsRevertDialogOpen] = useState(false)
+    const [revertWarning, setRevertWarning] = useState<string | undefined>()
     const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
     const [laborItems, setLaborItems] = useState<LaborFormItem[]>([])
     const [partsItems, setPartsItems] = useState<PartFormItem[]>([])
@@ -125,6 +129,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     
     // Update work order mutation
     const updateWorkOrderMutation = useUpdateWorkOrder()
+    const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
     
     // Form state for editing
     const [formData, setFormData] = useState({
@@ -153,7 +158,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         
         // Work order specifics
         notes: "",
-        statusTracker: initialWorkOrder.status_tracker || null,
+        // Normalize status_tracker to array (handle both old format single object and new format array)
+        statusTracker: (() => {
+            const tracker = initialWorkOrder.status_tracker
+            if (!tracker) return null
+            if (Array.isArray(tracker)) return tracker
+            // Handle old format: single object
+            if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                return [tracker]
+            }
+            return null
+        })(),
     })
 
     // Update form when work order details are fetched
@@ -209,7 +224,17 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 
                 // Work order notes
                 notes: workOrderDetails.notes || "",
-                statusTracker: workOrderDetails.status_tracker || null,
+                // Normalize status_tracker to array (handle both old format single object and new format array)
+                statusTracker: (() => {
+                    const tracker = workOrderDetails.status_tracker
+                    if (!tracker) return null
+                    if (Array.isArray(tracker)) return tracker
+                    // Handle old format: single object
+                    if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                        return [tracker]
+                    }
+                    return null
+                })(),
             }))
         }
     }, [workOrderDetails])
@@ -793,9 +818,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Check if work order can be edited based on status
     const canEdit = () => {
         const status = workOrderDetails?.status || initialWorkOrder.status
-        // Allow editing for: pending, approved, in_progress, waiting_parts, waiting_customer, on_hold
-        // Disable editing for: completed, invoiced, cancelled
-        return status !== 'completed' && status !== 'invoiced' && status !== 'cancelled'
+        // Allow editing for: pending, approved, in_progress, waiting_parts, waiting_customer, on_hold, completed
+        // Disable editing for: invoiced, cancelled
+        return status !== 'invoiced' && status !== 'cancelled'
     }
 
     // Check if work order can be deleted based on status
@@ -816,10 +841,56 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             setIsEditing(true)
         } else {
             const status = workOrderDetails?.status || initialWorkOrder.status
-            const statusName = status === 'completed' ? 'completed' : 
-                              status === 'invoiced' ? 'invoiced' : 'cancelled'
+            const statusName = status === 'invoiced' ? 'invoiced' : 'cancelled'
             toast.error(`${statusName.charAt(0).toUpperCase() + statusName.slice(1)} work orders cannot be edited`)
         }
+    }
+
+    const handleRevertClick = async () => {
+        const status = workOrderDetails?.status || initialWorkOrder.status
+        if (status !== 'completed') {
+            toast.error('Only completed work orders can be reverted')
+            return
+        }
+
+        // Check if revert is allowed
+        const canRevert = await workOrderService.canRevertFromCompleted(initialWorkOrder.id)
+        
+        if (!canRevert.canRevert) {
+            toast.error(canRevert.reason || 'Cannot revert this work order')
+            return
+        }
+
+        setRevertWarning(canRevert.reason)
+        setIsRevertDialogOpen(true)
+    }
+
+    const handleRevertConfirm = async () => {
+        try {
+            await updateWorkOrderStatusMutation.mutateAsync({
+                id: initialWorkOrder.id,
+                status: 'in_progress'
+            })
+
+            toast.success('Work order reverted to In Progress')
+            setIsRevertDialogOpen(false)
+            setRevertWarning(undefined)
+            
+            // Refresh work order details
+            if (onSave) {
+                // Trigger a refetch by calling onSave with updated status
+                const updatedWorkOrder = { ...initialWorkOrder, status: 'in_progress' as any }
+                onSave(updatedWorkOrder)
+            }
+        } catch (error) {
+            console.error('Failed to revert work order:', error)
+            toast.error('Failed to revert work order')
+        }
+    }
+
+    const handleRevertCancel = () => {
+        setIsRevertDialogOpen(false)
+        setRevertWarning(undefined)
     }
     
     const handleCancel = () => setIsEditing(false)
@@ -870,6 +941,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 workOrder={initialWorkOrder}
                                 workOrderDetails={workOrderDetails}
                                 onClose={onClose}
+                                onRevert={handleRevertClick}
                             />
 
                             {/* Status Bar */}
@@ -1092,6 +1164,16 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 isOpen={isDeleteConfirmationOpen}
                 onClose={handleDeleteCancel}
                 onConfirm={handleDeleteConfirm}
+            />
+            
+            <RevertWorkOrderDialog
+                isOpen={isRevertDialogOpen}
+                onClose={handleRevertCancel}
+                onConfirm={handleRevertConfirm}
+                workOrderTitle={workOrderDetails?.title || initialWorkOrder.title}
+                hasInvoice={!!workOrderDetails?.invoice_id}
+                warningMessage={revertWarning}
+                isReverting={updateWorkOrderStatusMutation.isPending}
             />
         </div>
     )

@@ -87,7 +87,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
             setErrors({})
         } else if (customerData) {
             // Existing customer - populate data
-            onFieldChange('customer', customerData.name)
+            onFieldChange('customer', customerData.name || '')
             onFieldChange('customerEmail', customerData.email || '')
             onFieldChange('customerPhone', customerData.phone || '')
             onFieldChange('customerAddress', customerData.address || '')
@@ -152,7 +152,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                     <Avatar className="h-16 w-16">
                         <AvatarImage src="" />
                         <AvatarFallback className="bg-[#b22222] text-white text-xl">
-                            {getInitials(customerName)}
+                            {customerName ? getInitials(customerName) : ''}
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-4">
@@ -163,7 +163,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                     <CustomerSearchBar
                                         onSelect={(customer) => {
                                             // Handle customer selection from search bar
-                                            onFieldChange('customer', customer.customer_name)
+                                            onFieldChange('customer', customer.customer_name || '')
                                             onFieldChange('customerEmail', customer.customer_email || '')
                                             onFieldChange('customerPhone', customer.customer_phone || '')
                                             onFieldChange('customerAddress', customer.customer_address || '')
@@ -194,7 +194,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         id="customer_name"
                                         className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customer ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Customer Name"
-                                        value={customerName}
+                                        value={customerName || ''}
                                         onChange={(e) => {
                                             if (!isEditing) return
                                             onFieldChange('customer', e.target.value)
@@ -217,7 +217,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         id="customer_phone"
                                         className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerPhone ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Phone Number"
-                                        value={formatPhoneNumber(customerPhone)}
+                                        value={customerPhone ? formatPhoneNumber(customerPhone) : ''}
                                         onChange={(e) => {
                                             if (!isEditing) return
                                             onFieldChange('customerPhone', e.target.value)
@@ -244,7 +244,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full ${errors.customerEmail ? 'border-red-500 focus:border-red-500' : ''}`}
                                         placeholder="Email Address"
                                         type="email"
-                                        value={customerEmail}
+                                        value={customerEmail == 'NULL' ? '' : customerEmail || ''}
                                         onChange={(e) => {
                                             if (!isEditing) return
                                             onFieldChange('customerEmail', e.target.value)
@@ -266,7 +266,7 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         id="customer_address"
                                         className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border-border dark:border-[#2a2a2a] focus:ring-gray-500 w-full"
                                         placeholder="Address"
-                                        value={customerAddress}
+                                        value={customerAddress == 'NULL' ? '' : customerAddress || ''}
                                         onChange={(e) => isEditing && onFieldChange('customerAddress', e.target.value)}
                                         disabled={!isEditing || (isCreating && customerId !== "new")}
                                     />

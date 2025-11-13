@@ -30,6 +30,10 @@ const defaultShopForm: AdminShopFormData = {
     shopAddress: '',
     shopCity: '',
     shopProvince: '',
+    shopOwner: '',
+    shopAbout: '',
+    shopTagline: '',
+    defaultHourlyRate: 99.99,
     website: '',
     businessNumber: null,
     hstNumber: null,
@@ -102,7 +106,19 @@ export default function CreateUserPage() {
                 setUserErrors([])
                 setShopErrors([])
             } else {
-                toast.error(result.error || 'Failed to create user')
+                // Display validation errors if available
+                if (result.details && Array.isArray(result.details)) {
+                    if (result.error?.includes('User')) {
+                        setUserErrors(result.details)
+                    } else if (result.error?.includes('Shop')) {
+                        setShopErrors(result.details)
+                    } else {
+                        // Show all errors in toast
+                        toast.error(`${result.error}: ${result.details.join(', ')}`)
+                    }
+                } else {
+                    toast.error(result.error || 'Failed to create user')
+                }
             }
         } catch (error) {
             console.error('Error creating user:', error)

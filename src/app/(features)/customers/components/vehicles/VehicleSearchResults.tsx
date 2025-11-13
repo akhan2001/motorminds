@@ -68,7 +68,7 @@ export const VehicleSearchResults: React.FC<VehicleSearchResultsProps> = ({
                                         )}
                                         {vehicle.mileage && (
                                             <span>
-                                                <strong className="text-gray-300">Mileage:</strong> {vehicle.mileage.toLocaleString()} mi
+                                                <strong className="text-gray-300">Mileage:</strong> {vehicle.mileage.toLocaleString()} kms
                                             </span>
                                         )}
                                     </div>

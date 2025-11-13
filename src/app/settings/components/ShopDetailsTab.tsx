@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react"
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 import { UseFormReturn } from "react-hook-form"
 import { Loader2 } from "lucide-react"
 
@@ -35,6 +36,8 @@ interface ShopDetailsTabProps {
     setNewService: (value: string) => void
     handleAddService: (e: React.KeyboardEvent<HTMLInputElement>) => void
     removeService: (service: string) => void
+    onSave?: () => void
+    isSaving?: boolean
 }
 
 // Loading component for lazy-loaded sections
@@ -54,11 +57,32 @@ export function ShopDetailsTab({
     newService,
     setNewService,
     handleAddService,
-    removeService
+    removeService,
+    onSave,
+    isSaving
 }: ShopDetailsTabProps) {
     return (
         <div className="space-y-6">
-            <h3 className="text-xl font-medium text-foreground">Shop Details</h3>
+            <div className="flex items-center justify-between">
+                <h3 className="text-xl font-medium text-foreground">Shop Details</h3>
+                {onSave && (
+                    <Button
+                        type="button"
+                        onClick={onSave}
+                        disabled={isSaving}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            "Save"
+                        )}
+                    </Button>
+                )}
+            </div>
             
             {/* Shop Information Section */}
             <div className="space-y-6">

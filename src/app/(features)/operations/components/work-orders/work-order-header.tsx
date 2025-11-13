@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useMessagingAvailability } from '../../hooks/use-work-order-messaging'
 
 interface WorkOrderHeaderProps {
     className?: string
@@ -27,12 +26,9 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
     onStatusTrackersClick
 }) => {
     const router = useRouter()
-    const messagingAvailability = useMessagingAvailability()
 
     const handleMessagesClick = () => {
-        if (messagingAvailability.isAvailable) {
-            router.push('/messages')
-        }
+        window.open('/messaging', '_blank')
     }
 
     return (
@@ -84,30 +80,16 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    disabled={!messagingAvailability.isAvailable}
                                     onClick={handleMessagesClick}
-                                    className={cn(
-                                        "bg-transparent border-border text-muted-foreground",
-                                        messagingAvailability.isAvailable
-                                            ? "hover:bg-accent hover:text-foreground"
-                                            : "opacity-50 cursor-not-allowed"
-                                    )}
+                                    className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                                 >
-                                    {messagingAvailability.isLoading ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    ) : !messagingAvailability.isAvailable ? (
-                                        <Lock className="h-4 w-4 mr-2" />
-                                    ) : (
-                                        <MessageSquare className="h-4 w-4 mr-2" />
-                                    )}
-                                    Messages
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Automation / Campaigns
                                 </Button>
                             </TooltipTrigger>
-                            {!messagingAvailability.isAvailable && !messagingAvailability.isLoading && (
-                                <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                    <p>Contact admin to set up messaging</p>
-                                </TooltipContent>
-                            )}
+                            <TooltipContent className="bg-popover text-popover-foreground border-border">
+                                <p>Open messaging hub to view templates and queue</p>
+                            </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 

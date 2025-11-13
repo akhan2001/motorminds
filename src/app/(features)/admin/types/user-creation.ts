@@ -15,6 +15,10 @@ export interface AdminShopFormData {
     shopAddress: string
     shopCity: string
     shopProvince: string
+    shopOwner?: string
+    shopAbout?: string
+    shopTagline?: string
+    defaultHourlyRate?: number
     website: string
     businessNumber: string | null
     hstNumber: string | null
