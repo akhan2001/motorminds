@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import { X, Tag } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,6 +12,7 @@ import { TechnicianDropdown } from "@/app/(features)/technician"
 import { useAuth } from "../../../hooks/use-auth"
 import { StatusTrackerSelector } from "../status-tracker-selector"
 import type { StatusTracker } from "../../../types/status-tracker"
+import { WORK_ORDER_TITLE_CATEGORIES, OTHER_CATEGORY } from "../../../lib/work-order-title-categories"
 
 export interface WorkOrderInformationProps {
     title: string
@@ -48,6 +50,54 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
     className = ""
 }) => {
     const { shopId } = useAuth()
+    
+    // Determine if current title is a category or custom
+    const isTitleACategory = WORK_ORDER_TITLE_CATEGORIES.includes(title as any)
+    const [selectedCategory, setSelectedCategory] = useState<string>(
+        isTitleACategory ? title : OTHER_CATEGORY
+    )
+    const [customTitle, setCustomTitle] = useState<string>(
+        isTitleACategory ? '' : title
+    )
+
+    // Update selected category when title prop changes externally
+    useEffect(() => {
+        const isCategory = WORK_ORDER_TITLE_CATEGORIES.includes(title as any)
+        if (isCategory) {
+            setSelectedCategory(title)
+            setCustomTitle('')
+        } else if (title) {
+            setSelectedCategory(OTHER_CATEGORY)
+            setCustomTitle(title)
+        }
+    }, [title])
+
+    // Handle category selection
+    const handleCategoryChange = (value: string) => {
+        setSelectedCategory(value)
+        if (value === OTHER_CATEGORY) {
+            // If switching to "Other", keep current custom title or clear it
+            if (customTitle) {
+                onFieldChange('title', customTitle)
+            } else {
+                onFieldChange('title', '')
+            }
+        } else {
+            // If selecting a category, set it as title and clear custom
+            setCustomTitle('')
+            onFieldChange('title', value)
+        }
+    }
+
+    // Handle custom title input
+    const handleCustomTitleChange = (value: string) => {
+        const formattedValue = value
+            .slice(0, 100)
+            .toLowerCase()
+            .replace(/\b\w/g, (char) => char.toUpperCase())
+        setCustomTitle(formattedValue)
+        onFieldChange('title', formattedValue)
+    }
 
     // Handle technician selection
     const handleTechnicianSelect = (technicianId: string, technicianData?: any) => {
@@ -74,27 +124,44 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <Label className="text-muted-foreground dark:text-gray-400">Title *</Label>
-                            <Input
-                                value={title}
-                                onChange={(e) => {
-                                    if (isEditing) {
-                                        // Convert to title case and limit to 30 characters
-                                        const value = e.target.value
-                                            .slice(0, 100)
-                                            .toLowerCase()
-                                            .replace(/\b\w/g, (char) => char.toUpperCase())
-                                        onFieldChange('title', value)
-                                    }
-                                }}
-                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
-                                readOnly={!isEditing}
-                                maxLength={100}
-                                placeholder={isEditing ? "Brief Title for Work Order" : ""}
-                            />
-                            {isEditing && (
-                                <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
-                                    {title.length}/100 characters
-                                </p>
+                            {isEditing ? (
+                                <div className="space-y-2">
+                                    <Select
+                                        value={selectedCategory}
+                                        onValueChange={handleCategoryChange}
+                                    >
+                                        <SelectTrigger className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500">
+                                            <SelectValue placeholder="Select category" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-popover dark:bg-[#1a1a1a] text-popover-foreground dark:text-white border-border dark:border-[#2a2a2a]">
+                                            {WORK_ORDER_TITLE_CATEGORIES.map((category) => (
+                                                <SelectItem 
+                                                    key={category} 
+                                                    value={category}
+                                                    className="hover:bg-accent dark:hover:bg-[#2a2a2a]"
+                                                >
+                                                    {category}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {selectedCategory === OTHER_CATEGORY && (
+                                        <Input
+                                            value={customTitle}
+                                            onChange={(e) => handleCustomTitleChange(e.target.value)}
+                                            className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
+                                            maxLength={100}
+                                            placeholder="Enter custom title..."
+                                        />
+                                    )}
+                                    <p className="text-xs text-muted-foreground dark:text-gray-500">
+                                        {selectedCategory === OTHER_CATEGORY ? customTitle.length : selectedCategory.length}/100 characters
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="h-10 px-3 bg-background dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md flex items-center">
+                                    <span className="text-foreground dark:text-white text-sm">{title || '—'}</span>
+                                </div>
                             )}
                         </div>
                         <div className="space-y-1.5">
