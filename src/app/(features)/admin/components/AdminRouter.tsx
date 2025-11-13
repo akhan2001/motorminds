@@ -11,10 +11,10 @@ export function AdminRouter() {
 
     if (loading) {
         return (
-            <div className="h-screen flex items-center justify-center bg-[#0d0d0d]">
+            <div className="h-screen flex items-center justify-center bg-background">
                 <div className="text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-                    <p className="text-gray-400">Loading admin interface...</p>
+                    <p className="text-muted-foreground">Loading admin interface...</p>
                 </div>
             </div>
         )
@@ -22,10 +22,10 @@ export function AdminRouter() {
 
     if (error) {
         return (
-            <div className="h-screen flex items-center justify-center bg-[#0d0d0d]">
+            <div className="h-screen flex items-center justify-center bg-background">
                 <div className="text-center">
                     <p className="text-red-500 mb-2">Error loading admin context</p>
-                    <p className="text-gray-400 text-sm">{error}</p>
+                    <p className="text-muted-foreground text-sm">{error}</p>
                 </div>
             </div>
         )
@@ -33,10 +33,10 @@ export function AdminRouter() {
 
     if (!adminType) {
         return (
-            <div className="h-screen flex items-center justify-center bg-[#0d0d0d]">
+            <div className="h-screen flex items-center justify-center bg-background">
                 <div className="text-center">
                     <p className="text-red-500 mb-2">Access Denied</p>
-                    <p className="text-gray-400 text-sm">You do not have admin privileges</p>
+                    <p className="text-muted-foreground text-sm">You do not have admin privileges</p>
                 </div>
             </div>
         )
@@ -51,10 +51,10 @@ export function AdminRouter() {
             return <ShopDashboard />
         default:
             return (
-                <div className="h-screen flex items-center justify-center bg-[#0d0d0d]">
+                <div className="h-screen flex items-center justify-center bg-background">
                     <div className="text-center">
                         <p className="text-red-500 mb-2">Unknown Admin Type</p>
-                        <p className="text-gray-400 text-sm">Invalid admin configuration</p>
+                        <p className="text-muted-foreground text-sm">Invalid admin configuration</p>
                     </div>
                 </div>
             )

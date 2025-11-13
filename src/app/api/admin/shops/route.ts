@@ -1,17 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const supabase = await createClient();
         
-        // Get all shops
+        // Get authenticated user
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            )
+        }
+
+        // Check if super admin
+        const { searchParams } = new URL(request.url)
+        const isSuperAdmin = searchParams.get('super_admin') === 'true'
+        
+        if (isSuperAdmin) {
+            // Verify user is super admin
+            const { data: userData } = await supabase
+                .from('users')
+                .select('role')
+                .eq('id', user.id)
+                .single()
+
+            const userRole = userData?.role?.toUpperCase()
+            const isSuperAdminUser = userRole === 'SUPER-ADMIN' || userRole === 'SUPER_ADMIN'
+            
+            if (!isSuperAdminUser) {
+                return NextResponse.json(
+                    { error: 'Forbidden - Super admin access required' },
+                    { status: 403 }
+                )
+            }
+        }
+        
+        // Get all shops with organization info
         const { data: shops, error } = await supabase
             .from('shops')
-            .select('*')
+            .select(`
+                *,
+                organizations:organizations(id, name)
+            `)
             .order('shop_name', { ascending: true });
         
         if (error) {
@@ -22,20 +55,12 @@ export async function GET(request: NextRequest) {
             );
         }
         
-        // Get customer counts for each shop
-        const shopsWithStats = await Promise.all(
-            (shops || []).map(async (shop) => {
-                const { count: customerCount } = await supabase
-                    .from('customers')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('shop_id', shop.id);
-                
-                return {
-                    ...shop,
-                    customer_count: customerCount || 0
-                };
-            })
-        );
+        // Format shops with organization name
+        const shopsWithStats = (shops || []).map((shop: any) => ({
+            ...shop,
+            organization_name: shop.organizations?.name || null,
+            organization_id: shop.organization_id || null
+        }));
         
         return NextResponse.json({
             shops: shopsWithStats,

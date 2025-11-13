@@ -103,11 +103,7 @@ export default function AdminNav() {
 						key={item.href}
 						asChild
 						variant={isActive ? 'default' : 'outline'}
-						className={
-							isActive
-								? 'bg-blue-600 hover:bg-blue-700 whitespace-nowrap'
-								: 'border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white whitespace-nowrap'
-						}
+						className="whitespace-nowrap"
 						size="sm"
 					>
 						<Link href={item.href}>

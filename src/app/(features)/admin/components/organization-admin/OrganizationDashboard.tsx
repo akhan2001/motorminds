@@ -14,7 +14,7 @@ export function OrganizationDashboard() {
     const { organizationId } = useAdminContext()
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
@@ -24,16 +24,16 @@ export function OrganizationDashboard() {
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/admin" className="text-gray-400 hover:text-white">
+                                        <Link href="/admin" className="text-muted-foreground hover:text-foreground">
                                             Admin
                                         </Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator>
-                                    <Slash className="text-gray-600" />
+                                    <Slash className="text-muted-foreground" />
                                 </BreadcrumbSeparator>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="text-white">
+                                    <BreadcrumbPage className="text-foreground">
                                         Organization Admin
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
@@ -45,67 +45,67 @@ export function OrganizationDashboard() {
 
                         {/* Header */}
                         <div className="mb-6">
-                            <h1 className="text-3xl font-bold text-white mb-2">
+                            <h1 className="text-3xl font-bold text-foreground mb-2">
                                 Organization Management
                             </h1>
-                            <p className="text-gray-400">
+                            <p className="text-muted-foreground">
                                 Manage your MSO shops and resources
                             </p>
                         </div>
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Total Shops</p>
-                                            <p className="text-2xl font-bold text-white">0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Total Shops</p>
+                                            <p className="text-2xl font-bold text-foreground">0</p>
                                         </div>
-                                        <div className="p-3 bg-blue-600/20 rounded-full">
-                                            <Building2 className="h-6 w-6 text-blue-400" />
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                                            <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Total Users</p>
-                                            <p className="text-2xl font-bold text-white">0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                                            <p className="text-2xl font-bold text-foreground">0</p>
                                         </div>
-                                        <div className="p-3 bg-purple-600/20 rounded-full">
-                                            <Users className="h-6 w-6 text-purple-400" />
+                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Organization Revenue</p>
-                                            <p className="text-2xl font-bold text-white">$0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Organization Revenue</p>
+                                            <p className="text-2xl font-bold text-foreground">$0</p>
                                         </div>
-                                        <div className="p-3 bg-green-600/20 rounded-full">
-                                            <TrendingUp className="h-6 w-6 text-green-400" />
+                                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
+                                            <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Active Work Orders</p>
-                                            <p className="text-2xl font-bold text-white">0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Active Work Orders</p>
+                                            <p className="text-2xl font-bold text-foreground">0</p>
                                         </div>
-                                        <div className="p-3 bg-orange-600/20 rounded-full">
-                                            <Package className="h-6 w-6 text-orange-400" />
+                                        <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
+                                            <Package className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                                         </div>
                                     </div>
                                 </CardContent>
@@ -114,18 +114,18 @@ export function OrganizationDashboard() {
 
                         {/* Quick Actions */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-blue-600/20 rounded-lg">
-                                            <Building2 className="h-6 w-6 text-blue-400" />
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                                            <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Shops</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Shops</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Manage all shops in your organization
                                     </p>
-                                    <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+                                    <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                                         <Link href="/admin/organization/shops">
                                             Manage Shops
                                         </Link>
@@ -133,18 +133,18 @@ export function OrganizationDashboard() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-purple-600/20 rounded-lg">
-                                            <Users className="h-6 w-6 text-purple-400" />
+                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Users</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Users</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Cross-shop user management
                                     </p>
-                                    <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+                                    <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                                         <Link href="/admin/organization/users">
                                             Manage Users
                                         </Link>
@@ -152,18 +152,18 @@ export function OrganizationDashboard() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-green-600/20 rounded-lg">
-                                            <BarChart3 className="h-6 w-6 text-green-400" />
+                                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                                            <BarChart3 className="h-6 w-6 text-green-600 dark:text-green-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Analytics</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Analytics</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Organization-wide analytics
                                     </p>
-                                    <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+                                    <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
                                         <Link href="/admin/shared/analytics">
                                             View Analytics
                                         </Link>
@@ -171,18 +171,18 @@ export function OrganizationDashboard() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-orange-600/20 rounded-lg">
-                                            <Package className="h-6 w-6 text-orange-400" />
+                                        <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                                            <Package className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Shared Resources</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Shared Resources</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Parts catalog, pricing, procedures
                                     </p>
-                                    <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
+                                    <Button asChild className="w-full bg-orange-600 hover:bg-orange-700 text-white">
                                         <Link href="/admin/organization/resources">
                                             Manage Resources
                                         </Link>
@@ -190,18 +190,18 @@ export function OrganizationDashboard() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-gray-600/20 rounded-lg">
-                                            <Settings className="h-6 w-6 text-gray-400" />
+                                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                            <Settings className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Organization Settings</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Organization Settings</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Configure organization settings
                                     </p>
-                                    <Button asChild className="w-full bg-gray-600 hover:bg-gray-700">
+                                    <Button asChild className="w-full bg-gray-600 hover:bg-gray-700 text-white">
                                         <Link href="/admin/organization/settings">
                                             Settings
                                         </Link>
