@@ -21,7 +21,8 @@ import {
     LocationTab, 
     ShopDetailsTab, 
     ImagesTab, 
-    SocialMediaTab 
+    SocialMediaTab,
+    EmployeesTab
 } from "./components"
 
 const supabase = createClient()
@@ -226,7 +227,7 @@ export function ProfileForm({ shopId }: { shopId: string }) {
     useEffect(() => {
         const handleHashChange = () => {
             const hash = window.location.hash.replace('#', '')
-            if (hash && ['basic', 'location', 'details', 'images', 'social'].includes(hash)) {
+            if (hash && ['basic', 'location', 'details', 'images', 'social', 'employees'].includes(hash)) {
                 setActiveTab(hash)
             }
         }
@@ -550,7 +551,7 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
-                            <TabsList className="grid grid-cols-5 mb-8 bg-slate-50 dark:bg-muted border-none text-foreground">
+                            <TabsList className="grid grid-cols-6 mb-8 bg-slate-50 dark:bg-muted border-none text-foreground">
                                 <TabsTrigger 
                                     value="basic" 
                                     className={`data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative ${
@@ -631,6 +632,15 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                                         )}
                                     </span>
                                 </TabsTrigger>
+                                <TabsTrigger 
+                                    value="employees" 
+                                    className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground hover:bg-muted relative"
+                                    onClick={() => window.location.hash = '#employees'}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        Employees
+                                    </span>
+                                </TabsTrigger>
                             </TabsList>
                             
                             {/* Basic Information Tab */}
@@ -666,6 +676,11 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                             {/* Social Media Tab */}
                             <TabsContent value="social">
                                 <SocialMediaTab form={form} />
+                            </TabsContent>
+                            
+                            {/* Employees Tab */}
+                            <TabsContent value="employees">
+                                <EmployeesTab shopId={shopId} />
                             </TabsContent>
                         </Tabs>
                         
