@@ -119,6 +119,19 @@ export function useCreateInvoice() {
 
     return useMutation({
         mutationFn: async (data: InvoiceFormData & { shop_id: string }) => {
+            // Validate walk-in customer data
+            if (data.customer_type === 'walk_in') {
+                if (!data.walk_in_vehicle_info?.year || !data.walk_in_vehicle_info?.make || 
+                    !data.walk_in_vehicle_info?.model || !data.walk_in_vehicle_info?.license_plate) {
+                    throw new Error('Year, make, model, and license plate are required for walk-in customers')
+                }
+            } else {
+                // For registered customers, customer_id is required
+                if (!data.customer_id) {
+                    throw new Error('Customer selection is required for registered customers')
+                }
+            }
+
             // Generate invoice number
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
             
@@ -136,6 +149,8 @@ export function useCreateInvoice() {
                 ...data,
                 invoice_number: invoiceNumber,
                 display_id: invoiceNumber,
+                // For walk-in customers, customer_id should be null
+                customer_id: data.customer_type === 'walk_in' ? null : data.customer_id,
                 subtotal,
                 tax_amount,
                 total_amount,
@@ -355,7 +370,7 @@ export function useCreateInvoiceFromWorkOrder() {
                     display_id: invoiceNumber,
                     shop_id,
                     work_order_id,
-                    customer_id: workOrder.customer_id,
+                    customer_id: workOrder.customer_id, // null for walk-in customers
                     vehicle_id: workOrder.vehicle_id,
                     title: workOrder.title || 'Service Invoice',
                     description: workOrder.description,
@@ -372,6 +387,9 @@ export function useCreateInvoiceFromWorkOrder() {
                     fees_total: invoiceItems.filter(i => i.item_type === 'fee' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0),
                     invoice_items: invoiceItems,
                     issue_date: new Date().toISOString(),
+                    // Preserve walk-in customer information from work order
+                    customer_type: workOrder.customer_type || 'registered',
+                    walk_in_vehicle_info: workOrder.walk_in_vehicle_info,
                 })
                 .select()
                 .single()

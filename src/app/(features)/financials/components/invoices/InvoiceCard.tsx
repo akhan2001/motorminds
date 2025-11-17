@@ -70,22 +70,44 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                 {/* Customer Info */}
                 <div>
                     <p className="text-xs uppercase mb-0.5 text-muted-foreground dark:text-gray-400">CUSTOMER</p>
-                    <p className="text-xs font-medium text-foreground dark:text-white">{invoice.customer?.customer_name || 'Unknown'}</p>
-                    {invoice.customer?.customer_email && (
-                        <p className="text-xs text-muted-foreground dark:text-gray-400">{invoice.customer.customer_email}</p>
+                    {invoice.customer_type === 'walk_in' ? (
+                        <>
+                            <p className="text-xs font-medium text-foreground dark:text-white">Walk-in Customer</p>
+                            <p className="text-xs text-muted-foreground dark:text-gray-400">No customer record</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-xs font-medium text-foreground dark:text-white">{invoice.customer?.customer_name || 'Unknown'}</p>
+                            {invoice.customer?.customer_email && (
+                                <p className="text-xs text-muted-foreground dark:text-gray-400">{invoice.customer.customer_email}</p>
+                            )}
+                        </>
                     )}
                 </div>
 
                 {/* Vehicle Info */}
-                {invoice.vehicle && (
+                {(invoice.vehicle || invoice.walk_in_vehicle_info) && (
                     <div>
                         <p className="text-xs uppercase mb-0.5 text-muted-foreground dark:text-gray-400">VEHICLE</p>
-                        <p className="text-xs font-medium text-foreground dark:text-white">
-                            {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
-                        </p>
-                        {invoice.vehicle.license_plate && (
-                            <p className="text-xs text-muted-foreground dark:text-gray-400">Plate: {invoice.vehicle.license_plate}</p>
-                        )}
+                        {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
+                            <>
+                                <p className="text-xs font-medium text-foreground dark:text-white">
+                                    {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
+                                </p>
+                                {invoice.walk_in_vehicle_info.license_plate && (
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400">Plate: {invoice.walk_in_vehicle_info.license_plate}</p>
+                                )}
+                            </>
+                        ) : invoice.vehicle ? (
+                            <>
+                                <p className="text-xs font-medium text-foreground dark:text-white">
+                                    {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
+                                </p>
+                                {invoice.vehicle.license_plate && (
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400">Plate: {invoice.vehicle.license_plate}</p>
+                                )}
+                            </>
+                        ) : null}
                     </div>
                 )}
 

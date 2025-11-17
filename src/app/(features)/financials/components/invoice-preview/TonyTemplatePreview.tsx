@@ -83,47 +83,79 @@ export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop })
                 <div className="flex p-1.5">
                     <div className="w-[40%] pr-2">
                         <div className="text-[10pt] text-blue-900 mb-1 uppercase">Customer Information</div>
-                        <div className="flex flex-row">
-                            <span className="text-[10pt] text-blue-900">CUSTOMER NAME:</span>
-                            <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">{invoice.customer?.customer_name || ''}</span>
-                        </div>
-                        <div className="flex flex-row">
-                            <span className="text-[10pt] text-blue-900">ADDRESS:</span>
-                            <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">{invoice.customer?.customer_address || ''}</span>
-                        </div>
-                        <div className="flex flex-row">
-                            <span className="text-[10pt] text-blue-900">CITY, PROV:</span>
-                            <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]"></span>
-                        </div>
-                        <div className="flex flex-row">
-                            <span className="text-[10pt] text-blue-900">POSTAL CODE:</span>
-                            <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]"></span>
-                        </div>
-                        <div className="flex flex-row">
-                            <span className="text-[10pt] text-blue-900">TELEPHONE:</span>
-                            <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">{invoice.customer?.customer_phone || ''}</span>
-                        </div>
+                        {invoice.customer_type === 'walk_in' ? (
+                            <div className="flex flex-row">
+                                <span className="text-[10pt] text-blue-900 font-bold">WALK-IN CUSTOMER</span>
+                                <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">(No customer record)</span>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex flex-row">
+                                    <span className="text-[10pt] text-blue-900">CUSTOMER NAME:</span>
+                                    <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">{invoice.customer?.customer_name || ''}</span>
+                                </div>
+                                <div className="flex flex-row">
+                                    <span className="text-[10pt] text-blue-900">ADDRESS:</span>
+                                    <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">{invoice.customer?.customer_address || ''}</span>
+                                </div>
+                                <div className="flex flex-row">
+                                    <span className="text-[10pt] text-blue-900">CITY, PROV:</span>
+                                    <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]"></span>
+                                </div>
+                                <div className="flex flex-row">
+                                    <span className="text-[10pt] text-blue-900">POSTAL CODE:</span>
+                                    <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]"></span>
+                                </div>
+                                <div className="flex flex-row">
+                                    <span className="text-[10pt] text-blue-900">TELEPHONE:</span>
+                                    <span className="text-[10pt] text-blue-900 flex-1 min-h-[12px]">{invoice.customer?.customer_phone || ''}</span>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="w-[35%] px-2">
                         <div className="flex flex-col">
                             <div className="text-[10pt] text-blue-900 mb-1 uppercase">Vehicle Information</div>
-                            <div className="flex flex-row">
-                                <span className="text-[10pt] text-blue-900">MAKE:</span>
-                                <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.make || ''}</span>
-                            </div>
-                            <div className="flex flex-row">
-                                <span className="text-[10pt] text-blue-900">MODEL:</span>
-                                <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.model || ''}</span>
-                            </div>
-                            <div className="flex flex-row">
-                                <span className="text-[10pt] text-blue-900">YEAR:</span>
-                                <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.year || ''}</span>
-                            </div>
-                            <div className="flex flex-row">
-                                <span className="text-[10pt] text-blue-900">PLATE:</span>
-                                <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.license_plate || ''}</span>
-                            </div>
+                            {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
+                                <>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">MAKE:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.walk_in_vehicle_info.make || ''}</span>
+                                    </div>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">MODEL:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.walk_in_vehicle_info.model || ''}</span>
+                                    </div>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">YEAR:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.walk_in_vehicle_info.year || ''}</span>
+                                    </div>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">PLATE:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.walk_in_vehicle_info.license_plate || ''}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">MAKE:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.make || ''}</span>
+                                    </div>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">MODEL:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.model || ''}</span>
+                                    </div>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">YEAR:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.year || ''}</span>
+                                    </div>
+                                    <div className="flex flex-row">
+                                        <span className="text-[10pt] text-blue-900">PLATE:</span>
+                                        <span className="text-[10pt] text-blue-900"> {invoice.vehicle?.license_plate || ''}</span>
+                                    </div>
+                                </>
+                            )}
                             <div className="flex flex-row">
                                 <span className="text-[10pt] text-blue-900">ODOMETER:</span>
                                 {/* <span className="text-[8pt] text-blue-900">{invoice.mileage || ''}</span> */}
