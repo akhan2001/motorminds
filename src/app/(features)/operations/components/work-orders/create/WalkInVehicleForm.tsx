@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertCircle, Search, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { decodeVin } from '@/app/(features)/customers/vehicles/lib/vin-decode'
 import { VehicleSearchByPlate } from '../../../../customers/components/vehicles'
+import { VEHICLE_MAKES } from '../../../../customers/types/vehicle'
 import type { WalkInVehicleInfo, CustomerVehicle } from '../../../../customers/types/vehicle'
 
 interface WalkInVehicleFormProps {
@@ -31,6 +33,10 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 }) => {
     const [errors, setErrors] = useState<Partial<Record<keyof WalkInVehicleInfo, string>>>({})
     const [vinDecoding, setVinDecoding] = useState(false)
+    // Show custom make input if current make is not in the predefined list
+    const [showCustomMake, setShowCustomMake] = useState(() => {
+        return data.make ? !VEHICLE_MAKES.includes(data.make) : false
+    })
 
     const handleFieldChange = (field: keyof WalkInVehicleInfo, value: string | number) => {
         const newData = { ...data, [field]: value }
@@ -44,7 +50,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
     const validateField = (field: keyof WalkInVehicleInfo, value: string | number | undefined): string | undefined => {
         if (value === undefined || value === '') {
-            if (['year', 'make', 'model', 'license_plate'].includes(field as string)) {
+            if (['year', 'make', 'model'].includes(field as string)) {
                 const fieldName = field as string
                 return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`
             }
@@ -68,11 +74,6 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                     return 'Model is required'
                 }
                 break
-            case 'license_plate':
-                if (!value || (typeof value === 'string' && value.trim().length === 0)) {
-                    return 'License plate is required'
-                }
-                break
             case 'mileage':
                 if (value && (typeof value === 'string' ? parseInt(value) : value) < 0) {
                     return 'Mileage must be a positive number'
@@ -90,7 +91,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
     }
 
     const isFormValid = () => {
-        const requiredFields: (keyof WalkInVehicleInfo)[] = ['year', 'make', 'model', 'license_plate']
+        const requiredFields: (keyof WalkInVehicleInfo)[] = ['year', 'make', 'model']
         return requiredFields.every(field => {
             const value = data[field]
             return value && (typeof value === 'string' ? value.trim().length > 0 : true)
@@ -137,7 +138,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
     const handleVehicleSelected = (vehicle: CustomerVehicle) => {
         // Convert CustomerVehicle to WalkInVehicleInfo format
         const vehicleInfo: WalkInVehicleInfo = {
-            year: vehicle.year ? parseInt(vehicle.year.toString()) : undefined,
+            year: vehicle.year ? parseInt(vehicle.year.toString()) : new Date().getFullYear(),
             make: vehicle.make || '',
             model: vehicle.model || '',
             license_plate: vehicle.license_plate || '',
@@ -158,7 +159,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
     const handleVehicleCreated = (vehicle: CustomerVehicle) => {
         // Convert CustomerVehicle to WalkInVehicleInfo format and populate form
         const vehicleInfo: WalkInVehicleInfo = {
-            year: vehicle.year ? parseInt(vehicle.year.toString()) : undefined,
+            year: vehicle.year ? parseInt(vehicle.year.toString()) : new Date().getFullYear(),
             make: vehicle.make || '',
             model: vehicle.model || '',
             license_plate: vehicle.license_plate || '',
@@ -220,17 +221,64 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
                         <div className="space-y-1.5">
                             <Label htmlFor="make" className="text-foreground">Make *</Label>
-                            <Input
-                                id="make"
-                                value={data.make || ''}
-                                onChange={(e) => handleFieldChange('make', e.target.value)}
-                                onBlur={() => handleBlur('make')}
-                                placeholder="Toyota"
-                                disabled={!isEditing}
-                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
-                                    errors.make ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
-                                }`}
-                            />
+                            {showCustomMake ? (
+                                <div className="space-y-2">
+                                    <Input
+                                        id="make"
+                                        value={data.make || ''}
+                                        onChange={(e) => handleFieldChange('make', e.target.value)}
+                                        onBlur={() => handleBlur('make')}
+                                        placeholder="Enter custom make"
+                                        disabled={!isEditing}
+                                        className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                            errors.make ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
+                                        }`}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowCustomMake(false)
+                                            handleFieldChange('make', '')
+                                        }}
+                                        className="text-xs text-muted-foreground hover:text-foreground"
+                                    >
+                                        Select from list
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Select
+                                    value={data.make && VEHICLE_MAKES.includes(data.make) ? data.make : ''}
+                                    onValueChange={(value) => {
+                                        if (value === 'custom') {
+                                            setShowCustomMake(true)
+                                        } else {
+                                            handleFieldChange('make', value)
+                                        }
+                                    }}
+                                    disabled={!isEditing}
+                                >
+                                    <SelectTrigger 
+                                        id="make"
+                                        className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                            errors.make ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
+                                        }`}
+                                    >
+                                        <SelectValue placeholder="Select make" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                                        {VEHICLE_MAKES.map((make) => (
+                                            <SelectItem key={make} value={make} className="hover:bg-accent dark:hover:bg-[#2a2a2a]">
+                                                {make}
+                                            </SelectItem>
+                                        ))}
+                                        <SelectItem value="custom" className="text-red-600 dark:text-red-400 hover:bg-accent dark:hover:bg-[#2a2a2a]">
+                                            + Add New Vehicle Make
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
                             {errors.make && (
                                 <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                     <AlertCircle className="h-3 w-3" />
@@ -263,7 +311,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="license_plate" className="text-foreground">License Plate *</Label>
+                            <Label htmlFor="license_plate" className="text-foreground">License Plate</Label>
                             <Input
                                 id="license_plate"
                                 value={data.license_plate || ''}
@@ -362,7 +410,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
 // Export the validation function for use in parent components
 export const validateWalkInVehicleInfo = (data: WalkInVehicleInfo): boolean => {
-    const requiredFields: (keyof WalkInVehicleInfo)[] = ['year', 'make', 'model', 'license_plate']
+    const requiredFields: (keyof WalkInVehicleInfo)[] = ['year', 'make', 'model']
     return requiredFields.every(field => {
         const value = data[field]
         return value && (typeof value === 'string' ? value.trim().length > 0 : true)
