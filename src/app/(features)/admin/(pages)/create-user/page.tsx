@@ -136,22 +136,50 @@ export default function CreateUserPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] p-6">
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <div className="flex items-center gap-4 mb-4">
-                        <Button asChild variant="outline" className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]">
-                            <Link href="/admin/users">
-                                <ArrowLeft className="h-4 w-4 mr-2" />
-                                Go Back
-                            </Link>
-                        </Button>
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Create New User</h1>
-                    <p className="text-gray-400">Create a new user account and optionally associate them with a shop.</p>
-                </div>
+        <div className="h-screen flex flex-col bg-background">
+            <Nav />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-6 max-w-4xl mx-auto w-full">
+                        {/* Breadcrumb Navigation */}
+                        <Breadcrumb className="mb-4">
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink asChild>
+                                        <Link href="/admin" className="text-muted-foreground hover:text-foreground">
+                                            Admin
+                                        </Link>
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator>
+                                    <Slash className="text-muted-foreground" />
+                                </BreadcrumbSeparator>
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage className="text-foreground">
+                                        Create User
+                                    </BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Admin Navigation */}
+                        <AdminNav />
+
+                        {/* Header */}
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 className="text-3xl font-bold text-foreground mb-2">Create New User</h1>
+                                <p className="text-muted-foreground">Create a new user account and optionally associate them with a shop.</p>
+                            </div>
+                            <Button asChild variant="outline">
+                                <Link href="/admin/users">
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Go Back
+                                </Link>
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
                     {/* User Form */}
                     <UserForm
                         userForm={userForm}
@@ -223,7 +251,9 @@ export default function CreateUserPage() {
                             )}
                         </Button>
                     </div>
-                </form>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     )

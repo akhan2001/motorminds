@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Package, Settings, BarChart3, Users, FileText, Database, Building2, UserPlus } from 'lucide-react'
 import { useAdminContext } from './admin-context/useAdminContext'
-import type { AdminType } from '@/types/core/user'
+import type { AdminType } from '../types/admin'
 
 interface AdminNavItem {
 	name: string
@@ -30,7 +30,7 @@ const adminNavItems: AdminNavItem[] = [
 		adminTypes: ['super-admin']
 	},
 	{
-		name: 'Shops',
+		name: 'All Shops',
 		href: '/admin/super-admin/shops',
 		icon: Building2,
 		adminTypes: ['super-admin']
@@ -55,10 +55,23 @@ const adminNavItems: AdminNavItem[] = [
 	},
 	// Organization Admin Only
 	{
-		name: 'Shops',
+		name: 'My Shops',
 		href: '/admin/organization/shops',
 		icon: Building2,
 		adminTypes: ['organization-admin']
+	},
+	{
+		name: 'Organization Users',
+		href: '/admin/organization/users',
+		icon: Users,
+		adminTypes: ['organization-admin']
+	},
+	// Shop Admin Only
+	{
+		name: 'Shop Users',
+		href: '/admin/shop/users',
+		icon: Users,
+		adminTypes: ['shop-admin']
 	},
 	// All Admin Types - Users
 	{

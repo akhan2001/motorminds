@@ -1,13 +1,15 @@
 'use client'
 
-import { useAdminContext } from '@/contexts/admin-context'
+import { useAdminContextWithRole } from '@/contexts/admin-context'
+import { useAuth } from '@/hooks/core/useAuth'
 import { SuperAdminDashboard } from './super-admin/SuperAdminDashboard'
 import { OrganizationDashboard } from './organization-admin/OrganizationDashboard'
 import { ShopDashboard } from './shop-admin/ShopDashboard'
 import { Loader2 } from 'lucide-react'
 
 export function AdminRouter() {
-    const { adminType, loading, error } = useAdminContext()
+    const { user } = useAuth()
+    const { adminType, loading, error } = useAdminContextWithRole(user?.role || null)
 
     if (loading) {
         return (

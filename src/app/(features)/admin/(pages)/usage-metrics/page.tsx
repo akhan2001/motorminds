@@ -139,9 +139,9 @@ export default function UsageMetricsPage() {
     }
 
     const renderShopMetrics = (title: string, metrics: ShopMetric[], icon: React.ReactNode) => (
-        <Card className="bg-[#111111] border-[#2a2a2a]">
+        <Card>
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
+                <CardTitle className="text-foreground flex items-center gap-2">
                     {icon}
                     {title}
                 </CardTitle>
@@ -150,19 +150,19 @@ export default function UsageMetricsPage() {
                 {metrics.length > 0 ? (
                     <div className="space-y-2">
                         {metrics.slice(0, 10).map((shop, index) => (
-                            <div key={shop.shopId} className="flex justify-between items-center p-2 bg-[#0a0a0a] rounded">
-                                <span className="text-gray-300 text-sm">{shop.shopName}</span>
-                                <span className="text-white font-medium">{shop.count}</span>
+                            <div key={shop.shopId} className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                                <span className="text-foreground text-sm">{shop.shopName}</span>
+                                <span className="text-foreground font-medium">{shop.count}</span>
                             </div>
                         ))}
                         {metrics.length > 10 && (
-                            <div className="text-xs text-gray-400 text-center pt-2">
+                            <div className="text-xs text-muted-foreground text-center pt-2">
                                 And {metrics.length - 10} more shops...
                             </div>
                         )}
                     </div>
                 ) : (
-                    <div className="text-center py-4 text-gray-400">
+                    <div className="text-center py-4 text-muted-foreground">
                         No data available for this period
                     </div>
                 )}
@@ -171,26 +171,26 @@ export default function UsageMetricsPage() {
     )
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">
                         {/* Breadcrumb Navigation */}
-                        <Breadcrumb className="mb-6">
+                        <Breadcrumb className="mb-4">
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/admin" className="text-gray-400 hover:text-gray-300">
+                                        <Link href="/admin" className="text-muted-foreground hover:text-foreground">
                                             Admin
                                         </Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator>
-                                    <Slash className="h-4 w-4" />
+                                    <Slash className="text-muted-foreground" />
                                 </BreadcrumbSeparator>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="text-white">
+                                    <BreadcrumbPage className="text-foreground">
                                         Usage Metrics
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
@@ -203,19 +203,19 @@ export default function UsageMetricsPage() {
                         {/* Header */}
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h1 className="text-3xl font-bold text-white mb-2">
+                                <h1 className="text-3xl font-bold text-foreground mb-2">
                                     Usage Metrics
                                 </h1>
-                                <p className="text-gray-400">
+                                <p className="text-muted-foreground">
                                     Comprehensive platform usage insights across all shops
                                 </p>
                             </div>
                         </div>
 
                         {/* Date Range Selection */}
-                        <Card className="bg-[#111111] border-[#2a2a2a] mb-6">
+                        <Card className="mb-6">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-foreground flex items-center gap-2">
                                     <Calendar className="h-5 w-5" />
                                     Date Range Selection
                                 </CardTitle>
@@ -223,27 +223,27 @@ export default function UsageMetricsPage() {
                             <CardContent>
                                 <div className="flex gap-4 items-end">
                                     <div className="flex-1">
-                                        <Label className="text-gray-300">Start Date</Label>
+                                        <Label className="text-muted-foreground">Start Date</Label>
                                         <Input
                                             type="date"
                                             value={state.startDate}
                                             onChange={(e) => setState(prev => ({ ...prev, startDate: e.target.value }))}
-                                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                            className="bg-background border-border text-foreground"
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <Label className="text-gray-300">End Date</Label>
+                                        <Label className="text-muted-foreground">End Date</Label>
                                         <Input
                                             type="date"
                                             value={state.endDate}
                                             onChange={(e) => setState(prev => ({ ...prev, endDate: e.target.value }))}
-                                            className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                            className="bg-background border-border text-foreground"
                                         />
                                     </div>
                                     <Button
                                         onClick={fetchMetrics}
                                         disabled={state.loading}
-                                        className="bg-blue-600 hover:bg-blue-700"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
                                     >
                                         {state.loading ? (
                                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -261,52 +261,52 @@ export default function UsageMetricsPage() {
                             <>
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                                    <Card>
                                         <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Building2 className="h-5 w-5 text-blue-400" />
+                                                <Building2 className="h-5 w-5 text-blue-500" />
                                                 <div>
-                                                    <div className="text-sm text-gray-400">Total Shops</div>
-                                                    <div className="text-xl font-bold text-white">
+                                                    <div className="text-sm text-muted-foreground">Total Shops</div>
+                                                    <div className="text-xl font-bold text-foreground">
                                                         {state.metrics.shopOnboardingSummary.totalShops}
                                                     </div>
                                                 </div>
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                                    <Card>
                                         <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Receipt className="h-5 w-5 text-green-400" />
+                                                <Receipt className="h-5 w-5 text-green-500" />
                                                 <div>
-                                                    <div className="text-sm text-gray-400">Total Invoices</div>
-                                                    <div className="text-xl font-bold text-white">
+                                                    <div className="text-sm text-muted-foreground">Total Invoices</div>
+                                                    <div className="text-xl font-bold text-foreground">
                                                         {state.metrics.invoices.reduce((sum, shop) => sum + shop.count, 0)}
                                                     </div>
                                                 </div>
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                                    <Card>
                                         <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Wrench className="h-5 w-5 text-orange-400" />
+                                                <Wrench className="h-5 w-5 text-orange-500" />
                                                 <div>
-                                                    <div className="text-sm text-gray-400">Total Work Orders</div>
-                                                    <div className="text-xl font-bold text-white">
+                                                    <div className="text-sm text-muted-foreground">Total Work Orders</div>
+                                                    <div className="text-xl font-bold text-foreground">
                                                         {state.metrics.workOrders.reduce((sum, shop) => sum + shop.count, 0)}
                                                     </div>
                                                 </div>
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                                    <Card>
                                         <CardContent className="p-4">
                                             <div className="flex items-center gap-2">
-                                                <Bot className="h-5 w-5 text-purple-400" />
+                                                <Bot className="h-5 w-5 text-purple-500" />
                                                 <div>
-                                                    <div className="text-sm text-gray-400">MIA Messages</div>
-                                                    <div className="text-xl font-bold text-white">
+                                                    <div className="text-sm text-muted-foreground">MIA Messages</div>
+                                                    <div className="text-xl font-bold text-foreground">
                                                         {state.metrics.miadiagnostics.totalMessages}
                                                     </div>
                                                 </div>
@@ -316,9 +316,9 @@ export default function UsageMetricsPage() {
                                 </div>
 
                                 {/* Download Actions */}
-                                <Card className="bg-[#111111] border-[#2a2a2a] mb-6">
+                                <Card className="mb-6">
                                     <CardHeader>
-                                        <CardTitle className="text-white flex items-center gap-2">
+                                        <CardTitle className="text-foreground flex items-center gap-2">
                                             <Download className="h-5 w-5" />
                                             Download Report
                                         </CardTitle>
@@ -329,7 +329,6 @@ export default function UsageMetricsPage() {
                                                 onClick={() => downloadReport('text')}
                                                 disabled={state.downloading}
                                                 variant="outline"
-                                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
                                             >
                                                 {state.downloading ? (
                                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -342,7 +341,6 @@ export default function UsageMetricsPage() {
                                                 onClick={() => downloadReport('json')}
                                                 disabled={state.downloading}
                                                 variant="outline"
-                                                className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
                                             >
                                                 {state.downloading ? (
                                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -360,56 +358,56 @@ export default function UsageMetricsPage() {
                                     {renderShopMetrics(
                                         'Invoices by Shop',
                                         state.metrics.invoices,
-                                        <Receipt className="h-5 w-5 text-green-400" />
+                                        <Receipt className="h-5 w-5 text-green-500" />
                                     )}
                                     {renderShopMetrics(
                                         'Work Orders by Shop',
                                         state.metrics.workOrders,
-                                        <Wrench className="h-5 w-5 text-orange-400" />
+                                        <Wrench className="h-5 w-5 text-orange-500" />
                                     )}
                                     {renderShopMetrics(
                                         'Appointments by Shop',
                                         state.metrics.appointments,
-                                        <Calendar className="h-5 w-5 text-blue-400" />
+                                        <Calendar className="h-5 w-5 text-blue-500" />
                                     )}
                                     {renderShopMetrics(
                                         'SMS Messages by Shop',
                                         state.metrics.smsMessages,
-                                        <MessageSquare className="h-5 w-5 text-cyan-400" />
+                                        <MessageSquare className="h-5 w-5 text-cyan-500" />
                                     )}
                                 </div>
 
                                 {/* MIA Diagnostics */}
-                                <Card className="bg-[#111111] border-[#2a2a2a] mt-6">
+                                <Card className="mt-6">
                                     <CardHeader>
-                                        <CardTitle className="text-white flex items-center gap-2">
-                                            <Bot className="h-5 w-5 text-purple-400" />
+                                        <CardTitle className="text-foreground flex items-center gap-2">
+                                            <Bot className="h-5 w-5 text-purple-500" />
                                             MIA Diagnostics
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            <div className="bg-[#0a0a0a] p-4 rounded">
-                                                <div className="text-sm text-gray-400">Total Messages</div>
-                                                <div className="text-2xl font-bold text-white">
+                                            <div className="bg-muted/50 p-4 rounded">
+                                                <div className="text-sm text-muted-foreground">Total Messages</div>
+                                                <div className="text-2xl font-bold text-foreground">
                                                     {state.metrics.miadiagnostics.totalMessages}
                                                 </div>
                                             </div>
-                                            <div className="bg-[#0a0a0a] p-4 rounded">
-                                                <div className="text-sm text-gray-400">Unique Sessions</div>
-                                                <div className="text-2xl font-bold text-white">
+                                            <div className="bg-muted/50 p-4 rounded">
+                                                <div className="text-sm text-muted-foreground">Unique Sessions</div>
+                                                <div className="text-2xl font-bold text-foreground">
                                                     {state.metrics.miadiagnostics.uniqueSessions}
                                                 </div>
                                             </div>
                                         </div>
                                         {state.metrics.miadiagnostics.messagesByShop.length > 0 && (
                                             <div>
-                                                <h4 className="text-white font-medium mb-3">Messages by Shop</h4>
+                                                <h4 className="text-foreground font-medium mb-3">Messages by Shop</h4>
                                                 <div className="space-y-2">
                                                     {state.metrics.miadiagnostics.messagesByShop.slice(0, 10).map((shop) => (
-                                                        <div key={shop.shopId} className="flex justify-between items-center p-2 bg-[#0a0a0a] rounded">
-                                                            <span className="text-gray-300 text-sm">{shop.shopName}</span>
-                                                            <span className="text-white font-medium">{shop.count}</span>
+                                                        <div key={shop.shopId} className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                                                            <span className="text-foreground text-sm">{shop.shopName}</span>
+                                                            <span className="text-foreground font-medium">{shop.count}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -422,13 +420,13 @@ export default function UsageMetricsPage() {
 
                         {/* Empty State */}
                         {!state.metrics && !state.loading && (
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="text-center py-12">
-                                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-white mb-2">
+                                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                    <h3 className="text-lg font-medium text-foreground mb-2">
                                         No Metrics Data
                                     </h3>
-                                    <p className="text-gray-400 mb-4">
+                                    <p className="text-muted-foreground mb-4">
                                         Select a date range and click "Generate Report" to view usage metrics
                                     </p>
                                 </CardContent>
