@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { toast } from 'sonner'
-import { Loader2, Plus, User, Building, ArrowLeft } from 'lucide-react'
+import { Loader2, Plus, User, Building, ArrowLeft, Slash } from 'lucide-react'
 import { AdminUserFormData, AdminShopFormData, CreateUserRequest } from '../../types/user-creation'
 import { UserCreationService } from '../../services/user-creation'
 import UserForm from '../../components/user-creation/UserForm'
 import ShopForm from '../../components/user-creation/ShopForm'
+import AdminNav from '../../components/AdminNav'
+import { Nav } from '@/app/components/nav'
 import Link from 'next/link'
 
 const defaultUserForm: AdminUserFormData = {
@@ -188,7 +191,7 @@ export default function CreateUserPage() {
                     />
 
                     {/* Shop Creation Toggle */}
-                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                    <Card>
                         <CardContent className="pt-6">
                             <div className="flex items-center space-x-3">
                                 <Switch
@@ -197,10 +200,10 @@ export default function CreateUserPage() {
                                     onCheckedChange={handleCreateShopToggle}
                                 />
                                 <div className="flex-1">
-                                    <Label htmlFor="create-shop" className="text-white font-medium">
+                                    <Label htmlFor="create-shop" className="text-foreground font-medium">
                                         Create Shop for this User
                                     </Label>
-                                    <p className="text-sm text-gray-400 mt-1">
+                                    <p className="text-sm text-muted-foreground mt-1">
                                         Create a shop and associate it with this user. Only applicable for shop owners.
                                     </p>
                                 </div>
@@ -229,7 +232,6 @@ export default function CreateUserPage() {
                                 setUserErrors([])
                                 setShopErrors([])
                             }}
-                            className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
                         >
                             Reset
                         </Button>
