@@ -59,39 +59,38 @@ export interface CostEstimate {
  * Get shop hourly labor rate from settings
  */
 async function getShopLaborRate(shopId: number): Promise<number> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
-        .from('shop_settings')
-        .select('hourly_labor_rate')
-        .eq('shop_id', shopId)
+        .from('shops')
+        .select('default_hourly_rate')
+        .eq('id', shopId)
         .single();
 
-    if (error || !data || !data.hourly_labor_rate) {
+    if (error || !data || !data.default_hourly_rate) {
         // Default to $100/hour if not set
-        return 100.0;
+        return 99.99;
     }
 
-    return data.hourly_labor_rate;
+    return data.default_hourly_rate;
 }
 
 /**
  * Get shop tax rate from settings
  */
 async function getShopTaxRate(shopId: number): Promise<number> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data, error } = await supabase
-        .from('shop_settings')
+        .from('shops')
         .select('tax_rate')
-        .eq('shop_id', shopId)
+        .eq('id', shopId)
         .single();
 
     if (error || !data || !data.tax_rate) {
-        // Default to 8% if not set
-        return 0.08;
+        // Default to 13% if not set in database
+        return 0.13;
     }
-
     return data.tax_rate / 100; // Convert percentage to decimal
 }
 
