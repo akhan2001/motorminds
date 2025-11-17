@@ -1,6 +1,6 @@
 // src/app/(features)/ai/AIDiagnostics/tools/cost-estimation-tools.ts
 
-import { tool } from 'ai';
+import { tool } from 'ai'
 import { z } from 'zod';
 import { calculateRepairCost } from '../lib/cost-calculator';
 
@@ -18,7 +18,7 @@ export const estimateRepairCostTool = tool({
         })).optional().describe('List of parts required for the repair'),
         laborHoursOverride: z.number().optional().describe('Override labor hours if known (otherwise will look up from MOTOR)')
     }),
-    execute: async ({ baseVehicleId, shopId, operation, parts, laborHoursOverride }) => {
+    execute: async ({ baseVehicleId, shopId, operation, parts, laborHoursOverride }: { baseVehicleId: number, shopId: number, operation: string, parts: { partNumber: string, description: string, quantity: number, unitPrice?: number }[], laborHoursOverride?: number }) => {
         try {
             const estimate = await calculateRepairCost({
                 baseVehicleId,

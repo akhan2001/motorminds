@@ -2,7 +2,7 @@
 
 import { tool } from 'ai';
 import { z } from 'zod';
-import { buildVehicleContext } from '../lib/context-builder';
+import { buildVehicleContext } from './context-builder';
 
 export const getVehicleHistoryTool = tool({
     description: 'Get complete vehicle service history including all work orders, invoices, appointments, and repairs. This provides critical context for diagnosing recurring issues or related problems.',

@@ -2,7 +2,7 @@
 
 import { NextRequest } from 'next/server';
 import { getShopIdForUser } from '@/utils/get-shop-id';
-import { buildVehicleContext, formatVehicleContextForAI } from '@/app/(features)/ai/AIDiagnostics/lib/context-builder';
+import { buildVehicleContext, formatVehicleContextForAI } from '@/app/(features)/ai/AIDiagnostics/tools/context-builder';
 
 /**
  * Vehicle context endpoint
