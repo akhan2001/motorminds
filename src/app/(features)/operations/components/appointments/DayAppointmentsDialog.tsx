@@ -9,7 +9,6 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Plus, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import type { AppointmentWithDetails } from '../../types/appointment'
@@ -64,8 +63,8 @@ export function DayAppointmentsDialog({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-md bg-white dark:bg-[#1a1a1a]">
-                <DialogHeader>
+            <DialogContent className="max-w-md max-h-[90vh] bg-white dark:bg-[#1a1a1a] flex flex-col p-0">
+                <DialogHeader className="px-6 pt-6 pb-4">
                     <DialogTitle className="text-xl font-semibold text-foreground">
                         {formattedDate}
                     </DialogTitle>
@@ -76,7 +75,7 @@ export function DayAppointmentsDialog({
 
                 {sortedAppointments.length === 0 ? (
                     // Empty state
-                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                    <div className="flex flex-col items-center justify-center py-12 space-y-4 px-6">
                         <Clock className="h-12 w-12 text-muted-foreground opacity-50" />
                         <div className="text-center space-y-2">
                             <p className="text-foreground font-medium">
@@ -96,9 +95,9 @@ export function DayAppointmentsDialog({
                     </div>
                 ) : (
                     // Appointments list
-                    <div className="space-y-4">
-                        <ScrollArea className="max-h-[400px]">
-                            <div className="space-y-2 pr-4">
+                    <div className="flex flex-col flex-1 min-h-0 px-6 pb-6 overflow-hidden">
+                        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                            <div className="space-y-2 pr-2">
                                 {sortedAppointments.map((appointment) => (
                                     <div
                                         key={appointment.id}
@@ -131,10 +130,10 @@ export function DayAppointmentsDialog({
                                     </div>
                                 ))}
                             </div>
-                        </ScrollArea>
+                        </div>
 
                         {/* Add Appointment Button */}
-                        <div className="pt-2 border-t border-border">
+                        <div className="pt-4 mt-4 border-t border-border flex-shrink-0">
                             <Button
                                 onClick={handleCreateAppointment}
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"

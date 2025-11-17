@@ -13,7 +13,7 @@ import EmployeeCostTable from "./components/EmployeeCostTable"
 import EditEmployeeModal from "./components/EditEmployeeModal"
 import { deactivateEmployee } from "./utils/employee-management"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import AddEmployeeForm from "@/app/settings/components/AddEmployeeForm"
+import { EmployeeForm } from "@/app/settings/components/EmployeeForm"
 import { generatePayrollReport, generatePayrollCsv } from "../utils/report-generator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -193,17 +193,16 @@ export default function PayrollPage() {
         />
 
         <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
-            <DialogContent className="bg-white dark:bg-card border-border text-foreground">
-                <DialogHeader>
-                    <DialogTitle>Add New Employee</DialogTitle>
-                </DialogHeader>
+            <DialogContent className="bg-white dark:bg-card border-border text-foreground max-w-2xl">
                 {shopId && (
-                    <AddEmployeeForm 
+                    <EmployeeForm 
                         shopId={shopId} 
-                        onAdded={() => {
+                        employee={null}
+                        onSuccess={() => {
                             setAddModalOpen(false);
                             fetchPayrollData();
-                        }} 
+                        }}
+                        onCancel={() => setAddModalOpen(false)}
                     />
                 )}
             </DialogContent>
