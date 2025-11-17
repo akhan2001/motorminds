@@ -76,6 +76,12 @@ const adminNavItems: AdminNavItem[] = [
 		adminTypes: ['super-admin']
 	},
 	{
+		name: 'Usage Metrics',
+		href: '/admin/usage-metrics',
+		icon: BarChart3,
+		adminTypes: ['super-admin']
+	},
+	{
 		name: 'Settings',
 		href: '/admin/settings',
 		icon: Settings,
