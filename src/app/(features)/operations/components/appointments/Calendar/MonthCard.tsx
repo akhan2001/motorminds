@@ -226,31 +226,50 @@ export function MonthCard({
 
     if (isLoading) {
         return (
-            <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
-                <CardHeader className="flex-shrink-0">
-                    <Skeleton className="h-6 w-32 bg-muted" />
-                </CardHeader>
-                <CardContent className="flex-1 min-h-0">
+            <div className="h-full flex flex-col">
+                {/* Loading Header */}
+                <div className="pb-4 flex-shrink-0 px-6">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-6 w-32" />
+                        <div className="flex items-center gap-1">
+                            <Skeleton className="h-8 w-8" />
+                            <Skeleton className="h-8 w-16" />
+                            <Skeleton className="h-8 w-8" />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Loading Calendar Content */}
+                <div className="flex-1 min-h-0 px-6">
                     <ScrollArea className="h-full">
+                        {/* Week Headers */}
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                            {Array.from({ length: 7 }).map((_, i) => (
+                                <Skeleton key={i} className="h-6 w-full" />
+                            ))}
+                        </div>
+
+                        {/* Calendar Grid */}
                         <div className="grid grid-cols-7 gap-1">
                             {Array.from({ length: 42 }).map((_, i) => (
-                                <Skeleton key={i} className="h-20 bg-muted" />
+                                <Skeleton key={i} className="h-20" />
                             ))}
                         </div>
                     </ScrollArea>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         )
     }
 
     return (
-        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col">
-            <CardHeader className="pb-4 flex-shrink-0">
+        <div className="h-full flex flex-col">
+            {/* Month Navigation Header */}
+            <div className="pb-4 flex-shrink-0 px-6">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-foreground flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         {format(currentMonth, 'MMMM yyyy')}
-                    </CardTitle>
+                    </h2>
                     
                     <div className="flex items-center gap-1">
                         <Button
@@ -287,9 +306,10 @@ export function MonthCard({
                         </Button>
                     </div>
                 </div>
-            </CardHeader>
+            </div>
 
-            <CardContent className="flex-1 min-h-0">
+            {/* Calendar Content */}
+            <div className="flex-1 min-h-0 px-6">
                 <ScrollArea className="h-full">
                     {/* Week Headers */}
                     <div className="grid grid-cols-7 gap-1 mb-2">
@@ -305,7 +325,7 @@ export function MonthCard({
                         {calendarDays.map(renderDayCell)}
                     </div>
                 </ScrollArea>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }

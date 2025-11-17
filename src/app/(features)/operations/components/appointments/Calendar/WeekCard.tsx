@@ -31,8 +31,9 @@ interface WeekCardProps {
 }
 
 const TIME_SLOTS = [
-    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', 
-    '14:00', '15:00', '16:00', '17:00', '18:00'
+    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', 
+    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', 
+    '16:00', '16:30', '17:00', '17:30', '18:00'
 ]
 
 const getStatusColor = (status: AppointmentStatus) => {
@@ -93,10 +94,32 @@ export function WeekCard({
     const appointmentsByDateTime = useMemo(() => {
         if (!appointments) return {}
         
-        return appointments.reduce((acc, appointment) => {
+        const grouped = appointments.reduce((acc, appointment) => {
             const dateKey = appointment.appointment_date
             const timeKey = appointment.start_time || '09:00'
-            const key = `${dateKey}-${timeKey}`
+            
+            // Try to match to nearest time slot
+            const appointmentTime = timeKey.substring(0, 5) // Get HH:MM format
+            let matchedTimeSlot = appointmentTime
+            
+            // If exact match not found, find closest time slot
+            if (!TIME_SLOTS.includes(appointmentTime)) {
+                const appointmentMinutes = parseInt(appointmentTime.split(':')[0]) * 60 + parseInt(appointmentTime.split(':')[1])
+                let closestSlot = TIME_SLOTS[0]
+                let closestDiff = Math.abs(appointmentMinutes - (parseInt(TIME_SLOTS[0].split(':')[0]) * 60 + parseInt(TIME_SLOTS[0].split(':')[1])))
+                
+                TIME_SLOTS.forEach(slot => {
+                    const slotMinutes = parseInt(slot.split(':')[0]) * 60 + parseInt(slot.split(':')[1])
+                    const diff = Math.abs(appointmentMinutes - slotMinutes)
+                    if (diff < closestDiff) {
+                        closestDiff = diff
+                        closestSlot = slot
+                    }
+                })
+                matchedTimeSlot = closestSlot
+            }
+            
+            const key = `${dateKey}-${matchedTimeSlot}`
             
             if (!acc[key]) {
                 acc[key] = []
@@ -104,6 +127,8 @@ export function WeekCard({
             acc[key].push(appointment)
             return acc
         }, {} as Record<string, AppointmentWithDetails[]>)
+        
+        return grouped
     }, [appointments])
 
     // Get available slots by date and time
@@ -162,6 +187,7 @@ export function WeekCard({
         const isAvailable = availabilityByDateTime[key]
         const isToday = isSameDay(date, new Date())
         const isSelected = isSameDay(date, selectedDate)
+        
 
         if (slotAppointments.length > 0) {
             // Show appointment
@@ -198,14 +224,14 @@ export function WeekCard({
                     key={key}
                     onClick={() => handleSlotClickInternal(date, time)}
                     className={`
-                        p-2 m-1 rounded-lg border border-dashed border-[#2a2a2a] cursor-pointer
+                        p-2 m-1 rounded-lg border border-dashed border-border cursor-pointer
                         transition-all duration-200 hover:border-blue-500 hover:bg-blue-500/5
                         ${isSelected ? 'border-blue-500/50 bg-blue-500/5' : ''}
                         group
                     `}
                 >
                     <div className="flex items-center justify-center h-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Plus className="h-4 w-4 text-blue-400" />
+                        <Plus className="h-4 w-4 text-blue-500" />
                     </div>
                 </div>
             )
@@ -214,7 +240,7 @@ export function WeekCard({
             return (
                 <div
                     key={key}
-                    className="p-2 m-1 rounded-lg bg-[#0a0a0a] border border-[#1a1a1a] opacity-30"
+                    className="p-2 m-1 rounded-lg bg-muted/30 border border-border opacity-30"
                 >
                     <div className="h-8"></div>
                 </div>
@@ -224,36 +250,55 @@ export function WeekCard({
 
     if (isLoading) {
         return (
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-                <CardHeader>
-                    <Skeleton className="h-6 w-40 bg-[#2a2a2a]" />
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-8 gap-2">
-                        {Array.from({ length: 96 }).map((_, i) => (
-                            <Skeleton key={i} className="h-16 bg-[#2a2a2a]" />
-                        ))}
+            <div className="h-full flex flex-col">
+                {/* Loading Header */}
+                <div className="pb-4 flex-shrink-0 px-6">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-6 w-40" />
+                        <div className="flex items-center gap-1">
+                            <Skeleton className="h-8 w-8" />
+                            <Skeleton className="h-8 w-20" />
+                            <Skeleton className="h-8 w-8" />
+                        </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+
+                {/* Loading Week Content */}
+                <div className="flex-1 min-h-0 px-6">
+                    <ScrollArea className="h-full">
+                        <div className="grid grid-cols-8 gap-1">
+                            {/* Time column and day headers */}
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <Skeleton key={i} className="h-12" />
+                            ))}
+                            
+                            {/* Time slots */}
+                            {Array.from({ length: 88 }).map((_, i) => (
+                                <Skeleton key={i + 8} className="h-16" />
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+            </div>
         )
     }
 
     return (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader className="pb-4">
+        <div className="h-full flex flex-col">
+            {/* Week Navigation Header */}
+            <div className="pb-4 flex-shrink-0 px-6">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         Week of {format(weekStart, 'MMM d, yyyy')}
-                    </CardTitle>
+                    </h2>
                     
                     <div className="flex items-center gap-1">
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={handlePreviousWeek}
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
@@ -267,7 +312,7 @@ export function WeekCard({
                                 onWeekChange?.(today)
                                 onDateSelect?.(format(today, 'yyyy-MM-dd'))
                             }}
-                            className="px-3 h-8 text-xs text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             This Week
                         </Button>
@@ -276,19 +321,20 @@ export function WeekCard({
                             variant="ghost"
                             size="sm"
                             onClick={handleNextWeek}
-                            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
-            </CardHeader>
+            </div>
 
-            <CardContent>
-                <ScrollArea className="h-[600px]">
+            {/* Week Calendar Content */}
+            <div className="flex-1 min-h-0 px-6">
+                <ScrollArea className="h-full">
                     <div className="grid grid-cols-8 gap-1">
                         {/* Time column header */}
-                        <div className="text-center text-xs font-medium text-gray-400 py-2 border-b border-[#2a2a2a]">
+                        <div className="text-center text-xs font-medium text-muted-foreground py-2 border-b border-border">
                             Time
                         </div>
                         
@@ -302,14 +348,14 @@ export function WeekCard({
                                     key={format(day, 'yyyy-MM-dd')}
                                     onClick={() => handleDateClick(day)}
                                     className={`
-                                        text-center text-xs font-medium py-2 border-b border-[#2a2a2a] cursor-pointer
-                                        transition-colors duration-200 hover:bg-[#2a2a2a]
-                                        ${isToday ? 'text-blue-400' : 'text-gray-400'}
-                                        ${isSelected ? 'bg-blue-500/10 text-blue-300' : ''}
+                                        text-center text-xs font-medium py-2 border-b border-border cursor-pointer
+                                        transition-colors duration-200 hover:bg-accent
+                                        ${isToday ? 'text-blue-500' : 'text-muted-foreground'}
+                                        ${isSelected ? 'bg-blue-500/10 text-blue-500' : ''}
                                     `}
                                 >
                                     <div>{format(day, 'EEE')}</div>
-                                    <div className={`mt-1 ${isToday ? 'text-blue-400 font-bold' : ''}`}>
+                                    <div className={`mt-1 ${isToday ? 'text-blue-500 font-bold' : ''}`}>
                                         {format(day, 'd')}
                                     </div>
                                 </div>
@@ -320,7 +366,7 @@ export function WeekCard({
                         {TIME_SLOTS.map((time) => (
                             <div key={`time-slots-${time}`} className="contents">
                                 {/* Time label */}
-                                <div className="text-center text-xs text-gray-400 py-4 border-r border-[#2a2a2a]">
+                                <div className="text-center text-xs text-muted-foreground py-4 border-r border-border">
                                     {time}
                                 </div>
                                 
@@ -330,7 +376,7 @@ export function WeekCard({
                         ))}
                     </div>
                 </ScrollArea>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }

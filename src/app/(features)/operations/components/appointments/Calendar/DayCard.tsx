@@ -15,9 +15,11 @@ import {
     AlertCircle,
     CheckCircle2,
     Clock3,
-    XCircle
+    XCircle,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react'
-import { format, isSameDay, parseISO } from 'date-fns'
+import { format, isSameDay, parseISO, addDays, subDays } from 'date-fns'
 import { useDayAvailability } from '../../../hooks/appointments/useAvailbility'
 import { useAppointments } from '../../../hooks/appointments/useAppointments'
 import type { AppointmentWithDetails, AppointmentStatus } from '../../../types/appointment'
@@ -29,6 +31,7 @@ interface DayCardProps {
     onAppointmentClick?: (appointment: AppointmentWithDetails) => void
     onSlotClick?: (slot: AvailableSlot & { date: string }) => void
     onCreateAppointment?: (date: string, time?: string) => void
+    onDateChange?: (date: string) => void
     isSelected?: boolean
     compact?: boolean
 }
@@ -71,6 +74,7 @@ export function DayCard({
     onAppointmentClick, 
     onSlotClick, 
     onCreateAppointment,
+    onDateChange,
     isSelected = false,
     compact = false 
 }: DayCardProps) {
@@ -130,110 +134,196 @@ export function DayCard({
         onCreateAppointment?.(date)
     }
 
+    const handlePreviousDay = () => {
+        const currentDate = parseISO(date)
+        const previousDay = subDays(currentDate, 1)
+        const previousDateString = format(previousDay, 'yyyy-MM-dd')
+        onDateChange?.(previousDateString)
+    }
+
+    const handleNextDay = () => {
+        const currentDate = parseISO(date)
+        const nextDay = addDays(currentDate, 1)
+        const nextDateString = format(nextDay, 'yyyy-MM-dd')
+        onDateChange?.(nextDateString)
+    }
+
+    const handleTodayClick = () => {
+        const today = new Date()
+        const todayString = format(today, 'yyyy-MM-dd')
+        onDateChange?.(todayString)
+    }
+
     if (isLoading) {
         return (
-            <Card className={`bg-[#1a1a1a] border-[#2a2a2a] ${compact ? 'h-32' : 'h-96'}`}>
-                <CardHeader className="pb-2">
-                    <Skeleton className="h-5 w-24 bg-[#2a2a2a]" />
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {Array.from({ length: compact ? 2 : 4 }).map((_, i) => (
-                        <Skeleton key={i} className="h-12 w-full bg-[#2a2a2a]" />
-                    ))}
-                </CardContent>
-            </Card>
+            <div className="h-full flex flex-col">
+                {/* Loading Header */}
+                <div className="pb-4 flex-shrink-0 px-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-6 w-32" />
+                            <div className="flex items-center gap-1">
+                                <Skeleton className="h-8 w-8" />
+                                <Skeleton className="h-8 w-16" />
+                                <Skeleton className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <Skeleton className="h-8 w-8" />
+                    </div>
+                    <Skeleton className="h-4 w-24 mt-2" />
+                </div>
+
+                {/* Loading Day Content */}
+                <div className="flex-1 min-h-0 px-6">
+                    <ScrollArea className="h-full">
+                        <div className="space-y-3">
+                            {Array.from({ length: compact ? 2 : 6 }).map((_, i) => (
+                                <div key={i} className="p-4 rounded-lg border border-border">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Skeleton className="h-4 w-4" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-4" />
+                                            <Skeleton className="h-4 w-32" />
+                                        </div>
+                                        {!compact && (
+                                            <>
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="h-4 w-4" />
+                                                    <Skeleton className="h-4 w-40" />
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="h-4 w-4" />
+                                                    <Skeleton className="h-4 w-28" />
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+            </div>
         )
     }
 
     return (
-        <Card className={`
-            bg-[#1a1a1a] border-[#2a2a2a] transition-all duration-200
-            ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'hover:border-[#3a3a3a]'}
-            ${compact ? 'h-32' : 'h-96'}
-        `}>
-            <CardHeader className="pb-2">
+        <div className="h-full flex flex-col">
+            {/* Day Header */}
+            <div className="pb-4 flex-shrink-0 px-6">
                 <div className="flex items-center justify-between">
-                    <CardTitle className={`
-                        text-white ${compact ? 'text-sm' : 'text-base'}
-                        ${isToday ? 'text-blue-400' : ''}
-                    `}>
-                        {compact ? dayNumber : formattedDate}
-                        {isToday && (
-                            <Badge variant="outline" className="ml-2 text-xs border-blue-500 text-blue-400">
+                    <div className="flex items-center gap-4">
+                        <h2 className={`
+                            text-lg font-semibold text-foreground flex items-center gap-2
+                            ${isToday ? 'text-blue-500' : ''}
+                        `}>
+                            <Calendar className="h-5 w-5" />
+                            {formattedDate}
+                            {isToday && (
+                                <Badge variant="outline" className="ml-2 text-xs border-blue-500 text-blue-500">
+                                    Today
+                                </Badge>
+                            )}
+                        </h2>
+                        
+                        {/* Day Navigation Controls */}
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handlePreviousDay}
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleTodayClick}
+                                className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
+                            >
                                 Today
-                            </Badge>
-                        )}
-                    </CardTitle>
+                            </Button>
+                            
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleNextDay}
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                     
-                    {!compact && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleCreateClick}
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
-                        >
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    )}
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCreateClick}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    >
+                        <Plus className="h-4 w-4" />
+                    </Button>
                 </div>
                 
-                {!compact && sortedAppointments.length > 0 && (
-                    <div className="text-xs text-gray-400">
+                {sortedAppointments.length > 0 && (
+                    <div className="text-sm text-muted-foreground mt-1">
                         {sortedAppointments.length} appointment{sortedAppointments.length === 1 ? '' : 's'}
                     </div>
                 )}
-            </CardHeader>
+            </div>
 
-            <CardContent className="pt-0">
-                <ScrollArea className={compact ? 'h-16' : 'h-80'}>
-                    <div className="space-y-2">
+            {/* Day Content */}
+            <div className="flex-1 min-h-0 px-6">
+                <ScrollArea className="h-full">
+                    <div className="space-y-3">
                         {/* Appointments */}
                         {sortedAppointments.map((appointment) => (
                             <div
                                 key={appointment.id}
                                 onClick={() => handleAppointmentClick(appointment)}
                                 className={`
-                                    p-3 rounded-lg border-l-4 cursor-pointer transition-all duration-200
-                                    bg-[#0d0d0d] border-[#2a2a2a] hover:bg-[#1a1a1a]
+                                    p-4 rounded-lg border-l-4 cursor-pointer transition-all duration-200
+                                    bg-card border-border hover:bg-accent/50
                                     ${getStatusColor(appointment.status || 'scheduled')}
                                 `}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
+                                        <div className="flex items-center gap-2 mb-2">
                                             {getStatusIcon(appointment.status || 'scheduled')}
-                                            <span className="text-xs font-medium text-white">
+                                            <span className="text-sm font-medium text-foreground">
                                                 {appointment.start_time} - {appointment.end_time}
                                             </span>
                                         </div>
                                         
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-1">
-                                                <User className="h-3 w-3 text-gray-400" />
-                                                <span className="text-xs text-white truncate">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <User className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm text-foreground truncate">
                                                     {appointment.customer_type === 'walk_in' 
                                                         ? 'Walk-in Customer' 
                                                         : appointment.customer?.customer_name || 'Unknown Customer'}
                                                 </span>
                                             </div>
                                             
-                                            {!compact && (
-                                                <>
-                                                    <div className="flex items-center gap-1">
-                                                        <Car className="h-3 w-3 text-gray-400" />
-                                                        <span className="text-xs text-gray-300 truncate">
-                                                            {appointment.vehicle?.year} {appointment.vehicle?.make} {appointment.vehicle?.model}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <div className="flex items-center gap-1">
-                                                        <Calendar className="h-3 w-3 text-gray-400" />
-                                                        <span className="text-xs text-gray-300 truncate">
-                                                            {appointment.service_type}
-                                                        </span>
-                                                    </div>
-                                                </>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <Car className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm text-muted-foreground truncate">
+                                                    {appointment.vehicle?.year} {appointment.vehicle?.make} {appointment.vehicle?.model}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm text-muted-foreground truncate">
+                                                    {appointment.service_type}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -241,11 +331,11 @@ export function DayCard({
                         ))}
 
                         {/* Available Slots */}
-                        {!compact && availableSlots.length > 0 && (
+                        {availableSlots.length > 0 && (
                             <>
                                 {sortedAppointments.length > 0 && (
-                                    <div className="border-t border-[#2a2a2a] pt-2 mt-2">
-                                        <div className="text-xs text-gray-400 mb-2">Available Times</div>
+                                    <div className="border-t border-border pt-4 mt-4">
+                                        <div className="text-sm font-medium text-foreground mb-3">Available Times</div>
                                     </div>
                                 )}
                                 
@@ -254,16 +344,16 @@ export function DayCard({
                                         key={index}
                                         onClick={() => handleSlotClick(slot)}
                                         className="
-                                            p-2 rounded-lg border border-dashed border-[#2a2a2a] cursor-pointer
+                                            p-3 rounded-lg border border-dashed border-border cursor-pointer
                                             transition-all duration-200 hover:border-blue-500 hover:bg-blue-500/5
                                         "
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Clock className="h-3 w-3 text-gray-400" />
-                                            <span className="text-xs text-gray-300">
+                                            <Clock className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-sm text-foreground">
                                                 {slot.time} - {slot.endTime}
                                             </span>
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-sm text-muted-foreground">
                                                 ({slot.duration}min)
                                             </span>
                                         </div>
@@ -275,7 +365,7 @@ export function DayCard({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setShowAllSlots(!showAllSlots)}
-                                        className="w-full text-xs text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                                        className="w-full text-sm text-muted-foreground hover:text-foreground hover:bg-accent"
                                     >
                                         {showAllSlots ? 'Show Less' : `Show ${dayAvailability?.availableSlots?.filter(s => s.isAvailable).length || 0} More Slots`}
                                     </Button>
@@ -284,23 +374,24 @@ export function DayCard({
                         )}
 
                         {/* Empty State */}
-                        {sortedAppointments.length === 0 && availableSlots.length === 0 && !compact && (
-                            <div className="text-center py-8">
-                                <AlertCircle className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                                <p className="text-sm text-gray-400">No appointments or available slots</p>
+                        {sortedAppointments.length === 0 && availableSlots.length === 0 && (
+                            <div className="text-center py-12">
+                                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                <p className="text-lg font-medium text-foreground mb-2">No appointments scheduled</p>
+                                <p className="text-sm text-muted-foreground mb-4">No appointments or available slots for this day</p>
                                 <Button
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="outline"
                                     onClick={handleCreateClick}
-                                    className="mt-2 text-xs text-blue-400 hover:text-blue-300"
+                                    className="border-border hover:bg-accent"
                                 >
+                                    <Plus className="h-4 w-4 mr-2" />
                                     Create Appointment
                                 </Button>
                             </div>
                         )}
                     </div>
                 </ScrollArea>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }
