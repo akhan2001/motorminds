@@ -111,11 +111,16 @@ export function DayCard({
     const availableSlots = useMemo(() => {
         if (!dayAvailability?.availableSlots) return []
         const slots = dayAvailability.availableSlots.filter(slot => slot.isAvailable)
+        
+        
         return showAllSlots ? slots : slots.slice(0, 3)
-    }, [dayAvailability?.availableSlots, showAllSlots])
+    }, [dayAvailability?.availableSlots, showAllSlots, date])
 
     const hasMoreSlots = dayAvailability?.availableSlots && 
         dayAvailability.availableSlots.filter(slot => slot.isAvailable).length > 3
+
+    // Check if we have any available slots data (even if empty)
+    const hasAvailabilityData = dayAvailability !== undefined && dayAvailability !== null
 
     // Format date for display
     const formattedDate = format(parseISO(date), 'EEE, MMM d')
@@ -373,12 +378,16 @@ export function DayCard({
                             </>
                         )}
 
-                        {/* Empty State */}
-                        {sortedAppointments.length === 0 && availableSlots.length === 0 && (
+                        {/* Empty State - Only show when appointments have loaded and there are none */}
+                        {!appointmentsLoading && sortedAppointments.length === 0 && (
                             <div className="text-center py-12">
                                 <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                                 <p className="text-lg font-medium text-foreground mb-2">No appointments scheduled</p>
-                                <p className="text-sm text-muted-foreground mb-4">No appointments or available slots for this day</p>
+                                {hasAvailabilityData && availableSlots.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground mb-4">No appointments or available slots for this day</p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground mb-4">No appointments scheduled for this day</p>
+                                )}
                                 <Button
                                     variant="outline"
                                     onClick={handleCreateClick}

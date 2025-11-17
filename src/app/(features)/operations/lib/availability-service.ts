@@ -16,10 +16,10 @@ const supabase = createClient()
 
 export class AvailabilityService {
     
-    // Simplified shop configuration
+    // Simplified shop configuration - full day availability (24 hours)
     private static readonly DEFAULT_SHOP_HOURS = {
-        start: '08:00',
-        end: '17:00'
+        start: '00:00',
+        end: '24:00' // Allows slots up to 23:00 (appointments end at 00:00 next day)
     }
 
     private static readonly STANDARD_APPOINTMENT_DURATION = 60 // All appointments are 60 minutes
@@ -121,6 +121,10 @@ export class AvailabilityService {
         // Get existing appointments
         const appointments = await AppointmentService.getAppointmentsByDate(shopId, date)
         
+        // Generate available slots first
+        const availableSlots = this.generateAvailableSlots(appointments, date)
+        
+        
         // Convert appointments to booked slots
         const bookedSlots = await Promise.all(
             appointments.map(async (apt) => {
@@ -134,13 +138,10 @@ export class AvailabilityService {
                     start: startTime,
                     end: endTime,
                     serviceType: apt.service_type,
-                    customerName: details?.customer.customer_name || 'Unknown'
+                    customerName: details?.customer?.customer_name || 'Unknown'
                 }
             })
         )
-
-        // Generate available slots
-        const availableSlots = this.generateAvailableSlots(appointments, date)
 
         return {
             date,
@@ -161,10 +162,10 @@ export class AvailabilityService {
         const slots: AvailableSlot[] = []
         
         // Convert shop hours to minutes
-        const shopStart = this.timeToMinutes(this.DEFAULT_SHOP_HOURS.start) // 8:00 AM = 480 minutes
-        const shopEnd = this.timeToMinutes(this.DEFAULT_SHOP_HOURS.end)     // 5:00 PM = 1020 minutes
+        const shopStart = this.timeToMinutes(this.DEFAULT_SHOP_HOURS.start) // 00:00 = 0 minutes
+        const shopEnd = this.timeToMinutes(this.DEFAULT_SHOP_HOURS.end)     // 24:00 = 1440 minutes (end of day)
         
-        // Generate slots every 30 minutes from 8:00 AM to 5:00 PM
+        // Generate slots every 30 minutes for the full day (24 hours)
         for (let minutes = shopStart; minutes < shopEnd; minutes += this.SLOT_INTERVAL) {
             const slotStart = minutes
             const slotEnd = minutes + this.STANDARD_APPOINTMENT_DURATION
@@ -183,9 +184,11 @@ export class AvailabilityService {
             })
             
             // Check if time is in the past (only for today)
-            const isToday = date === new Date().toISOString().split('T')[0]
-            const now = new Date()
-            const currentMinutes = now.getHours() * 60 + now.getMinutes()
+            // Parse both dates in local timezone to avoid timezone issues
+            const today = new Date()
+            const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+            const isToday = date === todayString
+            const currentMinutes = today.getHours() * 60 + today.getMinutes()
             const isPast = isToday && slotStart <= currentMinutes
             
             slots.push({
@@ -201,12 +204,12 @@ export class AvailabilityService {
 
     /**
      * Check if shop is open on a specific date
+     * Default: Open every day, all day (24/7)
      */
     private static isShopOpen(date: string): boolean {
-        const dayOfWeek = new Date(date).getDay()
-        
-        // Closed on Sundays (0)
-        return dayOfWeek !== 0
+        // Always return true - shop is open 24/7 by default
+        // This ensures Monday (and all days) are always available
+        return true
     }
 
     /**
@@ -221,9 +224,14 @@ export class AvailabilityService {
 
     /**
      * Convert time string (HH:MM) to minutes since midnight
+     * Handles 24:00 as 1440 minutes (end of day)
      */
     private static timeToMinutes(time: string): number {
         const [hours, minutes] = time.split(':').map(Number)
+        // Handle 24:00 as end of day (1440 minutes)
+        if (hours === 24 && minutes === 0) {
+            return 1440
+        }
         return hours * 60 + minutes
     }
 
@@ -240,9 +248,16 @@ export class AvailabilityService {
      * Add days to a date string
      */
     private static addDays(dateString: string, days: number): string {
-        const date = new Date(dateString)
+        // Parse date string (YYYY-MM-DD) in local timezone to avoid day shift
+        const [year, month, day] = dateString.split('-').map(Number)
+        const date = new Date(year, month - 1, day) // month is 0-indexed
         date.setDate(date.getDate() + days)
-        return date.toISOString().split('T')[0]
+        
+        // Format back to YYYY-MM-DD in local timezone
+        const resultYear = date.getFullYear()
+        const resultMonth = String(date.getMonth() + 1).padStart(2, '0')
+        const resultDay = String(date.getDate()).padStart(2, '0')
+        return `${resultYear}-${resultMonth}-${resultDay}`
     }
 
     /**
