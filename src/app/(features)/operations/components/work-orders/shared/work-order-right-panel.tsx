@@ -16,6 +16,10 @@ export interface WorkOrderRightPanelProps {
     technicianId?: string
     customerId?: string | null
     customerType?: 'registered' | 'walk_in'
+    vehicleId?: number
+    baseVehicleId?: number
+    dtcCodes?: string[]
+    reportedIssue?: string
     className?: string
 }
 
@@ -26,6 +30,10 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     technicianId,
     customerId,
     customerType,
+    vehicleId,
+    baseVehicleId,
+    dtcCodes,
+    reportedIssue,
     className = ""
 }) => {
     // Determine if work order is completed (read-only mode)
@@ -201,6 +209,10 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                             workOrderId={workOrderId}
                             shopId={shopId}
                             workOrderStatus={workOrderStatus}
+                            vehicleId={vehicleId}
+                            baseVehicleId={baseVehicleId}
+                            dtcCodes={dtcCodes}
+                            reportedIssue={reportedIssue}
                             className="h-full border-none"
                         />
                     </div>

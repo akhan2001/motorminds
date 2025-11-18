@@ -1,5 +1,9 @@
 'use client'
 
+// ============================================================================
+// ORIGINAL CHAT PAGE - COMMENTED OUT
+// ============================================================================
+/*
 import { Nav } from "../components/nav";
 import { ChatWindow } from "./components/ChatWindow";
 import ChatStart from "./components/ChatStart";
@@ -57,6 +61,69 @@ export default function Page() {
 				emptyStateComponent={<ChatStart />}
 				shopId={shopId}
 			/>
+		</div>
+	);
+}
+*/
+// ============================================================================
+// END OF ORIGINAL CHAT PAGE
+// ============================================================================
+
+// New AI Diagnostics Chat Page
+import { Nav } from "../components/nav";
+import { AIDiagnosticsPanel } from "@/app/(features)/ai/AIDiagnostics/components";
+import { checkUser } from "@/utils/supabase/supabase-auth"
+import { getShopId } from "@/utils/supabase/supabase-shop"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import LoadingPage from "@/components/loading"
+
+export default function Page() {
+	const [user, setUser] = useState<any>(null);
+	const [shopId, setShopId] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const router = useRouter();
+
+	useEffect(() => {
+        async function loadData() {
+            try {
+                setIsLoading(true);
+                const user = await checkUser()
+                if (user) {
+                    setUser(user)
+                    console.log(user.id)
+                    const shopId = await getShopId(user.id)
+                    if (shopId) {
+                        setShopId(shopId)
+                    } else {
+                        console.error("No shop ID found")
+                        router.push("/login");
+                    }
+                } else {
+                    console.error("No user found")
+                    router.push("/login");
+                }
+                setIsLoading(false);
+            } catch (error) {
+                console.error("Authentication error:", error);
+                router.push("/login");
+            }
+        }
+        loadData()
+    }, [])
+
+    if (isLoading) {
+        return <LoadingPage />
+    }
+
+	return (
+		<div className="h-screen bg-white dark:bg-black flex flex-col">
+			<Nav />
+			<div className="flex-1 overflow-hidden">
+				<AIDiagnosticsPanel 
+					className="h-full"
+				/>
+			</div>
 		</div>
 	);
 }
