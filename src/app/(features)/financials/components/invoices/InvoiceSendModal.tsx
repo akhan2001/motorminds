@@ -32,10 +32,13 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
     // Format the default message with actual invoice data
     useEffect(() => {
         if (invoice && isOpen) {
-            const customerName = invoice.customer.customer_name || 'Customer'
+            const isWalkIn = invoice.customer_type === 'walk_in' || !invoice.customer
+            const customerName = invoice.customer?.customer_name || (isWalkIn ? 'Walk-in Customer' : 'Customer')
             const vehicleInfo = invoice.vehicle ? 
                 `${invoice.vehicle.year} ${invoice.vehicle.make} ${invoice.vehicle.model}` : 
-                undefined
+                (invoice.walk_in_vehicle_info ? 
+                    `${invoice.walk_in_vehicle_info.year} ${invoice.walk_in_vehicle_info.make} ${invoice.walk_in_vehicle_info.model}` : 
+                    undefined)
             const invoiceNumber = invoice.invoice_number
             const totalAmount = invoice.total_amount
 
@@ -52,27 +55,31 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
     }, [invoice, isOpen])
 
     const handleSendEmail = async () => {
-        if (!invoice.customer.customer_email) {
+        const isWalkIn = invoice.customer_type === 'walk_in' || !invoice.customer
+        if (isWalkIn || !invoice.customer?.customer_email) {
             onConfirm(false)
             return
         }
 
         await sendInvoiceEmail({
-            to: invoice.customer.customer_email,
-            subject: `Invoice ${invoice.invoice_number} - ${invoice.customer.customer_name}`,
+            to: invoice.customer?.customer_email || '',
+            subject: `Invoice ${invoice.invoice_number} - ${invoice.customer?.customer_name || 'Customer'}`,
             body: customMessage,
-            customerName: invoice.customer.customer_name,
+            customerName: invoice.customer?.customer_name || 'Customer',
             invoiceNumber: invoice.invoice_number
         })
 
         onConfirm(true, customMessage)
     }
 
+    const isWalkIn = invoice.customer_type === 'walk_in' || !invoice.customer
     const vehicleInfo = invoice.vehicle ? 
         `${invoice.vehicle.year} ${invoice.vehicle.make} ${invoice.vehicle.model}` : 
-        'Vehicle information not available'
+        (invoice.walk_in_vehicle_info ? 
+            `${invoice.walk_in_vehicle_info.year} ${invoice.walk_in_vehicle_info.make} ${invoice.walk_in_vehicle_info.model}` : 
+            'Vehicle information not available')
 
-    const customerHasEmail = invoice.customer.customer_email
+    const customerHasEmail = !isWalkIn && !!invoice.customer?.customer_email
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -83,7 +90,9 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                         Send Invoice Email
                     </DialogTitle>
                     <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
-                        Send the invoice to the customer via email.
+                        {isWalkIn ? 
+                            'Walk-in customers do not have email addresses on file. Email sending is not available.' : 
+                            'Send the invoice to the customer via email.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -115,18 +124,27 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                                 Customer
                             </h4>
                             <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-border dark:border-[#2a2a2a]">
-                                <p className="text-foreground dark:text-white font-medium">{invoice.customer.customer_name || 'Unknown'}</p>
-                                {invoice.customer.customer_phone && (
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 mt-1">
-                                        <Phone className="h-3 w-3" />
-                                        {formatPhoneNumber(invoice.customer.customer_phone)}
+                                {isWalkIn ? (
+                                    <div>
+                                        <p className="text-foreground dark:text-white font-medium">Walk-in Customer</p>
+                                        <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">No customer record on file</p>
                                     </div>
-                                )}
-                                {invoice.customer.customer_email && (
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 mt-1">
-                                        <Mail className="h-3 w-3" />
-                                        {invoice.customer.customer_email}
-                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-foreground dark:text-white font-medium">{invoice.customer?.customer_name || 'Unknown'}</p>
+                                        {invoice.customer?.customer_phone && (
+                                            <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                                                <Phone className="h-3 w-3" />
+                                                {formatPhoneNumber(invoice.customer.customer_phone)}
+                                            </div>
+                                        )}
+                                        {invoice.customer?.customer_email && (
+                                            <div className="flex items-center gap-1 text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                                                <Mail className="h-3 w-3" />
+                                                {invoice.customer.customer_email}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -138,9 +156,9 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                             </h4>
                             <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-3 border border-border dark:border-[#2a2a2a]">
                                 <p className="text-foreground dark:text-white font-medium">{vehicleInfo}</p>
-                                {invoice.vehicle?.license_plate && (
+                                {(invoice.vehicle?.license_plate || invoice.walk_in_vehicle_info?.license_plate) && (
                                     <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
-                                        License: {invoice.vehicle.license_plate}
+                                        License: {invoice.vehicle?.license_plate || invoice.walk_in_vehicle_info?.license_plate}
                                     </p>
                                 )}
                             </div>
@@ -161,7 +179,13 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                             )}
                         </div>
 
-                        {!customerHasEmail ? (
+                        {isWalkIn ? (
+                            <div className="bg-yellow-500/10 dark:bg-yellow-500/10 border border-yellow-500/20 dark:border-yellow-500/20 rounded-lg p-3">
+                                <p className="text-yellow-600 dark:text-yellow-400 text-sm">
+                                    Walk-in customers do not have email addresses on file. Please send the invoice manually.
+                                </p>
+                            </div>
+                        ) : !customerHasEmail ? (
                             <div className="bg-yellow-500/10 dark:bg-yellow-500/10 border border-yellow-500/20 dark:border-yellow-500/20 rounded-lg p-3">
                                 <p className="text-yellow-600 dark:text-yellow-400 text-sm">
                                     No email address available for this customer.

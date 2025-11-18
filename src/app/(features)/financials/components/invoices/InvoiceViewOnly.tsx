@@ -242,43 +242,65 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             <div className="flex items-center gap-2 mb-4">
                                 <User className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                                 <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Information</h3>
+                                {invoice.customer_type === 'walk_in' && (
+                                    <Badge variant="outline" className="ml-2 text-xs border-orange-500 text-orange-500">
+                                        Walk-in
+                                    </Badge>
+                                )}
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Name</p>
-                                    <p className="text-foreground dark:text-white font-medium">{invoice.customer?.customer_name || 'N/A'}</p>
+                            {invoice.customer_type === 'walk_in' ? (
+                                <div className="text-center py-4">
+                                    <p className="text-foreground dark:text-white font-medium">Walk-in Customer</p>
+                                    <p className="text-muted-foreground dark:text-gray-400 text-sm">Walk-in customers do not have a customer record.</p>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Phone</p>
-                                    <p className="text-foreground dark:text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground dark:text-gray-500">Name</p>
+                                        <p className="text-foreground dark:text-white font-medium">{invoice.customer?.customer_name || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground dark:text-gray-500">Phone</p>
+                                        <p className="text-foreground dark:text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground dark:text-gray-500">Email</p>
+                                        <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_email || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground dark:text-gray-500">Address</p>
+                                        <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_address || 'N/A'}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Email</p>
-                                    <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_email || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground dark:text-gray-500">Address</p>
-                                    <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_address || 'N/A'}</p>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </Card>
                     
                     {/* Vehicle Information Card */}
-                    {invoice.vehicle && (
+                    {(invoice.vehicle || invoice.walk_in_vehicle_info) && (
                         <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                             <div className="p-4">
                                 <div className="flex items-center gap-2 mb-4">
                                     <Car className="h-4 w-4 text-green-600 dark:text-green-400" />
                                     <h3 className="text-lg font-semibold text-foreground dark:text-white">Vehicle Information</h3>
                                 </div>
-                                <p className="text-foreground dark:text-white">
-                                    {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
-                                    {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' 
-                                        ? ` - ${invoice.vehicle.license_plate}` 
-                                        : ''
-                                    }
-                                </p>
+                                {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
+                                    <p className="text-foreground dark:text-white">
+                                        {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
+                                        {invoice.walk_in_vehicle_info.license_plate 
+                                            ? ` - ${invoice.walk_in_vehicle_info.license_plate}` 
+                                            : ''
+                                        }
+                                    </p>
+                                ) : invoice.vehicle ? (
+                                    <p className="text-foreground dark:text-white">
+                                        {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
+                                        {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' 
+                                            ? ` - ${invoice.vehicle.license_plate}` 
+                                            : ''
+                                        }
+                                    </p>
+                                ) : null}
                             </div>
                         </Card>
                     )}
