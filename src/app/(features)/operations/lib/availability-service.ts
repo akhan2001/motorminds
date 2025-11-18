@@ -16,9 +16,9 @@ const supabase = createClient()
 
 export class AvailabilityService {
     
-    // Simplified shop configuration - full day availability (24 hours)
+    // Simplified shop configuration - 6am to midnight availability
     private static readonly DEFAULT_SHOP_HOURS = {
-        start: '00:00',
+        start: '06:00', // Start at 6am
         end: '24:00' // Allows slots up to 23:00 (appointments end at 00:00 next day)
     }
 

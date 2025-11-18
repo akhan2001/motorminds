@@ -267,7 +267,6 @@ export function MonthCard({
             <div className="pb-4 flex-shrink-0 px-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
                         {format(currentMonth, 'MMMM yyyy')}
                     </h2>
                     

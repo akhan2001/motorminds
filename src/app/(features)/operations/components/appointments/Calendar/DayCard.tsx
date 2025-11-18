@@ -220,59 +220,47 @@ export function DayCard({
             {/* Day Header */}
             <div className="pb-4 flex-shrink-0 px-6">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <h2 className={`
-                            text-lg font-semibold text-foreground flex items-center gap-2
-                            ${isToday ? 'text-blue-500' : ''}
-                        `}>
-                            <Calendar className="h-5 w-5" />
-                            {formattedDate}
-                            {isToday && (
-                                <Badge variant="outline" className="ml-2 text-xs border-blue-500 text-blue-500">
-                                    Today
-                                </Badge>
-                            )}
-                        </h2>
-                        
-                        {/* Day Navigation Controls */}
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handlePreviousDay}
-                                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleTodayClick}
-                                className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
-                            >
+                    <h2 className={`
+                        text-lg font-semibold text-foreground flex items-center gap-2
+                        ${isToday ? 'text-blue-500' : ''}
+                    `}>
+                        {formattedDate}
+                        {isToday && (
+                            <Badge variant="outline" className="ml-2 text-xs border-blue-500 text-blue-500">
                                 Today
-                            </Button>
-                            
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleNextDay}
-                                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
+                            </Badge>
+                        )}
+                    </h2>
                     
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={handleCreateClick}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                    {/* Day Navigation Controls */}
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handlePreviousDay}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleTodayClick}
+                            className="px-3 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-accent"
+                        >
+                            Today
+                        </Button>
+                        
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleNextDay}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
                 
                 {sortedAppointments.length > 0 && (
