@@ -105,8 +105,9 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        // Return streaming response
-        return result.toTextStreamResponse();
+        // Return streaming response in UI message stream format for AI SDK 5.0
+        // Use toUIMessageStreamResponse() for proper useChat integration
+        return result.toUIMessageStreamResponse();
 
     } catch (error) {
         console.error('Diagnostics API error:', error);
