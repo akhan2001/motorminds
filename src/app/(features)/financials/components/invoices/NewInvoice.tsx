@@ -16,11 +16,13 @@ import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
 import { toast } from 'sonner'
 import { CustomerInformation } from '../../../operations/components/work-orders/shared/customer-information'
 import { VehicleInformation } from '../../../operations/components/work-orders/shared/vehicle-information'
+import { WalkInVehicleForm } from '../../../operations/components/work-orders/create/WalkInVehicleForm'
 import { InvoiceLaborItems } from './InvoiceLaborItems'
 import { InvoicePartsItems } from './InvoicePartsItems'
 import { InvoiceServicesItems } from './InvoiceServicesItems'
 import { InvoicePackagesItems } from './InvoicePackagesItems'
 import { InvoiceDiscountsItems } from './InvoiceDiscountsItems'
+import type { WalkInVehicleInfo } from '../../../customers/types/vehicle'
 
 interface NewInvoiceProps {
     isOpen: boolean
@@ -33,7 +35,7 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
     const createMutation = useCreateInvoice()
 
     const [formData, setFormData] = useState<InvoiceFormData>({
-        customer_id: '',
+        customer_id: null,
         vehicle_id: null,
         work_order_id: null,
         title: '',
@@ -47,7 +49,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         payment_method: null,
         payment_reference: null,
         notes: null,
-        invoice_items: []
+        invoice_items: [],
+        customer_type: 'registered',
+        walk_in_vehicle_info: undefined
     })
 
     // Additional form state for customer and vehicle information
@@ -67,6 +71,17 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         mileage: '',
         color: ''
     })
+
+    // Walk-in vehicle info state
+    const [walkInVehicleInfo, setWalkInVehicleInfo] = useState<WalkInVehicleInfo>({
+        year: new Date().getFullYear(),
+        make: '',
+        model: '',
+        license_plate: '',
+        color: '',
+        vin: '',
+        mileage: undefined
+    })
     
     // Tax toggle state
     const [includeTax, setIncludeTax] = useState(true)
@@ -80,7 +95,7 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
 
     const resetFormValues = () => {
         setFormData({
-            customer_id: '',
+            customer_id: null,
             vehicle_id: null,
             work_order_id: null,
             title: '',
@@ -94,7 +109,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
             payment_method: null,
             payment_reference: null,
             notes: null,
-            invoice_items: []
+            invoice_items: [],
+            customer_type: 'registered',
+            walk_in_vehicle_info: undefined
         })
         
         setCustomerInfo({
@@ -113,6 +130,16 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
             mileage: '',
             color: ''
         })
+
+        setWalkInVehicleInfo({
+            year: new Date().getFullYear(),
+            make: '',
+            model: '',
+            license_plate: '',
+            color: '',
+            vin: '',
+            mileage: undefined
+        })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -124,10 +151,25 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
         }
 
         try {
+            // Prepare walk-in vehicle info if customer type is walk-in
+            let walkInVehicleData = undefined
+            if (formData.customer_type === 'walk_in') {
+                walkInVehicleData = {
+                    year: walkInVehicleInfo.year || new Date().getFullYear(),
+                    make: walkInVehicleInfo.make || '',
+                    model: walkInVehicleInfo.model || '',
+                    license_plate: walkInVehicleInfo.license_plate || '',
+                    color: walkInVehicleInfo.color || undefined,
+                    vin: walkInVehicleInfo.vin || undefined,
+                    mileage: walkInVehicleInfo.mileage || undefined
+                }
+            }
+
             // Ensure tax_rate is 0 if tax is disabled
             const finalFormData = {
                 ...formData,
-                tax_rate: includeTax ? formData.tax_rate : 0
+                tax_rate: includeTax ? formData.tax_rate : 0,
+                walk_in_vehicle_info: walkInVehicleData
             }
             
             await createMutation.mutateAsync({
@@ -204,55 +246,110 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto bg-background dark:bg-[#1A1A1A] p-4">
                     <form id="invoice-form" onSubmit={handleSubmit} className="space-y-4">                     
-                        {/* Customer Information Card */}
+                        {/* Customer Type Selection */}
                         <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                             <div className="p-4">
-                                <CustomerInformation
-                                    customerId={formData.customer_id}
-                                    customerName={customerInfo.name}
-                                    customerEmail={customerInfo.email}
-                                    customerPhone={customerInfo.phone}
-                                    customerAddress={customerInfo.address}
-                                    isEditing={true}
-                                    isCreating={true}
-                                    onFieldChange={(field, value) => {
-                                        if (field === 'customer') setCustomerInfo(prev => ({ ...prev, name: value }))
-                                        if (field === 'customerEmail') setCustomerInfo(prev => ({ ...prev, email: value }))
-                                        if (field === 'customerPhone') setCustomerInfo(prev => ({ ...prev, phone: value }))
-                                        if (field === 'customerAddress') setCustomerInfo(prev => ({ ...prev, address: value }))
-                                    }}
-                                    onCustomerChange={(customerId) => setFormData(prev => ({ ...prev, customer_id: customerId }))}
-                                />
+                                <div className="flex items-center gap-2 mb-4">
+                                    <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Type</h3>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="customer-type" className="text-muted-foreground dark:text-gray-400 text-xs">Customer Type</Label>
+                                        <Select
+                                            value={formData.customer_type}
+                                            onValueChange={(value: 'registered' | 'walk_in') => {
+                                                setFormData(prev => ({ 
+                                                    ...prev, 
+                                                    customer_type: value, 
+                                                    customer_id: value === 'walk_in' ? null : prev.customer_id 
+                                                }))
+                                            }}
+                                        >
+                                            <SelectTrigger className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+                                                <SelectItem value="registered" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Registered Customer</SelectItem>
+                                                <SelectItem value="walk_in" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Walk-in Customer</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        {/* Customer Information Card - Only for Registered Customers */}
+                        {formData.customer_type === 'registered' && (
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
+                                <div className="p-4">
+                                    <CustomerInformation
+                                        customerId={formData.customer_id || ''}
+                                        customerName={customerInfo.name}
+                                        customerEmail={customerInfo.email}
+                                        customerPhone={customerInfo.phone}
+                                        customerAddress={customerInfo.address}
+                                        isEditing={true}
+                                        isCreating={true}
+                                        onFieldChange={(field, value) => {
+                                            if (field === 'customer') setCustomerInfo(prev => ({ ...prev, name: value }))
+                                            if (field === 'customerEmail') setCustomerInfo(prev => ({ ...prev, email: value }))
+                                            if (field === 'customerPhone') setCustomerInfo(prev => ({ ...prev, phone: value }))
+                                            if (field === 'customerAddress') setCustomerInfo(prev => ({ ...prev, address: value }))
+                                        }}
+                                        onCustomerChange={(customerId) => setFormData(prev => ({ ...prev, customer_id: customerId }))}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Vehicle Information Card */}
                         <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                             <div className="p-4">
-                                <VehicleInformation
-                                    customerId={formData.customer_id}
-                                    selectedVehicleId={formData.vehicle_id || ""}
-                                    vehicleId={formData.vehicle_id || ""}
-                                    vehicleYear={vehicleInfo.year}
-                                    vehicleMake={vehicleInfo.make}
-                                    vehicleModel={vehicleInfo.model}
-                                    vehicleColor={vehicleInfo.color}
-                                    vehicleVin={vehicleInfo.vin}
-                                    vehicleLicensePlate={vehicleInfo.licensePlate}
-                                    vehicleMileage={vehicleInfo.mileage}
-                                    isEditing={true}
-                                    isCreating={true}
-                                    onFieldChange={(field, value) => {
-                                        if (field === 'vehicleYear') setVehicleInfo(prev => ({ ...prev, year: value }))
-                                        if (field === 'vehicleMake') setVehicleInfo(prev => ({ ...prev, make: value }))
-                                        if (field === 'vehicleModel') setVehicleInfo(prev => ({ ...prev, model: value }))
-                                        if (field === 'vehicleVin') setVehicleInfo(prev => ({ ...prev, vin: value }))
-                                        if (field === 'vehicleLicensePlate') setVehicleInfo(prev => ({ ...prev, licensePlate: value }))
-                                        if (field === 'vehicleMileage') setVehicleInfo(prev => ({ ...prev, mileage: value }))
-                                        if (field === 'vehicleColor') setVehicleInfo(prev => ({ ...prev, color: value }))
-                                    }}
-                                    onVehicleSelect={(vehicleId) => setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))}
-                                />
+                                {formData.customer_type === 'walk_in' ? (
+                                    // Walk-in Vehicle Information with Search
+                                    <WalkInVehicleForm
+                                        data={walkInVehicleInfo}
+                                        onDataChange={setWalkInVehicleInfo}
+                                        shopId={shopId || ''}
+                                        onVehicleSelected={(vehicleId) => {
+                                            // Vehicle selected from search - form is already populated
+                                            setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))
+                                        }}
+                                        onVehicleCreated={(vehicleId) => {
+                                            // Vehicle created from search - form is already populated
+                                            setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))
+                                        }}
+                                        isEditing={true}
+                                    />
+                                ) : (
+                                    // Registered Customer Vehicle Information
+                                    <VehicleInformation
+                                        customerId={formData.customer_id || undefined}
+                                        selectedVehicleId={formData.vehicle_id || ""}
+                                        vehicleId={formData.vehicle_id || ""}
+                                        vehicleYear={vehicleInfo.year}
+                                        vehicleMake={vehicleInfo.make}
+                                        vehicleModel={vehicleInfo.model}
+                                        vehicleColor={vehicleInfo.color}
+                                        vehicleVin={vehicleInfo.vin}
+                                        vehicleLicensePlate={vehicleInfo.licensePlate}
+                                        vehicleMileage={vehicleInfo.mileage}
+                                        isEditing={true}
+                                        isCreating={true}
+                                        onFieldChange={(field, value) => {
+                                            if (field === 'vehicleYear') setVehicleInfo(prev => ({ ...prev, year: value }))
+                                            if (field === 'vehicleMake') setVehicleInfo(prev => ({ ...prev, make: value }))
+                                            if (field === 'vehicleModel') setVehicleInfo(prev => ({ ...prev, model: value }))
+                                            if (field === 'vehicleVin') setVehicleInfo(prev => ({ ...prev, vin: value }))
+                                            if (field === 'vehicleLicensePlate') setVehicleInfo(prev => ({ ...prev, licensePlate: value }))
+                                            if (field === 'vehicleMileage') setVehicleInfo(prev => ({ ...prev, mileage: value }))
+                                            if (field === 'vehicleColor') setVehicleInfo(prev => ({ ...prev, color: value }))
+                                        }}
+                                        onVehicleSelect={(vehicleId) => setFormData(prev => ({ ...prev, vehicle_id: vehicleId }))}
+                                    />
+                                )}
                             </div>
                         </div>
                         

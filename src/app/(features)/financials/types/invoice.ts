@@ -1,9 +1,11 @@
+import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
+
 export interface Invoice {
     id: string
     invoice_number: string
     display_id: string | null
     work_order_id: string | null
-    customer_id: string
+    customer_id: string | null // null for walk-in customers
     vehicle_id: string | null
     shop_id: string
     title: string | null
@@ -28,6 +30,10 @@ export interface Invoice {
     notes: string | null
     created_at: string
     updated_at: string
+    
+    // Walk-in customer support
+    customer_type: 'registered' | 'walk_in'
+    walk_in_vehicle_info?: WalkInVehicleInfo
 }
 
 export interface InvoiceItem {
@@ -52,7 +58,7 @@ export interface InvoiceWithDetails extends Invoice {
         customer_email: string | null
         customer_phone: string | null
         customer_address: string | null
-    }
+    } | null // null for walk-in customers
     vehicle: {
         id: string
         year: number
@@ -69,7 +75,7 @@ export interface InvoiceWithDetails extends Invoice {
 }
 
 export interface InvoiceFormData {
-    customer_id: string
+    customer_id: string | null // null for walk-in customers
     vehicle_id: string | null
     work_order_id: string | null
     title: string
@@ -84,6 +90,10 @@ export interface InvoiceFormData {
     payment_reference: string | null
     notes: string | null
     invoice_items: InvoiceItem[]
+    
+    // Walk-in customer support
+    customer_type: 'registered' | 'walk_in'
+    walk_in_vehicle_info?: WalkInVehicleInfo
 }
 
 export type InvoiceStatus = 

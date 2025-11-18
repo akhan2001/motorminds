@@ -19,8 +19,10 @@ export const InvoiceSendChoiceModal: React.FC<InvoiceSendChoiceModalProps> = ({
     onEmailChoice,
     onSmsChoice
 }) => {
-    const customerHasEmail = !!invoice.customer.customer_email
-    const customerHasPhone = !!invoice.customer.customer_phone
+    const isWalkIn = invoice.customer_type === 'walk_in' || !invoice.customer
+    const customerHasEmail = !isWalkIn && !!invoice.customer?.customer_email
+    const customerHasPhone = !isWalkIn && !!invoice.customer?.customer_phone
+    const customerName = invoice.customer?.customer_name || 'Walk-in Customer'
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -31,7 +33,11 @@ export const InvoiceSendChoiceModal: React.FC<InvoiceSendChoiceModalProps> = ({
                         Send Invoice
                     </DialogTitle>
                     <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
-                        Choose how you'd like to send the invoice to {invoice.customer.customer_name}.
+                        {isWalkIn ? (
+                            'Walk-in customers do not have contact information on file. Please send the invoice manually.'
+                        ) : (
+                            `Choose how you'd like to send the invoice to ${customerName}.`
+                        )}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -39,13 +45,13 @@ export const InvoiceSendChoiceModal: React.FC<InvoiceSendChoiceModalProps> = ({
                     <Button 
                         className="h-24 bg-slate-50 dark:bg-[#1f1f1f] hover:bg-slate-100 dark:hover:bg-[#2a2a2a] text-foreground dark:text-white border border-border dark:border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed" 
                         onClick={onEmailChoice}
-                        disabled={!customerHasEmail}
+                        disabled={!customerHasEmail || isWalkIn}
                     >
                         <span className="grid gap-1 text-center">
                             <Mail size="28" className={`mx-auto ${customerHasEmail ? 'text-blue-500 dark:text-blue-400' : 'text-muted-foreground dark:text-gray-500'}`} />
                             <span className="text-base">Email</span>
                             <span className="text-xs text-muted-foreground dark:text-gray-400">
-                                {customerHasEmail ? invoice.customer.customer_email : 'No email address'}
+                                {isWalkIn ? 'Not available for walk-in' : customerHasEmail ? invoice.customer?.customer_email : 'No email address'}
                             </span>
                         </span>
                     </Button>
@@ -53,13 +59,13 @@ export const InvoiceSendChoiceModal: React.FC<InvoiceSendChoiceModalProps> = ({
                     <Button 
                         className="h-24 bg-slate-50 dark:bg-[#1f1f1f] hover:bg-slate-100 dark:hover:bg-[#2a2a2a] text-foreground dark:text-white border border-border dark:border-[#333333] disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={onSmsChoice}
-                        disabled={!customerHasPhone}
+                        disabled={!customerHasPhone || isWalkIn}
                     >
                         <span className="grid gap-1 text-center">
                             <MessageSquare size="28" className={`mx-auto ${customerHasPhone ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground dark:text-gray-500'}`} />
                             <span className="text-base">SMS</span>
                             <span className="text-xs text-muted-foreground dark:text-gray-400">
-                                {customerHasPhone ? invoice.customer.customer_phone : 'No phone number'}
+                                {isWalkIn ? 'Not available for walk-in' : customerHasPhone ? invoice.customer?.customer_phone : 'No phone number'}
                             </span>
                         </span>
                     </Button>
