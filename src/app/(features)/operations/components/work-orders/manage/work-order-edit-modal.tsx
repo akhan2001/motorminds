@@ -8,6 +8,8 @@ import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "..
 import { useWorkOrderWithDetails, useUpdateWorkOrder, useUpdateWorkOrderStatus } from "../../../hooks/use-work-orders"
 import { RevertWorkOrderDialog } from "../revert-work-order-dialog"
 import { workOrderService } from "../../../lib/work-order-service"
+import { useCanDeleteWorkOrders } from "../../../hooks/use-work-order-permissions"
+import { useAuth } from "../../../hooks/use-auth"
 import { Loader2 } from "lucide-react"
 import {
     WorkOrderModalHeader,
@@ -111,6 +113,10 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const [discountItems, setDiscountItems] = useState<GenericFormItem[]>([])
     const [packageItems, setPackageItems] = useState<GenericFormItem[]>([])
     
+    // Check permissions
+    const { shopId } = useAuth()
+    const { data: canDeleteWorkOrder = false, isLoading: isCheckingPermissions } = useCanDeleteWorkOrders(shopId || undefined)
+    
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
         { id: 'tech-1', name: 'John Smith' },
@@ -164,7 +170,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             if (!tracker) return null
             if (Array.isArray(tracker)) return tracker
             // Handle old format: single object
-            if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            if (tracker && typeof tracker === 'object' && 'name' in tracker && 'color' in tracker) {
                 return [tracker]
             }
             return null
@@ -230,7 +236,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     if (!tracker) return null
                     if (Array.isArray(tracker)) return tracker
                     // Handle old format: single object
-                    if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                    if (tracker && typeof tracker === 'object' && 'name' in tracker && 'color' in tracker) {
                         return [tracker]
                     }
                     return null
@@ -636,11 +642,15 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     }
 
     const handleDelete = () => {
+        if (!canDeleteWorkOrder) {
+            toast.error('You do not have permission to archive work orders. Only admins and shop owners can archive work orders.')
+            return
+        }
         if (canDelete()) {
             setIsDeleteConfirmationOpen(true)
         } else {
             const status = workOrderDetails?.status || initialWorkOrder.status
-            toast.error(`Invoiced work orders cannot be deleted due to financial record requirements`)
+            toast.error(`Invoiced work orders cannot be archived due to financial record requirements`)
         }
     }
 
@@ -823,15 +833,18 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         return status !== 'invoiced' && status !== 'cancelled'
     }
 
-    // Check if work order can be deleted based on status
+    // Check if work order can be deleted based on status AND permissions
     const canDelete = () => {
         const status = workOrderDetails?.status || initialWorkOrder.status
-        // Allow deletion for all statuses except invoiced (due to financial/legal reasons)
-        // This gives maximum flexibility for work order management
+        // Check permission first
+        if (!canDeleteWorkOrder) {
+            return false
+        }
+        // Then check status - don't allow deletion of invoiced work orders (due to financial/legal reasons)
         if (!status) return true // Default to allowing deletion if status is unclear
         
         const canDeleteResult = status !== 'invoiced'
-        // console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult)
+        // console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult, 'Has permission:', canDeleteWorkOrder)
         
         return canDeleteResult
     }
@@ -844,6 +857,14 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             const statusName = status === 'invoiced' ? 'invoiced' : 'cancelled'
             toast.error(`${statusName.charAt(0).toUpperCase() + statusName.slice(1)} work orders cannot be edited`)
         }
+    }
+
+    const handleDeleteClick = () => {
+        if (!canDeleteWorkOrder) {
+            toast.error('You do not have permission to archive work orders. Only admins and shop owners can archive work orders.')
+            return
+        }
+        setIsDeleteConfirmationOpen(true)
     }
 
     const handleRevertClick = async () => {
