@@ -238,36 +238,55 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                     </View>
                     <View style={styles.column}>
                         <Text style={styles.sectionTitle}>Bill To</Text>
-                        <View style={{ marginBottom: 6 }}>
-                            <Text style={styles.label}>Customer Name</Text>
-                            <Text style={styles.value}>{invoice.customer?.customer_name || 'N/A'}</Text>
-                        </View>
-                        {invoice.customer?.customer_email && (
+                        {invoice.customer_type === 'walk_in' ? (
                             <View style={{ marginBottom: 6 }}>
-                                <Text style={styles.label}>Email</Text>
-                                <Text style={styles.value}>{invoice.customer.customer_email}</Text>
+                                <Text style={styles.label}>Walk-in Customer</Text>
+                                <Text style={styles.value}>(No customer record on file)</Text>
                             </View>
-                        )}
-                        {invoice.customer?.customer_phone && (
-                            <View style={{ marginBottom: 6 }}>
-                                <Text style={styles.label}>Phone</Text>
-                                <Text style={styles.value}>{invoice.customer.customer_phone}</Text>
-                            </View>
+                        ) : (
+                            <>
+                                <View style={{ marginBottom: 6 }}>
+                                    <Text style={styles.label}>Customer Name</Text>
+                                    <Text style={styles.value}>{invoice.customer?.customer_name || 'N/A'}</Text>
+                                </View>
+                                {invoice.customer?.customer_email && (
+                                    <View style={{ marginBottom: 6 }}>
+                                        <Text style={styles.label}>Email</Text>
+                                        <Text style={styles.value}>{invoice.customer.customer_email}</Text>
+                                    </View>
+                                )}
+                                {invoice.customer?.customer_phone && (
+                                    <View style={{ marginBottom: 6 }}>
+                                        <Text style={styles.label}>Phone</Text>
+                                        <Text style={styles.value}>{invoice.customer.customer_phone}</Text>
+                                    </View>
+                                )}
+                            </>
                         )}
                     </View>
                 </View>
 
                 {/* Vehicle Info */}
-                {invoice.vehicle && (
+                {(invoice.vehicle || invoice.walk_in_vehicle_info) && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Vehicle Information</Text>
-                        <Text style={styles.value}>
-                            {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
-                            {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' 
-                                ? ` - ${invoice.vehicle.license_plate}` 
-                                : ''
-                            }
-                        </Text>
+                        {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
+                            <Text style={styles.value}>
+                                {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
+                                {invoice.walk_in_vehicle_info.license_plate 
+                                    ? ` - ${invoice.walk_in_vehicle_info.license_plate}` 
+                                    : ''
+                                }
+                            </Text>
+                        ) : invoice.vehicle ? (
+                            <Text style={styles.value}>
+                                {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
+                                {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' 
+                                    ? ` - ${invoice.vehicle.license_plate}` 
+                                    : ''
+                                }
+                            </Text>
+                        ) : null}
                     </View>
                 )}
 

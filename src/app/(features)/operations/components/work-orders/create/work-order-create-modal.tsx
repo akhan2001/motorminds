@@ -647,8 +647,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         }`}
                                                     onClick={() => handleCustomerTypeChange('walk_in')}
                                                 >
-                                                    <div className="font-medium text-foreground dark:text-white">Vehicle Search</div>
-                                                    <div className="text-xs text-muted-foreground dark:text-gray-400">Search by license plate</div>
+                                                    <div className="font-medium text-foreground dark:text-white">Walk-In Customer</div>
+                                                    <div className="text-xs text-muted-foreground dark:text-gray-400">Vehicle search only</div>
                                                 </button>
                                             </div>
                                         </div>

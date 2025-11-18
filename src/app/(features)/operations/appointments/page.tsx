@@ -9,9 +9,8 @@ import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 import { useAuth } from '../hooks/use-auth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
 import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointment } from '../hooks/appointments/useAppointments'
-import { MonthCard } from '../components/appointments/Calendar/MonthCard'
+import { CalendarView } from '../components/appointments/Calendar/CalendarView'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
-import { AppointmentHeader } from '../components/appointments/appointment-header'
 import { DayAppointmentsDialog } from '../components/appointments/DayAppointmentsDialog'
 import { AppointmentDetailsSheet } from '../components/appointments/AppointmentDetailsSheet'
 import type { AppointmentWithDetails } from '../types/appointment'
@@ -24,7 +23,6 @@ export default function AppointmentsPage() {
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [selectedDateForForm, setSelectedDateForForm] = useState<string>()
     const [selectedTimeForForm, setSelectedTimeForForm] = useState<string>()
-    const [searchValue, setSearchValue] = useState('')
     
     // Modal state
     const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
@@ -65,13 +63,17 @@ export default function AppointmentsPage() {
     }, [dayDialogAppointments])
 
     // Handlers
-    const handleDateSelect = (date: string) => {
+    const handleDateSelect = (date: string, currentView?: string) => {
         // Create date without timezone conversion by parsing the components
         const [year, month, day] = date.split('-').map(Number)
         setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
-        // Open day dialog
-        setSelectedDayForDialog(date)
-        setIsDayDialogOpen(true)
+        
+        // Only show the day dialog in week view
+        // In day and month views, appointments are already visible
+        if (currentView === 'week') {
+            setSelectedDayForDialog(date)
+            setIsDayDialogOpen(true)
+        }
     }
 
     const handleAppointmentClick = (appointment: AppointmentWithDetails) => {
@@ -81,6 +83,16 @@ export default function AppointmentsPage() {
     }
 
     const handleCreateAppointment = (date: string, time?: string) => {
+        setSelectedDateForForm(date)
+        setSelectedTimeForForm(time)
+        // Create date without timezone conversion by parsing the components
+        const [year, month, day] = date.split('-').map(Number)
+        setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
+        // Open form dialog
+        setIsAppointmentFormOpen(true)
+    }
+
+    const handleSlotClick = (date: string, time: string) => {
         setSelectedDateForForm(date)
         setSelectedTimeForForm(time)
         // Create date without timezone conversion by parsing the components
@@ -160,10 +172,6 @@ export default function AppointmentsPage() {
         }
     }
 
-    const handleSearchChange = (value: string) => {
-        setSearchValue(value)
-        // TODO: Implement search functionality
-    }
 
     const handleCustomersClick = () => {
         // TODO: Navigate to customers page or open customers modal
@@ -240,23 +248,20 @@ export default function AppointmentsPage() {
     return (
         <div className="h-screen flex flex-col bg-background">
             <Nav />
-            
-            <AppointmentHeader
-                onNewAppointment={handleShowNewAppointmentForm}
-                onCustomersClick={handleCustomersClick}
-                searchValue={searchValue}
-                onSearchChange={handleSearchChange}
-            />
 
             {/* Main Content - Calendar with Large Horizontal Padding */}
-            <div className="flex-1 overflow-hidden px-12">
-                <MonthCard
+            <div className="flex-1 overflow-hidden px-12 py-6">
+                <CalendarView
                     selectedDate={selectedDate}
                     shopId={shopId}
                     onDateSelect={handleDateSelect}
                     onAppointmentClick={handleAppointmentClick}
                     onCreateAppointment={handleCreateAppointment}
+                    onSlotClick={handleSlotClick}
                     onMonthChange={setSelectedDate}
+                    onWeekChange={setSelectedDate}
+                    onNewAppointment={handleShowNewAppointmentForm}
+                    onCustomersClick={handleCustomersClick}
                 />
             </div>
 

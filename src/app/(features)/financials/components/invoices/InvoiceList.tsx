@@ -35,7 +35,12 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
             invoice.display_id?.toLowerCase().includes(search) ||
             invoice.customer?.customer_name?.toLowerCase().includes(search) ||
             invoice.title?.toLowerCase().includes(search) ||
-            invoice.total_amount?.toString().includes(search)
+            invoice.total_amount?.toString().includes(search) ||
+            // Search walk-in customer info
+            (invoice.customer_type === 'walk_in' && 'walk-in'.includes(search)) ||
+            (invoice.walk_in_vehicle_info?.make?.toLowerCase().includes(search)) ||
+            (invoice.walk_in_vehicle_info?.model?.toLowerCase().includes(search)) ||
+            (invoice.walk_in_vehicle_info?.license_plate?.toLowerCase().includes(search))
         )
     }, [invoices, searchValue])
 

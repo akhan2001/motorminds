@@ -151,25 +151,6 @@ export class AppointmentService {
 
         if (error) throw new Error(`Failed to create appointment: ${error.message}`)
 
-        // After appointment is created, trigger automated messages
-        try {
-            // Trigger automated messaging (fire and forget - don't block creation)
-            // The trigger endpoint only needs appointment_id and will fetch all other data
-            fetch('/api/messaging/ai/triggers/appointment-scheduled', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    appointment_id: data.id
-                })
-            }).catch((error) => {
-                // Silently handle fetch errors (network issues, etc.)
-                console.error('Failed to trigger automated messages:', error)
-            })
-        } catch (error) {
-            // Don't fail the appointment creation if messaging fails
-            console.error('Failed to trigger automated messages:', error)
-        }
-
         return data
     }
 
@@ -208,25 +189,6 @@ export class AppointmentService {
             .single()
 
         if (error) throw new Error(`Failed to create walk-in appointment: ${error.message}`)
-
-        // After appointment is created, trigger automated messages
-        try {
-            // Trigger automated messaging (fire and forget - don't block creation)
-            // The trigger endpoint only needs appointment_id and will fetch all other data
-            fetch('/api/messaging/ai/triggers/appointment-scheduled', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    appointment_id: appointmentResult.id
-                })
-            }).catch((error) => {
-                // Silently handle fetch errors (network issues, etc.)
-                console.error('Failed to trigger automated messages:', error)
-            })
-        } catch (error) {
-            // Don't fail the appointment creation if messaging fails
-            console.error('Failed to trigger automated messages:', error)
-        }
 
         return appointmentResult
     }
