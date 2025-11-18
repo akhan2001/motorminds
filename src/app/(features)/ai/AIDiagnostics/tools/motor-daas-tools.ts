@@ -3,6 +3,18 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { MotorDaasClient } from '@/lib/integrations/motor-daas/client';
+import type {
+    MotorVehicleInfo,
+    DTCResponse,
+    ServiceProcedureResponse,
+    PartsResponse,
+    MaintenanceScheduleResponse,
+    SpecificationsResponse,
+    WorkTimeResponse,
+    TSBResponse,
+    WiringDiagramResponse,
+    BulkVehicleAttributesResponse
+} from '@/lib/integrations/motor-daas/types';
 
 const motorClient = new MotorDaasClient({
     publicKey: process.env.MOTOR_DAAS_PUBLIC_KEY!,
@@ -10,9 +22,12 @@ const motorClient = new MotorDaasClient({
     baseUrl: 'https://api.motor.com/v1'
 });
 
-export const getVehicleInfoTool = tool({
+export const getVehicleInfoTool = tool<
+    { vin: string },
+    { success: boolean; data?: MotorVehicleInfo; error?: string; message: string }
+>({
     description: 'Get detailed vehicle information by VIN including year, make, model, engine, transmission, and specifications',
-    parameters: z.object({
+    inputSchema: z.object({
         vin: z.string().length(17).describe('17-character Vehicle Identification Number')
     }),
     execute: async ({ vin }) => {
@@ -33,32 +48,22 @@ export const getVehicleInfoTool = tool({
     }
 });
 
-export const lookupDTCTool = tool({
+export const lookupDTCTool = tool<
+    { baseVehicleId: number; dtcCode?: string },
+    { success: boolean; data?: DTCResponse; error?: string; message: string }
+>({
     description: 'Look up diagnostic trouble code (DTC) definitions, possible causes, and repair procedures for a specific vehicle',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
         dtcCode: z.string().optional().describe('Specific DTC code (e.g., P0420) to look up. If not provided, returns all DTCs for the vehicle')
     }),
     execute: async ({ baseVehicleId, dtcCode }) => {
         try {
             const dtcResponse = await motorClient.getDiagnosticTroubleCodes(baseVehicleId, dtcCode);
-
-            if (dtcResponse.codes.length === 0) {
-                return {
-                    success: true,
-                    data: dtcResponse,
-                    message: dtcCode
-                        ? `No information found for DTC code ${dtcCode}`
-                        : 'No DTC codes found for this vehicle'
-                };
-            }
-
             return {
                 success: true,
                 data: dtcResponse,
-                message: dtcCode
-                    ? `Found definition for DTC ${dtcCode}`
-                    : `Found ${dtcResponse.totalCount} DTC codes`
+                message: dtcCode ? `Found definition for DTC ${dtcCode}` : `Found ${dtcResponse.totalCount} DTC codes`
             };
         } catch (error) {
             return {
@@ -70,16 +75,18 @@ export const lookupDTCTool = tool({
     }
 });
 
-export const getServiceProcedureTool = tool({
-    description: 'Get detailed service and repair procedures for a vehicle, including step-by-step instructions, specifications, and warnings',
-    parameters: z.object({
+export const getServiceProcedureTool = tool<
+    { baseVehicleId: number; systemId?: number },
+    { success: boolean; data?: ServiceProcedureResponse; error?: string; message: string }
+>({
+    description: 'Get step-by-step service and repair procedures for a specific vehicle system. Includes detailed instructions, diagrams, and technical specifications.',
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
-        systemId: z.number().optional().describe('Specific system ID to filter procedures (e.g., engine, transmission, brakes)')
+        systemId: z.number().optional().describe('Specific system ID to get procedures for (e.g., engine, transmission, brakes)')
     }),
     execute: async ({ baseVehicleId, systemId }) => {
         try {
             const procedures = await motorClient.getServiceProcedures(baseVehicleId, systemId);
-
             return {
                 success: true,
                 data: procedures,
@@ -95,9 +102,12 @@ export const getServiceProcedureTool = tool({
     }
 });
 
-export const getPartsTool = tool({
+export const getPartsTool = tool<
+    { baseVehicleId: number; partType?: string },
+    { success: boolean; data?: PartsResponse; error?: string; message: string }
+>({
     description: 'Get parts information including part numbers, descriptions, specifications, and interchange numbers',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
         partType: z.string().optional().describe('Specific part type to search for (e.g., "brake pad", "oil filter")')
     }),
@@ -122,9 +132,12 @@ export const getPartsTool = tool({
     }
 });
 
-export const getMaintenanceScheduleTool = tool({
+export const getMaintenanceScheduleTool = tool<
+    { baseVehicleId: number },
+    { success: boolean; data?: MaintenanceScheduleResponse; error?: string; message: string }
+>({
     description: 'Get recommended maintenance schedule including service intervals, required parts, and labor times',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info')
     }),
     execute: async ({ baseVehicleId }) => {
@@ -146,9 +159,12 @@ export const getMaintenanceScheduleTool = tool({
     }
 });
 
-export const getSpecificationsTool = tool({
+export const getSpecificationsTool = tool<
+    { baseVehicleId: number },
+    { success: boolean; data?: SpecificationsResponse; error?: string; message: string }
+>({
     description: 'Get vehicle specifications including fluid capacities, fluid types, torque specs, and technical specifications',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info')
     }),
     execute: async ({ baseVehicleId }) => {
@@ -170,9 +186,12 @@ export const getSpecificationsTool = tool({
     }
 });
 
-export const getWorkTimeTool = tool({
+export const getWorkTimeTool = tool<
+    { baseVehicleId: number; operation?: string },
+    { success: boolean; data?: WorkTimeResponse; error?: string; message: string }
+>({
     description: 'Get estimated labor times for repair operations to calculate accurate labor costs',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
         operation: z.string().optional().describe('Specific operation to get labor time for (e.g., "brake pad replacement")')
     }),
@@ -197,9 +216,12 @@ export const getWorkTimeTool = tool({
     }
 });
 
-export const getTSBTool = tool({
+export const getTSBTool = tool<
+    { baseVehicleId: number; system?: string },
+    { success: boolean; data?: TSBResponse; error?: string; message: string }
+>({
     description: 'Get Technical Service Bulletins (TSBs) for known issues, recalls, and manufacturer recommendations',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
         system: z.string().optional().describe('Specific system to filter TSBs (e.g., "engine", "transmission")')
     }),
@@ -224,9 +246,12 @@ export const getTSBTool = tool({
     }
 });
 
-export const getWiringDiagramsTool = tool({
+export const getWiringDiagramsTool = tool<
+    { baseVehicleId: number; saeSystemId?: number; saeSubjectId?: number; searchTerm?: string },
+    { success: boolean; data?: WiringDiagramResponse; error?: string; message: string }
+>({
     description: 'Get wiring diagrams for electrical system diagnosis and repair. Useful for tracing circuits, finding component locations, and diagnosing electrical issues.',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
         saeSystemId: z.number().optional().describe('SAE System ID to filter diagrams'),
         saeSubjectId: z.number().optional().describe('SAE Subject ID to filter diagrams'),
@@ -257,9 +282,12 @@ export const getWiringDiagramsTool = tool({
     }
 });
 
-export const getBulkVehicleAttributesTool = tool({
+export const getBulkVehicleAttributesTool = tool<
+    { baseVehicleIds: number[]; attributeStandard?: 'MOTOR' | 'VCDB' },
+    { success: boolean; data?: BulkVehicleAttributesResponse; error?: string; message: string }
+>({
     description: 'Get complete attribute information for multiple vehicles at once. Useful for comparing vehicles or batch processing.',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleIds: z.array(z.number()).describe('Array of base vehicle IDs to lookup'),
         attributeStandard: z.enum(['MOTOR', 'VCDB']).optional().describe('Attribute standard to use (default: MOTOR)')
     }),

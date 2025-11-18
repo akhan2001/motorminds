@@ -4,9 +4,12 @@ import { tool } from 'ai'
 import { z } from 'zod';
 import { calculateRepairCost } from '../lib/cost-calculator';
 
-export const estimateRepairCostTool = tool({
+export const estimateRepairCostTool = tool<
+    { baseVehicleId: number; shopId: number; operation: string; parts?: Array<{ partNumber: string; description: string; quantity: number; unitPrice?: number }>; laborHoursOverride?: number },
+    { success: boolean; data?: unknown; error?: string; message: string }
+>({
     description: 'Calculate estimated repair cost including labor and parts. Provides min/max range based on MOTOR labor times and shop rates.',
-    parameters: z.object({
+    inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from MOTOR DaaS'),
         shopId: z.number().describe('Shop ID to get hourly labor rate'),
         operation: z.string().describe('Repair operation description (e.g., "brake pad replacement")'),

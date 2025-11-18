@@ -12,21 +12,35 @@ const motorClient = new MotorDaasClient({
 
 /**
  * Quick DTC lookup endpoint
- * GET /api/ai/diagnostics/dtc?baseVehicleId=123&code=P0420
+ * GET /api/ai/diagnostics/dtc?baseVehicleId=123&code=P0420&testShopId=xxx (dev only)
  */
 export async function GET(req: NextRequest) {
     try {
-        // Authenticate user
-        const shopId = await getShopIdForUser();
+        // Allow testShopId in development mode
+        const searchParams = req.nextUrl.searchParams;
+        const testShopId = searchParams.get('testShopId');
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        
+        let shopId: string | null;
+        if (isDevelopment && testShopId) {
+            shopId = testShopId;
+        } else {
+            shopId = await getShopIdForUser();
+        }
+        
         if (!shopId) {
             return new Response(
-                JSON.stringify({ error: 'Unauthorized' }),
+                JSON.stringify({ 
+                    error: 'Unauthorized',
+                    ...(isDevelopment && {
+                        hint: 'In development mode, you can pass testShopId as a query parameter'
+                    })
+                }),
                 { status: 401, headers: { 'Content-Type': 'application/json' } }
             );
         }
 
         // Parse query parameters
-        const searchParams = req.nextUrl.searchParams;
         const baseVehicleId = searchParams.get('baseVehicleId');
         const dtcCode = searchParams.get('code');
 

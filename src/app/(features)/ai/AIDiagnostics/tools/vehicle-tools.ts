@@ -4,9 +4,12 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { buildVehicleContext } from '../lib/context-builder';
 
-export const getVehicleHistoryTool = tool({
+export const getVehicleHistoryTool = tool<
+    { vehicleId: number; shopId: number },
+    { success: boolean; data?: unknown; error?: string; message: string; summary?: unknown }
+>({
     description: 'Get complete vehicle service history including all work orders, invoices, appointments, and repairs. This provides critical context for diagnosing recurring issues or related problems.',
-    parameters: z.object({
+    inputSchema: z.object({
         vehicleId: z.number().describe('Customer vehicle ID'),
         shopId: z.number().describe('Shop ID for data access')
     }),

@@ -35,10 +35,21 @@ export class MotorDaasClient {
     }
 
     /**
+     * Test HelloWorld endpoint - simple test to verify authentication
+     */
+    async testHelloWorld(): Promise<{ Text: string }> {
+        const endpoint = '/HelloWorld';
+        const response = await this.makeRequest<{ Text: string }>(endpoint);
+        return response;
+    }
+
+    /**
      * Get vehicle information by VIN
+     * Based on MOTOR API Swagger: /Information/Vehicles/Search/VIN/{VIN}
      */
     async getVehicleInfo(vin: string): Promise<MotorVehicleInfo> {
-        const endpoint = `/Information/YMME/VehicleInfo/${vin}`;
+        // Try the correct endpoint format from Swagger docs
+        const endpoint = `/Information/Vehicles/Search/VIN/${vin}`;
         const cacheKey = MotorDaasCache.generateKey(endpoint);
 
         // Check cache first
@@ -57,13 +68,25 @@ export class MotorDaasClient {
 
     /**
      * Get diagnostic trouble codes for a vehicle
+     * Based on MOTOR API: /Information/Vehicles/Attributes/BaseVehicleID/{ID}/Content/Summaries/Of/DiagnosticTroubleCodes
      */
     async getDiagnosticTroubleCodes(
         baseVehicleId: number,
         dtcCode?: string
     ): Promise<DTCResponse> {
         const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/DiagnosticTroubleCodes`;
-        const params = dtcCode ? { code: dtcCode } : undefined;
+        
+        // MOTOR API requires ContentSilos=15 for Diagnostic Trouble Codes
+        // Use SearchTerm parameter for DTC code search (not "code")
+        const params: Record<string, string | number> = {
+            ContentSilos: 15,
+            AttributeStandard: 'MOTOR'
+        };
+        
+        if (dtcCode) {
+            params.SearchTerm = dtcCode;
+        }
+        
         const cacheKey = MotorDaasCache.generateKey(endpoint, params);
 
         const cached = this.cache.get<DTCResponse>(cacheKey);
@@ -304,7 +327,21 @@ export class MotorDaasClient {
 
         try {
             // Build authenticated URL
-            let fullPath = relativePath;
+            // MOTOR API requires /v1/ prefix in the relative path for signing
+            // Ensure path starts with / and doesn't duplicate /v1/
+            let fullPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+            
+            // Extract base URL pathname to check if /v1 is already included
+            const baseUrlObj = new URL(this.baseUrl);
+            const baseUrlPath = baseUrlObj.pathname;
+            
+            // For signing, we need the full path including /v1/
+            // The signing path should be: /v1/Information/...
+            const signingPath = baseUrlPath.endsWith('/v1') || baseUrlPath.endsWith('/v1/') 
+                ? `${baseUrlPath.replace(/\/$/, '')}${fullPath}`
+                : `/v1${fullPath}`;
+            
+            // Add query parameters to the path if present
             if (queryParams) {
                 const params = new URLSearchParams();
                 Object.entries(queryParams).forEach(([key, value]) => {
@@ -316,11 +353,19 @@ export class MotorDaasClient {
                 });
                 const queryString = params.toString();
                 if (queryString) {
-                    fullPath = `${relativePath}?${queryString}`;
+                    fullPath = `${fullPath}?${queryString}`;
                 }
             }
 
-            const url = this.auth.buildAuthenticatedUrl(this.baseUrl, fullPath, method);
+            // Use signingPath for authentication, fullPath for actual URL
+            // buildAuthenticatedUrl will now properly handle baseUrl with pathname
+            const url = this.auth.buildAuthenticatedUrl(this.baseUrl, fullPath, method, signingPath);
+
+            // Log URL in development for debugging
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`[MOTOR DaaS] ${method} ${fullPath}`);
+                console.log(`[MOTOR DaaS] Full URL: ${url.replace(/Sig=[^&]+/, 'Sig=***')}`); // Hide signature
+            }
 
             // Record request for rate limiting
             this.rateLimiter.recordRequest();
