@@ -28,22 +28,6 @@ declare module 'ai/react' {
     export function useChat(options?: UseChatOptions): UseChatHelpers
 }
 
-declare module 'ai' {
-    export interface Message {
-        id: string
-        role: 'user' | 'assistant' | 'system'
-        content: string
-        parts?: Array<{
-            type: string
-            text?: string
-            content?: string
-            state?: string
-            [key: string]: any
-        }>
-        [key: string]: any
-    }
+// Removed 'ai' module declaration to let the package provide its own types
+// The ai@5.0.93 package includes tool, streamText, StreamingTextResponse, etc.
 
-    export class StreamingTextResponse extends Response {
-        constructor(res: ReadableStream, init?: ResponseInit)
-    }
-}

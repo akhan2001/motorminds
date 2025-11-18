@@ -1,6 +1,6 @@
 // src/app/(features)/ai/AIDiagnostics/types/diagnostics.ts
 
-import { VehicleContext } from '../tools/context-builder';
+import { VehicleContext } from '../lib/context-builder';
 import { CostEstimate } from '../lib/cost-calculator';
 
 export interface DiagnosticMessage {

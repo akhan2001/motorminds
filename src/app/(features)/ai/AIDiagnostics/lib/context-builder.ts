@@ -70,7 +70,7 @@ export async function buildVehicleContext(
     vehicleId: number,
     shopId: number
 ): Promise<VehicleContext> {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Fetch vehicle information
     const { data: vehicleData, error: vehicleError } = await supabase

@@ -2,7 +2,7 @@
 
 import { tool } from 'ai';
 import { z } from 'zod';
-import { buildVehicleContext } from './context-builder';
+import { buildVehicleContext } from '../lib/context-builder';
 
 export const getVehicleHistoryTool = tool({
     description: 'Get complete vehicle service history including all work orders, invoices, appointments, and repairs. This provides critical context for diagnosing recurring issues or related problems.',
@@ -10,9 +10,9 @@ export const getVehicleHistoryTool = tool({
         vehicleId: z.number().describe('Customer vehicle ID'),
         shopId: z.number().describe('Shop ID for data access')
     }),
-    execute: async ({ vehicleId, shopId }) => {
+    execute: async (args: { vehicleId: number; shopId: number }) => {
         try {
-            const context = await buildVehicleContext(vehicleId, shopId);
+            const context = await buildVehicleContext(args.vehicleId, args.shopId);
 
             if (!context.vehicleInfo) {
                 return {
