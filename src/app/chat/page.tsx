@@ -69,9 +69,9 @@ export default function Page() {
 // END OF ORIGINAL CHAT PAGE
 // ============================================================================
 
-// New AI Diagnostics Chat Page
+// New AI Diagnostics Chat Page with 3-Column Layout
 import { Nav } from "../components/nav";
-import { AIDiagnosticsPanel } from "@/app/(features)/ai/AIDiagnostics/components";
+import { MIAThreeColumnLayout } from "./components/MIAThreeColumnLayout";
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { getShopId } from "@/utils/supabase/supabase-shop"
 import { useEffect, useState } from "react";
@@ -117,12 +117,10 @@ export default function Page() {
     }
 
 	return (
-		<div className="h-screen bg-white dark:bg-black flex flex-col">
+		<div className="h-screen bg-white dark:bg-[#0a0a0a] flex flex-col">
 			<Nav />
 			<div className="flex-1 overflow-hidden">
-				<AIDiagnosticsPanel 
-					className="h-full"
-				/>
+				<MIAThreeColumnLayout shopId={shopId} />
 			</div>
 		</div>
 	);
