@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
+import { Message as VercelChatMessage } from "ai";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
@@ -230,7 +230,12 @@ export async function POST(req: NextRequest) {
         },
     });
 
-    return new StreamingTextResponse(responseStream, { headers: corsHeaders });
+    return new Response(responseStream, { 
+        headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/plain; charset=utf-8',
+        }
+    });
 }
 
 async function processAppointmentBooking(aiResponse: string, shopId: string, supabase: any, shop: any) {

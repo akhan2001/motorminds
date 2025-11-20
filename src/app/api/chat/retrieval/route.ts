@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { generateSQLQuery, executeSQLQuery, explainSQLQuery } from "../../../mia/lib/sql-generator";
-import { StreamingTextResponse, Message as VercelChatMessage } from "ai";
+import { Message as VercelChatMessage } from "ai";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HttpResponseOutputParser } from "langchain/output_parsers";
@@ -143,7 +143,11 @@ export async function POST(req: NextRequest) {
 				}
 			});
 			
-			return new StreamingTextResponse(stream);
+			return new Response(stream, {
+				headers: {
+					'Content-Type': 'text/plain; charset=utf-8',
+				},
+			});
 		}
 
 		// If not an action, continue with classification
@@ -243,7 +247,11 @@ export async function POST(req: NextRequest) {
 				}
 			});
 
-			return new StreamingTextResponse(stream);
+			return new Response(stream, {
+				headers: {
+					'Content-Type': 'text/plain; charset=utf-8',
+				},
+			});
 		}
 
 		// 1. Generate SQL query from natural language
@@ -259,7 +267,11 @@ export async function POST(req: NextRequest) {
 					controller.close();
 				}
 			});
-			return new StreamingTextResponse(stream);
+			return new Response(stream, {
+				headers: {
+					'Content-Type': 'text/plain; charset=utf-8',
+				},
+			});
 		}
 
 		// 2. Execute the SQL query
@@ -275,7 +287,11 @@ export async function POST(req: NextRequest) {
 					controller.close();
 				}
 			});
-			return new StreamingTextResponse(stream);
+			return new Response(stream, {
+				headers: {
+					'Content-Type': 'text/plain; charset=utf-8',
+				},
+			});
 		}
 
 		// console.log("~ SQL query executed: ", results);
@@ -369,7 +385,11 @@ export async function POST(req: NextRequest) {
 				}
 			});
 
-			return new StreamingTextResponse(stream);
+			return new Response(stream, {
+				headers: {
+					'Content-Type': 'text/plain; charset=utf-8',
+				},
+			});
 		} catch (responseError) {
 			console.error("Error generating AI response:", responseError);
 			

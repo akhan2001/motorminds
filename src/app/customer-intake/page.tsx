@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useTheme } from 'next-themes'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Moon, Sun } from 'lucide-react'
 
-export default function CustomerIntakePage() {
+function CustomerIntakeContent() {
     const [mounted, setMounted] = useState(false)
     const [shopId, setShopId] = useState<string>('')
     const [shopName, setShopName] = useState<string>('')
@@ -247,5 +247,19 @@ export default function CustomerIntakePage() {
                 </div>
             </footer>
         </div>
+    )
+}
+
+export default function CustomerIntakePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col min-h-screen bg-background">
+                <div className="flex justify-center items-center h-screen">
+                    <div className="text-muted-foreground">Loading...</div>
+                </div>
+            </div>
+        }>
+            <CustomerIntakeContent />
+        </Suspense>
     )
 }
