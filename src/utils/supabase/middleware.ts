@@ -34,7 +34,8 @@ export async function updateSession(request: NextRequest) {
 		'/login', 
 		'/auth',
 		'/api/auth',
-	    '/api/voice-calling/webhook',
+		'/api/voice-calling/webhook',
+		'/customer-intake',
 	]
 	
 	// Skip authentication checks for public routes

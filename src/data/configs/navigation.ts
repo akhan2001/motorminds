@@ -21,7 +21,7 @@ const mechanicHubSubItems = [
 const customerSubItems = [
     { name: "All Customers", href: "/customers" },
     { name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
-    { name: "Customer Intake Form", href: "/customer-intake" },
+    { name: "Customer Intake Form", href: "/customer-intake?shop=" }, // Note: append shop ID when linking
     { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
     { name: "Customer Contracts", href: "/customer-contracts" },
 ];

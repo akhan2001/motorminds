@@ -1,6 +1,6 @@
 'use client'
 
-import { useChat } from 'ai/react'
+import { useChat } from '@ai-sdk/react'
 import type { Message } from 'ai'
 import { ChangeEvent, useState, useEffect } from 'react'
 
