@@ -40,21 +40,24 @@ export function VehicleInfo({ vehicle }: VehicleInfoProps) {
 							)}
 						</div>
 
-						<div className="grid grid-cols-2 gap-2">
-							<div>
-								<div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">VIN</div>
-								<div className="text-xs font-mono text-gray-900 dark:text-white">
-									{vehicle.vin}
-								</div>
+					<div className="grid grid-cols-2 gap-2">
+						<div>
+							<div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">VIN</div>
+							<div className="text-xs font-mono text-gray-900 dark:text-white">
+								{vehicle.vin || 'N/A'}
 							</div>
+						</div>
+						{vehicle.plate && (
 							<div>
 								<div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Plate</div>
 								<div className="text-xs font-medium text-gray-900 dark:text-white">
 									{vehicle.plate}
 								</div>
 							</div>
-						</div>
+						)}
+					</div>
 
+					{vehicle.mileage && (
 						<div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-[#2a2a2a]">
 							<Gauge className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
 							<div>
@@ -64,21 +67,28 @@ export function VehicleInfo({ vehicle }: VehicleInfoProps) {
 								</span>
 							</div>
 						</div>
+					)}
 
+					{(vehicle.customerName || vehicle.customerPhone) && (
 						<div className="pt-2 border-t border-gray-200 dark:border-[#2a2a2a]">
-							<div className="flex items-center gap-2 mb-1">
-								<User className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-								<span className="text-xs font-medium text-gray-900 dark:text-white">
-									{vehicle.customerName}
-								</span>
-							</div>
-							<div className="flex items-center gap-2 ml-5">
-								<Phone className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-								<span className="text-xs text-gray-600 dark:text-gray-400">
-									{vehicle.customerPhone}
-								</span>
-							</div>
+							{vehicle.customerName && (
+								<div className="flex items-center gap-2 mb-1">
+									<User className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+									<span className="text-xs font-medium text-gray-900 dark:text-white">
+										{vehicle.customerName}
+									</span>
+								</div>
+							)}
+							{vehicle.customerPhone && (
+								<div className="flex items-center gap-2 ml-5">
+									<Phone className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+									<span className="text-xs text-gray-600 dark:text-gray-400">
+										{vehicle.customerPhone}
+									</span>
+								</div>
+							)}
 						</div>
+					)}
 					</div>
 				</div>
 			)}

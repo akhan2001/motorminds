@@ -43,10 +43,53 @@ export interface DTCCode {
     relatedCodes?: string[];
 }
 
+// DTC Application Item
+export interface DTCItem {
+    Code: string;
+    DTCID: number;
+}
+
+// DTC Attribute Mapping
+export interface DTCAttributeMapping {
+    ID: number;
+    Type: string;
+}
+
+// DTC Content Silo
+export interface DTCContentSilo {
+    ID: number;
+    Name: string;
+    SourceSilos?: Array<{
+        ID: number;
+        Name: string;
+    }>;
+}
+
+// DTC Link
+export interface DTCLink {
+    Href: string;
+    Rel: string;
+}
+
+// DTC Application (from API)
+export interface DTCApplication {
+    Item: DTCItem;
+    ApplicationID: number;
+    AttributeMappings?: DTCAttributeMapping[];
+    ContentSilos?: DTCContentSilo[];
+    DisplayName: string;
+    IsActive: boolean;
+    Links?: DTCLink[];
+    Qualifiers?: any[];
+}
+
+// DTC Response (matches MOTOR API structure)
 export interface DTCResponse {
-    baseVehicleId: number;
-    codes: DTCCode[];
-    totalCount: number;
+    baseVehicleId?: number;
+    applications?: DTCApplication[];
+    totalCount?: number;
+    // Legacy support
+    codes?: DTCCode[];
 }
 
 // Service Procedure Types
@@ -96,6 +139,64 @@ export interface Part {
 export interface PartsResponse {
     baseVehicleId: number;
     parts: Part[];
+    totalCount: number;
+}
+
+// Recommended Fluids Types
+export interface RecommendedFluid {
+    positionId?: number;
+    positionPCDBId?: number;
+    positionDescription?: string;
+    positionType?: string;
+    fluidType: string;
+    displayName?: string;
+    isActive?: boolean;
+    attributes?: Record<string, any>;
+    specification?: string;
+    capacity?: string;
+    links?: FluidLink[];
+    qualifiers?: FluidQualifier[];
+    taxonomy?: FluidTaxonomy;
+}
+
+export interface FluidLink {
+    href?: string;
+    rel?: string;
+    count?: number;
+}
+
+export interface FluidQualifier {
+    qualifierId: number;
+    description: string;
+    family?: string;
+    type?: string;
+    isActive: boolean;
+    sequence?: number;
+}
+
+export interface FluidTaxonomy {
+    action?: string;
+    commonName?: string;
+    literalName?: string;
+    systemName?: string;
+    groupName?: string;
+    groupId?: number;
+    subGroupName?: string;
+    subGroupId?: number;
+    systemId?: number;
+    taxonomyId?: number;
+    infoObject?: {
+        description?: string;
+        infoObjectId?: number;
+    };
+    replacementTaxonomy?: any;
+}
+
+export interface RecommendedFluidsResponse {
+    baseVehicleId: number;
+    engineId?: number;
+    submodelId?: number;
+    applications: RecommendedFluid[];
     totalCount: number;
 }
 

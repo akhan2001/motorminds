@@ -15,7 +15,8 @@ import {
     getWorkTimeTool,
     getTSBTool,
     getWiringDiagramsTool,
-    getBulkVehicleAttributesTool
+    getBulkVehicleAttributesTool,
+    getRecommendedFluidsTool
 } from '@/app/(features)/ai/AIDiagnostics/tools/motor-daas-tools';
 import { getVehicleHistoryTool } from '@/app/(features)/ai/AIDiagnostics/tools/vehicle-tools';
 import { estimateRepairCostTool } from '@/app/(features)/ai/AIDiagnostics/tools/cost-estimation-tools';
@@ -68,8 +69,11 @@ export async function POST(req: NextRequest) {
 
                 systemMessage += `\n\n## CURRENT VEHICLE CONTEXT:\n\n${formattedContext}\n\nThis vehicle's complete history is available above. Use this context to inform your diagnosis and recommendations.`;
             } catch (error) {
-                console.error('Error building vehicle context:', error);
-                // Continue without context rather than failing
+                // Silently continue without context for sandbox vehicles or vehicles not in database
+                // This is expected when using MOTOR sandbox vehicles that don't exist in our CRM
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('[AI Diagnostics] Vehicle context not available (sandbox vehicle or not in database)');
+                }
             }
         }
 
@@ -85,6 +89,7 @@ export async function POST(req: NextRequest) {
             getTSB: getTSBTool,
             getWiringDiagrams: getWiringDiagramsTool,
             getBulkVehicleAttributes: getBulkVehicleAttributesTool,
+            getRecommendedFluids: getRecommendedFluidsTool,
             getVehicleHistory: getVehicleHistoryTool,
             estimateRepairCost: estimateRepairCostTool
         };

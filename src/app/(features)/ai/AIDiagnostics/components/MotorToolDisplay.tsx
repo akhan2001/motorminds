@@ -115,6 +115,11 @@ function getToolMetadata(toolName: string) {
             title: 'Cost Estimate',
             description: 'Calculating repair cost estimate',
             icon: <FileText className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+        },
+        getRecommendedFluids: {
+            title: 'Recommended Fluids',
+            description: 'Looking up OEM-specified fluids and capacities',
+            icon: <Settings className="w-5 h-5 text-blue-600 dark:text-blue-500" />
         }
     }
 
@@ -136,6 +141,9 @@ function ToolInput({ toolName, input }: { toolName: string; input: any }) {
             <span>
                 Base Vehicle ID: {input.baseVehicleId}
                 {input.dtcCode && ` • DTC: ${input.dtcCode}`}
+                {input.searchTerm && ` • Search: ${input.searchTerm}`}
+                {input.engineId && ` • Engine: ${input.engineId}`}
+                {input.submodelId && ` • Submodel: ${input.submodelId}`}
             </span>
         )
     }
@@ -184,24 +192,170 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
     // DTC Output
     if (toolName === 'lookupDTC') {
         const dtc = output.data
+        const applications = dtc?.applications || dtc?.codes || []
+        const totalCount = dtc?.totalCount || applications.length
+        
         return (
-            <div className="text-sm space-y-2">
-                <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Found {dtc.totalCount || 0} DTC codes</span>
+            <div className="space-y-2">
+                {output.message && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">{output.message}</div>
+                )}
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Found {totalCount} DTC application{totalCount === 1 ? '' : 's'}
+                    </span>
                 </div>
-                {dtc.codes && dtc.codes.length > 0 && (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {dtc.codes.slice(0, 5).map((code: any, idx: number) => (
-                            <div key={idx} className="border-l-2 border-yellow-600 dark:border-yellow-500 pl-3 py-1">
-                                <div className="font-medium text-gray-900 dark:text-gray-100">{code.code}</div>
-                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{code.description}</div>
-                            </div>
-                        ))}
-                        {dtc.codes.length > 5 && (
+                {applications.length > 0 ? (
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {applications.slice(0, 10).map((app: any, idx: number) => {
+                            // Handle both new API structure (app.Item) and legacy (app.code)
+                            const code = app.Item?.Code || app.code || 'N/A'
+                            const displayName = app.DisplayName || app.description || 'No description available'
+                            const isActive = app.IsActive !== undefined ? app.IsActive : true
+                            const applicationId = app.ApplicationID || app.id
+                            
+                            return (
+                                <div 
+                                    key={idx} 
+                                    className="border-l-2 border-yellow-600 dark:border-yellow-500 pl-3 py-2 bg-white dark:bg-[#1a1a1a] rounded"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="font-medium text-gray-900 dark:text-gray-100 font-mono">
+                                            {code}
+                                        </div>
+                                        {!isActive && (
+                                            <span className="px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-full">
+                                                Superseded
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                                        {displayName}
+                                    </div>
+                                    {applicationId && (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            Application ID: {applicationId}
+                                        </div>
+                                    )}
+                                    {app.AttributeMappings && app.AttributeMappings.length > 0 && (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            Attributes: {app.AttributeMappings.map((m: any) => `${m.Type}:${m.ID}`).join(', ')}
+                                        </div>
+                                    )}
+                                    {app.Links && app.Links.length > 0 && (
+                                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                            {app.Links.map((link: any) => link.Rel).join(', ')} available
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                        {applications.length > 10 && (
                             <div className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
-                                ... and {dtc.codes.length - 5} more
+                                ... and {applications.length - 10} more
                             </div>
                         )}
+                    </div>
+                ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-100 dark:bg-[#1a1a1a] rounded px-3 py-2">
+                        No DTC applications found for this vehicle configuration.
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    // Recommended Fluids Output
+    if (toolName === 'getRecommendedFluids') {
+        const fluids = output.data
+        
+        // Handle case where data might be undefined or applications is empty
+        const hasFluids = fluids?.applications && Array.isArray(fluids.applications) && fluids.applications.length > 0
+        
+        return (
+            <div className="space-y-2">
+                {output.message && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">{output.message}</div>
+                )}
+                {hasFluids ? (
+                    <div className="space-y-3">
+                        {fluids.applications.map((fluid: any, idx: number) => (
+                            <div key={idx} className="border-l-2 border-blue-600 dark:border-blue-500 pl-3 py-2 bg-white dark:bg-[#1a1a1a] rounded">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                                            {fluid.displayName || fluid.fluidType || 'Fluid'}
+                                        </div>
+                                        {fluid.taxonomy?.commonName && fluid.taxonomy.commonName !== fluid.fluidType && (
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                {fluid.taxonomy.commonName}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {fluid.isActive === false && (
+                                        <span className="text-xs text-gray-400 dark:text-gray-500 italic">Superseded</span>
+                                    )}
+                                </div>
+                                
+                                {fluid.positionDescription && (
+                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        <span className="font-medium">Position:</span> {fluid.positionDescription}
+                                        {fluid.positionType && ` (${fluid.positionType})`}
+                                    </div>
+                                )}
+                                
+                                {(fluid.specification || fluid.capacity) && (
+                                    <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                        {fluid.specification && (
+                                            <div>
+                                                <span className="text-gray-500 dark:text-gray-400">Specification:</span>{' '}
+                                                <span className="text-gray-900 dark:text-gray-100 font-medium">{fluid.specification}</span>
+                                            </div>
+                                        )}
+                                        {fluid.capacity && (
+                                            <div>
+                                                <span className="text-gray-500 dark:text-gray-400">Capacity:</span>{' '}
+                                                <span className="text-gray-900 dark:text-gray-100 font-medium">{fluid.capacity}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {fluid.taxonomy && (
+                                    <div className="mt-2 text-xs space-y-0.5">
+                                        {fluid.taxonomy.systemName && (
+                                            <div className="text-gray-500 dark:text-gray-400">
+                                                <span className="font-medium">System:</span> {fluid.taxonomy.systemName}
+                                            </div>
+                                        )}
+                                        {fluid.taxonomy.groupName && (
+                                            <div className="text-gray-500 dark:text-gray-400">
+                                                <span className="font-medium">Group:</span> {fluid.taxonomy.groupName}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {fluid.qualifiers && fluid.qualifiers.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-[#2a2a2a]">
+                                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Qualifiers:</div>
+                                        <div className="space-y-1">
+                                            {fluid.qualifiers.filter((q: any) => q.isActive).map((qualifier: any, qIdx: number) => (
+                                                <div key={qIdx} className="text-xs text-gray-600 dark:text-gray-400">
+                                                    • {qualifier.description}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-100 dark:bg-[#1a1a1a] rounded px-3 py-2">
+                        {fluids?.totalCount === 0 
+                            ? 'No fluid specifications found for this vehicle configuration. The vehicle may not have fluid data available in MOTOR DaaS.'
+                            : 'No fluid data available'}
                     </div>
                 )}
             </div>
@@ -255,6 +409,7 @@ export function isMotorTool(toolName: string): boolean {
         'getTSB',
         'getWiringDiagrams',
         'getBulkVehicleAttributes',
+        'getRecommendedFluids',
         'getVehicleHistory',
         'estimateRepairCost'
     ]

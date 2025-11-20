@@ -2,18 +2,20 @@
 
 export const mockVehicleData = {
 	id: 1,
-	year: 2017,
-	make: 'Chevrolet',
-	model: 'Corvette',
-	trim: 'Z51',
-	vin: '1G1YY2D74H5100001',
+	year: 2012,
+	make: 'Ford',
+	model: 'F-150',
+	trim: 'Platinum',
+	vin: '1FTFW1ET0CFC12345',
 	plate: 'ABC-1234',
-	mileage: 42350,
-	customerName: 'John Smith',
-	customerPhone: '(555) 123-4567',
+	mileage: 89500,
+	customerName: 'Michael Rodriguez',
+	customerPhone: '(555) 789-4321',
 	customerId: 101,
-	baseVehicleId: 22124,
-	activeDTCCodes: ['P0420', 'P0300']
+	baseVehicleId: 26332, // 2012 Ford F-150 (MOTOR Sandbox)
+	engineId: 11302, // 3.7L V6 FLEX FI
+	submodelId: 104, // Platinum
+	activeDTCCodes: ['P0171', 'P0174']
 }
 
 export const mockWorkOrders = [
@@ -24,7 +26,7 @@ export const mockWorkOrders = [
 		createdDate: '2024-11-18',
 		assignedTechnician: 'Mike Johnson',
 		totalAmount: 875.50,
-		reportedIssue: 'Check engine light on, rough idle at startup',
+		reportedIssue: 'Check engine light on, engine running lean on both banks',
 		lineItems: [
 			{ description: 'Diagnostic fee', quantity: 1, price: 125.00 },
 			{ description: 'O2 sensor replacement', quantity: 1, price: 350.50 },
@@ -50,32 +52,32 @@ export const mockWorkOrders = [
 export const mockDTCCodes = {
 	active: [
 		{
-			code: 'P0420',
-			description: 'Catalyst System Efficiency Below Threshold (Bank 1)',
+			code: 'P0171',
+			description: 'System Too Lean (Bank 1)',
 			severity: 'Warning',
 			detectedDate: '2024-11-18',
-			aiSummary: 'Most likely cause: Catalytic converter degradation or exhaust leak. Recommend oxygen sensor testing and exhaust inspection.'
+			aiSummary: 'Indicates insufficient fuel or excess air in Bank 1. Common causes: vacuum leak, dirty MAF sensor, weak fuel pump, or exhaust leak before O2 sensor.'
 		},
 		{
-			code: 'P0300',
-			description: 'Random/Multiple Cylinder Misfire Detected',
-			severity: 'Critical',
+			code: 'P0174',
+			description: 'System Too Lean (Bank 2)',
+			severity: 'Warning',
 			detectedDate: '2024-11-18',
-			aiSummary: 'Suggests ignition system issues. Check spark plugs, coil packs, and fuel delivery system. May be related to P0420.'
+			aiSummary: 'Indicates insufficient fuel or excess air in Bank 2. Lean condition on both banks suggests system-wide issue: intake leak, fuel pressure, or MAF sensor.'
 		}
 	],
 	historical: [
 		{
-			code: 'P0171',
-			description: 'System Too Lean (Bank 1)',
-			resolvedDate: '2024-10-15',
-			resolution: 'MAF sensor replaced'
+			code: 'P0420',
+			description: 'Catalyst System Efficiency Below Threshold (Bank 1)',
+			resolvedDate: '2024-09-28',
+			resolution: 'Catalytic converter replaced'
 		},
 		{
-			code: 'C0040',
-			description: 'Right Front Wheel Speed Sensor Circuit',
-			resolvedDate: '2024-09-22',
-			resolution: 'Wheel speed sensor replaced'
+			code: 'P0430',
+			description: 'Catalyst System Efficiency Below Threshold (Bank 2)',
+			resolvedDate: '2024-09-28',
+			resolution: 'Catalytic converter replaced'
 		}
 	]
 }

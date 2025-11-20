@@ -13,7 +13,8 @@ import type {
     WorkTimeResponse,
     TSBResponse,
     WiringDiagramResponse,
-    BulkVehicleAttributesResponse
+    BulkVehicleAttributesResponse,
+    RecommendedFluidsResponse
 } from '@/lib/integrations/motor-daas/types';
 
 const motorClient = new MotorDaasClient({
@@ -49,21 +50,79 @@ export const getVehicleInfoTool = tool<
 });
 
 export const lookupDTCTool = tool<
-    { baseVehicleId: number; dtcCode?: string },
+    { 
+        baseVehicleId: number; 
+        dtcCode?: string;
+        searchTerm?: string;
+        engineId?: number;
+        submodelId?: number;
+        countryId?: number;
+        transmissionId?: number;
+        driveTypeId?: number;
+        bodyStyleId?: number;
+        contentSilos?: number[];
+        include?: string[];
+        itemsPerPage?: number;
+        pageIndex?: number;
+    },
     { success: boolean; data?: DTCResponse; error?: string; message: string }
 >({
-    description: 'Look up diagnostic trouble code (DTC) definitions, possible causes, and repair procedures for a specific vehicle',
+    description: 'Look up diagnostic trouble code (DTC) definitions, possible causes, and repair procedures for a specific vehicle. Returns summary information for DTC applications including code, display name, and application details.',
     inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
-        dtcCode: z.string().optional().describe('Specific DTC code (e.g., P0420) to look up. If not provided, returns all DTCs for the vehicle')
+        dtcCode: z.string().optional().describe('Specific DTC code to search for (e.g., P0420, B2425-0D). Searches against the DTC code field.'),
+        searchTerm: z.string().optional().describe('Search term for DTC code lookup. Alternative to dtcCode parameter.'),
+        engineId: z.number().optional().describe('Engine ID (EN) for engine-specific DTCs'),
+        submodelId: z.number().optional().describe('Submodel ID (SM) for trim-specific DTCs'),
+        countryId: z.number().optional().describe('Country ID (CO), e.g., 1 for USA'),
+        transmissionId: z.number().optional().describe('Transmission ID (TR)'),
+        driveTypeId: z.number().optional().describe('Drive Type ID (DT)'),
+        bodyStyleId: z.number().optional().describe('Body Style ID (BS)'),
+        contentSilos: z.array(z.number()).optional().describe('Content Silos array (default: [15] for Diagnostic Trouble Codes)'),
+        include: z.array(z.string()).optional().describe('Additional data to include (e.g., ["Counts"])'),
+        itemsPerPage: z.number().optional().describe('Number of results per page (max 30)'),
+        pageIndex: z.number().optional().describe('Page index for pagination (0-based)')
     }),
-    execute: async ({ baseVehicleId, dtcCode }) => {
+    execute: async ({ 
+        baseVehicleId, 
+        dtcCode, 
+        searchTerm,
+        engineId,
+        submodelId,
+        countryId,
+        transmissionId,
+        driveTypeId,
+        bodyStyleId,
+        contentSilos,
+        include,
+        itemsPerPage,
+        pageIndex
+    }) => {
         try {
-            const dtcResponse = await motorClient.getDiagnosticTroubleCodes(baseVehicleId, dtcCode);
+            const dtcResponse = await motorClient.getDiagnosticTroubleCodes(baseVehicleId, {
+                dtcCode: dtcCode || searchTerm,
+                searchTerm: searchTerm || dtcCode,
+                engineId,
+                submodelId,
+                countryId,
+                transmissionId,
+                driveTypeId,
+                bodyStyleId,
+                contentSilos,
+                include,
+                itemsPerPage,
+                pageIndex
+            });
+            
+            const count = dtcResponse.applications?.length || 0;
+            const searchInfo = dtcCode || searchTerm ? ` for ${dtcCode || searchTerm}` : '';
+            
             return {
                 success: true,
                 data: dtcResponse,
-                message: dtcCode ? `Found definition for DTC ${dtcCode}` : `Found ${dtcResponse.totalCount} DTC codes`
+                message: count > 0 
+                    ? `Found ${count} DTC application${count === 1 ? '' : 's'}${searchInfo}`
+                    : `No DTC applications found${searchInfo}`
             };
         } catch (error) {
             return {
@@ -308,6 +367,70 @@ export const getBulkVehicleAttributesTool = tool<
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to get vehicle attributes',
                 message: 'Could not retrieve bulk vehicle attributes'
+            };
+        }
+    }
+});
+
+export const getRecommendedFluidsTool = tool<
+    { 
+        baseVehicleId: number; 
+        engineId?: number; 
+        submodelId?: number;
+        contentSilos?: number[];
+        includeImages?: boolean;
+        transmissionId?: number;
+        driveTypeId?: number;
+    },
+    { success: boolean; data?: RecommendedFluidsResponse; error?: string; message: string }
+>({
+    description: 'Get recommended fluids and capacities for a vehicle including engine oil, transmission fluid, coolant, brake fluid, and other fluids. Provides OEM specifications and fill capacities. Use contentSilos=[117] for custom fluid recommendations.',
+    inputSchema: z.object({
+        baseVehicleId: z.number().describe('MOTOR base vehicle ID'),
+        engineId: z.number().optional().describe('MOTOR engine ID for engine-specific fluids'),
+        submodelId: z.number().optional().describe('MOTOR submodel ID for trim-specific fluids'),
+        contentSilos: z.array(z.number()).optional().describe('Content silos to include (e.g., [117] for Custom Fluid Recommendations)'),
+        includeImages: z.boolean().optional().describe('Include image data in response'),
+        transmissionId: z.number().optional().describe('MOTOR transmission ID'),
+        driveTypeId: z.number().optional().describe('MOTOR drive type ID')
+    }),
+    execute: async ({ baseVehicleId, engineId, submodelId, contentSilos, includeImages, transmissionId, driveTypeId }) => {
+        try {
+            const fluids = await motorClient.getRecommendedFluids(
+                baseVehicleId,
+                engineId,
+                submodelId,
+                {
+                    contentSilos,
+                    include: includeImages ? ['Image'] : undefined,
+                    transmissionId,
+                    driveTypeId
+                }
+            );
+
+            if (fluids.totalCount === 0) {
+                return {
+                    success: true,
+                    data: fluids,
+                    message: 'No fluid recommendations found for this vehicle'
+                };
+            }
+
+            const fluidTypes = fluids.applications
+                .map(f => f.fluidType)
+                .filter(Boolean)
+                .join(', ');
+
+            return {
+                success: true,
+                data: fluids,
+                message: `Found ${fluids.totalCount} fluid recommendations: ${fluidTypes}`
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to get recommended fluids',
+                message: 'Could not retrieve fluid recommendations'
             };
         }
     }

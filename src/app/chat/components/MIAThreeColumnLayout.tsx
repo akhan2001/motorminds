@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react'
 import { ChatArea } from './ChatArea'
 import { RightSidebar } from './RightSidebar'
+import { SandboxVehicle } from './VehicleSelector'
 import { mockVehicleData, mockWorkOrders, mockDTCCodes, mockParts, mockServiceHistory, mockDiagrams } from './mockData'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
 
@@ -12,6 +13,7 @@ interface MIAThreeColumnLayoutProps {
 
 export function MIAThreeColumnLayout({ shopId }: MIAThreeColumnLayoutProps) {
 	const [selectedVehicle, setSelectedVehicle] = useState(mockVehicleData)
+	const [selectedSandboxVehicle, setSelectedSandboxVehicle] = useState<SandboxVehicle | null>(null)
 	const [selectedWorkOrder, setSelectedWorkOrder] = useState(mockWorkOrders[0] || null)
 	const [sidebarWidth, setSidebarWidth] = useState(384) // 24rem = 384px
 	const [isCollapsed, setIsCollapsed] = useState(false)
@@ -65,6 +67,8 @@ export function MIAThreeColumnLayout({ shopId }: MIAThreeColumnLayoutProps) {
 					vehicle={selectedVehicle}
 					workOrder={selectedWorkOrder}
 					shopId={shopId}
+					selectedSandboxVehicle={selectedSandboxVehicle}
+					onSandboxVehicleSelect={setSelectedSandboxVehicle}
 				/>
 			</div>
 
@@ -86,7 +90,7 @@ export function MIAThreeColumnLayout({ shopId }: MIAThreeColumnLayoutProps) {
 						className="flex-shrink-0"
 					>
 						<RightSidebar
-							vehicle={selectedVehicle}
+							vehicle={selectedSandboxVehicle || selectedVehicle}
 							workOrders={mockWorkOrders}
 							dtcCodes={mockDTCCodes}
 							parts={mockParts}
