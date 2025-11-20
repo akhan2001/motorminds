@@ -246,24 +246,95 @@ export const getSpecificationsTool = tool<
 });
 
 export const getWorkTimeTool = tool<
-    { baseVehicleId: number; operation?: string },
+    { 
+        baseVehicleId: number; 
+        searchTerm?: string;
+        vmrsCode?: string;
+        engineId?: number;
+        submodelId?: number;
+        countryId?: number;
+        transmissionId?: number;
+        driveTypeId?: number;
+        bodyStyleId?: number;
+        contentSilos?: number[];
+        taxonomyIDs?: number[];
+        groupID?: number;
+        subGroupID?: number;
+        systemID?: number;
+        include?: string[];
+        itemsPerPage?: number;
+        pageIndex?: number;
+    },
     { success: boolean; data?: WorkTimeResponse; error?: string; message: string }
 >({
-    description: 'Get estimated labor times for repair operations to calculate accurate labor costs',
+    description: 'Get estimated labor times for repair operations to calculate accurate labor costs. Returns summary information for estimated work time applications including base labor time, additional labor time, warranty labor time, required skill level, and service type. Supports searching by operation name, VMRS code, taxonomy, and vehicle attributes.',
     inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
-        operation: z.string().optional().describe('Specific operation to get labor time for (e.g., "brake pad replacement")')
+        searchTerm: z.string().optional().describe('Search term for operation name (searches against taxonomy literal name field, supports partial and complete matches)'),
+        vmrsCode: z.string().optional().describe('3, 6, or 9 digit VMRS code to filter results'),
+        engineId: z.number().optional().describe('Engine ID (EN) for engine-specific work times'),
+        submodelId: z.number().optional().describe('Submodel ID (SM) for trim-specific work times'),
+        countryId: z.number().optional().describe('Country ID (CO), e.g., 1 for USA'),
+        transmissionId: z.number().optional().describe('Transmission ID (TR)'),
+        driveTypeId: z.number().optional().describe('Drive Type ID (DT)'),
+        bodyStyleId: z.number().optional().describe('Body Style ID (BS)'),
+        contentSilos: z.array(z.number()).optional().describe('Content Silos array (28 = Mechanical Repair Labor GEN5, 103 = HD Estimated Work Times)'),
+        taxonomyIDs: z.array(z.number()).optional().describe('Taxonomy IDs to filter by'),
+        groupID: z.number().optional().describe('Taxonomy group ID'),
+        subGroupID: z.number().optional().describe('Taxonomy sub-group ID'),
+        systemID: z.number().optional().describe('Taxonomy system ID'),
+        include: z.array(z.string()).optional().describe('Additional data to include (e.g., ["Counts", "VMRSDetails"])'),
+        itemsPerPage: z.number().optional().describe('Number of results per page (max 30)'),
+        pageIndex: z.number().optional().describe('Page index for pagination (0-based)')
     }),
-    execute: async ({ baseVehicleId, operation }) => {
+    execute: async ({ 
+        baseVehicleId, 
+        searchTerm,
+        vmrsCode,
+        engineId,
+        submodelId,
+        countryId,
+        transmissionId,
+        driveTypeId,
+        bodyStyleId,
+        contentSilos,
+        taxonomyIDs,
+        groupID,
+        subGroupID,
+        systemID,
+        include,
+        itemsPerPage,
+        pageIndex
+    }) => {
         try {
-            const workTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId, operation);
+            const workTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId, {
+                searchTerm,
+                vmrsCode,
+                engineId,
+                submodelId,
+                countryId,
+                transmissionId,
+                driveTypeId,
+                bodyStyleId,
+                contentSilos,
+                taxonomyIDs,
+                groupID,
+                subGroupID,
+                systemID,
+                include,
+                itemsPerPage,
+                pageIndex
+            });
+
+            const count = workTimes.applications?.length || workTimes.workTimes?.length || 0;
+            const searchInfo = searchTerm ? ` for "${searchTerm}"` : (vmrsCode ? ` for VMRS ${vmrsCode}` : '');
 
             return {
                 success: true,
                 data: workTimes,
-                message: operation
-                    ? `Found labor time for "${operation}"`
-                    : `Found ${workTimes.totalCount} labor time estimates`
+                message: count > 0
+                    ? `Found ${count} work time application${count === 1 ? '' : 's'}${searchInfo}`
+                    : `No work time applications found${searchInfo}`
             };
         } catch (error) {
             return {

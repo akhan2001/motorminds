@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { Package, TrendingUp, Clock, DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
+import { PartsOrderingSheet } from '@/app/chat/components/Parts/PartsOrderingSheet'
 
 interface PartsInsightsProps {
 	parts: any[]
@@ -9,9 +10,17 @@ interface PartsInsightsProps {
 
 export function PartsInsights({ parts }: PartsInsightsProps) {
 	const [isExpanded, setIsExpanded] = useState(true)
+	const [isOrderingSheetOpen, setIsOrderingSheetOpen] = useState(false)
+	const [selectedParts, setSelectedParts] = useState<any[]>([])
 
 	if (!parts || parts.length === 0) {
 		return null
+	}
+
+	const handleOrderClick = (part: any) => {
+		setSelectedParts([part])
+		setIsOrderingSheetOpen(true)
+		console.log('Ordering part:', part)
 	}
 
 	return (
@@ -50,13 +59,12 @@ export function PartsInsights({ parts }: PartsInsightsProps) {
 									</div>
 									<div className="flex items-center gap-1 ml-2">
 										<TrendingUp className="w-3 h-3 text-green-600 dark:text-green-500" />
-										<span className={`text-xs font-medium ${
-											part.confidence === 'High'
+										<span className={`text-xs font-medium ${part.confidence === 'High'
 												? 'text-green-700 dark:text-green-400'
 												: part.confidence === 'Medium'
-												? 'text-yellow-700 dark:text-yellow-400'
-												: 'text-gray-700 dark:text-gray-400'
-										}`}>
+													? 'text-yellow-700 dark:text-yellow-400'
+													: 'text-gray-700 dark:text-gray-400'
+											}`}>
 											{part.confidence}
 										</span>
 									</div>
@@ -87,23 +95,32 @@ export function PartsInsights({ parts }: PartsInsightsProps) {
 									<div className="text-xs text-gray-600 dark:text-gray-400">
 										{part.supplier}
 									</div>
-									<span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
-										part.availability === 'In Stock'
+									<span className={`px-1.5 py-0.5 text-xs font-medium rounded ${part.availability === 'In Stock'
 											? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
 											: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
-									}`}>
+										}`}>
 										{part.availability}
 									</span>
 								</div>
 
-								<button className="w-full mt-2 px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors">
-									Order with 1 Click
+								<button
+									className="w-full mt-2 px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+									onClick={() => handleOrderClick(part)}
+								>
+									Order Parts
 								</button>
 							</div>
 						))}
 					</div>
 				</div>
 			)}
+
+			{/* Parts Ordering Sheet */}
+			<PartsOrderingSheet
+				parts={selectedParts}
+				isOpen={isOrderingSheetOpen}
+				onOpenChange={setIsOrderingSheetOpen}
+			/>
 		</div>
 	)
 }

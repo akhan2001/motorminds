@@ -135,7 +135,7 @@ export function AIDiagnosticsPanel({
 	return (
 		<div className={`flex flex-col h-full bg-white dark:bg-[#0a0a0a] ${className}`}>
 			{/* Header */}
-			<div className="flex-shrink-0 border-b border-gray-200 dark:border-[#222222] bg-gray-50 dark:bg-[#131313] px-4 py-3">
+			{/* <div className="flex-shrink-0 border-b border-gray-200 dark:border-[#222222] bg-gray-50 dark:bg-[#131313] px-4 py-3">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
 						<Sparkles className="w-5 h-5 text-red-600 dark:text-red-500" />
@@ -156,7 +156,7 @@ export function AIDiagnosticsPanel({
 				{workOrderId && (
 					<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Work Order: {workOrderId}</p>
 				)}
-			</div>
+			</div> */}
 
 			{/* Messages Container */}
 			<div

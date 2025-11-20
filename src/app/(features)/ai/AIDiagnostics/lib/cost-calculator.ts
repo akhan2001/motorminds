@@ -102,27 +102,54 @@ async function getLaborHours(
     operation: string
 ): Promise<number> {
     try {
-        const workTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId, operation);
+        const workTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId, { searchTerm: operation });
 
-        if (workTimes.workTimes.length > 0) {
-            // Return the first matching work time
+        // Check new API structure (applications with Items)
+        if (workTimes.applications && workTimes.applications.length > 0) {
+            const firstApp = workTimes.applications[0];
+            if (firstApp.Items && firstApp.Items.length > 0) {
+                const firstItem = firstApp.Items[0];
+                // Return base labor time + additional labor time
+                return (firstItem.BaseLaborTime || 0) + (firstItem.AdditionalLaborTime || 0);
+            }
+        }
+
+        // Check legacy structure (workTimes array)
+        if (workTimes.workTimes && workTimes.workTimes.length > 0) {
             return workTimes.workTimes[0].laborHours;
         }
 
         // If no exact match, try to get all work times and find closest match
-        const allWorkTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId);
+        const allWorkTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId, {});
         const operationLower = operation.toLowerCase();
 
-        const match = allWorkTimes.workTimes.find(wt =>
-            wt.operationDescription.toLowerCase().includes(operationLower) ||
-            operationLower.includes(wt.operationDescription.toLowerCase())
-        );
+        // Check new API structure
+        if (allWorkTimes.applications && allWorkTimes.applications.length > 0) {
+            const match = allWorkTimes.applications.find(app => {
+                const displayName = app.DisplayName?.toLowerCase() || '';
+                return displayName.includes(operationLower) || operationLower.includes(displayName);
+            });
+            
+            if (match && match.Items && match.Items.length > 0) {
+                const firstItem = match.Items[0];
+                return (firstItem.BaseLaborTime || 0) + (firstItem.AdditionalLaborTime || 0);
+            }
+        }
 
-        if (match) {
-            return match.laborHours;
+        // Check legacy structure
+        if (allWorkTimes.workTimes && allWorkTimes.workTimes.length > 0) {
+            const match = allWorkTimes.workTimes.find(wt =>
+                wt.operationDescription.toLowerCase().includes(operationLower) ||
+                operationLower.includes(wt.operationDescription.toLowerCase())
+            );
+
+            if (match) {
+                return match.laborHours;
+            }
         }
     } catch (error) {
         console.error('Error fetching labor hours from MOTOR:', error);
+        return 2.0; // Default to 2 hours if error occurs
     }
 
     // Default estimate if not found (2 hours)

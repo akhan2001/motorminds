@@ -33,6 +33,23 @@ export interface MotorVehicleInfo {
     region?: string;
 }
 
+export interface MotorVehicleAttributeOptions {
+    countryId?: number; // CO
+    engineId?: number; // EN
+    submodelId?: number; // SM
+    transmissionId?: number; // TR
+    driveTypeId?: number; // DT
+    bodyStyleId?: number; // BS
+    bedTypeId?: number; // BD
+    brakeTypeId?: number; // BR
+    axleTypeId?: number; // AX
+    cabTypeId?: number; // CB
+    springId?: number; // SP
+    steeringId?: number; // ST
+    wheelBaseId?: number; // WB
+    manufactureBodyCodeId?: number; // MB
+}
+
 // DTC Types
 export interface DTCCode {
     code: string;
@@ -247,10 +264,120 @@ export interface WorkTime {
     operationCode?: string;
 }
 
+// Work Time Item (from API)
+export interface WorkTimeItem {
+    Notes?: Array<{
+        NoteID: number;
+        Text: string;
+    }>;
+    AdditionalLaborTime: number;
+    AdditionalLaborTimeDescription: string;
+    AdditionalWarrantyLaborTime: number;
+    AllLaborTime: number;
+    AllLaborTimeDescription: string;
+    AllWarrantyLaborTime: number;
+    BaseLaborTime: number;
+    BaseLaborTimeDescription: string;
+    BaseWarrantyLaborTime: number;
+    EstimatedWorkTimeID: number;
+    LaborTimeInterval: string;
+    RequiredSkill: {
+        Code: string;
+        Description: string;
+        Name: string;
+    };
+    ServiceType: string;
+}
+
+// Work Time Category
+export interface WorkTimeCategory {
+    ID: number;
+}
+
+// Work Time Taxonomy
+export interface WorkTimeTaxonomy {
+    GroupID: number;
+    GroupName: string;
+    LiteralName: string;
+    SubGroupID: number;
+    SubGroupName: string;
+    SystemID: number;
+    SystemName: string;
+    TaxonomyID: number;
+}
+
+// Work Time Position
+export interface WorkTimePosition {
+    Name: string;
+    PCDBPositionID: number;
+    PositionID: number;
+    Type: string;
+}
+
+// Work Time Application (from API)
+export interface WorkTimeApplication {
+    Category: WorkTimeCategory;
+    IsMatch: boolean;
+    Items: WorkTimeItem[];
+    OptionalWorkTimes?: WorkTimeItem[];
+    AdditionalWorkTimes?: WorkTimeItem[];
+    ApplicationID: number;
+    AttributeMappings?: Array<{
+        ID: number;
+        Type: string;
+    }>;
+    ContentSilos?: Array<{
+        ID: number;
+        Name: string;
+        SourceSilos?: Array<{
+            ID: number;
+            Name: string;
+        }>;
+    }>;
+    DisplayName: string;
+    IsActive: boolean;
+    Links?: Array<{
+        Href: string;
+        Rel: string;
+        Count?: number;
+    }>;
+    Qualifiers?: Array<{
+        Description: string;
+        Family: string;
+        IsActive: boolean;
+    }>;
+    Position?: WorkTimePosition;
+    Taxonomy?: WorkTimeTaxonomy;
+    Vehicle?: {
+        MakeName?: string;
+        Model?: {
+            Links?: Array<{
+                Href: string;
+                Rel: string;
+                Count?: number;
+            }>;
+            ModelID: number;
+            ModelName: string;
+            Type?: {
+                Type: string;
+                VehicleTypeID: number;
+            };
+        };
+        Year?: number;
+    };
+    AppRelationType?: {
+        ID: number;
+        Type: string;
+    };
+}
+
+// Work Time Response (matches MOTOR API structure)
 export interface WorkTimeResponse {
-    baseVehicleId: number;
-    workTimes: WorkTime[];
-    totalCount: number;
+    baseVehicleId?: number;
+    applications?: WorkTimeApplication[];
+    totalCount?: number;
+    // Legacy support
+    workTimes?: WorkTime[];
 }
 
 // TSB Types

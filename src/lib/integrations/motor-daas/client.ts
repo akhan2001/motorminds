@@ -296,10 +296,100 @@ export class MotorDaasClient {
      */
     async getEstimatedWorkTimes(
         baseVehicleId: number,
-        operation?: string
+        options?: {
+            contentSilos?: number[];
+            taxonomyIDs?: number[];
+            groupID?: number;
+            subGroupID?: number;
+            systemID?: number;
+            itemsPerPage?: number;
+            pageIndex?: number;
+            searchTerm?: string;
+            vmrsCode?: string;
+            include?: string[];
+            partTerminologyIDs?: number[];
+            // Vehicle attribute IDs
+            countryId?: number; // CO
+            engineId?: number; // EN
+            submodelId?: number; // SM
+            transmissionId?: number; // TR
+            driveTypeId?: number; // DT
+            bodyStyleId?: number; // BS
+            bedTypeId?: number; // BD
+            brakeTypeId?: number; // BR
+            axleTypeId?: number; // AX
+            cabTypeId?: number; // CB
+            springId?: number; // SP
+            steeringId?: number; // ST
+            wheelBaseId?: number; // WB
+            manufactureBodyCodeId?: number; // MB
+        }
     ): Promise<WorkTimeResponse> {
         const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/EstimatedWorkTimes`;
-        const params = operation ? { operation } : undefined;
+        
+        const params: Record<string, string | number | number[] | string[]> = {
+            AttributeStandard: 'MOTOR'
+        };
+        
+        // Content Silos (28 = Mechanical Repair Labor (GEN5), 103 = HD Estimated Work Times)
+        if (options?.contentSilos) {
+            params.ContentSilos = options.contentSilos;
+        }
+        
+        // Taxonomy parameters
+        if (options?.taxonomyIDs) {
+            params.TaxonomyIDs = options.taxonomyIDs;
+        }
+        if (options?.groupID) {
+            params.GroupID = options.groupID;
+        }
+        if (options?.subGroupID) {
+            params.SubGroupID = options.subGroupID;
+        }
+        if (options?.systemID) {
+            params.SystemID = options.systemID;
+        }
+        
+        // Pagination
+        if (options?.itemsPerPage) {
+            params.ItemsPerPage = options.itemsPerPage;
+        }
+        if (options?.pageIndex !== undefined) {
+            params.PageIndex = options.pageIndex;
+        }
+        
+        // Search
+        if (options?.searchTerm) {
+            params.SearchTerm = options.searchTerm;
+        }
+        if (options?.vmrsCode) {
+            params.VMRSCode = options.vmrsCode;
+        }
+        
+        // Include additional data
+        if (options?.include) {
+            params.Include = options.include;
+        }
+        if (options?.partTerminologyIDs) {
+            params.PartTerminologyIDs = options.partTerminologyIDs;
+        }
+        
+        // Vehicle attribute IDs
+        if (options?.countryId) params.CO = options.countryId;
+        if (options?.engineId) params.EN = options.engineId;
+        if (options?.submodelId) params.SM = options.submodelId;
+        if (options?.transmissionId) params.TR = options.transmissionId;
+        if (options?.driveTypeId) params.DT = options.driveTypeId;
+        if (options?.bodyStyleId) params.BS = options.bodyStyleId;
+        if (options?.bedTypeId) params.BD = options.bedTypeId;
+        if (options?.brakeTypeId) params.BR = options.brakeTypeId;
+        if (options?.axleTypeId) params.AX = options.axleTypeId;
+        if (options?.cabTypeId) params.CB = options.cabTypeId;
+        if (options?.springId) params.SP = options.springId;
+        if (options?.steeringId) params.ST = options.steeringId;
+        if (options?.wheelBaseId) params.WB = options.wheelBaseId;
+        if (options?.manufactureBodyCodeId) params.MB = options.manufactureBodyCodeId;
+        
         const cacheKey = MotorDaasCache.generateKey(endpoint, params);
 
         const cached = this.cache.get<WorkTimeResponse>(cacheKey);
@@ -307,12 +397,55 @@ export class MotorDaasClient {
             return cached;
         }
 
-        const response = await this.makeRequest<WorkTimeResponse>(endpoint, 'GET', params);
+        // Make request - API returns { Body: { Applications: [] }, Header: { PagingInfo: {} } }
+        const response = await this.makeRequest<{
+            Body?: {
+                Applications?: any[];
+            };
+            Header?: {
+                PagingInfo?: {
+                    TotalItemCount?: number;
+                };
+            };
+            Applications?: any[]; // Direct response format
+        }>(endpoint, 'GET', params);
+
+        // Parse response - makeRequest already unwraps Body if present
+        const applications = Array.isArray(response?.Applications) 
+            ? response.Applications 
+            : (response?.Body?.Applications || []);
+        
+        const totalCount = response?.Header?.PagingInfo?.TotalItemCount 
+            || applications.length;
+
+        // Map to WorkTimeResponse format
+        const workTimeResponse: WorkTimeResponse = {
+            baseVehicleId,
+            applications: applications.map((app: any) => ({
+                Category: app.Category || { ID: 0 },
+                IsMatch: app.IsMatch !== undefined ? app.IsMatch : false,
+                Items: app.Items || [],
+                OptionalWorkTimes: app.OptionalWorkTimes || [],
+                AdditionalWorkTimes: app.AdditionalWorkTimes || [],
+                ApplicationID: app.ApplicationID || 0,
+                AttributeMappings: app.AttributeMappings || [],
+                ContentSilos: app.ContentSilos || [],
+                DisplayName: app.DisplayName || '',
+                IsActive: app.IsActive !== undefined ? app.IsActive : true,
+                Links: app.Links || [],
+                Qualifiers: app.Qualifiers || [],
+                Position: app.Position,
+                Taxonomy: app.Taxonomy,
+                Vehicle: app.Vehicle,
+                AppRelationType: app.AppRelationType
+            })),
+            totalCount
+        };
 
         // Cache for 12 hours
-        this.cache.set(cacheKey, response, 43200);
+        this.cache.set(cacheKey, workTimeResponse, 43200);
 
-        return response;
+        return workTimeResponse;
     }
 
     /**

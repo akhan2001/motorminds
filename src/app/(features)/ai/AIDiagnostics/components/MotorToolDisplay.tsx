@@ -157,6 +157,18 @@ function ToolInput({ toolName, input }: { toolName: string; input: any }) {
         )
     }
 
+    if (toolName === 'getWorkTime') {
+        return (
+            <span>
+                Base Vehicle ID: {input.baseVehicleId}
+                {input.searchTerm && ` • Search: ${input.searchTerm}`}
+                {input.vmrsCode && ` • VMRS: ${input.vmrsCode}`}
+                {input.engineId && ` • Engine: ${input.engineId}`}
+                {input.submodelId && ` • Submodel: ${input.submodelId}`}
+            </span>
+        )
+    }
+
     // Generic input display
     return <span>{JSON.stringify(input)}</span>
 }
@@ -259,6 +271,143 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                 ) : (
                     <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-100 dark:bg-[#1a1a1a] rounded px-3 py-2">
                         No DTC applications found for this vehicle configuration.
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    // Work Time Output
+    if (toolName === 'getWorkTime') {
+        const workTimes = output.data
+        const applications = workTimes?.applications || workTimes?.workTimes || []
+        const totalCount = workTimes?.totalCount || applications.length
+        
+        return (
+            <div className="space-y-2">
+                {output.message && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">{output.message}</div>
+                )}
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Found {totalCount} work time application{totalCount === 1 ? '' : 's'}
+                    </span>
+                </div>
+                {applications.length > 0 ? (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {applications.slice(0, 10).map((app: any, idx: number) => {
+                            const displayName = app.DisplayName || app.operationDescription || 'Work Time'
+                            const items = app.Items || []
+                            const taxonomy = app.Taxonomy
+                            const isActive = app.IsActive !== undefined ? app.IsActive : true
+                            
+                            return (
+                                <div 
+                                    key={idx} 
+                                    className="border-l-2 border-blue-600 dark:border-blue-500 pl-3 py-2 bg-white dark:bg-[#1a1a1a] rounded"
+                                >
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex-1">
+                                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                                                {displayName}
+                                            </div>
+                                            {taxonomy && (
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    {taxonomy.SystemName && `${taxonomy.SystemName}`}
+                                                    {taxonomy.GroupName && ` • ${taxonomy.GroupName}`}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {!isActive && (
+                                            <span className="px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-full">
+                                                Superseded
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    {items.length > 0 && (
+                                        <div className="space-y-2 mt-2">
+                                            {items.map((item: any, itemIdx: number) => (
+                                                <div key={itemIdx} className="bg-gray-50 dark:bg-[#0f0f0f] rounded p-2 text-xs">
+                                                    <div className="grid grid-cols-2 gap-2 mb-1">
+                                                        {item.BaseLaborTime > 0 && (
+                                                            <div>
+                                                                <span className="text-gray-500 dark:text-gray-400">Base Labor:</span>{' '}
+                                                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                                                    {item.BaseLaborTime} {item.LaborTimeInterval || 'Hours'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {item.AdditionalLaborTime > 0 && (
+                                                            <div>
+                                                                <span className="text-gray-500 dark:text-gray-400">Additional:</span>{' '}
+                                                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                                                    {item.AdditionalLaborTime} {item.LaborTimeInterval || 'Hours'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {item.AllLaborTime > 0 && (
+                                                            <div>
+                                                                <span className="text-gray-500 dark:text-gray-400">All Labor:</span>{' '}
+                                                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                                                    {item.AllLaborTime} {item.LaborTimeInterval || 'Hours'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {item.RequiredSkill && (
+                                                            <div>
+                                                                <span className="text-gray-500 dark:text-gray-400">Skill:</span>{' '}
+                                                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                                                    {item.RequiredSkill.Name} ({item.RequiredSkill.Code})
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {item.ServiceType && (
+                                                            <div>
+                                                                <span className="text-gray-500 dark:text-gray-400">Type:</span>{' '}
+                                                                <span className="font-medium text-gray-900 dark:text-gray-100">
+                                                                    {item.ServiceType}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {item.Notes && item.Notes.length > 0 && (
+                                                        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-[#2a2a2a]">
+                                                            {item.Notes.map((note: any, noteIdx: number) => (
+                                                                <div key={noteIdx} className="text-xs text-gray-600 dark:text-gray-400 italic">
+                                                                    {note.Text}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    
+                                    {app.Position && (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                            <span className="font-medium">Position:</span> {app.Position.Name}
+                                        </div>
+                                    )}
+                                    
+                                    {app.Links && app.Links.length > 0 && (
+                                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                            {app.Links.map((link: any) => link.Rel).join(', ')} available
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                        {applications.length > 10 && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
+                                ... and {applications.length - 10} more
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-100 dark:bg-[#1a1a1a] rounded px-3 py-2">
+                        No work time applications found for this vehicle configuration.
                     </div>
                 )}
             </div>
