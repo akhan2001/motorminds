@@ -225,14 +225,15 @@ export function useDeleteWorkOrder() {
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             
-            // Invalidate appointments since deleting a work order may reset appointment status
+            // Invalidate appointments since archiving a work order may reset appointment status
             queryClient.invalidateQueries({ queryKey: ['appointments'] })
             
-            toast.success('Work order deleted successfully')
+            toast.success('Work order archived successfully')
         },
         onError: (error: any) => {
-            console.error('Failed to delete work order:', error)
-            toast.error(error.message || 'Failed to delete work order')
+            console.error('Failed to archive work order:', error)
+            // Display the actual error message which includes permission denial
+            toast.error(error.message || 'Failed to archive work order')
         },
     })
 }

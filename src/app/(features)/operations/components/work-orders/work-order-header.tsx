@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette } from 'lucide-react'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette, Archive, PaintBucket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface WorkOrderHeaderProps {
@@ -29,6 +29,10 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
 
     const handleMessagesClick = () => {
         window.open('/messaging', '_blank')
+    }
+
+    const handleArchivedClick = () => {
+        router.push('/operations/work-orders/archived')
     }
 
     return (
@@ -66,6 +70,29 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                             <Plus className="h-4 w-4 mr-2" />
                             New Work Order
                         </Button>
+
+                        {/* Compact View Toggle - Icon Only */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground w-9 h-9"
+                                        onClick={onToggleView}
+                                    >
+                                        {isCompactView ? (
+                                            <Maximize2 className="h-4 w-4" />
+                                        ) : (
+                                            <Minimize2 className="h-4 w-4" />
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{isCompactView ? 'Enlarge View' : 'Compact View'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
             </div>
@@ -114,24 +141,16 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                         <Palette className="h-4 w-4 mr-2" />
                         Status Trackers
                     </Button>
-                    
+
+                    {/* Archived Work Orders Button */}
                     <Button
                         variant="outline"
                         size="sm"
+                        onClick={handleArchivedClick}
                         className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-                        onClick={onToggleView}
                     >
-                        {isCompactView ? (
-                            <>
-                                <Maximize2 className="h-4 w-4 mr-2" />
-                                Enlarge
-                            </>
-                        ) : (
-                            <>
-                                <Minimize2 className="h-4 w-4 mr-2" />
-                                Compact
-                            </>
-                        )}
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archived Work Orders
                     </Button>
                 </div>
             </div>

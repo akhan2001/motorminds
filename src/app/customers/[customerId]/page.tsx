@@ -81,7 +81,7 @@ export default function CustomerPage() {
                 const vehicles = await getCustomerVehicles(params?.customerId || '')
                 setCustomerVehicles(vehicles)
                 
-                // Get work orders
+                // Get work orders (including archived for customer history)
                 const { data: workOrderData } = await supabase
                     .from('work_orders')
                     .select(`
@@ -90,16 +90,18 @@ export default function CustomerPage() {
                         employees(first_name, last_name)
                     `)
                     .eq('customer_id', params?.customerId || '')
+                    // Include both active and archived work orders for full history
                     .order('created_at', { ascending: false })
                 
                 setWorkOrders(workOrderData || [])
                 
-                // Get invoices
+                // Get invoices (including those from archived work orders)
                 const { data: invoiceData } = await supabase
                     .from('invoices')
                     .select(`
                         *,
-                        customers(customer_name)
+                        customers(customer_name),
+                        work_orders!left(id, archived)
                     `)
                     .eq('customer_id', params?.customerId || '')
                     .order('created_at', { ascending: false })

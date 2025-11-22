@@ -104,6 +104,11 @@ export function CustomerHistoryCard({ workOrders, shopId }: CustomerHistoryCardP
                                     <CardTitle className="text-lg flex items-center mb-2 text-foreground">
                                         <Wrench className="h-5 w-5 mr-2 text-blue-400" />
                                         {order.title || 'Work Order'}
+                                        {order.archived && (
+                                            <Badge variant="outline" className="ml-2 text-xs border-gray-400 text-gray-600">
+                                                Archived
+                                            </Badge>
+                                        )}
                                     </CardTitle>
                                     <CardDescription className="text-muted-foreground mb-2">
                                         {order.customer_vehicles?.year} {order.customer_vehicles?.make} {order.customer_vehicles?.model}

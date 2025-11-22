@@ -2,6 +2,8 @@
 import { createClient } from '@/lib/supabase'
 import type { WorkOrder, WorkOrderWithDetails, WorkOrderItem, WorkOrderStatus } from '../types/work-order'
 import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
+import { workOrderArchiveService } from './work-order-archive-service'
+import { workOrderPermissions } from './work-order-permissions'
 
 export class WorkOrderService {
     private supabase = createClient()
@@ -12,6 +14,7 @@ export class WorkOrderService {
             .from('work_orders')
             .select('*')
             .eq('shop_id', shopId)
+            .eq('archived', false) // Only non-archived work orders
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -33,6 +36,7 @@ export class WorkOrderService {
                 technician:employees(id, first_name, last_name)
             `)
             .eq('shop_id', shopId)
+            .eq('archived', false) // Only get non-archived work orders
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -84,6 +88,7 @@ export class WorkOrderService {
             .from('work_orders')
             .select('*')
             .eq('shop_id', shopId)
+            .eq('archived', false) // Only non-archived work orders
             .eq('status', status)
             .order('created_at', { ascending: false })
 
@@ -106,6 +111,7 @@ export class WorkOrderService {
                 technician:employees(id, first_name, last_name)
             `)
             .eq('shop_id', shopId)
+            .eq('archived', false) // Only non-archived work orders
             .in('status', ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer'])
             .order('created_at', { ascending: false })
 
@@ -202,6 +208,14 @@ export class WorkOrderService {
         if (error) {
             console.error('Error updating work order status:', error)
             throw new Error(`Failed to update work order status: ${error.message}`)
+        }
+
+        // Auto-archive if status is set to 'invoiced'
+        if (status === 'invoiced') {
+            const { data: { user } } = await this.supabase.auth.getUser()
+            if (user) {
+                await workOrderArchiveService.autoArchiveIfInvoiced(id, status, user.id)
+            }
         }
 
         // After work order status set to 'completed', trigger automated messages
@@ -336,42 +350,40 @@ export class WorkOrderService {
     }
     
     // DELETE operations
+    /**
+     * Archive (soft delete) a work order
+     * Requires admin/shop owner permission
+     */
     async deleteWorkOrder(id: string): Promise<void> {
-        // First, get the work order to check if it has an appointment_id
+        // Get current user ID
+        const { data: { user } } = await this.supabase.auth.getUser()
+        if (!user) {
+            throw new Error('User not authenticated')
+        }
+
+        // Get work order to check shop_id
         const { data: workOrder, error: fetchError } = await this.supabase
             .from('work_orders')
-            .select('appointment_id')
+            .select('shop_id, archived')
             .eq('id', id)
             .single()
 
-        if (fetchError) {
-            console.error('Error fetching work order before deletion:', fetchError)
-            throw new Error(`Failed to fetch work order: ${fetchError.message}`)
+        if (fetchError || !workOrder) {
+            throw new Error(`Failed to fetch work order: ${fetchError?.message || 'Not found'}`)
         }
 
-        // Delete the work order
-        const { error: deleteError } = await this.supabase
-            .from('work_orders')
-            .delete()
-            .eq('id', id)
-
-        if (deleteError) {
-            console.error('Error deleting work order:', deleteError)
-            throw new Error(`Failed to delete work order: ${deleteError.message}`)
+        if (workOrder.archived) {
+            throw new Error('Work order is already archived')
         }
 
-        // If the work order was linked to an appointment, reset the appointment status to 'scheduled'
-        if (workOrder?.appointment_id) {
-            const { error: updateError } = await this.supabase
-                .from('appointments')
-                .update({ status: 'scheduled' })
-                .eq('id', workOrder.appointment_id)
-
-            if (updateError) {
-                console.error('Error updating appointment status after work order deletion:', updateError)
-                // Don't throw - work order deletion succeeded, this is just cleanup
-            }
+        // Check permission
+        const canDelete = await workOrderPermissions.canDeleteWorkOrder(user.id, workOrder.shop_id)
+        if (!canDelete) {
+            throw new Error('You do not have permission to delete work orders. Only admins and shop owners can delete work orders.')
         }
+
+        // Archive the work order instead of deleting
+        await workOrderArchiveService.archiveWorkOrder(id, user.id)
     }
 
     async deleteWorkOrderItem(id: string): Promise<void> {

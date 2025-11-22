@@ -8,6 +8,8 @@ import { WorkOrderKanbanItem, WorkOrderPriority, WorkOrderWithDetails } from "..
 import { useWorkOrderWithDetails, useUpdateWorkOrder, useUpdateWorkOrderStatus } from "../../../hooks/use-work-orders"
 import { RevertWorkOrderDialog } from "../revert-work-order-dialog"
 import { workOrderService } from "../../../lib/work-order-service"
+import { useCanDeleteWorkOrders } from "../../../hooks/use-work-order-permissions"
+import { useAuth } from "../../../hooks/use-auth"
 import { Loader2 } from "lucide-react"
 import {
     WorkOrderModalHeader,
@@ -91,7 +93,7 @@ interface GenericFormItem {
     active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
-export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({ 
+export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     workOrder: initialWorkOrder,
     onClose,
     onSave,
@@ -110,27 +112,31 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const [feeItems, setFeeItems] = useState<GenericFormItem[]>([])
     const [discountItems, setDiscountItems] = useState<GenericFormItem[]>([])
     const [packageItems, setPackageItems] = useState<GenericFormItem[]>([])
-    
+
+    // Check permissions
+    const { shopId } = useAuth()
+    const { data: canDeleteWorkOrder = false, isLoading: isCheckingPermissions } = useCanDeleteWorkOrders(shopId || undefined)
+
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
         { id: 'tech-1', name: 'John Smith' },
         { id: 'tech-2', name: 'Jane Doe' },
         { id: 'tech-3', name: 'Mike Johnson' },
     ]
-    
+
     // Fetch full work order details
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
-    
+
     // Fetch work order items for cost summary
     const { data: workOrderItems = [] } = useWorkOrderItems(initialWorkOrder.id)
-    
+
     // Check if work order has an invoice
     const { data: workOrderInvoice } = useWorkOrderInvoice(initialWorkOrder.id)
-    
+
     // Update work order mutation
     const updateWorkOrderMutation = useUpdateWorkOrder()
     const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
-    
+
     // Form state for editing
     const [formData, setFormData] = useState({
         title: initialWorkOrder.title || "",
@@ -141,12 +147,12 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         customer: initialWorkOrder.customer || "",
         vehicle: initialWorkOrder.vehicle || "",
         tags: initialWorkOrder.tags || [],
-        
+
         // Additional fields for comprehensive display
         customerEmail: "",
         customerPhone: "",
         customerAddress: "",
-        
+
         // Vehicle details (expanded from vehicle string)
         vehicleYear: "",
         vehicleMake: "",
@@ -155,7 +161,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         vehicleMileage: "",
         vehicleVin: "",
         vehicleLicensePlate: "",
-        
+
         // Work order specifics
         notes: "",
         // Normalize status_tracker to array (handle both old format single object and new format array)
@@ -164,7 +170,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             if (!tracker) return null
             if (Array.isArray(tracker)) return tracker
             // Handle old format: single object
-            if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+            if (tracker && typeof tracker === 'object' && 'name' in tracker && 'color' in tracker) {
                 return [tracker]
             }
             return null
@@ -176,29 +182,29 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         if (workOrderDetails) {
             // Handle walk-in customers
             const isWalkIn = workOrderDetails.customer_type === 'walk_in'
-            
+
             setFormData(prev => ({
                 ...prev,
                 title: workOrderDetails.title || "",
                 description: workOrderDetails.description || "",
                 priority: (workOrderDetails.priority || "medium") as WorkOrderPriority,
-                assignee: workOrderDetails.technician 
+                assignee: workOrderDetails.technician
                     ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
                     : workOrderDetails.assigned_technician_id || "",
                 date: workOrderDetails.created_at.split('T')[0] || "",
                 customer: isWalkIn ? "Walk-in Customer" : (workOrderDetails.customer?.customer_name || ""),
                 vehicle: isWalkIn && workOrderDetails.walk_in_vehicle_info
                     ? `${workOrderDetails.walk_in_vehicle_info.year} ${workOrderDetails.walk_in_vehicle_info.make} ${workOrderDetails.walk_in_vehicle_info.model}${workOrderDetails.walk_in_vehicle_info.license_plate ? ` (${workOrderDetails.walk_in_vehicle_info.license_plate})` : ''}`
-                    : workOrderDetails.vehicle 
+                    : workOrderDetails.vehicle
                         ? `${workOrderDetails.vehicle.year} ${workOrderDetails.vehicle.make} ${workOrderDetails.vehicle.model}${workOrderDetails.vehicle.license_plate ? ` (${workOrderDetails.vehicle.license_plate})` : ''}`
                         : "",
                 tags: workOrderDetails.tags || [],
-                
+
                 // Customer details
                 customerEmail: isWalkIn ? "" : (workOrderDetails.customer?.customer_email || ""),
                 customerPhone: isWalkIn ? "" : (workOrderDetails.customer?.customer_phone || ""),
                 customerAddress: isWalkIn ? "" : (workOrderDetails.customer?.customer_address || ""),
-                
+
                 // Vehicle details - use walk-in info if available
                 vehicleYear: isWalkIn && workOrderDetails.walk_in_vehicle_info
                     ? workOrderDetails.walk_in_vehicle_info.year?.toString() || ""
@@ -221,7 +227,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 vehicleLicensePlate: isWalkIn && workOrderDetails.walk_in_vehicle_info
                     ? workOrderDetails.walk_in_vehicle_info.license_plate || ""
                     : workOrderDetails.vehicle?.license_plate || "",
-                
+
                 // Work order notes
                 notes: workOrderDetails.notes || "",
                 // Normalize status_tracker to array (handle both old format single object and new format array)
@@ -230,7 +236,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     if (!tracker) return null
                     if (Array.isArray(tracker)) return tracker
                     // Handle old format: single object
-                    if (tracker && typeof tracker === 'object' && tracker.name && tracker.color) {
+                    if (tracker && typeof tracker === 'object' && 'name' in tracker && 'color' in tracker) {
                         return [tracker]
                     }
                     return null
@@ -251,7 +257,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 unit_price: item.unit_price,
                 active: item.active
             })))
-            
+
             // Separate items by type
             const labor: LaborFormItem[] = []
             const parts: PartFormItem[] = []
@@ -267,7 +273,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     item_type: item.item_type,
                     active: item.active
                 })
-                
+
                 if (item.item_type === 'labor') {
                     labor.push({
                         id: item.id,
@@ -380,11 +386,11 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         } catch (error) {
             console.error('Failed to update technician assignment:', error)
             toast.error('Failed to update technician assignment')
-            
+
             // Revert local state on error
             setFormData(prev => ({
                 ...prev,
-                assignee: workOrderDetails?.technician 
+                assignee: workOrderDetails?.technician
                     ? `${workOrderDetails.technician.first_name} ${workOrderDetails.technician.last_name || ''}`
                     : workOrderDetails?.assigned_technician_id || "",
             }))
@@ -411,13 +417,13 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const handleTemplateSelect = (template: WorkOrderItemTemplate) => {
         // Check if template is already selected
         const isAlreadySelected = selectedTemplates.some(selected => selected.id === template.id)
-        
+
         if (isAlreadySelected) {
             // Template already selected, don't add it again
             toast.info('Template already selected')
             return
         }
-        
+
         // Add to selected templates
         const selectedTemplate: SelectedTemplate = {
             ...template,
@@ -426,7 +432,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             selectedLaborHours: template.labor_hours
         }
         setSelectedTemplates(prev => [...prev, selectedTemplate])
-        
+
         // Auto-populate the appropriate items list based on template type
         if (template.item_type === 'labor') {
             // Add to labor items
@@ -465,9 +471,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     }
 
     const handleUpdateTemplate = (templateId: string, updates: Partial<SelectedTemplate>) => {
-        setSelectedTemplates(prev => 
-            prev.map(template => 
-                template.id === templateId 
+        setSelectedTemplates(prev =>
+            prev.map(template =>
+                template.id === templateId
                     ? { ...template, ...updates }
                     : template
             )
@@ -477,11 +483,11 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Labor items handlers
     const handleLaborItemsChange = (items: LaborFormItem[]) => {
         setLaborItems(items)
-        
+
         // Update selected templates - remove any templates that no longer have corresponding items
         // This ensures the green highlight is removed when items are deleted
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'labor' || itemDescriptions.includes(template.name)
         ))
     }
@@ -495,11 +501,11 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Parts items handlers
     const handlePartsItemsChange = (items: PartFormItem[]) => {
         setPartsItems(items)
-        
+
         // Update selected templates - remove any templates that no longer have corresponding items
         // This ensures the green highlight is removed when items are deleted
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'part' || itemDescriptions.includes(template.name)
         ))
     }
@@ -514,7 +520,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const handleServiceItemsChange = (items: GenericFormItem[]) => {
         setServiceItems(items)
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'service' || itemDescriptions.includes(template.name)
         ))
     }
@@ -522,7 +528,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const handleFeeItemsChange = (items: GenericFormItem[]) => {
         setFeeItems(items)
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'fee' || itemDescriptions.includes(template.name)
         ))
     }
@@ -530,7 +536,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const handleDiscountItemsChange = (items: GenericFormItem[]) => {
         setDiscountItems(items)
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'discount' || itemDescriptions.includes(template.name)
         ))
     }
@@ -538,7 +544,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const handlePackageItemsChange = (items: GenericFormItem[]) => {
         setPackageItems(items)
         const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template => 
+        setSelectedTemplates(prev => prev.filter(template =>
             template.item_type !== 'package' || itemDescriptions.includes(template.name)
         ))
     }
@@ -553,7 +559,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
         try {
             const workOrderId = workOrderDetails?.id || initialWorkOrder.id
-            
+
             // Create work order items from selected templates
             const itemPromises = selectedTemplates.map(async (template) => {
                 const itemData = {
@@ -571,15 +577,15 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     labor_hours: template.selectedLaborHours || template.labor_hours,
                     technician_id: template.selectedTechnicianId,
                 }
-                
+
                 return WorkOrderItemsService.createWorkOrderItem(itemData)
             })
-            
+
             await Promise.all(itemPromises)
-            
+
             // Clear selected templates after adding them
             setSelectedTemplates([])
-            
+
             toast.success(`${selectedTemplates.length} items added to work order`)
         } catch (error) {
             console.error('Failed to add templates as items:', error)
@@ -589,7 +595,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
     const handleSave = async () => {
         const workOrderId = workOrderDetails?.id || initialWorkOrder.id
-        
+
         // Prepare the update data for the mutation
         const updateData = {
             title: formData.title,
@@ -603,13 +609,13 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         try {
             // First save all work order items
             await saveAllItems()
-            
+
             // Then update the work order
             await updateWorkOrderMutation.mutateAsync({
                 id: workOrderId,
                 data: updateData
             })
-            
+
             // Also call the parent onSave callback if provided (for any additional logic)
             const updatedWorkOrder: WorkOrderKanbanItem = {
                 ...initialWorkOrder,
@@ -624,9 +630,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 status_tracker: formData.statusTracker,
             }
             updatedWorkOrder.id = workOrderId
-            
+
             await onSave?.(updatedWorkOrder, formData)
-            
+
             setIsEditing(false)
             toast.success("Work order and items updated successfully")
         } catch (error) {
@@ -636,11 +642,15 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     }
 
     const handleDelete = () => {
+        if (!canDeleteWorkOrder) {
+            toast.error('You do not have permission to archive work orders. Only admins and shop owners can archive work orders.')
+            return
+        }
         if (canDelete()) {
             setIsDeleteConfirmationOpen(true)
         } else {
             const status = workOrderDetails?.status || initialWorkOrder.status
-            toast.error(`Invoiced work orders cannot be deleted due to financial record requirements`)
+            toast.error(`Invoiced work orders cannot be archived due to financial record requirements`)
         }
     }
 
@@ -778,10 +788,10 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 work_order_id: workOrderId,
                 shop_id: shopId
             })
-            
+
             if (newInvoice) {
                 console.log('Invoice created:', newInvoice)
-                
+
                 // Show success message with option to view invoice
                 toast.success(
                     `Invoice ${newInvoice.display_id || newInvoice.invoice_number} generated successfully!`,
@@ -794,7 +804,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     }
                 )
             }
-            
+
         } catch (error: any) {
             console.error('Error generating invoice:', error)
             console.error('Error details:', {
@@ -803,7 +813,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 hint: error?.hint,
                 code: error?.code
             })
-            
+
             const errorMessage = error?.message || 'Failed to generate invoice. Please try again.'
             toast.error(errorMessage)
         }
@@ -823,17 +833,31 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         return status !== 'invoiced' && status !== 'cancelled'
     }
 
-    // Check if work order can be deleted based on status
+    // Check if work order can be deleted based on status AND permissions
     const canDelete = () => {
         const status = workOrderDetails?.status || initialWorkOrder.status
-        // Allow deletion for all statuses except invoiced (due to financial/legal reasons)
-        // This gives maximum flexibility for work order management
+        // Check permission first
+        if (!canDeleteWorkOrder) {
+            return false
+        }
+        // Then check status - don't allow deletion of invoiced work orders (due to financial/legal reasons)
         if (!status) return true // Default to allowing deletion if status is unclear
-        
+
         const canDeleteResult = status !== 'invoiced'
-        // console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult)
-        
+        // console.log('Delete check - Status:', status, 'Can delete:', canDeleteResult, 'Has permission:', canDeleteWorkOrder)
+
         return canDeleteResult
+    }
+
+    const getDeleteDisabledReason = () => {
+        if (!canDeleteWorkOrder) {
+            return "Only admins and shop owners can archive work orders."
+        }
+        const status = workOrderDetails?.status || initialWorkOrder.status
+        if (status === 'invoiced') {
+            return "Invoiced work orders cannot be archived due to financial record requirements"
+        }
+        return undefined
     }
 
     const handleEdit = () => {
@@ -846,6 +870,14 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         }
     }
 
+    const handleDeleteClick = () => {
+        if (!canDeleteWorkOrder) {
+            toast.error('You do not have permission to archive work orders. Only admins and shop owners can archive work orders.')
+            return
+        }
+        setIsDeleteConfirmationOpen(true)
+    }
+
     const handleRevertClick = async () => {
         const status = workOrderDetails?.status || initialWorkOrder.status
         if (status !== 'completed') {
@@ -855,7 +887,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
         // Check if revert is allowed
         const canRevert = await workOrderService.canRevertFromCompleted(initialWorkOrder.id)
-        
+
         if (!canRevert.canRevert) {
             toast.error(canRevert.reason || 'Cannot revert this work order')
             return
@@ -875,7 +907,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             toast.success('Work order reverted to In Progress')
             setIsRevertDialogOpen(false)
             setRevertWarning(undefined)
-            
+
             // Refresh work order details
             if (onSave) {
                 // Trigger a refetch by calling onSave with updated status
@@ -892,7 +924,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         setIsRevertDialogOpen(false)
         setRevertWarning(undefined)
     }
-    
+
     const handleCancel = () => setIsEditing(false)
 
     // Loading state
@@ -913,7 +945,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
                 <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8 text-center">
                     <p className="text-red-500 dark:text-red-400 mb-4">Failed to load work order details</p>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="px-4 py-2 bg-secondary dark:bg-gray-600 hover:bg-accent dark:hover:bg-gray-700 rounded text-foreground dark:text-white"
                     >
@@ -937,7 +969,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     <ResizablePanel defaultSize={60} minSize={50} maxSize={70}>
                         <div className="flex flex-col h-full min-h-0">
                             {/* Header */}
-                            <WorkOrderModalHeader 
+                            <WorkOrderModalHeader
                                 workOrder={initialWorkOrder}
                                 workOrderDetails={workOrderDetails}
                                 onClose={onClose}
@@ -945,7 +977,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                             />
 
                             {/* Status Bar */}
-                            <WorkOrderStatusBar 
+                            <WorkOrderStatusBar
                                 priority={formData.priority}
                                 date={formData.date}
                                 startedAt={workOrderDetails.started_at}
@@ -967,7 +999,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
                             {/* Main Content - Scrollable */}
                             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
-                                <div 
+                                <div
                                     className={`p-6 space-y-6 ${!canEdit() ? 'pointer-events-none opacity-90' : ''}`}
                                     onClick={() => {
                                         if (!canEdit() && !isEditing) {
@@ -977,153 +1009,153 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                     }}
                                 >
 
-                                {/* Customer Information */}
-                                <CustomerInformation 
-                                    customerId={""} // Not used in details view
-                                    customerName={formData.customer}
-                                    customerEmail={formData.customerEmail}
-                                    customerPhone={formData.customerPhone}
-                                    customerAddress={formData.customerAddress}
-                                    isEditing={isEditing}
-                                    onFieldChange={handleFieldChange}
-                                />
+                                    {/* Customer Information */}
+                                    <CustomerInformation
+                                        customerId={""} // Not used in details view
+                                        customerName={formData.customer}
+                                        customerEmail={formData.customerEmail}
+                                        customerPhone={formData.customerPhone}
+                                        customerAddress={formData.customerAddress}
+                                        isEditing={isEditing}
+                                        onFieldChange={handleFieldChange}
+                                    />
 
-                                {/* Vehicle Information */}
-                                <VehicleInformation 
-                                    vehicleId={workOrderDetails.vehicle_id || ""}
-                                    vehicleYear={formData.vehicleYear}
-                                    vehicleMake={formData.vehicleMake}
-                                    vehicleModel={formData.vehicleModel}
-                                    vehicleColor={formData.vehicleColor}
-                                    vehicleVin={formData.vehicleVin}
-                                    vehicleLicensePlate={formData.vehicleLicensePlate}
-                                    vehicleMileage={formData.vehicleMileage}
-                                    isEditing={isEditing}
-                                    onFieldChange={handleFieldChange}
-                                />
-                                {/* Work Order Information */}
-                                <WorkOrderInformation 
-                                    title={formData.title}
-                                    description={formData.description}
-                                    priority={formData.priority}
-                                    assignee={formData.assignee}
-                                    assigneeId={workOrderDetails?.assigned_technician_id || ""}
-                                    date={formData.date}
-                                    tags={formData.tags}
-                                    isEditing={isEditing}
-                                    isCreating={false}
-                                    onFieldChange={handleFieldChange}
-                                    onTechnicianSelect={handleTechnicianSelect}
-                                    onAddTag={handleAddTag}
-                                    onRemoveTag={handleRemoveTag}
-                                />
+                                    {/* Vehicle Information */}
+                                    <VehicleInformation
+                                        vehicleId={workOrderDetails.vehicle_id || ""}
+                                        vehicleYear={formData.vehicleYear}
+                                        vehicleMake={formData.vehicleMake}
+                                        vehicleModel={formData.vehicleModel}
+                                        vehicleColor={formData.vehicleColor}
+                                        vehicleVin={formData.vehicleVin}
+                                        vehicleLicensePlate={formData.vehicleLicensePlate}
+                                        vehicleMileage={formData.vehicleMileage}
+                                        isEditing={isEditing}
+                                        onFieldChange={handleFieldChange}
+                                    />
+                                    {/* Work Order Information */}
+                                    <WorkOrderInformation
+                                        title={formData.title}
+                                        description={formData.description}
+                                        priority={formData.priority}
+                                        assignee={formData.assignee}
+                                        assigneeId={workOrderDetails?.assigned_technician_id || ""}
+                                        date={formData.date}
+                                        tags={formData.tags}
+                                        isEditing={isEditing}
+                                        isCreating={false}
+                                        onFieldChange={handleFieldChange}
+                                        onTechnicianSelect={handleTechnicianSelect}
+                                        onAddTag={handleAddTag}
+                                        onRemoveTag={handleRemoveTag}
+                                    />
 
-                                {/* Cost Summary - Only show for completed work orders */}
-                                {workOrderDetails?.status === 'completed' && workOrderItems.length > 0 && (
-                                    <div className="mt-6">
-                                        <WorkOrderCostSummary 
-                                            workOrderItems={workOrderItems}
-                                        />
-                                    </div>
-                                )}
+                                    {/* Cost Summary - Only show for completed work orders */}
+                                    {workOrderDetails?.status === 'completed' && workOrderItems.length > 0 && (
+                                        <div className="mt-6">
+                                            <WorkOrderCostSummary
+                                                workOrderItems={workOrderItems}
+                                            />
+                                        </div>
+                                    )}
 
-                                {/* Work Order Items - Show for in-progress work orders (Editable) */}
-                                {workOrderDetails?.status !== 'completed' && (
-                                    <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg mt-6">
-                                        <div className="p-4">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <h3 className="text-lg font-semibold text-foreground dark:text-white">Work Order Items</h3>
-                                            </div>
+                                    {/* Work Order Items - Show for in-progress work orders (Editable) */}
+                                    {workOrderDetails?.status !== 'completed' && (
+                                        <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg mt-6">
+                                            <div className="p-4">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Work Order Items</h3>
+                                                </div>
 
-                                            {/* Labor Items */}
-                                            <div className="mb-6">
-                                                <WorkOrderLaborItems
-                                                    items={laborItems}
-                                                    onItemsChange={handleLaborItemsChange}
-                                                    workOrderId={initialWorkOrder.id}
-                                                    technicianOptions={technicianOptions}
-                                                    onItemSaved={handleLaborItemSaved}
-                                                    isEditing={isEditing}
-                                                />
-                                            </div>
+                                                {/* Labor Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderLaborItems
+                                                        items={laborItems}
+                                                        onItemsChange={handleLaborItemsChange}
+                                                        workOrderId={initialWorkOrder.id}
+                                                        technicianOptions={technicianOptions}
+                                                        onItemSaved={handleLaborItemSaved}
+                                                        isEditing={isEditing}
+                                                    />
+                                                </div>
 
-                                            {/* Parts Items */}
-                                            <div className="mb-6">
-                                                <WorkOrderPartsItems
-                                                    items={partsItems}
-                                                    onItemsChange={handlePartsItemsChange}
-                                                    workOrderId={initialWorkOrder.id}
-                                                    onItemSaved={handlePartItemSaved}
-                                                    isEditing={isEditing}
-                                                />
-                                            </div>
+                                                {/* Parts Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderPartsItems
+                                                        items={partsItems}
+                                                        onItemsChange={handlePartsItemsChange}
+                                                        workOrderId={initialWorkOrder.id}
+                                                        onItemSaved={handlePartItemSaved}
+                                                        isEditing={isEditing}
+                                                    />
+                                                </div>
 
-                                            {/* Service Items */}
-                                            <div className="mb-6">
-                                                <WorkOrderGenericItems
-                                                    items={serviceItems}
-                                                    onItemsChange={handleServiceItemsChange}
-                                                    workOrderId={initialWorkOrder.id}
-                                                    onItemSaved={handleGenericItemSaved}
-                                                    isEditing={isEditing}
-                                                    itemType="service"
-                                                    title="Services"
-                                                />
-                                            </div>
+                                                {/* Service Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderGenericItems
+                                                        items={serviceItems}
+                                                        onItemsChange={handleServiceItemsChange}
+                                                        workOrderId={initialWorkOrder.id}
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={isEditing}
+                                                        itemType="service"
+                                                        title="Services"
+                                                    />
+                                                </div>
 
-                                            {/* Fee Items */}
-                                            <div className="mb-6">
-                                                <WorkOrderGenericItems
-                                                    items={feeItems}
-                                                    onItemsChange={handleFeeItemsChange}
-                                                    workOrderId={initialWorkOrder.id}
-                                                    onItemSaved={handleGenericItemSaved}
-                                                    isEditing={isEditing}
-                                                    itemType="fee"
-                                                    title="Fees"
-                                                />
-                                            </div>
+                                                {/* Fee Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderGenericItems
+                                                        items={feeItems}
+                                                        onItemsChange={handleFeeItemsChange}
+                                                        workOrderId={initialWorkOrder.id}
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={isEditing}
+                                                        itemType="fee"
+                                                        title="Fees"
+                                                    />
+                                                </div>
 
-                                            {/* Discount Items */}
-                                            <div className="mb-6">
-                                                <WorkOrderGenericItems
-                                                    items={discountItems}
-                                                    onItemsChange={handleDiscountItemsChange}
-                                                    workOrderId={initialWorkOrder.id}
-                                                    onItemSaved={handleGenericItemSaved}
-                                                    isEditing={isEditing}
-                                                    itemType="discount"
-                                                    title="Discounts"
-                                                />
-                                            </div>
+                                                {/* Discount Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderGenericItems
+                                                        items={discountItems}
+                                                        onItemsChange={handleDiscountItemsChange}
+                                                        workOrderId={initialWorkOrder.id}
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={isEditing}
+                                                        itemType="discount"
+                                                        title="Discounts"
+                                                    />
+                                                </div>
 
-                                            {/* Package Items */}
-                                            <div>
-                                                <WorkOrderGenericItems
-                                                    items={packageItems}
-                                                    onItemsChange={handlePackageItemsChange}
-                                                    workOrderId={initialWorkOrder.id}
-                                                    onItemSaved={handleGenericItemSaved}
-                                                    isEditing={isEditing}
-                                                    itemType="package"
-                                                    title="Packages"
-                                                />
+                                                {/* Package Items */}
+                                                <div>
+                                                    <WorkOrderGenericItems
+                                                        items={packageItems}
+                                                        onItemsChange={handlePackageItemsChange}
+                                                        workOrderId={initialWorkOrder.id}
+                                                        onItemSaved={handleGenericItemSaved}
+                                                        isEditing={isEditing}
+                                                        itemType="package"
+                                                        title="Packages"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {/* Notes */}
-                                <WorkOrderNotes 
-                                    notes={formData.notes}
-                                    isEditing={isEditing}
-                                    onFieldChange={handleFieldChange}
-                                />
+                                    {/* Notes */}
+                                    <WorkOrderNotes
+                                        notes={formData.notes}
+                                        isEditing={isEditing}
+                                        onFieldChange={handleFieldChange}
+                                    />
                                 </div>
                             </div>
 
                             {/* Footer */}
-                            <WorkOrderModalFooter 
+                            <WorkOrderModalFooter
                                 isEditing={isEditing}
                                 canEdit={canEdit()}
                                 canDelete={canDelete()}
@@ -1137,6 +1169,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 onDelete={onDelete ? handleDelete : undefined}
                                 onGenerateInvoice={handleGenerateInvoice}
                                 onGoToInvoice={handleGoToInvoice}
+                                deleteDisabledReason={getDeleteDisabledReason()}
                             />
                         </div>
                     </ResizablePanel>
@@ -1146,8 +1179,8 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
 
                     {/* Right Panel */}
                     <ResizablePanel defaultSize={40} minSize={30} maxSize={50}>
-                        <WorkOrderRightPanel 
-                            workOrderId={initialWorkOrder.id} 
+                        <WorkOrderRightPanel
+                            workOrderId={initialWorkOrder.id}
                             shopId={initialWorkOrder.shop_id}
                             workOrderStatus={initialWorkOrder.status}
                             customerId={workOrderDetails?.customer_id}
@@ -1156,7 +1189,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>
-            
+
             {/* Delete Confirmation Dialog */}
             <WorkOrderDeleteConfirmation
                 workOrder={initialWorkOrder}
@@ -1164,7 +1197,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 onClose={handleDeleteCancel}
                 onConfirm={handleDeleteConfirm}
             />
-            
+
             <RevertWorkOrderDialog
                 isOpen={isRevertDialogOpen}
                 onClose={handleRevertCancel}

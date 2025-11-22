@@ -45,7 +45,9 @@ export function CustomerInvoiceCard({ invoices }: CustomerInvoiceCardProps) {
     return (
         <div className="space-y-4">
             {invoices.length > 0 ? (
-                invoices.map((invoice) => (
+                invoices.map((invoice) => {
+                    const isArchived = invoice.work_orders?.archived === true
+                    return (
                     <Card key={invoice.id} className="bg-white dark:bg-card border-border text-foreground overflow-hidden hover:border-border transition-colors">
                         <div className={`h-1 ${getStatusColor(invoice.status)}`}></div>
                         <CardHeader className="pb-4">
@@ -54,6 +56,11 @@ export function CustomerInvoiceCard({ invoices }: CustomerInvoiceCardProps) {
                                     <CardTitle className="text-lg flex items-center mb-2 text-foreground">
                                         <File className="h-5 w-5 mr-2 text-blue-400" />
                                         Invoice #{invoice.invoice_number || invoice.number}
+                                        {isArchived && (
+                                            <Badge variant="outline" className="ml-2 text-xs border-gray-400 text-gray-600">
+                                                Archived
+                                            </Badge>
+                                        )}
                                     </CardTitle>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                                         <div className="flex items-center gap-1">
@@ -151,7 +158,8 @@ export function CustomerInvoiceCard({ invoices }: CustomerInvoiceCardProps) {
                             </div>
                         </CardFooter>
                     </Card>
-                ))
+                    )
+                })
             ) : (
                 <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-card rounded-lg border border-border">
                     <File className="h-12 w-12 text-muted-foreground mb-3" />

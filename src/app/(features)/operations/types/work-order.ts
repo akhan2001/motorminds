@@ -9,7 +9,7 @@ export interface WorkOrder {
     description?: string
     status: WorkOrderStatus
     priority: WorkOrderPriority
-    
+
     // Relationships
     shop_id: string
     customer_id?: string | null // null for walk-ins
@@ -17,7 +17,7 @@ export interface WorkOrder {
     appointment_id?: string | null
     invoice_id?: string | null
     assigned_technician_id?: string | null
-    
+
     // New walk-in fields
     customer_type: 'registered' | 'walk_in'
     walk_in_vehicle_info?: WalkInVehicleInfo
@@ -27,12 +27,17 @@ export interface WorkOrder {
     attachments?: any[]
     notes?: string
     status_tracker?: StatusTracker[] | null // JSONB column - array of status trackers (max 5)
-    
+
     // Timestamps
     created_at: string
     updated_at: string
     started_at?: string
     completed_at?: string
+
+    // Archive fields
+    archived?: boolean
+    archived_at?: string | null
+    archived_by?: string | null
 }
 
 // Work order with joined customer and vehicle details
@@ -59,11 +64,15 @@ export interface WorkOrderWithDetails extends WorkOrder {
         first_name: string
         last_name: string
     }
+    archived_by_user?: {
+        id: string
+        email: string
+    }
 }
 
-export type WorkOrderStatus = 
+export type WorkOrderStatus =
     | 'pending'
-    | 'approved' 
+    | 'approved'
     | 'in_progress'
     | 'waiting_parts'
     | 'waiting_customer'
@@ -79,25 +88,25 @@ export interface WorkOrderItem {
     id: string
     work_order_id: string
     shop_service_id?: string
-    
+
     item_type: 'labor' | 'part' | 'service' | 'fee'
     description: string
     part_number?: string
-    
+
     quantity: number
     unit_price: number
     total_price: number
     unit_cost?: number
     total_cost?: number
-    
+
     supplier?: string
     category?: string
     warranty_period?: string
     notes?: string
-    
+
     labor_hours?: number
     technician_id?: string
-    
+
     created_at: string
     completed_at?: string
 }
