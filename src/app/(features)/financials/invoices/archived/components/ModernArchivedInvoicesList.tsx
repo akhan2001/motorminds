@@ -3,14 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Archive } from 'lucide-react'
-import { useAuth } from '../../../operations/hooks/use-auth'
-import { useArchivedInvoicesModern, useArchivedInvoiceCountModern } from '../../hooks/use-archived-invoices-modern'
+import { useAuth } from '@/app/(features)/operations/hooks/use-auth'
+import { useArchivedInvoicesModern, useArchivedInvoiceCountModern } from '@app/(features)/financials/hooks/use-archived-invoices-modern'
 import { ArchivedInvoiceCard } from '../../../components/invoices/archived/ArchivedInvoiceCard'
 import { ModernSearchInput } from './ModernSearchInput'
 import { ModernPagination } from './ModernPagination'
 import { useSearch } from './SearchProvider'
 import { InvoiceDetailSheet } from '../../../components/invoices/InvoiceDetailSheet'
-import { useInvoiceDetailSheet } from '../../hooks/use-invoice-detail-sheet'
+import { useInvoiceDetailSheet } from '@/app/(features)/financials/hooks/use-invoice-detail-sheet'
 
 const ITEMS_PER_PAGE = 50
 
@@ -42,7 +42,7 @@ export function ModernArchivedInvoicesList() {
 
 	if (error) {
 		return (
-			<Card className="bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+			<Card className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
 				<CardContent className="p-8 text-center">
 					<AlertCircle className="h-12 w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
 					<h3 className="text-lg font-medium text-foreground dark:text-white mb-2">Error Loading Archived Invoices</h3>

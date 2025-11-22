@@ -13,6 +13,7 @@ export interface ArchivedInvoiceFilters {
     amount_max?: number
     customer_id?: string
     work_order_id?: string
+    search?: string
 }
 
 export interface ArchivedInvoiceListParams {
@@ -25,7 +26,7 @@ export interface ArchivedInvoiceListParams {
 export class ArchivedInvoiceService {
     static async getArchivedInvoices(params: ArchivedInvoiceListParams): Promise<InvoiceWithDetails[]> {
         const { shopId, page = 1, limit = 50, filters = {} } = params
-        
+
         let query = supabase
             .from('invoices_table')
             .select(`
@@ -39,6 +40,11 @@ export class ArchivedInvoiceService {
             .order('created_at', { ascending: false })
 
         // Apply filters
+        if (filters.search) {
+            const searchTerm = `%${filters.search}%`
+            query = query.or(`invoice_number.ilike.${searchTerm},title.ilike.${searchTerm}`)
+        }
+
         if (filters.status && filters.status.length > 0) {
             query = query.in('status', filters.status)
         }
@@ -125,19 +131,24 @@ export class ArchivedInvoiceService {
                 .eq('archived', true)
 
             // Apply filters
+            if (filters?.search) {
+                const searchTerm = `%${filters.search}%`
+                query = query.or(`invoice_number.ilike.${searchTerm},title.ilike.${searchTerm}`)
+            }
+
             if (filters?.status && filters.status.length > 0) {
                 query = query.in('status', filters.status)
             }
 
             const { count, error } = await query
 
-        if (error) {
-            console.error('Error getting archived invoice count:', error)
-            console.error('Query details:', { shopId, filters })
-            return 0
-        }
+            if (error) {
+                console.error('Error getting archived invoice count:', error)
+                console.error('Query details:', { shopId, filters })
+                return 0
+            }
 
-        return count || 0
+            return count || 0
         } catch (err) {
             console.error('Exception in getArchivedInvoiceCount:', err)
             return 0 // Return 0 instead of throwing to prevent UI breaks
@@ -175,6 +186,8 @@ export class ArchivedInvoiceService {
             notes: data.notes,
             created_at: data.created_at,
             updated_at: data.updated_at,
+            customer_type: data.customer_type || (data.customer_id ? 'registered' : 'walk_in'),
+            walk_in_vehicle_info: data.walk_in_vehicle_info,
             customer: data.customer ? {
                 id: data.customer.id,
                 customer_name: data.customer.customer_name,
