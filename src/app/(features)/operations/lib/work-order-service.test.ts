@@ -61,7 +61,7 @@ describe('WorkOrderService', () => {
     })
 
     describe('Walk-in Customer Operations', () => {
-    test('should create walk-in work order successfully', async () => {
+        test('should create walk-in work order successfully', async () => {
             // Arrange
             const mockWorkOrder = {
                 id: 'test-id',
@@ -733,9 +733,9 @@ describe('WorkOrderService', () => {
             const mockQuery = {
                 eq: vi.fn().mockReturnThis(),
                 order: vi.fn().mockReturnThis(),
-                limit: vi.fn().mockResolvedValue({ 
-                    data: [{ work_order_number: 'WO-0005' }], 
-                    error: null 
+                limit: vi.fn().mockResolvedValue({
+                    data: [{ work_order_number: 'WO-0005' }],
+                    error: null
                 })
             }
             mockFrom.mockReturnValue({
@@ -791,12 +791,12 @@ describe('WorkOrderService', () => {
             }
             const customerData = { id: 'customer-1', name: 'John Doe' }
             const vehicleData = { id: 'vehicle-1', year: '2020', make: 'Toyota', model: 'Camry' }
-            const mockCreatedWorkOrder = { 
-                id: '1', 
+            const mockCreatedWorkOrder = {
+                id: '1',
                 created_at: '2024-01-29T10:00:00Z',
                 updated_at: '2024-01-29T10:00:00Z',
-                ...workOrderData, 
-                customer_id: 'customer-1', 
+                ...workOrderData,
+                customer_id: 'customer-1',
                 vehicle_id: 'vehicle-1',
                 customer_type: 'registered' as const,
                 walk_in_vehicle_info: undefined
@@ -846,12 +846,12 @@ describe('WorkOrderService', () => {
             const vehicleData = { year: '2020', make: 'Toyota', model: 'Camry' }
             const mockCreatedCustomer = { id: 'customer-1', customer_name: 'John Doe' }
             const mockCreatedVehicle = { id: 'vehicle-1', year: 2020, make: 'Toyota', model: 'Camry' }
-            const mockCreatedWorkOrder = { 
-                id: '1', 
+            const mockCreatedWorkOrder = {
+                id: '1',
                 created_at: '2024-01-29T10:00:00Z',
                 updated_at: '2024-01-29T10:00:00Z',
-                ...workOrderData, 
-                customer_id: 'customer-1', 
+                ...workOrderData,
+                customer_id: 'customer-1',
                 vehicle_id: 'vehicle-1',
                 customer_type: 'registered' as const,
                 walk_in_vehicle_info: undefined
@@ -1005,9 +1005,9 @@ describe('WorkOrderService', () => {
             const mockQuery = {
                 eq: vi.fn().mockReturnThis(),
                 order: vi.fn().mockReturnThis(),
-                limit: vi.fn().mockResolvedValue({ 
-                    data: [{ work_order_number: 'INVALID-FORMAT' }], 
-                    error: null 
+                limit: vi.fn().mockResolvedValue({
+                    data: [{ work_order_number: 'INVALID-FORMAT' }],
+                    error: null
                 })
             }
             mockFrom.mockReturnValue({
