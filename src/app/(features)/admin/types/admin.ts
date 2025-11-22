@@ -1,5 +1,9 @@
 // src/app/(features)/admin/types/admin.ts
 
+import type { Organization } from './organization'
+
+export type AdminType = 'super-admin' | 'organization-admin' | 'shop-admin'
+
 export interface Shop {
     id: string
     shop_name: string
@@ -25,6 +29,10 @@ export interface Shop {
     business_number?: string
     authorized_domains?: string[]
     widget_config?: any
+    organization_id?: string
+    organization_name?: string
+    default_hourly_rate?: number
+    status_tracker_presets?: any
     // Computed fields from users
     total_users?: number
     total_revenue?: number
@@ -37,21 +45,36 @@ export interface User {
     created_at: string
     role: string
     shop_id?: string
+    organization_id?: string
     plan: string
     status: string
+    email?: string
+    full_name?: string
+    shop_name?: string
+    last_login?: string
+    phone?: string
 }
 
 export interface AdminStats {
-    totalShops: number
-    totalUsers: number
-    activeUsers: number
-    inactiveUsers: number
-    suspendedUsers: number
-    planDistribution: {
+    totalShops?: number
+    totalUsers?: number
+    activeUsers?: number
+    inactiveUsers?: number
+    suspendedUsers?: number
+    planDistribution?: {
         DEFAULT: number
         PREMIUM: number
         ENTERPRISE: number
     }
+    // Super admin stats
+    totalOrganizations?: number
+    platformRevenue?: number
+    // Organization admin stats
+    organizationRevenue?: number
+    activeWorkOrders?: number
+    // Shop admin stats
+    shopRevenue?: number
+    partsInventory?: number
 }
 
 export interface UsersByShop {
@@ -61,4 +84,12 @@ export interface UsersByShop {
 
 export interface ShopWithUsers extends Shop {
     users: User[]
+}
+
+export interface AdminContext {
+    adminType: AdminType | null
+    organizationId: string | null
+    shopId: string | null
+    loading: boolean
+    error: string | null
 }

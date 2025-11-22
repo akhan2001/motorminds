@@ -21,7 +21,7 @@ const mechanicHubSubItems = [
 const customerSubItems = [
     { name: "All Customers", href: "/customers" },
     { name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
-    { name: "Customer Intake Form", href: "/customer-intake" },
+    { name: "Customer Intake Form", href: "/customer-intake?shop=" }, // Note: append shop ID when linking
     { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
     { name: "Customer Contracts", href: "/customer-contracts" },
 ];
@@ -76,35 +76,16 @@ export const navigationConfig: NavItem[] = [
                 href: "/admin",
                 adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
             },
+            // Super Admin Only
             { 
                 name: "Organizations", 
                 href: "/admin/super-admin/organizations",
                 adminTypes: ['super-admin']
             },
             { 
-                name: "Shops", 
-                href: "/admin/organization/shops",
-                adminTypes: ['organization-admin']
-            },
-            { 
-                name: "Users", 
-                href: "/admin/users",
-                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
-            },
-            { 
-                name: "Shop Users", 
-                href: "/admin/shop/users",
-                adminTypes: ['shop-admin']
-            },
-            { 
-                name: "Create User", 
-                href: "/admin/create-user",
-                adminTypes: ['super-admin', 'organization-admin']
-            },
-            { 
-                name: "Customers", 
-                href: "/admin/customers",
-                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+                name: "All Shops", 
+                href: "/admin/super-admin/shops",
+                adminTypes: ['super-admin']
             },
             { 
                 name: "Parts Requests", 
@@ -120,6 +101,44 @@ export const navigationConfig: NavItem[] = [
                 name: "Migrations", 
                 href: "/admin/migrations",
                 adminTypes: ['super-admin']
+            },
+            { 
+                name: "Usage Metrics", 
+                href: "/admin/usage-metrics",
+                adminTypes: ['super-admin']
+            },
+            // Organization Admin Only
+            { 
+                name: "My Shops", 
+                href: "/admin/organization/shops",
+                adminTypes: ['organization-admin']
+            },
+            { 
+                name: "Organization Users", 
+                href: "/admin/organization/users",
+                adminTypes: ['organization-admin']
+            },
+            // Shop Admin Only
+            { 
+                name: "Shop Users", 
+                href: "/admin/shop/users",
+                adminTypes: ['shop-admin']
+            },
+            // All Admin Types
+            { 
+                name: "Users", 
+                href: "/admin/users",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+            },
+            { 
+                name: "Create User", 
+                href: "/admin/create-user",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+            },
+            { 
+                name: "Customers", 
+                href: "/admin/customers",
+                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
             },
             { 
                 name: "Settings", 

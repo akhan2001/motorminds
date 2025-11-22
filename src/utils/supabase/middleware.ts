@@ -34,7 +34,8 @@ export async function updateSession(request: NextRequest) {
 		'/login', 
 		'/auth',
 		'/api/auth',
-	    '/api/voice-calling/webhook',
+		'/api/voice-calling/webhook',
+		'/customer-intake',
 	]
 	
 	// Skip authentication checks for public routes
@@ -51,9 +52,9 @@ export async function updateSession(request: NextRequest) {
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
-		// '/admin',
-		'/obd',
-		'/api/simulate-obd',
+		'/admin',
+		'/operations',
+		'/messaging',
 		'/financials',
 		'/api/financials',
 		'/parts',           // New refactored parts ordering
@@ -70,10 +71,7 @@ export async function updateSession(request: NextRequest) {
 		'/dashboard',       // Dashboard routes
 		'/customers',       // Customer management
 		'/invoices',        // Invoice management
-		'/appointments',    // Appointment management
 		'/settings',        // Settings pages
-		'/loyalty',         // Loyalty program
-		'/mechanic-hub'     // Mechanic hub
 	]
 	const isProtectedPath = protectedPaths.some(path =>
 		request.nextUrl.pathname.startsWith(path)
@@ -123,7 +121,7 @@ if (request.nextUrl.pathname.startsWith('/admin') && user) {
 		// Use server-side Supabase client for database query
 		const { data: userData, error } = await supabase
 			.from('users')
-			.select('role')
+			.select('role, organization_id')
 			.eq('id', user.id)
 			.single();
 
@@ -133,9 +131,14 @@ if (request.nextUrl.pathname.startsWith('/admin') && user) {
 			return NextResponse.redirect(redirectUrl)
 		}
 
-		// Allow both 'admin' and 'super-admin' roles to access admin routes
+		// Allow admin roles: 'admin', 'super-admin', 'super_admin', 'shop_admin', 'organization_admin'
 		const userRole = userData.role?.toUpperCase();
-		const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER-ADMIN';
+		const isAdmin = 
+			userRole === 'ADMIN' || 
+			userRole === 'SUPER-ADMIN' || 
+			userRole === 'SUPER_ADMIN' ||
+			userRole === 'SHOP_ADMIN' ||
+			userRole === 'ORGANIZATION_ADMIN';
 		
 		if (!isAdmin) {
 			// User is not admin - redirect to operations/appointments

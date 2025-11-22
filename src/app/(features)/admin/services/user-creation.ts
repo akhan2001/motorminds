@@ -60,14 +60,24 @@ export class UserCreationService {
 
             if (!userRecordExists) {
                 // If trigger didn't create the record, create it manually
+                const insertData: any = {
+                    id: userId,
+                    role: request.user.role,
+                    plan: request.user.plan,
+                    status: request.user.status
+                }
+                
+                // Add shop_id and organization_id if provided (from extended request)
+                if ((request.user as any).shop_id) {
+                    insertData.shop_id = (request.user as any).shop_id
+                }
+                if ((request.user as any).organization_id) {
+                    insertData.organization_id = (request.user as any).organization_id
+                }
+                
                 const { error: insertError } = await supabaseAdmin
                     .from('users')
-                    .insert({
-                        id: userId,
-                        role: request.user.role,
-                        plan: request.user.plan,
-                        status: request.user.status
-                    })
+                    .insert(insertData)
 
                 if (insertError) {
                     console.error('Failed to create user record manually:', insertError)
@@ -77,13 +87,23 @@ export class UserCreationService {
                 }
             } else {
                 // Update the existing record with the additional fields
+                const updateData: any = {
+                    role: request.user.role,
+                    plan: request.user.plan,
+                    status: request.user.status
+                }
+                
+                // Add shop_id and organization_id if provided (from extended request)
+                if ((request.user as any).shop_id) {
+                    updateData.shop_id = (request.user as any).shop_id
+                }
+                if ((request.user as any).organization_id) {
+                    updateData.organization_id = (request.user as any).organization_id
+                }
+                
                 const { error: userError } = await supabaseAdmin
                     .from('users')
-                    .update({
-                        role: request.user.role,
-                        plan: request.user.plan,
-                        status: request.user.status
-                    })
+                    .update(updateData)
                     .eq('id', userId)
 
                 if (userError) {

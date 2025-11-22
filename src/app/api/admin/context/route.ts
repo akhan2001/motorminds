@@ -48,23 +48,25 @@ export async function GET(request: NextRequest) {
         const userRole = userData.role?.toUpperCase()
 
         // Determine admin type based on role and context
-        // NOTE: All users have shop_id, so we can't use shop_id absence to determine super-admin
+        // Priority order: super-admin > organization-admin > shop-admin
         let adminType: 'super-admin' | 'organization-admin' | 'shop-admin' | null = null
         let organizationId: string | null = null
         let shopId: string | null = userData.shop_id || null
 
         // Priority 1: Super Admin - MotorMinds platform admin
-        // If role is 'super-admin', ALWAYS super-admin (regardless of shop_id/org_id)
-        if (userRole === 'SUPER-ADMIN') {
+        // If role is 'super-admin' or 'SUPER-ADMIN', ALWAYS super-admin (regardless of shop_id/org_id)
+        if (userRole === 'SUPER-ADMIN' || userRole === 'SUPER_ADMIN') {
             adminType = 'super-admin'
+            // Super admin can have organization_id and shop_id, but they're not limited by them
+            organizationId = userData.organization_id || null
         }
-        // Priority 2: Organization Admin - MSO admin (has organization)
-        // If user has organization_id, they're organization-admin (can manage multiple shops)
-        else if (userRole === 'ADMIN' && userData.organization_id) {
+        // Priority 2: Organization Admin - MSO admin (has organization_id)
+        // If user has organization_id and role is 'admin', they're organization-admin
+        else if ((userRole === 'ADMIN' || userRole === 'ORGANIZATION_ADMIN') && userData.organization_id) {
             adminType = 'organization-admin'
             organizationId = userData.organization_id
         }
-        // Priority 3: Shop Admin - Shop-level admin (role='admin' without organization)
+        // Priority 3: Shop Admin - Shop-level admin (role='admin' without organization_id)
         // If user has role='admin' but no organization_id, they're shop-admin
         else if (userRole === 'ADMIN' || userRole === 'SHOP_ADMIN') {
             adminType = 'shop-admin'
