@@ -1,6 +1,6 @@
 // src/app/(features)/operations/lib/work-order-archive-service.ts
 import { createClient } from '@/utils/supabase/client'
-import type { WorkOrder } from '../types/work-order'
+import type { WorkOrder, WorkOrderWithDetails } from '../types/work-order'
 
 export class WorkOrderArchiveService {
     private supabase = createClient()
@@ -102,15 +102,14 @@ export class WorkOrderArchiveService {
     /**
      * Get archived work orders for a shop
      */
-    async getArchivedWorkOrders(shopId: string): Promise<WorkOrder[]> {
+    async getArchivedWorkOrders(shopId: string): Promise<WorkOrderWithDetails[]> {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
                 *,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
-                technician:employees(id, first_name, last_name),
-                archived_by_user:users!work_orders_archived_by_fkey(id, email)
+                technician:employees(id, first_name, last_name)
             `)
             .eq('shop_id', shopId)
             .eq('archived', true)

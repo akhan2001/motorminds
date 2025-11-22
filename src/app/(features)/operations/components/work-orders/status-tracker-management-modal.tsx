@@ -134,7 +134,7 @@ export const StatusTrackerManagementModal: React.FC<StatusTrackerManagementModal
                 <DialogHeader>
                     <DialogTitle className="text-foreground dark:text-white">Manage Status Trackers</DialogTitle>
                     <DialogDescription className="text-muted-foreground dark:text-gray-400">
-                        Create custom status trackers to color-code work orders (e.g., "Oil Change", "Brake Repair")
+                        Create upto 5 custom status trackers to color-code work orders (e.g., "Oil Change", "Brake Repair")
                     </DialogDescription>
                 </DialogHeader>
 
@@ -196,11 +196,10 @@ export const StatusTrackerManagementModal: React.FC<StatusTrackerManagementModal
                                         key={color}
                                         type="button"
                                         onClick={() => setNewPresetColor(color)}
-                                        className={`w-8 h-8 rounded border-2 transition-all ${
-                                            newPresetColor === color
+                                        className={`w-8 h-8 rounded border-2 transition-all ${newPresetColor === color
                                                 ? 'border-foreground dark:border-white scale-110'
                                                 : 'border-border dark:border-[#2a2a2a] hover:scale-105'
-                                        }`}
+                                            }`}
                                         style={{ backgroundColor: color }}
                                         title={color}
                                     />
