@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from "@/utils/supabase/client";
 import type { UserRole } from '@/types/core/user';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function useUserRole() {
     const supabase = createClient();
@@ -16,27 +16,40 @@ export function useUserRole() {
                 .from('users')
                 .select('role')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle(); // Use maybeSingle to handle 406 gracefully
 
-            if (error) throw error;
+            // Handle errors gracefully - don't throw on 406 or RLS errors
+            if (error) {
+                // Log but don't throw - return null instead
+                if (error.code !== 'PGRST116') { // PGRST116 = no rows returned
+                    console.warn('Failed to fetch user role:', error);
+                }
+                return null;
+            }
             return data?.role || null;
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchOnWindowFocus: true,
-        retry: 1, // Retry once if the query fails
+        refetchOnWindowFocus: false, // Changed to false to reduce requests
+        retry: false, // Disable retry to prevent rate limiting
     });
+
+    // Use ref to store query refetch function to avoid dependency issues
+    const queryRef = useRef(query);
+    queryRef.current = query;
 
     // Listen to auth state changes and refetch when user changes
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-                // Refetch user role when auth state changes
-                query.refetch();
+            // Only refetch on actual sign in/out, not token refresh
+            // Token refresh doesn't mean role changed, and causes rate limiting
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                // Use ref to avoid dependency on query object
+                queryRef.current.refetch();
             }
         });
 
         return () => subscription.unsubscribe();
-    }, [query]);
+    }, [supabase]); // Only depend on supabase client
 
     return query;
 }

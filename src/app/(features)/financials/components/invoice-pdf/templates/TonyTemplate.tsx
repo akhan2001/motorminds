@@ -396,46 +396,78 @@ export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
                     <View style={styles.infoRow}>
                         <View style={styles.infoCol1}>
                             <Text style={styles.sectionLabel}>Customer Information</Text>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>CUSTOMER NAME:</Text>
-                                <Text style={styles.fieldValue}>{invoice.customer?.customer_name || ''}</Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>ADDRESS:</Text>
-                                <Text style={styles.fieldValue}>{invoice.customer?.customer_address || ''}</Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>CITY, PROV:</Text>
-                                <Text style={styles.fieldValue}></Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>POSTAL CODE:</Text>
-                                <Text style={styles.fieldValue}></Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>TELEPHONE:</Text>
-                                <Text style={styles.fieldValue}>{invoice.customer?.customer_phone || ''}</Text>
-                            </View>
+                            {invoice.customer_type === 'walk_in' ? (
+                                <View style={styles.fieldRow}>
+                                    <Text style={styles.fieldLabel}>WALK-IN CUSTOMER</Text>
+                                    <Text style={styles.fieldValue}>(No customer record)</Text>
+                                </View>
+                            ) : (
+                                <>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>CUSTOMER NAME:</Text>
+                                        <Text style={styles.fieldValue}>{invoice.customer?.customer_name || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>ADDRESS:</Text>
+                                        <Text style={styles.fieldValue}>{invoice.customer?.customer_address || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>CITY, PROV:</Text>
+                                        <Text style={styles.fieldValue}></Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>POSTAL CODE:</Text>
+                                        <Text style={styles.fieldValue}></Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>TELEPHONE:</Text>
+                                        <Text style={styles.fieldValue}>{invoice.customer?.customer_phone || ''}</Text>
+                                    </View>
+                                </>
+                            )}
                         </View>
 
                         <View style={styles.infoCol2}>
                             <Text style={styles.sectionLabel}>Vehicle Information</Text>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>MAKE:</Text>
-                                <Text style={styles.fieldValue}> {invoice.vehicle?.make || ''}</Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>MODEL:</Text>
-                                <Text style={styles.fieldValue}> {invoice.vehicle?.model || ''}</Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>YEAR:</Text>
-                                <Text style={styles.fieldValue}> {invoice.vehicle?.year || ''}</Text>
-                            </View>
-                            <View style={styles.fieldRow}>
-                                <Text style={styles.fieldLabel}>PLATE:</Text>
-                                <Text style={styles.fieldValue}> {invoice.vehicle?.license_plate || ''}</Text>
-                            </View>
+                            {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
+                                <>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>MAKE:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.walk_in_vehicle_info.make || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>MODEL:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.walk_in_vehicle_info.model || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>YEAR:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.walk_in_vehicle_info.year || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>PLATE:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.walk_in_vehicle_info.license_plate || ''}</Text>
+                                    </View>
+                                </>
+                            ) : (
+                                <>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>MAKE:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.vehicle?.make || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>MODEL:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.vehicle?.model || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>YEAR:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.vehicle?.year || ''}</Text>
+                                    </View>
+                                    <View style={styles.fieldRow}>
+                                        <Text style={styles.fieldLabel}>PLATE:</Text>
+                                        <Text style={styles.fieldValue}> {invoice.vehicle?.license_plate || ''}</Text>
+                                    </View>
+                                </>
+                            )}
                             <View style={styles.fieldRow}>
                                 <Text style={styles.fieldLabel}>ODOMETER:</Text>
                                 <Text style={styles.fieldValue}></Text>

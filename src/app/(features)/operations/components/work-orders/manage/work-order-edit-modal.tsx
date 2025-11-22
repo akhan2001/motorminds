@@ -1127,7 +1127,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 isEditing={isEditing}
                                 canEdit={canEdit()}
                                 canDelete={canDelete()}
-                                canGenerateInvoice={workOrderDetails?.customer_type === 'registered'}
+                                canGenerateInvoice={(workOrderDetails?.status === 'completed' || initialWorkOrder.status === 'completed')}
                                 workOrderStatus={workOrderDetails?.status || initialWorkOrder.status}
                                 hasInvoice={!!workOrderInvoice}
                                 onEdit={handleEdit}
