@@ -158,19 +158,17 @@ export async function POST(req: NextRequest) {
 						controller.enqueue(encoder.encode(word + ' '));
 					}
 					controller.close();
-				}
-			});
+			}
+		});
 
-			return new Response(stream, {
-				headers: {
-					'Content-Type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
-				},
-			});
-		}
+		return new Response(stream, {
+			headers: {
+				'Content-Type': 'text/plain; charset=utf-8',
+			},
+		});
+	}
 
-		if (lookAtDatabase) {
+	if (lookAtDatabase) {
 			console.log("Database mode is enabled, delegating to retrieval endpoint");
 			
 			const retrievalResponse = await fetch(new URL("/api/chat/retrieval", req.url), {
@@ -205,11 +203,15 @@ export async function POST(req: NextRequest) {
 
 		const stream = await chain.stream({
 			chat_history: formattedPreviousMessages.join("\n"),
-			input: currentMessageContent,
-		});
+		input: currentMessageContent,
+	});
 
-		return new StreamingTextResponse(stream);
-	} catch (e: any) {
+	return new Response(stream, {
+		headers: {
+			'Content-Type': 'text/plain; charset=utf-8',
+		},
+	});
+} catch (e: any) {
 		console.error("Error in main chat route:", e);
 		return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
 	}

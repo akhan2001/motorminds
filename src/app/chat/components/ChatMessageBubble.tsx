@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { Message } from "ai";
+import type { Message } from "@ai-sdk/react";
 import Image from "next/image";
 import { useState } from "react";
 import { CustomerFormMessage } from "./CustomerFormMessage";

@@ -230,6 +230,7 @@ export async function POST(req: NextRequest) {
         },
     });
 
+<<<<<<< HEAD
     return new Response(responseStream, {
         headers: {
             'Content-Type': 'text/event-stream',
@@ -237,6 +238,13 @@ export async function POST(req: NextRequest) {
             'Connection': 'keep-alive',
             ...corsHeaders,
         },
+=======
+    return new Response(responseStream, { 
+        headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/plain; charset=utf-8',
+        }
+>>>>>>> e9af15cf5eea98c8567569682b7e7581af0f9276
     });
 }
 

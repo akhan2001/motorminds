@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Message } from "ai";
+import type { Message } from "@ai-sdk/react";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 

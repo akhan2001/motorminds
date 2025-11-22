@@ -1,7 +1,6 @@
 "use client";
 
-import { type Message } from "ai";
-import { useChat } from "@ai-sdk/react";
+import { type Message, useChat } from "@ai-sdk/react";
 import { useState, useRef } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { toast } from "sonner";

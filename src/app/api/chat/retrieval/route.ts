@@ -145,9 +145,7 @@ export async function POST(req: NextRequest) {
 			
 			return new Response(stream, {
 				headers: {
-					'Content-Type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
+					'Content-Type': 'text/plain; charset=utf-8',
 				},
 			});
 		}
@@ -251,9 +249,7 @@ export async function POST(req: NextRequest) {
 
 			return new Response(stream, {
 				headers: {
-					'Content-Type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
+					'Content-Type': 'text/plain; charset=utf-8',
 				},
 			});
 		}
@@ -273,9 +269,7 @@ export async function POST(req: NextRequest) {
 			});
 			return new Response(stream, {
 				headers: {
-					'Content-Type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
+					'Content-Type': 'text/plain; charset=utf-8',
 				},
 			});
 		}
@@ -295,9 +289,7 @@ export async function POST(req: NextRequest) {
 			});
 			return new Response(stream, {
 				headers: {
-					'Content-Type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
+					'Content-Type': 'text/plain; charset=utf-8',
 				},
 			});
 		}
@@ -395,9 +387,7 @@ export async function POST(req: NextRequest) {
 
 			return new Response(stream, {
 				headers: {
-					'Content-Type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
+					'Content-Type': 'text/plain; charset=utf-8',
 				},
 			});
 		} catch (responseError) {

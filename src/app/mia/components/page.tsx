@@ -86,7 +86,11 @@ export default function ChatWindowComponent() {
         />
         <button
           type="submit"
+<<<<<<< HEAD
           disabled={isLoading || !input?.trim()}
+=======
+          disabled={isLoading || !input || !input.trim()}
+>>>>>>> e9af15cf5eea98c8567569682b7e7581af0f9276
           className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
         >
           Send
