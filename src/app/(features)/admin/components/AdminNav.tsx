@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Package, Settings, BarChart3, Users, FileText, Database, Building2, Wrench, UserPlus, UserSearch } from 'lucide-react'
+import { Package, Settings, BarChart3, Users, FileText, Database, Building2, UserPlus } from 'lucide-react'
 import { useAdminContext } from './admin-context/useAdminContext'
-import type { AdminType } from '@/types/core/user'
+import type { AdminType } from '../types/admin'
 
 interface AdminNavItem {
 	name: string
@@ -15,12 +15,14 @@ interface AdminNavItem {
 }
 
 const adminNavItems: AdminNavItem[] = [
+	// Dashboard - All admin types
 	{
 		name: 'Dashboard',
 		href: '/admin',
 		icon: BarChart3,
 		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
 	},
+	// Super Admin Only
 	{
 		name: 'Organizations',
 		href: '/admin/super-admin/organizations',
@@ -28,34 +30,10 @@ const adminNavItems: AdminNavItem[] = [
 		adminTypes: ['super-admin']
 	},
 	{
-		name: 'Shops',
-		href: '/admin/organization/shops',
+		name: 'All Shops',
+		href: '/admin/super-admin/shops',
 		icon: Building2,
-		adminTypes: ['organization-admin']
-	},
-	{
-		name: 'Users',
-		href: '/admin/users',
-		icon: Users,
-		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
-	},
-	{
-		name: 'Shop Users',
-		href: '/admin/shop/users',
-		icon: Users,
-		adminTypes: ['shop-admin']
-	},
-	{
-		name: 'Create User',
-		href: '/admin/create-user',
-		icon: UserPlus,
-		adminTypes: ['super-admin', 'organization-admin']
-	},
-	{
-		name: 'Customers',
-		href: '/admin/customers',
-		icon: UserSearch,
-		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+		adminTypes: ['super-admin']
 	},
 	{
 		name: 'Parts Requests',
@@ -73,6 +51,47 @@ const adminNavItems: AdminNavItem[] = [
 		name: 'Migrations',
 		href: '/admin/migrations',
 		icon: Database,
+		adminTypes: ['super-admin']
+	},
+	// Organization Admin Only
+	{
+		name: 'My Shops',
+		href: '/admin/organization/shops',
+		icon: Building2,
+		adminTypes: ['organization-admin']
+	},
+	{
+		name: 'Organization Users',
+		href: '/admin/organization/users',
+		icon: Users,
+		adminTypes: ['organization-admin']
+	},
+	// Shop Admin Only
+	{
+		name: 'Shop Users',
+		href: '/admin/shop/users',
+		icon: Users,
+		adminTypes: ['shop-admin']
+	},
+	// All Admin Types - Users
+	{
+		name: 'Users',
+		href: '/admin/users',
+		icon: Users,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+	},
+	// Create User - Super Admin & Organization Admin
+	{
+		name: 'Create User',
+		href: '/admin/create-user',
+		icon: UserPlus,
+		adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+	},
+	// Settings - All admin types
+	{
+		name: 'Usage Metrics',
+		href: '/admin/usage-metrics',
+		icon: BarChart3,
 		adminTypes: ['super-admin']
 	},
 	{
@@ -105,8 +124,8 @@ export default function AdminNav() {
 						variant={isActive ? 'default' : 'outline'}
 						className={
 							isActive
-								? 'bg-blue-600 hover:bg-blue-700 whitespace-nowrap'
-								: 'border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a] hover:text-white whitespace-nowrap'
+								? 'bg-red-600 hover:bg-red-700 text-white whitespace-nowrap'
+								: 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-nowrap'
 						}
 						size="sm"
 					>

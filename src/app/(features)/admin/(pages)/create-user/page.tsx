@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { toast } from 'sonner'
-import { Loader2, Plus, User, Building, ArrowLeft } from 'lucide-react'
+import { Loader2, Plus, User, Building, ArrowLeft, Slash } from 'lucide-react'
 import { AdminUserFormData, AdminShopFormData, CreateUserRequest } from '../../types/user-creation'
 import { UserCreationService } from '../../services/user-creation'
 import UserForm from '../../components/user-creation/UserForm'
 import ShopForm from '../../components/user-creation/ShopForm'
+import AdminNav from '../../components/AdminNav'
+import { Nav } from '@/app/components/nav'
 import Link from 'next/link'
 
 const defaultUserForm: AdminUserFormData = {
@@ -136,22 +139,50 @@ export default function CreateUserPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] p-6">
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <div className="flex items-center gap-4 mb-4">
-                        <Button asChild variant="outline" className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]">
-                            <Link href="/admin/users">
-                                <ArrowLeft className="h-4 w-4 mr-2" />
-                                Go Back
-                            </Link>
-                        </Button>
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Create New User</h1>
-                    <p className="text-gray-400">Create a new user account and optionally associate them with a shop.</p>
-                </div>
+        <div className="h-screen flex flex-col bg-background">
+            <Nav />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-6 max-w-4xl mx-auto w-full">
+                        {/* Breadcrumb Navigation */}
+                        <Breadcrumb className="mb-4">
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink asChild>
+                                        <Link href="/admin" className="text-muted-foreground hover:text-foreground">
+                                            Admin
+                                        </Link>
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator>
+                                    <Slash className="text-muted-foreground" />
+                                </BreadcrumbSeparator>
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage className="text-foreground">
+                                        Create User
+                                    </BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Admin Navigation */}
+                        <AdminNav />
+
+                        {/* Header */}
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 className="text-3xl font-bold text-foreground mb-2">Create New User</h1>
+                                <p className="text-muted-foreground">Create a new user account and optionally associate them with a shop.</p>
+                            </div>
+                            <Button asChild variant="outline">
+                                <Link href="/admin/users">
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Go Back
+                                </Link>
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
                     {/* User Form */}
                     <UserForm
                         userForm={userForm}
@@ -160,7 +191,7 @@ export default function CreateUserPage() {
                     />
 
                     {/* Shop Creation Toggle */}
-                    <Card className="bg-[#111111] border-[#2a2a2a]">
+                    <Card>
                         <CardContent className="pt-6">
                             <div className="flex items-center space-x-3">
                                 <Switch
@@ -169,10 +200,10 @@ export default function CreateUserPage() {
                                     onCheckedChange={handleCreateShopToggle}
                                 />
                                 <div className="flex-1">
-                                    <Label htmlFor="create-shop" className="text-white font-medium">
+                                    <Label htmlFor="create-shop" className="text-foreground font-medium">
                                         Create Shop for this User
                                     </Label>
-                                    <p className="text-sm text-gray-400 mt-1">
+                                    <p className="text-sm text-muted-foreground mt-1">
                                         Create a shop and associate it with this user. Only applicable for shop owners.
                                     </p>
                                 </div>
@@ -201,7 +232,6 @@ export default function CreateUserPage() {
                                 setUserErrors([])
                                 setShopErrors([])
                             }}
-                            className="border-[#2a2a2a] text-gray-300 hover:bg-[#1a1a1a]"
                         >
                             Reset
                         </Button>
@@ -223,7 +253,9 @@ export default function CreateUserPage() {
                             )}
                         </Button>
                     </div>
-                </form>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     )

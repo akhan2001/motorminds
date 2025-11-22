@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, TrendingUp, Package, Settings, BarChart3, Wrench } from 'lucide-react'
@@ -10,11 +11,53 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Slash } from 'lucide-react'
 import { useAdminContext } from '../admin-context/useAdminContext'
 
+interface ShopStats {
+    totalUsers: number
+    shopRevenue: number
+    activeWorkOrders: number
+    partsInventory: number
+}
+
 export function ShopDashboard() {
     const { shopId } = useAdminContext()
+    const [stats, setStats] = useState<ShopStats | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (shopId) {
+            fetchStats()
+        }
+    }, [shopId])
+
+    const fetchStats = async () => {
+        try {
+            setLoading(true)
+            const response = await fetch('/api/admin/shop/stats')
+            const data = await response.json()
+            
+            if (response.ok) {
+                setStats(data.stats)
+            } else {
+                console.error('Error fetching stats:', data.error)
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount)
+    }
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
@@ -24,16 +67,16 @@ export function ShopDashboard() {
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/admin" className="text-gray-400 hover:text-white">
+                                        <Link href="/admin" className="text-muted-foreground hover:text-foreground">
                                             Admin
                                         </Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator>
-                                    <Slash className="text-gray-600" />
+                                    <Slash className="text-muted-foreground" />
                                 </BreadcrumbSeparator>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="text-white">
+                                    <BreadcrumbPage className="text-foreground">
                                         Shop Admin
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
@@ -45,67 +88,75 @@ export function ShopDashboard() {
 
                         {/* Header */}
                         <div className="mb-6">
-                            <h1 className="text-3xl font-bold text-white mb-2">
+                            <h1 className="text-3xl font-bold text-foreground mb-2">
                                 Shop Management
                             </h1>
-                            <p className="text-gray-400">
+                            <p className="text-muted-foreground">
                                 Manage your shop operations and staff
                             </p>
                         </div>
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Shop Users</p>
-                                            <p className="text-2xl font-bold text-white">0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Shop Users</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.totalUsers || 0}
+                                            </p>
                                         </div>
-                                        <div className="p-3 bg-purple-600/20 rounded-full">
-                                            <Users className="h-6 w-6 text-purple-400" />
+                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Shop Revenue</p>
-                                            <p className="text-2xl font-bold text-white">$0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Shop Revenue</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : formatCurrency(stats?.shopRevenue || 0)}
+                                            </p>
                                         </div>
-                                        <div className="p-3 bg-green-600/20 rounded-full">
-                                            <TrendingUp className="h-6 w-6 text-green-400" />
+                                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
+                                            <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Active Work Orders</p>
-                                            <p className="text-2xl font-bold text-white">0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Active Work Orders</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.activeWorkOrders || 0}
+                                            </p>
                                         </div>
-                                        <div className="p-3 bg-orange-600/20 rounded-full">
-                                            <Wrench className="h-6 w-6 text-orange-400" />
+                                        <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
+                                            <Wrench className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-400">Parts Inventory</p>
-                                            <p className="text-2xl font-bold text-white">0</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Parts Inventory</p>
+                                            <p className="text-2xl font-bold text-foreground">
+                                                {loading ? '...' : stats?.partsInventory || 0}
+                                            </p>
                                         </div>
-                                        <div className="p-3 bg-blue-600/20 rounded-full">
-                                            <Package className="h-6 w-6 text-blue-400" />
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                                            <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                         </div>
                                     </div>
                                 </CardContent>
@@ -114,18 +165,18 @@ export function ShopDashboard() {
 
                         {/* Quick Actions */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-purple-600/20 rounded-lg">
-                                            <Users className="h-6 w-6 text-purple-400" />
+                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Shop Users</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Shop Users</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Manage shop staff and permissions
                                     </p>
-                                    <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+                                    <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
                                         <Link href="/admin/shop/users">
                                             Manage Users
                                         </Link>
@@ -133,18 +184,18 @@ export function ShopDashboard() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-green-600/20 rounded-lg">
-                                            <BarChart3 className="h-6 w-6 text-green-400" />
+                                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                                            <BarChart3 className="h-6 w-6 text-green-600 dark:text-green-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Shop Performance</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Shop Performance</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         View shop analytics and reports
                                     </p>
-                                    <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+                                    <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
                                         <Link href="/admin/shop/performance">
                                             View Performance
                                         </Link>
@@ -152,18 +203,18 @@ export function ShopDashboard() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                            <Card className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className="p-3 bg-gray-600/20 rounded-lg">
-                                            <Settings className="h-6 w-6 text-gray-400" />
+                                        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                            <Settings className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                                         </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white mb-2">Shop Settings</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">Shop Settings</h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Configure shop-specific settings
                                     </p>
-                                    <Button asChild className="w-full bg-gray-600 hover:bg-gray-700">
+                                    <Button asChild className="w-full bg-red-600 hover:bg-red-700 text-white">
                                         <Link href="/admin/shop/settings">
                                             Settings
                                         </Link>

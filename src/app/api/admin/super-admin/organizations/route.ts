@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
             .eq('id', user.id)
             .single()
 
-        if (userError || !userData || userData.role?.toUpperCase() !== 'ADMIN' || userData.organization_id) {
+        const userRole = userData?.role?.toUpperCase()
+        const isSuperAdmin = userRole === 'SUPER-ADMIN' || userRole === 'SUPER_ADMIN'
+        
+        if (userError || !userData || !isSuperAdmin) {
             return NextResponse.json(
                 { error: 'Forbidden - Super admin access required' },
                 { status: 403 }
@@ -81,7 +84,10 @@ export async function POST(request: NextRequest) {
             .eq('id', user.id)
             .single()
 
-        if (userError || !userData || userData.role?.toUpperCase() !== 'ADMIN' || userData.organization_id) {
+        const userRole = userData?.role?.toUpperCase()
+        const isSuperAdmin = userRole === 'SUPER-ADMIN' || userRole === 'SUPER_ADMIN'
+        
+        if (userError || !userData || !isSuperAdmin) {
             return NextResponse.json(
                 { error: 'Forbidden - Super admin access required' },
                 { status: 403 }

@@ -54,7 +54,7 @@ export default function OrganizationsPage() {
     )
 
     return (
-        <div className="h-screen flex flex-col bg-[#0d0d0d]">
+        <div className="h-screen flex flex-col bg-background">
             <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
@@ -64,16 +64,16 @@ export default function OrganizationsPage() {
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/admin" className="text-gray-400 hover:text-white">
+                                        <Link href="/admin" className="text-muted-foreground hover:text-foreground">
                                             Admin
                                         </Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator>
-                                    <Slash className="text-gray-600" />
+                                    <Slash className="text-muted-foreground" />
                                 </BreadcrumbSeparator>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="text-white">
+                                    <BreadcrumbPage className="text-foreground">
                                         Organizations
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
@@ -86,14 +86,14 @@ export default function OrganizationsPage() {
                         {/* Header */}
                         <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h1 className="text-3xl font-bold text-white mb-2">
+                                <h1 className="text-3xl font-bold text-foreground mb-2">
                                     Organizations
                                 </h1>
-                                <p className="text-gray-400">
+                                <p className="text-muted-foreground">
                                     Manage all MSOs and organizations
                                 </p>
                             </div>
-                            <Button className="bg-blue-600 hover:bg-blue-700">
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Create Organization
                             </Button>
@@ -102,12 +102,12 @@ export default function OrganizationsPage() {
                         {/* Search */}
                         <div className="mb-6">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder="Search organizations..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                                    className="pl-10"
                                 />
                             </div>
                         </div>
@@ -115,20 +115,20 @@ export default function OrganizationsPage() {
                         {/* Organizations List */}
                         {loading ? (
                             <div className="text-center py-8">
-                                <p className="text-gray-400">Loading organizations...</p>
+                                <p className="text-muted-foreground">Loading organizations...</p>
                             </div>
                         ) : filteredOrganizations.length === 0 ? (
-                            <Card className="bg-[#111111] border-[#2a2a2a]">
+                            <Card>
                                 <CardContent className="text-center py-12">
-                                    <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-white mb-2">
+                                    <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                    <h3 className="text-lg font-medium text-foreground mb-2">
                                         No organizations found
                                     </h3>
-                                    <p className="text-gray-400 mb-4">
+                                    <p className="text-muted-foreground mb-4">
                                         {searchTerm ? 'Try adjusting your search' : 'Create your first organization to get started'}
                                     </p>
                                     {!searchTerm && (
-                                        <Button className="bg-blue-600 hover:bg-blue-700">
+                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                                             <Plus className="h-4 w-4 mr-2" />
                                             Create Organization
                                         </Button>
@@ -138,28 +138,28 @@ export default function OrganizationsPage() {
                         ) : (
                             <div className="grid grid-cols-1 gap-4">
                                 {filteredOrganizations.map((org) => (
-                                    <Card key={org.id} className="bg-[#111111] border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors">
+                                    <Card key={org.id} className="hover:shadow-md transition-shadow">
                                         <CardContent className="p-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4">
-                                                    <div className="p-3 bg-blue-600/20 rounded-lg">
-                                                        <Building2 className="h-6 w-6 text-blue-400" />
+                                                    <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                                                        <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="text-lg font-semibold text-white">{org.name}</h3>
-                                                        <p className="text-sm text-gray-400">{org.billing_email}</p>
+                                                        <h3 className="text-lg font-semibold text-foreground">{org.name}</h3>
+                                                        <p className="text-sm text-muted-foreground">{org.billing_email}</p>
                                                         <div className="flex items-center gap-2 mt-2">
-                                                            <Badge variant="outline" className="bg-purple-600/20 text-purple-400 border-purple-600">
+                                                            <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700">
                                                                 {org.organization_type}
                                                             </Badge>
                                                             <Badge variant="outline" className={
                                                                 org.status === 'active' 
-                                                                    ? 'bg-green-600/20 text-green-400 border-green-600'
-                                                                    : 'bg-red-600/20 text-red-400 border-red-600'
+                                                                    ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
+                                                                    : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700'
                                                             }>
                                                                 {org.status}
                                                             </Badge>
-                                                            <span className="text-xs text-gray-400">
+                                                            <span className="text-xs text-muted-foreground">
                                                                 {org.shop_count || 0} shops
                                                             </span>
                                                         </div>
@@ -170,7 +170,6 @@ export default function OrganizationsPage() {
                                                         asChild
                                                         variant="outline"
                                                         size="sm"
-                                                        className="border-blue-500 text-blue-400 hover:bg-blue-900/20"
                                                     >
                                                         <Link href={`/admin/super-admin/organizations/${org.id}`}>
                                                             <Edit className="h-4 w-4 mr-2" />
