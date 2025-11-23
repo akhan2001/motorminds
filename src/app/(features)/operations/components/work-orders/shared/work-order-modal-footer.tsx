@@ -2,6 +2,7 @@
 
 import { Trash2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export interface WorkOrderModalFooterProps {
     isEditing: boolean
@@ -19,6 +20,7 @@ export interface WorkOrderModalFooterProps {
     onDelete?: () => void
     onGenerateInvoice?: () => void
     onGoToInvoice?: () => void
+    deleteDisabledReason?: string
     className?: string
 }
 
@@ -38,25 +40,45 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     onDelete,
     onGenerateInvoice,
     onGoToInvoice,
+    deleteDisabledReason,
     className = ""
 }) => {
     return (
         <div className={`flex items-center justify-between p-6 border-t border-border dark:border-[#222222] shrink-0 ${className}`}>
             <div className="flex items-center gap-2">
                 {onDelete && (
-                    <Button
-                        variant="destructive"
-                        className={
-                            canDelete 
-                                ? 'bg-[#e23232] text-white hover:bg-[#e23232]/80' 
-                                : 'bg-gray-600 dark:bg-gray-600 text-muted-foreground dark:text-gray-400 cursor-not-allowed opacity-50'
-                        }
-                        onClick={onDelete}
-                        disabled={!canDelete}
-                    >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                    </Button>
+                    canDelete ? (
+                        <Button
+                            variant="destructive"
+                            className='bg-[#e23232] text-white hover:bg-[#e23232]/80'
+                            onClick={onDelete}
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    ) : (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span tabIndex={0}>
+                                        <Button
+                                            variant="destructive"
+                                            className='bg-gray-600 dark:bg-gray-600 text-muted-foreground dark:text-gray-400 cursor-not-allowed opacity-50'
+                                            disabled
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            Delete
+                                        </Button>
+                                    </span>
+                                </TooltipTrigger>
+                                {deleteDisabledReason && (
+                                    <TooltipContent>
+                                        <p>{deleteDisabledReason}</p>
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
+                    )
                 )}
             </div>
 
@@ -75,8 +97,8 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                             onClick={onSave}
                             disabled={isSubmitting}
                         >
-                            {isSubmitting 
-                                ? (isCreating ? 'Creating...' : 'Saving...') 
+                            {isSubmitting
+                                ? (isCreating ? 'Creating...' : 'Saving...')
                                 : (isCreating ? 'Create Work Order' : 'Save Changes')
                             }
                         </Button>
@@ -86,11 +108,10 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         {onEdit && workOrderStatus !== 'completed' && (
                             <Button
                                 variant="outline"
-                                className={`border px-8 ${
-                                    canEdit 
-                                        ? 'border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white' 
-                                        : 'border-border dark:border-gray-600 text-muted-foreground dark:text-gray-500 cursor-not-allowed opacity-50'
-                                }`}
+                                className={`border px-8 ${canEdit
+                                    ? 'border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white'
+                                    : 'border-border dark:border-gray-600 text-muted-foreground dark:text-gray-500 cursor-not-allowed opacity-50'
+                                    }`}
                                 onClick={onEdit}
                                 disabled={!canEdit}
                             >

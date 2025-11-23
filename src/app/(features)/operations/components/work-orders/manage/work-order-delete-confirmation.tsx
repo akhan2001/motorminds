@@ -31,10 +31,10 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                         <div className="flex items-center justify-center w-10 h-10 bg-red-50 dark:bg-red-500/10 rounded-full">
                             <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                         </div>
-                        Delete Work Order
+                        Archive Work Order
                     </DialogTitle>
                     <DialogDescription className="text-muted-foreground">
-                        Are you sure you want to delete this work order?
+                        Are you sure you want to archive this work order? It will be moved to your historical records.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -57,13 +57,13 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                         </div>
                     </div>
 
-                    <div className="bg-red-50 dark:bg-red-500/10 border border-red-300 dark:border-red-500/20 rounded-lg p-4">
+                    <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-300 dark:border-blue-500/20 rounded-lg p-4">
                         <div className="flex gap-3">
-                            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                            <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h5 className="text-red-600 dark:text-red-400 font-medium mb-1">Warning</h5>
-                                <p className="text-red-600 dark:text-red-300 text-sm">
-                                    This action cannot be undone. The work order and all associated data will be permanently deleted.
+                                <h5 className="text-blue-600 dark:text-blue-400 font-medium mb-1">Archiving Information</h5>
+                                <p className="text-blue-600 dark:text-blue-300 text-sm">
+                                    The work order will be archived and moved to historical records. You can still access it from the customer's service history and old invoices.
                                 </p>
                             </div>
                         </div>
@@ -88,12 +88,12 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                         {isDeleting ? (
                             <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Deleting...
+                                Archiving...
                             </>
                         ) : (
                             <>
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Work Order
+                                Archive Work Order
                             </>
                         )}
                     </Button>

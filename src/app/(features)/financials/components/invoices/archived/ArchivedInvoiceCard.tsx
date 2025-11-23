@@ -28,9 +28,9 @@ export const ArchivedInvoiceCard: React.FC<ArchivedInvoiceCardProps> = ({ invoic
     }
 
     return (
-        <Card 
+        <Card
             className={cn(
-                "bg-slate-50 dark:bg-[#131313] border-border dark:border-[#2a2a2a] p-4 transition-all hover:bg-slate-100 dark:hover:bg-[#1a1a1a] hover:shadow-lg",
+                "bg-white dark:bg-[#131313] border-border dark:border-[#2a2a2a] p-4 transition-all hover:bg-slate-100 dark:hover:bg-[#1a1a1a] hover:shadow-lg",
                 isSelected && "border-zinc-500 dark:border-zinc-500 ring-1 ring-red-500/20",
                 onClick && "cursor-pointer"
             )}
@@ -106,7 +106,7 @@ export const ArchivedInvoiceCard: React.FC<ArchivedInvoiceCardProps> = ({ invoic
                             Archived
                         </Badge>
                     </div>
-                    
+
                     {invoice.payment_method && (
                         <span className="text-xs text-muted-foreground dark:text-gray-500 capitalize">
                             {invoice.payment_method.replace('_', ' ')}
