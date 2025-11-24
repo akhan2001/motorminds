@@ -35,7 +35,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     }
 
     return (
-        <div className={cn("bg-background dark:bg-[#0d0d0d] border-b border-border dark:border-[#2a2a2a] flex-shrink-0", className)}>
+        <div className={cn("bg-background border-b border-border dark:border-[#2a2a2a] flex-shrink-0", className)}>
             {/* Main Header */}
             <div className="px-6 py-3">
                 <div className="flex items-center justify-between">

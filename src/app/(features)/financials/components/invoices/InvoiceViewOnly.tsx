@@ -197,13 +197,13 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         <div className="h-full flex flex-col bg-background dark:bg-[#0d0d0d]">
             {/* Fixed Header */}
             <div className="bg-slate-50 dark:bg-[#131313] p-4 border-b border-border dark:border-[#333333]">
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between">
                     <div className="flex-1">
                         <h2 className="text-xl font-semibold text-foreground dark:text-white">
-                            Invoice #{invoice.invoice_number}
+                            Invoice #{invoice.display_id}
                         </h2>
                         <p className="text-muted-foreground dark:text-gray-500 text-sm">
-                            {invoice.id}
+                            {invoice.invoice_number}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
