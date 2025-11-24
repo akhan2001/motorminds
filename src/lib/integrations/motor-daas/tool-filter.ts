@@ -74,4 +74,6 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     getAppointment: TOOL_CATEGORIES.CRM,
     getInvoice: TOOL_CATEGORIES.CRM,
     estimateRepairCost: TOOL_CATEGORIES.CRM,
+
+    lookupForums: TOOL_CATEGORIES.ONLINE,
 }
