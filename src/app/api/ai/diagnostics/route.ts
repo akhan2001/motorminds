@@ -105,8 +105,14 @@ export async function POST(req: NextRequest) {
             messages,
             tools,
             temperature: 0.7,
+            maxSteps: 5, // Allow multiple tool calls
             onError: ({ error }: { error: unknown }) => {
                 console.error('AI streaming error:', error);
+            },
+            onToolCall: ({ toolCall }: { toolCall: any }) => {
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('[AI Diagnostics] Tool called:', toolCall.toolName);
+                }
             }
         });
 

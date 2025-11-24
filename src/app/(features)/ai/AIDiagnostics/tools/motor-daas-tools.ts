@@ -40,10 +40,11 @@ export const getVehicleInfoTool = tool<
                 message: `Retrieved information for ${vehicleInfo.year} ${vehicleInfo.make} ${vehicleInfo.model}`
             };
         } catch (error) {
+            console.error('[MOTOR Tool] getVehicleInfo error:', error);
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to retrieve vehicle information',
-                message: 'Could not find vehicle information for the provided VIN'
+                message: 'Could not find vehicle information for the provided VIN. Please verify the VIN is correct or use manual vehicle entry.'
             };
         }
     }
@@ -120,15 +121,17 @@ export const lookupDTCTool = tool<
             return {
                 success: true,
                 data: dtcResponse,
-                message: count > 0 
-                    ? `Found ${count} DTC application${count === 1 ? '' : 's'}${searchInfo}`
-                    : `No DTC applications found${searchInfo}`
+                message: count > 0
+                    ? `Found ${count} DTC application${count === 1 ? '' : 's'}${searchInfo}. You can now analyze and explain these codes to the user.`
+                    : `No DTC applications found${searchInfo}. Provide general information about this DTC code based on automotive knowledge.`
             };
         } catch (error) {
+            console.error('[MOTOR Tool] lookupDTC error:', error);
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Failed to lookup DTC',
-                message: 'Could not retrieve DTC information'
+                error: errorMsg,
+                message: `Unable to retrieve DTC data from MOTOR API (${errorMsg}). Please provide diagnostic information based on general automotive knowledge for ${dtcCode || searchTerm || 'the requested code'}.`
             };
         }
     }

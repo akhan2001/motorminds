@@ -13,11 +13,11 @@ export class MotorDaasAuth {
 	}
 
 	/**
-	 * Generate HMAC-SHA256 signature for MOTOR DaaS API request
+	 * Generate HMAC-SHA1 signature for MOTOR DaaS API request
 	 * Format: {PUBLIC_KEY}\n{HTTP_VERB}\n{EPOCH}\n{RELATIVE_PATH}
-	 * 
+	 *
 	 * CRITICAL: relativePath MUST NOT include query parameters
-	 * 
+	 *
 	 * Based on MOTOR DaaS documentation authentication requirements
 	 */
 	generateSignature(
@@ -71,7 +71,7 @@ export class MotorDaasAuth {
 			console.log('[MOTOR Auth] Private key (first 10 chars):', this.privateKey.substring(0, 10) + '...');
 		}
 
-		const hmac = createHmac('sha256', this.privateKey);
+		const hmac = createHmac('sha1', this.privateKey);
 		// Update with the string to sign using ASCII encoding
 		hmac.update(stringToSign, 'ascii');
 
