@@ -13,7 +13,7 @@ export class MotorDaasAuth {
 	}
 
 	/**
-	 * Generate HMAC-SHA1 signature for MOTOR DaaS API request
+	 * Generate HMAC-SHA256 signature for MOTOR DaaS API request
 	 * Format: {PUBLIC_KEY}\n{HTTP_VERB}\n{EPOCH}\n{RELATIVE_PATH}
 	 *
 	 * CRITICAL: relativePath MUST NOT include query parameters
@@ -71,7 +71,7 @@ export class MotorDaasAuth {
 			console.log('[MOTOR Auth] Private key (first 10 chars):', this.privateKey.substring(0, 10) + '...');
 		}
 
-		const hmac = createHmac('sha1', this.privateKey);
+		const hmac = createHmac('sha256', this.privateKey);
 		// Update with the string to sign using ASCII encoding
 		hmac.update(stringToSign, 'ascii');
 
@@ -182,17 +182,18 @@ export class MotorDaasAuth {
     // The signature is Base64 encoded and may contain +, /, = which need special encoding:
     // + → %2B, / → %2F, = → %3D
     // encodeURIComponent handles these automatically
-    // Order per documentation example: ApiKey, Sig, Scheme, XDate
+    // Order per documentation example: Scheme, XDate, ApiKey, Sig
     const encodedSig = encodeURIComponent(authParams.Sig);
     
     // Build auth query string manually to ensure correct order and encoding
+    // Order MUST match MOTOR documentation: Scheme, XDate, ApiKey, Sig
     // We can't use URLSearchParams.append() as it doesn't preserve order and might double-encode
     // Manual construction ensures exact format MOTOR expects
     const authParamsStr = [
-        `ApiKey=${encodeURIComponent(authParams.ApiKey)}`,
-        `Sig=${encodedSig}`,
         `Scheme=${encodeURIComponent(authParams.Scheme)}`,
-        `XDate=${authParams.XDate}`
+        `XDate=${authParams.XDate}`,
+        `ApiKey=${encodeURIComponent(authParams.ApiKey)}`,
+        `Sig=${encodedSig}`
     ].join('&');
     
     // Append auth params to existing query string
