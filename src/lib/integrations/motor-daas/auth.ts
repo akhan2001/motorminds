@@ -163,50 +163,36 @@ export class MotorDaasAuth {
 			fullPath = `${basePath}${pathOnly}`;
 		}
 
-		// Build the URL object
+		// Build the URL object for origin and path only
 		const url = new URL(fullPath, baseUrlObj.origin);
 
-    // Add existing query parameters first (if any)
-    // Use URLSearchParams to properly encode values
-    if (existingQuery) {
-      const existingParams = new URLSearchParams(existingQuery);
-      existingParams.forEach((value, key) => {
-        // URLSearchParams automatically encodes values, but we need to be careful
-        // to not double-encode. Since we're using URLSearchParams, it handles encoding.
-        url.searchParams.append(key, value);
-      });
-    }
-    
-    // Append authentication parameters to query string (these go last)
-    // Per MOTOR documentation: Signature must be URL encoded for query string
-    // The signature is Base64 encoded and may contain +, /, = which need special encoding:
-    // + → %2B, / → %2F, = → %3D
-    // encodeURIComponent handles these automatically
-    // Order per documentation example: Scheme, XDate, ApiKey, Sig
+    // CRITICAL: Build entire query string manually to preserve exact parameter order
+    // The URL object's searchParams reorders parameters, which breaks MOTOR auth
+
+    // Build auth query string first (MOTOR requires specific order)
+    // Order per documentation: Scheme, XDate, ApiKey, Sig
     const encodedSig = encodeURIComponent(authParams.Sig);
-    
-    // Build auth query string manually to ensure correct order and encoding
-    // Order MUST match MOTOR documentation: Scheme, XDate, ApiKey, Sig
-    // We can't use URLSearchParams.append() as it doesn't preserve order and might double-encode
-    // Manual construction ensures exact format MOTOR expects
     const authParamsStr = [
         `Scheme=${encodeURIComponent(authParams.Scheme)}`,
         `XDate=${authParams.XDate}`,
         `ApiKey=${encodeURIComponent(authParams.ApiKey)}`,
         `Sig=${encodedSig}`
     ].join('&');
-    
-    // Append auth params to existing query string
-    // Use manual string concatenation to avoid double-encoding issues
-    if (url.search) {
-        url.search += '&' + authParamsStr;
+
+    // Combine existing query params with auth params
+    // Auth params MUST come after existing params but in exact order
+    let fullQueryString = '';
+    if (existingQuery) {
+        fullQueryString = existingQuery + '&' + authParamsStr;
     } else {
-        url.search = '?' + authParamsStr;
+        fullQueryString = authParamsStr;
     }
-    
+
+    // Build final URL manually as string to avoid URL object reordering
+    const finalUrl = `${url.origin}${url.pathname}?${fullQueryString}`;
+
     // Verify the final URL structure in development
     if (process.env.NODE_ENV === 'development') {
-      const finalUrl = url.toString();
       const sigMatch = finalUrl.match(/Sig=([^&]+)/);
       if (sigMatch) {
         const sigInUrl = sigMatch[1];
@@ -225,11 +211,11 @@ export class MotorDaasAuth {
 			console.log('[MOTOR Auth] Public Key:', authParams.ApiKey);
 			console.log('[MOTOR Auth] Signature (raw):', authParams.Sig);
 			console.log('[MOTOR Auth] Signature (URL encoded):', encodedSig);
-			console.log('[MOTOR Auth] Final URL (sig hidden):', url.toString().replace(/Sig=[^&]+/, 'Sig=***'));
-			console.log('[MOTOR Auth] Full URL:', url.toString());
+			console.log('[MOTOR Auth] Final URL (sig hidden):', finalUrl.replace(/Sig=[^&]+/, 'Sig=***'));
+			console.log('[MOTOR Auth] Full URL:', finalUrl);
 		}
 
-		return url.toString();
+		return finalUrl;
 	}
 
 	/**
