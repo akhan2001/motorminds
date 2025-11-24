@@ -60,7 +60,7 @@ export function DiagnosticsForm({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className="relative px-4">
             <div className="flex items-end gap-2 border border-gray-300 dark:border-[#2a2a2a] rounded-lg bg-white dark:bg-[#1a1a1a] p-2">
                 {/* Textarea */}
                 <textarea
@@ -106,9 +106,6 @@ export function DiagnosticsForm({
                 <span>
                     Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#2a2a2a] border border-gray-300 dark:border-[#3a3a3a] text-[10px]">Enter</kbd> to send,
                     <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-[#2a2a2a] border border-gray-300 dark:border-[#3a3a3a] text-[10px] ml-1">Shift + Enter</kbd> for new line
-                </span>
-                <span className="text-[10px]">
-                    {input.length} / 2000
                 </span>
             </div>
         </form>

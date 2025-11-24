@@ -161,12 +161,12 @@ export function AIDiagnosticsPanel({
 			{/* Messages Container */}
 			<div
 				ref={messagesContainerRef}
-				className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800"
+				className="flex-1 overflow-y-auto px-6 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800"
 			>
 				{/* Debug info */}
 				{process.env.NODE_ENV === 'development' && (
 					<div className="text-xs text-gray-500 mb-2">
-						Messages: {chat.messages.length} | Status: {chat.status}
+						Messages: {chat.messages.length} | Status: <span className={`font-bold ${chat.status === 'ready' ? 'text-green-500' : chat.status === 'streaming' ? 'text-yellow-500' : 'text-red-500'}`}>{chat.status}</span>
 					</div>
 				)}
 

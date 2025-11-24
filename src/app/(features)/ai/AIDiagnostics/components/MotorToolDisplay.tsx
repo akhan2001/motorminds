@@ -31,8 +31,8 @@ export function MotorToolDisplay({ toolName, input, output, state }: ToolDisplay
                     <div className="flex items-center gap-2">
                         <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{toolMeta.title}</h4>
                         {isLoading && <LoadingSpinner />}
-            {hasError && <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-500" />}
-            {hasOutput && output?.success && <Check className="w-4 h-4 text-green-600 dark:text-green-500" />}
+                        {hasError && <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-500" />}
+                        {hasOutput && output?.success && <Check className="w-4 h-4 text-green-600 dark:text-green-500" />}
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{toolMeta.description}</p>
                 </div>
@@ -206,7 +206,7 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
         const dtc = output.data
         const applications = dtc?.applications || dtc?.codes || []
         const totalCount = dtc?.totalCount || applications.length
-        
+
         return (
             <div className="space-y-2">
                 {output.message && (
@@ -225,10 +225,10 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                             const displayName = app.DisplayName || app.description || 'No description available'
                             const isActive = app.IsActive !== undefined ? app.IsActive : true
                             const applicationId = app.ApplicationID || app.id
-                            
+
                             return (
-                                <div 
-                                    key={idx} 
+                                <div
+                                    key={idx}
                                     className="border-l-2 border-yellow-600 dark:border-yellow-500 pl-3 py-2 bg-white dark:bg-[#1a1a1a] rounded"
                                 >
                                     <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
         const workTimes = output.data
         const applications = workTimes?.applications || workTimes?.workTimes || []
         const totalCount = workTimes?.totalCount || applications.length
-        
+
         return (
             <div className="space-y-2">
                 {output.message && (
@@ -300,10 +300,10 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                             const items = app.Items || []
                             const taxonomy = app.Taxonomy
                             const isActive = app.IsActive !== undefined ? app.IsActive : true
-                            
+
                             return (
-                                <div 
-                                    key={idx} 
+                                <div
+                                    key={idx}
                                     className="border-l-2 border-blue-600 dark:border-blue-500 pl-3 py-2 bg-white dark:bg-[#1a1a1a] rounded"
                                 >
                                     <div className="flex items-start justify-between mb-2">
@@ -324,7 +324,7 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                                             </span>
                                         )}
                                     </div>
-                                    
+
                                     {items.length > 0 && (
                                         <div className="space-y-2 mt-2">
                                             {items.map((item: any, itemIdx: number) => (
@@ -384,13 +384,13 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                                             ))}
                                         </div>
                                     )}
-                                    
+
                                     {app.Position && (
                                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                                             <span className="font-medium">Position:</span> {app.Position.Name}
                                         </div>
                                     )}
-                                    
+
                                     {app.Links && app.Links.length > 0 && (
                                         <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                                             {app.Links.map((link: any) => link.Rel).join(', ')} available
@@ -417,10 +417,10 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
     // Recommended Fluids Output
     if (toolName === 'getRecommendedFluids') {
         const fluids = output.data
-        
+
         // Handle case where data might be undefined or applications is empty
         const hasFluids = fluids?.applications && Array.isArray(fluids.applications) && fluids.applications.length > 0
-        
+
         return (
             <div className="space-y-2">
                 {output.message && (
@@ -445,14 +445,14 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                                         <span className="text-xs text-gray-400 dark:text-gray-500 italic">Superseded</span>
                                     )}
                                 </div>
-                                
+
                                 {fluid.positionDescription && (
                                     <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                         <span className="font-medium">Position:</span> {fluid.positionDescription}
                                         {fluid.positionType && ` (${fluid.positionType})`}
                                     </div>
                                 )}
-                                
+
                                 {(fluid.specification || fluid.capacity) && (
                                     <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
                                         {fluid.specification && (
@@ -469,7 +469,7 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                                         )}
                                     </div>
                                 )}
-                                
+
                                 {fluid.taxonomy && (
                                     <div className="mt-2 text-xs space-y-0.5">
                                         {fluid.taxonomy.systemName && (
@@ -484,7 +484,7 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                                         )}
                                     </div>
                                 )}
-                                
+
                                 {fluid.qualifiers && fluid.qualifiers.length > 0 && (
                                     <div className="mt-2 pt-2 border-t border-gray-200 dark:border-[#2a2a2a]">
                                         <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Qualifiers:</div>
@@ -502,7 +502,7 @@ function ToolOutput({ toolName, output }: { toolName: string; output: any }) {
                     </div>
                 ) : (
                     <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-100 dark:bg-[#1a1a1a] rounded px-3 py-2">
-                        {fluids?.totalCount === 0 
+                        {fluids?.totalCount === 0
                             ? 'No fluid specifications found for this vehicle configuration. The vehicle may not have fluid data available in MOTOR DaaS.'
                             : 'No fluid data available'}
                     </div>

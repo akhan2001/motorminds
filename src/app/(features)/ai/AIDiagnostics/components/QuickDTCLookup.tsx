@@ -67,21 +67,21 @@ export function QuickDTCLookup({ baseVehicleId, onResultClick }: QuickDTCLookupP
                     size="sm"
                     className="bg-brand-600 hover:bg-brand-700"
                 >
-          {isLoading ? (
-            <span className="animate-spin">⏳</span>
-          ) : (
-            <Search className="w-4 h-4" />
-          )}
+                    {isLoading ? (
+                        <span className="animate-spin">⏳</span>
+                    ) : (
+                        <Search className="w-4 h-4" />
+                    )}
                 </Button>
             </div>
 
             {/* No Vehicle Warning */}
-      {!baseVehicleId && (
-        <div className="text-xs text-warning-600 bg-warning-200 rounded px-3 py-2 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>Select a vehicle to enable DTC lookup</span>
-        </div>
-      )}
+            {!baseVehicleId && (
+                <div className="text-xs text-warning-600 bg-warning-200 rounded px-3 py-2 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Select a vehicle to enable DTC lookup</span>
+                </div>
+            )}
 
             {/* Error */}
             {error && (
@@ -93,11 +93,11 @@ export function QuickDTCLookup({ baseVehicleId, onResultClick }: QuickDTCLookupP
             {/* Result */}
             {result && result.success && result.dtc && (
                 <div className="border rounded-lg p-3 bg-surface-100">
-          <div className="flex items-start justify-between mb-2">
-            <h4 className="font-medium text-foreground flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-warning-600" />
-              {result.dtc.code}
-            </h4>
+                    <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium text-foreground flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-warning-600" />
+                            {result.dtc.code}
+                        </h4>
                         {onResultClick && (
                             <button
                                 onClick={() => onResultClick(result.dtc.code)}
