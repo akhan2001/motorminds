@@ -4,10 +4,11 @@ export interface NavItem {
     name: string;
     href: string;
     hasDropdown?: boolean;
-    subItems?: Array<{ name: string; href: string; adminTypes?: AdminType[]; shopIds?: string[] }>;
+    subItems?: Array<{ name: string; href: string; adminTypes?: AdminType[]; shopIds?: string[]; excludedShopIds?: string[] }>;
     requiredRoles: UserRole[];
     adminTypes?: AdminType[]; // Optional: restrict to specific admin types
     shopIds?: string[]; // Optional: restrict to specific shop IDs
+    excludedShopIds?: string[]; // Optional: exclude specific shop IDs
 }
 
 // Define mechanic hub subitems with role requirements
@@ -40,7 +41,14 @@ export const navigationConfig: NavItem[] = [
     {
         name: "Invoices",
         href: "/financials/invoices",
-        requiredRoles: ['admin', 'super', 'user']
+        requiredRoles: ['admin', 'super', 'user'],
+        excludedShopIds: ['850e8400-e29b-41d4-a716-446655440003'] // Hide for this specific shop
+    },
+    {
+        name: "Old Invoices",
+        href: "/invoices",
+        requiredRoles: ['admin', 'super', 'user'],
+        shopIds: ['850e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440006'] // Only show for this specific shop
     },
     {
         name: "Mia AI",
@@ -58,12 +66,6 @@ export const navigationConfig: NavItem[] = [
         name: "Financials",
         href: "/financials",
         requiredRoles: ['admin', 'super', 'user']
-    },
-    {
-        name: "Old Invoices",
-        href: "/invoices",
-        requiredRoles: ['admin', 'super', 'user'],
-        shopIds: ['850e8400-e29b-41d4-a716-446655440003', '850e8400-e29b-41d4-a716-446655440006'] // Only show for this specific shop
     },
     {
         name: "Admin",
