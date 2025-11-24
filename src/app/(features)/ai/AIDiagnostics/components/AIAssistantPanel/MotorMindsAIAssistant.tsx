@@ -1,8 +1,12 @@
 import { useChat } from '@ai-sdk/react'
 import { useState } from 'react'
+import { DefaultChatTransport } from 'ai'
+import { getShopIdForUser } from '@/utils/get-shop-id'
+import { BASE_PATH } from '@/lib/constants'
 
 export const MotorMindsAIAssistant = ({ className }: AIAssistantProps) => {
     const [activeMode, setActiveMode] = useState<'general' | 'diagnostics'>('general')
+    const shop_id = getShopIdForUser()
 
     const generalChat = useChat({
         id: `${snap.activeChatId}-general`,
@@ -13,7 +17,7 @@ export const MotorMindsAIAssistant = ({ className }: AIAssistantProps) => {
                     body: {
                         messages,
                         shop_id: shop_id,
-                        look_at_database; true,
+                        look_at_database: true,
                         show_intermediate_steps: true,
                     }
                 }
