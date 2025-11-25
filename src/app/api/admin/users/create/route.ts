@@ -118,21 +118,24 @@ export async function POST(request: NextRequest) {
         }
 
         // Convert to CreateUserRequest format
-        // Note: AdminUserFormData doesn't include shop_id/organization_id, 
-        // but UserCreationService.createUser will handle these separately
+        // Handle both nested structure (from page) and flat structure (for backwards compatibility)
+        const userData = body.user || body
+        const shopData = body.shop
+        
         const createUserRequest: any = {
             user: {
-                email: body.email,
-                password: body.password,
-                fullName: body.full_name,
-                phone: body.phone || '',
-                role: body.role,
-                plan: body.plan || 'DEFAULT',
-                status: body.status,
+                email: userData.email,
+                password: userData.password,
+                fullName: userData.fullName || userData.full_name,
+                phone: userData.phone || '',
+                role: userData.role,
+                plan: userData.plan || 'DEFAULT',
+                status: userData.status,
                 shop_id: body.shop_id || null,
                 organization_id: body.organization_id || null
             },
-            createShop: false
+            shop: shopData,
+            createShop: body.createShop || false
         }
 
         // Validate the request
