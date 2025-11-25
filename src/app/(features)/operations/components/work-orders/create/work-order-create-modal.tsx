@@ -225,7 +225,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             return formData.walkInVehicleInfo.year &&
                 formData.walkInVehicleInfo.make.trim() &&
                 formData.walkInVehicleInfo.model.trim() &&
-                formData.walkInVehicleInfo.license_plate.trim()
+                true
         }
 
         // For registered customers, validate customer selection
@@ -246,7 +246,9 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 ((!formData.vehicleId || formData.vehicleId === "new") && // New vehicle with required fields
                     formData.vehicleMake.trim() &&
                     formData.vehicleModel.trim() &&
-                    formData.vehicleYear.trim()))
+                    formData.vehicleYear.trim()
+                )
+            )
     }
 
     const isStep3Complete = () => {
