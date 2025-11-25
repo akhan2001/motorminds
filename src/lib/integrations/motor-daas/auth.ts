@@ -170,13 +170,13 @@ export class MotorDaasAuth {
     // The URL object's searchParams reorders parameters, which breaks MOTOR auth
 
     // Build auth query string first (MOTOR requires specific order)
-    // Order per documentation: Scheme, XDate, ApiKey, Sig
+    // Order per HTTP example in docs: ApiKey, Sig, Scheme, XDate
     const encodedSig = encodeURIComponent(authParams.Sig);
     const authParamsStr = [
-        `Scheme=${encodeURIComponent(authParams.Scheme)}`,
-        `XDate=${authParams.XDate}`,
         `ApiKey=${encodeURIComponent(authParams.ApiKey)}`,
-        `Sig=${encodedSig}`
+        `Sig=${encodedSig}`,
+        `Scheme=${encodeURIComponent(authParams.Scheme)}`,
+        `XDate=${authParams.XDate}`
     ].join('&');
 
     // Combine existing query params with auth params
