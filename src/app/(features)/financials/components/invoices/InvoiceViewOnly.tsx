@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { 
-    Edit, Download, Send, Trash2, 
+import {
+    Edit, Download, Send, Trash2,
     User, Car, LayoutIcon, X, Check, XCircle, Wrench
 } from 'lucide-react'
 import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
@@ -45,7 +45,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
-        
+
         try {
             await deleteMutation.mutateAsync({ id: invoiceId, shop_id: shopId || '' })
             toast.success('Invoice deleted successfully')
@@ -275,7 +275,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             )}
                         </div>
                     </Card>
-                    
+
                     {/* Vehicle Information Card */}
                     {(invoice.vehicle || invoice.walk_in_vehicle_info) && (
                         <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
@@ -287,16 +287,16 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 {invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
                                     <p className="text-foreground dark:text-white">
                                         {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
-                                        {invoice.walk_in_vehicle_info.license_plate 
-                                            ? ` - ${invoice.walk_in_vehicle_info.license_plate}` 
+                                        {invoice.walk_in_vehicle_info.license_plate
+                                            ? ` - ${invoice.walk_in_vehicle_info.license_plate}`
                                             : ''
                                         }
                                     </p>
                                 ) : invoice.vehicle ? (
                                     <p className="text-foreground dark:text-white">
                                         {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
-                                        {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' 
-                                            ? ` - ${invoice.vehicle.license_plate}` 
+                                        {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL'
+                                            ? ` - ${invoice.vehicle.license_plate}`
                                             : ''
                                         }
                                     </p>
@@ -304,7 +304,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             </div>
                         </Card>
                     )}
-                    
+
                     {/* Work Order Details Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
@@ -312,13 +312,13 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 <LayoutIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                                 <h2 className="text-lg font-semibold text-foreground dark:text-white">Work Order Details</h2>
                             </div>
-                            
+
                             {invoice.title && (
                                 <div className="mb-1">
                                     <h3 className="text-md font-semibold text-foreground dark:text-white">{invoice.title}</h3>
                                 </div>
                             )}
-                            
+
                             {invoice.description && (
                                 <div className="mb-4">
                                     <p className="text-muted-foreground dark:text-gray-400">{invoice.description}</p>
@@ -333,7 +333,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                     <div className="col-span-2 text-center">QTY / HOURS</div>
                                     <div className="col-span-3 text-right">TOTAL</div>
                                 </div>
-                                
+
                                 {/* Invoice Items */}
                                 {invoice.invoice_items.map((item, index) => {
                                     const isActive = (item as any).active !== false // Use the 'active' field from JSONB
@@ -384,7 +384,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                     )
                                 })}
                             </div>
-                            
+
                             {invoice.notes && (
                                 <div className="mt-4 pt-4 border-t border-border dark:border-gray-700">
                                     <p className="text-foreground dark:text-white font-medium">Notes:</p>
@@ -393,7 +393,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             )}
                         </div>
                     </Card>
-                    
+
                     {/* Amount and Status Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
@@ -422,15 +422,15 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                         <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Due:</p>
                                     </div>
                                     <div>
-                                    <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
+                                        <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                     </div>
                                 </div>
-                                <Badge 
-                                    variant="outline" 
+                                <Badge
+                                    variant="outline"
                                     className={cn(
                                         "text-sm px-3 py-1",
-                                        invoice.status === 'paid' 
-                                            ? 'bg-green-600 text-white border-green-600' 
+                                        invoice.status === 'paid'
+                                            ? 'bg-green-600 text-white border-green-600'
                                             : 'bg-red-600 text-white border-red-600'
                                     )}
                                 >
@@ -444,17 +444,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
 
             {/* Fixed Footer with Actions */}
             <div className="bg-slate-50 dark:bg-[#131313] border-t border-border dark:border-[#333333] p-4 flex flex-wrap gap-2">
-                <Button 
+                <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700" 
+                    className="bg-green-600 text-white hover:bg-green-700"
                     onClick={onEdit}
                 >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                 </Button>
-                <Button 
+                <Button
                     size="sm"
-                    className="bg-gray-600 text-white hover:bg-gray-700" 
+                    className="bg-gray-600 text-white hover:bg-gray-700"
                     onClick={handleDownload}
                     disabled={isDownloading || isLoadingShopInfo || !shopInfo}
                     title={shopInfoError ? 'Shop information failed to load. Please refresh the page.' : isLoadingShopInfo ? 'Loading shop information...' : !shopInfo ? 'Shop information not available' : undefined}
@@ -462,18 +462,18 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     <Download className="w-4 h-4 mr-2" />
                     {isDownloading ? 'Generating...' : isLoadingShopInfo ? 'Loading...' : 'PDF'}
                 </Button>
-                <Button 
+                <Button
                     size="sm"
-                    className="bg-purple-600 text-white hover:bg-purple-700" 
+                    className="bg-purple-600 text-white hover:bg-purple-700"
                     onClick={handleSend}
                 >
                     <Send className="w-4 h-4 mr-2" />
                     Send
                 </Button>
-                <Button 
+                <Button
                     size="sm"
                     variant="outline"
-                    className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600" 
+                    className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
                     onClick={handleDelete}
                     disabled={deleteMutation.isPending}
                 >

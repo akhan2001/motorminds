@@ -122,8 +122,8 @@ export function useCreateInvoice() {
             // Validate walk-in customer data
             if (data.customer_type === 'walk_in') {
                 if (!data.walk_in_vehicle_info?.year || !data.walk_in_vehicle_info?.make || 
-                    !data.walk_in_vehicle_info?.model || !data.walk_in_vehicle_info?.license_plate) {
-                    throw new Error('Year, make, model, and license plate are required for walk-in customers')
+                    !data.walk_in_vehicle_info?.model) {
+                    throw new Error('Year, make, and model are required for walk-in customers')
                 }
             } else {
                 // For registered customers, customer_id is required
