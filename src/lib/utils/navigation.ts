@@ -38,6 +38,13 @@ export function getFilteredNavItems(userRole: UserRole | string | null, adminTyp
     if (!mappedRole && !adminType && !isAdminRole) return [];
     
     return navigationConfig.filter(item => {
+        // Check shop ID exclusion first
+        if (item.excludedShopIds && item.excludedShopIds.length > 0) {
+            if (shopId && item.excludedShopIds.includes(shopId)) {
+                return false;
+            }
+        }
+        
         // Check shop ID restriction
         if (item.shopIds && item.shopIds.length > 0) {
             if (!shopId || !item.shopIds.includes(shopId)) {
@@ -72,6 +79,13 @@ export function getFilteredNavItems(userRole: UserRole | string | null, adminTyp
             const shouldShowAll = item.name === 'Admin' && !adminType && isAdminRole;
             
             const filteredSubItems = item.subItems.filter(subItem => {
+                // Check shop ID exclusion for subitems
+                if (subItem.excludedShopIds && subItem.excludedShopIds.length > 0) {
+                    if (shopId && subItem.excludedShopIds.includes(shopId)) {
+                        return false;
+                    }
+                }
+                
                 // Check shop ID restriction for subitems
                 if (subItem.shopIds && subItem.shopIds.length > 0) {
                     if (!shopId || !subItem.shopIds.includes(shopId)) {
@@ -113,6 +127,13 @@ export function hasNavAccess(route: string, userRole: UserRole | string | null, 
     
     if (!navItem) return false;
     
+    // Check shop ID exclusion first
+    if (navItem.excludedShopIds && navItem.excludedShopIds.length > 0) {
+        if (shopId && navItem.excludedShopIds.includes(shopId)) {
+            return false;
+        }
+    }
+    
     // Check shop ID restriction
     if (navItem.shopIds && navItem.shopIds.length > 0) {
         if (!shopId || !navItem.shopIds.includes(shopId)) {
@@ -126,6 +147,7 @@ export function hasNavAccess(route: string, userRole: UserRole | string | null, 
         const matchingSubItem = navItem.subItems?.find(sub => 
             route.startsWith(sub.href) && 
             (!sub.adminTypes || sub.adminTypes.includes(adminType)) &&
+            (!sub.excludedShopIds || !shopId || !sub.excludedShopIds.includes(shopId)) &&
             (!sub.shopIds || (shopId && sub.shopIds.includes(shopId)))
         );
         return !!matchingSubItem;
@@ -144,6 +166,13 @@ export function hasNavAccess(route: string, userRole: UserRole | string | null, 
     // Check subitem admin type access and shop ID
     const subItem = navItem.subItems?.find(sub => route.startsWith(sub.href));
     if (subItem) {
+        // Check shop ID exclusion for subitems
+        if (subItem.excludedShopIds && subItem.excludedShopIds.length > 0) {
+            if (shopId && subItem.excludedShopIds.includes(shopId)) {
+                return false;
+            }
+        }
+        
         if (subItem.shopIds && subItem.shopIds.length > 0) {
             if (!shopId || !subItem.shopIds.includes(shopId)) {
                 return false;

@@ -225,7 +225,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             return formData.walkInVehicleInfo.year &&
                 formData.walkInVehicleInfo.make.trim() &&
                 formData.walkInVehicleInfo.model.trim() &&
-                formData.walkInVehicleInfo.license_plate.trim()
+                true
         }
 
         // For registered customers, validate customer selection
@@ -246,7 +246,9 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 ((!formData.vehicleId || formData.vehicleId === "new") && // New vehicle with required fields
                     formData.vehicleMake.trim() &&
                     formData.vehicleModel.trim() &&
-                    formData.vehicleYear.trim()))
+                    formData.vehicleYear.trim()
+                )
+            )
     }
 
     const isStep3Complete = () => {
@@ -631,8 +633,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                             <div className="grid grid-cols-2 gap-3">
                                                 <button
                                                     className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'registered'
-                                                            ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
-                                                            : 'border-border dark:border-gray-600 hover:border-muted dark:hover:border-gray-500'
+                                                        ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
+                                                        : 'border-border dark:border-gray-600 hover:border-muted dark:hover:border-gray-500'
                                                         }`}
                                                     onClick={() => handleCustomerTypeChange('registered')}
                                                 >
@@ -642,8 +644,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                                                 <button
                                                     className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'walk_in'
-                                                            ? 'border-green-500 bg-green-500/10 text-green-500 dark:text-green-400'
-                                                            : 'border-border dark:border-gray-600 hover:border-muted dark:hover:border-gray-500'
+                                                        ? 'border-green-500 bg-green-500/10 text-green-500 dark:text-green-400'
+                                                        : 'border-border dark:border-gray-600 hover:border-muted dark:hover:border-gray-500'
                                                         }`}
                                                     onClick={() => handleCustomerTypeChange('walk_in')}
                                                 >

@@ -78,7 +78,7 @@ export interface InvoiceFormData {
     customer_id: string | null // null for walk-in customers
     vehicle_id: string | null
     work_order_id: string | null
-    title: string
+    title: string | null
     description: string | null
     status: InvoiceStatus
     priority: InvoicePriority

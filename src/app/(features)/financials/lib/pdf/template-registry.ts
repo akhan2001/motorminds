@@ -1,5 +1,6 @@
 import { ProfessionalTemplate } from '../../components/invoice-pdf/templates/ProfessionalTemplate'
 import { TonyTemplate } from '../../components/invoice-pdf/templates/TonyTemplate'
+import { ModernTemplate } from '../../components/invoice-pdf/templates/ModernTemplate'
 import type { TemplateRegistry, TemplateMetadata } from '../../types/invoice-pdf'
 import { hasTemplateAccess } from './template-restrictions'
 
@@ -14,6 +15,11 @@ export const TEMPLATE_METADATA: Record<string, TemplateMetadata> = {
         id: 'tony',
         name: 'Good Guyz Garage',
         description: 'Classic automotive garage invoice with Canadian branding',
+    },
+    modern: {
+        id: 'modern',
+        name: 'Modern',
+        description: 'Contemporary design with bold typography',
     },
     // Future templates can be added here:
     // modern: {
@@ -38,11 +44,11 @@ export const TEMPLATE_REGISTRY: TemplateRegistry = {
         component: TonyTemplate,
         metadata: TEMPLATE_METADATA.tony,
     },
-    // Future templates:
-    // modern: {
-    //     component: ModernTemplate,
-    //     metadata: TEMPLATE_METADATA.modern,
-    // },
+    modern: {
+        component: ModernTemplate,
+        metadata: TEMPLATE_METADATA.modern,
+    },
+    // Future templates can be added here:
 }
 
 // Helper to get template component
