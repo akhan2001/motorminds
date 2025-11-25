@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { 
-    Users, 
-    Building2, 
-    Calendar, 
-    CheckCircle, 
-    Edit, 
+import {
+    Users,
+    Building2,
+    Calendar,
+    CheckCircle,
+    Edit,
     Search,
     RefreshCw,
     User,
@@ -66,13 +66,13 @@ export default function AdminUsersPage() {
         try {
             setLoading(true)
             console.log('Fetching admin users...')
-            
+
             const response = await fetch(`/api/admin/users?t=${Date.now()}`)
             console.log('Response status:', response.status)
-            
+
             const data = await response.json()
             console.log('Response data:', data)
-            
+
             if (response.ok) {
                 console.log('Raw API response:', data)
                 setUsers(data.users || [])
@@ -93,7 +93,7 @@ export default function AdminUsersPage() {
         try {
             const response = await fetch(`/api/admin/users/stats?t=${Date.now()}`)
             const data = await response.json()
-            
+
             if (response.ok) {
                 setStats(data.stats)
             } else {
@@ -156,7 +156,7 @@ export default function AdminUsersPage() {
 
         try {
             setIsSubmitting(true)
-            
+
             const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -220,17 +220,17 @@ export default function AdminUsersPage() {
 
     const filteredUsers = users.filter(user => {
         const matchesFilter = filter === 'all' || user.status === filter
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.shop_name?.toLowerCase().includes(searchTerm.toLowerCase())
-        
+
         return matchesFilter && matchesSearch
     })
 
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                <Nav />
+    return (
+        <div className="h-screen flex flex-col bg-background">
+            <Nav />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">
@@ -258,7 +258,7 @@ export default function AdminUsersPage() {
                         {/* Admin Navigation */}
                         <AdminNav />
 
-                    {/* Header */}
+                        {/* Header */}
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -267,7 +267,7 @@ export default function AdminUsersPage() {
                                 <p className="text-muted-foreground">
                                     Manage all users across the platform
                                 </p>
-                    </div>
+                            </div>
                             <div className="flex gap-3">
                                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                                     <Link href="/admin/create-user">
@@ -283,8 +283,8 @@ export default function AdminUsersPage() {
                                     <RefreshCw className="h-4 w-4 mr-2" />
                                     Refresh
                                 </Button>
-                </div>
-            </div>
+                            </div>
+                        </div>
 
                         {/* Filters */}
                         <div className="flex gap-4 mb-6">
@@ -297,8 +297,8 @@ export default function AdminUsersPage() {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-10 bg-[#1a1a1a] border-[#2a2a2a] text-white"
                                     />
-                    </div>
-                </div>
+                                </div>
+                            </div>
                             <div className="flex gap-2">
                                 {(['all', 'active', 'inactive', 'suspended'] as const).map((status) => (
                                     <Button
@@ -315,11 +315,11 @@ export default function AdminUsersPage() {
                                         {status.charAt(0).toUpperCase() + status.slice(1)}
                                     </Button>
                                 ))}
-            </div>
-                    </div>
+                            </div>
+                        </div>
 
                         {/* Stats Cards */}
-                    {stats && (
+                        {stats && (
                             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                                 <Card className="bg-[#111111] border-[#2a2a2a]">
                                     <CardContent className="p-4">
@@ -341,8 +341,8 @@ export default function AdminUsersPage() {
                                                 <div className="text-xl font-bold text-white">{stats.activeUsers}</div>
                                             </div>
                                         </div>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
                                 <Card className="bg-[#111111] border-[#2a2a2a]">
                                     <CardContent className="p-4">
                                         <div className="flex items-center gap-2">
@@ -352,8 +352,8 @@ export default function AdminUsersPage() {
                                                 <div className="text-xl font-bold text-white">{stats.totalShops}</div>
                                             </div>
                                         </div>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
                                 <Card className="bg-[#111111] border-[#2a2a2a]">
                                     <CardContent className="p-4">
                                         <div className="flex items-center gap-2">
@@ -362,9 +362,9 @@ export default function AdminUsersPage() {
                                                 <div className="text-sm text-gray-400">Premium</div>
                                                 <div className="text-xl font-bold text-white">{stats.planDistribution.PREMIUM + stats.planDistribution.ENTERPRISE}</div>
                                             </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                                 <Card className="bg-[#111111] border-[#2a2a2a]">
                                     <CardContent className="p-4">
                                         <div className="flex items-center gap-2">
@@ -373,11 +373,11 @@ export default function AdminUsersPage() {
                                                 <div className="text-sm text-gray-400">Suspended</div>
                                                 <div className="text-xl font-bold text-white">{stats.suspendedUsers}</div>
                                             </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
 
                         {/* Users List */}
                         {loading ? (
@@ -434,8 +434,8 @@ export default function AdminUsersPage() {
                                                     {user.phone && <div><strong>Phone:</strong> {user.phone}</div>}
                                                     <div><strong>User ID:</strong> {user.id}</div>
                                                 </div>
-                        </div>
-                        
+                                            </div>
+
                                             {/* Shop Information */}
                                             {user.shop_name && (
                                                 <div className="bg-[#0a0a0a] p-3 rounded-lg border border-[#2a2a2a]">
@@ -447,23 +447,23 @@ export default function AdminUsersPage() {
                                                         <div><strong>Shop:</strong> {user.shop_name}</div>
                                                         {user.shop_id && <div><strong>Shop ID:</strong> {user.shop_id}</div>}
                                                     </div>
-                        </div>
-                    )}
+                                                </div>
+                                            )}
 
                                             {/* Dates */}
                                             <div className="flex items-center gap-4 text-xs text-gray-400">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="h-3 w-3" />
                                                     Joined {formatDate(user.created_at)}
-                            </div>
+                                                </div>
                                                 {user.last_login && (
                                                     <div className="flex items-center gap-1">
                                                         <Calendar className="h-3 w-3" />
                                                         Last login {formatDate(user.last_login)}
-                            </div>
-                        )}
-                    </div>
-                        
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             {/* Admin Actions */}
                                             <div className="flex gap-2 pt-2 border-t border-[#2a2a2a]">
                                                 <Button
@@ -502,9 +502,9 @@ export default function AdminUsersPage() {
                                 ))}
                             </div>
                         )}
+                    </div>
                 </div>
             </div>
-        </div>
 
             {/* Edit User Modal */}
             <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -514,7 +514,7 @@ export default function AdminUsersPage() {
                             Edit User
                         </DialogTitle>
                     </DialogHeader>
-                    
+
                     {selectedUser && (
                         <div className="space-y-6 mt-4">
                             {/* User Summary */}
