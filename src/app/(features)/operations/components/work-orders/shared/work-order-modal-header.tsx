@@ -27,9 +27,9 @@ export const WorkOrderModalHeader: React.FC<WorkOrderModalHeaderProps> = ({
     return (
         <div className={`flex items-center justify-between p-6 border-b border-border dark:border-[#222222] shrink-0 ${className}`}>
             <div className="space-y-1">
-                <h2 className="text-foreground dark:text-white text-xl sm:text-2xl">
+                <h1 className="text-foreground dark:text-white text-xl sm:text-2xl font-bold">
                     {isCreating ? 'Create New Work Order' : `Work Order ${displayNumber}`}
-                </h2>
+                </h1>
                 <p className="text-muted-foreground dark:text-gray-400 text-xs sm:text-sm">
                     {isCreating 
                         ? 'Fill out the details to create a new work order.'

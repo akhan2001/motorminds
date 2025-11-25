@@ -116,13 +116,50 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
         try {
             const decodedVehicle = await decodeVin(vin)
             
+            console.log('Decoded vehicle data:', decodedVehicle)
+            
             if (decodedVehicle) {
-                // Populate fields with decoded data
-                handleFieldChange('year', decodedVehicle.year || '')
-                handleFieldChange('make', decodedVehicle.make || '')
-                handleFieldChange('model', decodedVehicle.model || '')
+                // Convert year string to number
+                const yearStr = decodedVehicle.year?.toString().trim()
+                const yearNum = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear()
                 
-                toast.success(`VIN decoded: ${decodedVehicle.year} ${decodedVehicle.make} ${decodedVehicle.model}`)
+                // Convert make and model to proper case (Title Case)
+                // Handle both spaces AND hyphens (e.g., 'MERCEDES-BENZ' -> 'Mercedes-Benz')
+                const makeRaw = decodedVehicle.make || ''
+                const modelRaw = decodedVehicle.model || ''
+                
+                const toProperCase = (str: string) => {
+                    return str
+                        .toLowerCase()
+                        .split(/(\s+|-)/g) // Split on spaces OR hyphens, but keep delimiters
+                        .map(part => {
+                            // If it's a delimiter (space or hyphen), keep it as-is
+                            if (part === ' ' || part === '-') return part
+                            // Otherwise capitalize first letter
+                            return part.charAt(0).toUpperCase() + part.slice(1)
+                        })
+                        .join('')
+                }
+                
+                const makeProperCase = toProperCase(makeRaw)
+                const modelProperCase = toProperCase(modelRaw)
+                
+                console.log('Year conversion:', { original: decodedVehicle.year, yearStr, yearNum })
+                console.log('Make conversion:', { original: makeRaw, properCase: makeProperCase })
+                console.log('Model conversion:', { original: modelRaw, properCase: modelProperCase })
+                
+                // Update all fields
+                const updatedData = {
+                    ...data,
+                    year: yearNum,
+                    make: makeProperCase || data.make,
+                    model: modelProperCase || data.model
+                }
+                
+                console.log('Updated vehicle data:', updatedData)
+                onDataChange(updatedData)
+                
+                toast.success(`VIN decoded: ${yearNum} ${makeProperCase} ${modelProperCase}`)
             } else {
                 toast.error('No vehicle data found for this VIN')
             }
@@ -316,20 +353,11 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                                 id="license_plate"
                                 value={data.license_plate || ''}
                                 onChange={(e) => handleFieldChange('license_plate', e.target.value.toUpperCase())}
-                                onBlur={() => handleBlur('license_plate')}
                                 placeholder="ABC123"
                                 disabled={!isEditing}
-                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
-                                    errors.license_plate ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
-                                }`}
+                                className="bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600"
                                 maxLength={10}
                             />
-                            {errors.license_plate && (
-                                <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
-                                    <AlertCircle className="h-3 w-3" />
-                                    {errors.license_plate}
-                                </div>
-                            )}
                         </div>
                     </div>
 
@@ -410,6 +438,7 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
 
 // Export the validation function for use in parent components
 export const validateWalkInVehicleInfo = (data: WalkInVehicleInfo): boolean => {
+    // Only year, make, and model are required - license_plate is optional
     const requiredFields: (keyof WalkInVehicleInfo)[] = ['year', 'make', 'model']
     return requiredFields.every(field => {
         const value = data[field]

@@ -112,7 +112,7 @@ function InvoicesContent() {
 
                         {/* Right Panel - Invoice Form/Details - 50% */}
                         <ResizablePanel defaultSize={50} minSize={40} maxSize={60}>
-                            <div className="h-full p-2">
+                            <div className="h-full">
                                 <InvoiceDashboard 
                                     selectedInvoiceId={selectedInvoice}
                                     onClose={handleCloseForm}
