@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
-import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
+import { formatPhoneNumber } from "@/utils/format-phone"
 import { decodeVin } from '@/app/utils/vin-decode'
 import { WorkOrderPartsLabor } from "@/app/mechanic-hub/components/work-order-parts-labor"
 import { VehicleSearchContainer } from "@/app/mechanic-hub/components/vehicle-search-container"

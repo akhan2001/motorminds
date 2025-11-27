@@ -353,6 +353,7 @@ export function useCreateInvoiceFromWorkOrder() {
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
             // Creating invoice with data
+            const invoiceData = {
                 shop_id,
                 work_order_id,
                 customer_id: workOrder.customer_id,
@@ -360,7 +361,7 @@ export function useCreateInvoiceFromWorkOrder() {
                 subtotal,
                 tax_amount,
                 total_amount
-            })
+            }
 
             const { data: invoice, error: invoiceError } = await supabase
                 .from('invoices_table')

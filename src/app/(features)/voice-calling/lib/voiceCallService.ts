@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/utils/supabase/client'
-import { formatPhoneNumberE164, isValidE164 } from '@/lib/utils/phone-utils'
+import { formatPhoneNumberE164, isValidE164 } from '@/utils/format-phone'
 import { toast } from 'sonner'
 import { VoiceCallPurpose, VoiceCallStatus } from '../types/voice-call'
 

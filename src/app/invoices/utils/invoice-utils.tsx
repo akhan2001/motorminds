@@ -71,25 +71,7 @@ export function formatDate(dateString: string): string {
 	return date.toLocaleDateString();
 }
 
-// Format phone number
-export function formatPhoneNumber(phoneNumber: string | null | undefined): string {
-	if (!phoneNumber) return '';
-	
-	// Remove all non-numeric characters
-	const cleaned = phoneNumber.replace(/\D/g, '');
-	
-	// Check if we have enough digits
-	if (cleaned.length < 10) return phoneNumber;
-	
-	// Format as (XXX) XXX-XXXX
-	const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-	if (match) {
-		return `(${match[1]}) ${match[2]}-${match[3]}`;
-	}
-	
-	// Return original if we couldn't format it
-	return phoneNumber;
-}
+// Phone number formatting moved to @/utils/format-phone
 
 // Calculate total with tax
 export function calculateTotalWithTax(amount: number, taxRate: number): number {

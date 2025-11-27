@@ -1,4 +1,4 @@
-import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { formatPhoneNumber } from "@/utils/format-phone";
 import { Card } from "@/components/ui/card";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { User, Mail, Phone, MapPin, Key, Home, Copy } from "lucide-react";

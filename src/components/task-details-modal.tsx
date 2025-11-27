@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/lib/supabase"
 import { generateInvoice } from "@/app/invoices/api/invoiceGenerator"
 import { toast } from "sonner"
-import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils"
+import { formatPhoneNumber } from "@/utils/format-phone"
 import MechanicsHubChat from "@/app/mechanic-hub/components/mechanics-hub-chat"
 import { WorkOrderStatusButtons } from "./work-order-status-buttons"
 import { ConfirmationDialog } from "@/app/financials/components/ConfirmationDialog"

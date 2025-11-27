@@ -18,7 +18,7 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { formatPhoneNumber } from "@/utils/format-phone";
 
 export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, user: any, refreshIndex: number }) {
 	const [customers, setCustomers] = useState<any[]>([]);

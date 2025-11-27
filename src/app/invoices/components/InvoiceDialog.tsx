@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { formatCurrency, formatDate, setInvoiceStatus } from '../utils/invoice-utils';
 import { deleteInvoice } from '../utils/invoice-utils';
 import { ConfirmationProvider, useConfirmation } from '@/app/components/confirmation-service';
-import { formatPhoneNumber } from '../utils/invoice-utils';
+import { formatPhoneNumber } from '@/utils/format-phone';
 import { sendInvoiceEmail } from '@/app/customers/api/customer-utils';
 import { generateInvoicePDF } from '../utils/pdf-generator';
 import EditInvoiceForm from './EditInvoiceForm';

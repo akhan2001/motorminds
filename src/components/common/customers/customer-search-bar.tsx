@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCustomerSearch } from '@/hooks/use-customer-search'
 import { Customer } from '@/app/(features)/customers/types'
-import { getInitials, formatPhoneNumber } from '@/lib/utils/text'
+import { getInitials } from '@/lib/utils/text'
+import { formatPhoneNumber } from '@/utils/format-phone'
 import { Plus } from 'lucide-react'
 
 interface CustomerSearchBarProps {

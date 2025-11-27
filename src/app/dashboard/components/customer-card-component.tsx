@@ -3,7 +3,7 @@ import { Customer } from "@/app/customers/components/customer-interface";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MapPin, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { formatPhoneNumber } from "@/utils/format-phone";
 import { useRouter } from "next/navigation";
 
 export function CustomerCard({ customer }: { customer: Customer }) {
