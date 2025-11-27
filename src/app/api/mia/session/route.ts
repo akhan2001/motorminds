@@ -8,16 +8,9 @@ export async function GET(request: NextRequest) {
         const shopId = request.headers.get('x-shop-id')
         const userId = request.headers.get('x-user-id')
 
-        console.log('Session API Debug:', {
-            shopId,
-            userId,
-            headers: Object.fromEntries(request.headers.entries())
-        })
-
         if (!shopId) {
             console.error('Missing shop ID in request headers')
             // TEMPORARY: For debugging, create a fallback session without shop_id requirement
-            console.log('Creating fallback session without shop_id for debugging')
             const fallbackSessionId = `fallback_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
             
             return NextResponse.json({ 
@@ -48,7 +41,6 @@ export async function GET(request: NextRequest) {
             if (error) {
                 console.error('Error fetching session:', error)
                 // If session not found, create a new one instead of returning error
-                console.log('Session not found, creating new session instead')
                 const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                 
                 const { data: newSession, error: createError } = await supabase
@@ -75,11 +67,6 @@ export async function GET(request: NextRequest) {
             // Create new session
             const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
             
-            console.log('Creating new session:', {
-                session_id: newSessionId,
-                shop_id: shopId
-            })
-            
             const { data: session, error } = await supabase
                 .from('mia_sessions')
                 .insert({
@@ -105,7 +92,6 @@ export async function GET(request: NextRequest) {
                 }, { status: 500 })
             }
 
-            console.log('Session created successfully:', session)
             return NextResponse.json({ session })
         }
     } catch (error) {

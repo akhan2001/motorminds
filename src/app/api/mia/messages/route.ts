@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
 
 		// Handle fallback sessions (for debugging when no shop_id)
 		if (sessionId.startsWith('fallback_session_')) {
-			console.log('Handling fallback session - returning empty messages')
 			return NextResponse.json({ messages: [] })
 		}
 
@@ -72,7 +71,6 @@ export async function POST(request: NextRequest) {
 
 		// Handle fallback sessions (for debugging when no shop_id)
 		if (sessionId.startsWith('fallback_session_')) {
-			console.log('Handling fallback session - skipping message storage')
 			return NextResponse.json({
 				message: {
 					id: `fallback_${Date.now()}`,

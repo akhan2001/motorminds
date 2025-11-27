@@ -75,8 +75,6 @@ export const useCart = () => {
 
             if (existingItem) {
                 // Part already exists, don't add duplicate
-                // You could add a toast notification here if needed
-                console.log(`Part ${part.partNumber} from ${part.supplier} is already in cart`)
                 return prev
             }
 

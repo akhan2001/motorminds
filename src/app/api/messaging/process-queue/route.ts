@@ -108,8 +108,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log(`📬 Found ${allPendingMessages?.length || 0} pending messages to process`);
-
         if (!allPendingMessages || allPendingMessages.length === 0) {
             return NextResponse.json({
                 success: true,
@@ -148,16 +146,6 @@ export async function POST(request: NextRequest) {
                 if (pendingMessages.length === 0) continue;
 
                 // Get shop's Twilio phone number
-                console.log(`🔍 Looking for phone number for shop: ${shopId} (type: ${typeof shopId})`);
-                
-                // Try querying all phone numbers first to see what we get
-                const { data: allPhones, error: allPhonesError } = await supabase
-                    .from('twilio_phone_numbers')
-                    .select('*')
-                    .eq('shop_id', shopId);
-                
-                console.log(`📋 All phones for shop ${shopId}:`, allPhones?.length || 0, allPhones);
-                
                 const { data: phoneNumbers, error: phoneError } = await supabase
                     .from('twilio_phone_numbers')
                     .select('*')
@@ -168,8 +156,6 @@ export async function POST(request: NextRequest) {
                 if (phoneError) {
                     console.error(`❌ Error fetching phone numbers:`, phoneError);
                 }
-
-                console.log(`📞 Phone numbers found:`, phoneNumbers?.length || 0, phoneNumbers);
 
                 if (phoneError || !phoneNumbers || phoneNumbers.length === 0) {
                     console.error(`❌ No active phone number for shop ${shopId}`);
@@ -193,7 +179,6 @@ export async function POST(request: NextRequest) {
                     try {
                         // Check rate limit
                         if (!checkRateLimit()) {
-                            console.log('Rate limit reached, stopping processing');
                             break; // Stop processing this batch
                         }
 
@@ -205,10 +190,7 @@ export async function POST(request: NextRequest) {
                             continue;
                         }
 
-                        // Format phone number to E.164 format (required for Twilio)
                         const formattedPhone = formatPhoneNumberE164(customerPhone);
-
-                        // Generate message body from template if available
                         let messageBody: string;
                         
                         if (queueItem.template && (queueItem.template as any)?.message_template) {
@@ -229,7 +211,7 @@ export async function POST(request: NextRequest) {
                                     
                                     workOrderData = workOrder;
                                 } catch (err) {
-                                    console.warn('Could not fetch work order for variable replacement:', err);
+                                    // Work order not found, continue with available data
                                 }
                             }
                             
@@ -289,16 +271,11 @@ export async function POST(request: NextRequest) {
                         const customerId = queueItem.customer_id;
                         const customerName = (queueItem.customer as any)?.customer_name;
 
-                        // Send message via Twilio
-                        console.log(`📤 Sending SMS to ${formattedPhone} from ${shopPhoneNumber.phone_number}`);
-                        
                         const twilioMessage = await twilioClient!.messages.create({
                             to: formattedPhone,
                             from: shopPhoneNumber.phone_number,
                             body: messageBody,
                         });
-
-                        console.log(`✅ Twilio message sent: ${twilioMessage.sid}`);
 
                         // Store message in sms_messages (required for foreign key)
                         const { data: storedMessage, error: messageError } = await supabase
@@ -333,7 +310,6 @@ export async function POST(request: NextRequest) {
 
                         // Update queue with sms_message_id (UUID from sms_messages table)
                         await markAsSent(queueItem.id, storedMessage.id);
-                        console.log(`✅ Linked queue item to SMS message: ${storedMessage.id}`);
 
                         // Update sms_conversations
                         await supabase

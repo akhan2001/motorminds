@@ -352,8 +352,7 @@ export function useCreateInvoiceFromWorkOrder() {
             // Generate invoice number
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
-            console.log('Creating invoice with data:', {
-                invoiceNumber,
+            // Creating invoice with data
                 shop_id,
                 work_order_id,
                 customer_id: workOrder.customer_id,

@@ -155,8 +155,6 @@ IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no cod
                 top_p: 0.9
             }
 
-            console.log('Mia Parts Search Request:', { message, vehicleContext: vehicleContextString })
-
             // Call Perplexity API
             const response = await fetch(PERPLEXITY_API_URL, {
                 method: 'POST',
@@ -184,8 +182,6 @@ IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no cod
             if (!aiResponse) {
                 throw new Error("No response from Perplexity")
             }
-
-            console.log('Perplexity Response:', { aiResponse, citations })
 
             // Try to parse as JSON with robust cleaning
             let parsedResponse
@@ -222,7 +218,6 @@ IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no cod
                 
             } catch (parseError) {
                 console.error('JSON parsing failed:', parseError)
-                console.log('Raw AI response:', aiResponse.substring(0, 500) + '...')
                 
                 // If JSON parsing fails, try to extract meaningful information
                 let fallbackMessage = "I found some automotive parts information, but I'm having trouble formatting the response properly. Please try rephrasing your request."
