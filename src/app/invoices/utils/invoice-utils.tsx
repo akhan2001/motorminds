@@ -42,7 +42,7 @@ export async function getInvoiceData(id: string) {
 	return data;
 }
 
-// Generate new invoice
+/** Generate new invoice
 // export async function generateNewInvoice(shopId: string) {
 //   const { data, error } = await supabase
 //     .from('invoices')
@@ -52,8 +52,7 @@ export async function getInvoiceData(id: string) {
 //       created_at: new Date().toISOString(),
 //     })
 //     .select();
-
-// }
+} */
 
 // Format currency
 export function formatCurrency(amount: number | null | undefined): string {
