@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { formatDate } from "@/app/invoices/utils/invoice-utils";
+import { formatDate } from "@/lib/utils/formatters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, File, DollarSign, Calendar, User } from "lucide-react";

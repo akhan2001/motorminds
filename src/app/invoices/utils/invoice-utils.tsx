@@ -54,24 +54,8 @@ export async function getInvoiceData(id: string) {
 //     .select();
 } */
 
-// Format currency
-export function formatCurrency(amount: number | null | undefined): string {
-	if (amount === null || amount === undefined) {
-		return '$0.00';
-	}
-	return `$${Number(amount).toFixed(2)}`;
-}
-
-// Format date
-export function formatDate(dateString: string): string {
-	if (dateString === null || dateString === undefined) {
-		return '';
-	}
-	const date = new Date(dateString);
-	return date.toLocaleDateString();
-}
-
-// Phone number formatting moved to @/utils/format-phone
+// Formatting utilities moved to @/lib/utils/formatters
+// Import from there: import { formatCurrency, formatDate, formatPhoneNumber } from '@/lib/utils/formatters'
 
 // Calculate total with tax
 export function calculateTotalWithTax(amount: number, taxRate: number): number {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { History, Wrench, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/app/invoices/utils/invoice-utils";
+import { formatDate } from "@/lib/utils/formatters";
 import { useState } from "react";
 import { TaskDetailsModal } from "@/components/task-details-modal";
 import { supabase } from "@/lib/supabase";
