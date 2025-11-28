@@ -2,7 +2,7 @@
 
 import { useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Nav } from "@/app/components/nav";
+// import { Nav } from "@/components/navigation/nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -64,7 +64,7 @@ function InvoicesContent() {
     if (isAuthLoading || (shopId && isInvoicesLoading)) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -84,7 +84,7 @@ function InvoicesContent() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden px-4">
                 <InvoiceHeader 
                     searchValue={searchValue}
@@ -137,7 +137,7 @@ function InvoicesContent() {
 function InvoicesLoading() {
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex items-center justify-center">
                 <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                     <CardContent className="flex items-center gap-4 p-6">

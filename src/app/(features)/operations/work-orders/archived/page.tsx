@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from "react"
-import { Nav } from "@/app/components/nav"
+import { Nav } from "@/components/navigation/nav"
 import { Card, CardContent } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/common/feedback/loading-states"
 import { ArchivedWorkOrdersList } from "../../components/work-orders/archived/ArchivedWorkOrdersList"

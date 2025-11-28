@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Nav } from "@/app/components/nav";
+// import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderCreateModal } from "../components/work-orders/create";
 import { WorkOrderEditModal } from "../components/work-orders/manage/work-order-edit-modal";
@@ -583,7 +583,7 @@ function WorkOrdersContent() {
     if (isLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -603,7 +603,7 @@ function WorkOrdersContent() {
     if (error) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -631,7 +631,7 @@ function WorkOrdersContent() {
     if (!shopId || !user) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -658,7 +658,7 @@ function WorkOrdersContent() {
             onWorkOrderCompletionAttempt={handleWorkOrderCompletionAttempt}
         >
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <WorkOrderHeader
                         isCompactView={isCompactView}
@@ -728,7 +728,7 @@ function WorkOrdersContent() {
 function WorkOrdersLoading() {
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex items-center justify-center">
                 <div className="text-foreground">Loading...</div>
             </div>

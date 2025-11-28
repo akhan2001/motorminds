@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Database, Users, Car, FileText } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { BreadcrumbPage } from '@/components/ui/breadcrumb'
 import { useMigrationsData } from './hooks/use-migrations-data'
@@ -19,7 +19,7 @@ export default function MigrationsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-[#0d0d0d]">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">

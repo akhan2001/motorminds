@@ -13,7 +13,7 @@ import EmployeeCostTable from "./components/EmployeeCostTable"
 import EditEmployeeModal from "./components/EditEmployeeModal"
 import { deactivateEmployee } from "./utils/employee-management"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { EmployeeForm } from "@/app/settings/components/EmployeeForm"
+import { EmployeeForm } from "@/app/(features)/settings/components/EmployeeForm"
 import { generatePayrollReport, generatePayrollCsv } from "../utils/report-generator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 

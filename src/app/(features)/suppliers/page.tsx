@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+//import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import SupplierModal from './components/supplier-modal'
@@ -49,7 +49,7 @@ export default function SuppliersPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col">
                 <div className="p-6 max-w-6xl mx-auto w-full">
 

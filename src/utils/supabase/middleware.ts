@@ -52,26 +52,29 @@ export async function updateSession(request: NextRequest) {
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
-		'/admin',
 		'/operations',
-		'/messaging',
 		'/financials',
-		'/api/financials',
+		'/invoices',        // Invoice management
+		'/mia-ai',          // Mia AI routes
+		'/mia',             // MIA diagnostic interface
+		'/chat',
+		'/customers',       // Customer management
+		'/customer-intake', // Customer intake form
+		'/customer-invoice-intake',  // Customer invoice intake form
+		'/messages',
+		'/messaging',
+		'/admin',
+		'/settings',        // Settings pages
 		'/parts',           // New refactored parts ordering
 		'/parts-ordering',  // Original parts ordering  
 		'/suppliers',       // Supplier management
+		'/voice-calling',   // Voice calling interface
+		'/app',             // All app routes (appointments, invoices, etc.)
+		'/api/financials',
+		'/api/mia',         // MIA API routes
+		'/api/voice',       // Voice calling API
 		'/api/suppliers',   // Supplier API
 		'/api/parts',       // Parts API
-		'/voice-calling',   // Voice calling interface
-		'/api/voice',       // Voice calling API
-		'/app',             // All app routes (appointments, invoices, etc.)
-		'/mia-ai',          // Mia AI routes
-		'/mia',             // MIA diagnostic interface
-		'/api/mia',         // MIA API routes
-		'/dashboard',       // Dashboard routes
-		'/customers',       // Customer management
-		'/invoices',        // Invoice management
-		'/settings',        // Settings pages
 	]
 	const isProtectedPath = protectedPaths.some(path =>
 		request.nextUrl.pathname.startsWith(path)

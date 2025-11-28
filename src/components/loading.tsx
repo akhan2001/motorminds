@@ -1,4 +1,4 @@
-import { Nav } from "@/app/components/nav";
+import { Nav } from "@/components/navigation/nav";
 
 export default function LoadingPage() {
     return (

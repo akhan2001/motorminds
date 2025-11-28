@@ -1,6 +1,6 @@
 'use client'
 
-import { Nav } from '@/app/components/nav'
+import { Nav } from '@/components/navigation/nav'
 import InvoiceDashboardClient from './components/invoice-dashboard-client'
 import { NewInvoicesBanner } from './components/NewInvoicesBanner'
 import { checkUser } from '@/utils/supabase/supabase-auth'
