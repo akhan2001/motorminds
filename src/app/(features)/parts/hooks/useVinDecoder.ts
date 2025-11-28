@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { decodeVin } from '@/app/utils/vin-decode'
+import { decodeVin } from '@/app/(features)/customers/vehicles/lib/vin-decode'
 import { MakeModelSelection } from '@/components/ui/make-model-selector'
 
 export const useVinDecoder = () => {

@@ -11,20 +11,11 @@ export interface NavItem {
     excludedShopIds?: string[]; // Optional: exclude specific shop IDs
 }
 
-// Define mechanic hub subitems with role requirements
-const mechanicHubSubItems = [
-    { name: "Work Orders", href: "/mechanic-hub" },
-    { name: "Parts & Ordering", href: "/parts-ordering" },
-    { name: "Appointments", href: "/appointments" },
-    { name: "Services & Parts", href: "/mechanic-hub/service-parts" },
-];
-
 const customerSubItems = [
     { name: "All Customers", href: "/customers" },
     { name: "All Customer Vehicles", href: "/customers/customer-vehicles" },
     { name: "Customer Intake Form", href: "/customer-intake?shop=" }, // Note: append shop ID when linking
     { name: "Customer Invoice Intake", href: "/customer-invoice-intake" },
-    { name: "Customer Contracts", href: "/customer-contracts" },
 ];
 
 export const navigationConfig: NavItem[] = [

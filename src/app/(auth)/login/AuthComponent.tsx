@@ -115,7 +115,7 @@ export default function AuthComponent() {
                     </Button>
                 </form>
 
-                <div className="mt-5 md:mt-6 text-center">
+                {/* <div className="mt-5 md:mt-6 text-center">
                     <Link href="/forgot-password" className="text-xs sm:text-sm text-gray-400">
                         Forgot Your Password? <span className="underline hover:text-white">Reset It Here</span>
                     </Link>
@@ -124,7 +124,7 @@ export default function AuthComponent() {
                     <p className="text-xs sm:text-sm text-gray-400">
                         Don't have an account? <Link href="/signup" className="underline hover:text-white">Create Account</Link>
                     </p>
-                </div>
+                </div> */}
             </div>
         </div>
     )

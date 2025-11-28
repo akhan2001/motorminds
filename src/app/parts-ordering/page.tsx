@@ -4,7 +4,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Nav } from "../components/nav"
 import { useState, useEffect, useRef } from "react"
 import MakeModelSelector, { MakeModelSelection } from "@/components/ui/make-model-selector"
-import { decodeVin } from "../utils/vin-decode"
+import { decodeVin } from "@/app/(features)/customers/vehicles/lib/vin-decode"
 
 interface VehicleEngine {
     vehicleId: number
