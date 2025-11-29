@@ -55,8 +55,6 @@ export async function POST(
         if (updateError) throw updateError;
 
         // Trigger the process-queue endpoint synchronously to send immediately
-        console.log('🚀 Triggering process-queue for immediate send...');
-        
         try {
             const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
                            (request.headers.get('host')?.includes('localhost') 
@@ -77,7 +75,6 @@ export async function POST(
             }
 
             const result = await processResponse.json();
-            console.log('✅ Process queue result:', result);
 
             return NextResponse.json({
                 success: true,

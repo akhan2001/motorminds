@@ -122,8 +122,8 @@ export function useCreateInvoice() {
             // Validate walk-in customer data
             if (data.customer_type === 'walk_in') {
                 if (!data.walk_in_vehicle_info?.year || !data.walk_in_vehicle_info?.make || 
-                    !data.walk_in_vehicle_info?.model) {
-                    throw new Error('Year, make, and model are required for walk-in customers')
+                    !data.walk_in_vehicle_info?.model || !data.walk_in_vehicle_info?.license_plate) {
+                    throw new Error('Year, make, model, and license plate are required for walk-in customers')
                 }
             } else {
                 // For registered customers, customer_id is required
@@ -352,8 +352,8 @@ export function useCreateInvoiceFromWorkOrder() {
             // Generate invoice number
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
-            console.log('Creating invoice with data:', {
-                invoiceNumber,
+            // Creating invoice with data
+            const invoiceData = {
                 shop_id,
                 work_order_id,
                 customer_id: workOrder.customer_id,
@@ -361,7 +361,7 @@ export function useCreateInvoiceFromWorkOrder() {
                 subtotal,
                 tax_amount,
                 total_amount
-            })
+            }
 
             const { data: invoice, error: invoiceError } = await supabase
                 .from('invoices_table')

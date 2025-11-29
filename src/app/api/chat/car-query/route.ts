@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
             }
 
             const data: CarQueryResponse = await response.json();
-            console.log("Received response from FastAPI:", data);
 
             return NextResponse.json({
                 response: data.response,

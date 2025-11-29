@@ -95,8 +95,6 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        console.log(`📬 Found ${campaigns?.length || 0} campaigns to process`)
-
         if (!campaigns || campaigns.length === 0) {
             return NextResponse.json({
                 success: true,
@@ -113,8 +111,6 @@ export async function POST(request: NextRequest) {
         // Process each campaign
         for (const campaign of campaigns) {
             try {
-                console.log(`📤 Processing campaign: ${campaign.name} (${campaign.id})`)
-
                 // Update status to in_progress if not already
                 if (campaign.status !== 'in_progress') {
                     await supabase
@@ -189,8 +185,6 @@ export async function POST(request: NextRequest) {
                                 completed_at: new Date().toISOString()
                             })
                             .eq('id', campaign.id)
-                        
-                        console.log(`✅ Campaign ${campaign.name} completed`)
                     }
                     continue
                 }
@@ -207,7 +201,6 @@ export async function POST(request: NextRequest) {
                     try {
                         // Check rate limit
                         if (!checkRateLimit()) {
-                            console.log('⏸️  Rate limit reached, stopping processing')
                             break
                         }
 
@@ -268,7 +261,6 @@ export async function POST(request: NextRequest) {
                         
                         // Check for invalid characters (like XXXX in test numbers)
                         if (rawPhone.toUpperCase().includes('X') || rawPhone.includes('*') || rawPhone.length < 10) {
-                            console.warn(`⚠️ [PROCESS] Invalid phone number format: ${rawPhone} (contains invalid characters or too short)`)
                             await supabase
                                 .from('ai_mass_campaign_recipients')
                                 .update({
@@ -286,7 +278,6 @@ export async function POST(request: NextRequest) {
                         
                         // Validate E.164 format
                         if (!isValidE164(formattedPhone)) {
-                            console.warn(`⚠️ [PROCESS] Invalid E.164 format: ${formattedPhone} (from ${rawPhone})`)
                             await supabase
                                 .from('ai_mass_campaign_recipients')
                                 .update({
@@ -298,8 +289,6 @@ export async function POST(request: NextRequest) {
                             totalFailed++
                             continue
                         }
-
-                        console.log(`📱 [PROCESS] Sending to ${formattedPhone} (from ${rawPhone})`)
 
                         // Send via Twilio
                         const twilioMessage = await twilioClient.messages.create({

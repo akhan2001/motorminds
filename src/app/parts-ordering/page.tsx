@@ -4,7 +4,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { Nav } from "../components/nav"
 import { useState, useEffect, useRef } from "react"
 import MakeModelSelector, { MakeModelSelection } from "@/components/ui/make-model-selector"
-import { decodeVin } from "../utils/vin-decode"
+import { decodeVin } from "@/app/(features)/customers/vehicles/lib/vin-decode"
 
 interface VehicleEngine {
     vehicleId: number
@@ -170,23 +170,19 @@ export default function PartsOrdering() {
 
     const initializeSession = async (skipHistory = false) => {
         try {
-            console.log('🔄 Initializing session, skipHistory:', skipHistory)
             // Get or create session
             const response = await fetch('/api/mia/session')
             const data = await response.json()
             
             if (data.session) {
-                console.log('✅ Got session:', data.session.session_id)
                 setSessionId(data.session.session_id)
                 
                 if (!skipHistory) {
                     // Load message history
-                    console.log('📜 Loading message history...')
                     const messagesResponse = await fetch(`/api/mia/messages?sessionId=${data.session.session_id}`)
                     const messagesData = await messagesResponse.json()
                     
                     if (messagesData.messages && messagesData.messages.length > 0) {
-                        console.log('📝 Found', messagesData.messages.length, 'messages, restoring...')
                         // Convert stored messages to chat messages format
                         const convertedMessages = messagesData.messages.map((msg: any) => ({
                             id: msg.id,
@@ -198,7 +194,6 @@ export default function PartsOrdering() {
                         }))
                         setChatMessages(convertedMessages)
                     } else {
-                        console.log('📝 No message history, showing welcome message')
                         // No message history, show welcome message
                         setChatMessages([{
                             id: '1',
@@ -208,7 +203,6 @@ export default function PartsOrdering() {
                         }])
                     }
                 } else {
-                    console.log('⏭️ Skipping history load, showing fresh welcome message')
                     // Skip history and show fresh welcome message
                     setChatMessages([{
                         id: '1',

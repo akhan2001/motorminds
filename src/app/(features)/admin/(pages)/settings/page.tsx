@@ -23,7 +23,7 @@ import {
     CheckCircle,
     Info
 } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/components/navigation/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Slash } from "lucide-react"
 import Link from 'next/link'
@@ -171,7 +171,7 @@ export default function AdminSettingsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-[#0d0d0d]">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">

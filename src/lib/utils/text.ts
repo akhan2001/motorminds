@@ -80,13 +80,5 @@ export function maskEmail(email: string): string {
     return `${maskedLocal}@${domain}`
 }
 
-/**
- * Format phone number to (XXX) XXX-XXXX format
- */
-export function formatPhoneNumber(phone: string): string {
-    const cleaned = phone.replace(/\D/g, '')
-    if (cleaned.length === 10) {
-        return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`
-    }
-    return phone // Return original if not 10 digits
-}
+// Phone number formatting moved to @/utils/format-phone
+// Import from there: import { formatPhoneNumber } from '@/utils/format-phone'

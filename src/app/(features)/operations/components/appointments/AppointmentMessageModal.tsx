@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Calendar, User, Phone, MessageSquare, Lock, Loader2, Car, Clock } from 'lucide-react'
 import { format } from 'date-fns'
-import { formatPhoneNumber } from '@/lib/utils/text'
+import { formatPhoneNumber } from '@/utils/format-phone'
 import { useAppointmentMessaging } from '../../hooks/appointments/useAppointmentMessaging'
 import { 
     formatAppointmentMessage, 

@@ -12,7 +12,26 @@ export async function POST(req: NextRequest) {
         }
 
         const supabase = await createClient()
-        const shopId = req.headers.get('x-shop-id')
+        
+        // Get shop_id from authenticated user (set by middleware)
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+            return new Response('Unauthorized', { status: 401 })
+        }
+        
+        // Get shop_id from user metadata or users table
+        let shopId = user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
 
         if (!shopId) {
             return new Response('Shop ID required', { status: 400 })

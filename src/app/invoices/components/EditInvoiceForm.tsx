@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getShopInfo } from "@/utils/supabase/supabase-shop";
 import { getCustomers, getCustomerVehicles } from "@/app/customers/api/customer-utils";
 import { Button } from "@/components/ui/button";
-import { updateInvoice, formatPhoneNumber } from "@/app/invoices/utils/invoice-utils";
+import { updateInvoice } from "@/app/invoices/utils/invoice-utils";
+import { formatPhoneNumber } from "@/utils/format-phone";
 import { getShopStaffNames } from "@/utils/shopinfo/getShopInfo";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";

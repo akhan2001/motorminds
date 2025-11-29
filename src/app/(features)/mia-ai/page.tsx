@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Nav } from '@/app/components/nav'
+//import { Nav } from '@/app/components/nav'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertCircle } from 'lucide-react'
@@ -20,7 +20,7 @@ export default function MiaAiPage() {
     if (authLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -71,7 +71,7 @@ export default function MiaAiPage() {
     if (!shopId || !user) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -95,7 +95,7 @@ export default function MiaAiPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             
             <MiaPageHeader />
 

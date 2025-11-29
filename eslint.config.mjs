@@ -1,14 +1,46 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-import pluginReact from "eslint-plugin-react";
+import { defineConfig } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
 
+const eslintConfig = defineConfig([
+    ...nextVitals,
+    ...nextTs,
+    {
+        rules: {
+            // Indentation: 4-space tabs
+            'indent': ['error', 'tab'],
+            '@typescript-eslint/indent': ['error', 'tab'],
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
-  {files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"]},
-  {languageOptions: { globals: globals.browser }},
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
-];
+            // TypeScript rules
+            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-unused-vars': ['warn', {
+                argsIgnorePattern: '^_',
+                varsIgnorePattern: '^_'
+            }],
+
+            // React rules
+            'react/no-unescaped-entities': 'off',
+            'react/react-in-jsx-scope': 'off',
+            'react/prop-types': 'off',
+
+            // General code quality
+            'no-console': ['error', { allow: [] }], // No console statements allowed
+            'no-unused-vars': 'off', // Use TS version instead
+            'prefer-const': 'warn',
+            'no-var': 'error'
+        }
+    },
+    {
+        ignores: [
+            '.next/**',
+            'out/**',
+            'build/**',
+            'next-env.d.ts',
+            'node_modules/**',
+            '.vercel/**'
+        ]
+    }
+])
+
+export default eslintConfig
+

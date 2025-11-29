@@ -113,15 +113,12 @@ export async function POST(req: NextRequest) {
 		const body = await req.json();
 		const lookAtDatabase = body.look_at_database;
 		const messages = body.messages ?? [];
-		console.log("Body in main chat route: ", body);
 
 		// Check if this is a car-specific query
 		const lastMessage = messages[messages.length - 1];
 		const carQueryDetection = await detectCarQuery(lastMessage.content);
 
 		if (carQueryDetection.isCarQuery && carQueryDetection.carInfo) {
-			console.log("Car query detected, delegating to car query endpoint");
-			
 			const carQueryResponse = await fetch(new URL("/api/chat/car-query", req.url), {
 				method: "POST",
 				headers: {
@@ -169,8 +166,6 @@ export async function POST(req: NextRequest) {
 	}
 
 	if (lookAtDatabase) {
-			console.log("Database mode is enabled, delegating to retrieval endpoint");
-			
 			const retrievalResponse = await fetch(new URL("/api/chat/retrieval", req.url), {
 				method: "POST",
 				headers: {

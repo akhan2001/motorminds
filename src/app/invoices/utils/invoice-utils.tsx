@@ -42,7 +42,7 @@ export async function getInvoiceData(id: string) {
 	return data;
 }
 
-// Generate new invoice
+/** Generate new invoice
 // export async function generateNewInvoice(shopId: string) {
 //   const { data, error } = await supabase
 //     .from('invoices')
@@ -52,45 +52,10 @@ export async function getInvoiceData(id: string) {
 //       created_at: new Date().toISOString(),
 //     })
 //     .select();
+} */
 
-// }
-
-// Format currency
-export function formatCurrency(amount: number | null | undefined): string {
-	if (amount === null || amount === undefined) {
-		return '$0.00';
-	}
-	return `$${Number(amount).toFixed(2)}`;
-}
-
-// Format date
-export function formatDate(dateString: string): string {
-	if (dateString === null || dateString === undefined) {
-		return '';
-	}
-	const date = new Date(dateString);
-	return date.toLocaleDateString();
-}
-
-// Format phone number
-export function formatPhoneNumber(phoneNumber: string | null | undefined): string {
-	if (!phoneNumber) return '';
-	
-	// Remove all non-numeric characters
-	const cleaned = phoneNumber.replace(/\D/g, '');
-	
-	// Check if we have enough digits
-	if (cleaned.length < 10) return phoneNumber;
-	
-	// Format as (XXX) XXX-XXXX
-	const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-	if (match) {
-		return `(${match[1]}) ${match[2]}-${match[3]}`;
-	}
-	
-	// Return original if we couldn't format it
-	return phoneNumber;
-}
+// Formatting utilities moved to @/lib/utils/formatters
+// Import from there: import { formatCurrency, formatDate, formatPhoneNumber } from '@/lib/utils/formatters'
 
 // Calculate total with tax
 export function calculateTotalWithTax(amount: number, taxRate: number): number {

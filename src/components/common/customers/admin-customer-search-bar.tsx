@@ -21,7 +21,8 @@ import {
 } from '@/components/ui/popover'
 import { useAdminCustomerSearch, useAdminCustomerVehicles } from '@/hooks/use-admin-customer-search'
 import { Customer, CustomerVehicle } from '@/app/(features)/customers/types'
-import { getInitials, formatPhoneNumber } from '@/lib/utils/text'
+import { getInitials } from '@/lib/utils/text'
+import { formatPhoneNumber } from '@/utils/format-phone'
 
 interface AdminCustomerSearchBarProps {
     onSelect: (data: CustomerVehicleSelection) => void

@@ -2,7 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query'
 import { useRef, useCallback } from 'react'
-import { decodeVin as decodeVinUtil } from '@/app/utils/vin-decode'
+import { decodeVin as decodeVinUtil } from '@/app/(features)/customers/vehicles/lib/vin-decode'
 import { toast } from 'sonner'
 
 interface VinData {

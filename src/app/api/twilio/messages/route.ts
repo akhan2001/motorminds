@@ -122,13 +122,6 @@ export async function POST(request: NextRequest) {
             customerName
         );
 
-        console.log('✅ Customer processed for outgoing message:', { 
-            customerId, 
-            isNew, 
-            name: customer.customer_name,
-            phone: customer.customer_phone 
-        });
-
         // Send message via Twilio
         const twilioMessage = await twilioClient.messages.create({
             to: to,

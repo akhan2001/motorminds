@@ -70,7 +70,6 @@ export async function createDefaultTemplate(shopId: string): Promise<MessageTemp
         throw new Error(`Failed to create default template: ${error.message}`);
     }
     
-    console.log('✅ Default template created for shop:', shopId);
     return template;
 }
 
@@ -83,7 +82,6 @@ export async function initializeDefaultTemplate(shopId: string): Promise<Message
     const exists = await hasDefaultTemplate(shopId);
     
     if (exists) {
-        console.log('✅ Default template already exists for shop:', shopId);
         return null;
     }
     
@@ -131,7 +129,6 @@ export async function initializeAllShopsDefaultTemplates(): Promise<{
         }
     }
     
-    console.log(`✅ Initialized default templates: ${results.success} success, ${results.failed} failed`);
     return results;
 }
 

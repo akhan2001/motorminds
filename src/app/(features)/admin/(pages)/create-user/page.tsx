@@ -13,7 +13,7 @@ import { UserCreationService } from '../../services/user-creation'
 import UserForm from '../../components/user-creation/UserForm'
 import ShopForm from '../../components/user-creation/ShopForm'
 import AdminNav from '../../components/AdminNav'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/components/navigation/nav'
 import Link from 'next/link'
 
 const defaultUserForm: AdminUserFormData = {
@@ -140,7 +140,7 @@ export default function CreateUserPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-4xl mx-auto w-full">

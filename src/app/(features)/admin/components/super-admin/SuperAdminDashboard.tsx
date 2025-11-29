@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Building2, Users, TrendingUp, Database, Settings, BarChart3, Package, FileText } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/components/navigation/nav'
 import Link from 'next/link'
 import AdminNav from '../AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'
@@ -54,7 +54,7 @@ export function SuperAdminDashboard() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">

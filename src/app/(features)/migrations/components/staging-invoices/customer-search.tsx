@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useStagingCustomerSearch } from '../../hooks/use-staging-invoices'
 import { StagingCustomer } from '../../types/staging-invoices'
-import { getInitials, formatPhoneNumber } from '@/lib/utils/text'
+import { getInitials } from '@/lib/utils/text'
+import { formatPhoneNumber } from '@/utils/format-phone'
 
 interface CustomerSearchProps {
     shopId?: string

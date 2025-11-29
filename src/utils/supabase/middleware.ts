@@ -31,13 +31,13 @@ export async function updateSession(request: NextRequest) {
 	// Public routes that should not trigger authentication checks
 	const publicPaths = [
 		'/signup',
-		'/login', 
+		'/login',
 		'/auth',
 		'/api/auth',
 		'/api/voice-calling/webhook',
 		'/customer-intake',
 	]
-	
+
 	// Skip authentication checks for public routes
 	if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
 		return supabaseResponse;
@@ -52,26 +52,29 @@ export async function updateSession(request: NextRequest) {
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
-		'/admin',
 		'/operations',
-		'/messaging',
 		'/financials',
-		'/api/financials',
+		'/invoices',        // Invoice management
+		'/mia-ai',          // Mia AI routes
+		'/mia',             // MIA diagnostic interface
+		'/chat',
+		'/customers',       // Customer management
+		'/customer-intake', // Customer intake form
+		'/customer-invoice-intake',  // Customer invoice intake form
+		'/messages',
+		'/messaging',
+		'/admin',
+		'/settings',        // Settings pages
 		'/parts',           // New refactored parts ordering
 		'/parts-ordering',  // Original parts ordering  
 		'/suppliers',       // Supplier management
+		'/voice-calling',   // Voice calling interface
+		'/app',             // All app routes (appointments, invoices, etc.)
+		'/api/financials',
+		'/api/mia',         // MIA API routes
+		'/api/voice',       // Voice calling API
 		'/api/suppliers',   // Supplier API
 		'/api/parts',       // Parts API
-		'/voice-calling',   // Voice calling interface
-		'/api/voice',       // Voice calling API
-		'/app',             // All app routes (appointments, invoices, etc.)
-		'/mia-ai',          // Mia AI routes
-		'/mia',             // MIA diagnostic interface
-		'/api/mia',         // MIA API routes
-		'/dashboard',       // Dashboard routes
-		'/customers',       // Customer management
-		'/invoices',        // Invoice management
-		'/settings',        // Settings pages
 	]
 	const isProtectedPath = protectedPaths.some(path =>
 		request.nextUrl.pathname.startsWith(path)
@@ -110,50 +113,50 @@ export async function updateSession(request: NextRequest) {
 			return NextResponse.redirect(redirectUrl)
 		}
 
-	// Add shop context to request headers for downstream use
-	supabaseResponse.headers.set('x-user-id', user.id)
-	supabaseResponse.headers.set('x-shop-id', shopId)
-}
-
-// Admin access control - only admin users can access /admin routes
-if (request.nextUrl.pathname.startsWith('/admin') && user) {
-	try {
-		// Use server-side Supabase client for database query
-		const { data: userData, error } = await supabase
-			.from('users')
-			.select('role, organization_id')
-			.eq('id', user.id)
-			.single();
-
-		if (error || !userData) {
-			console.log('Error or no userData, redirecting to operations/appointments');
-			const redirectUrl = new URL('/operations/appointments', request.url)
-			return NextResponse.redirect(redirectUrl)
-		}
-
-		// Allow admin roles: 'admin', 'super-admin', 'super_admin', 'shop_admin', 'organization_admin'
-		const userRole = userData.role?.toUpperCase();
-		const isAdmin = 
-			userRole === 'ADMIN' || 
-			userRole === 'SUPER-ADMIN' || 
-			userRole === 'SUPER_ADMIN' ||
-			userRole === 'SHOP_ADMIN' ||
-			userRole === 'ORGANIZATION_ADMIN';
-		
-		if (!isAdmin) {
-			// User is not admin - redirect to operations/appointments
-			const redirectUrl = new URL('/operations/appointments', request.url)
-			return NextResponse.redirect(redirectUrl)
-		}
-	} catch (error) {
-		console.error('Error checking user role for admin access:', error);
-		// On error, redirect to safe page
-		const redirectUrl = new URL('/operations/appointments', request.url)
-		return NextResponse.redirect(redirectUrl)
+		// Add shop context to request headers for downstream use
+		supabaseResponse.headers.set('x-user-id', user.id)
+		supabaseResponse.headers.set('x-shop-id', shopId)
 	}
-}
 
-// Demo user redirects - redirect from / and /dashboard to /mia
+	// Admin access control - only admin users can access /admin routes
+	if (request.nextUrl.pathname.startsWith('/admin') && user) {
+		try {
+			// Use server-side Supabase client for database query
+			const { data: userData, error } = await supabase
+				.from('users')
+				.select('role, organization_id')
+				.eq('id', user.id)
+				.single();
+
+			if (error || !userData) {
+				console.log('Error or no userData, redirecting to operations/appointments');
+				const redirectUrl = new URL('/operations/appointments', request.url)
+				return NextResponse.redirect(redirectUrl)
+			}
+
+			// Allow admin roles: 'admin', 'super-admin', 'super_admin', 'shop_admin', 'organization_admin'
+			const userRole = userData.role?.toUpperCase();
+			const isAdmin =
+				userRole === 'ADMIN' ||
+				userRole === 'SUPER-ADMIN' ||
+				userRole === 'SUPER_ADMIN' ||
+				userRole === 'SHOP_ADMIN' ||
+				userRole === 'ORGANIZATION_ADMIN';
+
+			if (!isAdmin) {
+				// User is not admin - redirect to operations/appointments
+				const redirectUrl = new URL('/operations/appointments', request.url)
+				return NextResponse.redirect(redirectUrl)
+			}
+		} catch (error) {
+			console.error('Error checking user role for admin access:', error);
+			// On error, redirect to safe page
+			const redirectUrl = new URL('/operations/appointments', request.url)
+			return NextResponse.redirect(redirectUrl)
+		}
+	}
+
+	// Demo user redirects - redirect from / and /dashboard to /mia
 	if (user && (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard')) {
 		try {
 			const { data: userData, error } = await supabase

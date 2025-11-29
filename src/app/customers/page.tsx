@@ -1,6 +1,6 @@
 'use client'
 
-import { Nav } from '@/app/components/nav'
+import { Nav } from '@/components/navigation/nav'
 import { CustomerDashboard } from './components/customer-dashboard'
 import { checkUser } from '@/utils/supabase/supabase-auth'
 import { getShopId } from '@/utils/supabase/supabase-shop'
@@ -40,7 +40,7 @@ export default function CustomersPage() {
     if (isLoading) {
         return (
             <div className="flex flex-col min-h-screen bg-background text-foreground">
-                <Nav activeLink="Customers" />
+                <Nav/>
                 {/* <CustomersTableLoading /> */}
             </div>
         )
@@ -49,7 +49,7 @@ export default function CustomersPage() {
     if (!shopId) {
         return (
             <div className="flex flex-col min-h-screen bg-background text-foreground">
-                <Nav activeLink="Customers" />
+                <Nav/>
                 <div className="flex justify-center items-center h-[80vh]">
                     <p className="text-foreground">No shop found for this user.</p>
                 </div>
@@ -59,7 +59,7 @@ export default function CustomersPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
-            <Nav activeLink="Customers" />
+            <Nav/>
             <CustomerDashboard shopId={shopId} user={user} />
         </div>
     )

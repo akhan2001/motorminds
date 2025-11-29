@@ -5,7 +5,26 @@ import { createClient } from '@/utils/supabase/server'
 export async function GET(request: NextRequest) {
 	try {
 		const supabase = await createClient()
-		const shopId = request.headers.get('x-shop-id')
+		
+		// Get shop_id from authenticated user
+		const { data: { user } } = await supabase.auth.getUser()
+		
+		if (!user) {
+			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		
+		// Get shop_id from user metadata or users table
+		let shopId = user.user_metadata?.shop_id
+		
+		if (!shopId) {
+			const { data: userData } = await supabase
+				.from('users')
+				.select('shop_id')
+				.eq('id', user.id)
+				.single()
+			
+			shopId = userData?.shop_id
+		}
 
 		const { searchParams } = new URL(request.url)
 		const sessionId = searchParams.get('sessionId')
@@ -16,7 +35,6 @@ export async function GET(request: NextRequest) {
 
 		// Handle fallback sessions (for debugging when no shop_id)
 		if (sessionId.startsWith('fallback_session_')) {
-			console.log('Handling fallback session - returning empty messages')
 			return NextResponse.json({ messages: [] })
 		}
 
@@ -60,7 +78,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
 	try {
 		const supabase = await createClient()
-		const shopId = request.headers.get('x-shop-id')
+		
+		// Get shop_id from authenticated user
+		const { data: { user } } = await supabase.auth.getUser()
+		
+		if (!user) {
+			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		
+		// Get shop_id from user metadata or users table
+		let shopId = user.user_metadata?.shop_id
+		
+		if (!shopId) {
+			const { data: userData } = await supabase
+				.from('users')
+				.select('shop_id')
+				.eq('id', user.id)
+				.single()
+			
+			shopId = userData?.shop_id
+		}
 
 		const { sessionId, role, content, metadata = {} } = await request.json()
 
@@ -72,7 +109,6 @@ export async function POST(request: NextRequest) {
 
 		// Handle fallback sessions (for debugging when no shop_id)
 		if (sessionId.startsWith('fallback_session_')) {
-			console.log('Handling fallback session - skipping message storage')
 			return NextResponse.json({
 				message: {
 					id: `fallback_${Date.now()}`,

@@ -7,19 +7,14 @@ import { replaceVariables } from '@/app/(features)/messaging/lib/variable-replac
 import type { ServiceType } from '@/app/(features)/messaging/types/message-template'
 
 export async function POST(request: NextRequest) {
-    console.log('🚀 Queue-automated endpoint called!')
-    
     try {
         const shopId = await getShopIdForUser()
-        console.log('🔑 Shop ID:', shopId)
         
         if (!shopId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const body = await request.json()
-        console.log('📦 Request body:', body)
-        
         const { work_order_id, customer_id, service_type } = body
 
         if (!work_order_id || !customer_id) {
@@ -51,11 +46,8 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        console.log('📋 Work order customer type:', workOrder.customer_type)
-
         // For walk-in customers, we don't send automated messages (no long-term customer relationship)
         if (workOrder.customer_type === 'walk_in') {
-            console.log('⚠️  Walk-in customer - skipping automated messages')
             return NextResponse.json({
                 success: true,
                 queued: 0,
@@ -65,7 +57,6 @@ export async function POST(request: NextRequest) {
 
         // Check if customer has phone number
         if (!workOrder.customer?.customer_phone) {
-            console.log('⚠️  No customer phone number')
             return NextResponse.json({
                 success: true,
                 queued: 0,
@@ -79,8 +70,6 @@ export async function POST(request: NextRequest) {
             'work_order_complete',
             service_type as ServiceType || undefined
         )
-
-        console.log(`📋 Found ${templates.length} active templates`)
 
         if (templates.length === 0) {
             return NextResponse.json({
@@ -163,13 +152,10 @@ export async function POST(request: NextRequest) {
                 })
 
                 queuedCount++
-                console.log(`✅ Queued message for template: ${template.name}`)
             } catch (error) {
                 console.error(`❌ Error queuing message for template ${template.id}:`, error)
             }
         }
-
-        console.log(`🎉 Successfully queued ${queuedCount} messages`)
 
         return NextResponse.json({
             success: true,

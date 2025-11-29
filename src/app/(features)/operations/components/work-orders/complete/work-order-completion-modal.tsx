@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link, CheckCircle2 } from 'lucide-react'
-import { formatPhoneNumber } from '@/lib/utils/text'
+import { formatPhoneNumber } from '@/utils/format-phone'
 import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
 import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
