@@ -24,7 +24,7 @@ const eslintConfig = defineConfig([
             'react/prop-types': 'off',
 
             // General code quality
-            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            'no-console': ['error', { allow: [] }], // No console statements allowed
             'no-unused-vars': 'off', // Use TS version instead
             'prefer-const': 'warn',
             'no-var': 'error'

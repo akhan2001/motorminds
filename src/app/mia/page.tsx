@@ -58,7 +58,6 @@ export default function MiaPage() {
             await loadSessionMessages(session.session_id)
             
         } catch (err) {
-            console.error('Failed to load existing session:', err)
             // If loading existing session fails, create a new one
             await initializeSession()
         } finally {
@@ -77,11 +76,6 @@ export default function MiaPage() {
             
             if (!sessionResponse.ok) {
                 const errorText = await sessionResponse.text()
-                console.error('Session creation failed:', {
-                    status: sessionResponse.status,
-                    statusText: sessionResponse.statusText,
-                    error: errorText
-                })
                 throw new Error(`Failed to create session: ${sessionResponse.status} - ${errorText}`)
             }
             
@@ -95,7 +89,6 @@ export default function MiaPage() {
             await loadSessionMessages(session.session_id)
             
         } catch (err) {
-            console.error('Failed to initialize session:', err)
             setError(err as Error)
         } finally {
             setSessionLoading(false)
@@ -120,7 +113,7 @@ export default function MiaPage() {
                 setMessages(uiMessages)
             }
         } catch (err) {
-            console.error('Failed to load session messages:', err)
+            // Silently handle error
         }
     }
 
@@ -158,7 +151,6 @@ export default function MiaPage() {
             }
 
             const data = await response.json()
-            console.log('API Response:', data)
 
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),

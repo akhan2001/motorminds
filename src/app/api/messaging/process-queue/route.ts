@@ -1,11 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { createClient as createServiceClient, SupabaseClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
-import { markAsSent, markAsFailed } from "@/app/(features)/messaging/lib/message-queue-service";
 import { replaceVariables } from "@/app/(features)/messaging/lib/variable-replacer";
 import { createOrFindCustomerByPhone } from "@/utils/phone-number";
 import { formatPhoneNumberE164 } from "@/utils/format-phone";
+
+// Helper functions that use the provided Supabase client (for service role access)
+async function markAsSentWithClient(supabase: SupabaseClient, queueId: string, smsMessageId: string, originalRetryCount?: number): Promise<void> {
+    const updateData: any = {
+        status: 'sent',
+        sms_message_id: smsMessageId,
+        sent_at: new Date().toISOString()
+    };
+    
+    // Reset retry_count if it was used as a processing flag
+    if (originalRetryCount !== undefined) {
+        updateData.retry_count = originalRetryCount;
+    }
+    
+    const { error } = await supabase
+        .from('ai_message_queue')
+        .update(updateData)
+        .eq('id', queueId);
+
+    if (error) {
+        console.error(`Failed to mark message ${queueId} as sent:`, error);
+        throw error;
+    }
+}
+
+async function markAsFailedWithClient(supabase: SupabaseClient, queueId: string, errorMessage: string, originalRetryCount?: number): Promise<void> {
+    const updateData: any = {
+        status: 'failed',
+        error_message: errorMessage
+    };
+    
+    // Reset retry_count if it was used as a processing flag
+    if (originalRetryCount !== undefined) {
+        updateData.retry_count = originalRetryCount;
+    }
+    
+    const { error } = await supabase
+        .from('ai_message_queue')
+        .update(updateData)
+        .eq('id', queueId);
+
+    if (error) {
+        console.error(`Failed to mark message ${queueId} as failed:`, error);
+        throw error;
+    }
+}
 
 // Helper to format delay time in human-readable format
 function formatDelayTime(hours: number): string {
@@ -86,7 +131,16 @@ export async function POST(request: NextRequest) {
         
         const now = new Date().toISOString();
 
+        // Cleanup: Reset any messages stuck with abnormally high retry_count (from previous processing attempts)
+        // This handles cases where a process crashed while processing
+        await supabase
+            .from('ai_message_queue')
+            .update({ retry_count: 0 })
+            .eq('status', 'pending')
+            .gte('retry_count', 1000000); // Reset processing flags
+
         // Get all pending messages ready to send with related data
+        // Exclude messages with abnormally high retry_count (being processed)
         const { data: allPendingMessages, error: queueError } = await supabase
             .from('ai_message_queue')
             .select(`
@@ -96,6 +150,7 @@ export async function POST(request: NextRequest) {
                 shop:shops(id, shop_name, shop_phone)
             `)
             .eq('status', 'pending')
+            .lt('retry_count', 1000000) // Exclude messages being processed
             .lte('scheduled_send_at', now)
             .order('scheduled_send_at', { ascending: true })
             .limit(100); // Process max 100 messages per run to respect rate limits
@@ -177,15 +232,39 @@ export async function POST(request: NextRequest) {
                 // Process each message in this shop's batch
                 for (const queueItem of pendingMessages) {
                     try {
+                        // CRITICAL: Atomically claim the message by updating retry_count
+                        // This acts as a lock - if update affects 0 rows, message was already claimed
+                        // We increment retry_count temporarily as a "processing" flag
+                        const { data: claimedItem, error: claimError } = await supabase
+                            .from('ai_message_queue')
+                            .update({ 
+                                retry_count: queueItem.retry_count + 1000000 // Use large number as processing flag
+                            })
+                            .eq('id', queueItem.id)
+                            .eq('status', 'pending') // Only update if still pending
+                            .select()
+                            .single();
+
+                        if (claimError || !claimedItem) {
+                            // Message was already processed by another instance, skip it
+                            console.log(`⏭️  Message ${queueItem.id} already claimed by another process, skipping`);
+                            continue;
+                        }
+
                         // Check rate limit
                         if (!checkRateLimit()) {
+                            // Reset retry_count back to original if we hit rate limit
+                            await supabase
+                                .from('ai_message_queue')
+                                .update({ retry_count: queueItem.retry_count })
+                                .eq('id', queueItem.id);
                             break; // Stop processing this batch
                         }
 
                         // Get customer phone number
                         const customerPhone = (queueItem.customer as any)?.customer_phone;
                         if (!customerPhone) {
-                            await markAsFailed(queueItem.id, 'Customer phone number not available');
+                            await markAsFailedWithClient(supabase, queueItem.id, 'Customer phone number not available', queueItem.retry_count);
                             failed++;
                             continue;
                         }
@@ -296,20 +375,22 @@ export async function POST(request: NextRequest) {
                         if (messageError) {
                             console.error('❌ Failed to store SMS message:', messageError);
                             // Mark as failed if we can't store the message (required for foreign key)
-                            await markAsFailed(queueItem.id, `SMS sent but failed to store: ${messageError.message}`);
+                            await markAsFailedWithClient(supabase, queueItem.id, `SMS sent but failed to store: ${messageError.message}`, queueItem.retry_count);
                             failed++;
                             continue;
                         }
 
                         if (!storedMessage?.id) {
                             console.error('❌ SMS message stored but no ID returned');
-                            await markAsFailed(queueItem.id, 'SMS sent but failed to get message ID');
+                            await markAsFailedWithClient(supabase, queueItem.id, 'SMS sent but failed to get message ID', queueItem.retry_count);
                             failed++;
                             continue;
                         }
 
                         // Update queue with sms_message_id (UUID from sms_messages table)
-                        await markAsSent(queueItem.id, storedMessage.id);
+                        // Use atomic update with service role client
+                        // Reset retry_count to original value when marking as sent
+                        await markAsSentWithClient(supabase, queueItem.id, storedMessage.id, queueItem.retry_count);
 
                         // Update sms_conversations
                         await supabase
@@ -329,9 +410,9 @@ export async function POST(request: NextRequest) {
                     } catch (error: any) {
                         console.error(`Error processing queue item ${queueItem.id}:`, error);
                         
-                        // Mark as failed
+                        // Mark as failed using service role client
                         const errorMessage = error.message || error.toString() || 'Unknown error';
-                        await markAsFailed(queueItem.id, errorMessage);
+                        await markAsFailedWithClient(supabase, queueItem.id, errorMessage, queueItem.retry_count);
                         failed++;
                         errors.push(`Queue item ${queueItem.id}: ${errorMessage}`);
                     }

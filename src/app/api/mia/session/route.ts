@@ -5,25 +5,29 @@ import { createClient } from '@/utils/supabase/server'
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient()
-        const shopId = request.headers.get('x-shop-id')
-        const userId = request.headers.get('x-user-id')
+        
+        // Get shop_id from authenticated user
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        
+        // Get shop_id from user metadata or users table
+        let shopId = user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
 
         if (!shopId) {
-            console.error('Missing shop ID in request headers')
-            // TEMPORARY: For debugging, create a fallback session without shop_id requirement
-            const fallbackSessionId = `fallback_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            
-            return NextResponse.json({ 
-                session: {
-                    id: 'fallback',
-                    session_id: fallbackSessionId,
-                    shop_id: null,
-                    vehicle_context: {},
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }
-            })
+            return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
         }
 
         const { searchParams } = new URL(request.url)
@@ -104,7 +108,26 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const supabase = await createClient()
-        const shopId = request.headers.get('x-shop-id')
+        
+        // Get shop_id from authenticated user
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        
+        // Get shop_id from user metadata or users table
+        let shopId = user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
 
         if (!shopId) {
             return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })

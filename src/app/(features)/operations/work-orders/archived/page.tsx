@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from "react"
-import { Nav } from "@/components/navigation/nav"
+// import { Nav } from "@/components/navigation/nav"
 import { Card, CardContent } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/common/feedback/loading-states"
 import { ArchivedWorkOrdersList } from "../../components/work-orders/archived/ArchivedWorkOrdersList"
@@ -14,8 +14,8 @@ function ArchivedWorkOrdersContent() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
-            <div className="flex-1 flex flex-col overflow-hidden">
+            {/* <Nav /> */}
+            <div className="flex-1 flex flex-col">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">
                         {/* Header */}
@@ -50,7 +50,7 @@ function ArchivedWorkOrdersContent() {
 function ArchivedWorkOrdersLoading() {
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex items-center justify-center">
                 <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                     <CardContent className="flex items-center gap-4 p-6">
