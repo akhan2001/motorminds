@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 import { ImmediateInsights } from '@/app/mia/types/MiaInsights';
 import { supabase } from '@/lib/supabase';
-import { getVehicleInfoById } from '@/app/vehicles/utils/vehicle_utils';
+// vehicle_utils doesn't exist - needs refactoring
+// import { getVehicleInfoById } from '@/app/vehicles/utils/vehicle_utils';
 // Define interfaces for type safety
 interface OrderDetails {
     description: string;
@@ -107,7 +108,8 @@ export async function POST(req: Request) {
         
         // Get vehicle information using the utility function
         const vehicleId = workOrderData.vehicle_id || workOrderData.vehicle?.id;
-        const vehicleInfo = vehicleId ? await getVehicleInfoById(vehicleId) : null;
+        // TODO: Refactor - getVehicleInfoById doesn't exist
+        const vehicleInfo = null; // vehicleId ? await getVehicleInfoById(vehicleId) : null;
 
         console.log("vehicleInfo", vehicleInfo);
         console.log("orderDetails", orderDetails);

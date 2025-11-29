@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { supabase } from '@/lib/supabase';
 import { config } from '@/lib/config';
-import { createDocuSealSubmission } from '@/app/customer-contracts/utils/docuseal-utils';
+// docuseal-utils doesn't exist - feature needs refactoring
+// import { createDocuSealSubmission } from '@/app/customer-contracts/utils/docuseal-utils';
 
 const resend = new Resend(config.email.resendApiKey);
 
@@ -37,15 +38,18 @@ export async function POST(req: Request) {
             }, { status: 400 });
         }
 
+        // TODO: Refactor - createDocuSealSubmission doesn't exist
+        return NextResponse.json({ error: 'Endpoint needs refactoring' }, { status: 501 });
+        
         // Create DocuSeal submission using utility function
-        const submissionData = await createDocuSealSubmission({
-            contractId: contract.id,
-            customerEmail: contract.customer.customer_email,
-            customerName: contract.customer.customer_name || 'Customer'
-        });
+        // const submissionData = await createDocuSealSubmission({
+        //     contractId: contract.id,
+        //     customerEmail: contract.customer.customer_email,
+        //     customerName: contract.customer.customer_name || 'Customer'
+        // });
         
         // Create signing URL for customer with submission slug
-        const signingUrl = `${config.app.baseUrl}/contracts/sign/${contractId}?slug=${submissionData.slug}`;
+        // const signingUrl = `${config.app.baseUrl}/contracts/sign/${contractId}?slug=${submissionData.slug}`;
         
         // Send email with signing link
         const { data, error } = await resend.emails.send({

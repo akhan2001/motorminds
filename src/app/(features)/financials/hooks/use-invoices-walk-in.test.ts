@@ -5,7 +5,36 @@ import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
 
 // Mock the Supabase client
 const mockSupabaseClient = vi.hoisted(() => ({
-    from: vi.fn()
+    from: vi.fn(() => ({
+        select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+                single: vi.fn(),
+                order: vi.fn()
+            })),
+            order: vi.fn()
+        })),
+        insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+                single: vi.fn()
+            }))
+        })),
+        update: vi.fn(() => ({
+            eq: vi.fn(() => ({
+                select: vi.fn(() => ({
+                    single: vi.fn()
+                }))
+            }))
+        })),
+        delete: vi.fn(() => ({
+            eq: vi.fn()
+        }))
+    })),
+    auth: {
+        getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+            error: null
+        })
+    }
 }))
 
 vi.mock('@/utils/supabase/client', () => ({

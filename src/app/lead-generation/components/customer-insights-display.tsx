@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, Info, Clock, User, Car } from "lucide-react"
 import { getCustomerDetails } from "@/app/customers/api/customer-utils"
-import { getVehicleInfoById } from "@/app/vehicles/utils/vehicle_utils"
+// vehicle_utils file doesn't exist - need to refactor this component
+// import { getVehicleInfoById } from "@/app/vehicles/utils/vehicle_utils"
 
 interface CustomerInsightsProps {
   repairOrderId?: string
@@ -67,8 +68,9 @@ export default function CustomerInsightsDisplay({
           
           if (data.vehicle_id) {
             try {
-              const vehicleData = await getVehicleInfoById(data.vehicle_id)
-              setVehicle(vehicleData)
+              // TODO: Refactor to use vehicle service from (features)/customers
+              // const vehicleData = await getVehicleInfoById(data.vehicle_id)
+              // setVehicle(vehicleData)
             } catch (err) {
               console.error("Error fetching vehicle:", err)
             }
