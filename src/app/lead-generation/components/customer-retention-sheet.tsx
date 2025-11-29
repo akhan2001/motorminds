@@ -17,7 +17,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import MiaInsights from "@/app/mechanic-hub/components/mia-insights";
+// MiaInsights removed - use newer AI insights components from (features)/ai
 
 interface CustomerRetention {
   id: string;
