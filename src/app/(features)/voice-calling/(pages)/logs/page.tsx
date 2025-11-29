@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Phone, Clock, CheckCircle, XCircle, Loader2, ArrowLeft, Calendar, User, Package, RefreshCw } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { formatDate } from '@/lib/utils/formatting'
 import { createBrowserClient } from '@supabase/ssr'
@@ -108,7 +108,7 @@ export default function VoiceCallLogsPage() {
     if (authLoading || loading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                 </div>
@@ -118,7 +118,7 @@ export default function VoiceCallLogsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 overflow-y-auto">
                 <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
                     {/* Breadcrumb */}

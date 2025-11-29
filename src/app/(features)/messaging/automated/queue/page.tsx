@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/app/components/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,14 +13,29 @@ import { Clock, Send, XCircle, CheckCircle, Loader2, RefreshCw, ArrowLeft } from
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/core/useAuth'
 import type { MessageQueueItem } from '../../types/message-queue'
+
+// Extended type for queue items with enriched data from API
+type EnrichedQueueItem = MessageQueueItem & {
+    phone_number?: string
+    message_body?: string
+    customer?: {
+        customer_name: string
+        customer_phone: string
+    }
+    template?: {
+        name: string
+        message_template: string
+    }
+}
 import { MessagingHeader } from '../../components/MessagingHeader'
 
 export default function QueuePage() {
     const router = useRouter()
     const { shopId, isLoading: authLoading } = useAuth()
-    const [queueItems, setQueueItems] = useState<MessageQueueItem[]>([])
+    const [queueItems, setQueueItems] = useState<EnrichedQueueItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState('all')
+    const [sendingIds, setSendingIds] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         if (!authLoading && !shopId) {
@@ -51,16 +66,34 @@ export default function QueuePage() {
     }
 
     const handleSendNow = async (id: string) => {
+        // Prevent duplicate clicks
+        if (sendingIds.has(id)) {
+            return
+        }
+
         try {
+            setSendingIds(prev => new Set(prev).add(id))
             const response = await fetch(`/api/messaging/queue/${id}/send-now`, {
                 method: 'POST'
             })
-            if (!response.ok) throw new Error('Failed to send message')
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.error || 'Failed to send message')
+            }
             toast.success('Message scheduled for immediate sending')
-            fetchQueue()
-        } catch (error) {
+            // Wait a bit before refreshing to allow processing
+            setTimeout(() => {
+                fetchQueue()
+            }, 1000)
+        } catch (error: any) {
             console.error('Error sending message:', error)
-            toast.error('Failed to send message')
+            toast.error(error.message || 'Failed to send message')
+        } finally {
+            setSendingIds(prev => {
+                const next = new Set(prev)
+                next.delete(id)
+                return next
+            })
         }
     }
 
@@ -117,7 +150,7 @@ export default function QueuePage() {
     if (authLoading || isLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
@@ -127,14 +160,14 @@ export default function QueuePage() {
 
     return (
         <div className="h-screen flex flex-col bg-background dark:bg-[#0a0a0a]">
-            <Nav />
+            {/* <Nav /> */}
             
             <MessagingHeader 
                 title="Message Queue"
                 description="View and manage scheduled and sent messages"
             />
 
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1">
                 <div className="container mx-auto p-6 space-y-6">
                     {/* Back Button */}
                     <Button variant="ghost" onClick={() => router.push('/messaging/automated')}>
@@ -254,8 +287,13 @@ export default function QueuePage() {
                                                                         variant="ghost"
                                                                         size="sm"
                                                                         onClick={() => handleSendNow(item.id)}
+                                                                        disabled={sendingIds.has(item.id)}
                                                                     >
-                                                                        <Send className="h-4 w-4" />
+                                                                        {sendingIds.has(item.id) ? (
+                                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                                        ) : (
+                                                                            <Send className="h-4 w-4" />
+                                                                        )}
                                                                     </Button>
                                                                     <Button
                                                                         variant="ghost"

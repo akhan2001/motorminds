@@ -5,7 +5,7 @@ import { FinancialsAuthProvider, useFinancialsAuth } from '@/contexts/Financials
 import { FinancialsPasswordModal } from '@/components/financials/FinancialsPasswordModal';
 import { FinancialsSetupPassword } from '@/components/financials/FinancialsSetupPassword';
 import { createClient } from '@/utils/supabase/client';
-import { Nav } from '@/app/components/nav';
+import { Nav } from '@/components/navigation/nav';
 
 interface FinancialsLayoutContentProps {
     children: React.ReactNode;

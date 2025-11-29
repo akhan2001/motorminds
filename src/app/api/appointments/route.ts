@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        console.log('Appointment creation request body:', body);
         
         const {
             customer_id,
@@ -124,8 +123,6 @@ export async function POST(request: NextRequest) {
             confirmation_code: generateConfirmationCode()
         };
         
-        console.log('Creating appointment with data:', appointmentData);
-        
         const { data: appointment, error: appointmentError } = await supabase
             .from('appointments')
             .insert(appointmentData)
@@ -155,8 +152,6 @@ export async function POST(request: NextRequest) {
                 status: 'pending',
                 total_cost: 0
             };
-            
-            console.log('Creating repair order with data:', repairOrderData);
             
             const { data: createdRepairOrder, error: repairOrderError } = await supabase
                 .from('repair_orders')

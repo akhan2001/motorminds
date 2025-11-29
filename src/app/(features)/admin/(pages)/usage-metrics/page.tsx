@@ -19,7 +19,7 @@ import {
     Bot,
     Loader2
 } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+import { Nav } from '@/components/navigation/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { Slash } from "lucide-react"
 import Link from 'next/link'

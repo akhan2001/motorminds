@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/app/components/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -97,7 +97,7 @@ export default function CampaignsPage() {
     if (authLoading || isLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
@@ -107,7 +107,7 @@ export default function CampaignsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
-            <Nav />
+            {/* <Nav /> */}
             
             <MessagingHeader 
                 title="Mass Campaigns"

@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
-import { createDocuSealSubmission } from '@/app/customer-contracts/utils/docuseal-utils';
+// Docuseal utils file doesn't exist - feature needs refactoring
+// import { createDocuSealSubmission } from '@/app/customer-contracts/utils/docuseal-utils';
 
 export async function POST(req: Request) {
     try {
         const { contractId, customerEmail, customerName } = await req.json();
         
-        const result = await createDocuSealSubmission({
-            contractId,
-            customerEmail,
-            customerName
-        });
+        // TODO: Refactor this endpoint - docuseal utils don't exist
+        return NextResponse.json({ error: 'Endpoint needs refactoring' }, { status: 501 });
+        
+        // const result = await createDocuSealSubmission({
+        //     contractId,
+        //     customerEmail,
+        //     customerName
+        // });
 
-        return NextResponse.json(result);
+        // return NextResponse.json(result);
 
     } catch (error) {
         console.error('Error creating DocuSeal submission:', error);

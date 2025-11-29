@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { checkUser } from "@/utils/supabase/supabase-auth"
 import { getShopId } from "@/utils/supabase/supabase-shop"
-import { ArrowRight, Facebook, Instagram, MessageSquare, Phone, Sparkles } from "lucide-react"
+import { AlertCircle, ArrowRight, Facebook, Instagram, MessageSquare, Phone, Sparkles, LoaderCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -17,52 +17,73 @@ import TwilioMessaging from "./components/TwilioMessaging"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import FacebookSdk from "@/app/components/FacebookSdk"
+import { LoadingSpinner } from "@/components/common/feedback/loading-states"
+import { useAuth } from "@/hooks/core/useAuth"
 
 export default function Messages() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
-    const [shopId, setShopId] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    
+    // Authentication
+    const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
 
-    // Authenticate the user and get the shop ID
-    useEffect(() => { 
-        async function loadData() {
-            try {
-                setIsLoading(true)
-                const user = await checkUser();
-                if (user) {
-                    setUser(user);
-                    const shopId = await getShopId(user.id);
-                    if (shopId) {
-                        setShopId(shopId);
-                        // check if facebook/ig connected
-                        const { data } = await supabase
-                            .from("connected_pages")
-                            .select("id")
-                            .eq("shop_id", shopId)
-                            .limit(1)
-                            .maybeSingle();
-                        setIsConnected(!!data);
-                    } else {
-                        console.error("No shop ID found");
-                        router.push("/login");
-                    }
-                } else {
-                    console.error("No user found");
-                    router.push("/login");
-                }
-                setIsLoading(false)
-            } catch (error) {
-                console.error("Authentication error:", error);
-                router.push("/login");
-            }
-        }
-        loadData();
-    }, []);
+    // Loading state
+    if (authLoading) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                {/* <Nav /> */}
+                <div className="flex-1 flex items-center justify-center">
+                    <Card className="bg-card border-border">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <LoadingSpinner size="md" className="text-blue-500" />
+                            <div>
+                                <p className="text-foreground font-medium">Loading Messages</p>
+                                <p className="text-muted-foreground text-sm">Fetching data from database...</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
 
-    if (isLoading) {
-        return <LoadingPage />
+    // Error state
+    if (authError) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                {/* <Nav /> */}
+                <div className="flex-1 flex items-center justify-center">
+                    <Card className="bg-card border-border">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <AlertCircle className="h-6 w-6 text-red-500" />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
+    // Don't render main content if we don't have authentication data
+    if (!shopId || !user) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                {/* <Nav /> */}
+                <div className="flex-1 flex items-center justify-center">
+                    <Card className="bg-card border-border">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <AlertCircle className="h-6 w-6 text-yellow-500" />
+                            <div>
+                                <p className="text-foreground font-medium">Authentication Required</p>
+                                <p className="text-muted-foreground text-sm mb-3">
+                                    Unable to access messages. Please ensure you are logged in.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
     }
 
     return (

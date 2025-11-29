@@ -312,8 +312,6 @@ export class WorkOrderService {
             if (deleteError) {
                 console.error('Error cancelling pending messages:', deleteError)
                 // Don't throw - this is a cleanup operation
-            } else {
-                console.log(`Cancelled ${messageIds.length} pending message(s) for work order ${workOrderId}`)
             }
         } catch (error) {
             // Don't fail the revert if message cancellation fails
@@ -419,9 +417,6 @@ export class WorkOrderService {
         workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'customer_type' | 'walk_in_vehicle_info'>
         walkInVehicleInfo: WalkInVehicleInfo
     }): Promise<WorkOrder> {
-        console.log('Creating walk-in work order with vehicle info:', data.walkInVehicleInfo)
-        console.log('Walk-in work order vehicle_id:', data.workOrder.vehicle_id)
-        
         // Validate required walk-in vehicle fields
         if (!data.walkInVehicleInfo.year || !data.walkInVehicleInfo.make || !data.walkInVehicleInfo.model || !data.walkInVehicleInfo.license_plate) {
             throw new Error('Year, make, model, and license plate are required for walk-in customers')
@@ -436,7 +431,6 @@ export class WorkOrderService {
             walk_in_vehicle_info: data.walkInVehicleInfo,
         }
 
-        console.log('Creating work order with walk-in data:', workOrderData)
         return this.createWorkOrder(workOrderData)
     }
 
@@ -491,7 +485,6 @@ export class WorkOrderService {
             }
 
             customerId = newCustomer.id
-            console.log('Customer created successfully with ID:', customerId)
         }
 
         // 2. Create vehicle if needed
@@ -524,7 +517,6 @@ export class WorkOrderService {
             }
 
             vehicleId = newVehicle.id
-            console.log('Vehicle created successfully with ID:', vehicleId)
         }
 
         // 3. Create work order with valid customer_id and vehicle_id
@@ -540,7 +532,6 @@ export class WorkOrderService {
             walk_in_vehicle_info: undefined,
         }
 
-        console.log('Creating work order with customer_id:', customerId, 'vehicle_id:', vehicleId)
         return this.createWorkOrder(workOrderData)
     }
 

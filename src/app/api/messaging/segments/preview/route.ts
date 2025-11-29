@@ -156,9 +156,8 @@ export async function POST(request: NextRequest) {
 
         // Apply total spent filters if specified
         if (hasFilters && (segment.total_spent_min || segment.total_spent_max)) {
-            // This would require joining with work_orders and summing amounts
-            // For now, we'll skip this complex filter but keep the structure
-            console.log('Total spent filtering not yet implemented')
+            // Total spent filtering not yet implemented
+            // Would require joining with work_orders and summing amounts
         }
 
         // Return count and sample

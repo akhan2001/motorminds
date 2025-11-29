@@ -95,3 +95,29 @@ export function isValidE164(phoneNumber: string): boolean {
     const e164Regex = /^\+[1-9]\d{1,14}$/
     return e164Regex.test(phoneNumber)
 }
+
+/**
+ * Format phone number for display purposes (user-friendly format)
+ * @param phoneNumber - The phone number to format
+ * @returns Formatted phone number for display
+ */
+export function formatPhoneNumberDisplay(phoneNumber: string): string {
+    if (!phoneNumber) return ''
+    
+    // Remove all non-digit characters
+    const digits = phoneNumber.replace(/\D/g, '')
+    
+    // Format as (XXX) XXX-XXXX for US numbers
+    if (digits.length === 10) {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+    }
+    
+    // Format as +1 (XXX) XXX-XXXX for US numbers with country code
+    if (digits.length === 11 && digits.startsWith('1')) {
+        const usDigits = digits.slice(1)
+        return `+1 (${usDigits.slice(0, 3)}) ${usDigits.slice(3, 6)}-${usDigits.slice(6)}`
+    }
+    
+    // Return original for international numbers
+    return phoneNumber
+}

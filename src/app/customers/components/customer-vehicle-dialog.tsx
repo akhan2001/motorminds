@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { SearchIcon } from "lucide-react";
-import { decodeVin } from '@/app/utils/vin-decode';
+import { decodeVin } from '@/app/(features)/customers/vehicles/lib/vin-decode';
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 

@@ -16,7 +16,7 @@ import {
     AlertCircle,
     Edit
 } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+import { Nav } from '@/components/navigation/nav'
 import Link from 'next/link'
 import AdminNav from '../../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'

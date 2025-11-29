@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Phone, Clock, CheckCircle, AlertCircle, Plus, RefreshCw, Loader2 } from 'lucide-react'
 import { AlertTriangle, Info } from 'lucide-react'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/app/components/nav'
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
 import { EmptyState } from '@/components/common/feedback/empty-states'
 import { PartsService } from '@/app/(features)/parts/lib/partsService'
@@ -307,7 +307,7 @@ export default function VoiceCallingPage() {
     if (isLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center space-x-4 p-6">
@@ -327,7 +327,7 @@ export default function VoiceCallingPage() {
     if (error) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                         <CardContent className="flex items-center space-x-4 p-6">
@@ -355,9 +355,9 @@ export default function VoiceCallingPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1">
                     <div className="p-6 max-w-6xl mx-auto w-full space-y-6">
                         {/* Breadcrumb Navigation */}
                         <Breadcrumb>

@@ -73,8 +73,6 @@ export async function POST(
             supabase: serviceSupabase
         });
 
-        console.log('SMS confirmation result:', result);
-
         return NextResponse.json({ 
             success: true, 
             message: 'SMS confirmation sent successfully' 

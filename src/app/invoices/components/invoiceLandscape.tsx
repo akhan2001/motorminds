@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
-import { formatPhoneNumber } from "../utils/invoice-utils";
+import { formatPhoneNumber } from "@/utils/format-phone";
 
 // Create styles
 const styles = StyleSheet.create({

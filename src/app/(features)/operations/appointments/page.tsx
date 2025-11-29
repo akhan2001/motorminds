@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Nav } from '@/app/components/nav'
+// import { Nav } from '@/components/navigation/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
@@ -182,7 +182,7 @@ export default function AppointmentsPage() {
     if (isLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -202,7 +202,7 @@ export default function AppointmentsPage() {
     if (error) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -227,7 +227,7 @@ export default function AppointmentsPage() {
     if (!shopId || !user) {
         return (
             <div className="h-screen flex flex-col bg-background">
-                <Nav />
+                {/* <Nav /> */}
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -247,7 +247,7 @@ export default function AppointmentsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
 
             {/* Main Content - Calendar with Large Horizontal Padding */}
             <div className="flex-1 overflow-hidden px-12 py-6">

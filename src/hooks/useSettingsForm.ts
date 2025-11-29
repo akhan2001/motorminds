@@ -1,5 +1,5 @@
 import { useReducer, useCallback, useMemo } from 'react'
-import { WeekSchedule, DaySchedule } from '@/app/settings/profile-form'
+import { WeekSchedule, DaySchedule } from '@/app/(features)/settings/profile-form'
 
 // State types
 export interface SettingsFormState {

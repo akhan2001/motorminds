@@ -121,8 +121,6 @@ export async function POST(req: NextRequest) {
 
 		// First check if this is a special action command
 		const actionDetection = await detectActionCommand(currentMessageContent);
-
-		console.log("~ Action detection: ", actionDetection);
 		
 		if (actionDetection.isAction && actionDetection.response) {
 			// Return special action response
@@ -258,7 +256,6 @@ export async function POST(req: NextRequest) {
 		let sqlQuery;
 		try {
 			sqlQuery = await generateSQLQuery(currentMessageContent, shopId);
-			console.log("Generated SQL query:", sqlQuery);
 		} catch (error: any) {
 			const encoder = new TextEncoder();
 			const stream = new ReadableStream({
@@ -294,16 +291,12 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
-		// console.log("~ SQL query executed: ", results);
-
-		// 4. Generate natural language response using LangChain
+	// 4. Generate natural language response using LangChain
 		try {
 			// Format the results for the AI
 			const formattedResults = Array.isArray(results) 
 				? `Found ${results.length} results: ${JSON.stringify(results, null, 2)}` 
 				: JSON.stringify(results);
-
-			console.log("~ Formatted results: ", formattedResults);
 			
 			// Convert previous messages to LangChain messages
 			const messageHistory = [];

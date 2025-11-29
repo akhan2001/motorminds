@@ -14,9 +14,6 @@ async function getSegmentCustomersServer(
     shopId: string,
     segment: CustomerSegment
 ) {
-    console.log(`🔍 [SEGMENT] Building customer query for shop ${shopId}`)
-    console.log(`🔍 [SEGMENT] Segment filters:`, JSON.stringify(segment, null, 2))
-    
     // Start with basic customer query - filter out NULL, 'NULL' string, and empty strings
     let query = supabase
         .from('customers')
@@ -49,14 +46,6 @@ async function getSegmentCustomersServer(
             return v !== null && v !== undefined
         })
 
-    console.log(`🔍 [SEGMENT] Has filters: ${hasFilters}`)
-    console.log(`🔍 [SEGMENT] Segment keys: ${segment ? Object.keys(segment).join(', ') : 'null'}`)
-    
-    // If no filters, return all customers (empty segment = all customers)
-    if (!hasFilters) {
-        console.log(`🔍 [SEGMENT] No filters - returning all customers with phone numbers`)
-    }
-
     if (hasFilters) {
         // Apply customer tags filter
         if (segment.customer_tags && segment.customer_tags.length > 0) {
@@ -78,7 +67,6 @@ async function getSegmentCustomersServer(
         throw error
     }
 
-    console.log(`🔍 [SEGMENT] Initial customer query returned ${customers?.length || 0} customers`)
     let filtered = customers || []
 
     // Apply additional filters that require work orders
@@ -189,10 +177,8 @@ async function getSegmentCustomersServer(
                 segment.vehicle_years?.includes(v.year)
             )
         )
-        console.log(`🔍 [SEGMENT] After vehicle_years filter: ${filtered.length} customers`)
     }
 
-    console.log(`✅ [SEGMENT] Final filtered customer count: ${filtered.length}`)
     return filtered
 }
 
@@ -228,29 +214,17 @@ export async function POST(
             )
         }
 
-        console.log(`📋 [SEND] Starting send for campaign ${id}`)
-        console.log(`📋 [SEND] Campaign data:`, {
-            name: campaign.name,
-            status: campaign.status,
-            scheduled_send_at: campaign.scheduled_send_at,
-            customer_segment: campaign.customer_segment
-        })
-
         // Check if recipients already generated
         const { count: recipientCount } = await supabase
             .from('ai_mass_campaign_recipients')
             .select('*', { count: 'exact', head: true })
             .eq('campaign_id', id)
 
-        console.log(`📋 [SEND] Existing recipient count: ${recipientCount}`)
-
         let recipients: any[] = []
         
         if (recipientCount === 0) {
-            console.log(`📋 [SEND] No recipients found, generating new ones...`)
             // Generate recipients using server-side logic
             const customers = await getSegmentCustomersServer(supabase, shopId, campaign.customer_segment)
-            console.log(`📋 [SEND] Found ${customers.length} customers matching segment`)
 
             // Get shop info for variable replacement
             const { data: shop } = await supabase
@@ -318,7 +292,6 @@ export async function POST(
             }
 
             // Insert recipients
-            console.log(`📋 [SEND] Inserting ${recipients.length} recipients into database...`)
             const { error: insertError, data: insertedRecipients } = await supabase
                 .from('ai_mass_campaign_recipients')
                 .insert(recipients)
@@ -329,21 +302,15 @@ export async function POST(
                 throw insertError
             }
 
-            console.log(`✅ [SEND] Successfully inserted ${insertedRecipients?.length || 0} recipients`)
-
             // Update campaign total_recipients with actual inserted count
             const actualCount = insertedRecipients?.length || recipients.length
-            console.log(`📋 [SEND] Updating campaign total_recipients to ${actualCount}`)
             const { error: updateError } = await supabase
                 .from('ai_mass_campaigns')
                 .update({ total_recipients: actualCount })
                 .eq('id', id)
 
             if (updateError) {
-                console.error('❌ [SEND] Error updating total_recipients:', updateError)
-                // Don't throw, but log the error
-            } else {
-                console.log(`✅ [SEND] Successfully updated campaign total_recipients`)
+                console.error('Error updating total_recipients:', updateError)
             }
 
             // Update recipients array for response
@@ -371,10 +338,6 @@ export async function POST(
             ? new Date(campaign.scheduled_send_at)
             : null
 
-        console.log(`📅 [SEND] Date comparison:`)
-        console.log(`📅 [SEND] scheduled_send_at: ${campaign.scheduled_send_at}`)
-        console.log(`📅 [SEND] scheduledFor Date object: ${scheduledFor}`)
-
         let newStatus: string
         if (scheduledFor) {
             // Compare dates by date string (YYYY-MM-DD) using local date to avoid timezone issues
@@ -390,29 +353,20 @@ export async function POST(
             const todayDay = String(today.getDate()).padStart(2, '0')
             const todayDateStr = `${todayYear}-${todayMonth}-${todayDay}`
             
-            console.log(`📅 [SEND] Scheduled date string (local): ${scheduledDateStr}`)
-            console.log(`📅 [SEND] Today date string (local): ${todayDateStr}`)
-            console.log(`📅 [SEND] Is scheduled date > today? ${scheduledDateStr > todayDateStr}`)
-            
             // If scheduled date is today or in the past, send immediately
             // If scheduled date is in the future, keep as scheduled
             newStatus = scheduledDateStr > todayDateStr ? 'scheduled' : 'in_progress'
-            console.log(`📅 [SEND] Determined status: ${newStatus}`)
         } else {
             newStatus = 'in_progress'
-            console.log(`📅 [SEND] No scheduled date, status: ${newStatus}`)
         }
 
-        console.log(`📋 [SEND] Updating campaign status to: ${newStatus}`)
         const { error: statusUpdateError } = await supabase
             .from('ai_mass_campaigns')
             .update({ status: newStatus })
             .eq('id', id)
 
         if (statusUpdateError) {
-            console.error(`❌ [SEND] Error updating status:`, statusUpdateError)
-        } else {
-            console.log(`✅ [SEND] Successfully updated campaign status`)
+            console.error('Error updating campaign status:', statusUpdateError)
         }
 
         // If immediate, trigger processing synchronously
@@ -422,8 +376,6 @@ export async function POST(
                     || (request.headers.get('host')?.includes('localhost') 
                         ? `http://${request.headers.get('host')}` 
                         : `https://${request.headers.get('host')}`)
-
-                console.log(`🚀 Triggering campaign processing for campaign ${id}...`)
                 
                 const processResponse = await fetch(`${baseUrl}/api/messaging/campaigns-process`, {
                     method: 'POST',
@@ -433,13 +385,10 @@ export async function POST(
                 const processResult = await processResponse.json()
                 
                 if (!processResponse.ok) {
-                    console.error('❌ Campaign processing failed:', processResult)
-                    // Don't fail the send request, but log the error
-                } else {
-                    console.log(`✅ Campaign processing started:`, processResult)
+                    console.error('Campaign processing failed:', processResult)
                 }
             } catch (err) {
-                console.error('❌ Failed to trigger campaign processing:', err)
+                console.error('Failed to trigger campaign processing:', err)
                 // Don't fail the send request - cron will pick it up
             }
         }

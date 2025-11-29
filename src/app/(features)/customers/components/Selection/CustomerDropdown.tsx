@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/utils/supabase/client"
-import { formatPhoneNumber } from "@/lib/utils/text"
+import { formatPhoneNumber } from "@/utils/format-phone"
 
 // Customer dropdown option (same as work-order-form.tsx)
 interface CustomerOption {

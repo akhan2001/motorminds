@@ -81,7 +81,6 @@ function calculateAvailableSlots(
 
         // Check if operating hours exist
         if (!parsedHours || typeof parsedHours !== 'object') {
-            console.log('No operating hours configured for shop');
             return [];
         }
 
@@ -90,7 +89,6 @@ function calculateAvailableSlots(
         const daySchedule = parsedHours[dayOfWeek];
 
         if (!daySchedule) {
-            console.log('No schedule found for', dayOfWeek);
             return [];
         }
 

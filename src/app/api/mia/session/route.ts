@@ -5,32 +5,29 @@ import { createClient } from '@/utils/supabase/server'
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient()
-        const shopId = request.headers.get('x-shop-id')
-        const userId = request.headers.get('x-user-id')
-
-        console.log('Session API Debug:', {
-            shopId,
-            userId,
-            headers: Object.fromEntries(request.headers.entries())
-        })
+        
+        // Get shop_id from authenticated user
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        
+        // Get shop_id from user metadata or users table
+        let shopId = user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
 
         if (!shopId) {
-            console.error('Missing shop ID in request headers')
-            // TEMPORARY: For debugging, create a fallback session without shop_id requirement
-            console.log('Creating fallback session without shop_id for debugging')
-            const fallbackSessionId = `fallback_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            
-            return NextResponse.json({ 
-                session: {
-                    id: 'fallback',
-                    session_id: fallbackSessionId,
-                    shop_id: null,
-                    vehicle_context: {},
-                    status: 'active',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }
-            })
+            return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
         }
 
         const { searchParams } = new URL(request.url)
@@ -48,7 +45,6 @@ export async function GET(request: NextRequest) {
             if (error) {
                 console.error('Error fetching session:', error)
                 // If session not found, create a new one instead of returning error
-                console.log('Session not found, creating new session instead')
                 const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                 
                 const { data: newSession, error: createError } = await supabase
@@ -75,11 +71,6 @@ export async function GET(request: NextRequest) {
             // Create new session
             const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
             
-            console.log('Creating new session:', {
-                session_id: newSessionId,
-                shop_id: shopId
-            })
-            
             const { data: session, error } = await supabase
                 .from('mia_sessions')
                 .insert({
@@ -105,7 +96,6 @@ export async function GET(request: NextRequest) {
                 }, { status: 500 })
             }
 
-            console.log('Session created successfully:', session)
             return NextResponse.json({ session })
         }
     } catch (error) {
@@ -118,7 +108,26 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const supabase = await createClient()
-        const shopId = request.headers.get('x-shop-id')
+        
+        // Get shop_id from authenticated user
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        
+        // Get shop_id from user metadata or users table
+        let shopId = user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
 
         if (!shopId) {
             return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
