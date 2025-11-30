@@ -9,4 +9,8 @@ export { QuickActionCard } from './QuickActionCard'
 export { FilterBar } from './FilterBar'
 export { SearchBar } from './SearchBar'
 export { BulkActionsBar } from './BulkActionsBar'
+export { CustomerCard } from './CustomerCard'
+export { CustomerDetailSheet } from './CustomerDetailSheet'
+export { SearchInput } from './SearchInput'
+export { DataTable } from './DataTable'
 

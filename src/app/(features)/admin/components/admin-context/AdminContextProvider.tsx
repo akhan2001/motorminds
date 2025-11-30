@@ -8,12 +8,14 @@ export interface AdminContextType {
     shopId?: string | null
     loading: boolean
     error?: string | null
+    refresh: () => Promise<void>
 }
 
 const AdminContext = createContext<AdminContextType>({
     adminType: null,
     loading: true,
-    error: null
+    error: null,
+    refresh: async () => {}
 })
 
 export function AdminContextProvider({ children }: { children: ReactNode }) {
@@ -27,35 +29,48 @@ export function AdminContextProvider({ children }: { children: ReactNode }) {
         fetchAdminContext()
     }, [])
 
-    const fetchAdminContext = async () => {
+    const fetchAdminContext = async (skipCache = false) => {
         try {
-            const response = await fetch('/api/admin/context')
+            setContext(prev => ({ ...prev, loading: true, error: null }))
+            
+            const url = skipCache ? '/api/admin/context?debug=true&clearCache=true' : '/api/admin/context'
+            const response = await fetch(url)
             
             if (!response.ok) {
-                throw new Error('Failed to fetch admin context')
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Failed to fetch admin context')
             }
 
             const data = await response.json()
+            
+            console.log('Admin context fetched:', data)
             
             setContext({
                 adminType: data.adminType,
                 organizationId: data.organizationId,
                 shopId: data.shopId,
                 loading: false,
-                error: null
+                error: null,
+                refresh: () => fetchAdminContext(true)
             })
         } catch (error) {
             console.error('Error fetching admin context:', error)
             setContext({
                 adminType: null,
+                organizationId: null,
+                shopId: null,
                 loading: false,
-                error: error instanceof Error ? error.message : 'Unknown error'
+                error: error instanceof Error ? error.message : 'Unknown error',
+                refresh: () => fetchAdminContext(true)
             })
         }
     }
 
     return (
-        <AdminContext.Provider value={context}>
+        <AdminContext.Provider value={{
+            ...context,
+            refresh: () => fetchAdminContext(true)
+        }}>
             {children}
         </AdminContext.Provider>
     )
