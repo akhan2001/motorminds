@@ -14,3 +14,6 @@ export { CustomerDetailSheet } from './CustomerDetailSheet'
 export { SearchInput } from './SearchInput'
 export { DataTable } from './DataTable'
 
+// Customer detail modular components
+export * from './customer-detail'
+
