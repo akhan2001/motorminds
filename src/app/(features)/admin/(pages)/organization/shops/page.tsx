@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Building2, Plus, Search, MapPin, Phone, Mail } from 'lucide-react'
-import { Nav } from '@/components/navigation/nav'
+// import { Nav } from '@/components/navigation/nav'
 import Link from 'next/link'
 import AdminNav from '../../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'
@@ -60,7 +60,7 @@ export default function OrganizationShopsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">
