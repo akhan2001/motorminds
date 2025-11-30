@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Suspense } from 'react'
 import { CustomerDetailSheet } from '../../../components/shared'
@@ -8,6 +8,7 @@ import { CustomerTable } from '../../../components/shared/CustomerTable'
 import { useAdminContext } from '@/contexts/admin-context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
+import { useDebouncedSearch } from '../../../hooks/use-debounced-search'
 
 interface Customer {
     id: string
@@ -50,46 +51,60 @@ function OrganizationCustomersContent() {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
-    const [searchTerm, setSearchTerm] = useState('')
 
-    // Fetch customers with optimized query
+    // Use the debounced search hook properly
+    const { searchTerm, debouncedSearchTerm, updateSearchTerm } = useDebouncedSearch('', 500)
+
+    // Fetch customers with optimized query using debounced search
     const { data, isLoading, error } = useQuery({
-        queryKey: ['admin', 'organization', organizationId, 'customers', searchTerm, currentPage],
+        queryKey: ['admin', 'organization', organizationId, 'customers', debouncedSearchTerm, currentPage],
         queryFn: async () => {
             const params = new URLSearchParams({
-                search: searchTerm,
                 page: currentPage.toString(),
                 limit: '50'
             })
+            
+            // Only add search param if there's a search term
+            if (debouncedSearchTerm.trim()) {
+                params.set('search', debouncedSearchTerm.trim())
+            }
+            
+            
             const res = await fetch(`/api/admin/organization/customers?${params}`)
             
             if (!res.ok) {
-                throw new Error('Failed to fetch customers')
+                const errorText = await res.text()
+                console.error('Failed to fetch customers:', res.status, errorText)
+                throw new Error(`Failed to fetch customers: ${res.status}`)
             }
             
             return res.json()
         },
         enabled: !!organizationId,
-        staleTime: 30000 // 30 seconds
+        staleTime: 30000, // 30 seconds
+        keepPreviousData: true // Keep previous data while fetching new data
     })
 
     // Fetch customer history when a customer is selected
-    const { data: customerHistory, isLoading: historyLoading } = useQuery({
+    const { data: customerHistory, isLoading: historyLoading, error: historyError } = useQuery({
         queryKey: ['admin', 'customer', selectedCustomer?.id, 'history'],
         queryFn: async () => {
             if (!selectedCustomer) return null
             
-            // This would be implemented based on your API structure
+            
             const res = await fetch(`/api/admin/customers/${selectedCustomer.id}/history`)
             
             if (!res.ok) {
-                return null // Return null if history not available
+                const errorText = await res.text()
+                console.error('Failed to fetch customer history:', res.status, errorText)
+                throw new Error(`Failed to fetch customer history: ${res.status}`)
             }
             
             return res.json()
         },
         enabled: !!selectedCustomer,
-        staleTime: 60000 // 1 minute
+        staleTime: 60000, // 1 minute
+        retry: 1 // Only retry once on failure
     })
 
     const handleCustomerClick = useCallback((customer: Customer) => {
@@ -103,9 +118,18 @@ function OrganizationCustomersContent() {
     }, [])
 
     const handleSearch = useCallback((search: string) => {
-        setSearchTerm(search)
+        updateSearchTerm(search)
         setCurrentPage(1) // Reset to first page on search
-    }, [])
+    }, [updateSearchTerm])
+
+    // Memoize customer data to prevent unnecessary re-renders
+    const customers = useMemo(() => {
+        return (data as any)?.customers || []
+    }, [data])
+
+    const totalCount = useMemo(() => {
+        return (data as any)?.total || 0
+    }, [data])
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page)
@@ -124,10 +148,10 @@ function OrganizationCustomersContent() {
                 </div>
                 
                 <CustomerTable
-                    customers={(data as any)?.customers || []}
+                    customers={customers}
                     loading={isLoading}
                     error={error?.message || null}
-                    totalCount={(data as any)?.total || 0}
+                    totalCount={totalCount}
                     currentPage={currentPage}
                     itemsPerPage={50}
                     onCustomerClick={handleCustomerClick}
@@ -143,6 +167,7 @@ function OrganizationCustomersContent() {
                     isOpen={isSheetOpen}
                     onClose={handleSheetClose}
                     loading={historyLoading}
+                    error={historyError?.message || null}
                 />
             </div>
         </main>

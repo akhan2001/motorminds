@@ -5,19 +5,28 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-    User, 
-    Mail, 
-    Phone, 
-    MapPin, 
-    Building2, 
-    Calendar, 
-    Car, 
-    Wrench, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+    User,
+    Mail,
+    Phone,
+    MapPin,
+    Building2,
+    Calendar,
+    Car,
+    Wrench,
     FileText,
     DollarSign,
     Clock,
-    History
+    History,
+    CalendarDays,
+    Receipt,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    Users,
+    Loader2
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatPhoneNumber } from '@/utils/format-phone'
@@ -44,10 +53,51 @@ interface CustomerHistory {
     workOrders: Array<{
         id: string
         work_order_number: string
+        title?: string
         status: string
+        priority?: string
         created_at: string
+        updated_at?: string
+        completed_at?: string
         total_amount?: number
-        vehicle_info?: string
+        customer_vehicles?: {
+            id: string
+            year?: number
+            make?: string
+            model?: string
+            license_plate?: string
+        }
+        employees?: {
+            id: string
+            first_name?: string
+            last_name?: string
+        }
+        shops?: {
+            id: string
+            shop_name: string
+        }
+    }>
+    appointments: Array<{
+        id: string
+        appointment_date: string
+        start_time?: string
+        end_time?: string
+        service_type: string
+        status?: string
+        notes?: string
+        created_at: string
+        confirmation_code?: string
+        customer_vehicles?: {
+            id: string
+            year?: number
+            make?: string
+            model?: string
+            license_plate?: string
+        }
+        shops?: {
+            id: string
+            shop_name: string
+        }
     }>
     invoices: Array<{
         id: string
@@ -55,9 +105,28 @@ interface CustomerHistory {
         status: string
         total_amount: number
         issue_date: string
+        due_date?: string
+        paid_date?: string
+        created_at: string
+        work_orders?: {
+            id: string
+            work_order_number: string
+            title?: string
+        }
+        shops?: {
+            id: string
+            shop_name: string
+        }
     }>
     totalSpent: number
     lastVisit?: string
+    stats?: {
+        totalWorkOrders: number
+        totalAppointments: number
+        totalInvoices: number
+        completedWorkOrders: number
+        paidInvoices: number
+    }
 }
 
 interface CustomerDetailSheetProps {
@@ -66,6 +135,7 @@ interface CustomerDetailSheetProps {
     isOpen: boolean
     onClose: () => void
     loading?: boolean
+    error?: string | null
 }
 
 /**
@@ -108,6 +178,30 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
             return <Badge className="bg-red-500/10 dark:bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/20">{status}</Badge>
         }
         return <Badge className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20">{status}</Badge>
+    }
+
+    const getWorkOrderStatusVariant = (status: string) => {
+        const statusLower = status.toLowerCase()
+        if (statusLower === 'completed') return 'default'
+        if (statusLower === 'in_progress' || statusLower === 'pending') return 'secondary'
+        if (statusLower === 'cancelled') return 'destructive'
+        return 'outline'
+    }
+
+    const getAppointmentStatusVariant = (status: string) => {
+        const statusLower = status.toLowerCase()
+        if (statusLower === 'completed' || statusLower === 'confirmed') return 'default'
+        if (statusLower === 'scheduled' || statusLower === 'in_progress') return 'secondary'
+        if (statusLower === 'cancelled') return 'destructive'
+        return 'outline'
+    }
+
+    const getInvoiceStatusVariant = (status: string) => {
+        const statusLower = status.toLowerCase()
+        if (statusLower === 'paid') return 'default'
+        if (statusLower === 'pending' || statusLower === 'sent') return 'secondary'
+        if (statusLower === 'overdue' || statusLower === 'cancelled') return 'destructive'
+        return 'outline'
     }
 
     return (
@@ -181,7 +275,7 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
 
                     {/* Customer Stats */}
                     {customerHistory && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-2 mb-2">
@@ -200,91 +294,255 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                                         <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Work Orders</span>
                                     </div>
                                     <p className="text-lg font-semibold text-foreground dark:text-white">
-                                        {customerHistory.workOrders.length}
+                                        {customerHistory.stats?.totalWorkOrders || customerHistory.workOrders.length}
                                     </p>
                                 </CardContent>
                             </Card>
                             <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Clock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
-                                        <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Last Visit</span>
+                                        <CalendarDays className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                                        <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Appointments</span>
                                     </div>
                                     <p className="text-lg font-semibold text-foreground dark:text-white">
-                                        {customerHistory.lastVisit ? formatDate(customerHistory.lastVisit) : 'Never'}
+                                        {customerHistory.stats?.totalAppointments || customerHistory.appointments?.length || 0}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                            <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                                <CardContent className="p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Receipt className="h-4 w-4 text-purple-500 dark:text-purple-400" />
+                                        <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Invoices</span>
+                                    </div>
+                                    <p className="text-lg font-semibold text-foreground dark:text-white">
+                                        {customerHistory.stats?.totalInvoices || customerHistory.invoices?.length || 0}
                                     </p>
                                 </CardContent>
                             </Card>
                         </div>
                     )}
 
-                    {/* Recent Work Orders */}
-                    {customerHistory?.workOrders && customerHistory.workOrders.length > 0 && (
-                        <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Wrench className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                                <h3 className="text-foreground dark:text-white font-medium">Recent Work Orders</h3>
-                            </div>
-                            <div className="space-y-3">
-                                {customerHistory.workOrders.slice(0, 5).map((workOrder) => (
-                                    <div key={workOrder.id} className="flex items-center justify-between p-3 bg-white dark:bg-[#0a0a0a] rounded border border-border dark:border-[#333333]">
-                                        <div className="flex items-center gap-3">
-                                            <Wrench className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
-                                            <div>
-                                                <p className="text-sm font-medium text-foreground dark:text-white">
-                                                    #{workOrder.work_order_number}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground dark:text-gray-400">
-                                                    {formatDate(workOrder.created_at)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {workOrder.total_amount && (
-                                                <span className="text-sm font-medium text-foreground dark:text-white">
-                                                    {formatCurrency(workOrder.total_amount)}
-                                                </span>
-                                            )}
-                                            {getStatusBadge(workOrder.status)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    {/* Customer History Tabs */}
+                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
+                                <History className="h-5 w-5" />
+                                Customer History
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {loading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : (
+                                <Tabs defaultValue="work-orders" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="work-orders" className="flex items-center gap-2">
+                                            <Wrench className="h-4 w-4" />
+                                            Work Orders
+                                        </TabsTrigger>
+                                        <TabsTrigger value="appointments" className="flex items-center gap-2">
+                                            <CalendarDays className="h-4 w-4" />
+                                            Appointments
+                                        </TabsTrigger>
+                                        <TabsTrigger value="invoices" className="flex items-center gap-2">
+                                            <Receipt className="h-4 w-4" />
+                                            Invoices
+                                        </TabsTrigger>
+                                    </TabsList>
 
-                    {/* Recent Invoices */}
-                    {customerHistory?.invoices && customerHistory.invoices.length > 0 && (
-                        <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
-                            <div className="flex items-center gap-2 mb-3">
-                                <FileText className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                                <h3 className="text-foreground dark:text-white font-medium">Recent Invoices</h3>
-                            </div>
-                            <div className="space-y-3">
-                                {customerHistory.invoices.slice(0, 5).map((invoice) => (
-                                    <div key={invoice.id} className="flex items-center justify-between p-3 bg-white dark:bg-[#0a0a0a] rounded border border-border dark:border-[#333333]">
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
-                                            <div>
-                                                <p className="text-sm font-medium text-foreground dark:text-white">
-                                                    #{invoice.invoice_number}
+                                    <TabsContent value="work-orders" className="mt-4">
+                                        <ScrollArea className="h-[400px]">
+                                            {!customerHistory?.workOrders || customerHistory.workOrders.length === 0 ? (
+                                                <p className="text-muted-foreground dark:text-gray-400 text-center py-8">
+                                                    No work orders found
                                                 </p>
-                                                <p className="text-xs text-muted-foreground dark:text-gray-400">
-                                                    {formatDate(invoice.issue_date)}
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {customerHistory.workOrders.map((workOrder) => (
+                                                        <div key={workOrder.id} className="p-4 bg-card dark:bg-[#0f0f0f] rounded-lg border border-border dark:border-[#2a2a2a]">
+                                                            <div className="flex items-start justify-between">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <h4 className="font-medium text-foreground dark:text-white">
+                                                                            #{workOrder.work_order_number}
+                                                                        </h4>
+                                                                        <Badge
+                                                                            variant={getWorkOrderStatusVariant(workOrder.status)}
+                                                                            className="capitalize"
+                                                                        >
+                                                                            {workOrder.status}
+                                                                        </Badge>
+                                                                    </div>
+                                                                    {workOrder.title && (
+                                                                        <p className="text-sm text-muted-foreground dark:text-gray-400 mb-2">
+                                                                            {workOrder.title}
+                                                                        </p>
+                                                                    )}
+                                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Calendar className="h-3 w-3" />
+                                                                            {formatDate(workOrder.created_at)}
+                                                                        </div>
+                                                                        {workOrder.customer_vehicles && (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Car className="h-3 w-3" />
+                                                                                {`${workOrder.customer_vehicles.year || ''} ${workOrder.customer_vehicles.make || ''} ${workOrder.customer_vehicles.model || ''}`.trim() || 'Unknown Vehicle'}
+                                                                            </div>
+                                                                        )}
+                                                                        {workOrder.employees && (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Users className="h-3 w-3" />
+                                                                                {`${workOrder.employees.first_name || ''} ${workOrder.employees.last_name || ''}`.trim()}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                {workOrder.total_amount && (
+                                                                    <div className="text-right">
+                                                                        <p className="font-semibold text-foreground dark:text-white">
+                                                                            {formatCurrency(workOrder.total_amount)}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </TabsContent>
+
+                                    <TabsContent value="appointments" className="mt-4">
+                                        <ScrollArea className="h-[400px]">
+                                            {!customerHistory?.appointments || customerHistory.appointments.length === 0 ? (
+                                                <p className="text-muted-foreground dark:text-gray-400 text-center py-8">
+                                                    No appointments found
                                                 </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-foreground dark:text-white">
-                                                {formatCurrency(invoice.total_amount)}
-                                            </span>
-                                            {getStatusBadge(invoice.status)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {customerHistory.appointments.map((appointment) => (
+                                                        <div key={appointment.id} className="p-4 bg-card dark:bg-[#0f0f0f] rounded-lg border border-border dark:border-[#2a2a2a]">
+                                                            <div className="flex items-start justify-between">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <h4 className="font-medium text-foreground dark:text-white">
+                                                                            {appointment.service_type}
+                                                                        </h4>
+                                                                        {appointment.status && (
+                                                                            <Badge
+                                                                                variant={getAppointmentStatusVariant(appointment.status)}
+                                                                                className="capitalize"
+                                                                            >
+                                                                                {appointment.status}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Calendar className="h-3 w-3" />
+                                                                            {formatDate(appointment.appointment_date)}
+                                                                        </div>
+                                                                        {appointment.start_time && (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Clock className="h-3 w-3" />
+                                                                                {appointment.start_time}
+                                                                                {appointment.end_time && ` - ${appointment.end_time}`}
+                                                                            </div>
+                                                                        )}
+                                                                        {appointment.customer_vehicles && (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Car className="h-3 w-3" />
+                                                                                {`${appointment.customer_vehicles.year || ''} ${appointment.customer_vehicles.make || ''} ${appointment.customer_vehicles.model || ''}`.trim() || 'Unknown Vehicle'}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    {appointment.notes && (
+                                                                        <p className="text-sm text-muted-foreground dark:text-gray-400 mt-2">
+                                                                            {appointment.notes}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                {appointment.confirmation_code && (
+                                                                    <div className="text-right">
+                                                                        <p className="text-xs text-muted-foreground dark:text-gray-400">
+                                                                            Code: {appointment.confirmation_code}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </TabsContent>
+
+                                    <TabsContent value="invoices" className="mt-4">
+                                        <ScrollArea className="h-[400px]">
+                                            {!customerHistory?.invoices || customerHistory.invoices.length === 0 ? (
+                                                <p className="text-muted-foreground dark:text-gray-400 text-center py-8">
+                                                    No invoices found
+                                                </p>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {customerHistory.invoices.map((invoice) => (
+                                                        <div key={invoice.id} className="p-4 bg-card dark:bg-[#0f0f0f] rounded-lg border border-border dark:border-[#2a2a2a]">
+                                                            <div className="flex items-start justify-between">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <h4 className="font-medium text-foreground dark:text-white">
+                                                                            #{invoice.invoice_number}
+                                                                        </h4>
+                                                                        <Badge
+                                                                            variant={getInvoiceStatusVariant(invoice.status)}
+                                                                            className="capitalize"
+                                                                        >
+                                                                            {invoice.status}
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground dark:text-gray-400">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Calendar className="h-3 w-3" />
+                                                                            Issued: {formatDate(invoice.issue_date)}
+                                                                        </div>
+                                                                        {invoice.due_date && (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Clock className="h-3 w-3" />
+                                                                                Due: {formatDate(invoice.due_date)}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    {invoice.work_orders && (
+                                                                        <p className="text-sm text-muted-foreground dark:text-gray-400 mt-2">
+                                                                            Work Order: #{invoice.work_orders.work_order_number}
+                                                                            {invoice.work_orders.title && ` - ${invoice.work_orders.title}`}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="font-semibold text-foreground dark:text-white">
+                                                                        {formatCurrency(invoice.total_amount)}
+                                                                    </p>
+                                                                    {invoice.paid_date && (
+                                                                        <p className="text-xs text-green-600 dark:text-green-400">
+                                                                            Paid: {formatDate(invoice.paid_date)}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </TabsContent>
+                                </Tabs>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {/* Notes */}
                     {customer.notes && (

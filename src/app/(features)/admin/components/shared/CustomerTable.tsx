@@ -14,7 +14,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useDebouncedSearch } from '../../hooks/use-debounced-search'
+// Removed useDebouncedSearch import as we're now using server-side search
 
 interface Customer {
     id: string
@@ -60,18 +60,21 @@ export const CustomerTable = React.memo<CustomerTableProps>(({
     className = ""
 }) => {
     const [searchQuery, setSearchQuery] = useState("")
-    const { debouncedSearchTerm } = useDebouncedSearch(searchQuery, 300)
 
-    // Handle search input change
+    // Handle search input change with immediate feedback
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
         setSearchQuery(value)
-    }, [])
+        // Trigger search immediately for better UX with server-side search
+        onSearch(value)
+    }, [onSearch])
 
-    // Trigger search when debounced term changes
+    // Clear search when component unmounts or search is cleared
     React.useEffect(() => {
-        onSearch(debouncedSearchTerm)
-    }, [debouncedSearchTerm, onSearch])
+        if (searchQuery === '') {
+            onSearch('')
+        }
+    }, [searchQuery, onSearch])
 
     // Format phone number
     const formatPhoneNumber = useCallback((phone: string | undefined | null) => {
@@ -195,7 +198,16 @@ export const CustomerTable = React.memo<CustomerTableProps>(({
                 </div>
                 {searchQuery && !loading && (
                     <p className="text-sm text-muted-foreground mt-2">
-                        Found {totalCount} {totalCount === 1 ? 'customer' : 'customers'}
+                        {totalCount > 0 ? (
+                            <>Found {totalCount} {totalCount === 1 ? 'customer' : 'customers'} for "{searchQuery}"</>
+                        ) : (
+                            <>No customers found for "{searchQuery}"</>
+                        )}
+                    </p>
+                )}
+                {loading && searchQuery && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Searching for "{searchQuery}"...
                     </p>
                 )}
             </div>

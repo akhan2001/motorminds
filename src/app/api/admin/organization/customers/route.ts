@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminContext } from '@/lib/auth/admin-role-checker'
 
 export async function GET(request: NextRequest) {
     try {
+        if (!supabaseAdmin) {
+            console.error('Supabase admin client not configured')
+            return NextResponse.json(
+                { error: 'Database connection not configured' },
+                { status: 500 }
+            )
+        }
+
         const supabase = await createClient()
         
         // Get authenticated user
@@ -19,7 +28,7 @@ export async function GET(request: NextRequest) {
         // Get admin context
         const adminContext = await getAdminContext(user.id)
         
-        if (!adminContext || adminContext.adminType !== 'organization-admin') {
+        if (!adminContext || (adminContext.adminType !== 'organization-admin' && adminContext.adminType !== 'super-admin')) {
             return NextResponse.json(
                 { error: 'Forbidden - Organization admin access required' },
                 { status: 403 }
@@ -27,39 +36,70 @@ export async function GET(request: NextRequest) {
         }
 
         const { searchParams } = new URL(request.url)
-        const search = searchParams.get('search')
+        const search = searchParams.get('search')?.trim()
         const shopId = searchParams.get('shopId') // Optional: filter by shop
         const page = parseInt(searchParams.get('page') || '1')
         const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
         const offset = (page - 1) * limit
 
-        // Build query using JOIN for efficiency
-        let query = supabase
-            .from('customers')
-            .select(`
-                *,
-                shops:shop_id (
-                    id,
-                    shop_name,
-                    shop_email,
-                    organization_id
-                )
-            `, { count: 'exact' })
 
-        // Filter by organization via shops
-        // RLS policy will handle access, but we add explicit filter for clarity
-        const { data: orgShops } = await supabase
+        // Get organization shops first (using admin client for efficiency)
+        let shopsQuery = supabaseAdmin
             .from('shops')
-            .select('id')
-            .eq('organization_id', adminContext.organizationId!)
+            .select('id, shop_name')
+            
+        // For super-admin, allow access to all organizations, otherwise filter by organization
+        if (adminContext.adminType === 'super-admin') {
+            // Super admin can see all shops, but we still need an organization filter
+            // Check if organizationId is provided in query params for super-admin
+            const orgIdParam = searchParams.get('organizationId')
+            if (orgIdParam) {
+                shopsQuery = shopsQuery.eq('organization_id', orgIdParam)
+            } else if (adminContext.organizationId) {
+                shopsQuery = shopsQuery.eq('organization_id', adminContext.organizationId)
+            }
+        } else {
+            // Organization admin - filter by their organization
+            shopsQuery = shopsQuery.eq('organization_id', adminContext.organizationId!)
+        }
+        
+        const { data: orgShops, error: shopsError } = await shopsQuery
+
+        if (shopsError) {
+            console.error('Error fetching organization shops:', shopsError)
+            return NextResponse.json(
+                { error: 'Failed to fetch organization shops' },
+                { status: 500 }
+            )
+        }
 
         const shopIds = orgShops?.map(s => s.id) || []
         
         if (shopIds.length === 0) {
-            return NextResponse.json({ customers: [], total: 0, page, limit })
+            return NextResponse.json({ customers: [], total: 0, page, limit, totalPages: 0 })
         }
 
-        // Apply shop filter
+        // Build optimized query using admin client (bypasses RLS)
+        let query = supabaseAdmin
+            .from('customers')
+            .select(`
+                id,
+                customer_name,
+                customer_email,
+                customer_phone,
+                customer_address,
+                shop_id,
+                created_at,
+                updated_at,
+                notes,
+                shops:shop_id (
+                    id,
+                    shop_name,
+                    shop_email
+                )
+            `, { count: 'exact' })
+
+        // Apply shop filter first (most selective)
         if (shopId && shopId !== 'all') {
             if (!shopIds.includes(shopId)) {
                 return NextResponse.json(
@@ -72,14 +112,27 @@ export async function GET(request: NextRequest) {
             query = query.in('shop_id', shopIds)
         }
 
-        // Apply search filter
-        if (search) {
-            query = query.or(
-                `customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`
-            )
+        // Apply optimized search filter (following customer search patterns)
+        if (search && search.length >= 1) {
+            if (search.match(/^\+?[\d\s()-]+$/)) {
+                // Phone number search - use indexed phone column for fast lookups
+                const cleanPhone = search.replace(/\D/g, '')
+                query = query.ilike('customer_phone', `%${cleanPhone}%`)
+            } else if (search.includes('@')) {
+                // Email search - direct column match
+                query = query.ilike('customer_email', `%${search}%`)
+            } else if (search.length >= 2) {
+                // Multi-field search with OR condition for better performance
+                query = query.or(
+                    `customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%,customer_address.ilike.%${search}%`
+                )
+            } else {
+                // Short queries - use simple ILIKE on name only
+                query = query.ilike('customer_name', `%${search}%`)
+            }
         }
 
-        // Apply pagination
+        // Apply pagination and ordering
         const { data: customers, error, count } = await query
             .order('customer_name', { ascending: true })
             .range(offset, offset + limit - 1)
@@ -92,12 +145,47 @@ export async function GET(request: NextRequest) {
             )
         }
 
+        // Client-side relevance scoring for search results (only if searching)
+        let finalCustomers = customers || []
+        
+        if (search && search.length >= 2) {
+            const scoredCustomers = finalCustomers.map(customer => {
+                let score = 0
+                const lowerQuery = search.toLowerCase()
+                const lowerName = customer.customer_name?.toLowerCase() || ''
+
+                // Boost exact matches
+                if (lowerName === lowerQuery) score += 100
+                // Boost name starts with query
+                else if (lowerName.startsWith(lowerQuery)) score += 50
+                // Boost name contains query
+                else if (lowerName.includes(lowerQuery)) score += 25
+
+                // Boost if email matches
+                if (customer.customer_email?.toLowerCase().includes(lowerQuery)) score += 30
+
+                // Boost if phone matches
+                if (customer.customer_phone?.includes(search.replace(/\D/g, ''))) score += 40
+
+                // Boost if address matches
+                if (customer.customer_address?.toLowerCase().includes(lowerQuery)) score += 15
+                
+                return { ...customer, _score: score }
+            }).sort((a, b) => b._score - a._score)
+
+            // Remove the score from the response
+            finalCustomers = scoredCustomers.map(({ _score, ...customer }) => customer)
+        }
+
+        const totalPages = Math.ceil((count || 0) / limit)
+
         return NextResponse.json({
-            customers: customers || [],
+            customers: finalCustomers,
             total: count || 0,
             page,
             limit,
-            totalPages: Math.ceil((count || 0) / limit)
+            totalPages,
+            query: search || null
         })
 
     } catch (error) {
