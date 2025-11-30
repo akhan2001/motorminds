@@ -1,5 +1,6 @@
 import { useChat } from '@ai-sdk/react'
 import { useState } from 'react'
+// @ts-ignore - DefaultChatTransport is available at runtime from ai v5
 import { DefaultChatTransport } from 'ai'
 import { getShopIdForUser } from '@/utils/get-shop-id'
 import { BASE_PATH } from '@/lib/constants'

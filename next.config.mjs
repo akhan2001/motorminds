@@ -1,3 +1,9 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 let userConfig = undefined
 try {
 	userConfig = await import('./v0-user-next.config')
@@ -39,6 +45,22 @@ const nextConfig = {
 				enforce: true,
 			}
 		}
+
+		// Ensure @ai-sdk/provider always resolves to the root package,
+		// avoiding partial scoped installs under @ai-sdk/gateway/node_modules
+		config.resolve = config.resolve || {}
+		config.resolve.alias = {
+			...(config.resolve.alias || {}),
+			'@ai-sdk/provider': path.join(
+				__dirname,
+				'node_modules',
+				'@ai-sdk',
+				'provider',
+				'dist',
+				'index.mjs'
+			),
+		}
+
 		return config
 	},
 }

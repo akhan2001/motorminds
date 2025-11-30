@@ -3,6 +3,7 @@
 
 import React, { useEffect, useRef } from 'react'
 import { useChat, type UIMessage } from '@ai-sdk/react'
+// @ts-ignore - DefaultChatTransport is available at runtime from ai v5
 import { DefaultChatTransport } from 'ai'
 import { DiagnosticsForm } from './DiagnosticsForm'
 import { MotorToolDisplay, isMotorTool } from './MotorToolDisplay'
@@ -69,19 +70,25 @@ export function AIDiagnosticsPanel({
 		return []
 	}, [reportedIssue, dtcCodes, baseVehicleId])
 
-	// useChat hook for AI streaming (AI SDK 5.0 with DefaultChatTransport)
+	// useChat hook for AI streaming (AI SDK with DefaultChatTransport)
 	const chat = useChat({
 		id: 'ai-diagnostics',
 		transport: new DefaultChatTransport({
 			api: '/api/ai/diagnostics',
-			async prepareSendMessagesRequest({ messages, ...options }) {
+			async prepareSendMessagesRequest({
+				messages,
+				...options
+			}: {
+				messages: UIMessage[]
+				[key: string]: any
+			}) {
 				// Convert UIMessage[] to the format expected by the API
 				// The API expects messages with role and content
 				const formattedMessages = messages.map((msg: UIMessage) => {
 					// Extract text content from parts array
 					const textParts = msg.parts?.filter(part => part.type === 'text') || []
 					const content = textParts.map(part => (part as any).text).join('')
-					
+
 					return {
 						id: msg.id,
 						role: msg.role,
