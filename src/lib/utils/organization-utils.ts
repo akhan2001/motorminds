@@ -1,4 +1,24 @@
 // Utility functions for organization-level operations
+import { AdminType } from '@/app/(features)/admin/types/admin';
+
+/**
+ * Determines if a user is an organization admin
+ * @param adminType - The admin type
+ * @returns boolean indicating if user is organization admin
+ */
+export function isOrganizationAdmin(adminType?: AdminType | null): boolean {
+    return adminType === 'organization-admin' || adminType === 'super-admin';
+}
+
+/**
+ * Determines if organization-wide search should be enabled
+ * @param adminType - The admin type
+ * @param organizationId - The organization ID
+ * @returns boolean indicating if organization search should be enabled
+ */
+export function shouldEnableOrganizationWideSearch(adminType?: AdminType | null, organizationId?: string | null): boolean {
+    return isOrganizationAdmin(adminType) && !!organizationId;
+}
 
 /**
  * Determines if organization-wide customer search should be enabled
