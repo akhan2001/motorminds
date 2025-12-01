@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { FileText, Calendar, DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { FileText, Calendar, DollarSign, CheckCircle, XCircle, Clock, Building2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useCustomerInvoices } from '../../../hooks/use-customer-invoices'
 import { format } from 'date-fns'
@@ -18,7 +18,7 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
     customerId,
     shopId
 }) => {
-    const { data: invoices, isLoading, error } = useCustomerInvoices(customerId, shopId)
+    const { data: invoices, isLoading, error } = useCustomerInvoices(customerId, shopId, true) // Enable organization-wide invoice access
     const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithDetails | null>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
 
@@ -116,6 +116,13 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
                                 <span className="text-sm font-medium text-foreground dark:text-white">
                                     {invoice.display_id || invoice.invoice_number}
                                 </span>
+                                {/* Show shop indicator for invoices from other shops */}
+                                {!(invoice as any).isFromCurrentShop && (invoice as any).shopName && (
+                                    <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                        <Building2 className="h-3 w-3 mr-1" />
+                                        {(invoice as any).shopName}
+                                    </Badge>
+                                )}
                             </div>
                             {getStatusBadge(invoice.status)}
                         </div>

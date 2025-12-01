@@ -5,18 +5,24 @@ import { Customer, CustomerVehicle } from '@/app/(features)/customers/types'
 interface UseCustomerSearchProps {
     searchQuery: string
     enabled?: boolean
+    organizationWide?: boolean
 }
 
 interface UseCustomerSearchReturn {
-    customers: Customer[]
+    customers: (Customer & { 
+        isFromCurrentShop?: boolean
+        shopName?: string 
+    })[]
     isLoading: boolean
     error: Error | null
     refetch: () => void
+    isOrganizationSearch?: boolean
 }
 
 export function useCustomerSearch({
     searchQuery,
-    enabled = true
+    enabled = true,
+    organizationWide = false
 }: UseCustomerSearchProps): UseCustomerSearchReturn {
     const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
 
@@ -29,17 +35,29 @@ export function useCustomerSearch({
         return () => clearTimeout(timer)
     }, [searchQuery])
 
-    const { data: customers = [], isLoading, error, refetch } = useQuery({
-        queryKey: ['customers', 'search', debouncedQuery],
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['customers', 'search', debouncedQuery, organizationWide],
         queryFn: async () => {
-            if (!debouncedQuery.trim()) return []
+            if (!debouncedQuery.trim()) return { customers: [], isOrganizationSearch: false }
 
-            const response = await fetch(`/api/customers?search=${encodeURIComponent(debouncedQuery)}&limit=20`)
+            const params = new URLSearchParams({
+                q: debouncedQuery,
+                limit: '20'
+            })
+            
+            if (organizationWide) {
+                params.append('organization', 'true')
+            }
+
+            const response = await fetch(`/api/customers/search?${params}`)
             if (!response.ok) {
                 throw new Error('Failed to search customers')
             }
-            const data = await response.json()
-            return data.customers || []
+            const responseData = await response.json()
+            return {
+                customers: responseData.customers || [],
+                isOrganizationSearch: responseData.isOrganizationSearch || false
+            }
         },
         enabled: enabled && debouncedQuery.trim().length > 0,
         staleTime: 5 * 60 * 1000, // 5 minutes
@@ -47,10 +65,11 @@ export function useCustomerSearch({
     })
 
     return {
-        customers,
+        customers: data?.customers || [],
         isLoading,
         error: error as Error | null,
-        refetch
+        refetch,
+        isOrganizationSearch: data?.isOrganizationSearch
     }
 }
 

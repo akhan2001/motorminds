@@ -72,6 +72,13 @@ export interface InvoiceWithDetails extends Invoice {
         title: string
         status: string
     } | null
+    shop?: {
+        id: string
+        shop_name: string
+    } | null
+    // Organization context properties
+    isFromCurrentShop?: boolean
+    shopName?: string
 }
 
 export interface InvoiceFormData {

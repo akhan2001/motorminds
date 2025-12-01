@@ -29,13 +29,33 @@ export async function GET(request: NextRequest) {
         const phone = searchParams.get('phone');
         const limit = parseInt(searchParams.get('limit') || '20');
 
-        // Search customers table only
+        // Get user's organization info for organization-aware search
+        const { data: shopData } = await supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single()
+
+        // Search customers with organization support
         let query = supabase
             .from('customers')
-            .select('*')
-            .eq('shop_id', shopId)
+            .select(`
+                *,
+                shops:shop_id (
+                    shop_name
+                )
+            `)
             .order('updated_at', { ascending: false })
-            .limit(limit);
+            .limit(limit)
+
+        // Apply organization-aware filter
+        if (shopData?.organization_id) {
+            // MSO shop: include customers from same organization
+            query = query.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+        } else {
+            // Non-MSO shop: only same shop
+            query = query.eq('shop_id', shopId)
+        }
 
         if (phone) {
             // Search by exact phone number

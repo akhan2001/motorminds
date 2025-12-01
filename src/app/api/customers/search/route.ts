@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
 		const { searchParams } = new URL(request.url)
 		const query = searchParams.get('q')
 		const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+		const orgOnly = searchParams.get('organization') === 'true'
 
 		if (!query || query.trim().length < 2) {
 			return NextResponse.json({ customers: [] })
@@ -20,21 +21,51 @@ export async function GET(request: NextRequest) {
 		const supabase = await createClient()
 		const searchTerm = query.trim()
 
-		// Search customers table only
+		// Get user's shop and organization info
+		const { data: shopData, error: shopError } = await supabase
+			.from('shops')
+			.select('organization_id')
+			.eq('id', shopId)
+			.single()
+
+		if (shopError) {
+			console.error('Failed to get shop data:', shopError)
+			return NextResponse.json({ error: 'Shop not found' }, { status: 404 })
+		}
+
+		const organizationId = shopData?.organization_id // Can be null for non-MSO shops
+
+		// Search customers with enhanced selection
 		let dbQuery = supabase
 			.from('customers')
 			.select(`
-        id,
-        customer_name,
-        customer_email,
-        customer_phone,
-        customer_address,
-        customer_vehicle,
-        license_plate,
-        tags
-      `)
-			.eq('shop_id', shopId)
+				id,
+				customer_name,
+				customer_email,
+				customer_phone,
+				customer_address,
+				customer_vehicle,
+				license_plate,
+				tags,
+				shop_id,
+				organization_id,
+				shops:shop_id (
+					shop_name
+				)
+			`)
 			.limit(limit)
+
+		// Filter logic based on organization status and request
+		if (orgOnly && organizationId) {
+			// Organization-wide search (only for MSO shops)
+			dbQuery = dbQuery.eq('organization_id', organizationId)
+		} else if (orgOnly && !organizationId) {
+			// Non-MSO shop requesting org search - fall back to shop-only
+			dbQuery = dbQuery.eq('shop_id', shopId)
+		} else {
+			// Default: shop-only search
+			dbQuery = dbQuery.eq('shop_id', shopId)
+		}
 
 		// Optimize search based on input pattern
 		if (searchTerm.match(/^\+?[\d\s()-]+$/)) {
@@ -75,7 +106,7 @@ export async function GET(request: NextRequest) {
 			return NextResponse.json({ error: 'Search failed' }, { status: 500 })
 		}
 
-		// Additional client-side relevance scoring for better UX
+		// Enhanced relevance scoring with shop indication
 		const scoredCustomers = (customers || []).map(customer => {
 			let score = 0
 			const lowerQuery = searchTerm.toLowerCase()
@@ -93,17 +124,27 @@ export async function GET(request: NextRequest) {
 
 			// Boost if phone matches
 			if (customer.customer_phone?.includes(searchTerm.replace(/\D/g, ''))) score += 40
+
+			// Boost customers from current shop (for organization-wide searches)
+			if (customer.shop_id === shopId) score += 20
 			
-			return { ...customer, _score: score }
+			return { 
+				...customer, 
+				_score: score,
+				isFromCurrentShop: customer.shop_id === shopId,
+				shopName: (customer.shops as any)?.shop_name
+			}
 		}).sort((a, b) => b._score - a._score)
 
-    // Remove the score from the response
-    const finalCustomers = scoredCustomers.map(({ _score, ...customer }) => customer)
+		// Remove the score from the response
+		const finalCustomers = scoredCustomers.map(({ _score, ...customer }) => customer)
 
 		return NextResponse.json({
 			customers: finalCustomers,
 			total: finalCustomers.length,
-			query: searchTerm
+			query: searchTerm,
+			organizationId: orgOnly ? organizationId : null,
+			isOrganizationSearch: orgOnly && !!organizationId
 		})
 
 	} catch (error) {

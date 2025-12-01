@@ -186,6 +186,8 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                         }}
                                         placeholder="Search customers..."
                                         className="w-full"
+                                        organizationWide={true}
+                                        showShopNames={true}
                                     />
                                 </TabsContent>
                                 <TabsContent value="vehicle" className="mt-3">

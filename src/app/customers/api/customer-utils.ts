@@ -58,12 +58,28 @@ export async function getCustomerDetails(customerId: string) {
 }
 
 export async function verifyCustomerBelongsToShop(customerId: string, shopId: string) {
-    const { data: customerData, error } = await supabase
+    // Get shop's organization info
+    const { data: shopData } = await supabase
+        .from('shops')
+        .select('organization_id')
+        .eq('id', shopId)
+        .single()
+
+    let customerQuery = supabase
         .from('customers')
         .select('*')
         .eq('id', customerId)
-        .eq('shop_id', shopId)
-        .single();
+
+    // Apply organization-aware filter
+    if (shopData?.organization_id) {
+        // MSO shop: allow customers from same organization or same shop
+        customerQuery = customerQuery.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+    } else {
+        // Non-MSO shop: only same shop
+        customerQuery = customerQuery.eq('shop_id', shopId)
+    }
+
+    const { data: customerData, error } = await customerQuery.single()
 
     if (error) {
         console.error('Error verifying customer belongs to shop:', error);
