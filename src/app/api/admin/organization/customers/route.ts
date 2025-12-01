@@ -37,10 +37,13 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url)
         const search = searchParams.get('search')?.trim()
-        const shopId = searchParams.get('shopId') // Optional: filter by shop
+        const shopIdParam = searchParams.get('shop_id') // Optional: filter by shop(s) - comma separated
         const page = parseInt(searchParams.get('page') || '1')
         const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
         const offset = (page - 1) * limit
+
+        // Parse shop IDs if provided (comma-separated)
+        const shopIds = shopIdParam ? shopIdParam.split(',').filter(id => id.trim()) : []
 
 
         // Get organization shops first (using admin client for efficiency)
@@ -73,10 +76,24 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        const shopIds = orgShops?.map(s => s.id) || []
+        const orgShopIds = orgShops?.map(s => s.id) || []
         
-        if (shopIds.length === 0) {
+        if (orgShopIds.length === 0) {
             return NextResponse.json({ customers: [], total: 0, page, limit, totalPages: 0 })
+        }
+
+        // Determine which shops to query based on filter
+        let targetShopIds = orgShopIds
+        if (shopIds.length > 0) {
+            // Validate that all requested shop IDs belong to the organization
+            const invalidShopIds = shopIds.filter(id => !orgShopIds.includes(id))
+            if (invalidShopIds.length > 0) {
+                return NextResponse.json(
+                    { error: 'Some shops not in your organization' },
+                    { status: 403 }
+                )
+            }
+            targetShopIds = shopIds
         }
 
         // Build optimized query using admin client (bypasses RLS)
@@ -100,17 +117,7 @@ export async function GET(request: NextRequest) {
             `, { count: 'exact' })
 
         // Apply shop filter first (most selective)
-        if (shopId && shopId !== 'all') {
-            if (!shopIds.includes(shopId)) {
-                return NextResponse.json(
-                    { error: 'Shop not in your organization' },
-                    { status: 403 }
-                )
-            }
-            query = query.eq('shop_id', shopId)
-        } else {
-            query = query.in('shop_id', shopIds)
-        }
+        query = query.in('shop_id', targetShopIds)
 
         // Apply optimized search filter (following customer search patterns)
         if (search && search.length >= 1) {

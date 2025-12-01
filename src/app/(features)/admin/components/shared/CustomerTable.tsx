@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Search, Loader2 } from "lucide-react"
+import { Search, Loader2, Filter, X, Check } from "lucide-react"
 import { 
     Pagination,
     PaginationContent,
@@ -14,6 +14,17 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+    DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu"
 // Removed useDebouncedSearch import as we're now using server-side search
 
 interface Customer {
@@ -32,6 +43,11 @@ interface Customer {
     }
 }
 
+interface Shop {
+    id: string
+    shop_name: string
+}
+
 interface CustomerTableProps {
     customers: Customer[]
     loading: boolean
@@ -42,6 +58,9 @@ interface CustomerTableProps {
     onCustomerClick: (customer: Customer) => void
     onSearch: (search: string) => void
     onPageChange: (page: number) => void
+    onShopFilter?: (shopIds: string[]) => void
+    availableShops?: Shop[]
+    selectedShopIds?: string[]
     showShopName?: boolean
     className?: string
 }
@@ -56,10 +75,14 @@ export const CustomerTable = React.memo<CustomerTableProps>(({
     onCustomerClick,
     onSearch,
     onPageChange,
+    onShopFilter,
+    availableShops = [],
+    selectedShopIds = [],
     showShopName = false,
     className = ""
 }) => {
     const [searchQuery, setSearchQuery] = useState("")
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
 
     // Handle search input change with immediate feedback
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,37 +201,138 @@ export const CustomerTable = React.memo<CustomerTableProps>(({
         return items
     }, [currentPage, totalPages, onPageChange])
 
+    // Handle shop filter changes
+    const handleShopFilterChange = useCallback((shopId: string, checked: boolean) => {
+        if (!onShopFilter) return
+        
+        let newSelectedShops: string[]
+        if (checked) {
+            newSelectedShops = [...selectedShopIds, shopId]
+        } else {
+            newSelectedShops = selectedShopIds.filter(id => id !== shopId)
+        }
+        
+        onShopFilter(newSelectedShops)
+    }, [selectedShopIds, onShopFilter])
+
+    // Clear all shop filters
+    const handleClearShopFilters = useCallback(() => {
+        if (!onShopFilter) return
+        onShopFilter([])
+    }, [onShopFilter])
+
     // Handle row click
     const handleRowClick = useCallback((customer: Customer) => {
         onCustomerClick(customer)
     }, [onCustomerClick])
 
+    // Get selected shop names for display
+    const selectedShopNames = useMemo(() => {
+        return availableShops
+            .filter(shop => selectedShopIds.includes(shop.id))
+            .map(shop => shop.shop_name)
+    }, [availableShops, selectedShopIds])
+
     return (
         <div className={`space-y-4 ${className}`}>
-            {/* Search Bar */}
-            <div className="relative mb-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                        className="pl-10 bg-background border-border hover:border-border focus:border-border text-foreground w-full"
-                        placeholder="Search by name, email, phone, or address..."
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                    />
+            {/* Search Bar & Filters */}
+            <div className="space-y-4 mb-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                            className="pl-10 bg-background border-border hover:border-border focus:border-border text-foreground w-full"
+                            placeholder="Search by name, email, phone, or address..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                        />
+                    </div>
+                    
+                    {/* Shop Filter Dropdown */}
+                    {showShopName && availableShops.length > 0 && onShopFilter && (
+                        <DropdownMenu open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="relative">
+                                    <Filter className="h-4 w-4 mr-2" />
+                                    Shops
+                                    {selectedShopIds.length > 0 && (
+                                        <Badge 
+                                            variant="secondary" 
+                                            className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-600 text-white"
+                                        >
+                                            {selectedShopIds.length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64">
+                                <DropdownMenuLabel className="flex items-center justify-between">
+                                    Filter by Shop
+                                    {selectedShopIds.length > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleClearShopFilters}
+                                            className="h-auto p-1 text-xs"
+                                        >
+                                            Clear All
+                                        </Button>
+                                    )}
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {availableShops.map((shop) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={shop.id}
+                                        checked={selectedShopIds.includes(shop.id)}
+                                        onCheckedChange={(checked) => handleShopFilterChange(shop.id, checked)}
+                                        className="cursor-pointer"
+                                    >
+                                        {shop.shop_name}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
-                {searchQuery && !loading && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                        {totalCount > 0 ? (
-                            <>Found {totalCount} {totalCount === 1 ? 'customer' : 'customers'} for "{searchQuery}"</>
-                        ) : (
-                            <>No customers found for "{searchQuery}"</>
+
+                {/* Active Filters Display */}
+                {(selectedShopIds.length > 0 || searchQuery) && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {searchQuery && !loading && (
+                            <div className="text-sm text-muted-foreground">
+                                {totalCount > 0 ? (
+                                    <>Found {totalCount} {totalCount === 1 ? 'customer' : 'customers'} for "{searchQuery}"</>
+                                ) : (
+                                    <>No customers found for "{searchQuery}"</>
+                                )}
+                            </div>
                         )}
-                    </p>
-                )}
-                {loading && searchQuery && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                        Searching for "{searchQuery}"...
-                    </p>
+                        {loading && searchQuery && (
+                            <div className="text-sm text-muted-foreground">
+                                Searching for "{searchQuery}"...
+                            </div>
+                        )}
+                        
+                        {/* Shop Filter Badges */}
+                        {selectedShopNames.map((shopName, index) => (
+                            <Badge 
+                                key={index}
+                                variant="secondary" 
+                                className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800"
+                            >
+                                Shop: {shopName}
+                                <button
+                                    onClick={() => {
+                                        const shop = availableShops.find(s => s.shop_name === shopName)
+                                        if (shop) handleShopFilterChange(shop.id, false)
+                                    }}
+                                    className="ml-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        ))}
+                    </div>
                 )}
             </div>
 
@@ -256,7 +380,7 @@ export const CustomerTable = React.memo<CustomerTableProps>(({
                                             {customer.customer_name}
                                         </TableCell>
                                         <TableCell className="text-foreground hidden sm:table-cell">
-                                            {customer.customer_email || "-"}
+                                        {customer.customer_email === "NULL" ? "-" : customer.customer_email}
                                         </TableCell>
                                         <TableCell className="text-foreground hidden md:table-cell">
                                             {formatPhoneNumber(customer.customer_phone)}
@@ -267,7 +391,7 @@ export const CustomerTable = React.memo<CustomerTableProps>(({
                                             </TableCell>
                                         )}
                                         <TableCell className="text-foreground hidden xl:table-cell">
-                                            {customer.customer_address || "-"}
+                                            {customer.customer_address === "NULL" ? "-" : customer.customer_address}
                                         </TableCell>
                                     </TableRow>
                                 ))

@@ -51,13 +51,26 @@ function OrganizationCustomersContent() {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
+    const [selectedShopIds, setSelectedShopIds] = useState<string[]>([])
 
     // Use the debounced search hook properly
     const { searchTerm, debouncedSearchTerm, updateSearchTerm } = useDebouncedSearch('', 500)
 
-    // Fetch customers with optimized query using debounced search
+    // Fetch shops for filter options
+    const { data: shopsData } = useQuery({
+        queryKey: ['admin', 'organization', organizationId, 'shops'],
+        queryFn: async () => {
+            const res = await fetch(`/api/admin/organization/shops`)
+            if (!res.ok) throw new Error('Failed to fetch shops')
+            return res.json()
+        },
+        enabled: !!organizationId,
+        staleTime: 300000, // 5 minutes - shops don't change often
+    })
+
+    // Fetch customers with optimized query using debounced search and shop filters
     const { data, isLoading, error } = useQuery({
-        queryKey: ['admin', 'organization', organizationId, 'customers', debouncedSearchTerm, currentPage],
+        queryKey: ['admin', 'organization', organizationId, 'customers', debouncedSearchTerm, currentPage, selectedShopIds],
         queryFn: async () => {
             const params = new URLSearchParams({
                 page: currentPage.toString(),
@@ -68,7 +81,11 @@ function OrganizationCustomersContent() {
             if (debouncedSearchTerm.trim()) {
                 params.set('search', debouncedSearchTerm.trim())
             }
-            
+
+            // Add shop filter if shops are selected
+            if (selectedShopIds.length > 0) {
+                params.set('shop_id', selectedShopIds.join(','))
+            }
             
             const res = await fetch(`/api/admin/organization/customers?${params}`)
             
@@ -82,7 +99,7 @@ function OrganizationCustomersContent() {
         },
         enabled: !!organizationId,
         staleTime: 30000, // 30 seconds
-        keepPreviousData: true // Keep previous data while fetching new data
+        placeholderData: (previousData) => previousData // Keep previous data while fetching new data
     })
 
     // Fetch customer history when a customer is selected
@@ -122,6 +139,11 @@ function OrganizationCustomersContent() {
         setCurrentPage(1) // Reset to first page on search
     }, [updateSearchTerm])
 
+    const handleShopFilter = useCallback((shopIds: string[]) => {
+        setSelectedShopIds(shopIds)
+        setCurrentPage(1) // Reset to first page on filter change
+    }, [])
+
     // Memoize customer data to prevent unnecessary re-renders
     const customers = useMemo(() => {
         return (data as any)?.customers || []
@@ -130,6 +152,10 @@ function OrganizationCustomersContent() {
     const totalCount = useMemo(() => {
         return (data as any)?.total || 0
     }, [data])
+
+    const availableShops = useMemo(() => {
+        return (shopsData as any)?.shops || []
+    }, [shopsData])
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page)
@@ -157,6 +183,9 @@ function OrganizationCustomersContent() {
                     onCustomerClick={handleCustomerClick}
                     onSearch={handleSearch}
                     onPageChange={handlePageChange}
+                    onShopFilter={handleShopFilter}
+                    availableShops={availableShops}
+                    selectedShopIds={selectedShopIds}
                     showShopName={true}
                 />
 
