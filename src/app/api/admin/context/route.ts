@@ -5,6 +5,11 @@ import { createClient } from '@/utils/supabase/server'
 const adminContextCache = new Map<string, { data: any, timestamp: number }>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
+// Clear cache function
+function clearCache() {
+    adminContextCache.clear()
+}
+
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient()
@@ -20,9 +25,16 @@ export async function GET(request: NextRequest) {
         }
 
         // Check cache first
+        const { searchParams } = new URL(request.url)
+        const clearCacheParam = searchParams.get('clearCache') === 'true'
+        
+        if (clearCacheParam) {
+            clearCache()
+        }
+        
         const cacheKey = user.id
         const cached = adminContextCache.get(cacheKey)
-        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        if (!clearCacheParam && cached && Date.now() - cached.timestamp < CACHE_TTL) {
             return NextResponse.json(cached.data)
         }
 
@@ -46,6 +58,7 @@ export async function GET(request: NextRequest) {
         }
 
         const userRole = userData.role?.toUpperCase()
+        
 
         // Determine admin type based on role and context
         // Priority order: super-admin > organization-admin > shop-admin
@@ -99,6 +112,7 @@ export async function GET(request: NextRequest) {
             userId: user.id
         }
 
+
         // Cache the result
         adminContextCache.set(cacheKey, {
             data: result,
@@ -114,4 +128,5 @@ export async function GET(request: NextRequest) {
         )
     }
 }
+
 

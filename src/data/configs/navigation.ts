@@ -107,10 +107,15 @@ export const navigationConfig: NavItem[] = [
                 adminTypes: ['organization-admin']
             },
             { 
-                name: "Organization Users", 
-                href: "/admin/organization/users",
+                name: "Organization Customers", 
+                href: "/admin/organization/customers",
                 adminTypes: ['organization-admin']
             },
+            // { 
+            //     name: "Organization Users", 
+            //     href: "/admin/organization/users",
+            //     adminTypes: ['organization-admin']
+            // },
             // Shop Admin Only
             { 
                 name: "Shop Users", 
@@ -121,22 +126,22 @@ export const navigationConfig: NavItem[] = [
             { 
                 name: "Users", 
                 href: "/admin/users",
-                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+                adminTypes: ['super-admin', 'shop-admin']
             },
             { 
                 name: "Create User", 
                 href: "/admin/create-user",
-                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+                adminTypes: ['super-admin', 'shop-admin']
             },
             { 
                 name: "Customers", 
                 href: "/admin/customers",
-                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+                adminTypes: ['super-admin', 'shop-admin']
             },
             { 
                 name: "Settings", 
                 href: "/admin/settings",
-                adminTypes: ['super-admin', 'organization-admin', 'shop-admin']
+                adminTypes: ['super-admin', 'shop-admin']
             }
         ]
     }
