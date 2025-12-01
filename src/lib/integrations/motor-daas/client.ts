@@ -16,7 +16,12 @@ import {
     WiringDiagramResponse,
     BulkVehicleAttributesResponse,
     RecommendedFluidsResponse,
-    MotorDaasError
+    MotorDaasError,
+    YearResponse,
+    MakeResponse,
+    ModelResponse,
+    EngineResponse,
+    SubmodelResponse
 } from './types';
 
 export class MotorDaasClient {
@@ -63,6 +68,23 @@ export class MotorDaasClient {
 
         // Cache for 24 hours (vehicle info rarely changes)
         this.cache.set(cacheKey, response, 86400);
+
+        return response;
+    }
+
+    async getYears(): Promise<YearResponse> {
+        const endpoint = '/Information/Vehicles/Search/Years';
+        const cacheKey = MotorDaasCache.generateKey(endpoint);
+
+        const cached = this.cache.get<YearResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await this.makeRequest<YearResponse>(endpoint);
+
+        // Cache for 7 days (years rarely change)
+        this.cache.set(cacheKey, response, 604800); // 7 days
 
         return response;
     }
