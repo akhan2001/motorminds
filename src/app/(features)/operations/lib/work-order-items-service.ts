@@ -357,6 +357,275 @@ export class WorkOrderItemsService {
             return false
         }
     }
+
+    /**
+     * Search work order items by description within a shop
+     * Returns unique items based on description, item_type, and other key fields
+     */
+    static async searchWorkOrderItems(
+        shopId: string,
+        searchTerm: string,
+        itemType?: string,
+        limit: number = 20
+    ): Promise<WorkOrderItem[]> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        if (!searchTerm || searchTerm.trim().length < 2) {
+            return []
+        }
+
+        let query = supabase
+            .from('work_order_items')
+            .select('*')
+            .eq('shop_id', shopId)
+            .ilike('description', `%${searchTerm.trim()}%`)
+            .order('created_at', { ascending: false })
+            .limit(limit)
+
+        if (itemType) {
+            query = query.eq('item_type', itemType)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+            console.error('Error searching work order items:', error)
+            throw new Error(`Failed to search work order items: ${error.message}`)
+        }
+
+        return data || []
+    }
+
+    /**
+     * Get recent work order items for a shop, optionally filtered by type
+     * Returns items from the last 90 days, ordered by most recent
+     */
+    static async getRecentWorkOrderItems(
+        shopId: string,
+        itemType?: string,
+        limit: number = 10
+    ): Promise<WorkOrderItem[]> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        const ninetyDaysAgo = new Date()
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
+        let query = supabase
+            .from('work_order_items')
+            .select('*')
+            .eq('shop_id', shopId)
+            .gte('created_at', ninetyDaysAgo.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(limit)
+
+        if (itemType) {
+            query = query.eq('item_type', itemType)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+            console.error('Error fetching recent work order items:', error)
+            throw new Error(`Failed to fetch recent work order items: ${error.message}`)
+        }
+
+        return data || []
+    }
+
+    /**
+     * Get frequently used work order items based on description
+     * Groups items by description and returns the most commonly used ones
+     */
+    static async getFrequentWorkOrderItems(
+        shopId: string,
+        itemType?: string,
+        limit: number = 10
+    ): Promise<Array<WorkOrderItem & { usage_count: number }>> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        // This is a simplified version - in a real implementation, you'd want to use
+        // a database function or aggregate query to group by description
+        const items = await this.getWorkOrderItemsByShopId(shopId)
+
+        // Filter by type if specified
+        const filteredItems = itemType
+            ? items.filter(item => item.item_type === itemType)
+            : items
+
+        // Group by description (case-insensitive) and count occurrences
+        const descriptionMap = new Map<string, { item: WorkOrderItem; count: number }>()
+
+        filteredItems.forEach(item => {
+            const key = item.description.toLowerCase().trim()
+            const existing = descriptionMap.get(key)
+
+            if (existing) {
+                existing.count++
+                // Keep the most recent item for this description
+                if (new Date(item.created_at) > new Date(existing.item.created_at)) {
+                    existing.item = item
+                }
+            } else {
+                descriptionMap.set(key, { item, count: 1 })
+            }
+        })
+
+        // Convert to array, sort by count, and return top items
+        const sortedItems = Array.from(descriptionMap.values())
+            .sort((a, b) => b.count - a.count)
+            .slice(0, limit)
+            .map(({ item, count }) => ({
+                ...item,
+                usage_count: count
+            }))
+
+        return sortedItems
+    }
+
+    /**
+     * Get distinct values for a field (useful for autocomplete)
+     */
+    static async getDistinctFieldValues(
+        shopId: string,
+        field: 'category' | 'supplier' | 'part_number',
+        itemType?: string,
+        limit: number = 20
+    ): Promise<string[]> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        let query = supabase
+            .from('work_order_items')
+            .select(field)
+            .eq('shop_id', shopId)
+            .not(field, 'is', null)
+            .limit(1000) // Get a large set to deduplicate
+
+        if (itemType) {
+            query = query.eq('item_type', itemType)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+            console.error(`Error fetching distinct ${field} values:`, error)
+            return []
+        }
+
+        // Deduplicate and filter out empty strings
+        const values = [...new Set(
+            data
+                .map(item => item[field])
+                .filter(val => val && val.trim().length > 0)
+        )]
+
+        return values.slice(0, limit)
+    }
+
+    /**
+     * Combined search that returns both matching items and suggestions
+     * Useful for enhanced search experiences
+     */
+    static async searchWithSuggestions(
+        shopId: string,
+        searchTerm: string,
+        itemType?: string
+    ): Promise<{
+        matches: WorkOrderItem[]
+        recent: WorkOrderItem[]
+        frequent: Array<WorkOrderItem & { usage_count: number }>
+    }> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        // Run searches in parallel for better performance
+        const [matches, recent, frequent] = await Promise.all([
+            searchTerm.trim().length >= 2
+                ? this.searchWorkOrderItems(shopId, searchTerm, itemType, 10)
+                : Promise.resolve([]),
+            this.getRecentWorkOrderItems(shopId, itemType, 5),
+            this.getFrequentWorkOrderItems(shopId, itemType, 5)
+        ])
+
+        return {
+            matches,
+            recent,
+            frequent
+        }
+    }
+
+    /**
+     * Batch create multiple work order items
+     * Useful for applying templates or importing items
+     */
+    static async batchCreateWorkOrderItems(
+        workOrderId: string,
+        items: WorkOrderItemFormData[]
+    ): Promise<WorkOrderItem[]> {
+        if (!workOrderId) {
+            throw new Error('Work Order ID is required')
+        }
+
+        if (!items || items.length === 0) {
+            return []
+        }
+
+        // Create all items in parallel
+        const createdItems = await Promise.all(
+            items.map(item =>
+                this.createWorkOrderItem({
+                    work_order_id: workOrderId,
+                    ...item
+                })
+            )
+        )
+
+        return createdItems
+    }
+
+    /**
+     * Batch update multiple work order items
+     * Useful for bulk operations
+     */
+    static async batchUpdateWorkOrderItems(
+        updates: Array<{ itemId: string; data: Partial<WorkOrderItemFormData> }>
+    ): Promise<WorkOrderItem[]> {
+        if (!updates || updates.length === 0) {
+            return []
+        }
+
+        // Update all items in parallel
+        const updatedItems = await Promise.all(
+            updates.map(({ itemId, data }) =>
+                this.updateWorkOrderItem(itemId, data)
+            )
+        )
+
+        return updatedItems
+    }
+
+    /**
+     * Batch delete multiple work order items
+     * Useful for bulk operations
+     */
+    static async batchDeleteWorkOrderItems(itemIds: string[]): Promise<void> {
+        if (!itemIds || itemIds.length === 0) {
+            return
+        }
+
+        // Delete all items in parallel
+        await Promise.all(
+            itemIds.map(itemId => this.deleteWorkOrderItem(itemId))
+        )
+    }
 }
 
 export const workOrderItemsService = new WorkOrderItemsService()
