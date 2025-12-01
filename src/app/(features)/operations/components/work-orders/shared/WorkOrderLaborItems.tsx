@@ -32,6 +32,7 @@ interface WorkOrderLaborItemsProps {
     workOrderId?: string; // Optional for creating items
     technicianOptions?: { id: string; name: string }[];
     onItemSaved?: (item: WorkOrderItem) => void; // Callback when item is saved to database
+    onItemDeleted?: (itemId: string) => void; // Callback when item is deleted from database
     isEditing?: boolean; // Whether the work order is in edit mode
 }
 
@@ -41,6 +42,7 @@ export function WorkOrderLaborItems({
     workOrderId, 
     technicianOptions = [], 
     onItemSaved,
+    onItemDeleted,
     isEditing = true
 }: WorkOrderLaborItemsProps) {
 
@@ -113,6 +115,9 @@ export function WorkOrderLaborItems({
                 // Item exists, delete it
                 await WorkOrderItemsService.deleteWorkOrderItem(id);
                 toast.success('Labor item deleted');
+                
+                // Notify parent component for optimistic updates
+                onItemDeleted?.(id);
             } catch (error: any) {
                 // If item doesn't exist in database, that's fine - it was only local
                 if (error.message?.includes('not found')) {

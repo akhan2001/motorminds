@@ -30,6 +30,7 @@ interface WorkOrderGenericItemsProps {
     onItemsChange: (items: GenericFormItem[]) => void;
     workOrderId?: string;
     onItemSaved?: (item: WorkOrderItem) => void;
+    onItemDeleted?: (itemId: string) => void;
     isEditing?: boolean;
     itemType: 'service' | 'fee' | 'discount' | 'package';
     title: string;
@@ -41,6 +42,7 @@ export function WorkOrderGenericItems({
     onItemsChange, 
     workOrderId, 
     onItemSaved,
+    onItemDeleted,
     isEditing = true,
     itemType,
     title,
@@ -103,8 +105,34 @@ export function WorkOrderGenericItems({
         }]);
     };
 
-    const removeItem = (id: string) => {
-        onItemsChange(items.filter(item => item.id !== id));
+    const removeItem = async (id: string) => {
+        // Update local state immediately for better UX
+        const updatedItems = items.filter(item => item.id !== id);
+        onItemsChange(updatedItems);
+
+        // If workOrderId exists, try to delete from database
+        if (workOrderId) {
+            try {
+                // Check if item exists in database first
+                await WorkOrderItemsService.getWorkOrderItem(id);
+                // Item exists, delete it
+                await WorkOrderItemsService.deleteWorkOrderItem(id);
+                toast.success(`${title.slice(0, -1)} item deleted`);
+                
+                // Notify parent component for optimistic updates
+                onItemDeleted?.(id);
+            } catch (error: any) {
+                // If item doesn't exist in database, that's fine - it was only local
+                if (error.message?.includes('not found')) {
+                    console.log('Item was only local, no database deletion needed');
+                } else {
+                    console.error(`Error deleting ${itemType} item:`, error);
+                    toast.error('Failed to delete item from database');
+                    // Revert local state on error
+                    onItemsChange(items);
+                }
+            }
+        }
     };
 
     const updateItem = (id: string, field: keyof GenericFormItem, value: any) => {

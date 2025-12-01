@@ -81,7 +81,7 @@ export function useCreateWorkOrderItem() {
                 queryKey: workOrderItemKeys.summary(newItem.work_order_id) 
             })
             
-            toast.success('Work order item created successfully')
+            // Note: Toast messages are handled by individual components
         },
         onError: (error: any) => {
             console.error('Failed to create work order item:', error)
@@ -114,7 +114,7 @@ export function useUpdateWorkOrderItem() {
                 queryKey: workOrderItemKeys.summary(updatedItem.work_order_id) 
             })
             
-            toast.success('Work order item updated successfully')
+            // Note: Toast messages are handled by individual components
         },
         onError: (error: any) => {
             console.error('Failed to update work order item:', error)
@@ -155,7 +155,7 @@ export function useDeleteWorkOrderItem() {
                 queryClient.invalidateQueries({ queryKey: workOrderItemKeys.lists() })
             }
             
-            toast.success('Work order item deleted successfully')
+            // Note: Toast messages are handled by individual components
         },
         onError: (error: any) => {
             console.error('Failed to delete work order item:', error)

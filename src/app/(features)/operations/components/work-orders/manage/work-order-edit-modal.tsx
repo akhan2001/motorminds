@@ -38,6 +38,8 @@ import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calcu
 import { PanelProvider } from "../../../contexts"
 import { useWorkOrderInvoice } from "../../../hooks/use-work-order-invoice"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
+import { workOrderItemKeys } from "../../../hooks/use-work-order-items"
 
 export interface WorkOrderEditModalProps {
     workOrder: WorkOrderKanbanItem
@@ -113,6 +115,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Check permissions
     const { shopId } = useAuth()
     const { data: canDeleteWorkOrder = false, isLoading: isCheckingPermissions } = useCanDeleteWorkOrders(shopId || undefined)
+    const queryClient = useQueryClient()
 
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -490,9 +493,24 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     }
 
     const handleLaborItemSaved = async (item: any) => {
-        // Handle successful save of individual labor item
-        // Refresh work order items list to reflect the saved item
-        await refetchWorkOrderItems()
+        // Optimistically update the React Query cache
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                // Check if item already exists (update) or is new (create)
+                const existingIndex = oldItems.findIndex(oldItem => oldItem.id === item.id)
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    const newItems = [...oldItems]
+                    newItems[existingIndex] = { ...newItems[existingIndex], ...item }
+                    return newItems
+                } else {
+                    // Add new item
+                    return [...oldItems, item]
+                }
+            }
+        )
     }
 
     // Parts items handlers
@@ -508,9 +526,24 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     }
 
     const handlePartItemSaved = async (item: any) => {
-        // Handle successful save of individual part item
-        // Refresh work order items list to reflect the saved item
-        await refetchWorkOrderItems()
+        // Optimistically update the React Query cache
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                // Check if item already exists (update) or is new (create)
+                const existingIndex = oldItems.findIndex(oldItem => oldItem.id === item.id)
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    const newItems = [...oldItems]
+                    newItems[existingIndex] = { ...newItems[existingIndex], ...item }
+                    return newItems
+                } else {
+                    // Add new item
+                    return [...oldItems, item]
+                }
+            }
+        )
     }
 
     // Generic items handlers
@@ -547,8 +580,35 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     }
 
     const handleGenericItemSaved = async (item: any) => {
-        // Refresh work order items list to reflect the saved item
-        await refetchWorkOrderItems()
+        // Optimistically update the React Query cache
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                // Check if item already exists (update) or is new (create)
+                const existingIndex = oldItems.findIndex(oldItem => oldItem.id === item.id)
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    const newItems = [...oldItems]
+                    newItems[existingIndex] = { ...newItems[existingIndex], ...item }
+                    return newItems
+                } else {
+                    // Add new item
+                    return [...oldItems, item]
+                }
+            }
+        )
+    }
+
+    // Handle item deletion optimistically
+    const handleItemDeleted = async (itemId: string) => {
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                return oldItems.filter(item => item.id !== itemId)
+            }
+        )
     }
 
     // Function to add selected templates as work order items
@@ -1210,6 +1270,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         workOrderId={initialWorkOrder.id}
                                                         technicianOptions={technicianOptions}
                                                         onItemSaved={handleLaborItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                     />
                                                 </div>
@@ -1221,6 +1282,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handlePartsItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handlePartItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                     />
                                                 </div>
@@ -1232,6 +1294,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handleServiceItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="service"
                                                         title="Services"
@@ -1245,6 +1308,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handleFeeItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="fee"
                                                         title="Fees"
@@ -1258,6 +1322,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handleDiscountItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="discount"
                                                         title="Discounts"
@@ -1271,6 +1336,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handlePackageItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="package"
                                                         title="Packages"
