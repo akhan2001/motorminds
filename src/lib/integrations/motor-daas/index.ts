@@ -67,7 +67,12 @@ export type {
     MotorDaasError,
     RateLimitInfo,
     CacheEntry,
-    CacheConfig
+    CacheConfig,
+    YearResponse,
+    MakeResponse,
+    ModelResponse,
+    EngineResponse,
+    SubmodelResponse
 } from './types';
 
 /**

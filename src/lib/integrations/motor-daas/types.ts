@@ -33,6 +33,46 @@ export interface MotorVehicleInfo {
     region?: string;
 }
 
+// YMME (Year/Make/Model/Engine) Types
+export interface YearResponse {
+    years: number[];
+}
+
+export interface MakeResponse {
+    makes: Array<{
+        makeId: number;
+        makeName: string;
+    }>;
+}
+
+export interface ModelResponse {
+    models: Array<{
+        modelId: number;
+        modelName: string;
+    }>;
+}
+
+export interface EngineResponse {
+    engines: Array<{
+        engineId: number;
+        engineName: string;
+        baseVehicleId: number;
+        liter?: string;
+        cylinders?: string;
+        blockType?: string;
+        fuelType?: string;
+        displacement?: string;
+        engineVin?: string;
+    }>;
+}
+
+export interface SubmodelResponse {
+    submodels: Array<{
+        submodelId: number;
+        submodelName: string;
+    }>;
+}
+
 export interface MotorVehicleAttributeOptions {
     countryId?: number; // CO
     engineId?: number; // EN

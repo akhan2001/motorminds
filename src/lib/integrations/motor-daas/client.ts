@@ -16,7 +16,12 @@ import {
     WiringDiagramResponse,
     BulkVehicleAttributesResponse,
     RecommendedFluidsResponse,
-    MotorDaasError
+    MotorDaasError,
+    YearResponse,
+    MakeResponse,
+    ModelResponse,
+    EngineResponse,
+    SubmodelResponse
 } from './types';
 
 export class MotorDaasClient {
@@ -63,6 +68,116 @@ export class MotorDaasClient {
 
         // Cache for 24 hours (vehicle info rarely changes)
         this.cache.set(cacheKey, response, 86400);
+
+        return response;
+    }
+
+    /**
+     * Get available years for YMME selection
+     * Based on MOTOR API: /Information/YMME/Years
+     */
+    async getYears(): Promise<YearResponse> {
+        const endpoint = '/Information/YMME/Years';
+        const cacheKey = MotorDaasCache.generateKey(endpoint);
+
+        const cached = this.cache.get<YearResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await this.makeRequest<YearResponse>(endpoint);
+
+        // Cache for 7 days (years list changes rarely)
+        this.cache.set(cacheKey, response, 604800);
+
+        return response;
+    }
+
+    /**
+     * Get available makes for a specific year
+     * Based on MOTOR API: /Information/YMME/Makes?year={year}
+     */
+    async getMakes(year: number): Promise<MakeResponse> {
+        const endpoint = `/Information/YMME/Makes`;
+        const params = { year };
+        const cacheKey = MotorDaasCache.generateKey(endpoint, params);
+
+        const cached = this.cache.get<MakeResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await this.makeRequest<MakeResponse>(endpoint, 'GET', params);
+
+        // Cache for 7 days
+        this.cache.set(cacheKey, response, 604800);
+
+        return response;
+    }
+
+    /**
+     * Get available models for a specific year and make
+     * Based on MOTOR API: /Information/YMME/Models?year={year}&makeId={makeId}
+     */
+    async getModels(year: number, makeId: number): Promise<ModelResponse> {
+        const endpoint = `/Information/YMME/Models`;
+        const params = { year, makeId };
+        const cacheKey = MotorDaasCache.generateKey(endpoint, params);
+
+        const cached = this.cache.get<ModelResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await this.makeRequest<ModelResponse>(endpoint, 'GET', params);
+
+        // Cache for 7 days
+        this.cache.set(cacheKey, response, 604800);
+
+        return response;
+    }
+
+    /**
+     * Get available engines for a specific year, make, and model
+     * Returns engines with baseVehicleId for each engine option
+     * Based on MOTOR API: /Information/YMME/Engines?year={year}&makeId={makeId}&modelId={modelId}
+     */
+    async getEngines(year: number, makeId: number, modelId: number): Promise<EngineResponse> {
+        const endpoint = `/Information/YMME/Engines`;
+        const params = { year, makeId, modelId };
+        const cacheKey = MotorDaasCache.generateKey(endpoint, params);
+
+        const cached = this.cache.get<EngineResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await this.makeRequest<EngineResponse>(endpoint, 'GET', params);
+
+        // Cache for 7 days
+        this.cache.set(cacheKey, response, 604800);
+
+        return response;
+    }
+
+    /**
+     * Get available submodels for a specific year, make, and model
+     * Based on MOTOR API: /Information/YMME/Submodels?year={year}&makeId={makeId}&modelId={modelId}
+     */
+    async getSubmodels(year: number, makeId: number, modelId: number): Promise<SubmodelResponse> {
+        const endpoint = `/Information/YMME/Submodels`;
+        const params = { year, makeId, modelId };
+        const cacheKey = MotorDaasCache.generateKey(endpoint, params);
+
+        const cached = this.cache.get<SubmodelResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        const response = await this.makeRequest<SubmodelResponse>(endpoint, 'GET', params);
+
+        // Cache for 7 days
+        this.cache.set(cacheKey, response, 604800);
 
         return response;
     }
