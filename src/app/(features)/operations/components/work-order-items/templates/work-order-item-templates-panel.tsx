@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Search, Filter, Package } from 'lucide-react'
+import { Plus, Search, Filter, Package, Loader2 } from 'lucide-react'
 import { WorkOrderItemTemplateCard } from './work-order-item-template-card'
 import { WorkOrderItemTemplateCardSmall } from './work-order-item-template-card-small'
-import { useWorkOrderItemTemplates, useDeleteWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
+import { useInfiniteWorkOrderItemTemplates, useDeleteWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { useCloneTemplateToWorkOrder } from '../../../hooks/use-work-order-item-templates'
 import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templates'
@@ -37,46 +37,61 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
     const [searchInput, setSearchInput] = useState('') // User's input (immediate)
     const [searchTerm, setSearchTerm] = useState('') // Debounced search term (delayed)
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
+    const [selectedItemType, setSelectedItemType] = useState<string>('all')
     
     // Get panel context to determine card size
     const { context } = usePanelContext()
     const useSmallCard = context === 'work-order-modal' || context === 'work-order-edit'
 
-    // Debounce search input - wait 300ms after user stops typing
+    // Debounce search input - wait 500ms after user stops typing (longer for server-side search)
     useEffect(() => {
         const timer = setTimeout(() => {
             setSearchTerm(searchInput)
-        }, 300)
+        }, 500)
 
         return () => clearTimeout(timer)
     }, [searchInput])
 
-    // Only fetch templates when user starts searching
-    const shouldFetch = searchTerm.length > 0 // || selectedCategory !== 'all' // Category filter disabled
-    
-    // Hooks - only load when needed (enabled flag prevents unnecessary API calls)
-    const { data: templates = [], isLoading, error } = useWorkOrderItemTemplates(shopId, { enabled: shouldFetch })
+    // Use infinite query for better performance with large datasets
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading,
+        error
+    } = useInfiniteWorkOrderItemTemplates(shopId, {
+        enabled: true,
+        limit: 20, // Load 20 templates per page
+        search: searchTerm.length >= 2 ? searchTerm : undefined,
+        category: selectedCategory !== 'all' ? selectedCategory : undefined,
+        itemType: selectedItemType !== 'all' ? selectedItemType : undefined
+    })
+
     const deleteTemplateMutation = useDeleteWorkOrderItemTemplate()
     const cloneTemplateMutation = useCloneTemplateToWorkOrder()
     
     // Get predefined categories
     const categories = getTemplateCategories().map(cat => cat.value)
 
-    // Filter templates based on search and category
-    const filteredTemplates = React.useMemo(() => {
-        if (!shouldFetch) return []
-        
-        return templates.filter(template => {
-            const matchesSearch = searchTerm.length === 0 || 
-                template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                template.category?.toLowerCase().includes(searchTerm.toLowerCase())
-            
-            const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
-            
-            return matchesSearch && matchesCategory
-        })
-    }, [templates, searchTerm, selectedCategory, shouldFetch])
+    // Define item types for filtering
+    const itemTypes = [
+        { value: 'all', label: 'All Types' },
+        { value: 'labor', label: 'Labor' },
+        { value: 'part', label: 'Parts' },
+        { value: 'service', label: 'Services' },
+        { value: 'fee', label: 'Fees' },
+        { value: 'discount', label: 'Discounts' },
+        { value: 'package', label: 'Packages' }
+    ]
+
+    // Flatten infinite query results
+    const allTemplates = useMemo(() => {
+        return data?.pages?.flatMap(page => page.templates) || []
+    }, [data])
+
+    // For display purposes, we'll use the flattened templates
+    const filteredTemplates = allTemplates
 
 
     const handleTemplateSelect = async (template: WorkOrderItemTemplate) => {
@@ -114,6 +129,16 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
         // Use callback if provided, otherwise do nothing
         onCreateTemplate?.()
     }
+
+    // Infinite scroll handler
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+        
+        // Load more when user scrolls to bottom 200px
+        if (scrollHeight - scrollTop <= clientHeight + 200 && hasNextPage && !isFetchingNextPage) {
+            fetchNextPage()
+        }
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
     if (isLoading) {
         return (
@@ -187,7 +212,7 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
 
             {/* Search and Filter - always show */}
             <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground dark:text-gray-400" />
                         <Input
@@ -214,75 +239,99 @@ export const WorkOrderItemTemplatesPanel: React.FC<WorkOrderItemTemplatesPanelPr
                     )}
                 </div>
                 
-                {/* Category Filter - Commented out for now */}
-                {/* <div className="mt-2">
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="bg-background dark:bg-[#292929] text-foreground dark:text-white border-border dark:border-[#626262] text-sm">
-                            <Filter className="h-3 w-3 mr-2" />
-                            <SelectValue placeholder="All Categories" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-popover dark:bg-[#292929] text-popover-foreground dark:text-white border-border dark:border-[#626262]">
-                            <SelectItem value="all">All Categories</SelectItem>
-                            {categories.map((category) => (
-                                <SelectItem key={category} value={category}>
-                                    {category}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div> */}
+                {/* Filter Controls */}
+                <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                        <Select value={selectedItemType} onValueChange={setSelectedItemType}>
+                            <SelectTrigger className="bg-background dark:bg-[#292929] text-foreground dark:text-white border-border dark:border-[#626262] text-sm h-8">
+                                <Filter className="h-3 w-3 mr-2" />
+                                <SelectValue placeholder="All Types" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover dark:bg-[#292929] text-popover-foreground dark:text-white border-border dark:border-[#626262]">
+                                {itemTypes.map((type) => (
+                                    <SelectItem key={type.value} value={type.value}>
+                                        {type.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex-1">
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                            <SelectTrigger className="bg-background dark:bg-[#292929] text-foreground dark:text-white border-border dark:border-[#626262] text-sm h-8">
+                                <SelectValue placeholder="All Categories" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover dark:bg-[#292929] text-popover-foreground dark:text-white border-border dark:border-[#626262]">
+                                <SelectItem value="all">All Categories</SelectItem>
+                                {categories.map((category) => (
+                                    <SelectItem key={category} value={category}>
+                                        {category}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </div>
 
-            {/* Content Area - Scrollable */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-800">
+            {/* Content Area - Scrollable with Infinite Scroll */}
+            <div 
+                className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-800"
+                onScroll={handleScroll}
+            >
                 <div className={`p-4 ${useSmallCard ? 'space-y-2' : 'space-y-3'}`}>
-                    {!shouldFetch ? (
-                        /* Show search prompt - templates only load when searching/filtering */
-                        <div className="text-center py-12">
-                            <Search className="h-12 w-12 text-muted-foreground dark:text-gray-600 mx-auto mb-4" />
-                            <h4 className="text-foreground dark:text-white text-lg font-medium mb-2">
-                                Search for Templates
-                            </h4>
-                            <p className="text-muted-foreground dark:text-gray-400 text-sm mb-2">
-                                Use the search bar above to find templates
-                            </p>
-                            <p className="text-muted-foreground dark:text-gray-500 text-xs">
-                                Or select a category to browse by type
-                            </p>
-                        </div>
-                    ) : isLoading ? (
+                    {isLoading && filteredTemplates.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
                             <p className="text-muted-foreground dark:text-gray-400 text-sm">Loading templates...</p>
                         </div>
                     ) : filteredTemplates.length > 0 ? (
-                        filteredTemplates.map((template) => {
-                            const CardComponent = useSmallCard ? WorkOrderItemTemplateCardSmall : WorkOrderItemTemplateCard
-                            return (
-                                <CardComponent
-                                    key={template.id}
-                                    template={template}
-                                    onSelect={workOrderId ? handleTemplateSelect : undefined}
-                                    onEdit={handleEditTemplateClick}
-                                    onDelete={handleDeleteTemplate}
-                                    isSelectable={!!workOrderId}
-                                    isSelected={selectedTemplateIds.includes(template.id)}
-                                />
-                            )
-                        })
+                        <>
+                            {filteredTemplates.map((template) => {
+                                const CardComponent = useSmallCard ? WorkOrderItemTemplateCardSmall : WorkOrderItemTemplateCard
+                                return (
+                                    <CardComponent
+                                        key={template.id}
+                                        template={template}
+                                        onSelect={workOrderId ? handleTemplateSelect : undefined}
+                                        onEdit={handleEditTemplateClick}
+                                        onDelete={handleDeleteTemplate}
+                                        isSelectable={!!workOrderId}
+                                        isSelected={selectedTemplateIds.includes(template.id)}
+                                    />
+                                )
+                            })}
+                            
+                            {/* Loading indicator for infinite scroll */}
+                            {isFetchingNextPage && (
+                                <div className="text-center py-4">
+                                    <Loader2 className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-2" />
+                                    <p className="text-muted-foreground dark:text-gray-400 text-sm">Loading more templates...</p>
+                                </div>
+                            )}
+                            
+                            {/* End of results indicator */}
+                            {!hasNextPage && filteredTemplates.length > 20 && (
+                                <div className="text-center py-4">
+                                    <p className="text-muted-foreground dark:text-gray-500 text-sm">
+                                        Showing all {filteredTemplates.length} templates
+                                    </p>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="text-center py-8">
                             <Package className="h-8 w-8 text-muted-foreground dark:text-gray-500 mx-auto mb-2" />
                             <p className="text-muted-foreground dark:text-gray-500 text-base">
-                                {templates.length === 0
-                                    ? 'No templates created yet'
-                                    : 'No templates found'
+                                {searchTerm || selectedCategory !== 'all' || selectedItemType !== 'all'
+                                    ? 'No templates found'
+                                    : 'No templates created yet'
                                 }
                             </p>
                             <p className="text-muted-foreground dark:text-gray-600 text-sm mt-1">
-                                {templates.length === 0
-                                    ? 'Create your first template to get started'
-                                    : 'Try adjusting your search or filter'
+                                {searchTerm || selectedCategory !== 'all' || selectedItemType !== 'all'
+                                    ? 'Try adjusting your search or filters'
+                                    : 'Create your first template to get started'
                                 }
                             </p>
                         </div>

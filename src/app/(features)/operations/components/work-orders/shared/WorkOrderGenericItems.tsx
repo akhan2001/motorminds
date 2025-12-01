@@ -253,7 +253,7 @@ export function WorkOrderGenericItems({
                                                 }
                                             }
                                         }}
-                                        placeholder={`Enter ${itemType} description`}
+                                        placeholder={`Type here to search for a ${itemType} template...`}
                                         disabled={!isEditing}
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
                                     />

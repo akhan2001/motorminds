@@ -245,7 +245,7 @@ export function WorkOrderLaborItems({
                                                 }
                                             }
                                         }}
-                                        placeholder="e.g., Oil change, Brake repair"
+                                        placeholder="Type here to search for a labor item template..."
                                         disabled={!isEditing}
                                         className="bg-white dark:bg-background border-border text-foreground"
                                     />
