@@ -361,7 +361,7 @@ export function WorkOrderLaborItems({
                                             id={`labor_notes_${index}`}
                                             value={item.notes || ''}
                                             onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            className="bg-white dark:bg-background border-border text-foreground min-h-[60px] max-h-[120px]"
                                             placeholder="Additional notes..."
                                             rows={2}
                                             disabled={!isEditing}

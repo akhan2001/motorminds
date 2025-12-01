@@ -254,7 +254,7 @@ export function WorkOrderGenericItems({
                                             }
                                         }}
                                         placeholder={`Enter ${itemType} description`}
-                                        disabled={!isEditing || item.active !== undefined}
+                                        disabled={!isEditing}
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
                                     />
                                 </div>
@@ -268,7 +268,7 @@ export function WorkOrderGenericItems({
                                         min="0"
                                         step="1"
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
-                                        disabled={!isEditing || item.active !== undefined}
+                                        disabled={!isEditing}  
                                     />
                                 </div>
 
@@ -281,7 +281,7 @@ export function WorkOrderGenericItems({
                                         min={itemType === 'discount' ? undefined : "0"}
                                         step="0.01"
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
-                                        disabled={!isEditing || item.active !== undefined}
+                                        disabled={!isEditing}
                                     />
                                 </div>
 
@@ -294,7 +294,7 @@ export function WorkOrderGenericItems({
                                         min="0"
                                         step="0.01"
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
-                                        disabled={!isEditing || item.active !== undefined}
+                                        disabled={!isEditing}
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -306,7 +306,7 @@ export function WorkOrderGenericItems({
                                         value={item.category || ''}
                                         onChange={(e) => updateItem(item.id, 'category', e.target.value)}
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
-                                        disabled={!isEditing || item.active !== undefined}
+                                        disabled={!isEditing}  
                                         placeholder="e.g., engine, transmission"
                                     />
                                 </div>
@@ -322,7 +322,7 @@ export function WorkOrderGenericItems({
                                             min="0"
                                             step="0.25"
                                             className="bg-white dark:bg-background text-foreground border-border mt-1"
-                                            disabled={!isEditing || item.active !== undefined}
+                                            disabled={!isEditing}
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -334,8 +334,8 @@ export function WorkOrderGenericItems({
                                         value={item.notes || ''}
                                         onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
                                         placeholder="Additional notes..."
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1 min-h-[60px]"
-                                        disabled={!isEditing || item.active !== undefined}
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1 min-h-[60px] max-h-[120px]"
+                                        disabled={!isEditing}
                                     />
                                 </div>
 
