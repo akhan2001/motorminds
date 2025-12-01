@@ -9,6 +9,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
+import { useAuth } from "../../../hooks/use-auth";
 
 interface PartFormItem {
     id: string;
@@ -39,7 +42,9 @@ export function WorkOrderPartsItems({
     onItemSaved,
     isEditing = true
 }: WorkOrderPartsItemsProps) {
-    
+
+    const { shopId } = useAuth();
+
     // Helper function to convert form item to service format
     const convertToWorkOrderItem = (item: PartFormItem): WorkOrderItemCreateData => ({
         work_order_id: workOrderId!,
@@ -385,13 +390,34 @@ export function WorkOrderPartsItems({
                                         <Label htmlFor={`part_description_${index}`} className="text-muted-foreground text-xs">
                                             Description *
                                         </Label>
-                                        <Input
-                                            id={`part_description_${index}`}
+                                        <TemplateDropdown
+                                            shopId={shopId || ''}
+                                            itemType="part"
                                             value={item.description}
-                                            onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
-                                            disabled={!isEditing}
+                                            onChange={(value) => updateItem(item.id, 'description', value)}
+                                            onTemplateSelect={(template: WorkOrderItemTemplate) => {
+                                                // Populate all fields from the template
+                                                const updatedItems = items.map(i => {
+                                                    if (i.id !== item.id) return i;
+
+                                                    return {
+                                                        ...i,
+                                                        description: template.name,
+                                                        part_number: template.part_number || i.part_number,
+                                                        quantity: template.quantity,
+                                                        unit_price: template.unit_price,
+                                                        total_price: template.quantity * template.unit_price,
+                                                        supplier: template.supplier || i.supplier,
+                                                        category: template.category || i.category,
+                                                        warranty_period: template.warranty_period || i.warranty_period,
+                                                        notes: template.description || i.notes,
+                                                    };
+                                                });
+                                                onItemsChange(updatedItems);
+                                            }}
                                             placeholder="e.g., Brake pads, Oil filter"
+                                            disabled={!isEditing}
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                         />
                                     </div>
                                     <div>

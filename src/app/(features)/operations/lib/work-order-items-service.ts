@@ -62,10 +62,12 @@ export class WorkOrderItemsService {
             .single()
 
         if (error) {
-            console.error('Error fetching work order item:', error)
+            // PGRST116 is "not found" - don't log as error since it's expected in some flows
             if (error.code === 'PGRST116') {
                 throw new Error(`Work order item with ID ${itemId} not found`)
             }
+            // Only log unexpected errors
+            console.error('Error fetching work order item:', error)
             throw new Error(`Failed to fetch work order item: ${error.message}`)
         }
 

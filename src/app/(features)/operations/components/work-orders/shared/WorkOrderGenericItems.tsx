@@ -9,6 +9,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { WorkOrderItem, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
+import { useAuth } from "../../../hooks/use-auth";
 
 interface GenericFormItem {
     id: string;
@@ -16,6 +19,9 @@ interface GenericFormItem {
     quantity: number;
     unit_price: number;
     total_price: number;
+    unit_cost?: number;
+    category?: string;
+    labor_hours?: number; // For packages and services
     notes?: string;
     active?: boolean; // true = accepted, false = declined, undefined = pending
 }
@@ -41,7 +47,9 @@ export function WorkOrderGenericItems({
     title,
     icon: Icon = DollarSign
 }: WorkOrderGenericItemsProps) {
-    
+
+    const { shopId } = useAuth();
+
     // Helper function to convert form item to service format
     const convertToWorkOrderItem = (item: GenericFormItem): WorkOrderItemCreateData => ({
         work_order_id: workOrderId!,
@@ -49,6 +57,9 @@ export function WorkOrderGenericItems({
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
+        unit_cost: item.unit_cost,
+        category: item.category,
+        labor_hours: item.labor_hours,
         notes: item.notes,
     });
 
@@ -83,9 +94,12 @@ export function WorkOrderGenericItems({
         onItemsChange([...items, { 
             id: uuidv4(), 
             description: "", 
-            quantity: 1, 
+            quantity: 1,
             unit_price: 0,
             total_price: 0,
+            unit_cost: 0,
+            category: "",
+            labor_hours: 0,
             notes: "",
             active: undefined // pending by default
         }]);
@@ -218,12 +232,33 @@ export function WorkOrderGenericItems({
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="md:col-span-2">
                                     <Label className="text-muted-foreground text-xs">Description *</Label>
-                                    <Input
+                                    <TemplateDropdown
+                                        shopId={shopId || ''}
+                                        itemType={itemType}
                                         value={item.description}
-                                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                        onChange={(value) => updateItem(item.id, 'description', value)}
+                                        onTemplateSelect={(template: WorkOrderItemTemplate) => {
+                                            // Populate all fields from the template
+                                            const updatedItems = items.map(i => {
+                                                if (i.id !== item.id) return i;
+
+                                                return {
+                                                    ...i,
+                                                    description: template.name,
+                                                    quantity: template.quantity,
+                                                    unit_price: template.unit_price,
+                                                    total_price: template.quantity * template.unit_price,
+                                                    unit_cost: template.unit_cost,
+                                                    category: template.category || i.category,
+                                                    labor_hours: template.labor_hours || i.labor_hours,
+                                                    notes: template.description || i.notes,
+                                                };
+                                            });
+                                            onItemsChange(updatedItems);
+                                        }}
                                         placeholder={`Enter ${itemType} description`}
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
                                         disabled={!isEditing || item.active !== undefined}
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
                                     />
                                 </div>
 
@@ -246,12 +281,55 @@ export function WorkOrderGenericItems({
                                         type="number"
                                         value={item.unit_price}
                                         onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
-                                        min="0"
+                                        min={itemType === 'discount' ? undefined : "0"}
                                         step="0.01"
                                         className="bg-white dark:bg-background text-foreground border-border mt-1"
                                         disabled={!isEditing || item.active !== undefined}
                                     />
                                 </div>
+
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Unit Cost (Optional)</Label>
+                                    <Input
+                                        type="number"
+                                        value={item.unit_cost || ''}
+                                        onChange={(e) => updateItem(item.id, 'unit_cost', parseFloat(e.target.value) || 0)}
+                                        min="0"
+                                        step="0.01"
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        disabled={!isEditing || item.active !== undefined}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Category (Optional)</Label>
+                                    <Input
+                                        type="text"
+                                        value={item.category || ''}
+                                        onChange={(e) => updateItem(item.id, 'category', e.target.value)}
+                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        disabled={!isEditing || item.active !== undefined}
+                                        placeholder="e.g., engine, transmission"
+                                    />
+                                </div>
+
+                                {/* Labor Hours field for packages and services */}
+                                {(itemType === 'package' || itemType === 'service') && (
+                                    <div>
+                                        <Label className="text-muted-foreground text-xs">Labor Hours (Optional)</Label>
+                                        <Input
+                                            type="number"
+                                            value={item.labor_hours || ''}
+                                            onChange={(e) => updateItem(item.id, 'labor_hours', parseFloat(e.target.value) || 0)}
+                                            min="0"
+                                            step="0.25"
+                                            className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                            disabled={!isEditing || item.active !== undefined}
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="md:col-span-2">
                                     <Label className="text-muted-foreground text-xs">Notes</Label>

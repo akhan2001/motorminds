@@ -15,6 +15,7 @@ export const workOrderItemTemplateKeys = {
     lists: () => [...workOrderItemTemplateKeys.all, 'list'] as const,
     list: (shopId: string) => [...workOrderItemTemplateKeys.lists(), shopId] as const,
     byCategory: (shopId: string, category: string) => [...workOrderItemTemplateKeys.all, 'by-category', shopId, category] as const,
+    search: (shopId: string, itemType: string, searchTerm: string) => [...workOrderItemTemplateKeys.all, 'search', shopId, itemType, searchTerm] as const,
     details: () => [...workOrderItemTemplateKeys.all, 'detail'] as const,
     detail: (id: string) => [...workOrderItemTemplateKeys.details(), id] as const,
     categories: (shopId: string) => [...workOrderItemTemplateKeys.all, 'categories', shopId] as const,
@@ -55,6 +56,30 @@ export function useWorkOrderItemTemplate(templateId: string) {
         queryFn: () => WorkOrderItemTemplatesService.getTemplate(templateId),
         enabled: !!templateId,
         staleTime: 30 * 1000,
+    })
+}
+
+/**
+ * Hook to search templates by item type and description
+ */
+export function useSearchWorkOrderItemTemplates(
+    shopId: string, 
+    itemType: string, 
+    searchTerm: string, 
+    options?: { enabled?: boolean; limit?: number }
+) {
+    return useQuery({
+        queryKey: workOrderItemTemplateKeys.search(shopId, itemType, searchTerm),
+        queryFn: () => WorkOrderItemTemplatesService.searchTemplates(
+            shopId, 
+            itemType, 
+            searchTerm, 
+            options?.limit || 10
+        ),
+        enabled: options?.enabled !== undefined 
+            ? (!!shopId && !!itemType && searchTerm.length >= 2 && options.enabled)
+            : (!!shopId && !!itemType && searchTerm.length >= 2),
+        staleTime: 30 * 1000, // 30 seconds
     })
 }
 

@@ -11,6 +11,8 @@ import { TechnicianDropdown } from "@/app/(features)/technician/components/Techn
 import { useAuth } from "../../../hooks/use-auth";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
 
 interface LaborFormItem {
     id: string;
@@ -18,6 +20,8 @@ interface LaborFormItem {
     labor_hours: number;
     unit_price: number;
     total_price: number;
+    unit_cost?: number;
+    category?: string;
     notes?: string;
     technician_id?: string;
     active?: boolean; // true = accepted, false = declined, undefined = pending
@@ -40,7 +44,7 @@ export function WorkOrderLaborItems({
     onItemSaved,
     isEditing = true
 }: WorkOrderLaborItemsProps) {
-    
+
     // Helper function to convert form item to service format
     const convertToWorkOrderItem = (item: LaborFormItem): WorkOrderItemCreateData => ({
         work_order_id: workOrderId!,
@@ -48,7 +52,9 @@ export function WorkOrderLaborItems({
         description: item.description,
         quantity: 1, // Labor items typically have quantity of 1
         unit_price: item.unit_price,
+        unit_cost: item.unit_cost,
         labor_hours: item.labor_hours,
+        category: item.category,
         notes: item.notes,
         technician_id: item.technician_id,
     });
@@ -88,6 +94,8 @@ export function WorkOrderLaborItems({
             labor_hours: 1, 
             unit_price: 0,
             total_price: 0,
+            unit_cost: 0,
+            category: "",
             notes: "",
             technician_id: "",
             active: undefined // pending by default
@@ -281,7 +289,10 @@ export function WorkOrderLaborItems({
             if (field === 'labor_hours' || field === 'unit_price') {
                 const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
                 updatedItem[field] = numValue as number;
-            } else if (field === 'technician_id' || field === 'description' || field === 'notes') {
+            } else if (field === 'unit_cost') {
+                const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+                updatedItem[field] = numValue as number;
+            } else if (field === 'technician_id' || field === 'description' || field === 'notes' || field === 'category') {
                 updatedItem[field] = value as string;
             }
             
@@ -373,18 +384,37 @@ export function WorkOrderLaborItems({
                             </div>
 
                             <div className="space-y-3">
-                                {/* Description */}
+                                {/* Description with Template Dropdown */}
                                 <div>
                                     <Label htmlFor={`labor_description_${index}`} className="text-muted-foreground text-xs">
                                         Description *
                                     </Label>
-                                    <Input
-                                        id={`labor_description_${index}`}
+                                    <TemplateDropdown
+                                        shopId={shopId || ''}
+                                        itemType="labor"
                                         value={item.description}
-                                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                        className="bg-white dark:bg-background border-border text-foreground"
+                                        onChange={(value) => updateItem(item.id, 'description', value)}
+                                        onTemplateSelect={(template: WorkOrderItemTemplate) => {
+                                            // Populate all fields from the template
+                                            const updatedItems = items.map(i => {
+                                                if (i.id !== item.id) return i;
+
+                                                return {
+                                                    ...i,
+                                                    description: template.name,
+                                                    labor_hours: template.labor_hours || 1,
+                                                    unit_price: template.unit_price,
+                                                    total_price: (template.labor_hours || 1) * template.unit_price,
+                                                    unit_cost: template.unit_cost,
+                                                    category: template.category || i.category,
+                                                    notes: template.description || i.notes,
+                                                };
+                                            });
+                                            onItemsChange(updatedItems);
+                                        }}
                                         placeholder="e.g., Oil change, Brake repair"
                                         disabled={!isEditing}
+                                        className="bg-white dark:bg-background border-border text-foreground"
                                     />
                                 </div>
 
@@ -420,6 +450,40 @@ export function WorkOrderLaborItems({
                                             step="0.01"
                                             disabled={!isEditing}
                                             placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Unit Cost and Category */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label htmlFor={`labor_unit_cost_${index}`} className="text-muted-foreground text-xs">
+                                            Unit Cost (Optional)
+                                        </Label>
+                                        <Input
+                                            id={`labor_unit_cost_${index}`}
+                                            type="number"
+                                            value={item.unit_cost || ''}
+                                            onChange={(e) => updateItem(item.id, 'unit_cost', e.target.value)}
+                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            min="0"
+                                            step="0.01"
+                                            disabled={!isEditing}
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`labor_category_${index}`} className="text-muted-foreground text-xs">
+                                            Category (Optional)
+                                        </Label>
+                                        <Input
+                                            id={`labor_category_${index}`}
+                                            type="text"
+                                            value={item.category || ''}
+                                            onChange={(e) => updateItem(item.id, 'category', e.target.value)}
+                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            disabled={!isEditing}
+                                            placeholder="e.g., engine, transmission"
                                         />
                                     </div>
                                 </div>
