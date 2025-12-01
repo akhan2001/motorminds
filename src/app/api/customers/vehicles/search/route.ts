@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         const supabase = await createClient()
         const searchTerm = query.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') // Normalize license plate
 
-        console.log('Vehicle search API - normalized query:', searchTerm, 'shop:', shopId)
+        // console.log('Vehicle search API - normalized query:', searchTerm, 'shop:', shopId)
 
         // Search walk-in vehicles (customer_id is null)
         const walkInQuery = supabase
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
             )
             .slice(0, limit)
 
-        console.log('Vehicle search API - found vehicles:', uniqueVehicles.length)
+        // console.log('Vehicle search API - found vehicles:', uniqueVehicles.length)
 
         return NextResponse.json({
             vehicles: uniqueVehicles,

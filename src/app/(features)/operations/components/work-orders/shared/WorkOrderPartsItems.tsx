@@ -103,6 +103,24 @@ export function WorkOrderPartsItems({
     };
 
     const acceptItem = async (id: string) => {
+        const item = items.find(item => item.id === id);
+        if (!item) {
+            toast.error('Item not found');
+            return;
+        }
+
+        // Validate required fields before proceeding
+        if (!item.description.trim()) {
+            toast.error('Description is required to accept item');
+            return;
+        }
+
+        if (item.quantity <= 0) {
+            toast.error('Quantity must be greater than 0 to accept item');
+            return;
+        }
+
+        // Update local state first
         const updatedItems = items.map(item => 
             item.id === id ? { ...item, active: true } : item
         );
@@ -111,14 +129,43 @@ export function WorkOrderPartsItems({
         // Save to database if workOrderId exists
         if (workOrderId) {
             try {
-                const item = items.find(item => item.id === id);
-                if (item) {
-                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: true });
+                // Always save the item first to ensure it exists in the database
+                const itemData = convertToWorkOrderItem(item);
+                
+                // Check if item exists in database
+                let savedItem;
+                try {
+                    const existingItem = await WorkOrderItemsService.getWorkOrderItem(id);
+                    // Item exists, update it with accepted status
+                    savedItem = await WorkOrderItemsService.updateWorkOrderItem(id, { 
+                        ...itemData,
+                        active: true 
+                    });
                     toast.success('Part item accepted and saved');
+                } catch (fetchError: any) {
+                    if (fetchError.message?.includes('not found')) {
+                        // Item doesn't exist, create it with accepted status
+                        savedItem = await WorkOrderItemsService.createWorkOrderItem({
+                            ...itemData,
+                            active: true
+                        });
+                        
+                        // Update local state with the database ID
+                        const updatedItemsWithDbId = items.map(localItem => 
+                            localItem.id === id ? { ...localItem, id: savedItem.id, active: true } : localItem
+                        );
+                        onItemsChange(updatedItemsWithDbId);
+                        
+                        toast.success('Part item saved and accepted');
+                    } else {
+                        throw fetchError;
+                    }
                 }
+                
+                onItemSaved?.(savedItem);
             } catch (error: any) {
-                console.error('Error updating part item:', error);
-                toast.error('Failed to save acceptance status');
+                console.error('Error saving/accepting part item:', error);
+                toast.error(`Failed to save item: ${error.message || 'Unknown error'}`);
                 // Revert local state on error
                 const revertedItems = items.map(item => 
                     item.id === id ? { ...item, active: undefined } : item
@@ -131,6 +178,24 @@ export function WorkOrderPartsItems({
     };
 
     const declineItem = async (id: string) => {
+        const item = items.find(item => item.id === id);
+        if (!item) {
+            toast.error('Item not found');
+            return;
+        }
+
+        // Validate required fields before proceeding
+        if (!item.description.trim()) {
+            toast.error('Description is required to decline item');
+            return;
+        }
+
+        if (item.quantity <= 0) {
+            toast.error('Quantity must be greater than 0 to decline item');
+            return;
+        }
+
+        // Update local state first
         const updatedItems = items.map(item => 
             item.id === id ? { ...item, active: false } : item
         );
@@ -139,14 +204,43 @@ export function WorkOrderPartsItems({
         // Save to database if workOrderId exists
         if (workOrderId) {
             try {
-                const item = items.find(item => item.id === id);
-                if (item) {
-                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: false });
+                // Always save the item first to ensure it exists in the database
+                const itemData = convertToWorkOrderItem(item);
+                
+                // Check if item exists in database
+                let savedItem;
+                try {
+                    const existingItem = await WorkOrderItemsService.getWorkOrderItem(id);
+                    // Item exists, update it with declined status
+                    savedItem = await WorkOrderItemsService.updateWorkOrderItem(id, { 
+                        ...itemData,
+                        active: false 
+                    });
                     toast.info('Part item declined and saved');
+                } catch (fetchError: any) {
+                    if (fetchError.message?.includes('not found')) {
+                        // Item doesn't exist, create it with declined status
+                        savedItem = await WorkOrderItemsService.createWorkOrderItem({
+                            ...itemData,
+                            active: false
+                        });
+                        
+                        // Update local state with the database ID
+                        const updatedItemsWithDbId = items.map(localItem => 
+                            localItem.id === id ? { ...localItem, id: savedItem.id, active: false } : localItem
+                        );
+                        onItemsChange(updatedItemsWithDbId);
+                        
+                        toast.info('Part item saved and declined');
+                    } else {
+                        throw fetchError;
+                    }
                 }
+                
+                onItemSaved?.(savedItem);
             } catch (error: any) {
-                console.error('Error updating part item:', error);
-                toast.error('Failed to save decline status');
+                console.error('Error saving/declining part item:', error);
+                toast.error(`Failed to save item: ${error.message || 'Unknown error'}`);
                 // Revert local state on error
                 const revertedItems = items.map(item => 
                     item.id === id ? { ...item, active: undefined } : item
@@ -158,8 +252,31 @@ export function WorkOrderPartsItems({
         }
     };
 
-    const removeItem = (id: string) => {
-        onItemsChange(items.filter(item => item.id !== id));
+    const removeItem = async (id: string) => {
+        // Update local state immediately for better UX
+        const updatedItems = items.filter(item => item.id !== id);
+        onItemsChange(updatedItems);
+
+        // If workOrderId exists, try to delete from database
+        if (workOrderId) {
+            try {
+                // Check if item exists in database first
+                await WorkOrderItemsService.getWorkOrderItem(id);
+                // Item exists, delete it
+                await WorkOrderItemsService.deleteWorkOrderItem(id);
+                toast.success('Part item deleted');
+            } catch (error: any) {
+                // If item doesn't exist in database, that's fine - it was only local
+                if (error.message?.includes('not found')) {
+                    console.log('Item was only local, no database deletion needed');
+                } else {
+                    console.error('Error deleting part item:', error);
+                    toast.error('Failed to delete item from database');
+                    // Revert local state on error
+                    onItemsChange(items);
+                }
+            }
+        }
     };
 
     const updateItem = (id: string, field: keyof PartFormItem, value: string | number) => {

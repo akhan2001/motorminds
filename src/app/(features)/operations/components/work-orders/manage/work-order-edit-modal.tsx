@@ -664,6 +664,19 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         setIsDeleteConfirmationOpen(false)
     }
 
+    // Handle modal close with auto-save
+    const handleModalClose = async () => {
+        try {
+            // Save any unsaved items before closing
+            await saveAllItems()
+            onClose()
+        } catch (error) {
+            console.error('Error saving items on close:', error)
+            // Still close the modal even if save fails
+            onClose()
+        }
+    }
+
     // Save all labor and parts items when saving work order
     const saveAllItems = async () => {
         try {
@@ -946,7 +959,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8 text-center">
                     <p className="text-red-500 dark:text-red-400 mb-4">Failed to load work order details</p>
                     <button
-                        onClick={onClose}
+                        onClick={handleModalClose}
                         className="px-4 py-2 bg-secondary dark:bg-gray-600 hover:bg-accent dark:hover:bg-gray-700 rounded text-foreground dark:text-white"
                     >
                         Close
@@ -972,7 +985,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                             <WorkOrderModalHeader
                                 workOrder={initialWorkOrder}
                                 workOrderDetails={workOrderDetails}
-                                onClose={onClose}
+                                onClose={handleModalClose}
                                 onRevert={handleRevertClick}
                             />
 

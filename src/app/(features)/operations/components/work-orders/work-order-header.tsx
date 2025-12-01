@@ -53,13 +53,13 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
                         {/* Search Bar */}
-                        <div className="relative w-80">
+                        {/* <div className="relative w-80">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Find customer and create work order..."
                                 className="pl-10 h-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-red-500"
                             />
-                        </div>
+                        </div> */}
 
                         {/* Create Work Order Button */}
                         <Button
