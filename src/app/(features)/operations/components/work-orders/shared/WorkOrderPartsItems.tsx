@@ -248,7 +248,7 @@ export function WorkOrderPartsItems({
                                                     }
                                                 }
                                             }}
-                                            placeholder="e.g., Brake pads, Oil filter"
+                                            placeholder="Type here to search for a part item template..."
                                             disabled={!isEditing}
                                             className="bg-white dark:bg-background border-border text-foreground"
                                         />
