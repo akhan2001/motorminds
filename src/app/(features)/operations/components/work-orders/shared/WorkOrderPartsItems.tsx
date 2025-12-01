@@ -207,25 +207,46 @@ export function WorkOrderPartsItems({
                                             itemType="part"
                                             value={item.description}
                                             onChange={(value) => updateItem(item.id, 'description', value)}
-                                            onTemplateSelect={(template: WorkOrderItemTemplate) => {
-                                                // Populate all fields from the template
-                                                const updatedItems = items.map(i => {
-                                                    if (i.id !== item.id) return i;
+                                            onTemplateSelect={async (template: WorkOrderItemTemplate) => {
+                                                // Create updated item with template data
+                                                const updatedItem = {
+                                                    ...item,
+                                                    description: template.name,
+                                                    part_number: template.part_number || item.part_number,
+                                                    quantity: template.quantity,
+                                                    unit_price: template.unit_price,
+                                                    total_price: template.quantity * template.unit_price,
+                                                    supplier: template.supplier || item.supplier,
+                                                    category: template.category || item.category,
+                                                    warranty_period: template.warranty_period || item.warranty_period,
+                                                    notes: template.description || item.notes,
+                                                };
 
-                                                    return {
-                                                        ...i,
-                                                        description: template.name,
-                                                        part_number: template.part_number || i.part_number,
-                                                        quantity: template.quantity,
-                                                        unit_price: template.unit_price,
-                                                        total_price: template.quantity * template.unit_price,
-                                                        supplier: template.supplier || i.supplier,
-                                                        category: template.category || i.category,
-                                                        warranty_period: template.warranty_period || i.warranty_period,
-                                                        notes: template.description || i.notes,
-                                                    };
-                                                });
+                                                // Update local state first for immediate UI feedback
+                                                const updatedItems = items.map(i => i.id === item.id ? updatedItem : i);
                                                 onItemsChange(updatedItems);
+
+                                                // Auto-save to database if workOrderId exists
+                                                if (workOrderId) {
+                                                    try {
+                                                        const itemData = convertToWorkOrderItem(updatedItem);
+                                                        const savedItem = await WorkOrderItemsService.createWorkOrderItem(itemData);
+                                                        
+                                                        // Update local state with database ID and notify parent
+                                                        const finalItems = items.map(i => 
+                                                            i.id === item.id ? { ...updatedItem, id: savedItem.id } : i
+                                                        );
+                                                        onItemsChange(finalItems);
+                                                        onItemSaved?.(savedItem);
+                                                        
+                                                        toast.success('Part item created from template');
+                                                    } catch (error: any) {
+                                                        console.error('Error saving part item from template:', error);
+                                                        toast.error('Failed to save part item');
+                                                        // Revert to original state on error
+                                                        onItemsChange(items);
+                                                    }
+                                                }
                                             }}
                                             placeholder="e.g., Brake pads, Oil filter"
                                             disabled={!isEditing}

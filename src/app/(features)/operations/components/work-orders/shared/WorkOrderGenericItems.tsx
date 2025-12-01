@@ -180,7 +180,7 @@ export function WorkOrderGenericItems({
                     {items.map((item, index) => (
                         <div
                             key={item.id}
-                            className="p-4 rounded-lg border border-border transition-all"
+                            className="bg-white dark:bg-card border border-border rounded-lg p-4"
                         >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
@@ -207,24 +207,51 @@ export function WorkOrderGenericItems({
                                         itemType={itemType}
                                         value={item.description}
                                         onChange={(value) => updateItem(item.id, 'description', value)}
-                                        onTemplateSelect={(template: WorkOrderItemTemplate) => {
-                                            // Populate all fields from the template
-                                            const updatedItems = items.map(i => {
-                                                if (i.id !== item.id) return i;
+                                        onTemplateSelect={async (template: WorkOrderItemTemplate) => {
+                                            // Create updated item with template data
+                                            let unitPrice = template.unit_price;
+                                            // For discounts, ensure the unit price is negative
+                                            if (itemType === 'discount' && unitPrice > 0) {
+                                                unitPrice = -unitPrice;
+                                            }
 
-                                                return {
-                                                    ...i,
-                                                    description: template.name,
-                                                    quantity: template.quantity,
-                                                    unit_price: template.unit_price,
-                                                    total_price: template.quantity * template.unit_price,
-                                                    unit_cost: template.unit_cost,
-                                                    category: template.category || i.category,
-                                                    labor_hours: template.labor_hours || i.labor_hours,
-                                                    notes: template.description || i.notes,
-                                                };
-                                            });
+                                            const updatedItem = {
+                                                ...item,
+                                                description: template.name,
+                                                quantity: template.quantity,
+                                                unit_price: unitPrice,
+                                                total_price: template.quantity * unitPrice,
+                                                unit_cost: template.unit_cost,
+                                                category: template.category || item.category,
+                                                labor_hours: template.labor_hours || item.labor_hours,
+                                                notes: template.description || item.notes,
+                                            };
+
+                                            // Update local state first for immediate UI feedback
+                                            const updatedItems = items.map(i => i.id === item.id ? updatedItem : i);
                                             onItemsChange(updatedItems);
+
+                                            // Auto-save to database if workOrderId exists
+                                            if (workOrderId) {
+                                                try {
+                                                    const itemData = convertToWorkOrderItem(updatedItem);
+                                                    const savedItem = await WorkOrderItemsService.createWorkOrderItem(itemData);
+                                                    
+                                                    // Update local state with database ID and notify parent
+                                                    const finalItems = items.map(i => 
+                                                        i.id === item.id ? { ...updatedItem, id: savedItem.id } : i
+                                                    );
+                                                    onItemsChange(finalItems);
+                                                    onItemSaved?.(savedItem);
+                                                    
+                                                    toast.success(`${title.slice(0, -1)} item created from template`);
+                                                } catch (error: any) {
+                                                    console.error(`Error saving ${itemType} item from template:`, error);
+                                                    toast.error(`Failed to save ${itemType} item`);
+                                                    // Revert to original state on error
+                                                    onItemsChange(items);
+                                                }
+                                            }
                                         }}
                                         placeholder={`Enter ${itemType} description`}
                                         disabled={!isEditing || item.active !== undefined}

@@ -206,23 +206,44 @@ export function WorkOrderLaborItems({
                                         itemType="labor"
                                         value={item.description}
                                         onChange={(value) => updateItem(item.id, 'description', value)}
-                                        onTemplateSelect={(template: WorkOrderItemTemplate) => {
-                                            // Populate all fields from the template
-                                            const updatedItems = items.map(i => {
-                                                if (i.id !== item.id) return i;
+                                        onTemplateSelect={async (template: WorkOrderItemTemplate) => {
+                                            // Create updated item with template data
+                                            const updatedItem = {
+                                                ...item,
+                                                description: template.name,
+                                                labor_hours: template.labor_hours || 1,
+                                                unit_price: template.unit_price,
+                                                total_price: (template.labor_hours || 1) * template.unit_price,
+                                                unit_cost: template.unit_cost,
+                                                category: template.category || item.category,
+                                                notes: template.description || item.notes,
+                                            };
 
-                                                return {
-                                                    ...i,
-                                                    description: template.name,
-                                                    labor_hours: template.labor_hours || 1,
-                                                    unit_price: template.unit_price,
-                                                    total_price: (template.labor_hours || 1) * template.unit_price,
-                                                    unit_cost: template.unit_cost,
-                                                    category: template.category || i.category,
-                                                    notes: template.description || i.notes,
-                                                };
-                                            });
+                                            // Update local state first for immediate UI feedback
+                                            const updatedItems = items.map(i => i.id === item.id ? updatedItem : i);
                                             onItemsChange(updatedItems);
+
+                                            // Auto-save to database if workOrderId exists
+                                            if (workOrderId) {
+                                                try {
+                                                    const itemData = convertToWorkOrderItem(updatedItem);
+                                                    const savedItem = await WorkOrderItemsService.createWorkOrderItem(itemData);
+                                                    
+                                                    // Update local state with database ID and notify parent
+                                                    const finalItems = items.map(i => 
+                                                        i.id === item.id ? { ...updatedItem, id: savedItem.id } : i
+                                                    );
+                                                    onItemsChange(finalItems);
+                                                    onItemSaved?.(savedItem);
+                                                    
+                                                    toast.success('Labor item created from template');
+                                                } catch (error: any) {
+                                                    console.error('Error saving labor item from template:', error);
+                                                    toast.error('Failed to save labor item');
+                                                    // Revert to original state on error
+                                                    onItemsChange(items);
+                                                }
+                                            }
                                         }}
                                         placeholder="e.g., Oil change, Brake repair"
                                         disabled={!isEditing}
