@@ -59,7 +59,7 @@ export function ShopDashboard() {
     return (
         <div className="h-screen flex flex-col bg-background">
             {/* <Nav /> */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col ">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">
                         {/* Breadcrumb */}
@@ -94,73 +94,6 @@ export function ShopDashboard() {
                             <p className="text-muted-foreground">
                                 Manage your shop operations and staff
                             </p>
-                        </div>
-
-                        {/* Stats Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-muted-foreground">Shop Users</p>
-                                            <p className="text-2xl font-bold text-foreground">
-                                                {loading ? '...' : stats?.totalUsers || 0}
-                                            </p>
-                                        </div>
-                                        <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
-                                            <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-muted-foreground">Shop Revenue</p>
-                                            <p className="text-2xl font-bold text-foreground">
-                                                {loading ? '...' : formatCurrency(stats?.shopRevenue || 0)}
-                                            </p>
-                                        </div>
-                                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
-                                            <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-muted-foreground">Active Work Orders</p>
-                                            <p className="text-2xl font-bold text-foreground">
-                                                {loading ? '...' : stats?.activeWorkOrders || 0}
-                                            </p>
-                                        </div>
-                                        <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-full">
-                                            <Wrench className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-muted-foreground">Parts Inventory</p>
-                                            <p className="text-2xl font-bold text-foreground">
-                                                {loading ? '...' : stats?.partsInventory || 0}
-                                            </p>
-                                        </div>
-                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                                            <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
                         </div>
 
                         {/* Quick Actions */}

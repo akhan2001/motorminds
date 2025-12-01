@@ -38,6 +38,8 @@ import { calculateInvoiceTotals } from "../../../../financials/lib/invoice-calcu
 import { PanelProvider } from "../../../contexts"
 import { useWorkOrderInvoice } from "../../../hooks/use-work-order-invoice"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
+import { workOrderItemKeys } from "../../../hooks/use-work-order-items"
 
 export interface WorkOrderEditModalProps {
     workOrder: WorkOrderKanbanItem
@@ -66,7 +68,6 @@ interface LaborFormItem {
     total_price: number;
     notes?: string;
     technician_id?: string;
-    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 interface PartFormItem {
@@ -80,7 +81,6 @@ interface PartFormItem {
     category?: string;
     warranty_period?: string;
     notes?: string;
-    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 interface GenericFormItem {
@@ -90,7 +90,6 @@ interface GenericFormItem {
     unit_price: number;
     total_price: number;
     notes?: string;
-    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
@@ -116,6 +115,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     // Check permissions
     const { shopId } = useAuth()
     const { data: canDeleteWorkOrder = false, isLoading: isCheckingPermissions } = useCanDeleteWorkOrders(shopId || undefined)
+    const queryClient = useQueryClient()
 
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -128,7 +128,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
 
     // Fetch work order items for cost summary
-    const { data: workOrderItems = [] } = useWorkOrderItems(initialWorkOrder.id)
+    const { data: workOrderItems = [], refetch: refetchWorkOrderItems } = useWorkOrderItems(initialWorkOrder.id)
 
     // Check if work order has an invoice
     const { data: workOrderInvoice } = useWorkOrderInvoice(initialWorkOrder.id)
@@ -492,10 +492,25 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         ))
     }
 
-    const handleLaborItemSaved = (item: any) => {
-        // Handle successful save of individual labor item
-        toast.success(`Labor item "${item.description}" saved successfully`)
-        // Optionally refresh work order items list
+    const handleLaborItemSaved = async (item: any) => {
+        // Optimistically update the React Query cache
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                // Check if item already exists (update) or is new (create)
+                const existingIndex = oldItems.findIndex(oldItem => oldItem.id === item.id)
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    const newItems = [...oldItems]
+                    newItems[existingIndex] = { ...newItems[existingIndex], ...item }
+                    return newItems
+                } else {
+                    // Add new item
+                    return [...oldItems, item]
+                }
+            }
+        )
     }
 
     // Parts items handlers
@@ -510,10 +525,25 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         ))
     }
 
-    const handlePartItemSaved = (item: any) => {
-        // Handle successful save of individual part item
-        toast.success(`Part item "${item.description}" saved successfully`)
-        // Optionally refresh work order items list
+    const handlePartItemSaved = async (item: any) => {
+        // Optimistically update the React Query cache
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                // Check if item already exists (update) or is new (create)
+                const existingIndex = oldItems.findIndex(oldItem => oldItem.id === item.id)
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    const newItems = [...oldItems]
+                    newItems[existingIndex] = { ...newItems[existingIndex], ...item }
+                    return newItems
+                } else {
+                    // Add new item
+                    return [...oldItems, item]
+                }
+            }
+        )
     }
 
     // Generic items handlers
@@ -549,8 +579,36 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         ))
     }
 
-    const handleGenericItemSaved = (item: any) => {
-        toast.success(`${item.item_type} item "${item.description}" saved successfully`)
+    const handleGenericItemSaved = async (item: any) => {
+        // Optimistically update the React Query cache
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                // Check if item already exists (update) or is new (create)
+                const existingIndex = oldItems.findIndex(oldItem => oldItem.id === item.id)
+                if (existingIndex >= 0) {
+                    // Update existing item
+                    const newItems = [...oldItems]
+                    newItems[existingIndex] = { ...newItems[existingIndex], ...item }
+                    return newItems
+                } else {
+                    // Add new item
+                    return [...oldItems, item]
+                }
+            }
+        )
+    }
+
+    // Handle item deletion optimistically
+    const handleItemDeleted = async (itemId: string) => {
+        const workOrderId = workOrderDetails?.id || initialWorkOrder.id
+        queryClient.setQueryData(
+            workOrderItemKeys.list(workOrderId),
+            (oldItems: any[] = []) => {
+                return oldItems.filter(item => item.id !== itemId)
+            }
+        )
     }
 
     // Function to add selected templates as work order items
@@ -664,7 +722,20 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
         setIsDeleteConfirmationOpen(false)
     }
 
-    // Save all labor and parts items when saving work order
+    // Handle modal close with auto-save
+    const handleModalClose = async () => {
+        try {
+            // Save any unsaved items before closing
+            await saveAllItems()
+            onClose()
+        } catch (error) {
+            console.error('Error saving items on close:', error)
+            // Still close the modal even if save fails
+            onClose()
+        }
+    }
+
+    // Save all work order items when saving work order
     const saveAllItems = async () => {
         try {
             const workOrderId = workOrderDetails?.id || initialWorkOrder.id
@@ -674,33 +745,50 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
             const existingItems = await WorkOrderItemsService.getWorkOrderItems(workOrderId)
             const existingItemIds = new Set(existingItems.map(item => item.id))
 
+            // Track all current item IDs from local state
+            const currentItemIds = new Set([
+                ...laborItems.map(i => i.id),
+                ...partsItems.map(i => i.id),
+                ...serviceItems.map(i => i.id),
+                ...feeItems.map(i => i.id),
+                ...discountItems.map(i => i.id),
+                ...packageItems.map(i => i.id)
+            ])
+
+            // Delete items that exist in database but not in local state
+            for (const existingItem of existingItems) {
+                if (!currentItemIds.has(existingItem.id)) {
+                    console.log('Deleting removed item:', existingItem.id)
+                    try {
+                        await WorkOrderItemsService.deleteWorkOrderItem(existingItem.id)
+                    } catch (error) {
+                        console.error(`Error deleting item ${existingItem.id}:`, error)
+                    }
+                }
+            }
+
             // Save all labor items
             for (const item of laborItems) {
                 if (item.description.trim()) {
                     try {
                         if (existingItemIds.has(item.id)) {
-                            // Update existing item
-                            console.log('Updating existing labor item:', item.id)
                             await WorkOrderItemsService.updateWorkOrderItem(item.id, {
                                 description: item.description,
                                 labor_hours: item.labor_hours,
                                 unit_price: item.unit_price,
                                 notes: item.notes,
-                                technician_id: item.technician_id,
-                                active: item.active
+                                technician_id: item.technician_id
                             })
                         } else {
-                            // Create new item
-                            console.log('Creating new labor item:', item.id)
                             await WorkOrderItemsService.createWorkOrderItem({
                                 work_order_id: workOrderId,
                                 item_type: 'labor',
                                 description: item.description,
-                                quantity: 1, // Labor items typically have quantity of 1
+                                quantity: 1,
                                 unit_price: item.unit_price,
                                 labor_hours: item.labor_hours,
                                 notes: item.notes,
-                                technician_id: item.technician_id,
+                                technician_id: item.technician_id
                             })
                         }
                     } catch (error) {
@@ -715,8 +803,6 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 if (item.description.trim()) {
                     try {
                         if (existingItemIds.has(item.id)) {
-                            // Update existing item
-                            console.log('Updating existing parts item:', item.id)
                             await WorkOrderItemsService.updateWorkOrderItem(item.id, {
                                 description: item.description,
                                 part_number: item.part_number,
@@ -725,12 +811,9 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 supplier: item.supplier,
                                 category: item.category,
                                 warranty_period: item.warranty_period,
-                                notes: item.notes,
-                                active: item.active
+                                notes: item.notes
                             })
                         } else {
-                            // Create new item
-                            console.log('Creating new parts item:', item.id)
                             await WorkOrderItemsService.createWorkOrderItem({
                                 work_order_id: workOrderId,
                                 item_type: 'part',
@@ -741,11 +824,123 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                 supplier: item.supplier,
                                 category: item.category,
                                 warranty_period: item.warranty_period,
-                                notes: item.notes,
+                                notes: item.notes
                             })
                         }
                     } catch (error) {
                         console.error(`Error saving parts item ${item.id}:`, error)
+                        throw error
+                    }
+                }
+            }
+
+            // Save all service items
+            for (const item of serviceItems) {
+                if (item.description.trim()) {
+                    try {
+                        if (existingItemIds.has(item.id)) {
+                            await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        } else {
+                            await WorkOrderItemsService.createWorkOrderItem({
+                                work_order_id: workOrderId,
+                                item_type: 'service',
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        }
+                    } catch (error) {
+                        console.error(`Error saving service item ${item.id}:`, error)
+                        throw error
+                    }
+                }
+            }
+
+            // Save all fee items
+            for (const item of feeItems) {
+                if (item.description.trim()) {
+                    try {
+                        if (existingItemIds.has(item.id)) {
+                            await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        } else {
+                            await WorkOrderItemsService.createWorkOrderItem({
+                                work_order_id: workOrderId,
+                                item_type: 'fee',
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        }
+                    } catch (error) {
+                        console.error(`Error saving fee item ${item.id}:`, error)
+                        throw error
+                    }
+                }
+            }
+
+            // Save all discount items
+            for (const item of discountItems) {
+                if (item.description.trim()) {
+                    try {
+                        if (existingItemIds.has(item.id)) {
+                            await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        } else {
+                            await WorkOrderItemsService.createWorkOrderItem({
+                                work_order_id: workOrderId,
+                                item_type: 'discount',
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        }
+                    } catch (error) {
+                        console.error(`Error saving discount item ${item.id}:`, error)
+                        throw error
+                    }
+                }
+            }
+
+            // Save all package items
+            for (const item of packageItems) {
+                if (item.description.trim()) {
+                    try {
+                        if (existingItemIds.has(item.id)) {
+                            await WorkOrderItemsService.updateWorkOrderItem(item.id, {
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        } else {
+                            await WorkOrderItemsService.createWorkOrderItem({
+                                work_order_id: workOrderId,
+                                item_type: 'package',
+                                description: item.description,
+                                quantity: item.quantity,
+                                unit_price: item.unit_price,
+                                notes: item.notes
+                            })
+                        }
+                    } catch (error) {
+                        console.error(`Error saving package item ${item.id}:`, error)
                         throw error
                     }
                 }
@@ -946,7 +1141,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                 <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8 text-center">
                     <p className="text-red-500 dark:text-red-400 mb-4">Failed to load work order details</p>
                     <button
-                        onClick={onClose}
+                        onClick={handleModalClose}
                         className="px-4 py-2 bg-secondary dark:bg-gray-600 hover:bg-accent dark:hover:bg-gray-700 rounded text-foreground dark:text-white"
                     >
                         Close
@@ -972,7 +1167,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                             <WorkOrderModalHeader
                                 workOrder={initialWorkOrder}
                                 workOrderDetails={workOrderDetails}
-                                onClose={onClose}
+                                onClose={handleModalClose}
                                 onRevert={handleRevertClick}
                             />
 
@@ -1075,6 +1270,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         workOrderId={initialWorkOrder.id}
                                                         technicianOptions={technicianOptions}
                                                         onItemSaved={handleLaborItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                     />
                                                 </div>
@@ -1086,6 +1282,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handlePartsItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handlePartItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                     />
                                                 </div>
@@ -1097,6 +1294,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handleServiceItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="service"
                                                         title="Services"
@@ -1110,6 +1308,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handleFeeItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="fee"
                                                         title="Fees"
@@ -1123,6 +1322,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handleDiscountItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="discount"
                                                         title="Discounts"
@@ -1136,6 +1336,7 @@ export const WorkOrderEditModal: React.FC<WorkOrderEditModalProps> = ({
                                                         onItemsChange={handlePackageItemsChange}
                                                         workOrderId={initialWorkOrder.id}
                                                         onItemSaved={handleGenericItemSaved}
+                                                        onItemDeleted={handleItemDeleted}
                                                         isEditing={isEditing}
                                                         itemType="package"
                                                         title="Packages"

@@ -4,11 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Package, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, Package } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
+import { useAuth } from "../../../hooks/use-auth";
 
 interface PartFormItem {
     id: string;
@@ -21,7 +24,6 @@ interface PartFormItem {
     category?: string;
     warranty_period?: string;
     notes?: string;
-    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 interface WorkOrderPartsItemsProps {
@@ -29,6 +31,7 @@ interface WorkOrderPartsItemsProps {
     onItemsChange: (items: PartFormItem[]) => void;
     workOrderId?: string; // Optional for creating items
     onItemSaved?: (item: WorkOrderItem) => void; // Callback when item is saved to database
+    onItemDeleted?: (itemId: string) => void; // Callback when item is deleted from database
     isEditing?: boolean; // Whether the work order is in edit mode
 }
 
@@ -37,9 +40,12 @@ export function WorkOrderPartsItems({
     onItemsChange, 
     workOrderId, 
     onItemSaved,
+    onItemDeleted,
     isEditing = true
 }: WorkOrderPartsItemsProps) {
-    
+
+    const { shopId } = useAuth();
+
     // Helper function to convert form item to service format
     const convertToWorkOrderItem = (item: PartFormItem): WorkOrderItemCreateData => ({
         work_order_id: workOrderId!,
@@ -97,69 +103,38 @@ export function WorkOrderPartsItems({
             supplier: "",
             category: "",
             warranty_period: "",
-            notes: "",
-            active: undefined // pending by default
+            notes: ""
         }]);
     };
 
-    const acceptItem = async (id: string) => {
-        const updatedItems = items.map(item => 
-            item.id === id ? { ...item, active: true } : item
-        );
+    const removeItem = async (id: string) => {
+        // Update local state immediately for better UX
+        const updatedItems = items.filter(item => item.id !== id);
         onItemsChange(updatedItems);
-        
-        // Save to database if workOrderId exists
+
+        // If workOrderId exists, try to delete from database
         if (workOrderId) {
             try {
-                const item = items.find(item => item.id === id);
-                if (item) {
-                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: true });
-                    toast.success('Part item accepted and saved');
-                }
+                // Check if item exists in database first
+                await WorkOrderItemsService.getWorkOrderItem(id);
+                // Item exists, delete it
+                await WorkOrderItemsService.deleteWorkOrderItem(id);
+                toast.success('Part item deleted');
+                
+                // Notify parent component for optimistic updates
+                onItemDeleted?.(id);
             } catch (error: any) {
-                console.error('Error updating part item:', error);
-                toast.error('Failed to save acceptance status');
-                // Revert local state on error
-                const revertedItems = items.map(item => 
-                    item.id === id ? { ...item, active: undefined } : item
-                );
-                onItemsChange(revertedItems);
-            }
-        } else {
-            toast.success('Part item accepted');
-        }
-    };
-
-    const declineItem = async (id: string) => {
-        const updatedItems = items.map(item => 
-            item.id === id ? { ...item, active: false } : item
-        );
-        onItemsChange(updatedItems);
-        
-        // Save to database if workOrderId exists
-        if (workOrderId) {
-            try {
-                const item = items.find(item => item.id === id);
-                if (item) {
-                    await WorkOrderItemsService.updateWorkOrderItem(id, { active: false });
-                    toast.info('Part item declined and saved');
+                // If item doesn't exist in database, that's fine - it was only local
+                if (error.message?.includes('not found')) {
+                    console.log('Item was only local, no database deletion needed');
+                } else {
+                    console.error('Error deleting part item:', error);
+                    toast.error('Failed to delete item from database');
+                    // Revert local state on error
+                    onItemsChange(items);
                 }
-            } catch (error: any) {
-                console.error('Error updating part item:', error);
-                toast.error('Failed to save decline status');
-                // Revert local state on error
-                const revertedItems = items.map(item => 
-                    item.id === id ? { ...item, active: undefined } : item
-                );
-                onItemsChange(revertedItems);
             }
-        } else {
-            toast.info('Part item declined');
         }
-    };
-
-    const removeItem = (id: string) => {
-        onItemsChange(items.filter(item => item.id !== id));
     };
 
     const updateItem = (id: string, field: keyof PartFormItem, value: string | number) => {
@@ -201,63 +176,22 @@ export function WorkOrderPartsItems({
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div key={item.id} className={`bg-white dark:bg-card border rounded-lg p-4 ${
-                            item.active === true ? 'border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/5' : 
-                            item.active === false ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' : 
-                            'border-border'
-                        }`}>
+                        <div key={item.id} className="bg-white dark:bg-card border border-border rounded-lg p-4">
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <h4 className="text-sm font-medium text-green-600 dark:text-green-400">Part Item {index + 1}</h4>
-                                    {item.active === true && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-500/20">
-                                            Accepted
-                                        </span>
-                                    )}
-                                    {item.active === false && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-500/20">
-                                            Declined
-                                        </span>
-                                    )}
                                 </div>
                                 {isEditing && (
-                                    <div className="flex items-center gap-1">
-                                        {/* Accept/Decline buttons */}
-                                        {item.active !== true && (
-                                            <Button
-                                                type="button"
-                                                onClick={() => acceptItem(item.id)}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 h-7 w-7 p-0"
-                                                title="Accept"
-                                            >
-                                                <CheckCircle className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        {item.active !== false && (
-                                            <Button
-                                                type="button"
-                                                onClick={() => declineItem(item.id)}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 w-7 p-0"
-                                                title="Decline"
-                                            >
-                                                <XCircle className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            onClick={() => removeItem(item.id)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeItem(item.id)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 )}
                             </div>
 
@@ -268,13 +202,55 @@ export function WorkOrderPartsItems({
                                         <Label htmlFor={`part_description_${index}`} className="text-muted-foreground text-xs">
                                             Description *
                                         </Label>
-                                        <Input
-                                            id={`part_description_${index}`}
+                                        <TemplateDropdown
+                                            shopId={shopId || ''}
+                                            itemType="part"
                                             value={item.description}
-                                            onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
-                                            disabled={!isEditing}
+                                            onChange={(value) => updateItem(item.id, 'description', value)}
+                                            onTemplateSelect={async (template: WorkOrderItemTemplate) => {
+                                                // Create updated item with template data
+                                                const updatedItem = {
+                                                    ...item,
+                                                    description: template.name,
+                                                    part_number: template.part_number || item.part_number,
+                                                    quantity: template.quantity,
+                                                    unit_price: template.unit_price,
+                                                    total_price: template.quantity * template.unit_price,
+                                                    supplier: template.supplier || item.supplier,
+                                                    category: template.category || item.category,
+                                                    warranty_period: template.warranty_period || item.warranty_period,
+                                                    notes: template.description || item.notes,
+                                                };
+
+                                                // Update local state first for immediate UI feedback
+                                                const updatedItems = items.map(i => i.id === item.id ? updatedItem : i);
+                                                onItemsChange(updatedItems);
+
+                                                // Auto-save to database if workOrderId exists
+                                                if (workOrderId) {
+                                                    try {
+                                                        const itemData = convertToWorkOrderItem(updatedItem);
+                                                        const savedItem = await WorkOrderItemsService.createWorkOrderItem(itemData);
+                                                        
+                                                        // Update local state with database ID and notify parent
+                                                        const finalItems = items.map(i => 
+                                                            i.id === item.id ? { ...updatedItem, id: savedItem.id } : i
+                                                        );
+                                                        onItemsChange(finalItems);
+                                                        onItemSaved?.(savedItem);
+                                                        
+                                                        toast.success('Part item created from template');
+                                                    } catch (error: any) {
+                                                        console.error('Error saving part item from template:', error);
+                                                        toast.error('Failed to save part item');
+                                                        // Revert to original state on error
+                                                        onItemsChange(items);
+                                                    }
+                                                }
+                                            }}
                                             placeholder="e.g., Brake pads, Oil filter"
+                                            disabled={!isEditing}
+                                            className="bg-white dark:bg-background border-border text-foreground"
                                         />
                                     </div>
                                     <div>
@@ -392,7 +368,7 @@ export function WorkOrderPartsItems({
                                             id={`part_notes_${index}`}
                                             value={item.notes || ''}
                                             onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            className="bg-white dark:bg-background border-border text-foreground min-h-[60px] max-h-[120px]"
                                             disabled={!isEditing}
                                             placeholder="Additional notes..."
                                             rows={2}

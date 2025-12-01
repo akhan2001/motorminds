@@ -179,6 +179,40 @@ export class WorkOrderItemTemplatesService {
     }
 
     /**
+     * Search templates by item type and description
+     */
+    static async searchTemplates(
+        shopId: string, 
+        itemType: string, 
+        searchTerm: string, 
+        limit: number = 10
+    ): Promise<WorkOrderItemTemplate[]> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        if (!searchTerm || searchTerm.length < 2) {
+            return []
+        }
+
+        const { data, error } = await this.supabase
+            .from('work_order_item_templates')
+            .select('*')
+            .eq('shop_id', shopId)
+            .eq('item_type', itemType)
+            .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+            .order('name', { ascending: true })
+            .limit(limit)
+
+        if (error) {
+            console.error('Error searching templates:', error)
+            throw new Error(`Failed to search templates: ${error.message}`)
+        }
+
+        return data || []
+    }
+
+    /**
      * Get all unique categories for a shop
      */
     static async getCategoriesByShopId(shopId: string): Promise<string[]> {
