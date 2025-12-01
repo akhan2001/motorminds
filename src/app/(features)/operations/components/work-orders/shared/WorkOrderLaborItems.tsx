@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Wrench, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, Wrench } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { TechnicianDropdown } from "@/app/(features)/technician/components/TechnicianDropdown";
@@ -24,7 +24,6 @@ interface LaborFormItem {
     category?: string;
     notes?: string;
     technician_id?: string;
-    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 interface WorkOrderLaborItemsProps {
@@ -97,159 +96,8 @@ export function WorkOrderLaborItems({
             unit_cost: 0,
             category: "",
             notes: "",
-            technician_id: "",
-            active: undefined // pending by default
+            technician_id: ""
         }]);
-    };
-
-    const acceptItem = async (id: string) => {
-        const item = items.find(item => item.id === id);
-        if (!item) {
-            toast.error('Item not found');
-            return;
-        }
-
-        // Validate required fields before proceeding
-        if (!item.description.trim()) {
-            toast.error('Description is required to accept item');
-            return;
-        }
-
-        if (item.labor_hours <= 0) {
-            toast.error('Labor hours must be greater than 0 to accept item');
-            return;
-        }
-
-        // Update local state first
-        const updatedItems = items.map(item => 
-            item.id === id ? { ...item, active: true } : item
-        );
-        onItemsChange(updatedItems);
-        
-        // Save to database if workOrderId exists
-        if (workOrderId) {
-            try {
-                // Always save the item first to ensure it exists in the database
-                const itemData = convertToWorkOrderItem(item);
-                
-                // Check if item exists in database
-                let savedItem;
-                try {
-                    const existingItem = await WorkOrderItemsService.getWorkOrderItem(id);
-                    // Item exists, update it with accepted status
-                    savedItem = await WorkOrderItemsService.updateWorkOrderItem(id, { 
-                        ...itemData,
-                        active: true 
-                    });
-                    toast.success('Labor item accepted and saved');
-                } catch (fetchError: any) {
-                    if (fetchError.message?.includes('not found')) {
-                        // Item doesn't exist, create it with accepted status
-                        savedItem = await WorkOrderItemsService.createWorkOrderItem({
-                            ...itemData,
-                            active: true
-                        });
-                        
-                        // Update local state with the database ID
-                        const updatedItemsWithDbId = items.map(localItem => 
-                            localItem.id === id ? { ...localItem, id: savedItem.id, active: true } : localItem
-                        );
-                        onItemsChange(updatedItemsWithDbId);
-                        
-                        toast.success('Labor item saved and accepted');
-                    } else {
-                        throw fetchError;
-                    }
-                }
-                
-                onItemSaved?.(savedItem);
-            } catch (error: any) {
-                console.error('Error saving/accepting labor item:', error);
-                toast.error(`Failed to save item: ${error.message || 'Unknown error'}`);
-                // Revert local state on error
-                const revertedItems = items.map(item => 
-                    item.id === id ? { ...item, active: undefined } : item
-                );
-                onItemsChange(revertedItems);
-            }
-        } else {
-            toast.success('Labor item accepted');
-        }
-    };
-
-    const declineItem = async (id: string) => {
-        const item = items.find(item => item.id === id);
-        if (!item) {
-            toast.error('Item not found');
-            return;
-        }
-
-        // Validate required fields before proceeding
-        if (!item.description.trim()) {
-            toast.error('Description is required to decline item');
-            return;
-        }
-
-        if (item.labor_hours <= 0) {
-            toast.error('Labor hours must be greater than 0 to decline item');
-            return;
-        }
-
-        // Update local state first
-        const updatedItems = items.map(item => 
-            item.id === id ? { ...item, active: false } : item
-        );
-        onItemsChange(updatedItems);
-        
-        // Save to database if workOrderId exists
-        if (workOrderId) {
-            try {
-                // Always save the item first to ensure it exists in the database
-                const itemData = convertToWorkOrderItem(item);
-                
-                // Check if item exists in database
-                let savedItem;
-                try {
-                    const existingItem = await WorkOrderItemsService.getWorkOrderItem(id);
-                    // Item exists, update it with declined status
-                    savedItem = await WorkOrderItemsService.updateWorkOrderItem(id, { 
-                        ...itemData,
-                        active: false 
-                    });
-                    toast.info('Labor item declined and saved');
-                } catch (fetchError: any) {
-                    if (fetchError.message?.includes('not found')) {
-                        // Item doesn't exist, create it with declined status
-                        savedItem = await WorkOrderItemsService.createWorkOrderItem({
-                            ...itemData,
-                            active: false
-                        });
-                        
-                        // Update local state with the database ID
-                        const updatedItemsWithDbId = items.map(localItem => 
-                            localItem.id === id ? { ...localItem, id: savedItem.id, active: false } : localItem
-                        );
-                        onItemsChange(updatedItemsWithDbId);
-                        
-                        toast.info('Labor item saved and declined');
-                    } else {
-                        throw fetchError;
-                    }
-                }
-                
-                onItemSaved?.(savedItem);
-            } catch (error: any) {
-                console.error('Error saving/declining labor item:', error);
-                toast.error(`Failed to save item: ${error.message || 'Unknown error'}`);
-                // Revert local state on error
-                const revertedItems = items.map(item => 
-                    item.id === id ? { ...item, active: undefined } : item
-                );
-                onItemsChange(revertedItems);
-            }
-        } else {
-            toast.info('Labor item declined');
-        }
     };
 
     const removeItem = async (id: string) => {
@@ -323,63 +171,22 @@ export function WorkOrderLaborItems({
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div key={item.id} className={`bg-white dark:bg-card border rounded-lg p-4 ${
-                            item.active === true ? 'border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/5' : 
-                            item.active === false ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' : 
-                            'border-border'
-                        }`}>
+                        <div key={item.id} className="bg-white dark:bg-card border border-border rounded-lg p-4">
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Labor Item {index + 1}</h4>
-                                    {item.active === true && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-500/20">
-                                            Accepted
-                                        </span>
-                                    )}
-                                    {item.active === false && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-500/20">
-                                            Declined
-                                        </span>
-                                    )}
                                 </div>
                                 {isEditing && (
-                                    <div className="flex items-center gap-1">
-                                        {/* Accept/Decline buttons */}
-                                        {item.active !== true && (
-                                            <Button
-                                                type="button"
-                                                onClick={() => acceptItem(item.id)}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 h-7 w-7 p-0"
-                                                title="Accept"
-                                            >
-                                                <CheckCircle className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        {item.active !== false && (
-                                            <Button
-                                                type="button"
-                                                onClick={() => declineItem(item.id)}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 w-7 p-0"
-                                                title="Decline"
-                                            >
-                                                <XCircle className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            onClick={() => removeItem(item.id)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeItem(item.id)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 )}
                             </div>
 

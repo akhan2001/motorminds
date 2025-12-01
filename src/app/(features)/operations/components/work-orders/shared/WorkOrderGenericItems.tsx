@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, DollarSign, Tag, Package as PackageIcon, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, DollarSign, Tag, Package as PackageIcon } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { WorkOrderItem, WorkOrderItemCreateData } from "../../../types/work-order-items";
@@ -23,7 +23,6 @@ interface GenericFormItem {
     category?: string;
     labor_hours?: number; // For packages and services
     notes?: string;
-    active?: boolean; // true = accepted, false = declined, undefined = pending
 }
 
 interface WorkOrderGenericItemsProps {
@@ -100,27 +99,8 @@ export function WorkOrderGenericItems({
             unit_cost: 0,
             category: "",
             labor_hours: 0,
-            notes: "",
-            active: undefined // pending by default
+            notes: ""
         }]);
-    };
-
-    const acceptItem = async (id: string) => {
-        const updatedItems = items.map(item => 
-            item.id === id ? { ...item, active: true } : item
-        );
-        onItemsChange(updatedItems);
-        
-        const item = items.find(i => i.id === id);
-        if (item) {
-            await saveItemToDatabase(item);
-        }
-    };
-
-    const declineItem = (id: string) => {
-        onItemsChange(items.map(item => 
-            item.id === id ? { ...item, active: false } : item
-        ));
     };
 
     const removeItem = (id: string) => {
@@ -139,18 +119,6 @@ export function WorkOrderGenericItems({
             }
             return item;
         }));
-    };
-
-    const getItemStatusColor = (item: GenericFormItem) => {
-        if (item.active === true) return 'border-green-300 dark:border-green-500/50 bg-green-50 dark:bg-green-500/10';
-        if (item.active === false) return 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-500/10';
-        return 'border-yellow-300 dark:border-yellow-500/50 bg-yellow-50 dark:bg-yellow-500/10';
-    };
-
-    const getItemStatusBadge = (item: GenericFormItem) => {
-        if (item.active === true) return <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Approved</span>;
-        if (item.active === false) return <span className="text-xs text-red-600 dark:text-red-400 font-medium">✗ Declined</span>;
-        return <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">⏳ Pending</span>;
     };
 
     return (
@@ -182,51 +150,25 @@ export function WorkOrderGenericItems({
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div 
-                            key={item.id} 
-                            className={`p-4 rounded-lg border ${getItemStatusColor(item)} transition-all`}
+                        <div
+                            key={item.id}
+                            className="p-4 rounded-lg border border-border transition-all"
                         >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
-                                    {getItemStatusBadge(item)}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    {item.active === undefined && isEditing && (
-                                        <>
-                                            <Button
-                                                type="button"
-                                                onClick={() => acceptItem(item.id)}
-                                                size="sm"
-                                                className="bg-green-600 hover:bg-green-700 text-white h-8 px-3"
-                                            >
-                                                <CheckCircle className="h-4 w-4 mr-1" />
-                                                Accept
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                onClick={() => declineItem(item.id)}
-                                                size="sm"
-                                                variant="outline"
-                                                className="border-red-300 dark:border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 h-8 px-3"
-                                            >
-                                                <XCircle className="h-4 w-4 mr-1" />
-                                                Decline
-                                            </Button>
-                                        </>
-                                    )}
-                                    {isEditing && (
-                                        <Button
-                                            type="button"
-                                            onClick={() => removeItem(item.id)}
-                                            variant="outline"
-                                            size="sm"
-                                            className="border-border text-muted-foreground hover:text-foreground hover:bg-muted h-8 px-3"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
+                                {isEditing && (
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeItem(item.id)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-border text-muted-foreground hover:text-foreground hover:bg-muted h-8 px-3"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
