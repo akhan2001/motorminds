@@ -21,7 +21,7 @@ export const CustomerContactInfo: React.FC<CustomerContactInfoProps> = ({ custom
                 {customer.customer_email && (
                     <div className="flex items-center gap-2">
                         <Mail className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
-                        <span className="text-foreground dark:text-white">{customer.customer_email}</span>
+                        <span className="text-foreground dark:text-white">{customer.customer_email === "NULL" ? "-" : customer.customer_email}</span>
                     </div>
                 )}
                 {customer.customer_phone && (
@@ -33,7 +33,7 @@ export const CustomerContactInfo: React.FC<CustomerContactInfoProps> = ({ custom
                 {customer.customer_address && (
                     <div className="flex items-center gap-2 md:col-span-2">
                         <MapPin className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
-                        <span className="text-foreground dark:text-white">{customer.customer_address}</span>
+                        <span className="text-foreground dark:text-white">{customer.customer_address === "NULL" ? "-" : customer.customer_address}</span>
                     </div>
                 )}
                 {customer.shops?.shop_name && (

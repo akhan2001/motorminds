@@ -34,9 +34,9 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                 <div className="space-y-6 pt-6">
                     <CustomerContactInfo customer={customer} />
 
-                    {customerHistory && (
+                    {/* {customerHistory && (
                         <CustomerStats customerHistory={customerHistory} />
-                    )}
+                    )} */}
 
                     <CustomerHistoryTabs 
                         customerHistory={customerHistory} 
