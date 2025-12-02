@@ -5,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LogOut, Settings, HelpCircle, Shield, Moon, Sun } from "lucide-react"
-import { createClient } from "@/utils/supabase/client"
+import { createClient, resetClient } from "@/utils/supabase/client"
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -53,12 +53,18 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
 
             if (error) {
                 console.error("Logout error:", error)
-            } else {
-                // Clear all React Query cache to ensure fresh data on next login
-                queryClient.clear()
-                // Force a full page reload to clear all cached data
-                window.location.href = "/login"
+                return
             }
+
+            // Clear all caches
+            queryClient.clear()
+            localStorage.clear() // Clear localStorage cache (admin context, etc.)
+
+            // Reset the singleton Supabase client
+            resetClient()
+
+            // Force a full page reload to clear all cached data
+            window.location.href = "/login"
         } catch (error) {
             console.error("Logout error:", error)
         }

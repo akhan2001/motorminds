@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
+import { createClient, resetClient } from "@/utils/supabase/client"
 import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useState, useMemo } from "react"
@@ -87,15 +87,21 @@ export function Nav() {
 		try {
 			const supabase = createClient()
 			const { error } = await supabase.auth.signOut()
-			
+
 			if (error) {
 				console.error("Logout error:", error)
-			} else {
-				// Clear all React Query cache to ensure fresh data on next login
-				queryClient.clear()
-				// Force a full page reload to clear all cached data
-				window.location.href = "/login"
+				return
 			}
+
+			// Clear all caches
+			queryClient.clear()
+			localStorage.clear() // Clear localStorage cache (admin context, etc.)
+
+			// Reset the singleton Supabase client
+			resetClient()
+
+			// Force a full page reload to clear all cached data
+			window.location.href = "/login"
 		} catch (error) {
 			console.error("Logout error:", error)
 		}
