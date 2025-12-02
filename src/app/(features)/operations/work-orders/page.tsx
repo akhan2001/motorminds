@@ -12,7 +12,8 @@ import { StatusTrackerManagementModal } from "../components/work-orders/status-t
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from "../hooks/use-work-orders";
-import { useAuth } from "../hooks/use-auth";
+// import { useAuth } from "../hooks/use-auth";
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { WorkOrderItemsService } from "../lib/work-order-items-service";
 import type { WorkOrderItemCreateData } from "../types/work-order-items";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";

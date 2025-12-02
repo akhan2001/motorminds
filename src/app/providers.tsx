@@ -6,6 +6,7 @@ import { TasksProvider } from "@/contexts/tasks-context"
 import { ConfirmationProvider } from "@/app/components/confirmation-service"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AdminContextProvider } from "@/contexts/admin-context"
+import { AuthProvider } from "@/lib/auth/AuthProvider"
 
 export default function Providers({
 	children,
@@ -17,27 +18,29 @@ export default function Providers({
 			queries: {
 				staleTime: 5 * 60 * 1000, // 5 minutes
 				retry: 1,
-				refetchOnWindowFocus: true,
+				refetchOnWindowFocus: false,
 			},
 		},
 	}))
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ThemeProvider
-				attribute="class"
-				defaultTheme="system"
-				enableSystem
-				disableTransitionOnChange
-			>
-				<AdminContextProvider>
-					<TasksProvider>
-						<ConfirmationProvider>
-							{children}
-						</ConfirmationProvider>
-					</TasksProvider>
-				</AdminContextProvider>
-			</ThemeProvider>
+			<AuthProvider>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<AdminContextProvider>
+						<TasksProvider>
+							<ConfirmationProvider>
+								{children}
+							</ConfirmationProvider>
+						</TasksProvider>
+					</AdminContextProvider>
+				</ThemeProvider>
+			</AuthProvider>
 		</QueryClientProvider>
 	)
 } 
