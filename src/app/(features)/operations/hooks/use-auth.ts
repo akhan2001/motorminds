@@ -3,8 +3,6 @@
 'use client'
 
 import { useUnifiedAuth } from '@/contexts/unified-auth-context'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 
 interface AuthState {
     user: any | null
@@ -14,21 +12,14 @@ interface AuthState {
 }
 
 export function useAuth(): AuthState {
-    const router = useRouter()
     const { user, shopInfo, isLoading, error } = useUnifiedAuth()
 
-    // Redirect to login if no user after loading completes
-    useEffect(() => {
-        if (!isLoading && !user) {
-            console.error('No authenticated user found')
-            router.push('/login')
-        }
-    }, [user, isLoading, router])
-
+    // Don't redirect here - middleware already handles auth protection
+    // Just return the auth state
     return {
         user,
         shopId: shopInfo?.id || null,
         isLoading,
-        error: !shopInfo && !isLoading ? 'No shop associated with this user' : error
+        error: !shopInfo && !isLoading && user ? 'No shop associated with this user' : error
     }
 }
