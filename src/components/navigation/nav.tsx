@@ -86,17 +86,27 @@ export function Nav() {
 	const handleLogout = async () => {
 		try {
 			console.log('Starting logout...')
+
+			// Create a timeout promise
+			const timeout = new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('SignOut timeout')), 3000)
+			)
+
 			const supabase = createClient()
 			console.log('Calling supabase.auth.signOut()...')
-			const { error } = await supabase.auth.signOut()
 
-			if (error) {
-				console.error("Logout error from Supabase:", error)
-				alert(`Logout failed: ${error.message}`)
-				return
+			// Race between signOut and timeout
+			try {
+				await Promise.race([
+					supabase.auth.signOut(),
+					timeout
+				])
+				console.log('Sign out successful')
+			} catch (timeoutError) {
+				console.warn('SignOut timed out, proceeding with cleanup anyway:', timeoutError)
 			}
 
-			console.log('Sign out successful, clearing caches...')
+			console.log('Clearing caches...')
 
 			// Clear all caches
 			queryClient.clear()
@@ -114,7 +124,10 @@ export function Nav() {
 			window.location.href = "/login"
 		} catch (error) {
 			console.error("Unexpected logout error:", error)
-			alert(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+			// Still try to redirect even on error
+			localStorage.clear()
+			resetClient()
+			window.location.href = "/login"
 		}
 	}
 
