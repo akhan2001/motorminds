@@ -4,26 +4,31 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CustomerForm } from "./customer-form";
-import { useRouter } from "next/navigation";
-import { OrganizationCustomersService } from "../lib/organization-customers-service";
-import { shouldEnableOrganizationWideSearch } from "@/lib/utils/organization-utils";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
     const [isAdding, setIsAdding] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
     const [useOrganizationTable, setUseOrganizationTable] = useState(false);
-    const router = useRouter();
 
-    // Check if organization-wide features should be enabled
+    // Check if user has organization access (simple check)
     useEffect(() => {
-        const checkOrganizationFeatures = async () => {
-            if (user?.id) {
-                const status = await OrganizationCustomersService.getOrganizationStatus(user.id);
-                const shouldUseOrgTable = shouldEnableOrganizationWideSearch(status.adminType, status.organizationId);
-                setUseOrganizationTable(shouldUseOrgTable);
+        const checkOrganizationAccess = async () => {
+            if (!user?.id) return;
+            
+            try {
+                // Simple API call to check if user can access organization customers
+                const res = await fetch('/api/customers/organization-check');
+                if (res.ok) {
+                    const data = await res.json();
+                    setUseOrganizationTable(data.hasOrganizationAccess);
+                }
+            } catch (error) {
+                // If check fails, default to regular table (safe fallback)
+                setUseOrganizationTable(false);
             }
         };
-        checkOrganizationFeatures();
+        
+        checkOrganizationAccess();
     }, [user?.id]);
 
     const handleCustomerAdded = () => {
@@ -48,6 +53,8 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                         </Button>
                     </div>
                 </div>
+                
+                {/* Use OrganizationCustomerTable for MSO shops, regular CustomerTable for individual shops */}
                 {useOrganizationTable ? (
                     <OrganizationCustomerTable
                         shopId={shopId}
@@ -63,7 +70,15 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                         refreshIndex={refreshKey}
                     />
                 )}
-                {isAdding && <CustomerForm onClose={handleCustomerAdded} shopId={shopId} isOpen={isAdding} />}
+
+                {/* Add Customer Form */}
+                {isAdding && (
+                    <CustomerForm 
+                        onClose={handleCustomerAdded} 
+                        shopId={shopId} 
+                        isOpen={isAdding} 
+                    />
+                )}
             </div>
         </main>
     )

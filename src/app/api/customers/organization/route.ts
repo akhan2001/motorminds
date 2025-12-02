@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
         const organizationId = shopData?.organization_id
 
+
         // Build customer query with organization support
         let query = supabase
             .from('customers')
@@ -60,11 +61,28 @@ export async function GET(request: NextRequest) {
 
         // Apply organization-aware filtering
         if (organizationWide && organizationId) {
-            // MSO shop: show customers from same organization
-            // The RLS policies will handle the access control
-            query = query.eq('organization_id', organizationId)
+            // Organization-wide search: Get all shops in organization first
+            const { data: orgShops, error: shopsError } = await supabase
+                .from('shops')
+                .select('id')
+                .eq('organization_id', organizationId)
+
+            if (shopsError) {
+                console.error('Error fetching organization shops:', shopsError)
+                return NextResponse.json({ error: 'Failed to fetch organization shops' }, { status: 500 })
+            }
+
+            const orgShopIds = orgShops?.map(s => s.id) || []
+
+            if (orgShopIds.length > 0) {
+                // Filter by all shops in the organization
+                query = query.in('shop_id', orgShopIds)
+            } else {
+                // Fallback to current shop if no org shops found
+                query = query.eq('shop_id', shopId)
+            }
         } else {
-            // Non-MSO shop or shop-only mode: filter by current shop
+            // Shop-only search: filter by current shop
             query = query.eq('shop_id', shopId)
         }
 
@@ -84,6 +102,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { data: customers, error, count } = await query
+
 
         if (error) {
             console.error('Customer search error:', error)
