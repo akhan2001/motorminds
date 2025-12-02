@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { UserRole } from '@/types/core/user'
@@ -41,88 +41,98 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
         error: null
     })
 
-    // Single function to fetch all auth data in one go
-    const fetchAuthData = useCallback(async () => {
-        try {
-            const supabase = createClient()
-
-            // Get user from Supabase
-            const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-            if (userError) {
-                console.warn('Error fetching user:', userError)
-                setState({
-                    user: null,
-                    role: null,
-                    shopInfo: null,
-                    isLoading: false,
-                    error: userError.message
-                })
-                return
-            }
-
-            if (!user) {
-                setState({
-                    user: null,
-                    role: null,
-                    shopInfo: null,
-                    isLoading: false,
-                    error: null
-                })
-                return
-            }
-
-            // Fetch user data including role and shop_id in a SINGLE query
-            const { data: userData, error: userDataError } = await supabase
-                .from('users')
-                .select('role, shop_id')
-                .eq('id', user.id)
-                .maybeSingle()
-
-            if (userDataError && userDataError.code !== 'PGRST116') {
-                console.warn('Error fetching user data:', userDataError)
-            }
-
-            const role = userData?.role || null
-            const shopId = userData?.shop_id || null
-
-            // Fetch shop info if shop_id exists
-            let shopInfo: ShopInfo | null = null
-            if (shopId) {
-                const { data: shopData, error: shopError } = await supabase
-                    .from('shops')
-                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
-                    .eq('id', shopId)
-                    .maybeSingle()
-
-                if (shopError && shopError.code !== 'PGRST116') {
-                    console.warn('Error fetching shop data:', shopError)
-                } else if (shopData) {
-                    shopInfo = shopData
-                }
-            }
-
-            setState({
-                user,
-                role,
-                shopInfo,
-                isLoading: false,
-                error: null
-            })
-
-        } catch (error) {
-            console.error('Unexpected error fetching auth data:', error)
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                error: error instanceof Error ? error.message : 'Unknown error'
-            }))
-        }
-    }, [])
 
     // Set up auth state listener ONCE on mount
     useEffect(() => {
         const supabase = createClient()
+        let isMounted = true
+
+        // Single function to fetch all auth data
+        const fetchAuthData = async () => {
+            try {
+                // Get user from Supabase
+                const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+                if (!isMounted) return
+
+                if (userError) {
+                    console.warn('Error fetching user:', userError)
+                    setState({
+                        user: null,
+                        role: null,
+                        shopInfo: null,
+                        isLoading: false,
+                        error: userError.message
+                    })
+                    return
+                }
+
+                if (!user) {
+                    setState({
+                        user: null,
+                        role: null,
+                        shopInfo: null,
+                        isLoading: false,
+                        error: null
+                    })
+                    return
+                }
+
+                // Fetch user data including role and shop_id in a SINGLE query
+                const { data: userData, error: userDataError } = await supabase
+                    .from('users')
+                    .select('role, shop_id')
+                    .eq('id', user.id)
+                    .maybeSingle()
+
+                if (!isMounted) return
+
+                if (userDataError && userDataError.code !== 'PGRST116') {
+                    console.warn('Error fetching user data:', userDataError)
+                }
+
+                const role = userData?.role || null
+                const shopId = userData?.shop_id || null
+
+                // Fetch shop info if shop_id exists
+                let shopInfo: ShopInfo | null = null
+                if (shopId) {
+                    const { data: shopData, error: shopError } = await supabase
+                        .from('shops')
+                        .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
+                        .eq('id', shopId)
+                        .maybeSingle()
+
+                    if (!isMounted) return
+
+                    if (shopError && shopError.code !== 'PGRST116') {
+                        console.warn('Error fetching shop data:', shopError)
+                    } else if (shopData) {
+                        shopInfo = shopData
+                    }
+                }
+
+                if (isMounted) {
+                    setState({
+                        user,
+                        role,
+                        shopInfo,
+                        isLoading: false,
+                        error: null
+                    })
+                }
+
+            } catch (error) {
+                console.error('Unexpected error fetching auth data:', error)
+                if (isMounted) {
+                    setState(prev => ({
+                        ...prev,
+                        isLoading: false,
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    }))
+                }
+            }
+        }
 
         // Initial fetch
         fetchAuthData()
@@ -136,14 +146,73 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
         })
 
         return () => {
+            isMounted = false
             subscription.unsubscribe()
         }
-    }, [fetchAuthData])
+    }, []) // Only run once on mount
+
+    // Manual refetch function
+    const refetch = async () => {
+        setState(prev => ({ ...prev, isLoading: true }))
+
+        try {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) {
+                setState({
+                    user: null,
+                    role: null,
+                    shopInfo: null,
+                    isLoading: false,
+                    error: null
+                })
+                return
+            }
+
+            const { data: userData } = await supabase
+                .from('users')
+                .select('role, shop_id')
+                .eq('id', user.id)
+                .maybeSingle()
+
+            const role = userData?.role || null
+            const shopId = userData?.shop_id || null
+
+            let shopInfo: ShopInfo | null = null
+            if (shopId) {
+                const { data: shopData } = await supabase
+                    .from('shops')
+                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
+                    .eq('id', shopId)
+                    .maybeSingle()
+
+                if (shopData) {
+                    shopInfo = shopData
+                }
+            }
+
+            setState({
+                user,
+                role,
+                shopInfo,
+                isLoading: false,
+                error: null
+            })
+        } catch (error) {
+            console.error('Error refetching auth data:', error)
+            setState(prev => ({
+                ...prev,
+                isLoading: false,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            }))
+        }
+    }
 
     return (
         <UnifiedAuthContext.Provider value={{
             ...state,
-            refetch: fetchAuthData
+            refetch
         }}>
             {children}
         </UnifiedAuthContext.Provider>
