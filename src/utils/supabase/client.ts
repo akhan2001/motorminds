@@ -18,3 +18,8 @@ export function createClient() {
 
 	return supabaseInstance;
 }
+
+// Reset the singleton instance (used during logout)
+export function resetClient() {
+	supabaseInstance = null;
+}
