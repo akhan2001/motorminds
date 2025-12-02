@@ -166,10 +166,13 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
         // Subscribe to auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log('[UnifiedAuth] Auth state changed:', event)
-            // Only refetch on actual sign in/out, not token refresh
-            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            // Only refetch on actual sign out, not SIGNED_IN or token refresh
+            // SIGNED_IN fires on initial load after we already fetched, causing double fetch
+            if (event === 'SIGNED_OUT') {
                 console.log('[UnifiedAuth] Refetching auth data due to:', event)
                 await fetchAuthData()
+            } else if (event === 'SIGNED_IN') {
+                console.log('[UnifiedAuth] Ignoring SIGNED_IN event (already have data)')
             }
         })
 

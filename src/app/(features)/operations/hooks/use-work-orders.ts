@@ -49,7 +49,7 @@ export function useWorkOrdersWithDetails(shopId: string) {
         queryKey: [...workOrderKeys.list(shopId), 'with-details'],
         queryFn: () => workOrderService.getWorkOrdersWithDetails(shopId),
         staleTime: 5 * 60 * 1000,
-        enabled: !!shopId,
+        enabled: !!shopId && shopId !== '', // Only enable if shopId is valid and not empty
     })
 }
 
