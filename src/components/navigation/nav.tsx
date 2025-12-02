@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
+import { supabase } from "@/lib/supabase"
 import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
@@ -86,7 +86,7 @@ export function Nav() {
 
 	const handleLogout = async () => {
 		try {
-			const supabase = createClient()
+			// Use singleton client to prevent creating new client instances
 			const { error } = await supabase.auth.signOut()
 			
 			if (error) {

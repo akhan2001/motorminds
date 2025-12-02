@@ -17,7 +17,8 @@ export default function Providers({
 			queries: {
 				staleTime: 5 * 60 * 1000, // 5 minutes
 				retry: 1,
-				refetchOnWindowFocus: true,
+				refetchOnWindowFocus: false,
+				refetchOnMount: false,
 			},
 		},
 	}))

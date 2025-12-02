@@ -5,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LogOut, Settings, HelpCircle, Shield, Moon, Sun } from "lucide-react"
-import { createClient } from "@/utils/supabase/client"
+import { supabase } from "@/lib/supabase"
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -48,7 +48,7 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
 
     const handleLogout = async () => {
         try {
-            const supabase = createClient()
+            // Use singleton client to prevent creating new client instances
             const { error } = await supabase.auth.signOut()
 
             if (error) {

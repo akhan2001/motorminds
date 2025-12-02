@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/utils/supabase/client'
+import { supabase } from '@/lib/supabase' // Use singleton client to prevent refresh loops
 
 interface ShopInfo {
     id: string
@@ -15,7 +15,8 @@ interface ShopInfo {
 }
 
 export function useShopInfo() {
-    const supabase = createClient()
+    // Use singleton client instead of creating new one on every render
+    // This prevents token refresh loops
 
     return useQuery({
         queryKey: ['shop-info'],
@@ -51,6 +52,7 @@ export function useShopInfo() {
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: false,
+        refetchOnMount: false,
         retry: 1
     })
 }
