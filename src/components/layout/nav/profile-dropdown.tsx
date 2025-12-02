@@ -48,25 +48,36 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
 
     const handleLogout = async () => {
         try {
+            console.log('Starting logout...')
             const supabase = createClient()
+            console.log('Calling supabase.auth.signOut()...')
             const { error } = await supabase.auth.signOut()
 
             if (error) {
-                console.error("Logout error:", error)
+                console.error("Logout error from Supabase:", error)
+                alert(`Logout failed: ${error.message}`)
                 return
             }
 
+            console.log('Sign out successful, clearing caches...')
+
             // Clear all caches
             queryClient.clear()
+            console.log('React Query cache cleared')
+
             localStorage.clear() // Clear localStorage cache (admin context, etc.)
+            console.log('localStorage cleared')
 
             // Reset the singleton Supabase client
             resetClient()
+            console.log('Supabase client reset')
 
             // Force a full page reload to clear all cached data
+            console.log('Redirecting to /login...')
             window.location.href = "/login"
         } catch (error) {
-            console.error("Logout error:", error)
+            console.error("Unexpected logout error:", error)
+            alert(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
     }
 
