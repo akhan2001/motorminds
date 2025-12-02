@@ -85,6 +85,8 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
                 }
 
                 console.log('[UnifiedAuth] User found, fetching user data from database...')
+                console.log('[UnifiedAuth] Auth user ID:', user.id)
+
                 // Fetch user data including role and shop_id in a SINGLE query
                 const { data: userData, error: userDataError } = await supabase
                     .from('users')
@@ -99,13 +101,36 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
                     return
                 }
 
+                // Handle case where users table row doesn't exist or RLS blocks access
                 if (userDataError && userDataError.code !== 'PGRST116') {
-                    console.warn('[UnifiedAuth] Error fetching user data:', userDataError)
+                    console.error('[UnifiedAuth] Database error fetching user data:', {
+                        code: userDataError.code,
+                        message: userDataError.message,
+                        details: userDataError.details,
+                        hint: userDataError.hint
+                    })
+                    // Don't fail completely - user might be in signup process
+                }
+
+                if (!userData) {
+                    console.warn('[UnifiedAuth] WARNING: No row found in users table for auth user', user.id)
+                    console.warn('[UnifiedAuth] This could indicate:')
+                    console.warn('[UnifiedAuth]   1. Database trigger failed to create users table row')
+                    console.warn('[UnifiedAuth]   2. RLS policy is blocking access')
+                    console.warn('[UnifiedAuth]   3. User is still in signup process')
+                    console.warn('[UnifiedAuth] User will have limited access until this is resolved')
                 }
 
                 const role = userData?.role || null
                 const shopId = userData?.shop_id || null
                 console.log('[UnifiedAuth] Extracted role and shopId:', { role, shopId })
+
+                if (!role && userData) {
+                    console.warn('[UnifiedAuth] User record exists but has no role assigned')
+                }
+                if (!shopId && userData) {
+                    console.warn('[UnifiedAuth] User record exists but has no shop_id assigned')
+                }
 
                 // Fetch shop info if shop_id exists
                 let shopInfo: ShopInfo | null = null
@@ -166,10 +191,13 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
         // Subscribe to auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log('[UnifiedAuth] Auth state changed:', event)
-            // Only refetch on actual sign in/out, not token refresh
-            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            // Only refetch on actual sign out, not SIGNED_IN or token refresh
+            // SIGNED_IN fires on initial load after we already fetched, causing double fetch
+            if (event === 'SIGNED_OUT') {
                 console.log('[UnifiedAuth] Refetching auth data due to:', event)
                 await fetchAuthData()
+            } else if (event === 'SIGNED_IN') {
+                console.log('[UnifiedAuth] Ignoring SIGNED_IN event (already have data)')
             }
         })
 
