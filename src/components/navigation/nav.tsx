@@ -3,16 +3,14 @@
 import { createClient } from "@/utils/supabase/client"
 import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MobileNav } from "@/components/navigation/mobile-nav"
 import { useQueryClient } from '@tanstack/react-query'
-import { useUserRole } from "@/hooks/core/useUserRole"
-import { useShopInfo } from "@/hooks/core/useShopInfo"
+import { useUnifiedAuth } from "@/contexts/unified-auth-context"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
@@ -23,8 +21,9 @@ export function Nav() {
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
 	const queryClient = useQueryClient()
-	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
-	const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
+
+	// Use unified auth - single source of truth for all auth data
+	const { role: userRole, shopInfo, isLoading } = useUnifiedAuth()
 
 	if (!pathname) {
 		return null
@@ -102,8 +101,8 @@ export function Nav() {
 		}
 	}
 
-	// Show loading state while fetching role and shop info
-	if (isLoadingRole || isLoadingShop) {
+	// Show loading state while fetching auth data
+	if (isLoading) {
 		return (
 			<header className="bg-background dark:bg-[#0d0d0d] px-4 pt-2 border-b border-border z-50 sticky top-0">
 				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">

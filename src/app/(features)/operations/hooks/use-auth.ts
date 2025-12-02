@@ -1,10 +1,10 @@
 // Custom hook for authentication in operations
+// Now uses unified auth context
 'use client'
 
-import { useState, useEffect } from 'react'
-import { checkUser } from '@/utils/supabase/supabase-auth'
-import { getShopId } from '@/utils/supabase/supabase-shop'
+import { useUnifiedAuth } from '@/contexts/unified-auth-context'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 interface AuthState {
     user: any | null
@@ -13,56 +13,22 @@ interface AuthState {
     error: string | null
 }
 
-export function useAuth() {
-    const [authState, setAuthState] = useState<AuthState>({
-        user: null,
-        shopId: null,
-        isLoading: true,
-        error: null
-    })
+export function useAuth(): AuthState {
     const router = useRouter()
+    const { user, shopInfo, isLoading, error } = useUnifiedAuth()
 
+    // Redirect to login if no user after loading completes
     useEffect(() => {
-        const loadAuth = async () => {
-            try {
-                setAuthState(prev => ({ ...prev, isLoading: true, error: null }))
-                
-                const user = await checkUser()
-                if (!user) {
-                    console.error('No authenticated user found')
-                    router.push('/login')
-                    return
-                }
-
-                const shopId = await getShopId(user.id)
-                if (!shopId) {
-                    console.error('No shop ID found for user')
-                    setAuthState(prev => ({ 
-                        ...prev, 
-                        isLoading: false, 
-                        error: 'No shop associated with this user' 
-                    }))
-                    return
-                }
-
-                setAuthState({
-                    user,
-                    shopId,
-                    isLoading: false,
-                    error: null
-                })
-            } catch (error) {
-                console.error('Authentication error:', error)
-                setAuthState(prev => ({
-                    ...prev,
-                    isLoading: false,
-                    error: error instanceof Error ? error.message : 'Authentication failed'
-                }))
-            }
+        if (!isLoading && !user) {
+            console.error('No authenticated user found')
+            router.push('/login')
         }
+    }, [user, isLoading, router])
 
-        loadAuth()
-    }, [router])
-
-    return authState
+    return {
+        user,
+        shopId: shopInfo?.id || null,
+        isLoading,
+        error: !shopInfo && !isLoading ? 'No shop associated with this user' : error
+    }
 }

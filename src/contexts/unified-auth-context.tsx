@@ -1,0 +1,179 @@
+'use client'
+
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import type { User } from '@supabase/supabase-js'
+import type { UserRole } from '@/types/core/user'
+
+interface ShopInfo {
+    id: string
+    shop_name: string
+    shop_owner: string
+    logo_image_url?: string
+    shop_email?: string
+    shop_phone?: string
+    shop_address?: string
+    shop_city?: string
+    shop_province?: string
+    business_number?: string
+}
+
+interface UnifiedAuthState {
+    user: User | null
+    role: UserRole | null
+    shopInfo: ShopInfo | null
+    isLoading: boolean
+    error: string | null
+}
+
+interface UnifiedAuthContextType extends UnifiedAuthState {
+    refetch: () => Promise<void>
+}
+
+const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined)
+
+export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
+    const [state, setState] = useState<UnifiedAuthState>({
+        user: null,
+        role: null,
+        shopInfo: null,
+        isLoading: true,
+        error: null
+    })
+
+    // Single function to fetch all auth data in one go
+    const fetchAuthData = useCallback(async () => {
+        try {
+            const supabase = createClient()
+
+            // Get user from Supabase
+            const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+            if (userError) {
+                console.warn('Error fetching user:', userError)
+                setState({
+                    user: null,
+                    role: null,
+                    shopInfo: null,
+                    isLoading: false,
+                    error: userError.message
+                })
+                return
+            }
+
+            if (!user) {
+                setState({
+                    user: null,
+                    role: null,
+                    shopInfo: null,
+                    isLoading: false,
+                    error: null
+                })
+                return
+            }
+
+            // Fetch user data including role and shop_id in a SINGLE query
+            const { data: userData, error: userDataError } = await supabase
+                .from('users')
+                .select('role, shop_id')
+                .eq('id', user.id)
+                .maybeSingle()
+
+            if (userDataError && userDataError.code !== 'PGRST116') {
+                console.warn('Error fetching user data:', userDataError)
+            }
+
+            const role = userData?.role || null
+            const shopId = userData?.shop_id || null
+
+            // Fetch shop info if shop_id exists
+            let shopInfo: ShopInfo | null = null
+            if (shopId) {
+                const { data: shopData, error: shopError } = await supabase
+                    .from('shops')
+                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
+                    .eq('id', shopId)
+                    .maybeSingle()
+
+                if (shopError && shopError.code !== 'PGRST116') {
+                    console.warn('Error fetching shop data:', shopError)
+                } else if (shopData) {
+                    shopInfo = shopData
+                }
+            }
+
+            setState({
+                user,
+                role,
+                shopInfo,
+                isLoading: false,
+                error: null
+            })
+
+        } catch (error) {
+            console.error('Unexpected error fetching auth data:', error)
+            setState(prev => ({
+                ...prev,
+                isLoading: false,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            }))
+        }
+    }, [])
+
+    // Set up auth state listener ONCE on mount
+    useEffect(() => {
+        const supabase = createClient()
+
+        // Initial fetch
+        fetchAuthData()
+
+        // Subscribe to auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            // Only refetch on actual sign in/out, not token refresh
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                await fetchAuthData()
+            }
+        })
+
+        return () => {
+            subscription.unsubscribe()
+        }
+    }, [fetchAuthData])
+
+    return (
+        <UnifiedAuthContext.Provider value={{
+            ...state,
+            refetch: fetchAuthData
+        }}>
+            {children}
+        </UnifiedAuthContext.Provider>
+    )
+}
+
+// Hook to use the unified auth context
+export function useUnifiedAuth() {
+    const context = useContext(UnifiedAuthContext)
+    if (context === undefined) {
+        throw new Error('useUnifiedAuth must be used within UnifiedAuthProvider')
+    }
+    return context
+}
+
+// Backward compatibility hooks for existing code
+export function useUserRole() {
+    const { role, isLoading } = useUnifiedAuth()
+    return {
+        data: role,
+        isLoading,
+        error: null
+    }
+}
+
+export function useShopInfo() {
+    const { shopInfo, isLoading } = useUnifiedAuth()
+    return {
+        data: shopInfo,
+        isLoading,
+        error: null
+    }
+}

@@ -6,6 +6,7 @@ import { TasksProvider } from "@/contexts/tasks-context"
 import { ConfirmationProvider } from "@/app/components/confirmation-service"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AdminContextProvider } from "@/contexts/admin-context"
+import { UnifiedAuthProvider } from "@/contexts/unified-auth-context"
 
 export default function Providers({
 	children,
@@ -17,7 +18,7 @@ export default function Providers({
 			queries: {
 				staleTime: 5 * 60 * 1000, // 5 minutes
 				retry: 1,
-				refetchOnWindowFocus: true,
+				refetchOnWindowFocus: false, // Prevent excessive refetching
 			},
 		},
 	}))
@@ -30,13 +31,15 @@ export default function Providers({
 				enableSystem
 				disableTransitionOnChange
 			>
-				<AdminContextProvider>
-					<TasksProvider>
-						<ConfirmationProvider>
-							{children}
-						</ConfirmationProvider>
-					</TasksProvider>
-				</AdminContextProvider>
+				<UnifiedAuthProvider>
+					<AdminContextProvider>
+						<TasksProvider>
+							<ConfirmationProvider>
+								{children}
+							</ConfirmationProvider>
+						</TasksProvider>
+					</AdminContextProvider>
+				</UnifiedAuthProvider>
 			</ThemeProvider>
 		</QueryClientProvider>
 	)
