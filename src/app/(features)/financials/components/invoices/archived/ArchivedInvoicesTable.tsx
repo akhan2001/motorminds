@@ -1,15 +1,19 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { 
     AlertCircle,
     ChevronLeft,
     ChevronRight,
-    Archive
+    Archive,
+    Search,
+    X
 } from 'lucide-react'
 import { useAuth } from '../../../../operations/hooks/use-auth'
 import { useArchivedInvoices, useArchivedInvoiceCount } from '../../../hooks/use-archived-invoices'
@@ -26,24 +30,49 @@ const ITEMS_PER_PAGE = 50
 export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
     const { shopId } = useAuth()
     const [currentPage, setCurrentPage] = useState(1)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [localSearchValue, setLocalSearchValue] = useState('')
     const { selectedInvoice, isSheetOpen, openInvoiceDetail, closeInvoiceDetail } = useInvoiceDetailSheet()
+    
+    // Memoize filters to prevent unnecessary re-renders
+    const filters = useMemo(() => ({
+        search: searchTerm || undefined
+    }), [searchTerm])
+
+    // Debounced search update - prevents excessive API calls
+    const debouncedUpdateSearch = useDebouncedCallback((term: string) => {
+        setSearchTerm(term)
+        // Reset to page 1 when searching
+        setCurrentPage(1)
+    }, 500)
     
     const { data: invoices, isLoading, error } = useArchivedInvoices({
         shopId: shopId || '',
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        filters: {}
+        filters
     })
 
-    const { data: totalCount = 0 } = useArchivedInvoiceCount(shopId || '', {})
+    const { data: totalCount = 0 } = useArchivedInvoiceCount(shopId || '', filters)
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
-    const handlePageChange = (newPage: number) => {
+    const handlePageChange = useCallback((newPage: number) => {
         setCurrentPage(newPage)
         // Scroll to top when page changes
         window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
+    }, [])
+
+    const handleSearchChange = useCallback((value: string) => {
+        setLocalSearchValue(value)
+        debouncedUpdateSearch(value)
+    }, [debouncedUpdateSearch])
+
+    const handleClearSearch = useCallback(() => {
+        setLocalSearchValue('')
+        setSearchTerm('')
+        setCurrentPage(1)
+    }, [])
 
     if (isLoading) {
         return (
@@ -95,12 +124,44 @@ export function ArchivedInvoicesTable({}: ArchivedInvoicesTableProps) {
                 </div>
             </CardHeader>
             <CardContent>
+                {/* Search */}
+                <div className="mb-6">
+                    <div className="relative flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-gray-400" />
+                            <Input
+                                placeholder="Search invoices by number, title..."
+                                value={localSearchValue}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="pl-10 pr-10 bg-background dark:bg-[#131313] border-border dark:border-[#3a3a3a] text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-500 focus:border-red-500"
+                            />
+                            {localSearchValue && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleClearSearch}
+                                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-accent dark:hover:bg-gray-700"
+                                >
+                                    <X className="h-3 w-3" />
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Results */}
                 {!invoices || invoices.length === 0 ? (
                     <div className="p-8 text-center">
                         <Archive className="h-12 w-12 text-muted-foreground dark:text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-foreground dark:text-white mb-2">No archived invoices</h3>
-                        <p className="text-muted-foreground dark:text-gray-400">Archived invoices will appear here</p>
+                        <h3 className="text-lg font-medium text-foreground dark:text-white mb-2">
+                            {searchTerm ? 'No archived invoices found' : 'No archived invoices'}
+                        </h3>
+                        <p className="text-muted-foreground dark:text-gray-400">
+                            {searchTerm
+                                ? 'Try adjusting your search terms'
+                                : 'Archived invoices will appear here'
+                            }
+                        </p>
                     </div>
                 ) : (
                     <>
