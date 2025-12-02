@@ -11,8 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MobileNav } from "./mobile-nav"
 import { useQueryClient } from '@tanstack/react-query'
-import { useUserRole } from "@/hooks/core/useUserRole"
-import { useShopInfo } from "@/hooks/core/useShopInfo"
+import { useAuth } from "@/lib/auth/AuthProvider"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
@@ -23,8 +22,7 @@ export function Nav() {
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
 	const queryClient = useQueryClient()
-	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
-	const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
+	const { user, userRole, shopId, shopInfo, isLoading: isAuthLoading } = useAuth()
 
 	if (!pathname) {
 		return null
@@ -38,10 +36,10 @@ export function Nav() {
 		const items = getFilteredNavItems(
 			userRole ?? null, 
 			adminType || undefined,
-			shopInfo?.id || undefined
+			shopId || undefined
 		);
 		return items;
-	}, [userRole, adminType, shopInfo?.id]);
+	}, [userRole, adminType, shopId]);
 
 	let activeLink = ""
 	let longestMatch = 0
