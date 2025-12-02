@@ -24,6 +24,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let mounted = true
 
+        const loadUserData = async (user: User) => {
+            try {
+                // Fetch shop_id
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('shop_id')
+                    .eq('id', user.id)
+                    .single()
+
+                if (mounted) {
+                    if (error) {
+                        console.error('Error fetching shop_id:', error)
+                        setState({
+                            user,
+                            shopId: null,
+                            isLoading: false,
+                            error: error.message
+                        })
+                    } else {
+                        setState({
+                            user,
+                            shopId: data?.shop_id || null,
+                            isLoading: false,
+                            error: null
+                        })
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error)
+                if (mounted) {
+                    setState({
+                        user,
+                        shopId: null,
+                        isLoading: false,
+                        error: error instanceof Error ? error.message : 'Failed to load user data'
+                    })
+                }
+            }
+        }
+
         const loadAuth = async () => {
             try {
                 // Get session once
@@ -32,25 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!mounted) return
 
                 if (session?.user) {
-                    // Fetch shop_id once
-                    const { data, error } = await supabase
-                        .from('users')
-                        .select('shop_id')
-                        .eq('id', session.user.id)
-                        .single()
-
-                    if (mounted) {
-                        setState({
-                            user: session.user,
-                            shopId: data?.shop_id || null,
-                            isLoading: false,
-                            error: error ? error.message : null
-                        })
-                    }
+                    await loadUserData(session.user)
                 } else if (mounted) {
                     setState({ user: null, shopId: null, isLoading: false, error: null })
                 }
             } catch (error) {
+                console.error('Error getting session:', error)
                 if (mounted) {
                     setState({
                         user: null,
@@ -67,19 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             async (event, session) => {
                 if (!mounted) return
 
-                if (event === 'SIGNED_IN' && session?.user) {
-                    const { data } = await supabase
-                        .from('users')
-                        .select('shop_id')
-                        .eq('id', session.user.id)
-                        .single()
+                console.log('AUTH PROVIDER - Event:', event, 'Has session:', !!session)
 
-                    setState({
-                        user: session.user,
-                        shopId: data?.shop_id || null,
-                        isLoading: false,
-                        error: null
-                    })
+                // Handle all events that provide a session
+                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+                    await loadUserData(session.user)
                 } else if (event === 'SIGNED_OUT') {
                     setState({ user: null, shopId: null, isLoading: false, error: null })
                 }
