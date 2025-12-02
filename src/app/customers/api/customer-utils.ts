@@ -1,26 +1,57 @@
 import { supabase } from "@/lib/supabase";
 
 /**
- * Fetch customers from the "customers" table filtered by shopId
+ * Fetch customers from the "customers" table with organization-aware filtering
  */
-export async function getCustomers(shopId: string) {
+export async function getCustomers(shopId: string, organizationWide: boolean = false) {
     try {
         if (!shopId || shopId === "null") {
             console.error("Invalid shop ID:", shopId);
             return [];
         }
         
-        const { data, error } = await supabase
+        // Get shop's organization info for organization-aware queries
+        const { data: shopData } = await supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single()
+
+        let query = supabase
             .from('customers')
-            .select('*')
-            .eq('shop_id', shopId);
+            .select(`
+                *,
+                shops:shop_id (
+                    id,
+                    shop_name
+                )
+            `)
+            .order('created_at', { ascending: false })
+
+        // Apply organization-aware filtering
+        if (organizationWide && shopData?.organization_id) {
+            // MSO shop: include customers from same organization
+            query = query.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+        } else {
+            // Non-MSO shop or shop-only mode: filter by current shop
+            query = query.eq('shop_id', shopId)
+        }
+
+        const { data, error } = await query
     
         if (error) {
             console.error("Supabase error:", error.message, error);
             return [];
         }
         
-        return data || [];
+        // Add organization context to results
+        const customersWithContext = (data || []).map(customer => ({
+            ...customer,
+            isFromCurrentShop: customer.shop_id === shopId,
+            shopName: customer.shops?.shop_name
+        }))
+        
+        return customersWithContext;
     } catch (err) {
         console.error("Unexpected error in getCustomers:", err);
         return [];
@@ -58,12 +89,28 @@ export async function getCustomerDetails(customerId: string) {
 }
 
 export async function verifyCustomerBelongsToShop(customerId: string, shopId: string) {
-    const { data: customerData, error } = await supabase
+    // Get shop's organization info
+    const { data: shopData } = await supabase
+        .from('shops')
+        .select('organization_id')
+        .eq('id', shopId)
+        .single()
+
+    let customerQuery = supabase
         .from('customers')
         .select('*')
         .eq('id', customerId)
-        .eq('shop_id', shopId)
-        .single();
+
+    // Apply organization-aware filter
+    if (shopData?.organization_id) {
+        // MSO shop: allow customers from same organization or same shop
+        customerQuery = customerQuery.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+    } else {
+        // Non-MSO shop: only same shop
+        customerQuery = customerQuery.eq('shop_id', shopId)
+    }
+
+    const { data: customerData, error } = await customerQuery.single()
 
     if (error) {
         console.error('Error verifying customer belongs to shop:', error);

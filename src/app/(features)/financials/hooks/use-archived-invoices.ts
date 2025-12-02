@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { ArchivedInvoiceService, type ArchivedInvoiceListParams } from '../lib/archived-invoice-service'
 
 export function useArchivedInvoices(params: ArchivedInvoiceListParams) {
@@ -7,6 +7,7 @@ export function useArchivedInvoices(params: ArchivedInvoiceListParams) {
         queryFn: () => ArchivedInvoiceService.getArchivedInvoices(params),
         enabled: !!params.shopId,
         staleTime: 30000, // 30 seconds
+        placeholderData: keepPreviousData, // Keep previous data while fetching new data (prevents re-renders)
     })
 }
 
@@ -25,6 +26,7 @@ export function useArchivedInvoiceCount(shopId: string, filters?: any) {
         queryFn: () => ArchivedInvoiceService.getArchivedInvoiceCount(shopId, filters),
         enabled: !!shopId,
         staleTime: 30000,
+        placeholderData: keepPreviousData, // Keep previous data while fetching new data (prevents re-renders)
     })
 }
 

@@ -19,6 +19,8 @@ interface CustomerSearchBarProps {
     placeholder?: string
     className?: string
     disabled?: boolean
+    organizationWide?: boolean
+    showShopNames?: boolean
 }
 
 export function CustomerSearchBar({
@@ -27,7 +29,9 @@ export function CustomerSearchBar({
     showCreateOption = true,
     placeholder = "Search customers by name, phone, or email...",
     className,
-    disabled = false
+    disabled = false,
+    organizationWide = false,
+    showShopNames = false
 }: CustomerSearchBarProps) {
     const [open, setOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
@@ -37,9 +41,10 @@ export function CustomerSearchBar({
     const popoverRef = useRef<HTMLDivElement>(null)
 
     // Search customers
-    const { customers, isLoading: customersLoading } = useCustomerSearch({
+    const { customers, isLoading: customersLoading, isOrganizationSearch } = useCustomerSearch({
         searchQuery,
-        enabled: open && searchQuery.trim().length > 0
+        enabled: open && searchQuery.trim().length > 0,
+        organizationWide
     })
 
     // Close dropdown when clicking outside
@@ -142,8 +147,15 @@ export function CustomerSearchBar({
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-foreground truncate">
-                                                    {customer.customer_name}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-medium text-foreground truncate">
+                                                        {customer.customer_name}
+                                                    </div>
+                                                    {isOrganizationSearch && !customer.isFromCurrentShop && showShopNames && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                            {customer.shopName || 'Other Shop'}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="text-sm text-muted-foreground truncate">
                                                     {customer.customer_phone && formatPhoneNumber(customer.customer_phone)}

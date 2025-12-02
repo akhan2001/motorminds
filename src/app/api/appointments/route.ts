@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
         const endDate = searchParams.get('end_date');
 
         const supabase = await createClient();
+        
+        // Get shop's organization info for organization-aware queries
+        const { data: shopData } = await supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single()
+
         let query = supabase
             .from('appointments')
             .select(`
@@ -106,6 +114,37 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = await createClient();
+
+        // Validate customer access for organization-aware appointments
+        if (customer_type === 'registered' && customer_id) {
+            const { data: shopData } = await supabase
+                .from('shops')
+                .select('organization_id')
+                .eq('id', shopId)
+                .single()
+
+            let customerQuery = supabase
+                .from('customers')
+                .select('id, shop_id, organization_id')
+                .eq('id', customer_id)
+
+            // Apply organization-aware filter
+            if (shopData?.organization_id) {
+                // MSO shop: allow customers from same organization or same shop
+                customerQuery = customerQuery.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+            } else {
+                // Non-MSO shop: only same shop
+                customerQuery = customerQuery.eq('shop_id', shopId)
+            }
+
+            const { data: customer, error: customerError } = await customerQuery.maybeSingle()
+            
+            if (customerError || !customer) {
+                return NextResponse.json({ 
+                    error: 'Customer not accessible or not found' 
+                }, { status: 403 });
+            }
+        }
 
         // Create appointment
         const appointmentData = {
