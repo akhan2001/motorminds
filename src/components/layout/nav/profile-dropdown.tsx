@@ -64,18 +64,18 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
         }
     }
 
-  const handleMenuClick = (action: string) => {
-    switch (action) {
-      case 'settings':
-        router.push('/settings')
-        break
-      case 'support':
-        window.open("https://www.motorminds.ca/contact-us", "_blank")
-        break
-      default:
-        break
+    const handleMenuClick = (action: string) => {
+        switch (action) {
+            case 'settings':
+                router.push('/settings')
+                break
+            case 'support':
+                window.open("https://www.motorminds.ca/contact-us", "_blank")
+                break
+            default:
+                break
+        }
     }
-  }
 
     if (!mounted) {
         return (
@@ -118,34 +118,34 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
                     </div>
                 </div>
 
-        {/* Menu Items */}
-        <div className="py-2">
-          <DropdownMenuItem 
-            onClick={() => handleMenuClick('settings')}
-            className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
-          >
-            <Settings className="w-4 h-4 mr-3" />
-            Settings
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => handleMenuClick('support')}
-            className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
-          >
-            <HelpCircle className="w-4 h-4 mr-3" />
-            Support
-          </DropdownMenuItem>
+                {/* Menu Items */}
+                <div className="py-2">
+                    <DropdownMenuItem
+                        onClick={() => handleMenuClick('settings')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
+                    >
+                        <Settings className="w-4 h-4 mr-3" />
+                        Settings
+                    </DropdownMenuItem>
 
-          {/* Theme Toggle */}
-          <DropdownMenuItem 
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
-            disabled={!mounted}
-          >
-            {themeIcon}
-            {themeText}
-          </DropdownMenuItem>
-        </div>
+                    <DropdownMenuItem
+                        onClick={() => handleMenuClick('support')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
+                    >
+                        <HelpCircle className="w-4 h-4 mr-3" />
+                        Support
+                    </DropdownMenuItem>
+
+                    {/* Theme Toggle */}
+                    <DropdownMenuItem
+                        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
+                        disabled={!mounted}
+                    >
+                        {themeIcon}
+                        {themeText}
+                    </DropdownMenuItem>
+                </div>
 
                 <DropdownMenuSeparator className="bg-border dark:bg-[#1f1f1f]" />
 
