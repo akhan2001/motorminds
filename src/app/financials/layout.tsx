@@ -6,6 +6,7 @@ import { FinancialsPasswordModal } from '@/components/financials/FinancialsPassw
 import { FinancialsSetupPassword } from '@/components/financials/FinancialsSetupPassword';
 import { createClient } from '@/utils/supabase/client';
 import { Nav } from '@/components/navigation/nav';
+import { useAuth } from '@/contexts/auth-context';
 
 interface FinancialsLayoutContentProps {
     children: React.ReactNode;
@@ -13,29 +14,23 @@ interface FinancialsLayoutContentProps {
 
 function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     const { isUnlocked, isLocked } = useFinancialsAuth();
+    const { shopId, loading: authLoading } = useAuth();
     const [needsPasswordSetup, setNeedsPasswordSetup] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Check if shop has financial password set up
     useEffect(() => {
         const checkPasswordStatus = async () => {
+            // Wait for auth to load
+            if (authLoading) {
+                return;
+            }
+
             try {
                 const supabase = createClient();
-                const { data: { user }, error: authError } = await supabase.auth.getUser();
-                
-                if (authError || !user) {
-                    setIsLoading(false);
-                    return;
-                }
 
-                // Get user's shop_id
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .select('shop_id')
-                    .eq('id', user.id)
-                    .single();
-
-                if (userError || !userData?.shop_id) {
+                // Use shopId from centralized auth - no need to call getUser()
+                if (!shopId) {
                     setIsLoading(false);
                     return;
                 }
@@ -44,7 +39,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
                 const { data: shopData, error: shopError } = await supabase
                     .from('shops')
                     .select('financials_password_hash')
-                    .eq('id', userData.shop_id)
+                    .eq('id', shopId)
                     .single();
 
                 if (shopError) {
@@ -62,7 +57,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
         };
 
         checkPasswordStatus();
-    }, []);
+    }, [shopId, authLoading]);
 
     // Loading state
     if (isLoading) {

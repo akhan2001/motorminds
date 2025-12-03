@@ -9,12 +9,14 @@ export const config = {
 	matcher: [
 		/*
 		* Match all request paths except for the ones starting with:
-		* - _next/static (static files)
-		* - _next/image (image optimization files)
-		* - favicon.ico (favicon file)
-		* Feel free to modify this pattern to include more paths.
+		* - _next/ (Next.js internal files including static, image, etc.)
+		* - api/auth (auth endpoints handle their own auth)
+		* - Static file extensions
+		* - favicon and other meta files
+		*
+		* This prevents middleware from running on static assets which was
+		* causing excessive token refresh attempts (thundering herd problem)
 		*/
-		'/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-		'/'
+		'/((?!_next/|api/auth|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|otf|map)$).*)',
 	],
 }

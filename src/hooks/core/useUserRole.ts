@@ -1,55 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
-import { createClient } from "@/utils/supabase/client";
+import { useAuth } from '@/contexts/auth-context';
 import type { UserRole } from '@/types/core/user';
-import { useEffect, useRef } from 'react';
 
+/**
+ * Hook to get the current user's role from the centralized AuthProvider.
+ * This prevents duplicate auth calls and token refresh storms.
+ *
+ * @deprecated This hook now uses centralized auth. The old React Query implementation
+ * has been replaced to prevent the thundering herd problem.
+ */
 export function useUserRole() {
-    const supabase = createClient();
-    
-    const query = useQuery({
-        queryKey: ['user-role'],
-        queryFn: async (): Promise<UserRole | null> => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return null;
+    const { userRole, loading } = useAuth();
 
-            const { data, error } = await supabase
-                .from('users')
-                .select('role')
-                .eq('id', user.id)
-                .maybeSingle(); // Use maybeSingle to handle 406 gracefully
-
-            // Handle errors gracefully - don't throw on 406 or RLS errors
-            if (error) {
-                // Log but don't throw - return null instead
-                if (error.code !== 'PGRST116') { // PGRST116 = no rows returned
-                    console.warn('Failed to fetch user role:', error);
-                }
-                return null;
-            }
-            return data?.role || null;
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchOnWindowFocus: false, // Changed to false to reduce requests
-        retry: false, // Disable retry to prevent rate limiting
-    });
-
-    // Use ref to store query refetch function to avoid dependency issues
-    const queryRef = useRef(query);
-    queryRef.current = query;
-
-    // Listen to auth state changes and refetch when user changes
-    useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            // Only refetch on actual sign in/out, not token refresh
-            // Token refresh doesn't mean role changed, and causes rate limiting
-            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-                // Use ref to avoid dependency on query object
-                queryRef.current.refetch();
-            }
-        });
-
-        return () => subscription.unsubscribe();
-    }, [supabase]); // Only depend on supabase client
-
-    return query;
+    return {
+        data: userRole as UserRole | null,
+        isLoading: loading,
+        error: null,
+        refetch: () => Promise.resolve({ data: userRole }),
+    };
 }
