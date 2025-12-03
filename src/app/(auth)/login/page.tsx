@@ -1,4 +1,4 @@
-import React from "react"
+import React, { Suspense } from "react"
 import Image from "next/image"
 import AuthComponent from "./AuthComponent"
 
@@ -37,7 +37,9 @@ export default function LoginPage() {
 
 				{/* RIGHT SECTION: The AuthComponent form */}
 				<div className="flex flex-col items-center justify-center w-full md:w-[40%] lg:w-[30%] h-[60%] md:h-full">
-					<AuthComponent />
+					<Suspense fallback={<div className="text-white">Loading...</div>}>
+						<AuthComponent />
+					</Suspense>
 				</div>
 			</div>
 		</div>
