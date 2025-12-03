@@ -5,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LogOut, Settings, HelpCircle, Shield, Moon, Sun } from "lucide-react"
-import { createClient } from "@/utils/supabase/client"
+import { useAuth } from "@/lib/auth/AuthProvider"
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -19,6 +19,7 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: ProfileDropdownProps) {
     const [mounted, setMounted] = useState(false)
+    const { signOut } = useAuth()
     const queryClient = useQueryClient()
     const router = useRouter()
     const { theme, setTheme } = useTheme()
@@ -48,17 +49,17 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
 
     const handleLogout = async () => {
         try {
-            const supabase = createClient()
-            const { error } = await supabase.auth.signOut()
-
-            if (error) {
-                console.error("Logout error:", error)
-            } else {
-                // Clear all React Query cache to ensure fresh data on next login
-                queryClient.clear()
-                // Force a full page reload to clear all cached data
-                window.location.href = "/login"
-            }
+            // Sign out from Supabase and clear AuthProvider state
+            await signOut()
+            
+            // Clear React Query cache
+            queryClient.clear()
+            
+            // Clear localStorage
+            localStorage.clear()
+            
+            // Redirect to login
+            router.push('/login')
         } catch (error) {
             console.error("Logout error:", error)
         }

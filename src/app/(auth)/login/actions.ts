@@ -21,7 +21,8 @@ export async function login(formData: FormData) {
 	}
 
 	revalidatePath('/', 'layout')
-	redirect('/')
+	// Return success instead of redirecting - let client handle redirect
+	return { success: true }
 }
 
 export async function signup(formData: FormData) {

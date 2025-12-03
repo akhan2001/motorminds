@@ -182,6 +182,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 // Handle all events that provide a session
                 if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+                    // Set loading state immediately before async operation
+                    setState(prev => ({ ...prev, isLoading: true }))
                     await loadUserData(session.user)
                 } else if (event === 'SIGNED_OUT') {
                     setState({ user: null, userRole: null, shopId: null, shopInfo: null, isLoading: false, error: null })

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,6 +9,7 @@ import Image from "next/image"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { login, signup } from "./actions"
+import { useAuth } from "@/lib/auth/AuthProvider"
 
 export default function AuthComponent() {
     const [showPassword, setShowPassword] = useState(false)
@@ -16,6 +17,8 @@ export default function AuthComponent() {
     const [message, setMessage] = useState<string | null>(null)
     const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
+    const router = useRouter()
+    const { user, shopId, isLoading: authLoading } = useAuth()
 
     useEffect(() => {
         const errorParam = searchParams?.get('error')
@@ -29,12 +32,33 @@ export default function AuthComponent() {
         }
     }, [searchParams])
 
+    // Redirect when auth is ready after login
+    useEffect(() => {
+        if (isLoading && !authLoading && user && shopId) {
+            console.log('AUTH COMPONENT - Redirecting to home after successful login')
+            router.push('/')
+        }
+    }, [isLoading, authLoading, user, shopId, router])
+
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setIsLoading(true)
-        const formData = new FormData(e.currentTarget)
-        await login(formData)
-        setIsLoading(false)
+        setError(null)
+        
+        try {
+            const formData = new FormData(e.currentTarget)
+            const result = await login(formData)
+            
+            if (result?.success) {
+                console.log('AUTH COMPONENT - Login successful, waiting for auth state...')
+                // Don't set isLoading to false - keep it true until redirect happens
+                // The useEffect above will handle the redirect once auth state is ready
+            }
+        } catch (err) {
+            console.error('AUTH COMPONENT - Login error:', err)
+            setError('An unexpected error occurred')
+            setIsLoading(false)
+        }
     }
 
     return (

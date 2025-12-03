@@ -83,11 +83,17 @@ export function Nav() {
 
 	const handleLogout = async () => {
 		try {
+			// Sign out from Supabase and clear AuthProvider state
 			await signOut()
-			// Clear all React Query cache to ensure fresh data on next login
+			
+			// Clear React Query cache
 			queryClient.clear()
-			// Force a full page reload to clear all cached data
-			window.location.href = "/login"
+			
+			// Clear localStorage
+			localStorage.clear()
+			
+			// Redirect to login
+			router.push('/login')
 		} catch (error) {
 			console.error("Logout error:", error)
 		}
