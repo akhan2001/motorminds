@@ -6,6 +6,7 @@ import { FinancialsPasswordModal } from '@/components/financials/FinancialsPassw
 import { FinancialsSetupPassword } from '@/components/financials/FinancialsSetupPassword';
 import { createClient } from '@/utils/supabase/client';
 import { Nav } from '@/components/navigation/nav';
+import { useUnifiedAuth } from '@/contexts/unified-auth-context';
 
 interface FinancialsLayoutContentProps {
     children: React.ReactNode;
@@ -13,56 +14,52 @@ interface FinancialsLayoutContentProps {
 
 function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
     const { isUnlocked, isLocked } = useFinancialsAuth();
+    const { user, shopInfo, isLoading: authLoading } = useUnifiedAuth();
     const [needsPasswordSetup, setNeedsPasswordSetup] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Check if shop has financial password set up
     useEffect(() => {
         const checkPasswordStatus = async () => {
+            // Wait for auth to finish loading
+            if (authLoading) {
+                return;
+            }
+
             try {
-                const supabase = createClient();
-                const { data: { user }, error: authError } = await supabase.auth.getUser();
-                
-                if (authError || !user) {
+                // Use shopInfo from UnifiedAuth instead of separate query
+                if (!user || !shopInfo?.id) {
+                    console.log('[FinancialsLayout] No user or shop info available');
                     setIsLoading(false);
                     return;
                 }
 
-                // Get user's shop_id
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .select('shop_id')
-                    .eq('id', user.id)
-                    .single();
-
-                if (userError || !userData?.shop_id) {
-                    setIsLoading(false);
-                    return;
-                }
+                console.log('[FinancialsLayout] Checking password status for shop:', shopInfo.id);
 
                 // Check if shop has financial password
+                const supabase = createClient();
                 const { data: shopData, error: shopError } = await supabase
                     .from('shops')
                     .select('financials_password_hash')
-                    .eq('id', userData.shop_id)
-                    .single();
+                    .eq('id', shopInfo.id)
+                    .maybeSingle();
 
                 if (shopError) {
-                    console.error('Error checking password status:', shopError);
+                    console.error('[FinancialsLayout] Error checking password status:', shopError);
                     setIsLoading(false);
                     return;
                 }
 
                 setNeedsPasswordSetup(!shopData?.financials_password_hash);
             } catch (error) {
-                console.error('Error in password status check:', error);
+                console.error('[FinancialsLayout] Error in password status check:', error);
             } finally {
                 setIsLoading(false);
             }
         };
 
         checkPasswordStatus();
-    }, []);
+    }, [user, shopInfo, authLoading]);
 
     // Loading state
     if (isLoading) {
