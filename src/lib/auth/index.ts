@@ -8,8 +8,11 @@ export * from './schemas'
 export * from './service'
 export * from './roles'
 
-// Actions
-export * from './actions'
+// NOTE: Server actions are NOT exported here
+// Due to Next.js limitations, server actions with 'use server' directive
+// cannot be re-exported through barrel exports.
+// Import directly from '@/lib/auth/actions' instead:
+//   import { loginAction, signupAction, logoutAction } from '@/lib/auth/actions'
 
 // Hooks (client-side only)
 export * from './hooks'
