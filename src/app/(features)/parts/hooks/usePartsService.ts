@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { PartsService, PartsRequestFilters, PartsRequestsResponse } from '../lib/partsService'
 import { PartsRequest, CreatePartsRequestRequest, UpdatePartsRequestRequest } from '../types/parts'
-import { useAuth } from '@/app/(features)/operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { toast } from 'sonner'
 
 export interface UsePartsServiceOptions {

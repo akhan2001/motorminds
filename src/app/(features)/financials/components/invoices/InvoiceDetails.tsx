@@ -10,7 +10,7 @@ import {
     User, Car, Calendar, DollarSign, AlertCircle 
 } from 'lucide-react'
 import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
-import { useAuth } from '../../../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { InvoiceSendModal } from './InvoiceSendModal'

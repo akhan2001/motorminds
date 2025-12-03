@@ -8,7 +8,7 @@ import { Plus, Trash2, Wrench } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { TechnicianDropdown } from "@/app/(features)/technician/components/TechnicianDropdown";
-import { useAuth } from "../../../hooks/use-auth";
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../work-order-items/shared";

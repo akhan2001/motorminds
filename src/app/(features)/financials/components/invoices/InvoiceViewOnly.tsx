@@ -11,14 +11,13 @@ import {
     User, Car, LayoutIcon, X, Check, XCircle, Wrench
 } from 'lucide-react'
 import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
-import { useAuth } from '../../../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { useRouter } from 'next/navigation'
-import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
 import { generateInvoicePDF, downloadPDF, getInvoiceFilename, generateInvoicePDFFromHTMLElement } from '../../lib/pdf/pdf-generator'
 import { TonyTemplatePreview } from '../invoice-preview/TonyTemplatePreview'
@@ -31,9 +30,8 @@ interface InvoiceViewOnlyProps {
 
 const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, onClose }) => {
     const router = useRouter()
-    const { shopId } = useAuth()
+    const { shopId, shopInfo, isLoading: isAuthLoading, error: authError } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
-    const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
     const [isLandscape, setIsLandscape] = useState(false)
@@ -62,11 +60,11 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         }
 
         if (!shopInfo) {
-            if (isLoadingShopInfo) {
+            if (isAuthLoading) {
                 toast.info('Loading shop information...')
                 return
             }
-            if (shopInfoError) {
+            if (authError) {
                 toast.error('Failed to load shop information. Please refresh the page and try again.')
                 return
             }
@@ -82,7 +80,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                 toast.success('Invoice PDF downloaded successfully')
             } else {
                 // For other templates, use React-PDF
-                const blob = await generateInvoicePDF(invoice, shopInfo, templateId)
+                const shopBranding = shopInfo ? {
+                    ...shopInfo,
+                    logo_image_url: shopInfo.logo_image_url ?? undefined,
+                    shop_email: shopInfo.shop_email ?? undefined,
+                    shop_phone: shopInfo.shop_phone ?? undefined,
+                    shop_address: shopInfo.shop_address ?? undefined,
+                    shop_city: shopInfo.shop_city ?? undefined,
+                    shop_province: shopInfo.shop_province ?? undefined,
+                    business_number: shopInfo.business_number ?? undefined,
+                } : shopInfo
+                const blob = await generateInvoicePDF(invoice, shopBranding, templateId)
                 const filename = getInvoiceFilename(invoice)
                 downloadPDF(blob, filename)
                 toast.success('Invoice PDF downloaded successfully')
@@ -456,11 +464,11 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     size="sm"
                     className="bg-gray-600 text-white hover:bg-gray-700"
                     onClick={handleDownload}
-                    disabled={isDownloading || isLoadingShopInfo || !shopInfo}
-                    title={shopInfoError ? 'Shop information failed to load. Please refresh the page.' : isLoadingShopInfo ? 'Loading shop information...' : !shopInfo ? 'Shop information not available' : undefined}
+                    disabled={isDownloading || isAuthLoading || !shopInfo}
+                    title={authError ? 'Shop information failed to load. Please refresh the page.' : isAuthLoading ? 'Loading shop information...' : !shopInfo ? 'Shop information not available' : undefined}
                 >
                     <Download className="w-4 h-4 mr-2" />
-                    {isDownloading ? 'Generating...' : isLoadingShopInfo ? 'Loading...' : 'PDF'}
+                    {isDownloading ? 'Generating...' : isAuthLoading ? 'Loading...' : 'PDF'}
                 </Button>
                 <Button
                     size="sm"

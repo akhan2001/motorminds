@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useStatusTrackerPresets } from '../../hooks/use-status-trackers'
-import { useAuth } from '../../hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { useUpdateWorkOrder } from '../../hooks/use-work-orders'
 import type { StatusTracker } from '../../types/status-tracker'
 import { MAX_WORK_ORDER_STATUS_TRACKERS } from '../../lib/status-tracker-constants'

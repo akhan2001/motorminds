@@ -11,7 +11,7 @@ import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from ".
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
-import { useAuth } from "../../../hooks/use-auth";
+import { useAuth } from '@/lib/auth/AuthProvider'
 
 interface PartFormItem {
     id: string;

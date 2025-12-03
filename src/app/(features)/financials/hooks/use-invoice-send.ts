@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { toast } from 'sonner'
 import type { 
     EmailAvailability, 

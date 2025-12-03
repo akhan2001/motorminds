@@ -15,7 +15,7 @@ import {
     Search,
     X
 } from 'lucide-react'
-import { useAuth } from '../../../../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { useArchivedInvoices, useArchivedInvoiceCount } from '../../../hooks/use-archived-invoices'
 import { ArchivedInvoiceCard } from './ArchivedInvoiceCard'
 import { InvoiceDetailSheet } from '../InvoiceDetailSheet'

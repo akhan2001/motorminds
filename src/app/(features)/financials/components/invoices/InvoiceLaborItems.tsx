@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Trash2, Wrench } from 'lucide-react'
 import { TechnicianDropdown } from '@/app/(features)/technician/components/TechnicianDropdown'
-import { useAuth } from '@/app/(features)/operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import type { InvoiceItem } from '../../types/invoice'
 
 interface InvoiceLaborItemsProps {

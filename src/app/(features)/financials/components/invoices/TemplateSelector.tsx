@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { getAvailableTemplates } from '../../lib/pdf/template-registry'
 import type { TemplateId } from '../../types/invoice-pdf'
-import { useShopInfo } from '@/hooks/core/useShopInfo'
-import { useAuth } from '../../../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 
 interface TemplateSelectorProps {
     selectedTemplateId: TemplateId

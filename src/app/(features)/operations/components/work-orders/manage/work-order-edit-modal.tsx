@@ -9,7 +9,7 @@ import { useWorkOrderWithDetails, useUpdateWorkOrder, useUpdateWorkOrderStatus }
 import { RevertWorkOrderDialog } from "../revert-work-order-dialog"
 import { workOrderService } from "../../../lib/work-order-service"
 import { useCanDeleteWorkOrders } from "../../../hooks/use-work-order-permissions"
-import { useAuth } from "../../../hooks/use-auth"
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { Loader2 } from "lucide-react"
 import {
     WorkOrderModalHeader,

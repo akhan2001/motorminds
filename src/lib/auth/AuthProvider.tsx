@@ -24,12 +24,13 @@ interface AuthContextType {
     shopInfo: ShopInfo | null
     isLoading: boolean
     error: string | null
+    signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [state, setState] = useState<AuthContextType>({
+    const [state, setState] = useState<Omit<AuthContextType, 'signOut'>>({
         user: null,
         userRole: null,
         shopId: null,
@@ -37,6 +38,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: true,
         error: null
     })
+
+    const signOut = async () => {
+        try {
+            console.log('AUTH PROVIDER - Signing out...')
+            const { error } = await supabase.auth.signOut()
+            
+            if (error) {
+                console.error('AUTH PROVIDER - Sign out error:', error)
+                throw error
+            }
+            
+            // Clear auth state
+            setState({
+                user: null,
+                userRole: null,
+                shopId: null,
+                shopInfo: null,
+                isLoading: false,
+                error: null
+            })
+            
+            console.log('AUTH PROVIDER - User signed out successfully')
+        } catch (error) {
+            console.error('AUTH PROVIDER - Sign out failed:', error)
+            throw error
+        }
+    }
 
     useEffect(() => {
         let mounted = true
@@ -170,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [])
 
     return (
-        <AuthContext.Provider value={state}>
+        <AuthContext.Provider value={{ ...state, signOut }}>
             {children}
         </AuthContext.Provider>
     )

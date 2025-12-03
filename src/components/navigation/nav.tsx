@@ -1,6 +1,5 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
 import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
@@ -22,7 +21,7 @@ export function Nav() {
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
 	const queryClient = useQueryClient()
-	const { user, userRole, shopId, shopInfo, isLoading: isAuthLoading } = useAuth()
+	const { user, userRole, shopId, shopInfo, isLoading: isAuthLoading, signOut } = useAuth()
 
 	if (!pathname) {
 		return null
@@ -84,17 +83,11 @@ export function Nav() {
 
 	const handleLogout = async () => {
 		try {
-			const supabase = createClient()
-			const { error } = await supabase.auth.signOut()
-			
-			if (error) {
-				console.error("Logout error:", error)
-			} else {
-				// Clear all React Query cache to ensure fresh data on next login
-				queryClient.clear()
-				// Force a full page reload to clear all cached data
-				window.location.href = "/login"
-			}
+			await signOut()
+			// Clear all React Query cache to ensure fresh data on next login
+			queryClient.clear()
+			// Force a full page reload to clear all cached data
+			window.location.href = "/login"
 		} catch (error) {
 			console.error("Logout error:", error)
 		}

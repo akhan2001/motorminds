@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
 // import { Nav } from "@/app/components/nav";
 import { WorkOrderKanban, WorkOrderHeader } from "../components/work-orders";
 import { WorkOrderCreateModal } from "../components/work-orders/create";
@@ -12,11 +13,13 @@ import { StatusTrackerManagementModal } from "../components/work-orders/status-t
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from "../hooks/use-work-orders";
-// import { useAuth } from "../hooks/use-auth";
+
 import { useAuth } from '@/lib/auth/AuthProvider'
+
 import { WorkOrderItemsService } from "../lib/work-order-items-service";
 import type { WorkOrderItemCreateData } from "../types/work-order-items";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/common/feedback/loading-states";

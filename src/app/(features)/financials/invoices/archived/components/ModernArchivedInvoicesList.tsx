@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Archive } from 'lucide-react'
-import { useAuth } from '../../../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { useArchivedInvoicesModern, useArchivedInvoiceCountModern } from '../../hooks/use-archived-invoices-modern'
 import { ArchivedInvoiceCard } from '../../../components/invoices/archived/ArchivedInvoiceCard'
 import { ModernSearchInput } from './ModernSearchInput'

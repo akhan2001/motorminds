@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '../operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import MiaPageHeader from './components/miaPageHeader'
 import { miaFeatures } from './components/miaFeatures'
 

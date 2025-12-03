@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Archive } from 'lucide-react'
-import { useAuth } from '../../../hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { useArchivedWorkOrders } from '../../../hooks/use-archived-work-orders'
 import { ArchivedWorkOrderCard } from './ArchivedWorkOrderCard'
 import { Input } from '@/components/ui/input'

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { getPriorityColor } from "@/lib/utils/status"
 import { WorkOrderPriority } from "../../../types/work-order"
 import { TechnicianDropdown } from "@/app/(features)/technician"
-import { useAuth } from "../../../hooks/use-auth"
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { StatusTrackerSelector } from "../status-tracker-selector"
 import type { StatusTracker } from "../../../types/status-tracker"
 import { WORK_ORDER_TITLE_CATEGORIES, OTHER_CATEGORY } from "../../../lib/work-order-title-categories"

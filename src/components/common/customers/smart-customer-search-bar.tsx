@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CustomerSearchBar } from './customer-search-bar'
 import { Customer } from '@/app/(features)/customers/types'
-import { useAuth } from '@/app/(features)/operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { shouldEnableOrganizationSearch, getCustomerSearchPlaceholder, shouldShowShopNames } from '@/lib/utils/organization-utils'
 
 interface SmartCustomerSearchBarProps {

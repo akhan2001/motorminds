@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { ProfileForm } from "@/app/(features)/settings/profile-form"
-import { useAuth } from '@/app/(features)/operations/hooks/use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertCircle, Settings } from 'lucide-react'

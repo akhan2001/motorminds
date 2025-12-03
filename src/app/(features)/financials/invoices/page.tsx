@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Loader2, AlertCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/common/feedback/loading-states";
-// import { useAuth } from "../../operations/hooks/use-auth";
+
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useInvoices } from "../hooks/use-invoices";
 import InvoiceHeader from "../components/invoices/InvoiceHeader";

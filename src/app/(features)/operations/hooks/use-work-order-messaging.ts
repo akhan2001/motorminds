@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from './use-auth'
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'sonner'
 import type { 

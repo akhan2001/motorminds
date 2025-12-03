@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils/text"
 import { formatPhoneNumber } from "@/utils/format-phone"
-import { useAuth } from "../../../hooks/use-auth"
+import { useAuth } from '@/lib/auth/AuthProvider'
 import { CustomerDropdown } from "@/app/(features)/customers/components/Selection"
 import { CustomerSearchBar } from "@/components/common/customers/customer-search-bar"
 import { VehicleSearchForCustomer } from "@/components/common/customers/vehicle-search-for-customer"
