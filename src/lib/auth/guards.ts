@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { isAdminRole } from './roles'
+import { getCachedUserShopId, getCachedUserRole, shopIdCache, userRoleCache } from './cache'
 
 export interface GuardContext {
   request: NextRequest
@@ -31,7 +32,7 @@ export function createAuthGuard(protectedPaths: string[]) {
 }
 
 /**
- * Create shop validation guard
+ * Create shop validation guard with caching
  */
 export function createShopGuard(protectedPaths: string[]) {
   return async (ctx: GuardContext): Promise<NextResponse | null> => {
@@ -46,18 +47,18 @@ export function createShopGuard(protectedPaths: string[]) {
     let shopId = ctx.user.user_metadata?.shop_id
 
     if (!shopId) {
-      try {
-        const { data: userData, error } = await ctx.supabase
-          .from('users')
-          .select('shop_id')
-          .eq('id', ctx.user.id)
-          .single()
+      // Try memory cache first
+      const cacheKey = `shop:${ctx.user.id}`
+      shopId = shopIdCache.get(cacheKey)
 
-        if (!error && userData?.shop_id) {
-          shopId = userData.shop_id
+      if (!shopId) {
+        // Use cached database query (deduplicates requests)
+        shopId = await getCachedUserShopId(ctx.user.id, ctx.supabase)
+
+        // Store in memory cache
+        if (shopId) {
+          shopIdCache.set(cacheKey, shopId)
         }
-      } catch (error) {
-        console.error('Error fetching user shop_id:', error)
       }
     }
 
@@ -75,7 +76,7 @@ export function createShopGuard(protectedPaths: string[]) {
 }
 
 /**
- * Create admin guard
+ * Create admin guard with caching
  */
 export function createAdminGuard(adminPaths: string[]) {
   return async (ctx: GuardContext): Promise<NextResponse | null> => {
@@ -88,14 +89,22 @@ export function createAdminGuard(adminPaths: string[]) {
     }
 
     try {
-      const { data: userData, error } = await ctx.supabase
-        .from('users')
-        .select('role, organization_id')
-        .eq('id', ctx.user.id)
-        .single()
+      // Try memory cache first
+      const cacheKey = `role:${ctx.user.id}`
+      let userData = userRoleCache.get(cacheKey)
 
-      if (error || !userData) {
-        console.log('Error or no userData, redirecting to operations/appointments')
+      if (!userData) {
+        // Use cached database query (deduplicates requests)
+        userData = await getCachedUserRole(ctx.user.id, ctx.supabase)
+
+        // Store in memory cache
+        if (userData.role) {
+          userRoleCache.set(cacheKey, userData)
+        }
+      }
+
+      if (!userData.role) {
+        console.log('No user role found, redirecting to operations/appointments')
         const redirectUrl = new URL('/operations/appointments', ctx.request.url)
         return NextResponse.redirect(redirectUrl)
       }
@@ -115,7 +124,7 @@ export function createAdminGuard(adminPaths: string[]) {
 }
 
 /**
- * Create demo user redirect guard
+ * Create demo user redirect guard with caching
  */
 export function createDemoRedirectGuard(redirectPaths: string[]) {
   return async (ctx: GuardContext): Promise<NextResponse | null> => {
@@ -128,13 +137,21 @@ export function createDemoRedirectGuard(redirectPaths: string[]) {
     }
 
     try {
-      const { data: userData, error } = await ctx.supabase
-        .from('users')
-        .select('role')
-        .eq('id', ctx.user.id)
-        .single()
+      // Try memory cache first
+      const cacheKey = `role:${ctx.user.id}`
+      let userData = userRoleCache.get(cacheKey)
 
-      if (!error && userData?.role === 'demo') {
+      if (!userData) {
+        // Use cached database query (deduplicates requests)
+        userData = await getCachedUserRole(ctx.user.id, ctx.supabase)
+
+        // Store in memory cache
+        if (userData.role) {
+          userRoleCache.set(cacheKey, userData)
+        }
+      }
+
+      if (userData.role === 'demo') {
         const redirectUrl = new URL('/mia', ctx.request.url)
         return NextResponse.redirect(redirectUrl)
       }

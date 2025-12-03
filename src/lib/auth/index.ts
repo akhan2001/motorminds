@@ -8,6 +8,9 @@ export * from './schemas'
 export * from './service'
 export * from './roles'
 
+// Caching utilities
+export * from './cache'
+
 // NOTE: Server actions are NOT exported here
 // Due to Next.js limitations, server actions with 'use server' directive
 // cannot be re-exported through barrel exports.
