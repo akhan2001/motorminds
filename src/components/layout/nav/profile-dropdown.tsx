@@ -5,8 +5,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LogOut, Settings, HelpCircle, Shield, Moon, Sun } from "lucide-react"
-import { createClient, resetClient } from "@/utils/supabase/client"
-import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 
@@ -19,7 +17,6 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: ProfileDropdownProps) {
     const [mounted, setMounted] = useState(false)
-    const queryClient = useQueryClient()
     const router = useRouter()
     const { theme, setTheme } = useTheme()
 
@@ -46,52 +43,9 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
             .slice(0, 2)
     }
 
-    const handleLogout = async () => {
-        try {
-            console.log('Starting logout...')
-
-            // Create a timeout promise
-            const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('SignOut timeout')), 3000)
-            )
-
-            const supabase = createClient()
-            console.log('Calling supabase.auth.signOut()...')
-
-            // Race between signOut and timeout
-            try {
-                await Promise.race([
-                    supabase.auth.signOut(),
-                    timeout
-                ])
-                console.log('Sign out successful')
-            } catch (timeoutError) {
-                console.warn('SignOut timed out, proceeding with cleanup anyway:', timeoutError)
-            }
-
-            console.log('Clearing caches...')
-
-            // Clear all caches
-            queryClient.clear()
-            console.log('React Query cache cleared')
-
-            localStorage.clear() // Clear localStorage cache (admin context, etc.)
-            console.log('localStorage cleared')
-
-            // Reset the singleton Supabase client
-            resetClient()
-            console.log('Supabase client reset')
-
-            // Force a full page reload to clear all cached data
-            console.log('Redirecting to /login...')
-            window.location.href = "/login"
-        } catch (error) {
-            console.error("Unexpected logout error:", error)
-            // Still try to redirect even on error
-            localStorage.clear()
-            resetClient()
-            window.location.href = "/login"
-        }
+    const handleLogout = () => {
+        // Match Studio pattern: navigate to /logout page
+        router.push('/logout')
     }
 
     const handleMenuClick = (action: string) => {

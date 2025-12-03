@@ -1,14 +1,15 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { login, signup } from "./actions"
+import { createClient } from "@/utils/supabase/client"
+import { useUnifiedAuth } from "@/contexts/unified-auth-context"
 
 export default function AuthComponent() {
     const [showPassword, setShowPassword] = useState(false)
@@ -16,6 +17,8 @@ export default function AuthComponent() {
     const [message, setMessage] = useState<string | null>(null)
     const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
+    const router = useRouter()
+    const { user, shopInfo } = useUnifiedAuth()
 
     useEffect(() => {
         const errorParam = searchParams?.get('error')
@@ -29,12 +32,41 @@ export default function AuthComponent() {
         }
     }, [searchParams])
 
+    // Redirect when auth is ready after login
+    useEffect(() => {
+        if (isLoading && user && shopInfo) {
+            const returnTo = searchParams?.get('returnTo') || '/operations/work-orders'
+            console.log('[Login] Auth ready, redirecting to:', returnTo)
+            router.push(returnTo)
+        }
+    }, [isLoading, user, shopInfo, searchParams, router])
+
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setIsLoading(true)
-        const formData = new FormData(e.currentTarget)
-        await login(formData)
-        setIsLoading(false)
+        setError(null)
+
+        const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value
+        const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value
+
+        try {
+            const supabase = createClient()
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            })
+
+            if (signInError) {
+                setError(signInError.message)
+                setIsLoading(false)
+                return
+            }
+
+            // Success! Keep isLoading true, useEffect will handle redirect when auth is ready
+        } catch (err) {
+            setError('An unexpected error occurred')
+            setIsLoading(false)
+        }
     }
 
     return (

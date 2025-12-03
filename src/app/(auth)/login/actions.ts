@@ -14,14 +14,23 @@ export async function login(formData: FormData) {
 		password: formData.get('password') as string,
 	}
 
+	// Get returnTo parameter if provided
+	const returnTo = formData.get('returnTo') as string | null
+
 	const { error } = await supabase.auth.signInWithPassword(data)
 
 	if (error) {
-		redirect('/login?error=' + encodeURIComponent(error.message))
+		const errorUrl = returnTo 
+			? `/login?error=${encodeURIComponent(error.message)}&returnTo=${encodeURIComponent(returnTo)}`
+			: `/login?error=${encodeURIComponent(error.message)}`
+		redirect(errorUrl)
 	}
 
 	revalidatePath('/', 'layout')
-	redirect('/')
+	
+	// Redirect to returnTo path or default to /operations/work-orders (like Studio redirects to /organizations)
+	const redirectPath = returnTo && returnTo !== '/login' ? returnTo : '/operations/work-orders'
+	redirect(redirectPath)
 }
 
 export async function signup(formData: FormData) {

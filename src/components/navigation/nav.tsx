@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient, resetClient } from "@/utils/supabase/client"
+// Removed useSignOut - using Studio pattern: navigate to /logout instead
 import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useState, useMemo } from "react"
@@ -20,7 +20,6 @@ export function Nav() {
 	const router = useRouter()
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
-	const queryClient = useQueryClient()
 
 	// Use unified auth - single source of truth for all auth data
 	const { role: userRole, shopInfo, isLoading } = useUnifiedAuth()
@@ -83,52 +82,9 @@ export function Nav() {
 		setOpen(false)
 	}
 
-	const handleLogout = async () => {
-		try {
-			console.log('Starting logout...')
-
-			// Create a timeout promise
-			const timeout = new Promise((_, reject) =>
-				setTimeout(() => reject(new Error('SignOut timeout')), 3000)
-			)
-
-			const supabase = createClient()
-			console.log('Calling supabase.auth.signOut()...')
-
-			// Race between signOut and timeout
-			try {
-				await Promise.race([
-					supabase.auth.signOut(),
-					timeout
-				])
-				console.log('Sign out successful')
-			} catch (timeoutError) {
-				console.warn('SignOut timed out, proceeding with cleanup anyway:', timeoutError)
-			}
-
-			console.log('Clearing caches...')
-
-			// Clear all caches
-			queryClient.clear()
-			console.log('React Query cache cleared')
-
-			localStorage.clear() // Clear localStorage cache (admin context, etc.)
-			console.log('localStorage cleared')
-
-			// Reset the singleton Supabase client
-			resetClient()
-			console.log('Supabase client reset')
-
-			// Force a full page reload to clear all cached data
-			console.log('Redirecting to /login...')
-			window.location.href = "/login"
-		} catch (error) {
-			console.error("Unexpected logout error:", error)
-			// Still try to redirect even on error
-			localStorage.clear()
-			resetClient()
-			window.location.href = "/login"
-		}
+	const handleLogout = () => {
+		// Match Studio pattern: navigate to /logout page
+		router.push('/logout')
 	}
 
 	// Show loading state while fetching auth data
