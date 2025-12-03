@@ -9,7 +9,7 @@ import Image from "next/image"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/client"
-import { useUnifiedAuth } from "@/contexts/unified-auth-context"
+import { useQueryClient } from "@tanstack/react-query"
 
 export default function AuthComponent() {
     const [showPassword, setShowPassword] = useState(false)
@@ -18,7 +18,7 @@ export default function AuthComponent() {
     const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
-    const { user, shopInfo } = useUnifiedAuth()
+    const queryClient = useQueryClient()
 
     useEffect(() => {
         const errorParam = searchParams?.get('error')
@@ -31,15 +31,6 @@ export default function AuthComponent() {
             setMessage(messageParam)
         }
     }, [searchParams])
-
-    // Redirect when auth is ready after login
-    useEffect(() => {
-        if (isLoading && user && shopInfo) {
-            const returnTo = searchParams?.get('returnTo') || '/operations/work-orders'
-            console.log('[Login] Auth ready, redirecting to:', returnTo)
-            router.push(returnTo)
-        }
-    }, [isLoading, user, shopInfo, searchParams, router])
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -62,7 +53,11 @@ export default function AuthComponent() {
                 return
             }
 
-            // Success! Keep isLoading true, useEffect will handle redirect when auth is ready
+            // Success! Reset queries and redirect (Studio pattern)
+            await queryClient.resetQueries()
+            
+            const returnTo = searchParams?.get('returnTo') || '/operations/work-orders'
+            router.push(returnTo)
         } catch (err) {
             setError('An unexpected error occurred')
             setIsLoading(false)
