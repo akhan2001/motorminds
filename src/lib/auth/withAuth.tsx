@@ -1,57 +1,61 @@
 'use client'
 
-import { useEffect, ComponentType } from 'react'
+import { ComponentType, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from './AuthProvider'
 
 /**
- * Higher-Order Component that protects pages requiring authentication
- * Follows Supabase Studio's withAuth pattern
+ * Higher-Order Component for protecting pages that require authentication.
  * 
  * Usage:
- * export default withAuth(MyProtectedPage)
+ * export default withAuth(MyPage)
+ * 
+ * Flow:
+ * 1. Checks if user is authenticated via useAuth()
+ * 2. If loading: shows nothing (prevents flash)
+ * 3. If not authenticated: redirects to /login with returnTo param
+ * 4. If authenticated: renders the wrapped component
+ * 
+ * Based on Supabase Studio's withAuth pattern:
+ * - Consistent auth checks across all protected pages
+ * - Automatic redirect with return path
+ * - Loading state handling
  */
 export function withAuth<T extends object>(
     Component: ComponentType<T>,
     options?: {
-        redirectTo?: string
+        requireShopId?: boolean
     }
 ) {
     const WithAuthHOC: ComponentType<T> = (props) => {
         const router = useRouter()
         const pathname = usePathname()
-        const { session, user, shopId, isLoading } = useAuth()
+        const { user, shopId, isLoading } = useAuth()
 
-        const isLoggedIn = Boolean(session && user)
-        const isFinishedLoading = !isLoading
-
-        // Determine if we should redirect to login
-        const shouldRedirect = isFinishedLoading && !isLoggedIn
+        // Default to requiring shopId unless explicitly set to false
+        const requireShopId = options?.requireShopId !== false
+        const isAuthenticated = Boolean(user)
+        const hasRequiredData = requireShopId ? Boolean(shopId) : true
+        const shouldRedirect = !isLoading && (!isAuthenticated || !hasRequiredData)
 
         useEffect(() => {
             if (shouldRedirect) {
-                const redirectTo = options?.redirectTo || '/login'
-                const returnTo = pathname !== redirectTo ? pathname : undefined
-                const redirectUrl = returnTo 
-                    ? `${redirectTo}?returnTo=${encodeURIComponent(returnTo)}`
-                    : redirectTo
-                
-                console.log('WITH_AUTH - Redirecting to login:', { redirectUrl, returnTo })
-                router.push(redirectUrl)
+                const returnTo = encodeURIComponent(pathname || '/')
+                console.log('WITH_AUTH - Redirecting to login, returnTo:', pathname)
+                router.push(`/login?returnTo=${returnTo}`)
             }
-        }, [shouldRedirect, router, pathname])
+        }, [shouldRedirect, pathname, router])
 
         // Show nothing while loading or redirecting
         if (isLoading || shouldRedirect) {
             return null
         }
 
-        // Render the protected component
+        // User is authenticated, render the component
         return <Component {...props} />
     }
 
-    WithAuthHOC.displayName = `withAuth(${Component.displayName || Component.name || 'Component'})`
+    WithAuthHOC.displayName = `withAuth(${Component.displayName || Component.name})`
 
     return WithAuthHOC
 }
-

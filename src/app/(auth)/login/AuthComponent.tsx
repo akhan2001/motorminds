@@ -34,11 +34,13 @@ export default function AuthComponent() {
 
     // Redirect when auth is ready after login
     useEffect(() => {
+        // Only redirect if we're in loading state (just logged in) and auth is ready
         if (isLoading && !authLoading && user && shopId) {
-            console.log('AUTH COMPONENT - Redirecting to home after successful login')
-            router.push('/')
+            const returnTo = searchParams?.get('returnTo') || '/'
+            console.log('AUTH COMPONENT - Auth ready, redirecting to:', returnTo)
+            router.push(returnTo)
         }
-    }, [isLoading, authLoading, user, shopId, router])
+    }, [isLoading, authLoading, user, shopId, router, searchParams])
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -51,8 +53,7 @@ export default function AuthComponent() {
             
             if (result?.success) {
                 console.log('AUTH COMPONENT - Login successful, waiting for auth state...')
-                // Don't set isLoading to false - keep it true until redirect happens
-                // The useEffect above will handle the redirect once auth state is ready
+                // Keep isLoading true - the useEffect will handle redirect once auth is ready
             }
         } catch (err) {
             console.error('AUTH COMPONENT - Login error:', err)

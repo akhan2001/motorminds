@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 import { useAuth } from '@/lib/auth/AuthProvider'
+import { withAuth } from '@/lib/auth/withAuth'
 // import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
 import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointment } from '../hooks/appointments/useAppointments'
 import { CalendarView } from '../components/appointments/Calendar/CalendarView'
@@ -15,7 +16,7 @@ import { DayAppointmentsDialog } from '../components/appointments/DayAppointment
 import { AppointmentDetailsSheet } from '../components/appointments/AppointmentDetailsSheet'
 import type { AppointmentWithDetails } from '../types/appointment'
 
-export default function AppointmentsPage() {
+const AppointmentsPage = withAuth(function AppointmentsPage() {
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
     
@@ -223,27 +224,7 @@ export default function AppointmentsPage() {
         )
     }
 
-    // Don't render main content if we don't have authentication data
-    if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Authentication Required</p>
-                                <p className="text-muted-foreground text-sm">
-                                    Unable to access appointments. Please ensure you are logged in.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
+    // Auth is now handled by withAuth HOC - no need for manual checks here
 
     return (
         <div className="h-screen flex flex-col bg-background">
@@ -301,4 +282,6 @@ export default function AppointmentsPage() {
             />
         </div>
     )
-}
+})
+
+export default AppointmentsPage

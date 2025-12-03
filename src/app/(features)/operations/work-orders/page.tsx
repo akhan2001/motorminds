@@ -15,6 +15,7 @@ import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from "../hooks/use-work-orders";
 
 import { useAuth } from '@/lib/auth/AuthProvider'
+import { withAuth } from '@/lib/auth/withAuth'
 
 import { WorkOrderItemsService } from "../lib/work-order-items-service";
 import type { WorkOrderItemCreateData } from "../types/work-order-items";
@@ -631,27 +632,7 @@ function WorkOrdersContent() {
         )
     }
 
-    // Don't render main content if we don't have authentication data (but only after loading is complete)
-    if (!authLoading && (!shopId || !user)) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Authentication Required</p>
-                                <p className="text-muted-foreground text-sm mb-3">
-                                    Unable to access work orders. Please ensure you are logged in.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
+    // Auth is now handled by withAuth HOC - no need for manual checks here
 
     return (
         <DragDropProvider
@@ -740,11 +721,13 @@ function WorkOrdersLoading() {
     )
 }
 
-// Main component with Suspense wrapper
-export default function WorkOrdersPage() {
+// Main component with Suspense wrapper and auth protection
+const WorkOrdersPage = withAuth(function WorkOrdersPage() {
     return (
         <Suspense fallback={<WorkOrdersLoading />}>
             <WorkOrdersContent />
         </Suspense>
     )
-}
+})
+
+export default WorkOrdersPage

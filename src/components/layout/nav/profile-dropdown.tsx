@@ -5,9 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LogOut, Settings, HelpCircle, Shield, Moon, Sun } from "lucide-react"
-import { useAuth } from "@/lib/auth/AuthProvider"
-import { useQueryClient } from '@tanstack/react-query'
-import { useRouter } from "next/navigation"
+import { useSignOut } from "@/lib/auth/useSignOut"
 import { useTheme } from "next-themes"
 
 interface ProfileDropdownProps {
@@ -19,9 +17,7 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: ProfileDropdownProps) {
     const [mounted, setMounted] = useState(false)
-    const { signOut } = useAuth()
-    const queryClient = useQueryClient()
-    const router = useRouter()
+    const signOut = useSignOut()
     const { theme, setTheme } = useTheme()
 
     useEffect(() => {
@@ -48,27 +44,13 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
     }
 
     const handleLogout = async () => {
-        try {
-            // Sign out from Supabase and clear AuthProvider state
-            await signOut()
-            
-            // Clear React Query cache
-            queryClient.clear()
-            
-            // Clear localStorage
-            localStorage.clear()
-            
-            // Redirect to login
-            router.push('/login')
-        } catch (error) {
-            console.error("Logout error:", error)
-        }
+        await signOut()
     }
 
   const handleMenuClick = (action: string) => {
     switch (action) {
       case 'settings':
-        router.push('/settings')
+        window.location.href = '/settings'
         break
       case 'support':
         window.open("https://www.motorminds.ca/contact-us", "_blank")

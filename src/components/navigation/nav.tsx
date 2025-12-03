@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MobileNav } from "@/components/navigation/mobile-nav"
-import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from "@/lib/auth/AuthProvider"
+import { useSignOut } from "@/lib/auth/useSignOut"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
@@ -20,8 +20,8 @@ export function Nav() {
 	const router = useRouter()
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
-	const queryClient = useQueryClient()
-	const { user, userRole, shopId, shopInfo, isLoading: isAuthLoading, signOut } = useAuth()
+	const signOut = useSignOut()
+	const { user, userRole, shopId, shopInfo, isLoading: isAuthLoading } = useAuth()
 
 	if (!pathname) {
 		return null
@@ -82,21 +82,7 @@ export function Nav() {
 	}
 
 	const handleLogout = async () => {
-		try {
-			// Sign out from Supabase and clear AuthProvider state
-			await signOut()
-			
-			// Clear React Query cache
-			queryClient.clear()
-			
-			// Clear localStorage
-			localStorage.clear()
-			
-			// Redirect to login
-			router.push('/login')
-		} catch (error) {
-			console.error("Logout error:", error)
-		}
+		await signOut()
 	}
 
 	// Show loading state while fetching role and shop info

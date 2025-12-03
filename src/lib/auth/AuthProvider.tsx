@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { User } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
+import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
 interface ShopInfo {
@@ -18,6 +18,7 @@ interface ShopInfo {
 }
 
 interface AuthContextType {
+    session: Session | null
     user: User | null
     userRole: string | null
     shopId: string | null
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [state, setState] = useState<Omit<AuthContextType, 'signOut'>>({
+        session: null,
         user: null,
         userRole: null,
         shopId: null,
@@ -39,9 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: null
     })
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         try {
             console.log('AUTH PROVIDER - Signing out...')
+            
+            // 1. Sign out from Supabase (clears cookies)
             const { error } = await supabase.auth.signOut()
             
             if (error) {
@@ -49,8 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw error
             }
             
-            // Clear auth state
+            // 2. Clear localStorage
+            if (typeof window !== 'undefined') {
+                localStorage.clear()
+            }
+            
+            // 3. Clear auth state
             setState({
+                session: null,
                 user: null,
                 userRole: null,
                 shopId: null,
@@ -64,14 +74,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error('AUTH PROVIDER - Sign out failed:', error)
             throw error
         }
-    }
+    }, [])
 
     useEffect(() => {
         let mounted = true
 
-        const loadUserData = async (user: User) => {
+        const loadUserData = async (session: Session) => {
             try {
-                // Fetch user role and shop_id
+                const user = session.user
+
+                // Fetch user role and shop_id in parallel
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('role, shop_id')
@@ -81,8 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (!mounted) return
 
                 if (userError) {
-                    console.error('Error fetching user data:', userError)
+                    console.error('AUTH PROVIDER - Error fetching user data:', userError)
                     setState({
+                        session,
                         user,
                         userRole: null,
                         shopId: null,
@@ -107,10 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (!mounted) return
 
                     if (shopError) {
-                        console.error('Error fetching shop info:', shopError)
+                        console.error('AUTH PROVIDER - Error fetching shop info:', shopError)
                     }
 
                     setState({
+                        session,
                         user,
                         userRole,
                         shopId,
@@ -122,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // No shop_id, just set user and role
                     if (mounted) {
                         setState({
+                            session,
                             user,
                             userRole,
                             shopId: null,
@@ -131,11 +146,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         })
                     }
                 }
+
+                console.log('AUTH PROVIDER - User data loaded:', { 
+                    userId: user.id, 
+                    userRole, 
+                    shopId 
+                })
             } catch (error) {
-                console.error('Error loading user data:', error)
+                console.error('AUTH PROVIDER - Error loading user data:', error)
                 if (mounted) {
                     setState({
-                        user,
+                        session,
+                        user: session.user,
                         userRole: null,
                         shopId: null,
                         shopInfo: null,
@@ -148,20 +170,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const loadAuth = async () => {
             try {
-                // Get session once
+                // Get initial session
                 const { data: { session } } = await supabase.auth.getSession()
 
                 if (!mounted) return
 
-                if (session?.user) {
-                    await loadUserData(session.user)
-                } else if (mounted) {
-                    setState({ user: null, userRole: null, shopId: null, shopInfo: null, isLoading: false, error: null })
+                if (session) {
+                    console.log('AUTH PROVIDER - Initial session found')
+                    await loadUserData(session)
+                } else {
+                    console.log('AUTH PROVIDER - No initial session')
+                    if (mounted) {
+                        setState({ 
+                            session: null,
+                            user: null, 
+                            userRole: null, 
+                            shopId: null, 
+                            shopInfo: null, 
+                            isLoading: false, 
+                            error: null 
+                        })
+                    }
                 }
             } catch (error) {
-                console.error('Error getting session:', error)
+                console.error('AUTH PROVIDER - Error getting session:', error)
                 if (mounted) {
                     setState({
+                        session: null,
                         user: null,
                         userRole: null,
                         shopId: null,
@@ -173,21 +208,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }
 
-        // Listen for auth changes
+        // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 if (!mounted) return
 
                 console.log('AUTH PROVIDER - Event:', event, 'Has session:', !!session)
 
-                // Handle all events that provide a session
-                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
-                    // Set loading state immediately before async operation
+                if (event === 'SIGNED_IN' && session) {
+                    // User just signed in - load their data
                     setState(prev => ({ ...prev, isLoading: true }))
-                    await loadUserData(session.user)
+                    await loadUserData(session)
                 } else if (event === 'SIGNED_OUT') {
-                    setState({ user: null, userRole: null, shopId: null, shopInfo: null, isLoading: false, error: null })
+                    // User signed out - clear state
+                    console.log('AUTH PROVIDER - User signed out, clearing state')
+                    setState({ 
+                        session: null,
+                        user: null, 
+                        userRole: null, 
+                        shopId: null, 
+                        shopInfo: null, 
+                        isLoading: false, 
+                        error: null 
+                    })
+                } else if (event === 'TOKEN_REFRESHED' && session) {
+                    // Token refreshed - update session but keep user data
+                    console.log('AUTH PROVIDER - Token refreshed')
+                    setState(prev => ({ ...prev, session }))
                 }
+                // Ignore INITIAL_SESSION - we handle that in loadAuth()
             }
         )
 
