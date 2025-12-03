@@ -1,11 +1,23 @@
-import { adminGuard } from '@/lib/auth/admin-guard';
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+import {
+  createAuthGuard,
+  createShopGuard,
+  createAdminGuard,
+  createDemoRedirectGuard,
+  GuardContext,
+} from '@/lib/auth/guards'
+import {
+  PUBLIC_PATHS,
+  PROTECTED_PATHS,
+  ADMIN_PATHS,
+  DEMO_REDIRECT_PATHS,
+} from '@/lib/auth/middleware-config'
 
 export async function updateSession(request: NextRequest) {
 	let supabaseResponse = NextResponse.next({
 		request,
-	});
+	})
 
 	const supabase = createServerClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,21 +38,11 @@ export async function updateSession(request: NextRequest) {
 				},
 			},
 		}
-	);
-
-	// Public routes that should not trigger authentication checks
-	const publicPaths = [
-		'/signup',
-		'/login',
-		'/auth',
-		'/api/auth',
-		'/api/voice-calling/webhook',
-		'/customer-intake',
-	]
+	)
 
 	// Skip authentication checks for public routes
-	if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
-		return supabaseResponse;
+	if (PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))) {
+		return supabaseResponse
 	}
 
 	// IMPORTANT: Avoid writing any logic between createServerClient and
@@ -48,129 +50,30 @@ export async function updateSession(request: NextRequest) {
 	// issues with users being randomly logged out.
 	const {
 		data: { user },
-	} = await supabase.auth.getUser();
+	} = await supabase.auth.getUser()
 
-	// Protected routes - keeping your existing logic
-	const protectedPaths = [
-		'/operations',
-		'/financials',
-		'/invoices',        // Invoice management
-		'/mia-ai',          // Mia AI routes
-		'/mia',             // MIA diagnostic interface
-		'/chat',
-		'/customers',       // Customer management
-		'/customer-intake', // Customer intake form
-		'/customer-invoice-intake',  // Customer invoice intake form
-		'/messages',
-		'/messaging',
-		'/admin',
-		'/settings',        // Settings pages
-		'/parts',           // New refactored parts ordering
-		'/parts-ordering',  // Original parts ordering  
-		'/suppliers',       // Supplier management
-		'/voice-calling',   // Voice calling interface
-		'/app',             // All app routes (appointments, invoices, etc.)
-		'/api/financials',
-		'/api/mia',         // MIA API routes
-		'/api/voice',       // Voice calling API
-		'/api/suppliers',   // Supplier API
-		'/api/parts',       // Parts API
-	]
-	const isProtectedPath = protectedPaths.some(path =>
-		request.nextUrl.pathname.startsWith(path)
-	)
-
-	if (isProtectedPath && !user) {
-		const redirectUrl = new URL('/login', request.url)
-		redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
-		return NextResponse.redirect(redirectUrl)
+	// Create guard context
+	const ctx: GuardContext = {
+		request,
+		response: supabaseResponse,
+		supabase,
+		user,
 	}
 
-	// Shop ID verification for authenticated users on protected paths
-	if (isProtectedPath && user) {
-		let shopId = user.user_metadata?.shop_id;
+	// Initialize guards
+	const authGuard = createAuthGuard(PROTECTED_PATHS)
+	const shopGuard = createShopGuard(PROTECTED_PATHS)
+	const adminGuard = createAdminGuard(ADMIN_PATHS)
+	const demoRedirectGuard = createDemoRedirectGuard(DEMO_REDIRECT_PATHS)
 
-		if (!shopId) {
-			// Query the users table to get shop_id
-			try {
-				const { data: userData, error } = await supabase
-					.from('users')
-					.select('shop_id')
-					.eq('id', user.id)
-					.single();
+	// Run guards in sequence
+	const guards = [authGuard, shopGuard, adminGuard, demoRedirectGuard]
 
-				if (!error && userData?.shop_id) {
-					shopId = userData.shop_id;
-				}
-			} catch (error) {
-				console.error('Error fetching user shop_id:', error);
-			}
-		}
-
-		if (!shopId) {
-			// User is authenticated but has no shop - redirect to dashboard instead
-			const redirectUrl = new URL('/dashboard', request.url)
-			return NextResponse.redirect(redirectUrl)
-		}
-
-		// Add shop context to request headers for downstream use
-		supabaseResponse.headers.set('x-user-id', user.id)
-		supabaseResponse.headers.set('x-shop-id', shopId)
-	}
-
-	// Admin access control - only admin users can access /admin routes
-	if (request.nextUrl.pathname.startsWith('/admin') && user) {
-		try {
-			// Use server-side Supabase client for database query
-			const { data: userData, error } = await supabase
-				.from('users')
-				.select('role, organization_id')
-				.eq('id', user.id)
-				.single();
-
-			if (error || !userData) {
-				console.log('Error or no userData, redirecting to operations/appointments');
-				const redirectUrl = new URL('/operations/appointments', request.url)
-				return NextResponse.redirect(redirectUrl)
-			}
-
-			// Allow admin roles: 'admin', 'super-admin', 'super_admin', 'shop_admin', 'organization_admin'
-			const userRole = userData.role?.toUpperCase();
-			const isAdmin =
-				userRole === 'ADMIN' ||
-				userRole === 'SUPER-ADMIN' ||
-				userRole === 'SUPER_ADMIN' ||
-				userRole === 'SHOP_ADMIN' ||
-				userRole === 'ORGANIZATION_ADMIN';
-
-			if (!isAdmin) {
-				// User is not admin - redirect to operations/appointments
-				const redirectUrl = new URL('/operations/appointments', request.url)
-				return NextResponse.redirect(redirectUrl)
-			}
-		} catch (error) {
-			console.error('Error checking user role for admin access:', error);
-			// On error, redirect to safe page
-			const redirectUrl = new URL('/operations/appointments', request.url)
-			return NextResponse.redirect(redirectUrl)
-		}
-	}
-
-	// Demo user redirects - redirect from / and /dashboard to /mia
-	if (user && (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard')) {
-		try {
-			const { data: userData, error } = await supabase
-				.from('users')
-				.select('role')
-				.eq('id', user.id)
-				.single();
-
-			if (!error && userData?.role === 'demo') {
-				const redirectUrl = new URL('/mia', request.url)
-				return NextResponse.redirect(redirectUrl)
-			}
-		} catch (error) {
-			console.error('Error checking user role for demo redirect:', error);
+	for (const guard of guards) {
+		const result = await guard(ctx)
+		if (result) {
+			// Guard returned a redirect response
+			return result
 		}
 	}
 

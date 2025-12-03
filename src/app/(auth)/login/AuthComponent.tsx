@@ -5,10 +5,8 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Image from "next/image"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { login, signup } from "./actions"
+import { loginAction } from "@/lib/auth"
 
 export default function AuthComponent() {
     const [showPassword, setShowPassword] = useState(false)
@@ -20,21 +18,34 @@ export default function AuthComponent() {
     useEffect(() => {
         const errorParam = searchParams?.get('error')
         const messageParam = searchParams?.get('message')
-        
+
         if (errorParam) {
-            setError(errorParam)
+            setError(decodeURIComponent(errorParam))
         }
         if (messageParam) {
-            setMessage(messageParam)
+            setMessage(decodeURIComponent(messageParam))
         }
     }, [searchParams])
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setIsLoading(true)
-        const formData = new FormData(e.currentTarget)
-        await login(formData)
-        setIsLoading(false)
+        setError(null)
+
+        try {
+            const formData = new FormData(e.currentTarget)
+            const result = await loginAction(formData)
+
+            if (!result.success && result.error) {
+                setError(result.error)
+            }
+            // If successful, loginAction will handle redirect
+        } catch (err) {
+            // loginAction throws on redirect, which is expected
+            // Do nothing here
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
