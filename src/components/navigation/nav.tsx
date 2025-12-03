@@ -34,7 +34,7 @@ export function Nav() {
 	// Get filtered navigation items based on user role, admin type, and shop ID
 	const navItems = useMemo(() => {
 		const items = getFilteredNavItems(
-			userRole ?? null, 
+			userRole ?? null,
 			adminType || undefined,
 			shopInfo?.id || undefined
 		);
@@ -116,38 +116,38 @@ export function Nav() {
 				<div className="flex flex-col items-start">
 					{/* Left: Logo and Premium Badge */}
 					<div className="flex items-center gap-4 py-3">
-						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-accent px-2 py-1 rounded-md transition-opacity"
-						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
+						<div
+							className="flex items-center gap-2 cursor-pointer hover:bg-accent px-2 py-1 rounded-md transition-opacity"
+							onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
 						>
 							<Image
-							src="/motorminds-logo-white (1).svg"
-							alt="Motorminds Logo"
-							width={35}
-							height={35}
-							className="w-8 h-8 dark:invert-0 invert"
+								src="/motorminds-logo-white (1).svg"
+								alt="Motorminds Logo"
+								width={35}
+								height={35}
+								className="w-8 h-8 dark:invert-0 invert"
 							/>
-							<span className="text-foreground font-medium">Motorminds</span>
+							<span className="text-foreground font-medium">MotorMinds</span>
 						</div>
 						<div className="hidden lg:block">
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-foreground border-muted-foreground">
-										{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
-									</Badge>
-								</TooltipTrigger>
-								<TooltipContent className="bg-popover text-popover-foreground border-border">
-									<p className="text-xs text-[#FBBC05]">
-										{userRole === 'demo' && 'Demo Access - Limited Features'}
-										{userRole === 'admin' && 'Administrator - Full Access'}
-										{userRole === 'super' && 'Super User - Full Access'}
-										{userRole === 'user' && 'Premium User - Standard Access'}
-										{!userRole && 'Loading user role...'}
-									</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Badge variant="outline" className="cursor-default text-foreground border-muted-foreground">
+											{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
+										</Badge>
+									</TooltipTrigger>
+									<TooltipContent className="bg-popover text-popover-foreground border-border">
+										<p className="text-xs text-[#FBBC05]">
+											{userRole === 'demo' && 'Demo Access - Limited Features'}
+											{userRole === 'admin' && 'Administrator - Full Access'}
+											{userRole === 'super' && 'Super User - Full Access'}
+											{userRole === 'user' && 'Premium User - Standard Access'}
+											{!userRole && 'Loading user role...'}
+										</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 						</div>
 					</div>
 					{/* Center: Navigation Links */}
@@ -157,12 +157,11 @@ export function Nav() {
 								<div key={item.name} className="relative flex flex-col">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<button 
-												className={`py-2 border-b-2 flex items-center gap-1 ${
-													activeLink === item.name
-													? "text-[#b22222] border-[#b22222]"
-													: "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground transition-colors"
-												}`}
+											<button
+												className={`py-2 border-b-2 flex items-center gap-1 ${activeLink === item.name
+														? "text-[#b22222] border-[#b22222]"
+														: "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground transition-colors"
+													}`}
 											>
 												{item.name}
 												<ChevronDown className="h-4 w-4" />
@@ -171,7 +170,7 @@ export function Nav() {
 										<DropdownMenuContent className="bg-popover text-popover-foreground border-border min-w-[180px]">
 											{item.subItems && item.subItems.length > 0 ? (
 												item.subItems.map((subItem) => (
-													<DropdownMenuItem 
+													<DropdownMenuItem
 														key={subItem.name}
 														onClick={() => handleSubItemClick(item.name, subItem.href)}
 														className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
@@ -192,11 +191,10 @@ export function Nav() {
 									key={item.name}
 									href="#"
 									onClick={() => handleNavClick(item.name, item.href)}
-									className={`py-2 border-b-2 flex items-center gap-1 group ${
-										activeLink === item.name
-										? "text-[#b22222] border-[#b22222]"
-										: "text-muted-foreground border-transparent hover:border-red-500 transition-colors"
-									} ${item.name === 'Mia AI' ? 'text-foreground hover:text-red-500 hover:animate-pulse' : 'hover:text-foreground'}`}
+									className={`py-2 border-b-2 flex items-center gap-1 group ${activeLink === item.name
+											? "text-[#b22222] border-[#b22222]"
+											: "text-muted-foreground border-transparent hover:border-red-500 transition-colors"
+										} ${item.name === 'Mia AI' ? 'text-foreground hover:text-red-500 hover:animate-pulse' : 'hover:text-foreground'}`}
 								>
 									{item.name}
 									{item.name === 'Mia AI' && (
@@ -212,10 +210,9 @@ export function Nav() {
 					{/* Full navigation for non-demo users */}
 					{userRole !== 'demo' && (
 						<>
-							<button 
-								className={`${
-									activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
-								} hover:text-foreground transition-colors`} 
+							<button
+								className={`${activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
+									} hover:text-foreground transition-colors`}
 								onClick={() => router.push("/messages")}
 							>
 								<MessageCircleMore className="inline-block w-5 h-5" />
@@ -227,9 +224,9 @@ export function Nav() {
 							</button>
 						</>
 					)}
-					
+
 					{/* Profile Dropdown - shown for all users */}
-					<ProfileDropdown 
+					<ProfileDropdown
 						avatar={shopInfo?.logo_image_url || ""}
 						shopOwnerName={shopInfo?.shop_owner}
 						shopName={shopInfo?.shop_name}
@@ -240,7 +237,7 @@ export function Nav() {
 				<div className="lg:hidden">
 					{userRole === 'demo' ? (
 						/* Simplified mobile menu for demo users - just profile dropdown */
-						<ProfileDropdown 
+						<ProfileDropdown
 							avatar={shopInfo?.logo_image_url || ""}
 							shopOwnerName={shopInfo?.shop_owner}
 							shopName={shopInfo?.shop_name}
@@ -248,7 +245,7 @@ export function Nav() {
 						/>
 					) : (
 						/* Full mobile navigation for non-demo users */
-						<MobileNav 
+						<MobileNav
 							navItems={navItems}
 							activeLink={activeLink}
 							avatar={shopInfo?.logo_image_url || ""}

@@ -20,14 +20,14 @@ export async function login(formData: FormData) {
 	const { error } = await supabase.auth.signInWithPassword(data)
 
 	if (error) {
-		const errorUrl = returnTo 
+		const errorUrl = returnTo
 			? `/login?error=${encodeURIComponent(error.message)}&returnTo=${encodeURIComponent(returnTo)}`
 			: `/login?error=${encodeURIComponent(error.message)}`
 		redirect(errorUrl)
 	}
 
 	revalidatePath('/', 'layout')
-	
+
 	// Redirect to returnTo path or default to /operations/work-orders (like Studio redirects to /organizations)
 	const redirectPath = returnTo && returnTo !== '/login' ? returnTo : '/operations/work-orders'
 	redirect(redirectPath)

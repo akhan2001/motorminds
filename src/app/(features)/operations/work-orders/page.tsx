@@ -234,7 +234,7 @@ function WorkOrdersContent() {
     // Completion modal state
     const [completionWorkOrder, setCompletionWorkOrder] = useState<WorkOrderWithDetails | null>(null)
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
-    
+
     // Templates modal state
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
 
@@ -361,7 +361,7 @@ function WorkOrdersContent() {
             // Check if this is a walk-in customer
             if (workOrderData.customerType === 'walk_in') {
                 console.log('Creating walk-in work order')
-                
+
                 // Prepare walk-in work order payload
                 const walkInPayload = {
                     workOrder: {
@@ -385,7 +385,7 @@ function WorkOrdersContent() {
                 newWorkOrder = await createWalkInWorkOrderMutation.mutateAsync(walkInPayload)
             } else {
                 console.log('Creating registered customer work order')
-                
+
                 // Prepare the data structure for registered customer
                 const payload = {
                     workOrder: {

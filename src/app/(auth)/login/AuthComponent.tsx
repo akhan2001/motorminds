@@ -23,7 +23,7 @@ export default function AuthComponent() {
     useEffect(() => {
         const errorParam = searchParams?.get('error')
         const messageParam = searchParams?.get('message')
-        
+
         if (errorParam) {
             setError(errorParam)
         }
@@ -55,7 +55,7 @@ export default function AuthComponent() {
 
             // Success! Reset queries and redirect (Studio pattern)
             await queryClient.resetQueries()
-            
+
             const returnTo = searchParams?.get('returnTo') || '/operations/work-orders'
             router.push(returnTo)
         } catch (err) {

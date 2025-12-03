@@ -17,42 +17,42 @@ import { createClient } from '@/utils/supabase/client'
  * This matches Studio's useSignOut implementation exactly.
  */
 export function useSignOut() {
-  const router = useRouter()
-  const queryClient = useQueryClient()
+	const router = useRouter()
+	const queryClient = useQueryClient()
 
-  return useCallback(async () => {
-    try {
-      console.log('[useSignOut] Starting logout process...')
-      const supabase = createClient()
+	return useCallback(async () => {
+		try {
+			console.log('[useSignOut] Starting logout process...')
+			const supabase = createClient()
 
-      // 1. Sign out from Supabase (invalidates session, clears cookies)
-      const { error } = await supabase.auth.signOut()
-      
-      if (error) {
-        console.error('[useSignOut] Supabase signOut error:', error)
-        throw error
-      }
-      console.log('[useSignOut] Supabase signOut complete')
+			// 1. Sign out from Supabase (invalidates session, clears cookies)
+			const { error } = await supabase.auth.signOut()
 
-      // 2. Clear React Query cache (remove all cached API responses)
-      queryClient.clear()
-      console.log('[useSignOut] Query cache cleared')
+			if (error) {
+				console.error('[useSignOut] Supabase signOut error:', error)
+				throw error
+			}
+			console.log('[useSignOut] Supabase signOut complete')
 
-      // 3. Clear localStorage (remove app-specific data)
-      if (typeof window !== 'undefined') {
-        localStorage.clear()
-        console.log('[useSignOut] localStorage cleared')
-      }
+			// 2. Clear React Query cache (remove all cached API responses)
+			queryClient.clear()
+			console.log('[useSignOut] Query cache cleared')
 
-      // 4. Redirect to login
-      console.log('[useSignOut] Redirecting to login')
-      router.push('/login')
+			// 3. Clear localStorage (remove app-specific data)
+			if (typeof window !== 'undefined') {
+				localStorage.clear()
+				console.log('[useSignOut] localStorage cleared')
+			}
 
-      return { error: null }
-    } catch (error) {
-      console.error('[useSignOut] Logout failed:', error)
-      return { error }
-    }
-  }, [queryClient, router])
+			// 4. Redirect to login
+			console.log('[useSignOut] Redirecting to login')
+			router.push('/login')
+
+			return { error: null }
+		} catch (error) {
+			console.error('[useSignOut] Logout failed:', error)
+			return { error }
+		}
+	}, [queryClient, router])
 }
 

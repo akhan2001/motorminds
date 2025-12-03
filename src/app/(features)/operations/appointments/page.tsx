@@ -18,36 +18,36 @@ import type { AppointmentWithDetails } from '../types/appointment'
 export default function AppointmentsPage() {
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
-    
+
     // State
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [selectedDateForForm, setSelectedDateForForm] = useState<string>()
     const [selectedTimeForForm, setSelectedTimeForForm] = useState<string>()
-    
+
     // Modal state
     const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
     const [selectedDayForDialog, setSelectedDayForDialog] = useState<string | null>(null)
     const [isAppointmentSheetOpen, setIsAppointmentSheetOpen] = useState(false)
     const [selectedAppointmentForSheet, setSelectedAppointmentForSheet] = useState<AppointmentWithDetails | null>(null)
     const [isAppointmentFormOpen, setIsAppointmentFormOpen] = useState(false)
-    
+
     // Data fetching - operations dashboard disabled for now
     // const { data: dashboardData, isLoading: dashboardLoading } = useOperationsDashboard(shopId || '')
     const dashboardData = null
     const dashboardLoading = false
-    
+
     // Work order creation
     const createWorkOrder = useCreateWorkOrderFromAppointment()
-    
+
     // Cancel appointment
     const cancelAppointment = useCancelAppointment()
-    
+
     // Fetch appointments for the selected day dialog
     const { data: dayDialogAppointments } = useAppointments(shopId || '', selectedDayForDialog ? {
         start: selectedDayForDialog,
         end: selectedDayForDialog
     } : undefined)
-    
+
     // Combined loading state
     const isLoading = authLoading
     const error = authError
@@ -67,7 +67,7 @@ export default function AppointmentsPage() {
         // Create date without timezone conversion by parsing the components
         const [year, month, day] = date.split('-').map(Number)
         setSelectedDate(new Date(year, month - 1, day)) // month is 0-indexed
-        
+
         // Only show the day dialog in week view
         // In day and month views, appointments are already visible
         if (currentView === 'week') {
@@ -152,7 +152,7 @@ export default function AppointmentsPage() {
     const handleCreateWorkOrder = async (appointmentId: string) => {
         try {
             const workOrderId = await createWorkOrder.mutateAsync(appointmentId)
-            
+
             // Refetch the appointment to get the updated data with work order
             if (selectedAppointmentForSheet) {
                 // Update the local state with work order info
@@ -261,7 +261,6 @@ export default function AppointmentsPage() {
                     onMonthChange={setSelectedDate}
                     onWeekChange={setSelectedDate}
                     onNewAppointment={handleShowNewAppointmentForm}
-                    onCustomersClick={handleCustomersClick}
                 />
             </div>
 
