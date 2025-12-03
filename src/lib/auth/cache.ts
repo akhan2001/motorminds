@@ -1,62 +1,9 @@
 // Request-level caching for authentication data
-// Prevents duplicate database queries during a single request cycle
+// Edge Runtime compatible (no React cache dependency)
 
-import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 
-/**
- * Cache wrapper for user shop_id lookups
- * Uses React cache() to deduplicate requests within the same render cycle
- */
-export const getCachedUserShopId = cache(async (userId: string, supabase: any): Promise<string | null> => {
-  try {
-    const { data: userData, error } = await supabase
-      .from('users')
-      .select('shop_id')
-      .eq('id', userId)
-      .single()
-
-    if (error || !userData?.shop_id) {
-      return null
-    }
-
-    return userData.shop_id
-  } catch (error) {
-    console.error('Error fetching user shop_id:', error)
-    return null
-  }
-})
-
-/**
- * Cache wrapper for user role lookups
- * Uses React cache() to deduplicate requests within the same render cycle
- */
-export const getCachedUserRole = cache(async (userId: string, supabase: any): Promise<{ role: string | null, organization_id?: string | null }> => {
-  try {
-    const { data: userData, error } = await supabase
-      .from('users')
-      .select('role, organization_id')
-      .eq('id', userId)
-      .single()
-
-    if (error || !userData) {
-      return { role: null, organization_id: null }
-    }
-
-    return {
-      role: userData.role,
-      organization_id: userData.organization_id
-    }
-  } catch (error) {
-    console.error('Error fetching user role:', error)
-    return { role: null, organization_id: null }
-  }
-})
-
-/**
- * In-memory cache with TTL for session-level caching
- * This provides additional caching beyond React's request-level cache
- */
+// In-memory cache with TTL for middleware (Edge Runtime compatible)
 interface CacheEntry<T> {
   value: T
   expiresAt: number
@@ -119,4 +66,53 @@ if (typeof setInterval !== 'undefined') {
     shopIdCache.cleanup()
     userRoleCache.cleanup()
   }, 60000)
+}
+
+/**
+ * Get user shop_id (Edge Runtime compatible)
+ * Uses only memory cache, no React cache
+ */
+export async function getCachedUserShopId(userId: string, supabase: any): Promise<string | null> {
+  try {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('shop_id')
+      .eq('id', userId)
+      .single()
+
+    if (error || !userData?.shop_id) {
+      return null
+    }
+
+    return userData.shop_id
+  } catch (error) {
+    console.error('Error fetching user shop_id:', error)
+    return null
+  }
+}
+
+/**
+ * Get user role (Edge Runtime compatible)
+ * Uses only memory cache, no React cache
+ */
+export async function getCachedUserRole(userId: string, supabase: any): Promise<{ role: string | null, organization_id?: string | null }> {
+  try {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('role, organization_id')
+      .eq('id', userId)
+      .single()
+
+    if (error || !userData) {
+      return { role: null, organization_id: null }
+    }
+
+    return {
+      role: userData.role,
+      organization_id: userData.organization_id
+    }
+  } catch (error) {
+    console.error('Error fetching user role:', error)
+    return { role: null, organization_id: null }
+  }
 }
