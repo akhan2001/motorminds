@@ -1,8 +1,4 @@
-"use client"
-export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
-
-import React, { Suspense } from "react"
+import React from "react"
 import Image from "next/image"
 import AuthComponent from "./AuthComponent"
 
@@ -41,9 +37,7 @@ export default function LoginPage() {
 
 				{/* RIGHT SECTION: The AuthComponent form */}
 				<div className="flex flex-col items-center justify-center w-full md:w-[40%] lg:w-[30%] h-[60%] md:h-full">
-					<Suspense fallback={<div className="text-white">Loading...</div>}>
-						<AuthComponent />
-					</Suspense>
+					<AuthComponent />
 				</div>
 			</div>
 		</div>

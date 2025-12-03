@@ -1,5 +1,19 @@
 import { redirect } from 'next/navigation'
+import { createClient } from '@/utils/supabase/server'
 
-export default function Page() {
-	redirect('/operations/work-orders')
+/**
+ * Root page - redirects authenticated users to work orders, unauthenticated to login
+ * This is a server component that checks auth before redirecting
+ */
+export default async function Page() {
+	const supabase = await createClient()
+	const { data: { user } } = await supabase.auth.getUser()
+
+	if (user) {
+		// User is logged in, redirect to work orders
+		redirect('/operations/work-orders')
+	} else {
+		// User is not logged in, redirect to login
+		redirect('/login')
+	}
 }
