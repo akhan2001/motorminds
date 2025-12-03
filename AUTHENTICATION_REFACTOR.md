@@ -160,13 +160,16 @@ await login(formData)
 
 **New**:
 ```typescript
-import { loginAction } from '@/lib/auth'
+// Import server actions directly from actions file
+import { loginAction } from '@/lib/auth/actions'
 
 const result = await loginAction(formData)
 if (!result.success) {
   console.error(result.error)
 }
 ```
+
+**Note:** Server actions must be imported from `@/lib/auth/actions`, not from the barrel export (`@/lib/auth`).
 
 #### 2. Update User Checks
 

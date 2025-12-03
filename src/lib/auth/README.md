@@ -43,8 +43,14 @@ export default async function Page() {
 
 #### Server Actions
 
+**Important:** Server actions must be imported directly from `@/lib/auth/actions`, not from the barrel export.
+
 ```typescript
-import { loginAction, logoutAction, signupAction } from '@/lib/auth'
+// ✅ Correct - import from actions file
+import { loginAction, logoutAction, signupAction } from '@/lib/auth/actions'
+
+// ❌ Wrong - don't import from barrel export
+// import { loginAction } from '@/lib/auth'
 
 // In your component:
 async function handleLogin(formData: FormData) {
@@ -248,7 +254,8 @@ const result = await adminGuard(request)
 #### After (New System):
 
 ```typescript
-import { loginAction, getCurrentUser, createAdminGuard } from '@/lib/auth'
+import { loginAction } from '@/lib/auth/actions'
+import { getCurrentUser, createAdminGuard } from '@/lib/auth'
 
 // Server action (with validation)
 const result = await loginAction(formData)
@@ -286,7 +293,8 @@ The following functions are deprecated and will be removed in a future version:
 ```typescript
 'use client'
 
-import { loginAction, loginSchema } from '@/lib/auth'
+import { loginAction } from '@/lib/auth/actions'
+import { loginSchema } from '@/lib/auth'
 import { useState } from 'react'
 
 export function LoginForm() {
