@@ -15,9 +15,35 @@ export default function Providers({
 	const [queryClient] = useState(() => new QueryClient({
 		defaultOptions: {
 			queries: {
-				staleTime: 5 * 60 * 1000, // 5 minutes
+				// Data stays fresh for 1 minute before refetching
+				staleTime: 60 * 1000, // 1 minute
+
+				// Disable automatic refetches to prevent thundering herd
+				refetchOnWindowFocus: false,
+				refetchOnMount: false,
+				refetchOnReconnect: false,
+
+				// Smart retry with exponential backoff
+				retry: (failureCount, error: any) => {
+					// Don't retry on 4xx errors (except 429 rate limits)
+					if (error?.status >= 400 && error?.status < 500 && error?.status !== 429) {
+						return false
+					}
+
+					// Max 3 retries
+					if (failureCount < 3) {
+						return true
+					}
+
+					return false
+				},
+
+				// Exponential backoff: 1s → 2s → 4s (max 30s)
+				retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+			},
+			mutations: {
+				// Mutations retry once by default
 				retry: 1,
-				refetchOnWindowFocus: true,
 			},
 		},
 	}))
