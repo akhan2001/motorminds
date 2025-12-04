@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Zap, Send, Users, MessageSquare, ArrowRight, Loader2 } from 'lucide-react'
-import { useAuth } from '@/hooks/core/useAuth'
+import { useUnifiedAuth } from '@/contexts/unified-auth-context'
 import { MessagingHeader } from './components/MessagingHeader'
 
-export default function MessagingDashboard() {
+function MessagingDashboard() {
     const router = useRouter()
-    const { shopId, isLoading: authLoading } = useAuth()
+    const { shopInfo, isLoading: authLoading } = useUnifiedAuth()
+    const shopId = shopInfo?.id
     const [stats, setStats] = useState({
         activeTemplates: 0,
         messagesSent: 0,
@@ -314,3 +315,5 @@ export default function MessagingDashboard() {
         </div>
     )
 }
+
+export default MessagingDashboard

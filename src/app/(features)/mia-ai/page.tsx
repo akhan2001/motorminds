@@ -6,88 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '../operations/hooks/use-auth'
+import { useUnifiedAuth } from '@/contexts/unified-auth-context'
 import MiaPageHeader from './components/miaPageHeader'
 import { miaFeatures } from './components/miaFeatures'
 
-export default function MiaAiPage() {
+function MiaAiPage() {
     const router = useRouter()
     
     // Authentication
-    const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
+    const { user, shopInfo, isLoading: authLoading } = useUnifiedAuth()
+    const shopId = shopInfo?.id
     
-    // Loading state
-    if (authLoading) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                            <div>
-                                <p className="text-foreground dark:text-white font-medium">Loading Mia AI</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm">Initializing AI services...</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
-
-    // Error state
-    if (authError) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                <Nav />
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-500" />
-                            <div>
-                                <p className="text-foreground dark:text-white font-medium">Failed to Load Mia AI</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm mb-3">
-                                    {authError && typeof authError === 'object' && 'message' in authError 
-                                        ? (authError as Error).message 
-                                        : 'Unknown error occurred'}
-                                </p>
-                                <Button 
-                                    onClick={() => window.location.reload()}
-                                    className="bg-red-600 hover:bg-red-700 text-white"
-                                    size="sm"
-                                >
-                                    Try Again
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
-
-    // Authentication check
-    if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500 dark:text-yellow-500" />
-                            <div>
-                                <p className="text-foreground dark:text-white font-medium">Authentication Required</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm">
-                                    Unable to access Mia AI. Please ensure you are logged in.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
+    // withAuth HOC handles authentication - this component only renders when authenticated
 
     const handleCardClick = (href: string) => {
         router.push(href)
@@ -165,3 +95,5 @@ export default function MiaAiPage() {
         </div>
     )
 }
+
+export default MiaAiPage

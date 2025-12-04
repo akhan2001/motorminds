@@ -82,7 +82,7 @@ export async function updateSession(request: NextRequest) {
 
 	if (isProtectedPath && !user) {
 		const redirectUrl = new URL('/login', request.url)
-		redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+		redirectUrl.searchParams.set('returnTo', request.nextUrl.pathname)
 		return NextResponse.redirect(redirectUrl)
 	}
 

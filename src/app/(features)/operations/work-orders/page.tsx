@@ -12,7 +12,7 @@ import { StatusTrackerManagementModal } from "../components/work-orders/status-t
 import { DragDropProvider } from "../components/work-orders/DragDrop";
 import { useWorkOrderStats } from "../hooks/use-work-order-stats";
 import { useWorkOrdersWithDetails, useCreateWorkOrderWithDependencies, useCreateWalkInWorkOrder, useUpdateWorkOrder, useUpdateWorkOrderStatus, useDeleteWorkOrder } from "../hooks/use-work-orders";
-import { useAuth } from "../hooks/use-auth";
+import { useUnifiedAuth } from '@/contexts/unified-auth-context';
 import { WorkOrderItemsService } from "../lib/work-order-items-service";
 import type { WorkOrderItemCreateData } from "../types/work-order-items";
 import type { WorkOrder, WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from "../types/work-order";
@@ -168,7 +168,8 @@ function WorkOrdersContent() {
     const searchParams = useSearchParams()
 
     // Authentication
-    const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
+    const { user, shopInfo, isLoading: authLoading } = useUnifiedAuth()
+    const shopId = shopInfo?.id
 
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
@@ -181,7 +182,7 @@ function WorkOrdersContent() {
     // Combined loading state
     const isLoading = authLoading || (shopId && workOrdersLoading)
     // Combined error state
-    const error = authError || workOrdersError
+    const error = workOrdersError
 
     // Transform work orders to kanban format
     const kanbanData = useMemo(() => {
@@ -627,27 +628,7 @@ function WorkOrdersContent() {
         )
     }
 
-    // Don't render main content if we don't have authentication data
-    if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Authentication Required</p>
-                                <p className="text-muted-foreground text-sm mb-3">
-                                    Unable to access work orders. Please ensure you are logged in.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
+    // withAuth HOC handles authentication - this component only renders when authenticated
 
     return (
         <DragDropProvider
