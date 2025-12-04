@@ -60,7 +60,7 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
                     .select('*')
                     .eq('id', shopId)
                     .maybeSingle()
-                
+
                 if (shopData) shopInfo = shopData
             }
 
@@ -69,22 +69,27 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
 
         // Initialize - check if user is logged in
         async function initialize() {
-            const { data: { session } } = await supabase.auth.getSession()
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
 
-            if (!session?.user) {
+                if (!session?.user) {
+                    setState({ user: null, role: null, shopInfo: null, isLoading: false })
+                    return
+                }
+
+                const userData = await fetchUserData(session.user.id)
+
+                if (mounted) {
+                    setState({
+                        user: session.user,
+                        role: userData?.role || null,
+                        shopInfo: userData?.shopInfo || null,
+                        isLoading: false,
+                    })
+                }
+            } catch (error) {
+                console.error('[UnifiedAuth] Error during initialization:', error)
                 setState({ user: null, role: null, shopInfo: null, isLoading: false })
-                return
-            }
-
-            const userData = await fetchUserData(session.user.id)
-            
-            if (mounted) {
-                setState({
-                    user: session.user,
-                    role: userData?.role || null,
-                    shopInfo: userData?.shopInfo || null,
-                    isLoading: false,
-                })
             }
         }
 

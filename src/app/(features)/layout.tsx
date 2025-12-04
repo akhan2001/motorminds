@@ -26,7 +26,7 @@ export default function FeaturesLayout({
 
 	useEffect(() => {
 		if (shouldRedirect) {
-			console.log('[FeaturesLayout] Redirecting to login, returnTo:', pathname)
+			// console.log('[FeaturesLayout] Redirecting to login, returnTo:', pathname)
 			const loginUrl = `/login?returnTo=${encodeURIComponent(pathname)}`
 			router.push(loginUrl)
 		}
