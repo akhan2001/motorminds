@@ -16,15 +16,15 @@ export async function updateSession(request: NextRequest) {
 					return request.cookies.getAll()
 				},
 				setAll(cookiesToSet) {
-					cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-					supabaseResponse = NextResponse.next({
-						request,
+					cookiesToSet.forEach(({ name, value, options }) => {
+						supabaseResponse.cookies.set(name, value, {
+							...options,
+							secure: true, // ← Force secure
+							sameSite: 'lax',
+						})
 					})
-					cookiesToSet.forEach(({ name, value, options }) =>
-						supabaseResponse.cookies.set(name, value, options)
-					)
 				},
-			},
+			}
 		}
 	);
 
@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
 	// This validates the JWT locally (when using asymmetric keys) without hitting the Auth server
 	// Dramatically reduces the "thundering herd" of requests (429 errors)
 	const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
-	
+
 	// Extract user info from JWT claims
 	const user = claimsData?.claims ? {
 		id: claimsData.claims.sub,
