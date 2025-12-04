@@ -5,12 +5,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function updateSession(request: NextRequest) {
 	const startTime = Date.now()
 	const requestId = Math.random().toString(36).substring(7)
-	
+
 	console.log(`[${requestId}] START`, {
 		path: request.nextUrl.pathname,
 		method: request.method,
 	})
-	
+
 	// Handle OPTIONS requests immediately (CORS preflight)
 	if (request.method === 'OPTIONS') {
 		console.log(`[${requestId}] OPTIONS request - returning 200`)
@@ -42,12 +42,12 @@ export async function updateSession(request: NextRequest) {
 					cookiesToSet.forEach(({ name, value }) => {
 						request.cookies.set(name, value)
 					})
-					
+
 					// Recreate response with updated request
 					supabaseResponse = NextResponse.next({
 						request,
 					})
-					
+
 					// Set cookies on response (to send back to browser)
 					cookiesToSet.forEach(({ name, value, options }) => {
 						supabaseResponse.cookies.set(name, value, {
@@ -79,7 +79,7 @@ export async function updateSession(request: NextRequest) {
 	// IMPORTANT: Do not run code between createServerClient and supabase.auth.getClaims()
 	// A simple mistake could make it very hard to debug issues with users being randomly logged out.
 	// IMPORTANT: If you remove getClaims() with SSR, users may be randomly logged out.
-	
+
 	// Debug: Check what cookies middleware receives
 	const cookies = request.cookies.getAll()
 	const authCookie = cookies.find(c => c.name.includes('auth-token'))
@@ -90,7 +90,7 @@ export async function updateSession(request: NextRequest) {
 		hasAuthToken: !!authCookie,
 		authTokenName: authCookie?.name
 	})
-	
+
 	// Use getClaims() as per official Supabase docs (validates JWT locally when possible)
 	const { data, error: claimsError } = await supabase.auth.getClaims()
 	const user = data?.claims ? {
@@ -99,7 +99,7 @@ export async function updateSession(request: NextRequest) {
 		user_metadata: data.claims.user_metadata || {},
 		app_metadata: data.claims.app_metadata || {},
 	} : null
-	
+
 	console.log('[Middleware] Auth result:', {
 		hasUser: !!user,
 		userId: user?.id?.substring(0, 8),
@@ -145,7 +145,7 @@ export async function updateSession(request: NextRequest) {
 		redirectUrl.searchParams.set('returnTo', request.nextUrl.pathname)
 		return NextResponse.redirect(redirectUrl)
 	}
-	
+
 	console.log(`[${requestId}] END - User authenticated (${Date.now() - startTime}ms)`)
 
 	// Shop ID verification for authenticated users on protected paths
