@@ -43,12 +43,18 @@ export async function updateSession(request: NextRequest) {
 		return supabaseResponse;
 	}
 
-	// IMPORTANT: Avoid writing any logic between createServerClient and
-	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
-	// issues with users being randomly logged out.
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	// Use getClaims() instead of getUser() for fast local JWT validation
+	// This validates the JWT locally (when using asymmetric keys) without hitting the Auth server
+	// Dramatically reduces the "thundering herd" of requests (429 errors)
+	const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+	
+	// Extract user info from JWT claims
+	const user = claimsData?.claims ? {
+		id: claimsData.claims.sub,
+		email: claimsData.claims.email,
+		user_metadata: claimsData.claims.user_metadata || {},
+		app_metadata: claimsData.claims.app_metadata || {},
+	} : null;
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
