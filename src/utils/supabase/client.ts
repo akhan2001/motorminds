@@ -1,5 +1,4 @@
 import { createBrowserClient } from '@supabase/ssr'
-import type { CookieOptions } from '@supabase/ssr'
 
 export function createClient() {
 	return createBrowserClient(
@@ -7,29 +6,33 @@ export function createClient() {
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 		{
 			cookies: {
-				get(name: string) {
-					if (typeof document === 'undefined') return undefined
-					const cookies = document.cookie.split('; ')
-					const cookie = cookies.find(c => c.startsWith(`${name}=`))
-					return cookie?.split('=')[1]
+				getAll() {
+					if (typeof document === 'undefined') return []
+					
+					// Parse all cookies from document.cookie
+					return document.cookie.split('; ').map(cookie => {
+						const [name, ...valueParts] = cookie.split('=')
+						return {
+							name,
+							value: valueParts.join('=')
+						}
+					}).filter(c => c.name) // Remove empty entries
 				},
-				set(name: string, value: string, options: CookieOptions) {
+				setAll(cookiesToSet) {
 					if (typeof document === 'undefined') return
 					
-					// Build cookie string with FORCED secure flag
-					const parts = [`${name}=${value}`]
-					
-					if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`)
-					if (options?.expires) parts.push(`Expires=${new Date(options.expires).toUTCString()}`)
-					parts.push('Path=/') // Always use root path
-					parts.push('SameSite=Lax') // Always use Lax
-					parts.push('Secure') // ALWAYS secure (works on both HTTP and HTTPS)
-					
-					document.cookie = parts.join('; ')
-				},
-				remove(name: string, options: CookieOptions) {
-					if (typeof document === 'undefined') return
-					this.set(name, '', { ...options, maxAge: 0 })
+					cookiesToSet.forEach(({ name, value, options }) => {
+						// Build cookie string with FORCED secure flag
+						const parts = [`${name}=${value}`]
+						
+						if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`)
+						if (options?.expires) parts.push(`Expires=${new Date(options.expires).toUTCString()}`)
+						parts.push('Path=/') // Always use root path
+						parts.push('SameSite=Lax') // Always use Lax
+						parts.push('Secure') // ALWAYS secure (critical for HTTPS)
+						
+						document.cookie = parts.join('; ')
+					})
 				},
 			}
 		}
