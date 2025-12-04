@@ -3,8 +3,17 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+	const startTime = Date.now()
+	const requestId = Math.random().toString(36).substring(7)
+	
+	console.log(`[${requestId}] START`, {
+		path: request.nextUrl.pathname,
+		method: request.method,
+	})
+	
 	// Handle OPTIONS requests immediately (CORS preflight)
 	if (request.method === 'OPTIONS') {
+		console.log(`[${requestId}] OPTIONS request - returning 200`)
 		return new NextResponse(null, {
 			status: 200,
 			headers: {
@@ -71,11 +80,19 @@ export async function updateSession(request: NextRequest) {
 	// A simple mistake could make it very hard to debug issues with users being randomly logged out.
 	// IMPORTANT: If you remove getClaims() with SSR, users may be randomly logged out.
 	
-	// Debug: Log cookies being sent to Supabase
-	console.log('[Middleware] Cookies available:', request.cookies.getAll().map(c => c.name))
+	// Debug: Check what cookies middleware receives
+	const cookies = request.cookies.getAll()
+	const authCookie = cookies.find(c => c.name.includes('auth-token'))
+	console.log('[Middleware]', {
+		path: request.nextUrl.pathname,
+		method: request.method,
+		hasCookies: cookies.length,
+		hasAuthToken: !!authCookie,
+		authTokenName: authCookie?.name
+	})
 	
 	// Use getClaims() as per official Supabase docs (validates JWT locally when possible)
-	const { data } = await supabase.auth.getClaims()
+	const { data, error: claimsError } = await supabase.auth.getClaims()
 	const user = data?.claims ? {
 		id: data.claims.sub,
 		email: data.claims.email,
@@ -83,11 +100,10 @@ export async function updateSession(request: NextRequest) {
 		app_metadata: data.claims.app_metadata || {},
 	} : null
 	
-	// Debug: Log auth result
 	console.log('[Middleware] Auth result:', {
 		hasUser: !!user,
-		userId: user?.id,
-		path: request.nextUrl.pathname
+		userId: user?.id?.substring(0, 8),
+		error: claimsError?.message,
 	})
 
 	// Protected routes - keeping your existing logic
@@ -121,10 +137,16 @@ export async function updateSession(request: NextRequest) {
 	)
 
 	if (isProtectedPath && !user) {
+		console.log(`[${requestId}] No user, redirecting to /login`, {
+			from: request.nextUrl.pathname,
+			hasAuthCookie: !!authCookie,
+		})
 		const redirectUrl = new URL('/login', request.url)
 		redirectUrl.searchParams.set('returnTo', request.nextUrl.pathname)
 		return NextResponse.redirect(redirectUrl)
 	}
+	
+	console.log(`[${requestId}] END - User authenticated (${Date.now() - startTime}ms)`)
 
 	// Shop ID verification for authenticated users on protected paths
 	if (isProtectedPath && user) {
