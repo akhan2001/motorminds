@@ -5,7 +5,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function updateSession(request: NextRequest) {
 	// Handle OPTIONS requests immediately (CORS preflight)
 	if (request.method === 'OPTIONS') {
-		return new NextResponse(null, { status: 200 })
+		return new NextResponse(null, {
+			status: 200,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+				'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+				'Access-Control-Max-Age': '86400',
+			}
+		})
 	}
 
 	let supabaseResponse = NextResponse.next({
@@ -59,23 +67,26 @@ export async function updateSession(request: NextRequest) {
 		return supabaseResponse;
 	}
 
-	// IMPORTANT: Avoid writing any logic between createServerClient and
-	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
-	// issues with users being randomly logged out.
+	// IMPORTANT: Do not run code between createServerClient and supabase.auth.getClaims()
+	// A simple mistake could make it very hard to debug issues with users being randomly logged out.
+	// IMPORTANT: If you remove getClaims() with SSR, users may be randomly logged out.
 	
 	// Debug: Log cookies being sent to Supabase
 	console.log('[Middleware] Cookies available:', request.cookies.getAll().map(c => c.name))
 	
-	const {
-		data: { user },
-		error: authError
-	} = await supabase.auth.getUser();
+	// Use getClaims() as per official Supabase docs (validates JWT locally when possible)
+	const { data } = await supabase.auth.getClaims()
+	const user = data?.claims ? {
+		id: data.claims.sub,
+		email: data.claims.email,
+		user_metadata: data.claims.user_metadata || {},
+		app_metadata: data.claims.app_metadata || {},
+	} : null
 	
 	// Debug: Log auth result
 	console.log('[Middleware] Auth result:', {
 		hasUser: !!user,
 		userId: user?.id,
-		error: authError?.message,
 		path: request.nextUrl.pathname
 	})
 

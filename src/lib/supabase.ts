@@ -1,47 +1,10 @@
 import { createBrowserClient } from '@supabase/ssr'
 
+// Official Supabase SSR pattern - let the library handle cookies automatically
 export function createClient() {
 	return createBrowserClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-		{
-			cookies: {
-				getAll() {
-					if (typeof document === 'undefined') return []
-					
-					// Parse all cookies from document.cookie
-					const cookies = document.cookie.split('; ')
-						.filter(c => c.trim()) // Remove empty strings
-						.map(cookie => {
-							const [name, ...valueParts] = cookie.split('=')
-							return {
-								name: name.trim(),
-								value: valueParts.join('=')
-							}
-						})
-						.filter(c => c.name) // Remove empty entries
-					
-					console.log('[Browser Client lib/supabase] getAll cookies:', cookies.map(c => c.name))
-					return cookies
-				},
-				setAll(cookiesToSet) {
-					if (typeof document === 'undefined') return
-					
-					cookiesToSet.forEach(({ name, value, options }) => {
-						// Build cookie string with FORCED secure flag
-						const parts = [`${name}=${value}`]
-						
-						if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`)
-						if (options?.expires) parts.push(`Expires=${new Date(options.expires).toUTCString()}`)
-						parts.push('Path=/') // Always use root path
-						parts.push('SameSite=Lax') // Always use Lax
-						parts.push('Secure') // ALWAYS secure (critical for HTTPS)
-						
-						document.cookie = parts.join('; ')
-					})
-				},
-			}
-		}
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 	)
 }
 
