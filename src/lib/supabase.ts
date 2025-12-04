@@ -10,13 +10,19 @@ export function createClient() {
 					if (typeof document === 'undefined') return []
 					
 					// Parse all cookies from document.cookie
-					return document.cookie.split('; ').map(cookie => {
-						const [name, ...valueParts] = cookie.split('=')
-						return {
-							name,
-							value: valueParts.join('=')
-						}
-					}).filter(c => c.name) // Remove empty entries
+					const cookies = document.cookie.split('; ')
+						.filter(c => c.trim()) // Remove empty strings
+						.map(cookie => {
+							const [name, ...valueParts] = cookie.split('=')
+							return {
+								name: name.trim(),
+								value: valueParts.join('=')
+							}
+						})
+						.filter(c => c.name) // Remove empty entries
+					
+					console.log('[Browser Client lib/supabase] getAll cookies:', cookies.map(c => c.name))
+					return cookies
 				},
 				setAll(cookiesToSet) {
 					if (typeof document === 'undefined') return

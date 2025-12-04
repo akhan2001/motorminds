@@ -62,9 +62,22 @@ export async function updateSession(request: NextRequest) {
 	// IMPORTANT: Avoid writing any logic between createServerClient and
 	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
 	// issues with users being randomly logged out.
+	
+	// Debug: Log cookies being sent to Supabase
+	console.log('[Middleware] Cookies available:', request.cookies.getAll().map(c => c.name))
+	
 	const {
 		data: { user },
+		error: authError
 	} = await supabase.auth.getUser();
+	
+	// Debug: Log auth result
+	console.log('[Middleware] Auth result:', {
+		hasUser: !!user,
+		userId: user?.id,
+		error: authError?.message,
+		path: request.nextUrl.pathname
+	})
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
