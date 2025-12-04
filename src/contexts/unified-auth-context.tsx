@@ -69,16 +69,21 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
 
         // Initialize - check if user is logged in
         async function initialize() {
+            console.log('[UnifiedAuth] Component mounted, starting initial fetch')
             const { data: { session } } = await supabase.auth.getSession()
 
             if (!session?.user) {
+                console.log('[UnifiedAuth] getSession result: { hasSession: false }')
                 setState({ user: null, role: null, shopInfo: null, isLoading: false })
                 return
             }
 
+            console.log('[UnifiedAuth] getSession result: { hasSession: true }')
+            console.log('[UnifiedAuth] User found, fetching user data from database...')
             const userData = await fetchUserData(session.user.id)
             
             if (mounted) {
+                console.log('[UnifiedAuth] Fetching shop data for shopId:', userData?.shopInfo?.id)
                 setState({
                     user: session.user,
                     role: userData?.role || null,
@@ -92,6 +97,8 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
 
         // Listen for auth changes - NO async in callback
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log(`[UnifiedAuth] Auth state changed: ${event} Has session: ${!!session}`)
+            
             // FAST synchronous updates only
             if (event === 'SIGNED_OUT') {
                 setState({ user: null, role: null, shopInfo: null, isLoading: false })
@@ -103,6 +110,7 @@ export function UnifiedAuthProvider({ children }: { children: ReactNode }) {
             // Async operations OUTSIDE callback
             setTimeout(async () => {
                 if (event === 'SIGNED_IN' && session?.user) {
+                    console.log('[UnifiedAuth] Fetching user data after SIGNED_IN')
                     const userData = await fetchUserData(session.user.id)
                     if (mounted) {
                         setState({

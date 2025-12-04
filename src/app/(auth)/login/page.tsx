@@ -1,7 +1,3 @@
-"use client"
-export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
-
 import React, { Suspense } from "react"
 import Image from "next/image"
 import AuthComponent from "./AuthComponent"

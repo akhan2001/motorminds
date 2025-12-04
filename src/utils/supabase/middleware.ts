@@ -3,6 +3,11 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+	// Handle OPTIONS requests immediately (required for CORS preflight on Vercel)
+	if (request.method === 'OPTIONS') {
+		return new NextResponse(null, { status: 200 })
+	}
+
 	let supabaseResponse = NextResponse.next({
 		request,
 	});
@@ -82,7 +87,7 @@ export async function updateSession(request: NextRequest) {
 
 	if (isProtectedPath && !user) {
 		const redirectUrl = new URL('/login', request.url)
-		redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+		redirectUrl.searchParams.set('returnTo', request.nextUrl.pathname)
 		return NextResponse.redirect(redirectUrl)
 	}
 

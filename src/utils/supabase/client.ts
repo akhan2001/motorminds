@@ -10,10 +10,18 @@ export function createClient() {
 		return supabaseInstance;
 	}
 
-	// Create new instance only if it doesn't exist
+	// Create new instance with secure cookie configuration for Vercel
 	supabaseInstance = createBrowserClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		{
+			cookieOptions: {
+				// Force secure cookies on HTTPS (required for Vercel deployments)
+				secure: typeof window !== 'undefined' && window.location.protocol === 'https:',
+				sameSite: 'lax',
+				path: '/',
+			}
+		}
 	);
 
 	return supabaseInstance;
