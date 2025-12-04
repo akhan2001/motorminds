@@ -3,6 +3,11 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+	// Handle OPTIONS requests immediately (CORS preflight)
+	if (request.method === 'OPTIONS') {
+		return new NextResponse(null, { status: 200 })
+	}
+
 	let supabaseResponse = NextResponse.next({
 		request,
 	});
@@ -16,10 +21,21 @@ export async function updateSession(request: NextRequest) {
 					return request.cookies.getAll()
 				},
 				setAll(cookiesToSet) {
+					// CRITICAL: Set cookies on request first (for immediate use)
+					cookiesToSet.forEach(({ name, value }) => {
+						request.cookies.set(name, value)
+					})
+					
+					// Recreate response with updated request
+					supabaseResponse = NextResponse.next({
+						request,
+					})
+					
+					// Set cookies on response (to send back to browser)
 					cookiesToSet.forEach(({ name, value, options }) => {
 						supabaseResponse.cookies.set(name, value, {
 							...options,
-							secure: true, // ← Force secure
+							secure: true, // Force secure flag
 							sameSite: 'lax',
 						})
 					})
