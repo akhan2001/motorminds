@@ -236,6 +236,8 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
                 setLoading(false)
             } else if (event === 'SIGNED_OUT') {
                 console.log('[AuthProvider] User signed out - clearing all state')
+                // Only clear state if we actually had a user before
+                // This prevents clearing state during initial load
                 setUser(null)
                 setSession(null)
                 setUserRole(null)
@@ -251,6 +253,26 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
                 console.log('[AuthProvider] User updated')
                 setUser(newSession.user)
                 setSession(newSession)
+            } else if (event === 'INITIAL_SESSION') {
+                console.log('[AuthProvider] Initial session event:', newSession ? 'Has session' : 'No session')
+                // INITIAL_SESSION fires on mount - only update if we have a session
+                if (newSession) {
+                    setUser(newSession.user)
+                    setSession(newSession)
+                    
+                    // Fetch user profile data for initial session
+                    const { role, shopId: fetchedShopId } = await fetchUserProfile(newSession.user.id)
+                    setUserRole(role)
+                    setShopId(fetchedShopId)
+
+                    // Fetch shop info if shopId exists
+                    if (fetchedShopId) {
+                        const shopData = await fetchShopInfo(fetchedShopId)
+                        setShopInfo(shopData)
+                    }
+                    
+                    setLoading(false)
+                }
             }
         })
 

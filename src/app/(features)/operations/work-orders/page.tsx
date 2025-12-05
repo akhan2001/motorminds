@@ -627,8 +627,8 @@ function WorkOrdersContent() {
         )
     }
 
-    // Don't render main content if we don't have authentication data
-    if (!shopId || !user) {
+    // Don't render main content if we don't have authentication data (after loading is complete)
+    if (!isLoading && (!shopId || !user)) {
         return (
             <div className="h-screen flex flex-col bg-background">
                 {/* <Nav /> */}
@@ -687,7 +687,7 @@ function WorkOrdersContent() {
                 )}
 
                 {/* Work Order Create Modal */}
-                {isCreateModalOpen && (
+                {isCreateModalOpen && shopId && (
                     <WorkOrderCreateModal
                         onClose={handleCreateModalClose}
                         onSave={handleWorkOrderCreate}

@@ -33,6 +33,13 @@ export default function AuthComponent() {
         e.preventDefault()
         setIsLoading(true)
         const formData = new FormData(e.currentTarget)
+        
+        // Add returnTo parameter if it exists in URL
+        const returnTo = searchParams?.get('returnTo')
+        if (returnTo) {
+            formData.append('returnTo', returnTo)
+        }
+        
         await login(formData)
         setIsLoading(false)
     }

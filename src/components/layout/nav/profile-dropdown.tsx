@@ -46,22 +46,9 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
             .slice(0, 2)
     }
 
-    const handleLogout = async () => {
-        try {
-            const supabase = createClient()
-            const { error } = await supabase.auth.signOut()
-
-            if (error) {
-                console.error("Logout error:", error)
-            } else {
-                // Clear all React Query cache to ensure fresh data on next login
-                queryClient.clear()
-                // Force a full page reload to clear all cached data
-                window.location.href = "/login"
-            }
-        } catch (error) {
-            console.error("Logout error:", error)
-        }
+    const handleLogout = () => {
+        // Redirect to logout page which handles the full logout process
+        router.push('/logout')
     }
 
   const handleMenuClick = (action: string) => {
