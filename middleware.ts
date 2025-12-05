@@ -2,8 +2,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from './src/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+	// CRITICAL: Log to verify middleware is running on Vercel
+	console.log('🔥 MIDDLEWARE RUNNING:', request.nextUrl.pathname)
+	
 	// Handle OPTIONS at the top level (before any other logic)
 	if (request.method === 'OPTIONS') {
+		console.log('🔥 OPTIONS request detected')
 		return new NextResponse(null, {
 			status: 200,
 			headers: {
@@ -15,7 +19,9 @@ export async function middleware(request: NextRequest) {
 		})
 	}
 
-	return await updateSession(request)
+	const result = await updateSession(request)
+	console.log('🔥 MIDDLEWARE COMPLETE:', result.status)
+	return result
 }
 
 export const config = {
