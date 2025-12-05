@@ -1,68 +1,24 @@
 // Custom hook for authentication in operations
+// Now uses centralized AuthProvider to prevent duplicate auth calls
 'use client'
 
-import { useState, useEffect } from 'react'
-import { checkUser } from '@/utils/supabase/supabase-auth'
-import { getShopId } from '@/utils/supabase/supabase-shop'
-import { useRouter } from 'next/navigation'
+import { useAuth as useAuthContext, useClaims } from '@/contexts/auth-context'
 
-interface AuthState {
-    user: any | null
-    shopId: string | null
-    isLoading: boolean
-    error: string | null
-}
-
+/**
+ * Hook to get auth state from the centralized AuthProvider.
+ * This prevents duplicate auth calls and token refresh storms.
+ * 
+ * @deprecated Use useClaims() from '@/contexts/auth-context' for new code.
+ * This hook exists for backwards compatibility with existing operations components.
+ */
 export function useAuth() {
-    const [authState, setAuthState] = useState<AuthState>({
-        user: null,
-        shopId: null,
-        isLoading: true,
+    const { claims, loading } = useClaims()
+    const { user } = useAuthContext()
+
+    return {
+        user,
+        shopId: claims.shopId,
+        isLoading: loading,
         error: null
-    })
-    const router = useRouter()
-
-    useEffect(() => {
-        const loadAuth = async () => {
-            try {
-                setAuthState(prev => ({ ...prev, isLoading: true, error: null }))
-                
-                const user = await checkUser()
-                if (!user) {
-                    console.error('No authenticated user found')
-                    router.push('/login')
-                    return
-                }
-
-                const shopId = await getShopId(user.id)
-                if (!shopId) {
-                    console.error('No shop ID found for user')
-                    setAuthState(prev => ({ 
-                        ...prev, 
-                        isLoading: false, 
-                        error: 'No shop associated with this user' 
-                    }))
-                    return
-                }
-
-                setAuthState({
-                    user,
-                    shopId,
-                    isLoading: false,
-                    error: null
-                })
-            } catch (error) {
-                console.error('Authentication error:', error)
-                setAuthState(prev => ({
-                    ...prev,
-                    isLoading: false,
-                    error: error instanceof Error ? error.message : 'Authentication failed'
-                }))
-            }
-        }
-
-        loadAuth()
-    }, [router])
-
-    return authState
+    }
 }

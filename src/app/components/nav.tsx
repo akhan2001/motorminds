@@ -1,16 +1,13 @@
 "use client"
 
-import { createClient } from "@/utils/supabase/client"
 import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MobileNav } from "./mobile-nav"
-import { useQueryClient } from '@tanstack/react-query'
 import { useUserRole } from "@/hooks/core/useUserRole"
 import { useShopInfo } from "@/hooks/core/useShopInfo"
 import { getFilteredNavItems } from "@/lib/utils/navigation"
@@ -22,7 +19,6 @@ export function Nav() {
 	const router = useRouter()
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
-	const queryClient = useQueryClient()
 	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
 	const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
 
@@ -84,22 +80,8 @@ export function Nav() {
 		setOpen(false)
 	}
 
-	const handleLogout = async () => {
-		try {
-			const supabase = createClient()
-			const { error } = await supabase.auth.signOut()
-			
-			if (error) {
-				console.error("Logout error:", error)
-			} else {
-				// Clear all React Query cache to ensure fresh data on next login
-				queryClient.clear()
-				// Force a full page reload to clear all cached data
-				window.location.href = "/login"
-			}
-		} catch (error) {
-			console.error("Logout error:", error)
-		}
+	const handleLogout = () => {
+		router.push('/logout')
 	}
 
 	// Show loading state while fetching role and shop info

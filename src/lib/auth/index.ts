@@ -20,6 +20,9 @@ export * from './cache'
 // Hooks (client-side only)
 export * from './hooks'
 
+// Re-export useClaims from auth context for convenience
+export { useClaims, type UserClaims } from '@/contexts/auth-context'
+
 // Guards
 export * from './guards'
 export * from './middleware-config'

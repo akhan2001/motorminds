@@ -3,10 +3,7 @@
 import { useState, useEffect } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { LogOut, Settings, HelpCircle, Shield, Moon, Sun } from "lucide-react"
-import { createClient } from "@/utils/supabase/client"
-import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 
@@ -19,7 +16,6 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: ProfileDropdownProps) {
     const [mounted, setMounted] = useState(false)
-    const queryClient = useQueryClient()
     const router = useRouter()
     const { theme, setTheme } = useTheme()
 
@@ -46,36 +42,21 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
             .slice(0, 2)
     }
 
-    const handleLogout = async () => {
-        try {
-            const supabase = createClient()
-            const { error } = await supabase.auth.signOut()
-
-            if (error) {
-                console.error("Logout error:", error)
-            } else {
-                // Clear all React Query cache to ensure fresh data on next login
-                queryClient.clear()
-                // Force a full page reload to clear all cached data
-                window.location.href = "/login"
-            }
-        } catch (error) {
-            console.error("Logout error:", error)
+    const handleMenuClick = (action: string) => {
+        switch (action) {
+            case 'settings':
+                router.push('/settings')
+                break
+            case 'support':
+                window.open("https://www.motorminds.ca/contact-us", "_blank")
+                break
+            case 'logout':
+                router.push('/logout')
+                break
+            default:
+                break
         }
     }
-
-  const handleMenuClick = (action: string) => {
-    switch (action) {
-      case 'settings':
-        router.push('/settings')
-        break
-      case 'support':
-        window.open("https://www.motorminds.ca/contact-us", "_blank")
-        break
-      default:
-        break
-    }
-  }
 
     if (!mounted) {
         return (
@@ -118,64 +99,46 @@ export function ProfileDropdown({ avatar, shopOwnerName, shopName, userRole }: P
                     </div>
                 </div>
 
-        {/* Menu Items */}
-        <div className="py-2">
-          <DropdownMenuItem 
-            onClick={() => handleMenuClick('settings')}
-            className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
-          >
-            <Settings className="w-4 h-4 mr-3" />
-            Settings
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => handleMenuClick('support')}
-            className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
-          >
-            <HelpCircle className="w-4 h-4 mr-3" />
-            Support
-          </DropdownMenuItem>
+                {/* Menu Items */}
+                <div className="py-2">
+                    <DropdownMenuItem
+                        onClick={() => handleMenuClick('settings')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
+                    >
+                        <Settings className="w-4 h-4 mr-3" />
+                        Settings
+                    </DropdownMenuItem>
 
-          {/* Theme Toggle */}
-          <DropdownMenuItem 
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
-            disabled={!mounted}
-          >
-            {themeIcon}
-            {themeText}
-          </DropdownMenuItem>
-        </div>
+                    <DropdownMenuItem
+                        onClick={() => handleMenuClick('support')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
+                    >
+                        <HelpCircle className="w-4 h-4 mr-3" />
+                        Support
+                    </DropdownMenuItem>
+
+                    {/* Theme Toggle */}
+                    <DropdownMenuItem
+                        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2"
+                        disabled={!mounted}
+                    >
+                        {themeIcon}
+                        {themeText}
+                    </DropdownMenuItem>
+                </div>
 
                 <DropdownMenuSeparator className="bg-border dark:bg-[#1f1f1f]" />
 
                 {/* Logout */}
                 <div className="py-2">
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2 text-red-500 dark:text-red-400">
-                                <LogOut className="w-4 h-4 mr-3" />
-                                Log out
-                            </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-popover dark:bg-[#0d0d0d] text-popover-foreground dark:text-white border-border dark:border-[#1f1f1f]">
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                                <AlertDialogDescription className="text-muted-foreground dark:text-gray-400">
-                                    You are about to logout. Do you want to continue?
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel className="bg-secondary dark:bg-transparent">Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    className="border-none bg-red-600 text-white hover:bg-red-700"
-                                    onClick={handleLogout}
-                                >
-                                    Yes, Continue
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    <DropdownMenuItem
+                        onClick={() => handleMenuClick('logout')}
+                        className="cursor-pointer hover:bg-accent dark:hover:bg-[#1f1f1f] hover:text-accent-foreground dark:hover:text-white px-4 py-2 text-red-500 dark:text-red-400"
+                    >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Log out
+                    </DropdownMenuItem>
                 </div>
             </DropdownMenuContent>
         </DropdownMenu>

@@ -34,18 +34,27 @@ export default function AuthComponent() {
 
         try {
             const formData = new FormData(e.currentTarget)
+
+            // Add the redirectTo parameter if present in URL
+            const redirectTo = searchParams?.get('returnTo') || searchParams?.get('redirectTo') || '/'
+            formData.set('redirectTo', redirectTo)
+
+            console.log('[Login] Attempting login, will redirect to:', redirectTo)
+
             const result = await loginAction(formData)
 
             if (!result.success && result.error) {
+                console.log('[Login] Login failed:', result.error)
                 setError(result.error)
+                setIsLoading(false)
             }
             // If successful, loginAction will handle redirect
+            // Keep isLoading true during redirect to prevent UI flash
         } catch (err) {
             // loginAction throws on redirect, which is expected
-            // Do nothing here
-        } finally {
-            setIsLoading(false)
+            console.log('[Login] Auth ready, redirecting to:', searchParams?.get('returnTo') || searchParams?.get('redirectTo') || '/')
         }
+        // Don't set isLoading to false here - let it stay true during redirect
     }
 
     return (
