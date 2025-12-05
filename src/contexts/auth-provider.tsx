@@ -209,13 +209,27 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
 
     // Initialize on mount
     useEffect(() => {
-        initializeAuth()
+        let isInitialized = false
+
+        async function init() {
+            // First, initialize auth state
+            await initializeAuth()
+            isInitialized = true
+        }
+
+        init()
 
         if (alwaysLoggedIn) return
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
             console.log('[AuthProvider] Auth state changed:', event)
+
+            // Skip INITIAL_SESSION if we've already initialized
+            if (event === 'INITIAL_SESSION' && isInitialized) {
+                console.log('[AuthProvider] Skipping INITIAL_SESSION - already initialized')
+                return
+            }
 
             if (event === 'SIGNED_IN' && newSession) {
                 console.log('[AuthProvider] User signed in:', newSession.user.email)
@@ -255,7 +269,7 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
                 setSession(newSession)
             } else if (event === 'INITIAL_SESSION') {
                 console.log('[AuthProvider] Initial session event:', newSession ? 'Has session' : 'No session')
-                // INITIAL_SESSION fires on mount - only update if we have a session
+                // INITIAL_SESSION fires on mount - only process if we haven't initialized yet
                 if (newSession) {
                     setUser(newSession.user)
                     setSession(newSession)
@@ -270,9 +284,17 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
                         const shopData = await fetchShopInfo(fetchedShopId)
                         setShopInfo(shopData)
                     }
-                    
-                    setLoading(false)
+                } else {
+                    // No session on initial load - clear state
+                    setUser(null)
+                    setSession(null)
+                    setUserRole(null)
+                    setShopId(null)
+                    setShopInfo(null)
                 }
+                
+                // Always set loading to false after INITIAL_SESSION
+                setLoading(false)
             }
         })
 
