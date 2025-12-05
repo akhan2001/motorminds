@@ -94,6 +94,11 @@ export class WorkOrderItemsService {
             throw new Error('Unit price cannot be negative')
         }
 
+        // Validate unit_price is properly set
+        if (itemData.unit_price === null || itemData.unit_price === undefined) {
+            throw new Error('Unit price is required')
+        }
+
         // Calculate total price
         const totalPrice = itemData.quantity * itemData.unit_price
         const totalCost = itemData.unit_cost ? itemData.quantity * itemData.unit_cost : undefined
@@ -174,13 +179,30 @@ export class WorkOrderItemsService {
         }
 
         // Recalculate total price if quantity or unit_price changed
-        if (itemData.quantity !== undefined || itemData.unit_price !== undefined) {
+        if (itemData.quantity !== undefined || itemData.unit_price !== undefined || itemData.labor_hours !== undefined) {
             // Get current item to get missing values
             try {
                 const currentItem = await this.getWorkOrderItem(itemId)
                 const newQuantity = itemData.quantity ?? currentItem.quantity
                 const newUnitPrice = itemData.unit_price ?? currentItem.unit_price
-                updatePayload.total_price = newQuantity * newUnitPrice
+                const newLaborHours = itemData.labor_hours ?? currentItem.labor_hours
+                
+                // Validate unit_price is not null/undefined
+                if (newUnitPrice === null || newUnitPrice === undefined) {
+                    throw new Error('Unit price cannot be null or undefined')
+                }
+                
+                // Calculate based on item type
+                if (currentItem.item_type === 'labor') {
+                    updatePayload.total_price = (newLaborHours || 0) * newUnitPrice
+                } else {
+                    updatePayload.total_price = newQuantity * newUnitPrice
+                }
+                
+                // Ensure unit_price is stored if it was calculated
+                if (itemData.unit_price === undefined && currentItem.unit_price !== newUnitPrice) {
+                    updatePayload.unit_price = newUnitPrice
+                }
             } catch (error) {
                 console.error('Error fetching current item for price calculation:', error)
                 // If item doesn't exist, we can't update it
