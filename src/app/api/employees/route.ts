@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { getUserId, getShopId } from '@/lib/auth/server-auth'
 
 // GET - List all employees for a shop
 export async function GET(req: NextRequest) {
     try {
-        const supabase = await createClient()
-        
-        // Get authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        // Use getClaims() via server-auth utilities
+        const userId = await getUserId()
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const userShopId = await getShopId()
+        if (!userShopId) {
+            return NextResponse.json({ error: 'User not associated with a shop' }, { status: 403 })
         }
 
         // Get shop_id from query params
@@ -22,19 +26,11 @@ export async function GET(req: NextRequest) {
         }
 
         // Verify user has access to this shop
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('shop_id')
-            .eq('id', user.id)
-            .single()
-
-        if (userError || !userData) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 })
-        }
-
-        if (userData.shop_id !== shopId) {
+        if (userShopId !== shopId) {
             return NextResponse.json({ error: 'Forbidden - Access denied to this shop' }, { status: 403 })
         }
+
+        const supabase = await createClient()
 
         // Build query
         let query = supabase

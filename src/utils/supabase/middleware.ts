@@ -1,32 +1,47 @@
-import { adminGuard } from '@/lib/auth/admin-guard';
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * Middleware Proxy for Supabase SSR
+ * 
+ * This proxy is responsible for:
+ * 1. Refreshing the Auth token by calling supabase.auth.getClaims()
+ * 2. Passing the refreshed Auth token to Server Components (via request.cookies.set)
+ * 3. Passing the refreshed Auth token to the browser (via response.cookies.set)
+ * 
+ * IMPORTANT: Always use getClaims() to protect pages - it validates the JWT signature.
+ * Never trust getSession() in server code - it doesn't revalidate the auth token.
+ */
 export async function updateSession(request: NextRequest) {
 	let supabaseResponse = NextResponse.next({
 		request,
-	});
+	})
 
 	const supabase = createServerClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 		{
 			cookies: {
 				getAll() {
 					return request.cookies.getAll()
 				},
 				setAll(cookiesToSet) {
+					// Set cookies on request first (for immediate use in Server Components)
 					cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+					
+					// Recreate response with updated request
 					supabaseResponse = NextResponse.next({
 						request,
 					})
+					
+					// Set cookies on response (to send back to browser)
 					cookiesToSet.forEach(({ name, value, options }) =>
 						supabaseResponse.cookies.set(name, value, options)
 					)
 				},
 			},
 		}
-	);
+	)
 
 	// Public routes that should not trigger authentication checks
 	const publicPaths = [
@@ -43,12 +58,18 @@ export async function updateSession(request: NextRequest) {
 		return supabaseResponse;
 	}
 
-	// IMPORTANT: Avoid writing any logic between createServerClient and
-	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
-	// issues with users being randomly logged out.
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	// IMPORTANT: Do not run code between createServerClient and supabase.auth.getClaims()
+	// A simple mistake could make it very hard to debug issues with users being randomly logged out.
+	// IMPORTANT: If you remove getClaims() with SSR, users may be randomly logged out.
+	
+	// Use getClaims() as per official Supabase docs (validates JWT locally when possible)
+	const { data, error: claimsError } = await supabase.auth.getClaims()
+	const user = data?.claims ? {
+		id: data.claims.sub,
+		email: data.claims.email,
+		user_metadata: data.claims.user_metadata || {},
+		app_metadata: data.claims.app_metadata || {},
+	} : null
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
