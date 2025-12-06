@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
+import { useAuth } from '@/contexts/AuthProvider'
 
 interface ShopInfo {
     id: string
@@ -14,31 +15,25 @@ interface ShopInfo {
     business_number?: string
 }
 
+/**
+ * Hook to get shop information using centralized auth context
+ * Uses shopId from AuthProvider - no redundant getUser() call
+ */
 export function useShopInfo() {
     const supabase = createClient()
+    const { shopId } = useAuth()
 
     return useQuery({
-        queryKey: ['shop-info'],
+        queryKey: ['shop-info', shopId],
         queryFn: async (): Promise<ShopInfo | null> => {
             try {
-                // Get current user
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) return null
+                if (!shopId) return null
 
-                // Get user's shop_id
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .select('shop_id')
-                    .eq('id', user.id)
-                    .single()
-
-                if (userError || !userData?.shop_id) return null
-
-                // Get shop information
+                // Get shop information directly using shopId from context
                 const { data: shopData, error: shopError } = await supabase
                     .from('shops')
                     .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
-                    .eq('id', userData.shop_id)
+                    .eq('id', shopId)
                     .single()
 
                 if (shopError || !shopData) return null
@@ -49,6 +44,7 @@ export function useShopInfo() {
                 return null
             }
         },
+        enabled: !!shopId, // Only run query if shopId exists
         staleTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: false,
         retry: 1
