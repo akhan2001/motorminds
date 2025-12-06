@@ -25,28 +25,10 @@ export default function LogoutPage() {
                 }
 
                 console.log('[Logout] Sign out successful')
+                console.log('[Logout] AuthProvider will handle redirect to /login')
 
-                // Clear localStorage (Supabase already handles this, but being explicit)
-                if (typeof window !== 'undefined') {
-                    const keysToRemove: string[] = []
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i)
-                        if (key && (
-                            key.startsWith('sb-') ||
-                            key.includes('supabase') ||
-                            key.includes('auth')
-                        )) {
-                            keysToRemove.push(key)
-                        }
-                    }
-                    keysToRemove.forEach(key => localStorage.removeItem(key))
-                    console.log('[Logout] localStorage cleared')
-                }
-
-                // Redirect to login after a brief delay
-                setTimeout(() => {
-                    router.push('/login')
-                }, 500)
+                // Don't redirect here - let AuthProvider's SIGNED_OUT event handle it
+                // This prevents race conditions and ensures all tabs redirect properly
 
             } catch (err: any) {
                 console.error('[Logout] Unexpected error:', err)
@@ -55,7 +37,7 @@ export default function LogoutPage() {
         }
 
         performLogout()
-    }, [router, supabase.auth])
+    }, [supabase.auth])
 
     if (error) {
         return (
@@ -82,7 +64,6 @@ export default function LogoutPage() {
             <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 <p className="text-foreground text-lg">Signing out...</p>
-                <p className="text-muted-foreground text-sm">Revoking your session</p>
             </div>
         </div>
     )

@@ -14,14 +14,25 @@ export async function login(formData: FormData) {
 		password: formData.get('password') as string,
 	}
 
-	const { error } = await supabase.auth.signInWithPassword(data)
+	const { data: authData, error } = await supabase.auth.signInWithPassword(data)
 
 	if (error) {
 		redirect('/login?error=' + encodeURIComponent(error.message))
 	}
 
+	// Verify session was established before redirecting
+	if (!authData.session) {
+		redirect('/login?error=' + encodeURIComponent('Failed to establish session'))
+	}
+
+	console.log('[Login] Session established for:', authData.user.email)
+
+	// Get the returnTo parameter if it exists
+	const returnTo = formData.get('returnTo') as string | null
+	const redirectPath = returnTo || '/operations/work-orders'
+
 	revalidatePath('/', 'layout')
-	redirect('/')
+	redirect(redirectPath)
 }
 
 export async function signup(formData: FormData) {
