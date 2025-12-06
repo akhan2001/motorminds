@@ -12,7 +12,35 @@ import { NextResponse, type NextRequest } from 'next/server'
  * IMPORTANT: Always use getClaims() to protect pages - it validates the JWT signature.
  * Never trust getSession() in server code - it doesn't revalidate the auth token.
  */
+
+// Allowed origins for CORS
+const allowedOrigins = [
+	'http://localhost:3000',
+	'http://localhost:3001',
+	'https://motorminds.vercel.app',
+	'https://app.motorminds.ca',
+	process.env.NEXT_PUBLIC_SITE_URL,
+].filter(Boolean) as string[]
+
+const corsOptions = {
+	'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
+	'Access-Control-Allow-Credentials': 'true',
+}
+
 export async function updateSession(request: NextRequest) {
+	const origin = request.headers.get('origin') ?? ''
+	const isAllowedOrigin = allowedOrigins.includes(origin)
+
+	// Handle preflight OPTIONS requests
+	if (request.method === 'OPTIONS') {
+		const preflightHeaders = {
+			...(isAllowedOrigin && { 'Access-Control-Allow-Origin': origin }),
+			...corsOptions,
+		}
+		return NextResponse.json({}, { headers: preflightHeaders })
+	}
+
 	let supabaseResponse = NextResponse.next({
 		request,
 	})
@@ -194,6 +222,15 @@ export async function updateSession(request: NextRequest) {
 			console.error('Error checking user role for demo redirect:', error);
 		}
 	}
+
+	// Add CORS headers to response if origin is allowed
+	if (isAllowedOrigin) {
+		supabaseResponse.headers.set('Access-Control-Allow-Origin', origin)
+	}
+
+	Object.entries(corsOptions).forEach(([key, value]) => {
+		supabaseResponse.headers.set(key, value)
+	})
 
 	// IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
 	// creating a new response object with NextResponse.next() make sure to:
