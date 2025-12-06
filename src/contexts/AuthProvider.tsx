@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -18,7 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/signup', '/auth', '/customer-intake']
+const PUBLIC_ROUTES = ['/login', '/signup', '/auth', '/customer-intake', '/customer-invoice-intake']
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
@@ -26,41 +26,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [userRole, setUserRole] = useState<UserRole | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [hasRedirected, setHasRedirected] = useState(false)
+    
     const router = useRouter()
     const pathname = usePathname()
-    const supabase = useMemo(() => createClient(), [])
+    
+    // Use ref to ensure supabase client is created only once
+    const supabaseRef = useRef(createClient())
+    const supabase = supabaseRef.current
+    
+    // Track if we've already redirected to prevent loops
+    const hasRedirectedRef = useRef(false)
 
-    const isPublicRoute = useMemo(() => {
-        return PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
-    }, [pathname])
+    // Check if current route is public
+    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
 
     const fetchAuthData = useCallback(async () => {
         try {
             setIsLoading(true)
             setError(null)
 
-            // Single network call to get user
-            const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+            // Use getSession first - it doesn't throw on missing session
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
-            if (authError) throw authError
-
-            if (!authUser) {
+            if (sessionError) {
+                console.warn('Session error:', sessionError)
+                // Don't throw - just set user to null
                 setUser(null)
                 setShopId(null)
                 setUserRole(null)
                 setIsLoading(false)
+                return
+            }
 
-                // Redirect to login if not on a public route (only once)
-                if (!isPublicRoute && pathname && !hasRedirected) {
-                    setHasRedirected(true)
-                    router.push(`/login?redirectTo=${encodeURIComponent(pathname)}`)
-                }
+            if (!session?.user) {
+                // No session - user is not logged in (this is not an error)
+                setUser(null)
+                setShopId(null)
+                setUserRole(null)
+                setIsLoading(false)
                 return
             }
 
             // Reset redirect flag when user is authenticated
-            setHasRedirected(false)
+            hasRedirectedRef.current = false
+            
+            const authUser = session.user
             setUser(authUser)
 
             // Fetch shop_id and role from users table in a single query
@@ -87,14 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setShopId(null)
             setUserRole(null)
             setIsLoading(false)
-
-            // Redirect to login on error if not on public route (only once)
-            if (!isPublicRoute && pathname && !hasRedirected) {
-                setHasRedirected(true)
-                router.push(`/login?redirectTo=${encodeURIComponent(pathname)}`)
-            }
         }
-    }, [supabase, isPublicRoute, pathname, hasRedirected, router])
+    }, [supabase])
 
     useEffect(() => {
         // Initial fetch on mount - single network call
@@ -102,8 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Listen for auth state changes (sign in, sign out, token refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            // Only refetch on actual sign in/out, not token refresh
-            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            if (event === 'SIGNED_IN') {
+                // Reset redirect flag on sign in
+                hasRedirectedRef.current = false
+                fetchAuthData()
+            } else if (event === 'SIGNED_OUT') {
                 fetchAuthData()
             } else if (event === 'TOKEN_REFRESHED' && session) {
                 // On token refresh, just update user object without refetching everything
@@ -114,18 +121,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => subscription.unsubscribe()
     }, [fetchAuthData, supabase])
 
-    // Show loading state on initial load for protected routes
-    if (isLoading && !isPublicRoute) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto"></div>
-                    <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">Loading...</p>
-                </div>
-            </div>
-        )
-    }
+    // Redirect to login if no user and on protected route
+    useEffect(() => {
+        if (!isLoading && !user && !isPublicRoute && !hasRedirectedRef.current) {
+            hasRedirectedRef.current = true
+            const redirectTo = pathname || '/'
+            router.push(`/login?redirectTo=${encodeURIComponent(redirectTo)}`)
+        }
+    }, [isLoading, user, isPublicRoute, pathname, router])
 
+    // IMPORTANT: Always render children to prevent hooks violation
+    // Child components should handle their own loading states based on isLoading
     return (
         <AuthContext.Provider
             value={{

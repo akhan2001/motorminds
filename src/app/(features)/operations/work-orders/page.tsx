@@ -168,7 +168,7 @@ function WorkOrdersContent() {
     const searchParams = useSearchParams()
 
     // Authentication
-    const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
+    const { user, shopId, isLoading: authLoading } = useAuth()
 
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
@@ -177,11 +177,6 @@ function WorkOrdersContent() {
     const updateWorkOrderMutation = useUpdateWorkOrder()
     const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
     const deleteWorkOrderMutation = useDeleteWorkOrder()
-
-    // Combined loading state
-    const isLoading = authLoading || (shopId && workOrdersLoading)
-    // Combined error state
-    const error = authError || workOrdersError
 
     // Transform work orders to kanban format
     const kanbanData = useMemo(() => {
@@ -579,8 +574,50 @@ function WorkOrdersContent() {
         }
     }
 
-    // Loading state
-    if (isLoading) {
+    // Loading state - show while auth is loading
+    if (authLoading) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                {/* <Nav /> */}
+                <div className="flex-1 flex items-center justify-center">
+                    <Card className="bg-card border-border">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <LoadingSpinner size="md" className="text-blue-500" />
+                            <div>
+                                <p className="text-foreground font-medium">Loading...</p>
+                                <p className="text-muted-foreground text-sm">Checking authentication...</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
+    // Auth check - BEFORE error check! User will be redirected by AuthProvider
+    if (!shopId || !user) {
+        return (
+            <div className="h-screen flex flex-col bg-background">
+                {/* <Nav /> */}
+                <div className="flex-1 flex items-center justify-center">
+                    <Card className="bg-card border-border">
+                        <CardContent className="flex items-center gap-4 p-6">
+                            <LoadingSpinner size="md" className="text-blue-500" />
+                            <div>
+                                <p className="text-foreground font-medium">Redirecting to Login...</p>
+                                <p className="text-muted-foreground text-sm">
+                                    Please wait while we redirect you to the login page.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )
+    }
+
+    // Data loading state - only show when authenticated and loading work orders
+    if (workOrdersLoading) {
         return (
             <div className="h-screen flex flex-col bg-background">
                 {/* <Nav /> */}
@@ -599,8 +636,8 @@ function WorkOrdersContent() {
         )
     }
 
-    // Error state
-    if (error) {
+    // Error state - only show when authenticated but data fetch failed
+    if (workOrdersError) {
         return (
             <div className="h-screen flex flex-col bg-background">
                 {/* <Nav /> */}
@@ -611,36 +648,14 @@ function WorkOrdersContent() {
                             <div>
                                 <p className="text-foreground font-medium">Failed to Load Work Orders</p>
                                 <p className="text-muted-foreground text-sm mb-3">
-                                    {error instanceof Error ? error.message : 'Unknown error occurred'}
+                                    {workOrdersError instanceof Error ? workOrdersError.message : 'Unknown error occurred'}
                                 </p>
                                 <button
-                                    onClick={() => (window.location.reload())}
+                                    onClick={() => refetch()}
                                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
                                 >
                                     Try Again
                                 </button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
-
-    // Don't render main content if we don't have authentication data
-    if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Authentication Required</p>
-                                <p className="text-muted-foreground text-sm mb-3">
-                                    Unable to access work orders. Please ensure you are logged in.
-                                </p>
                             </div>
                         </CardContent>
                     </Card>
