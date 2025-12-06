@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { User, Session } from '@supabase/supabase-js'
@@ -186,7 +186,8 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
         try {
             console.log('[AuthProvider] Starting sign out...')
 
-            const { error } = await supabase.auth.signOut()
+            // Sign out globally (all tabs) - this triggers SIGNED_OUT event
+            const { error } = await supabase.auth.signOut({ scope: 'global' })
 
             if (error) {
                 console.error('[AuthProvider] Sign out error:', error)
@@ -195,17 +196,16 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
 
             console.log('[AuthProvider] Sign out successful')
 
-            // Clear state (redirect is handled by useSignOut hook)
-            setUser(null)
-            setSession(null)
-            setUserRole(null)
-            setShopId(null)
-            setShopInfo(null)
+            // State will be cleared by SIGNED_OUT event
+            // Don't clear here to avoid race conditions
         } catch (error) {
             console.error('[AuthProvider] Sign out failed:', error)
             throw error
         }
     }, [supabase, alwaysLoggedIn])
+
+    // Track if we've already initialized (use ref to persist across renders)
+    const hasInitializedRef = useRef(false)
 
     // Initialize on mount
     useEffect(() => {
@@ -215,6 +215,38 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
         }
 
         console.log('[AuthProvider] Setting up auth listener...')
+
+        // Check for existing session immediately (synchronous from localStorage)
+        supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
+            hasInitializedRef.current = true
+            if (initialSession) {
+                console.log('[AuthProvider] Found existing session on mount:', initialSession.user.email)
+                setUser(initialSession.user)
+                setSession(initialSession)
+                
+                try {
+                    // Fetch user data
+                    const { role, shopId: fetchedShopId } = await fetchUserProfile(initialSession.user.id)
+                    setUserRole(role)
+                    setShopId(fetchedShopId)
+                    
+                    if (fetchedShopId) {
+                        const shopData = await fetchShopInfo(fetchedShopId)
+                        setShopInfo(shopData)
+                    }
+                } catch (error) {
+                    console.error('[AuthProvider] Error fetching user data on mount:', error)
+                } finally {
+                    setLoading(false)
+                }
+            } else {
+                console.log('[AuthProvider] No existing session on mount')
+                setLoading(false)
+            }
+        }).catch(error => {
+            console.error('[AuthProvider] Error getting session:', error)
+            setLoading(false)
+        })
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
@@ -239,14 +271,20 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
                 setLoading(false)
             } else if (event === 'SIGNED_OUT') {
                 console.log('[AuthProvider] User signed out - clearing all state')
-                // Only clear state if we actually had a user before
-                // This prevents clearing state during initial load
+                
+                // Clear all state
                 setUser(null)
                 setSession(null)
                 setUserRole(null)
                 setShopId(null)
                 setShopInfo(null)
                 setLoading(false)
+                
+                // Redirect to login (only if not already on auth pages)
+                if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/logout')) {
+                    console.log('[AuthProvider] Redirecting to login after sign out')
+                    router.push('/login')
+                }
             } else if (event === 'TOKEN_REFRESHED' && newSession) {
                 console.log('[AuthProvider] Token refreshed')
                 setUser(newSession.user)
@@ -258,6 +296,13 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
                 setSession(newSession)
             } else if (event === 'INITIAL_SESSION') {
                 console.log('[AuthProvider] Initial session event:', newSession ? 'Has session' : 'No session')
+                
+                // Skip if we already initialized via getSession()
+                if (hasInitializedRef.current) {
+                    console.log('[AuthProvider] Skipping INITIAL_SESSION - already initialized')
+                    return
+                }
+                
                 // INITIAL_SESSION fires on mount - only process if we haven't initialized yet
                 if (newSession) {
                     setUser(newSession.user)
