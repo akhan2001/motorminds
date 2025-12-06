@@ -1,17 +1,23 @@
 import { createClient } from "@/utils/supabase/server";
 
+/**
+ * Get shop ID for the current authenticated user
+ * Uses getClaims() for robust JWT validation instead of getUser()
+ */
 export async function getShopIdForUser() {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getClaims();
 
-    if (!user) {
+    if (!data?.claims?.sub) {
         return null;
     }
 
-    const { data, error } = await supabase
+    const userId = data.claims.sub;
+
+    const { data: userData, error } = await supabase
         .from('users')
         .select('shop_id')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
     
     if (error) {
@@ -19,5 +25,5 @@ export async function getShopIdForUser() {
         return null;
     }
 
-    return data.shop_id;
+    return userData.shop_id;
 }

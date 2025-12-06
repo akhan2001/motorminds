@@ -9,13 +9,16 @@ export function useUserRole() {
     const query = useQuery({
         queryKey: ['user-role'],
         queryFn: async (): Promise<UserRole | null> => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return null;
+            // Use getClaims() for robust JWT validation
+            const { data } = await supabase.auth.getClaims();
+            if (!data?.claims?.sub) return null;
 
-            const { data, error } = await supabase
+            const userId = data.claims.sub;
+
+            const { data: userData, error } = await supabase
                 .from('users')
                 .select('role')
-                .eq('id', user.id)
+                .eq('id', userId)
                 .maybeSingle(); // Use maybeSingle to handle 406 gracefully
 
             // Handle errors gracefully - don't throw on 406 or RLS errors
@@ -26,7 +29,7 @@ export function useUserRole() {
                 }
                 return null;
             }
-            return data?.role || null;
+            return userData?.role || null;
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: false, // Changed to false to reduce requests

@@ -6,11 +6,13 @@ export async function GET(req: NextRequest) {
     try {
         const supabase = await createClient()
         
-        // Get authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        // Get authenticated user using getClaims() for robust JWT validation
+        const { data } = await supabase.auth.getClaims()
+        if (!data?.claims?.sub) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+
+        const userId = data.claims.sub
 
         // Get shop_id from query params
         const { searchParams } = new URL(req.url)
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
         const { data: userData, error: userError } = await supabase
             .from('users')
             .select('shop_id')
-            .eq('id', user.id)
+            .eq('id', userId)
             .single()
 
         if (userError || !userData) {
@@ -67,11 +69,13 @@ export async function POST(req: NextRequest) {
     try {
         const supabase = await createClient()
         
-        // Get authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        // Get authenticated user using getClaims() for robust JWT validation
+        const { data } = await supabase.auth.getClaims()
+        if (!data?.claims?.sub) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+
+        const userId = data.claims.sub
 
         const body = await req.json()
         const { shop_id, first_name, last_name, role, salary_or_wage, pay_frequency } = body
@@ -88,7 +92,7 @@ export async function POST(req: NextRequest) {
         const { data: userData, error: userError } = await supabase
             .from('users')
             .select('shop_id')
-            .eq('id', user.id)
+            .eq('id', userId)
             .single()
 
         if (userError || !userData) {

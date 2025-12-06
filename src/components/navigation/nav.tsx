@@ -84,22 +84,9 @@ export function Nav() {
 		setOpen(false)
 	}
 
-	const handleLogout = async () => {
-		try {
-			const supabase = createClient()
-			const { error } = await supabase.auth.signOut()
-			
-			if (error) {
-				console.error("Logout error:", error)
-			} else {
-				// Clear all React Query cache to ensure fresh data on next login
-				queryClient.clear()
-				// Force a full page reload to clear all cached data
-				window.location.href = "/login"
-			}
-		} catch (error) {
-			console.error("Logout error:", error)
-		}
+	const handleLogout = () => {
+		// Redirect to /logout page which handles the sign out process
+		router.push('/logout')
 	}
 
 	// Show loading state while fetching role and shop info

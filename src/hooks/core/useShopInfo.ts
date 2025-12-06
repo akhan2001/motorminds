@@ -21,15 +21,17 @@ export function useShopInfo() {
         queryKey: ['shop-info'],
         queryFn: async (): Promise<ShopInfo | null> => {
             try {
-                // Get current user
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) return null
+                // Use getClaims() for robust JWT validation
+                const { data } = await supabase.auth.getClaims()
+                if (!data?.claims?.sub) return null
+
+                const userId = data.claims.sub
 
                 // Get user's shop_id
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('shop_id')
-                    .eq('id', user.id)
+                    .eq('id', userId)
                     .single()
 
                 if (userError || !userData?.shop_id) return null
