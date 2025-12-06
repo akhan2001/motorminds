@@ -2,6 +2,8 @@ import { type NextRequest } from 'next/server'
 import { updateSession } from './src/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+	// Force log to stderr to ensure it shows up
+	console.error('[MIDDLEWARE ROOT]', request.method, request.nextUrl.pathname)
 	return await updateSession(request)
 }
 

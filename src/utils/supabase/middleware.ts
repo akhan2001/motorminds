@@ -19,11 +19,15 @@ const corsOptions = {
 }
 
 export async function updateSession(request: NextRequest) {
+	const pathname = request.nextUrl.pathname
+	console.error('[Middleware] Request:', request.method, pathname)
+	
 	const origin = request.headers.get('origin') ?? ''
 	const isAllowedOrigin = allowedOrigins.includes(origin)
 
 	// Handle preflight OPTIONS requests (fixes Vercel feedback widget 400s)
 	if (request.method === 'OPTIONS') {
+		console.error('[Middleware] Handling OPTIONS preflight for:', pathname)
 		const preflightHeaders = {
 			...(isAllowedOrigin && { 'Access-Control-Allow-Origin': origin }),
 			...corsOptions,
@@ -68,6 +72,7 @@ export async function updateSession(request: NextRequest) {
 
 	// Skip authentication checks for public routes (but still add CORS headers)
 	if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+		console.error('[Middleware] Public path, skipping auth:', pathname)
 		// Add CORS headers for public routes too
 		if (isAllowedOrigin) {
 			supabaseResponse.headers.set('Access-Control-Allow-Origin', origin)
@@ -88,6 +93,8 @@ export async function updateSession(request: NextRequest) {
 		user_metadata: data.claims.user_metadata || {},
 		app_metadata: data.claims.app_metadata || {},
 	} : null
+	
+	console.error('[Middleware] Auth check:', user ? `User: ${user.email}` : 'No user')
 
 	// Protected routes - keeping your existing logic
 	const protectedPaths = [
@@ -120,6 +127,7 @@ export async function updateSession(request: NextRequest) {
 	)
 
 	if (isProtectedPath && !user) {
+		console.error('[Middleware] Protected path without auth, redirecting to login:', pathname)
 		const redirectUrl = new URL('/login', request.url)
 		redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
 		return NextResponse.redirect(redirectUrl)

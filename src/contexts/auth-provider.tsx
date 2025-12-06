@@ -216,6 +216,29 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
 
         console.log('[AuthProvider] Setting up auth listener...')
 
+        // Listen for storage events (cross-tab logout detection)
+        const handleStorageChange = (e: StorageEvent) => {
+            // Detect when Supabase auth tokens are removed (logout in another tab)
+            if (e.key?.includes('supabase.auth.token') && e.newValue === null) {
+                console.log('[AuthProvider] Detected logout in another tab via storage event')
+                // Clear state and redirect
+                setUser(null)
+                setSession(null)
+                setUserRole(null)
+                setShopId(null)
+                setShopInfo(null)
+                setLoading(false)
+                
+                if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+                    console.log('[AuthProvider] Redirecting to login due to cross-tab logout')
+                    window.location.href = '/login'
+                }
+            }
+        }
+
+        // Add storage event listener for cross-tab communication
+        window.addEventListener('storage', handleStorageChange)
+
         // Check for existing session immediately (synchronous from localStorage)
         supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
             hasInitializedRef.current = true
@@ -335,6 +358,7 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
 
         return () => {
             subscription.unsubscribe()
+            window.removeEventListener('storage', handleStorageChange)
         }
     }, [supabase, alwaysLoggedIn, fetchUserProfile, fetchShopInfo])
 
