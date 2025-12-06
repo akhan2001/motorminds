@@ -170,6 +170,14 @@ function WorkOrdersContent() {
     // Authentication
     const { user, shopId, isLoading: authLoading, error: authError } = useAuth()
 
+    // Redirect to login if not authenticated (after loading completes)
+    useEffect(() => {
+        if (!authLoading && !user) {
+            console.log('[WorkOrders] No user found, redirecting to login')
+            router.push('/login?returnTo=/operations/work-orders')
+        }
+    }, [authLoading, user, router])
+
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
     const createWorkOrderMutation = useCreateWorkOrderWithDependencies()
