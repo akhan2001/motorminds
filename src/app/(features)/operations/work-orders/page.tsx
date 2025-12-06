@@ -614,7 +614,7 @@ function WorkOrdersContent() {
                                     {error instanceof Error ? error.message : 'Unknown error occurred'}
                                 </p>
                                 <button
-                                    onClick={() => refetch()}
+                                    onClick={() => (window.location.reload())}
                                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
                                 >
                                     Try Again
