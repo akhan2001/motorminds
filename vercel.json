@@ -9,5 +9,6 @@
         "src/app/api/messaging/process-queue/route.ts": {
             "maxDuration": 60
         }
-    }
+    },
+    "feedback": false
 }
