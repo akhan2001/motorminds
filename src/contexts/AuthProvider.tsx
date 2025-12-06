@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -26,11 +26,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [userRole, setUserRole] = useState<UserRole | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [hasRedirected, setHasRedirected] = useState(false)
     const router = useRouter()
     const pathname = usePathname()
-    const supabase = createClient()
+    const supabase = useMemo(() => createClient(), [])
 
-    const fetchAuthData = async () => {
+    const isPublicRoute = useMemo(() => {
+        return PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
+    }, [pathname])
+
+    const fetchAuthData = useCallback(async () => {
         try {
             setIsLoading(true)
             setError(null)
@@ -46,14 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUserRole(null)
                 setIsLoading(false)
 
-                // Redirect to login if not on a public route
-                const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
-                if (!isPublicRoute && pathname) {
+                // Redirect to login if not on a public route (only once)
+                if (!isPublicRoute && pathname && !hasRedirected) {
+                    setHasRedirected(true)
                     router.push(`/login?redirectTo=${encodeURIComponent(pathname)}`)
                 }
                 return
             }
 
+            // Reset redirect flag when user is authenticated
+            setHasRedirected(false)
             setUser(authUser)
 
             // Fetch shop_id and role from users table in a single query
@@ -81,13 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserRole(null)
             setIsLoading(false)
 
-            // Redirect to login on error if not on public route
-            const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
-            if (!isPublicRoute && pathname) {
+            // Redirect to login on error if not on public route (only once)
+            if (!isPublicRoute && pathname && !hasRedirected) {
+                setHasRedirected(true)
                 router.push(`/login?redirectTo=${encodeURIComponent(pathname)}`)
             }
         }
-    }
+    }, [supabase, isPublicRoute, pathname, hasRedirected, router])
 
     useEffect(() => {
         // Initial fetch on mount - single network call
@@ -105,10 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
 
         return () => subscription.unsubscribe()
-    }, [])
+    }, [fetchAuthData, supabase])
 
     // Show loading state on initial load for protected routes
-    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
     if (isLoading && !isPublicRoute) {
         return (
             <div className="flex items-center justify-center min-h-screen">
