@@ -64,8 +64,9 @@ export function useSignOut() {
                 console.log('[useSignOut] localStorage cleared')
             }
 
-            // 5. Redirect to login (handled by AuthProvider)
+            // 5. Redirect to login
             console.log('[useSignOut] Redirecting to login')
+            router.push('/login')
 
             return { error: null }
         } catch (error) {

@@ -195,41 +195,30 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
 
             console.log('[AuthProvider] Sign out successful')
 
-            // Clear state
+            // Clear state (redirect is handled by useSignOut hook)
             setUser(null)
             setSession(null)
-
-            // Redirect to login
-            router.push('/login')
+            setUserRole(null)
+            setShopId(null)
+            setShopInfo(null)
         } catch (error) {
             console.error('[AuthProvider] Sign out failed:', error)
             throw error
         }
-    }, [supabase, router, alwaysLoggedIn])
+    }, [supabase, alwaysLoggedIn])
 
     // Initialize on mount
     useEffect(() => {
-        let isInitialized = false
-
-        async function init() {
-            // First, initialize auth state
-            await initializeAuth()
-            isInitialized = true
+        if (alwaysLoggedIn) {
+            setLoading(false)
+            return
         }
 
-        init()
-
-        if (alwaysLoggedIn) return
+        console.log('[AuthProvider] Setting up auth listener...')
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
             console.log('[AuthProvider] Auth state changed:', event)
-
-            // Skip INITIAL_SESSION if we've already initialized
-            if (event === 'INITIAL_SESSION' && isInitialized) {
-                console.log('[AuthProvider] Skipping INITIAL_SESSION - already initialized')
-                return
-            }
 
             if (event === 'SIGNED_IN' && newSession) {
                 console.log('[AuthProvider] User signed in:', newSession.user.email)
@@ -301,7 +290,7 @@ export function AuthProvider({ children, alwaysLoggedIn = false }: AuthProviderP
         return () => {
             subscription.unsubscribe()
         }
-    }, [supabase, initializeAuth, alwaysLoggedIn, fetchUserProfile, fetchShopInfo])
+    }, [supabase, alwaysLoggedIn, fetchUserProfile, fetchShopInfo])
 
     const value: AuthContextType = {
         user,
