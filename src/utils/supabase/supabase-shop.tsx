@@ -1,13 +1,35 @@
 import { supabase } from "@/lib/supabase";
 
+// Request deduplication: Prevent multiple simultaneous shop_id queries
+const shopIdCache = new Map<string, { promise: Promise<string>, timestamp: number }>()
+const CACHE_DURATION = 1000 // 1 second cache to prevent thundering herd
+
 export async function getShopId(userId: string) {
-    const { data, error } = await supabase
+    const now = Date.now()
+    const cached = shopIdCache.get(userId)
+
+    // Return cached promise if request is already in flight or recently completed
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+        return cached.promise
+    }
+
+    // Create new request and cache the promise
+    const promise = supabase
         .from("users")
         .select("shop_id")
         .eq("id", userId)
         .single()
-    if (error) throw error
-    return data.shop_id
+        .then(({ data, error }) => {
+            if (error) throw error
+            return data.shop_id
+        })
+
+    shopIdCache.set(userId, { promise, timestamp: now })
+
+    // Clean up old cache entries after 5 seconds
+    setTimeout(() => shopIdCache.delete(userId), 5000)
+
+    return promise
 }
 
 export async function getShopInfo(shopId: string) {
