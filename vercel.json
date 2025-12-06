@@ -1,4 +1,5 @@
 {
+    "feedback": false,
     "functions": {
         "src/app/api/mia-diagnostics/route.ts": {
             "maxDuration": 60
