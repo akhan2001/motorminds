@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthProvider'
 
 export interface CustomerVehicle {
     id: string
@@ -37,32 +38,19 @@ interface ShopMetaResult {
 }
 
 /**
- * useShopMeta – fetches shop id for current user plus customers (with vehicles)
- *   and active employees. Caches aggressively via React-Query.
+ * useShopMeta – fetches customers (with vehicles) and active employees
+ * Uses centralized auth context for shopId - no redundant getUser() call
+ * Caches aggressively via React-Query.
  */
 export function useShopMeta() {
-    return useQuery<ShopMetaResult, Error>({
-        queryKey: ['shop-meta'],
-        queryFn: async () => {
-            // 1) Get current user
-            const {
-                data: { user },
-                error: userErr,
-            } = await supabase.auth.getUser()
-            if (userErr) throw userErr
-            if (!user) throw new Error('Not authenticated')
+    const { shopId } = useAuth()
 
-            // 2) Get shop_id
-            const { data: userData, error: shopErr } = await supabase
-                .from('users')
-                .select('shop_id')
-                .eq('id', user.id)
-                .single()
-            if (shopErr) throw shopErr
-            const shopId = userData?.shop_id || null
+    return useQuery<ShopMetaResult, Error>({
+        queryKey: ['shop-meta', shopId],
+        queryFn: async () => {
             if (!shopId) throw new Error('No shop_id found for user')
 
-            // 3) Fetch customers (with vehicles) and employees in parallel
+            // Fetch customers (with vehicles) and employees in parallel
             const [custRes, empRes] = await Promise.all([
                 supabase
                     .from('customers')
@@ -80,12 +68,13 @@ export function useShopMeta() {
 
             const customers = (custRes.data || []) as Customer[]
             const employees = (empRes.data || []) as Employee[]
-            const vehicles: CustomerVehicle[] = customers.flatMap((c) => 
+            const vehicles: CustomerVehicle[] = customers.flatMap((c) =>
                 c.customer_vehicles.map(v => ({...v, customer_id: c.id}))
             )
 
             return { shopId, customers, vehicles, employees }
         },
+        enabled: !!shopId, // Only run query if shopId exists
         staleTime: 1000 * 60 * 5, // 5 min cache
     })
 } 
