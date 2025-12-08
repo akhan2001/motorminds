@@ -59,6 +59,8 @@ export function useWorkOrderWithDetails(workOrderId: string) {
         queryFn: () => workOrderService.getWorkOrderWithDetailsById(workOrderId),
         staleTime: 5 * 60 * 1000,
         enabled: !!workOrderId,
+        retry: false,
+        refetchOnWindowFocus: false,
     })
 }
 
