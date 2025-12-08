@@ -7,6 +7,15 @@ import { ConfirmationProvider } from "@/app/components/confirmation-service"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AdminContextProvider } from "@/contexts/admin-context"
 import { AuthProvider } from "@/contexts/AuthProvider"
+import { useCheckLatestDeploy } from "@/hooks/use-check-latest-deploy"
+
+function DeploymentChecker() {
+	// Enable in production, or in dev if ENABLE_DEPLOYMENT_CHECK is set
+	const isEnabled = process.env.NODE_ENV === 'production' || 
+	                 process.env.NEXT_PUBLIC_ENABLE_DEPLOYMENT_CHECK === 'true'
+	useCheckLatestDeploy(isEnabled)
+	return null
+}
 
 export default function Providers({
 	children,
@@ -35,6 +44,7 @@ export default function Providers({
 					<AdminContextProvider>
 						<TasksProvider>
 							<ConfirmationProvider>
+								<DeploymentChecker />
 								{children}
 							</ConfirmationProvider>
 						</TasksProvider>
