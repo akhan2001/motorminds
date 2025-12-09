@@ -786,7 +786,9 @@ export function AppointmentForm({
                                                 // Clear customer-related errors
                                                 setErrors(prev => ({ ...prev, customer: '' }))
                                             }}
-                                            placeholder="Search customers..."
+                                            placeholder="Search customers (organization-wide)..."
+                                            organizationWide={true}
+                                            showShopNames={true}
                                             className="w-full"
                                         />
                                         {errors.customer && (

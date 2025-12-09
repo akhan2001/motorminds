@@ -10,26 +10,68 @@ export class WorkOrderItemTemplatesService {
     private static supabase = createClient()
 
     /**
-     * Get all templates for a shop
+     * Get all templates for a shop with pagination and search
      */
-    static async getTemplatesByShopId(shopId: string): Promise<WorkOrderItemTemplate[]> {
+    static async getTemplatesByShopId(
+        shopId: string, 
+        options?: {
+            page?: number;
+            limit?: number;
+            search?: string;
+            category?: string;
+            itemType?: string;
+        }
+    ): Promise<{ templates: WorkOrderItemTemplate[]; total: number; hasMore: boolean }> {
         if (!shopId) {
             throw new Error('Shop ID is required')
         }
 
-        const { data, error } = await this.supabase
+        const page = options?.page || 1
+        const limit = options?.limit || 50
+        const offset = (page - 1) * limit
+        const search = options?.search?.trim()
+        const category = options?.category
+        const itemType = options?.itemType
+
+        let query = this.supabase
             .from('work_order_item_templates')
-            .select('*')
+            .select('*', { count: 'exact' })
             .eq('shop_id', shopId)
+
+        // Add search filter
+        if (search && search.length >= 2) {
+            query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,category.ilike.%${search}%`)
+        }
+
+        // Add category filter
+        if (category && category !== 'all') {
+            query = query.eq('category', category)
+        }
+
+        // Add item type filter
+        if (itemType && itemType !== 'all') {
+            query = query.eq('item_type', itemType)
+        }
+
+        // Add pagination and ordering
+        const { data, error, count } = await query
             .order('category', { ascending: true })
             .order('name', { ascending: true })
+            .range(offset, offset + limit - 1)
 
         if (error) {
             console.error('Error fetching work order item templates:', error)
             throw new Error(`Failed to fetch templates: ${error.message}`)
         }
 
-        return data || []
+        const total = count || 0
+        const hasMore = total > offset + (data?.length || 0)
+
+        return {
+            templates: data || [],
+            total,
+            hasMore
+        }
     }
 
     /**
@@ -176,6 +218,34 @@ export class WorkOrderItemTemplatesService {
         }
 
         return data
+    }
+
+    /**
+     * Get templates by item type (without search term)
+     */
+    static async getTemplatesByType(
+        shopId: string, 
+        itemType: string, 
+        limit: number = 10
+    ): Promise<WorkOrderItemTemplate[]> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        const { data, error } = await this.supabase
+            .from('work_order_item_templates')
+            .select('*')
+            .eq('shop_id', shopId)
+            .eq('item_type', itemType)
+            .order('name', { ascending: true })
+            .limit(limit)
+
+        if (error) {
+            console.error('Error fetching templates by type:', error)
+            throw new Error(`Failed to fetch templates: ${error.message}`)
+        }
+
+        return data || []
     }
 
     /**

@@ -49,7 +49,7 @@ export function useWorkOrdersWithDetails(shopId: string) {
         queryKey: [...workOrderKeys.list(shopId), 'with-details'],
         queryFn: () => workOrderService.getWorkOrdersWithDetails(shopId),
         staleTime: 5 * 60 * 1000,
-        enabled: !!shopId,
+        enabled: !!shopId && shopId !== '', // Only enable if shopId is valid (not empty)
     })
 }
 
@@ -59,13 +59,15 @@ export function useWorkOrderWithDetails(workOrderId: string) {
         queryFn: () => workOrderService.getWorkOrderWithDetailsById(workOrderId),
         staleTime: 5 * 60 * 1000,
         enabled: !!workOrderId,
+        retry: false,
+        refetchOnWindowFocus: false,
     })
 }
 
 // Mutation hooks for creating, updating, and deleting work orders
 export function useCreateWorkOrder() {
     const queryClient = useQueryClient()
-    
+
     return useMutation({
         mutationFn: async (data: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'>) => {
             // Generate work order number if not provided
@@ -73,7 +75,7 @@ export function useCreateWorkOrder() {
                 const workOrderNumber = await workOrderService.generateWorkOrderNumber(data.shop_id)
                 data.work_order_number = workOrderNumber
             }
-            
+
             return workOrderService.createWorkOrder(data)
         },
         onSuccess: (newWorkOrder) => {
@@ -81,7 +83,7 @@ export function useCreateWorkOrder() {
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             queryClient.invalidateQueries({ queryKey: workOrderKeys.list(newWorkOrder.shop_id) })
             queryClient.invalidateQueries({ queryKey: [...workOrderKeys.list(newWorkOrder.shop_id), 'with-details'] })
-            
+
             toast.success('Work order created successfully')
         },
         onError: (error: any) => {
@@ -94,7 +96,7 @@ export function useCreateWorkOrder() {
 // New mutation hook for creating work orders with customer/vehicle dependencies
 export function useCreateWalkInWorkOrder() {
     const queryClient = useQueryClient()
-    
+
     return useMutation({
         mutationFn: async (data: {
             workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id' | 'customer_type' | 'walk_in_vehicle_info'>
@@ -105,7 +107,7 @@ export function useCreateWalkInWorkOrder() {
                 const workOrderNumber = await workOrderService.generateWorkOrderNumber(data.workOrder.shop_id)
                 data.workOrder.work_order_number = workOrderNumber
             }
-            
+
             return workOrderService.createWalkInWorkOrder(data)
         },
         onSuccess: () => {
@@ -118,7 +120,7 @@ export function useCreateWalkInWorkOrder() {
 
 export function useCreateWorkOrderWithDependencies() {
     const queryClient = useQueryClient()
-    
+
     return useMutation({
         mutationFn: async (data: {
             workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at' | 'customer_id' | 'vehicle_id'>
@@ -145,7 +147,7 @@ export function useCreateWorkOrderWithDependencies() {
                 const workOrderNumber = await workOrderService.generateWorkOrderNumber(data.workOrder.shop_id)
                 data.workOrder.work_order_number = workOrderNumber
             }
-            
+
             return workOrderService.createWorkOrderWithDependencies(data)
         },
         onSuccess: (newWorkOrder) => {
@@ -153,7 +155,7 @@ export function useCreateWorkOrderWithDependencies() {
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             queryClient.invalidateQueries({ queryKey: workOrderKeys.list(newWorkOrder.shop_id) })
             queryClient.invalidateQueries({ queryKey: [...workOrderKeys.list(newWorkOrder.shop_id), 'with-details'] })
-            
+
             toast.success('Work order created successfully')
         },
         onError: (error: any) => {
@@ -165,7 +167,7 @@ export function useCreateWorkOrderWithDependencies() {
 
 export function useUpdateWorkOrder() {
     const queryClient = useQueryClient()
-    
+
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<WorkOrder> }) =>
             workOrderService.updateWorkOrder(id, data),
@@ -175,16 +177,16 @@ export function useUpdateWorkOrder() {
                 workOrderKeys.detail(updatedWorkOrder.id),
                 updatedWorkOrder
             )
-            
+
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
             queryClient.invalidateQueries({ queryKey: workOrderKeys.list(updatedWorkOrder.shop_id) })
-            
+
             // Invalidate the with-details query for this specific work order
-            queryClient.invalidateQueries({ 
-                queryKey: [...workOrderKeys.detail(updatedWorkOrder.id), 'with-details'] 
+            queryClient.invalidateQueries({
+                queryKey: [...workOrderKeys.detail(updatedWorkOrder.id), 'with-details']
             })
-            
+
             // toast.success('Work order updated successfully')
         },
         onError: (error: any) => {
@@ -196,14 +198,14 @@ export function useUpdateWorkOrder() {
 
 export function useUpdateWorkOrderStatus() {
     const queryClient = useQueryClient()
-    
+
     return useMutation({
         mutationFn: ({ id, status, enableAutomatedMessages }: { id: string; status: WorkOrderStatus; enableAutomatedMessages?: boolean }) =>
             workOrderService.updateWorkOrderStatus(id, status, enableAutomatedMessages),
         onSuccess: (_, { id }) => {
             // Invalidate all work order queries to refetch
             queryClient.invalidateQueries({ queryKey: workOrderKeys.all })
-            
+
             toast.success('Work order status updated')
         },
         onError: (error: any) => {
@@ -215,19 +217,19 @@ export function useUpdateWorkOrderStatus() {
 
 export function useDeleteWorkOrder() {
     const queryClient = useQueryClient()
-    
+
     return useMutation({
         mutationFn: (id: string) => workOrderService.deleteWorkOrder(id),
         onSuccess: (_, deletedId) => {
             // Remove from cache
             queryClient.removeQueries({ queryKey: workOrderKeys.detail(deletedId) })
-            
+
             // Invalidate lists to refetch
             queryClient.invalidateQueries({ queryKey: workOrderKeys.lists() })
-            
+
             // Invalidate appointments since archiving a work order may reset appointment status
             queryClient.invalidateQueries({ queryKey: ['appointments'] })
-            
+
             toast.success('Work order archived successfully')
         },
         onError: (error: any) => {

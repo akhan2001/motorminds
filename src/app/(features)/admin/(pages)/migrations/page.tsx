@@ -6,23 +6,23 @@ import {
     CheckCircle,
     AlertTriangle
 } from 'lucide-react'
-import { Nav } from '@/components/navigation/nav'
 import Link from 'next/link'
-import AdminNav from '../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { BreadcrumbPage } from '@/components/ui/breadcrumb'
 import { StagingVerificationComponent } from '../../components/staging-verification'
 import MigrationsNav from '../../components/migrations/MigrationsNav'
+import AdminNav from '../../components/AdminNav'
 
 export default function MigrationsPage() {
     return (
         <div className="h-screen flex flex-col bg-[#0d0d0d]">
-            <Nav />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto">
-                    <div className="p-6 max-w-7xl mx-auto w-full">
-                        {/* Breadcrumb */}
-                        <Breadcrumb className="mb-4">
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-6 max-w-7xl mx-auto w-full">
+                    {/* Admin Navigation */}
+                    <AdminNav />
+
+                    {/* Custom Breadcrumb */}
+                    <Breadcrumb className="mb-4">
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
@@ -39,9 +39,6 @@ export default function MigrationsPage() {
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
-
-                        {/* Admin Navigation */}
-                        <AdminNav />
 
                         {/* Header */}
                         <div className="mb-6">
@@ -110,9 +107,8 @@ export default function MigrationsPage() {
                             </Card>
                         </div>
 
-                        {/* Staging Verification Component */}
-                        <StagingVerificationComponent />
-                    </div>
+                    {/* Staging Verification Component */}
+                    <StagingVerificationComponent />
                 </div>
             </div>
         </div>

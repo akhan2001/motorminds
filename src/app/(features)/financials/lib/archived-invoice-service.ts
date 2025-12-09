@@ -13,6 +13,7 @@ export interface ArchivedInvoiceFilters {
     amount_max?: number
     customer_id?: string
     work_order_id?: string
+    search?: string
 }
 
 export interface ArchivedInvoiceListParams {
@@ -75,6 +76,13 @@ export class ArchivedInvoiceService {
             query = query.eq('work_order_id', filters.work_order_id)
         }
 
+        // Apply search filter - search across invoice_number, title, and display_id
+        if (filters.search && filters.search.trim()) {
+            const searchTerm = `%${filters.search.trim()}%`
+            // Use or() to search across multiple fields
+            query = query.or(`invoice_number.ilike.${searchTerm},title.ilike.${searchTerm},display_id.ilike.${searchTerm}`)
+        }
+
         // Apply pagination
         const from = (page - 1) * limit
         const to = from + limit - 1
@@ -127,6 +135,12 @@ export class ArchivedInvoiceService {
             // Apply filters
             if (filters?.status && filters.status.length > 0) {
                 query = query.in('status', filters.status)
+            }
+
+            // Apply search filter
+            if (filters?.search && filters.search.trim()) {
+                const searchTerm = `%${filters.search.trim()}%`
+                query = query.or(`invoice_number.ilike.${searchTerm},title.ilike.${searchTerm},display_id.ilike.${searchTerm}`)
             }
 
             const { count, error } = await query

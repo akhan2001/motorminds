@@ -16,13 +16,28 @@ export async function GET(
 
         const supabase = await createClient();
         
-        // Check if customer exists in customers table
-        const { data: customer, error: customerError } = await supabase
+        // Check if customer exists and is accessible (organization-aware)
+        const { data: shopData } = await supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single()
+
+        let customerQuery = supabase
             .from('customers')
-            .select('id')
+            .select('id, shop_id, organization_id')
             .eq('id', id)
-            .eq('shop_id', shopId)
-            .maybeSingle();
+
+        // Apply organization-aware filter
+        if (shopData?.organization_id) {
+            // MSO shop: allow customers from same organization or same shop
+            customerQuery = customerQuery.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+        } else {
+            // Non-MSO shop: only same shop
+            customerQuery = customerQuery.eq('shop_id', shopId)
+        }
+
+        const { data: customer, error: customerError } = await customerQuery.maybeSingle();
 
         if (customerError || !customer) {
             return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
@@ -63,13 +78,28 @@ export async function POST(
 
         const supabase = await createClient();
         
-        // First verify the customer belongs to this shop
-        const { data: customer, error: customerError } = await supabase
+        // First verify the customer is accessible (organization-aware)
+        const { data: shopData } = await supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single()
+
+        let customerQuery = supabase
             .from('customers')
-            .select('id')
+            .select('id, shop_id, organization_id')
             .eq('id', id)
-            .eq('shop_id', shopId)
-            .single();
+
+        // Apply organization-aware filter
+        if (shopData?.organization_id) {
+            // MSO shop: allow customers from same organization or same shop
+            customerQuery = customerQuery.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
+        } else {
+            // Non-MSO shop: only same shop
+            customerQuery = customerQuery.eq('shop_id', shopId)
+        }
+
+        const { data: customer, error: customerError } = await customerQuery.single();
 
         if (customerError || !customer) {
             return NextResponse.json({ error: 'Customer not found' }, { status: 404 });

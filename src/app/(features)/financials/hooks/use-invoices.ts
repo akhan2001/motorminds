@@ -305,22 +305,44 @@ export function useCreateInvoiceFromWorkOrder() {
             const invoiceItems = items.map(item => {
                 const isDeclined = item.active === false
                 
+                // Validate and ensure unit_price is set correctly
+                let unitPrice = Number(item.unit_price) || 0
+                let quantity = Number(item.quantity) || 0
+                let laborHours = item.labor_hours ? Number(item.labor_hours) : undefined
+                
                 // Calculate total_price consistently with work order service logic
                 let calculatedTotalPrice = 0
                 if (item.item_type === 'labor') {
                     // For labor: labor_hours * unit_price
-                    calculatedTotalPrice = (item.labor_hours || 0) * (item.unit_price || 0)
+                    calculatedTotalPrice = (laborHours || 0) * unitPrice
+                    
+                    // If total_price exists but unit_price is 0, reverse-calculate unit_price
+                    if (unitPrice === 0 && item.total_price && laborHours && laborHours > 0) {
+                        unitPrice = item.total_price / laborHours
+                        calculatedTotalPrice = item.total_price
+                    }
                 } else {
                     // For parts, services, fees: quantity * unit_price
-                    calculatedTotalPrice = (item.quantity || 0) * (item.unit_price || 0)
+                    calculatedTotalPrice = quantity * unitPrice
+                    
+                    // If total_price exists but unit_price is 0, reverse-calculate unit_price
+                    if (unitPrice === 0 && item.total_price && quantity && quantity > 0) {
+                        unitPrice = item.total_price / quantity
+                        calculatedTotalPrice = item.total_price
+                    }
+                }
+                
+                // If we still don't have a calculated total, use the stored total_price
+                if (calculatedTotalPrice === 0 && item.total_price) {
+                    calculatedTotalPrice = Number(item.total_price)
                 }
                 
                 return {
                     id: item.id,
                     item_type: item.item_type,
                     description: isDeclined ? `${item.description}` : item.description,
-                    quantity: Number(item.quantity),
-                    unit_price: Number(item.unit_price),
+                    quantity: quantity,
+                    unit_price: unitPrice,  // Now guaranteed to have correct value
                     total_price: calculatedTotalPrice,
                     unit_cost: item.unit_cost ? Number(item.unit_cost) : undefined,
                     total_cost: item.total_cost ? Number(item.total_cost) : undefined,
@@ -328,7 +350,7 @@ export function useCreateInvoiceFromWorkOrder() {
                     supplier: item.supplier,
                     category: item.category,
                     warranty_period: item.warranty_period,
-                    labor_hours: item.labor_hours ? Number(item.labor_hours) : undefined,
+                    labor_hours: laborHours,
                     technician_id: item.technician_id || undefined,
                     active: item.active, // Preserve the active field from work order
                     is_declined: isDeclined

@@ -20,11 +20,6 @@ const customerSubItems = [
 
 export const navigationConfig: NavItem[] = [
     {
-        name: "Appointments",
-        href: "/operations/appointments",
-        requiredRoles: ['admin', 'super', 'user']
-    },
-    {
         name: "Work Orders",
         href: "/operations/work-orders",
         requiredRoles: ['admin', 'super', 'user']
@@ -51,6 +46,11 @@ export const navigationConfig: NavItem[] = [
         href: "/customers",
         hasDropdown: true,
         subItems: customerSubItems,
+        requiredRoles: ['admin', 'super', 'user']
+    },
+    {
+        name: "Appointments",
+        href: "/operations/appointments",
         requiredRoles: ['admin', 'super', 'user']
     },
     {

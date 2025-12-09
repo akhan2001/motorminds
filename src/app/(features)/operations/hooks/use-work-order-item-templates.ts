@@ -1,5 +1,5 @@
 // React Query hooks for Work Order Item Templates
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { WorkOrderItemTemplatesService } from '../lib/work-order-item-templates-service'
 import type { 
@@ -22,16 +22,64 @@ export const workOrderItemTemplateKeys = {
 }
 
 /**
- * Hook to fetch all templates for a shop
+ * Hook to fetch all templates for a shop with pagination
  * @param shopId - The shop ID
- * @param options - Additional query options (e.g., enabled flag for lazy loading)
+ * @param options - Additional query options
  */
-export function useWorkOrderItemTemplates(shopId: string, options?: { enabled?: boolean }) {
+export function useWorkOrderItemTemplates(
+    shopId: string, 
+    options?: { 
+        enabled?: boolean;
+        page?: number;
+        limit?: number;
+        search?: string;
+        category?: string;
+        itemType?: string;
+    }
+) {
     return useQuery({
-        queryKey: workOrderItemTemplateKeys.list(shopId),
-        queryFn: () => WorkOrderItemTemplatesService.getTemplatesByShopId(shopId),
+        queryKey: [...workOrderItemTemplateKeys.list(shopId), options?.page, options?.limit, options?.search, options?.category, options?.itemType],
+        queryFn: () => WorkOrderItemTemplatesService.getTemplatesByShopId(shopId, {
+            page: options?.page,
+            limit: options?.limit,
+            search: options?.search,
+            category: options?.category,
+            itemType: options?.itemType
+        }),
         enabled: options?.enabled !== undefined ? (!!shopId && options.enabled) : !!shopId,
         staleTime: 30 * 1000, // 30 seconds
+    })
+}
+
+/**
+ * Hook for infinite scroll templates (optimized for large datasets)
+ */
+export function useInfiniteWorkOrderItemTemplates(
+    shopId: string,
+    options?: {
+        enabled?: boolean;
+        limit?: number;
+        search?: string;
+        category?: string;
+        itemType?: string;
+    }
+) {
+    return useInfiniteQuery({
+        queryKey: [...workOrderItemTemplateKeys.all, 'infinite', shopId, options?.search, options?.category, options?.itemType],
+        queryFn: ({ pageParam = 1 }) => 
+            WorkOrderItemTemplatesService.getTemplatesByShopId(shopId, {
+                page: pageParam as number,
+                limit: options?.limit || 20,
+                search: options?.search,
+                category: options?.category,
+                itemType: options?.itemType
+            }),
+        enabled: options?.enabled !== undefined ? (!!shopId && options.enabled) : !!shopId,
+        initialPageParam: 1,
+        getNextPageParam: (lastPage: { templates: WorkOrderItemTemplate[]; total: number; hasMore: boolean }, pages) => {
+            return lastPage.hasMore ? pages.length + 1 : undefined
+        },
+        staleTime: 30 * 1000,
     })
 }
 
@@ -56,6 +104,28 @@ export function useWorkOrderItemTemplate(templateId: string) {
         queryFn: () => WorkOrderItemTemplatesService.getTemplate(templateId),
         enabled: !!templateId,
         staleTime: 30 * 1000,
+    })
+}
+
+/**
+ * Hook to get templates by item type (without search term)
+ */
+export function useWorkOrderItemTemplatesByType(
+    shopId: string, 
+    itemType: string, 
+    options?: { enabled?: boolean; limit?: number }
+) {
+    return useQuery({
+        queryKey: [...workOrderItemTemplateKeys.all, 'by-type', shopId, itemType],
+        queryFn: () => WorkOrderItemTemplatesService.getTemplatesByType(
+            shopId, 
+            itemType, 
+            options?.limit || 10
+        ),
+        enabled: options?.enabled !== undefined 
+            ? (!!shopId && !!itemType && options.enabled)
+            : (!!shopId && !!itemType),
+        staleTime: 30 * 1000, // 30 seconds
     })
 }
 

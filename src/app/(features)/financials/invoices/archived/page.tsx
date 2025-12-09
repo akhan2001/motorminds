@@ -5,22 +5,32 @@ import { Suspense } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/common/feedback/loading-states"
 import { ArchivedInvoicesTable } from "../../components/invoices/archived/ArchivedInvoicesTable"
+import { ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 function ArchivedInvoicesContent() {
+    const router = useRouter()
+
     return (
         <div className="h-screen flex flex-col bg-background">
             {/* <Nav /> */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col ">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">
                         {/* Header */}
                         <div className="mb-8">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h1 className="text-3xl font-bold text-foreground dark:text-white mb-2">
-                                        Archived Invoices
-                                    </h1>
-                                    <p className="text-muted-foreground dark:text-gray-400">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Button variant="ghost" size="icon" onClick={() => router.push('/financials/invoices')} className="-ml-2">
+                                            <ArrowLeft className="h-5 w-5" />
+                                        </Button>
+                                        <h1 className="text-3xl font-bold text-foreground dark:text-white">
+                                            Archived Invoices
+                                        </h1>
+                                    </div>
+                                    <p className="text-muted-foreground dark:text-gray-400 ml-11">
                                         View historical archived invoices
                                     </p>
                                 </div>

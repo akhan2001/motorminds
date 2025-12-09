@@ -15,7 +15,7 @@ import {
     Search
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/currency'
-import { useSearchWorkOrderItemTemplates } from '../../../hooks/use-work-order-item-templates'
+import { useSearchWorkOrderItemTemplates, useWorkOrderItemTemplatesByType } from '../../../hooks/use-work-order-item-templates'
 import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templates'
 
 interface TemplateDropdownProps {
@@ -90,13 +90,24 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
         return () => clearTimeout(timer)
     }, [value])
 
-    // Search templates when user types
-    const { data: templates = [], isLoading } = useSearchWorkOrderItemTemplates(
+    // Get limited templates by type (for showing on focus) - limit to 15 for performance
+    const { data: allTemplates = [], isLoading: isLoadingAll } = useWorkOrderItemTemplatesByType(
+        shopId,
+        itemType,
+        { enabled: isOpen && searchTerm.length < 2, limit: 15 }
+    )
+
+    // Search templates when user types - limit to 10 for performance
+    const { data: searchResults = [], isLoading: isLoadingSearch } = useSearchWorkOrderItemTemplates(
         shopId,
         itemType,
         searchTerm,
-        { enabled: searchTerm.length >= 2 }
+        { enabled: searchTerm.length >= 2, limit: 10 }
     )
+
+    // Use search results if user is typing, otherwise show limited templates
+    const templates = searchTerm.length >= 2 ? searchResults : allTemplates
+    const isLoading = searchTerm.length >= 2 ? isLoadingSearch : isLoadingAll
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -113,7 +124,10 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value
         onChange(newValue)
-        setIsOpen(newValue.length >= 2) // Show dropdown when user types 2+ characters
+        // Keep dropdown open if it was already open, or open it if user types
+        if (isOpen || newValue.length > 0) {
+            setIsOpen(true)
+        }
     }
 
     const handleTemplateClick = (template: WorkOrderItemTemplate) => {
@@ -123,9 +137,8 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
     }
 
     const handleInputFocus = () => {
-        if (value.length >= 2) {
-            setIsOpen(true)
-        }
+        // Always show dropdown on focus
+        setIsOpen(true)
     }
 
     const showDropdown = isOpen && !disabled && (templates.length > 0 || isLoading)
@@ -143,14 +156,12 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
                     disabled={disabled}
                     className="pr-8"
                 />
-                {value.length >= 2 && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        {isLoading && (
-                            <div className="animate-spin rounded-full h-3 w-3 border-b border-muted-foreground"></div>
-                        )}
-                        <Search className="h-3 w-3 text-muted-foreground" />
-                    </div>
-                )}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {isLoading && (
+                        <div className="animate-spin rounded-full h-3 w-3 border-b border-muted-foreground"></div>
+                    )}
+                    <Search className="h-3 w-3 text-muted-foreground" />
+                </div>
             </div>
 
             {/* Dropdown */}
@@ -239,6 +250,18 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
                                     </div>
                                 </button>
                             ))}
+                            
+                            {/* Show more indicator when there are likely more templates */}
+                            {templates.length >= (searchTerm.length >= 2 ? 10 : 15) && (
+                                <div className="px-3 py-2 text-center border-t border-border dark:border-[#2a2a2a]">
+                                    <p className="text-xs text-muted-foreground dark:text-gray-500">
+                                        {searchTerm.length >= 2 
+                                            ? "Showing top 10 results. Keep typing to refine search."
+                                            : "Showing first 15 templates. Use search to find more."
+                                        }
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     ) : null}
                 </div>

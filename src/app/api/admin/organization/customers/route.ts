@@ -106,6 +106,7 @@ export async function GET(request: NextRequest) {
                 customer_phone,
                 customer_address,
                 shop_id,
+                organization_id,
                 created_at,
                 updated_at,
                 notes,

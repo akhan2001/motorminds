@@ -43,9 +43,9 @@ export async function updateSession(request: NextRequest) {
 		return supabaseResponse;
 	}
 
-	// IMPORTANT: Avoid writing any logic between createServerClient and
-	// supabase.auth.getUser(). A simple mistake could make it very hard to debug
-	// issues with users being randomly logged out.
+	// IMPORTANT: getUser() performs local JWT validation (not a network call)
+	// This is necessary for security - middleware must verify auth server-side
+	// The thundering herd fix is on the client side via centralized AuthProvider
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
