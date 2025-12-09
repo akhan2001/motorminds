@@ -22,6 +22,36 @@ import { getVehicleHistoryTool } from '@/app/(features)/ai/AIDiagnostics/tools/v
 import { estimateRepairCostTool } from '@/app/(features)/ai/AIDiagnostics/tools/cost-estimation-tools';
 import { AI_DIAGNOSTICS_PROMPT } from '@/app/(features)/ai/AIDiagnostics/lib/prompts';
 
+// Convert UI messages (with parts) to standard messages (with role and content)
+function convertUIMessagesToStandard(messages: any[]): Array<{ role: 'user' | 'assistant' | 'system'; content: string }> {
+    return messages.map((msg: any) => {
+        // If message already has content (standard format), return as-is
+        if (msg.content && typeof msg.content === 'string') {
+            return {
+                role: msg.role,
+                content: msg.content
+            };
+        }
+
+        // If message has parts (UI message format), extract text content
+        if (msg.parts && Array.isArray(msg.parts)) {
+            const textParts = msg.parts.filter((part: any) => part.type === 'text');
+            const content = textParts.map((part: any) => part.text).join('');
+            
+            return {
+                role: msg.role,
+                content: content
+            };
+        }
+
+        // Fallback: try to extract content from message
+        return {
+            role: msg.role || 'user',
+            content: msg.text || msg.content || ''
+        };
+    });
+}
+
 export async function POST(req: NextRequest) {
     try {
         // Parse request body
@@ -94,6 +124,9 @@ export async function POST(req: NextRequest) {
             estimateRepairCost: estimateRepairCostTool
         };
 
+        // Convert UI messages to standard format for streamText
+        const standardMessages = convertUIMessagesToStandard(messages);
+
         // Use OpenAI GPT-4 as primary model
         // Updated to use gpt-4o which is supported in AI SDK v5
         const model = openai('gpt-4o');
@@ -102,7 +135,7 @@ export async function POST(req: NextRequest) {
         const result = await streamText({
             model,
             system: systemMessage,
-            messages,
+            messages: standardMessages,
             tools,
             temperature: 0.7,
             onError: ({ error }: { error: unknown }) => {
