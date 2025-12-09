@@ -532,6 +532,37 @@ export interface RateLimitInfo {
     resetTime: number;
 }
 
+// Estimated Work Times Types (Summary endpoint)
+export interface EstimatedWorkTimeItem {
+    WorkTimeItemId: number;
+    GroupId: number;
+    GroupName: string;
+    ContentSilo: number;
+    ItemDescription: string;
+    WorkTime: number; // Hours
+}
+
+export interface EstimatedWorkTimesStatistics {
+    TotalItems: number;
+    PageIndex: number;
+    ItemsPerPage: number;
+}
+
+export interface EstimatedWorkTimesResponse {
+    WorkTimeItems: EstimatedWorkTimeItem[];
+    Statistics: EstimatedWorkTimesStatistics;
+}
+
+export interface EstimatedWorkTimesOptions extends MotorVehicleAttributeOptions {
+    contentSilos?: number[]; // ContentSilos parameter
+    include?: string[]; // Include parameter (e.g., 'Counts')
+    attributeStandard?: string; // AttributeStandard parameter
+    searchTerm?: string; // Search filter
+    vmrsCode?: string; // VMRS code filter
+    itemsPerPage?: number; // Pagination
+    pageIndex?: number; // Pagination
+}
+
 // Cache Types
 export interface CacheEntry<T> {
     data: T;

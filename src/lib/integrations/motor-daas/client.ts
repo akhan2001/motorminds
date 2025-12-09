@@ -16,6 +16,8 @@ import {
     WiringDiagramResponse,
     BulkVehicleAttributesResponse,
     RecommendedFluidsResponse,
+    EstimatedWorkTimesResponse,
+    EstimatedWorkTimesOptions,
     MotorDaasError
 } from './types';
 
@@ -446,6 +448,83 @@ export class MotorDaasClient {
         this.cache.set(cacheKey, workTimeResponse, 43200);
 
         return workTimeResponse;
+    }
+
+    /**
+     * Get estimated work times summary - simpler format with WorkTimeItems
+     * Returns a summary list of work time operations with basic information
+     * Based on MOTOR API: /Information/Vehicles/Attributes/BaseVehicleID/{ID}/Content/Summaries/Of/EstimatedWorkTimes
+     *
+     * Example URL:
+     * https://api.motor.com/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Summaries/Of/EstimatedWorkTimes?ContentSilos=28&Include=Counts&EN=4214&AttributeStandard=MOTOR
+     */
+    async getEstimatedWorkTimesSummary(
+        baseVehicleId: number,
+        options?: EstimatedWorkTimesOptions
+    ): Promise<EstimatedWorkTimesResponse> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/EstimatedWorkTimes`;
+
+        const params: Record<string, string | number | number[] | string[]> = {
+            AttributeStandard: options?.attributeStandard || 'MOTOR'
+        };
+
+        // Content Silos (28 = Mechanical Repair Labor (GEN5), 103 = HD Estimated Work Times)
+        if (options?.contentSilos) {
+            params.ContentSilos = options.contentSilos;
+        }
+
+        // Include additional data (e.g., 'Counts')
+        if (options?.include) {
+            params.Include = options.include;
+        }
+
+        // Pagination
+        if (options?.itemsPerPage) {
+            params.ItemsPerPage = options.itemsPerPage;
+        }
+        if (options?.pageIndex !== undefined) {
+            params.PageIndex = options.pageIndex;
+        }
+
+        // Search filters
+        if (options?.searchTerm) {
+            params.SearchTerm = options.searchTerm;
+        }
+        if (options?.vmrsCode) {
+            params.VMRSCode = options.vmrsCode;
+        }
+
+        // Vehicle attribute IDs
+        if (options?.countryId) params.CO = options.countryId;
+        if (options?.engineId) params.EN = options.engineId;
+        if (options?.submodelId) params.SM = options.submodelId;
+        if (options?.transmissionId) params.TR = options.transmissionId;
+        if (options?.driveTypeId) params.DT = options.driveTypeId;
+        if (options?.bodyStyleId) params.BS = options.bodyStyleId;
+        if (options?.bedTypeId) params.BD = options.bedTypeId;
+        if (options?.brakeTypeId) params.BR = options.brakeTypeId;
+        if (options?.axleTypeId) params.AX = options.axleTypeId;
+        if (options?.cabTypeId) params.CB = options.cabTypeId;
+        if (options?.springId) params.SP = options.springId;
+        if (options?.steeringId) params.ST = options.steeringId;
+        if (options?.wheelBaseId) params.WB = options.wheelBaseId;
+        if (options?.manufactureBodyCodeId) params.MB = options.manufactureBodyCodeId;
+
+        const cacheKey = MotorDaasCache.generateKey(endpoint, params);
+
+        const cached = this.cache.get<EstimatedWorkTimesResponse>(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Make request - this endpoint returns simpler format:
+        // { WorkTimeItems: [...], Statistics: { TotalItems, PageIndex, ItemsPerPage } }
+        const response = await this.makeRequest<EstimatedWorkTimesResponse>(endpoint, 'GET', params);
+
+        // Cache for 12 hours
+        this.cache.set(cacheKey, response, 43200);
+
+        return response;
     }
 
     /**
