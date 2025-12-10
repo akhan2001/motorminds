@@ -36,9 +36,9 @@ export const TOOL_CATEGORIES = {
     // UI Tools (always available)
     UI: 'ui',
 
-    // MOTOR Api Tool
+    // MOTOR API Tool
     MOTOR_API: 'motor-api',
-    
+
     // CRM Tool
     CRM: 'crm',
 
@@ -74,4 +74,57 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     getAppointment: TOOL_CATEGORIES.CRM,
     getInvoice: TOOL_CATEGORIES.CRM,
     estimateRepairCost: TOOL_CATEGORIES.CRM,
+
+    // Online Tools
+    lookupForums: TOOL_CATEGORIES.ONLINE,
+    lookupVideos: TOOL_CATEGORIES.ONLINE,
+    lookupArticles: TOOL_CATEGORIES.ONLINE,
+}
+
+
+/**
+ * Get the minimum opt-in level required for a tool category
+ */
+function getMinimumOptInLevel(category: ToolCategory): AiOptInLevel | null {
+    switch (category) {
+        case TOOL_CATEGORIES.UI:
+            return null // Always available
+        case TOOL_CATEGORIES.MOTOR_API:
+            return 'schema'
+        case TOOL_CATEGORIES.CRM:
+            return 'schema'
+        case TOOL_CATEGORIES.ONLINE:
+            return 'schema_and_log'
+        default:
+            return null
+    }
+}
+
+/**
+* Create a privacy message tool that explains why the tool is not available
+*/
+export function createPrivacyMessageTool(toolInstance: Tool<any, any>) {
+    const privacyMessage =
+        "You don't have permission to use this tool. This is an organization-wide setting requiring you to opt-in. Please choose your preferred data sharing level in your organization's settings. Supabase Assistant uses Amazon Bedrock, which does not store or log your prompts and completions, use them to train AWS models, or distribute them to third parties. By default, no data is shared. Granting permission allows Supabase to send information (like schema, logs, or data, depending on your chosen level) to Bedrock solely to generate responses."
+    const condensedPrivacyMessage =
+        'Requires opting in to sending data to Bedrock which does not store, train on, or distribute it. You can opt in via organization settings.'
+
+    return {
+        ...toolInstance,
+        description: `${toolInstance.description} (Note: ${condensedPrivacyMessage})`,
+        execute: async (_args: any, _context: any) => ({ status: privacyMessage }),
+    }
+}
+
+/**
+* Filter tools based on the AI opt-in level
+*/
+export function filterToolsByOptInLevel(tools: ToolSet): ToolSet {
+    return Object.fromEntries(
+        Object.entries(tools)
+            .filter(([toolName]) => TOOL_CATEGORY_MAP[toolName] !== undefined)
+            .map(([toolName, toolInstance]) => {
+                return [toolName, toolInstance]
+            })
+    )
 }
