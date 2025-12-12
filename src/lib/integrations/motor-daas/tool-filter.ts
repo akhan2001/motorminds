@@ -66,14 +66,14 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     getTSB: TOOL_CATEGORIES.MOTOR_API,
     getWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
     getBulkVehicleAttributes: TOOL_CATEGORIES.MOTOR_API,
+    estimateRepairCost: TOOL_CATEGORIES.MOTOR_API,
 
     // CRM Tool
-    getWorkOrder: TOOL_CATEGORIES.CRM,
     getCustomerInfo: TOOL_CATEGORIES.CRM,
     getVehicleHistory: TOOL_CATEGORIES.CRM,
     getAppointment: TOOL_CATEGORIES.CRM,
+    getWorkOrder: TOOL_CATEGORIES.CRM,
     getInvoice: TOOL_CATEGORIES.CRM,
-    estimateRepairCost: TOOL_CATEGORIES.CRM,
 
     lookupForums: TOOL_CATEGORIES.ONLINE,
 }

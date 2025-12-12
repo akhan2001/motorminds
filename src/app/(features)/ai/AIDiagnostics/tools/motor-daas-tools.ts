@@ -267,7 +267,7 @@ export const getWorkTimeTool = tool<
     },
     { success: boolean; data?: WorkTimeResponse; error?: string; message: string }
 >({
-    description: 'Get estimated labor times for repair operations to calculate accurate labor costs. Returns summary information for estimated work time applications including base labor time, additional labor time, warranty labor time, required skill level, and service type. Supports searching by operation name, VMRS code, taxonomy, and vehicle attributes.',
+    description: 'Get estimated work times, labor times, or repair hours for vehicle operations. Use this when the user asks about "estimated work time", "labor time", "work hours", "repair time", "how long", "time estimate", or similar questions about repair operations. Returns summary information for estimated work time applications including base labor time, additional labor time, warranty labor time, required skill level, and service type. Supports searching by operation name (e.g., "brake pad replacement", "oil change", "spark plug"), VMRS code, taxonomy, and vehicle attributes. Defaults to Mechanical Repair Labor (GEN5) content silo.',
     inputSchema: z.object({
         baseVehicleId: z.number().describe('Base vehicle ID from vehicle info'),
         searchTerm: z.string().optional().describe('Search term for operation name (searches against taxonomy literal name field, supports partial and complete matches)'),
@@ -307,6 +307,7 @@ export const getWorkTimeTool = tool<
         pageIndex
     }) => {
         try {
+            // Set defaults: ContentSilos=28 (Mechanical Repair Labor GEN5), Include=Counts
             const workTimes = await motorClient.getEstimatedWorkTimes(baseVehicleId, {
                 searchTerm,
                 vmrsCode,
@@ -316,12 +317,12 @@ export const getWorkTimeTool = tool<
                 transmissionId,
                 driveTypeId,
                 bodyStyleId,
-                contentSilos,
+                contentSilos: contentSilos || [28], // Default to Mechanical Repair Labor (GEN5)
                 taxonomyIDs,
                 groupID,
                 subGroupID,
                 systemID,
-                include,
+                include: include || ['Counts'], // Default to include counts
                 itemsPerPage,
                 pageIndex
             });
