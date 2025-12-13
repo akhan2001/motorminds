@@ -22,5 +22,4 @@ export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 export const DATE_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ'
 export const DATETIME_FORMAT = 'DD MMM YYYY, HH:mm:ss (ZZ)'
 
-
 export const DEVELOPER_HUB = process.env.NEXT_PUBLIC_DEVELOPER_HUB || 'https://www.motor.com/developer-hub/'

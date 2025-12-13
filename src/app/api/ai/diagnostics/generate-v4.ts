@@ -2,6 +2,13 @@ import { convertToModelMessages, type ModelMessage, stepCountIs, streamText } fr
 import type { NextApiRequest, NextApiResponse } from 'next'
 import z from 'zod'
 import { IS_PLATFORM } from '@/lib/constants'
+import {
+    AI_DIAGNOSTICS_PROMPT,
+    LIMITATIONS_PROMPT,
+    COMPLIANCE_PROMPT,
+    MOTOR_API_PROMPT,
+    DIAGNOSTIC_WORKFLOW_PROMPT
+} from '@/app/(features)/ai/AIDiagnostics/lib/prompts'
 
 export const maxDuration = 120
 
@@ -89,7 +96,34 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
     if (IS_PLATFORM && authorization) {
         try {
-            const { aiOptInLevel}
+            
+            const { result: schemas } = 
+            
+            const system = source`
+                ${AI_DIAGNOSTICS_PROMPT}
+                ${LIMITATIONS_PROMPT}
+                ${COMPLIANCE_PROMPT}
+                ${MOTOR_API_PROMPT}
+                ${DIAGNOSTIC_WORKFLOW_PROMPT}
+            `
+
+            const coreMessages: ModelMessage[] = [
+                {
+                    role: 'system',
+                    content: system,
+                    ...AI_DIAGNOSTICS_PROMPT(promptProviderOptions && {
+                        providerOptions: promptProviderOptions,
+                    }),
+                },
+                {
+                    role: 'assistant',
+                    // Add any dynamic context here
+                    content: `The user's current work order is ${workOrderId}. Their vailable schemas are ${schemas.join(', ')}. The current chat name is ${chatName}.`
+                },
+                ...convertToModelMessages(messages),
+            ]
+
+            
         }
     }
 }

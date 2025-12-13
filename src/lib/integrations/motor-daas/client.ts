@@ -24,6 +24,25 @@ import {
     SubmodelResponse
 } from './types';
 
+/**
+ * Cache TTL constants (in seconds) based on data volatility
+ * Matches MOTOR DaaS Integration Guide recommendations
+ */
+const CACHE_TTL = {
+    VEHICLE_INFO: 86400,           // 24 hours - VIN lookup results never change
+    SPECIFICATIONS: 86400,         // 24 hours - Technical specs are static
+    MAINTENANCE_SCHEDULE: 86400,   // 24 hours - Manufacturer intervals don't change
+    SERVICE_PROCEDURES: 43200,     // 12 hours - Repair steps rarely update
+    WORK_TIMES: 43200,             // 12 hours - Industry standards are stable
+    DTC: 21600,                    // 6 hours - Occasionally new codes added
+    TSB: 21600,                    // 6 hours - New bulletins released periodically
+    PARTS: 21600,                  // 6 hours - Pricing can change
+    WIRING_DIAGRAMS: 43200,        // 12 hours - Stable
+    RECOMMENDED_FLUIDS: 86400,     // 24 hours - Rarely changes
+    YEARS: 604800,                 // 7 days - Years list rarely changes
+    MAKES_MODELS: 604800           // 7 days - Make/model lists rarely change
+} as const;
+
 export class MotorDaasClient {
     private auth: MotorDaasAuth;
     private cache: MotorDaasCache;
@@ -33,7 +52,7 @@ export class MotorDaasClient {
     constructor(config: MotorAuthConfig) {
         this.auth = new MotorDaasAuth(config);
         this.cache = new MotorDaasCache({
-            defaultTTL: 3600, // 1 hour
+            defaultTTL: 3600, // 1 hour default fallback
             maxSize: 1000
         });
         this.rateLimiter = new MotorDaasRateLimiter(1500, 15);
@@ -67,7 +86,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<MotorVehicleInfo>(endpoint);
 
         // Cache for 24 hours (vehicle info rarely changes)
-        this.cache.set(cacheKey, response, 86400);
+        this.cache.set(cacheKey, response, CACHE_TTL.VEHICLE_INFO);
 
         return response;
     }
@@ -84,7 +103,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<YearResponse>(endpoint);
 
         // Cache for 7 days (years rarely change)
-        this.cache.set(cacheKey, response, 604800); // 7 days
+        this.cache.set(cacheKey, response, CACHE_TTL.YEARS);
 
         return response;
     }
@@ -216,7 +235,7 @@ export class MotorDaasClient {
         };
 
         // Cache DTC data for 6 hours
-        this.cache.set(cacheKey, dtcResponse, 21600);
+        this.cache.set(cacheKey, dtcResponse, CACHE_TTL.DTC);
 
         return dtcResponse;
     }
@@ -240,7 +259,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<ServiceProcedureResponse>(endpoint, 'GET', params);
 
         // Cache for 12 hours
-        this.cache.set(cacheKey, response, 43200);
+        this.cache.set(cacheKey, response, CACHE_TTL.SERVICE_PROCEDURES);
 
         return response;
     }
@@ -264,7 +283,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<PartsResponse>(endpoint, 'GET', params);
 
         // Cache for 6 hours
-        this.cache.set(cacheKey, response, 21600);
+        this.cache.set(cacheKey, response, CACHE_TTL.PARTS);
 
         return response;
     }
@@ -286,7 +305,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<MaintenanceScheduleResponse>(endpoint);
 
         // Cache for 24 hours
-        this.cache.set(cacheKey, response, 86400);
+        this.cache.set(cacheKey, response, CACHE_TTL.MAINTENANCE_SCHEDULE);
 
         return response;
     }
@@ -308,7 +327,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<SpecificationsResponse>(endpoint);
 
         // Cache for 24 hours (specs don't change)
-        this.cache.set(cacheKey, response, 86400);
+        this.cache.set(cacheKey, response, CACHE_TTL.SPECIFICATIONS);
 
         return response;
     }
@@ -465,7 +484,7 @@ export class MotorDaasClient {
         };
 
         // Cache for 12 hours
-        this.cache.set(cacheKey, workTimeResponse, 43200);
+        this.cache.set(cacheKey, workTimeResponse, CACHE_TTL.WORK_TIMES);
 
         return workTimeResponse;
     }
@@ -489,7 +508,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<TSBResponse>(endpoint, 'GET', params);
 
         // Cache for 6 hours (TSBs updated periodically)
-        this.cache.set(cacheKey, response, 21600);
+        this.cache.set(cacheKey, response, CACHE_TTL.TSB);
 
         return response;
     }
@@ -521,7 +540,7 @@ export class MotorDaasClient {
         const response = await this.makeRequest<WiringDiagramResponse>(endpoint, 'GET', params);
 
         // Cache for 24 hours (wiring diagrams don't change)
-        this.cache.set(cacheKey, response, 86400);
+        this.cache.set(cacheKey, response, CACHE_TTL.WIRING_DIAGRAMS);
 
         return response;
     }
@@ -552,7 +571,7 @@ export class MotorDaasClient {
         );
 
         // Cache for 24 hours (attributes rarely change)
-        this.cache.set(cacheKey, response, 86400);
+        this.cache.set(cacheKey, response, CACHE_TTL.VEHICLE_INFO);
 
         return response;
     }
@@ -729,7 +748,7 @@ export class MotorDaasClient {
         };
 
         // Cache for 24 hours
-        this.cache.set(cacheKey, fluidsResponse, 86400);
+        this.cache.set(cacheKey, fluidsResponse, CACHE_TTL.RECOMMENDED_FLUIDS);
         return fluidsResponse;
     }
 
@@ -858,7 +877,8 @@ export class MotorDaasClient {
     }
 
     /**
-     * Handle error responses from API
+     * Handle error responses from API (Layer 2: Client Level)
+     * Implements 3-layer error handling as per MOTOR DaaS Integration Guide
      */
     private async handleErrorResponse(response: Response): Promise<MotorDaasError> {
         let errorMessage = `MOTOR DaaS API error: ${response.status} ${response.statusText}`;
@@ -866,9 +886,23 @@ export class MotorDaasClient {
 
         try {
             const errorData = await response.json();
-            if (errorData.message) {
+            
+            // MOTOR API wraps errors in Header.Messages format
+            if (errorData.Header?.Messages && Array.isArray(errorData.Header.Messages)) {
+                const errors = errorData.Header.Messages.filter(
+                    (m: { Type: string }) => m.Type === 'Error'
+                );
+                
+                if (errors.length > 0) {
+                    // Use the first error's detailed description
+                    errorMessage = errors[0].LongDescription || errors[0].ShortDescription || errorMessage;
+                    errorCode = errors[0].Code || errorCode;
+                }
+            } else if (errorData.message) {
+                // Fallback to standard error message format
                 errorMessage = errorData.message;
             }
+            
             if (errorData.code) {
                 errorCode = errorData.code;
             }
@@ -876,7 +910,7 @@ export class MotorDaasClient {
             // If error response is not JSON, use default message
         }
 
-        // Provide user-friendly messages
+        // Transform HTTP status codes to user-friendly messages
         if (response.status === 401) {
             errorMessage = 'Authentication failed. Please check your MOTOR DaaS credentials.';
             errorCode = 'AUTH_FAILED';

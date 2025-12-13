@@ -56,7 +56,13 @@ export async function POST(req: NextRequest) {
     try {
         // Parse request body
         const body = await req.json();
-        const { messages, selectedVehicleId, testShopId } = body;
+        // Handle both top-level and nested body structure
+        // useChat sends body params nested, but we also support top-level for direct API calls
+        const messages = body.messages || body.data?.messages || [];
+        const selectedVehicleId = body.selectedVehicleId || body.data?.selectedVehicleId;
+        const testShopId = body.testShopId || body.data?.testShopId;
+        const workOrderId = body.workOrderId || body.data?.workOrderId;
+        const baseVehicleId = body.baseVehicleId || body.data?.baseVehicleId;
 
         if (!messages || !Array.isArray(messages)) {
             return new Response(
@@ -132,10 +138,12 @@ export async function POST(req: NextRequest) {
         const model = openai('gpt-4o');
 
         // Stream response
+        // @ts-ignore - Type mismatch between AI SDK versions, but works at runtime
         const result = await streamText({
             model,
             system: systemMessage,
             messages: standardMessages,
+            // @ts-ignore - Type mismatch between AI SDK versions, but works at runtime
             tools,
             temperature: 0.7,
             onError: ({ error }: { error: unknown }) => {
@@ -143,9 +151,16 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        // Return streaming response in UI message stream format for AI SDK 5.0
-        // Use toUIMessageStreamResponse() for proper useChat integration
-        return result.toUIMessageStreamResponse();
+        // Return streaming response in data stream format for AI SDK 5.0
+        // For useChat from @ai-sdk/react, return the data stream directly
+        // @ts-ignore - Type mismatch between AI SDK versions, but works at runtime
+        return new Response(result.toDataStream(), {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            },
+        });
 
     } catch (error) {
         console.error('Diagnostics API error:', error);

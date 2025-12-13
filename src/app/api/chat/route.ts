@@ -114,6 +114,25 @@ export async function POST(req: NextRequest) {
 		const lookAtDatabase = body.look_at_database;
 		const messages = body.messages ?? [];
 
+		// Check if this is a diagnostics request (has selectedVehicleId, workOrderId, or baseVehicleId)
+		// Forward to diagnostics endpoint
+		if (body.selectedVehicleId || body.workOrderId || body.baseVehicleId) {
+			const diagnosticsResponse = await fetch(new URL("/api/ai/diagnostics", req.url), {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body)
+			});
+
+			if (!diagnosticsResponse.ok) {
+				throw new Error("Failed to fetch from diagnostics endpoint");
+			}
+
+			// Return the diagnostics response stream
+			return diagnosticsResponse;
+		}
+
 		// Check if this is a car-specific query
 		const lastMessage = messages[messages.length - 1];
 		const carQueryDetection = await detectCarQuery(lastMessage.content);

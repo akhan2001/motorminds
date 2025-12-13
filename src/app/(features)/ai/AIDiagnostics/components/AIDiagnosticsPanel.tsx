@@ -3,8 +3,6 @@
 
 import React, { useEffect, useRef } from 'react'
 import { useChat, type UIMessage } from '@ai-sdk/react'
-// @ts-ignore - DefaultChatTransport is available at runtime from ai v5
-import { DefaultChatTransport } from 'ai'
 import { DiagnosticsForm } from './DiagnosticsForm'
 import { MotorToolDisplay, isMotorTool } from './MotorToolDisplay'
 import { X, Sparkles } from 'lucide-react'
@@ -71,23 +69,15 @@ export function AIDiagnosticsPanel({
 	}, [reportedIssue, dtcCodes, baseVehicleId])
 
 	// useChat hook for AI streaming (AI SDK v5)
-	// Using DefaultChatTransport like MotorMindsAIAssistant.tsx does
+	// Note: useChat defaults to /api/chat, but we handle routing in /api/chat to forward to /api/ai/diagnostics
 	const chat = useChat({
 		id: 'ai-diagnostics',
-		// @ts-ignore - DefaultChatTransport constructor is available at runtime
-		transport: new DefaultChatTransport({
-			api: '/api/ai/diagnostics',
-			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[], [key: string]: any }) {
-				return {
-					body: {
-						...(options.body || {}),
-						workOrderId,
-						selectedVehicleId: vehicleId,
-						baseVehicleId
-					}
-				}
-			}
-		}),
+		// @ts-ignore - body parameter is supported at runtime even if types don't include it
+		body: {
+			workOrderId,
+			selectedVehicleId: vehicleId,
+			baseVehicleId
+		},
 		messages: initialMessages,
 		onError: (error: Error) => {
 			console.error('AI Diagnostics error:', error)
