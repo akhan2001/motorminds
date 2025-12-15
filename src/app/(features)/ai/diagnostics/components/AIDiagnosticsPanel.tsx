@@ -29,43 +29,10 @@ export function AIDiagnosticsPanel({
 	className = '',
 	onClose
 }: AIDiagnosticsPanelProps) {
-	// Build initial messages with context
+	// Start with empty messages - context will be passed via API body params
 	const initialMessages = useMemo<UIMessage[]>(() => {
-		if (!reportedIssue && dtcCodes.length === 0 && !baseVehicleId) {
-			return []
-		}
-
-		let contextParts: string[] = []
-
-		if (reportedIssue) {
-			contextParts.push(`Customer reported: ${reportedIssue}`)
-		}
-
-		if (dtcCodes.length > 0) {
-			contextParts.push(`DTC codes: ${dtcCodes.join(', ')}`)
-		}
-
-		if (baseVehicleId) {
-			contextParts.push(`Base Vehicle ID: ${baseVehicleId}`)
-		}
-
-		if (contextParts.length > 0) {
-			return [
-				{
-					id: 'initial-context',
-					role: 'user' as const,
-					parts: [
-						{
-							type: 'text',
-							text: `I need help diagnosing this issue:\n\n${contextParts.join('\n')}`
-						}
-					]
-				}
-			]
-		}
-
 		return []
-	}, [reportedIssue, dtcCodes, baseVehicleId])
+	}, [])
 
 	// useChat hook for AI streaming (AI SDK v5)
 	// Using DefaultChatTransport to properly configure the API endpoint
@@ -142,26 +109,6 @@ export function AIDiagnosticsPanel({
 										isLoading={isChatLoading && message.id === chat.messages[chat.messages.length - 1]?.id}
 									/>
 								))}
-								{isChatLoading && (
-									<div className="flex justify-start mt-4">
-										<div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
-											<div className="flex items-center space-x-2">
-												<div className="flex space-x-1">
-													<div className="w-2 h-2 bg-red-600 rounded-full animate-bounce" />
-													<div
-														className="w-2 h-2 bg-red-600 rounded-full animate-bounce"
-														style={{ animationDelay: '0.1s' }}
-													/>
-													<div
-														className="w-2 h-2 bg-red-600 rounded-full animate-bounce"
-														style={{ animationDelay: '0.2s' }}
-													/>
-												</div>
-												<span className="text-sm text-muted-foreground">Mia is thinking...</span>
-											</div>
-										</div>
-									</div>
-								)}
 							</div>
 						</ConversationContent>
 						<ConversationScrollButton />

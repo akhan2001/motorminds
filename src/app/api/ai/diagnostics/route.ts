@@ -1,4 +1,5 @@
 import { streamText, convertToModelMessages, stepCountIs } from 'ai'
+
 import { openai } from '@ai-sdk/openai'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
@@ -65,6 +66,10 @@ export async function POST(request: NextRequest) {
 		// 5. Clean messages (last 7 only)
 		const cleanedMessages = (messages || []).slice(-7)
 
+		// #region agent log
+		fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'route.ts:67', message: 'cleanedMessages before convertToModelMessages', data: { count: cleanedMessages.length, messages: cleanedMessages.map((m: any) => ({ id: m.id, role: m.role, hasParts: !!m.parts })) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run2', hypothesisId: 'B' }) }).catch(() => { });
+		// #endregion
+
 		// 6. Get model
 		const modelResult = await getModel({
 			provider: 'openai',
@@ -101,6 +106,8 @@ export async function POST(request: NextRequest) {
 		`
 
 		// 9. Build messages
+		const convertedMessages = convertToModelMessages(cleanedMessages)
+
 		const coreMessages = [
 			{
 				role: 'system' as const,
@@ -113,7 +120,7 @@ export async function POST(request: NextRequest) {
 				role: 'assistant' as const,
 				content: `Shop ID: ${shopId}. ${contextString}`,
 			},
-			...convertToModelMessages(cleanedMessages),
+			...convertedMessages,
 		]
 
 		// 10. Setup abort controller
@@ -142,7 +149,8 @@ export async function POST(request: NextRequest) {
 		})
 
 		// 14. Return stream
-		return result.toDataStreamResponse({
+		return result.toUIMessageStreamResponse({
+			originalMessages: cleanedMessages,
 			sendReasoning: true,
 			onError: (error: any) => {
 				if (error == null) return 'unknown error'

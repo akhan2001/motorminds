@@ -16,7 +16,6 @@ const examplePrompts = [
 export function DiagnosticsOnboarding({ onSendMessage }: DiagnosticsOnboardingProps) {
 	return (
 		<div className="flex flex-col items-center justify-center h-full text-center">
-			<Sparkles className="w-12 h-12 text-red-600 dark:text-red-500 mb-4 opacity-50" />
 			<h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
 				AI-Powered Diagnostics
 			</h3>
