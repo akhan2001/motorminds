@@ -59,12 +59,12 @@ export class MotorDaasClient {
         }
 
         const finalUrl = url.toString();
-        console.log('[MOTOR DaaS] HelloWorld request:', {
-            url: finalUrl,
-            uriPath,
-            method: 'GET',
-            hasAuthParams: !!authParams.ApiKey
-        });
+        // console.log('[MOTOR DaaS] HelloWorld request:', {
+        //     url: finalUrl,
+        //     uriPath,
+        //     method: 'GET',
+        //     hasAuthParams: !!authParams.ApiKey
+        // });
 
         const response = await fetch(finalUrl, {
             method: 'GET',
@@ -82,7 +82,7 @@ export class MotorDaasClient {
         }
 
         const data: MotorApiResponse<{ Text: string }> = await response.json();
-        console.log('[MOTOR DaaS] HelloWorld success:', data);
+        // console.log('[MOTOR DaaS] HelloWorld success:', data);
         
         // Extract Body if wrapped
         return data.Body || data as any;

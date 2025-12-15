@@ -8,6 +8,9 @@ interface MessageInfoContextValue {
 	message: UIMessage
 	isLoading?: boolean
 	readOnly?: boolean
+	isUserMessage?: boolean
+	state?: 'editing' | 'idle'
+	isLastMessage?: boolean
 }
 
 interface MessageActionsContextValue {
@@ -42,7 +45,10 @@ export function MessageProvider({
 		id,
 		message,
 		isLoading,
-		readOnly
+		readOnly,
+		isUserMessage: message.role === 'user',
+		state: 'idle',
+		isLastMessage: false
 	}
 
 	const actionsValue: MessageActionsContextValue = {

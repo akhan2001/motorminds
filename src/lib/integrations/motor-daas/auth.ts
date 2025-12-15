@@ -78,16 +78,16 @@ export class MotorDaasAuth {
         // + becomes %2B, / becomes %2F, = becomes %3D
         const encodedSig = this.urlEncodeSignature(signature);
 
-        console.log('[MOTOR Auth] Building query params:', {
-            httpVerb,
-            uriPath,
-            epoch,
-            publicKey: this.publicKey.substring(0, 10) + '...',
-            signatureLength: signature.length,
-            encodedSigLength: encodedSig.length,
-            signaturePreview: signature.substring(0, 20) + '...',
-            encodedSigPreview: encodedSig.substring(0, 30) + '...'
-        });
+        // console.log('[MOTOR Auth] Building query params:', {
+        //     httpVerb,
+        //     uriPath,
+        //     epoch,
+        //     publicKey: this.publicKey.substring(0, 10) + '...',
+        //     signatureLength: signature.length,
+        //     encodedSigLength: encodedSig.length,
+        //     signaturePreview: signature.substring(0, 20) + '...',
+        //     encodedSigPreview: encodedSig.substring(0, 30) + '...'
+        // });
 
         return {
             Scheme: 'Shared',

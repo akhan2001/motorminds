@@ -35,7 +35,6 @@ export function AIDiagnosticsPanel({
 	}, [])
 
 	// useChat hook for AI streaming (AI SDK v5)
-	// Using DefaultChatTransport to properly configure the API endpoint
 	const chat = useChat({
 		id: 'ai-diagnostics',
 		transport: new DefaultChatTransport({
@@ -46,9 +45,9 @@ export function AIDiagnosticsPanel({
 					body: {
 						messages,
 						shopId: shopId || '',
-						vehicleId,
-						baseVehicleId,
-						workOrderId
+						workOrderId,
+						selectedVehicleId: vehicleId,
+						baseVehicleId
 					}
 				}
 			}
@@ -78,22 +77,6 @@ export function AIDiagnosticsPanel({
 
 	return (
 		<div className={`flex flex-col h-full bg-white dark:bg-[#0a0a0a] ${className}`}>
-			{/* Debug info */}
-			{process.env.NODE_ENV === 'development' && (
-				<div className="flex-shrink-0 px-6 py-2 text-xs text-gray-500 border-b border-gray-200 dark:border-[#222222]">
-					Messages: {chat.messages.length} | Status:{' '}
-					<span
-						className={`font-bold ${chat.status === 'ready'
-								? 'text-green-500'
-								: chat.status === 'streaming'
-									? 'text-yellow-500'
-									: 'text-red-500'
-							}`}
-					>
-						{chat.status}
-					</span>
-				</div>
-			)}
 
 			{/* Conversation Container */}
 			<Conversation>

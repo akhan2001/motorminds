@@ -15,7 +15,7 @@ export const helloWorldTool = tool({
 	inputSchema: z.object({}),
 	execute: async () => {
 		try {
-			console.log('[helloWorldTool] Starting MOTOR DaaS HelloWorld call...')
+			// console.log('[helloWorldTool] Starting MOTOR DaaS HelloWorld call...')
 			const result = await motorClient.helloWorld()
 			console.log('[helloWorldTool] Success:', result)
 			return {

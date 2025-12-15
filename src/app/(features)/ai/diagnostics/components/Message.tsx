@@ -83,6 +83,36 @@ function MessageContent({ message, isUser }: MessageContentProps) {
 	}
 
 	// Assistant messages: show all parts (text, tools, etc.)
-	return <MessagePartSwitcher message={message} />
+	const parts = message.parts || []
+	const partsCount = parts.length
+
+	// If no parts, check if message has content directly (fallback for older format)
+	if (partsCount === 0) {
+		const content = (message as any).content
+		if (content) {
+			return (
+				<div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
+					{content}
+				</div>
+			)
+		}
+		return (
+			<div className="text-sm text-gray-500 dark:text-gray-400 italic">
+				No content available
+			</div>
+		)
+	}
+
+	return (
+		<div className="space-y-2">
+			{parts.map((part: any, idx: number) => (
+				<MessagePartSwitcher
+					key={idx}
+					part={part}
+					isLastPart={idx === partsCount - 1}
+				/>
+			))}
+		</div>
+	)
 }
 
