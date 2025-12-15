@@ -22,22 +22,32 @@ export class MotorDaasClient {
 
     /**
      * Simple HelloWorld test
-     * Endpoint: /v1/Getting/Started/HelloWorld
+     * Endpoint: /v1/HelloWorld
      */
     async helloWorld(correlationId?: string): Promise<{ Text: string }> {
-        const uriPath = '/v1/Getting/Started/HelloWorld';
-        const url = new URL(`${this.baseUrl}/Getting/Started/HelloWorld`);
+        const uriPath = '/v1/HelloWorld';
+        // Ensure baseUrl doesn't have trailing slash, then append HelloWorld
+        const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+        const url = new URL(`${baseUrlClean}/HelloWorld`);
         
         // Use query string authentication (works in browsers)
+        // Build query string manually to avoid double-encoding the signature
         const authParams = this.auth.buildAuthQueryParams('GET', uriPath);
-        authParams.forEach((value, key) => {
-            url.searchParams.set(key, value);
-        });
-
+        const queryParts: string[] = [];
+        
+        // Add params in correct order: Scheme, ApiKey, Sig, Xdate
+        queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
+        queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
+        queryParts.push(`Sig=${authParams.Sig}`); // Already encoded, don't encode again
+        queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
+        
         // Add correlation ID if provided
         if (correlationId) {
-            url.searchParams.set('xcorrelationid', correlationId);
+            queryParts.push(`xcorrelationid=${encodeURIComponent(correlationId)}`);
         }
+        
+        // Set the query string manually
+        url.search = queryParts.join('&');
         
         const headers: HeadersInit = {
             'Accept': 'application/json'
@@ -48,9 +58,23 @@ export class MotorDaasClient {
             headers['X-CorrelationID'] = correlationId;
         }
 
-        const response = await fetch(url.toString(), {
+        const finalUrl = url.toString();
+        console.log('[MOTOR DaaS] HelloWorld request:', {
+            url: finalUrl,
+            uriPath,
+            method: 'GET',
+            hasAuthParams: !!authParams.ApiKey
+        });
+
+        const response = await fetch(finalUrl, {
             method: 'GET',
             headers
+        });
+
+        console.log('[MOTOR DaaS] HelloWorld response:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
         });
 
         if (!response.ok) {
@@ -58,6 +82,7 @@ export class MotorDaasClient {
         }
 
         const data: MotorApiResponse<{ Text: string }> = await response.json();
+        console.log('[MOTOR DaaS] HelloWorld success:', data);
         
         // Extract Body if wrapped
         return data.Body || data as any;
@@ -74,25 +99,34 @@ export class MotorDaasClient {
     ): Promise<T> {
         // Ensure endpoint starts with /v1
         const uriPath = endpoint.startsWith('/v1') ? endpoint : `/v1${endpoint}`;
-        const url = new URL(`${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
+        const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+        const url = new URL(`${baseUrlClean}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
 
         // Add authentication query params
+        // Build query string manually to avoid double-encoding the signature
         const authParams = this.auth.buildAuthQueryParams(method, uriPath);
-        authParams.forEach((value, key) => {
-            url.searchParams.set(key, value);
-        });
+        const queryParts: string[] = [];
+        
+        // Add params in correct order: Scheme, ApiKey, Sig, Xdate
+        queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
+        queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
+        queryParts.push(`Sig=${authParams.Sig}`); // Already encoded, don't encode again
+        queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
 
         // Add custom query params
-            if (queryParams) {
-                Object.entries(queryParams).forEach(([key, value]) => {
-                url.searchParams.set(key, value);
+        if (queryParams) {
+            Object.entries(queryParams).forEach(([key, value]) => {
+                queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
             });
         }
 
         // Add correlation ID
         if (correlationId) {
-            url.searchParams.set('xcorrelationid', correlationId);
+            queryParts.push(`xcorrelationid=${encodeURIComponent(correlationId)}`);
         }
+        
+        // Set the query string manually
+        url.search = queryParts.join('&');
 
         const headers: HeadersInit = {
             'Accept': 'application/json'
@@ -120,7 +154,10 @@ export class MotorDaasClient {
         let errorCode = 'API_ERROR';
 
         try {
-            const errorData: MotorApiResponse<unknown> = await response.json();
+            const errorText = await response.text();
+            console.error('[MOTOR DaaS] Error response body:', errorText);
+            
+            const errorData: MotorApiResponse<unknown> = JSON.parse(errorText);
             
             if (errorData.Header?.Messages) {
                 const errors = errorData.Header.Messages.filter(m => m.Type === 'Error');
@@ -129,7 +166,8 @@ export class MotorDaasClient {
                     errorCode = errors[0].Code || errorCode;
                 }
             }
-        } catch {
+        } catch (parseError) {
+            console.error('[MOTOR DaaS] Failed to parse error response:', parseError);
             // Not JSON, use default
         }
 

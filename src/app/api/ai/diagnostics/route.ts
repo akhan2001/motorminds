@@ -66,10 +66,6 @@ export async function POST(request: NextRequest) {
 		// 5. Clean messages (last 7 only)
 		const cleanedMessages = (messages || []).slice(-7)
 
-		// #region agent log
-		fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'route.ts:67', message: 'cleanedMessages before convertToModelMessages', data: { count: cleanedMessages.length, messages: cleanedMessages.map((m: any) => ({ id: m.id, role: m.role, hasParts: !!m.parts })) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run2', hypothesisId: 'B' }) }).catch(() => { });
-		// #endregion
-
 		// 6. Get model
 		const modelResult = await getModel({
 			provider: 'openai',
@@ -94,16 +90,32 @@ export async function POST(request: NextRequest) {
 					? `Vehicle ID: ${vehicleId}`
 					: 'No vehicle context'
 
-		// 8. Build system prompt
-		const systemPrompt = source`
-			${AI_DIAGNOSTICS_PROMPT}
-			${DIAGNOSTIC_WORKFLOW_PROMPT}
-			${LIMITATIONS_PROMPT}
-			${COMPLIANCE_PROMPT}
-			${MOTOR_API_PROMPT}
-			${contextString ? `Current vehicle context: ${contextString}` : ''}
-			Be helpful, accurate, and professional.
-		`
+		// 8. Build system prompt - Simplified for Hello World testing
+		const systemPrompt = `You are an automotive diagnostic AI assistant integrated with MOTOR DaaS.
+
+Your current capabilities:
+- Test MOTOR DaaS API connection using the helloWorld tool
+
+How to use your tools:
+- When users ask to "test the connection", "say hello", or want to verify the MOTOR API is working, use the helloWorld tool
+- The helloWorld tool will test the connection to MOTOR DaaS and return a simple "Hello World" message
+
+Scope:
+- You MUST only answer questions related to vehicle diagnostics and automotive topics
+- You MUST decline all other questions politely and redirect to automotive topics
+
+${contextString ? `Current vehicle context: ${contextString}` : ''}
+
+Be helpful, accurate, and professional.`
+		// const systemPrompt = source`
+		// 	${AI_DIAGNOSTICS_PROMPT}
+		// 	${DIAGNOSTIC_WORKFLOW_PROMPT}
+		// 	${LIMITATIONS_PROMPT}
+		// 	${COMPLIANCE_PROMPT}
+		// 	${MOTOR_API_PROMPT}
+		// 	${contextString ? `Current vehicle context: ${contextString}` : ''}
+		// 	Be helpful, accurate, and professional.
+		// `
 
 		// 9. Build messages
 		const convertedMessages = convertToModelMessages(cleanedMessages)

@@ -61,19 +61,39 @@ export class MotorDaasAuth {
 
     /**
      * Build query string authentication parameters
-     * Format: ApiKey=...&Sig=...&Scheme=Shared&XDate=...
+     * Format: Scheme=Shared&ApiKey=...&Sig=...&Xdate=...
+     * Note: Parameter name is Xdate (lowercase 'd'), not XDate
+     * Returns an object with raw values to avoid double encoding
      */
-    buildAuthQueryParams(httpVerb: string, uriPath: string): URLSearchParams {
+    buildAuthQueryParams(httpVerb: string, uriPath: string): {
+        Scheme: string;
+        ApiKey: string;
+        Sig: string; // Already URL-encoded
+        Xdate: string;
+    } {
         const epoch = Math.floor(Date.now() / 1000);
         const signature = this.generateSignature(httpVerb, uriPath, epoch);
+        
+        // URL encode signature manually for query string
+        // + becomes %2B, / becomes %2F, = becomes %3D
         const encodedSig = this.urlEncodeSignature(signature);
 
-        const params = new URLSearchParams();
-        params.set('ApiKey', this.publicKey);
-        params.set('Sig', encodedSig);
-        params.set('Scheme', 'Shared');
-        params.set('XDate', epoch.toString());
+        console.log('[MOTOR Auth] Building query params:', {
+            httpVerb,
+            uriPath,
+            epoch,
+            publicKey: this.publicKey.substring(0, 10) + '...',
+            signatureLength: signature.length,
+            encodedSigLength: encodedSig.length,
+            signaturePreview: signature.substring(0, 20) + '...',
+            encodedSigPreview: encodedSig.substring(0, 30) + '...'
+        });
 
-        return params;
+        return {
+            Scheme: 'Shared',
+            ApiKey: this.publicKey,
+            Sig: encodedSig, // Already URL-encoded
+            Xdate: epoch.toString() // Note: lowercase 'd'
+        };
     }
 }
