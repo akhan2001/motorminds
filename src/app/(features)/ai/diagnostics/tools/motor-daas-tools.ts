@@ -1,6 +1,5 @@
 // src/app/(features)/ai/diagnostics/tools/motor-daas-tools.ts
 
-// @ts-ignore - tool is available at runtime from ai package
 import { tool } from 'ai'
 import { z } from 'zod'
 import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'

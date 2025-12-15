@@ -73,6 +73,7 @@ export function ChatArea({
 			{/* Chat Panel */}
 			<div className="flex-1 min-h-0">
 				<AIDiagnosticsPanel
+					shopId={shopId}
 					workOrderId={workOrder?.id}
 					vehicleId={activeVehicle.id || activeVehicle.motorId}
 					baseVehicleId={activeVehicle.baseVehicleId}

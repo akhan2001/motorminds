@@ -2,12 +2,14 @@
 
 import React, { useMemo } from 'react'
 import { useChat, type UIMessage } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { DiagnosticsChatForm } from './DiagnosticsChatForm'
 import { DiagnosticsOnboarding } from './DiagnosticsOnboarding'
 import { Message } from './Message'
 import { Conversation, ConversationContent, ConversationScrollButton } from './elements/Conversation'
 
 interface AIDiagnosticsPanelProps {
+	shopId?: string
 	workOrderId?: string
 	vehicleId?: number
 	baseVehicleId?: number
@@ -18,6 +20,7 @@ interface AIDiagnosticsPanelProps {
 }
 
 export function AIDiagnosticsPanel({
+	shopId,
 	workOrderId,
 	vehicleId,
 	baseVehicleId,
@@ -65,16 +68,24 @@ export function AIDiagnosticsPanel({
 	}, [reportedIssue, dtcCodes, baseVehicleId])
 
 	// useChat hook for AI streaming (AI SDK v5)
+	// Using DefaultChatTransport to properly configure the API endpoint
 	const chat = useChat({
 		id: 'ai-diagnostics',
-		// @ts-ignore - api parameter works at runtime
-		api: '/api/ai/diagnostics',
-		// @ts-ignore - body parameter is supported at runtime
-		body: {
-			workOrderId,
-			selectedVehicleId: vehicleId,
-			baseVehicleId
-		},
+		transport: new DefaultChatTransport({
+			api: '/api/ai/diagnostics',
+			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[]; [key: string]: any }) {
+				return {
+					...options,
+					body: {
+						messages,
+						shopId: shopId || '',
+						vehicleId,
+						baseVehicleId,
+						workOrderId
+					}
+				}
+			}
+		}),
 		messages: initialMessages,
 		onError: (error: Error) => {
 			console.error('AI Diagnostics error:', error)
@@ -105,13 +116,12 @@ export function AIDiagnosticsPanel({
 				<div className="flex-shrink-0 px-6 py-2 text-xs text-gray-500 border-b border-gray-200 dark:border-[#222222]">
 					Messages: {chat.messages.length} | Status:{' '}
 					<span
-						className={`font-bold ${
-							chat.status === 'ready'
+						className={`font-bold ${chat.status === 'ready'
 								? 'text-green-500'
 								: chat.status === 'streaming'
 									? 'text-yellow-500'
 									: 'text-red-500'
-						}`}
+							}`}
 					>
 						{chat.status}
 					</span>
