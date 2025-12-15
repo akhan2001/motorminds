@@ -18,7 +18,9 @@ export class AppointmentService {
      */
     static async getAppointmentsWithDetails(
         shopId: string, 
-        dateRange?: DateRange
+        dateRange?: DateRange,
+        limit: number = 200,
+        offset: number = 0
     ): Promise<AppointmentWithDetails[]> {
         let query = supabase
             .from('appointments')
@@ -64,6 +66,7 @@ export class AppointmentService {
             .eq('shop_id', shopId)
             .order('appointment_date', { ascending: true })
             .order('start_time', { ascending: true })
+            .range(offset, offset + limit - 1)
 
         if (dateRange) {
             query = query
