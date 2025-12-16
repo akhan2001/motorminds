@@ -239,6 +239,90 @@ export class MotorDaasClient {
         }>(endpoint, 'GET', queryParams);
     }
 
+    /**
+     * Get wiring diagram details
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Details/Of/WiringDiagrams/{ApplicationID}
+     */
+    async getWiringDiagramDetails(
+        baseVehicleId: number,
+        applicationId: number
+    ): Promise<{
+        ApplicationID: number;
+        DisplayName: string;
+        Description?: string;
+        Documents?: Array<{
+            DocumentID: number;
+            DocumentType: string;
+            Links?: Array<{ Href: string; Rel: string }>;
+        }>;
+        Components?: Array<any>;
+        Connectors?: Array<any>;
+    }> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Details/Of/WiringDiagrams/${applicationId}`;
+        
+        const queryParams: Record<string, string> = {
+            AttributeStandard: 'MOTOR'
+        };
+
+        return this.request<{
+            ApplicationID: number;
+            DisplayName: string;
+            Description?: string;
+            Documents?: Array<{
+                DocumentID: number;
+                DocumentType: string;
+                Links?: Array<{ Href: string; Rel: string }>;
+            }>;
+            Components?: Array<any>;
+            Connectors?: Array<any>;
+        }>(endpoint, 'GET', queryParams);
+    }
+
+    /**
+     * Get wiring diagram document (image/PDF)
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Documents/Of/WiringDiagrams/{DocumentID}
+     * Returns binary data (Blob)
+     */
+    async getWiringDiagramDocument(
+        baseVehicleId: number,
+        documentId: number
+    ): Promise<{ blob: Blob; contentType: string }> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Documents/Of/WiringDiagrams/${documentId}`;
+        const uriPath = `/v1${endpoint}`;
+        const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+        const url = new URL(`${baseUrlClean}${endpoint}`);
+
+        // Add authentication query params
+        const authParams = this.auth.buildAuthQueryParams('GET', uriPath);
+        const queryParts: string[] = [];
+
+        queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
+        queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
+        queryParts.push(`Sig=${authParams.Sig}`);
+        queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
+        queryParts.push(`AttributeStandard=MOTOR`);
+
+        url.search = queryParts.join('&');
+
+        const headers: HeadersInit = {
+            'Accept': '*/*' // Accept any content type for binary data
+        };
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            await this.handleError(response);
+        }
+
+        const contentType = response.headers.get('content-type') || 'application/octet-stream';
+        const blob = await response.blob();
+
+        return { blob, contentType };
+    }
+
     private async handleError(response: Response): Promise<never> {
         let errorMessage = `MOTOR API error: ${response.status}`;
         let errorCode = 'API_ERROR';

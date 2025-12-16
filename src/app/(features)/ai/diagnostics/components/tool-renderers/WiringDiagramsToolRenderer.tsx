@@ -2,8 +2,9 @@
 
 import React from 'react'
 import { Tool } from '../elements/Tool'
-import { CheckIcon, Loader2, AlertCircle, FileText } from 'lucide-react'
+import { CheckIcon, Loader2, AlertCircle, FileText, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { DiagramViewer } from '../diagram-viewer/DiagramViewer'
 
 interface WiringDiagramsToolRendererProps {
 	toolPart: {
@@ -16,6 +17,7 @@ interface WiringDiagramsToolRendererProps {
 
 export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRendererProps) {
 	const { state, input, output } = toolPart
+	const [viewingDiagramId, setViewingDiagramId] = React.useState<number | null>(null)
 
 	// Loading state
 	if (state === 'input-streaming') {
@@ -90,6 +92,13 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 		const subject = parsedResult.subject
 		const searchTerm = parsedResult.searchTerm
 		const totalCount = parsedResult.totalCount || diagrams.length
+		
+		// Extract baseVehicleId from input (tool input) or use default
+		const vehicleIdFromInput = input?.baseVehicleId
+		const defaultVehicleId = 22124 // 2010 Honda Civic
+		const currentBaseVehicleId: number = vehicleIdFromInput 
+			? (typeof vehicleIdFromInput === 'string' ? parseInt(vehicleIdFromInput, 10) : vehicleIdFromInput)
+			: defaultVehicleId
 
 		return (
 			<Tool
@@ -118,33 +127,68 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 						</div>
 					)}
 
+					{/* Viewing diagram */}
+					{viewingDiagramId && currentBaseVehicleId && (
+						<div className="mt-4 space-y-2">
+							<div className="flex items-center justify-between">
+								<h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+									Wiring Diagram
+								</h4>
+								<Button
+									size="sm"
+									variant="ghost"
+									className="h-6 w-6 p-0"
+									onClick={() => {
+										setViewingDiagramId(null)
+									}}
+								>
+									<X className="w-4 h-4" />
+								</Button>
+							</div>
+							<DiagramViewer
+								baseVehicleId={currentBaseVehicleId}
+								applicationId={viewingDiagramId}
+								diagramName={
+									diagrams.find((d: { id: number }) => d.id === viewingDiagramId)?.name ||
+									`Diagram ${viewingDiagramId}`
+								}
+							/>
+						</div>
+					)}
+
 					{/* Diagrams list */}
 					{diagrams.length > 0 ? (
 						<div className="space-y-2 max-h-[400px] overflow-y-auto w-full">
 							{diagrams.map((diagram: { id: number; name: string; href?: string }, idx: number) => {
 								const diagramName = diagram.name || `Diagram ${diagram.id || idx + 1}`
+								const isViewing = viewingDiagramId === diagram.id
+								
 								return (
-									<div
-										key={diagram.id || idx}
-										className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors w-full"
-									>
-										<div className="flex items-start gap-2 flex-1 min-w-0 overflow-hidden">
-											<FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-											<span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-0">
-												{diagramName}
-											</span>
-										</div>
-										<Button
-											size="sm"
-											variant="outline"
-											className="h-7 px-3 text-xs flex-shrink-0"
-											onClick={() => {
-												// TODO: Phase 2 - Open diagram in right panel
-												console.log('View diagram:', diagram.id, diagramName)
-											}}
+									<div key={diagram.id || idx}>
+										<div
+											className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors w-full"
 										>
-											View
-										</Button>
+											<div className="flex items-start gap-2 flex-1 min-w-0 overflow-hidden">
+												<FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+												<span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-0">
+													{diagramName}
+												</span>
+											</div>
+											<Button
+												size="sm"
+												variant={isViewing ? 'default' : 'outline'}
+												className="h-7 px-3 text-xs flex-shrink-0"
+												onClick={() => {
+													if (isViewing) {
+														setViewingDiagramId(null)
+													} else {
+														setViewingDiagramId(diagram.id)
+													}
+												}}
+											>
+												{isViewing ? 'Hide' : 'View'}
+											</Button>
+										</div>
 									</div>
 								)
 							})}
