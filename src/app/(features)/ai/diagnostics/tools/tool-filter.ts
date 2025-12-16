@@ -13,7 +13,8 @@ export const toolSetValidationSchema = z.record(
         'rename_chat',
 
         // MOTOR API Tools
-        'helloWorldTool',
+        'helloWorld',
+        'getServiceProcedures',
         'getVehicleInfo',
         'lookupDTC',
         'getServiceProcedure',
@@ -69,7 +70,8 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     rename_chat: TOOL_CATEGORIES.UI,
 
     // MOTOR API Tools
-    helloWorldTool: TOOL_CATEGORIES.MOTOR_API,
+    helloWorld: TOOL_CATEGORIES.MOTOR_API,
+    getServiceProcedures: TOOL_CATEGORIES.MOTOR_API,
     getVehicleInfo: TOOL_CATEGORIES.MOTOR_API,
     lookupDTC: TOOL_CATEGORIES.MOTOR_API,
     getServiceProcedure: TOOL_CATEGORIES.MOTOR_API,

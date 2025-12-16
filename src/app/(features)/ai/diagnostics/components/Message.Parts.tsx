@@ -6,6 +6,7 @@ import { BrainIcon, CheckIcon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tool } from './elements/Tool'
 import { useMessageInfoContext } from './Message.Context'
+import { WiringDiagramsToolRenderer } from './tool-renderers/WiringDiagramsToolRenderer'
 
 // Type definitions based on AI SDK v5 structure
 type TextUIPart = { type: 'text'; text: string }
@@ -186,12 +187,17 @@ function MessagePartHelloWorld({ toolPart }: { toolPart: ToolUIPart }) {
 	return null
 }
 
+function MessagePartWiringDiagrams({ toolPart }: { toolPart: ToolUIPart }) {
+	return <WiringDiagramsToolRenderer toolPart={toolPart} />
+}
+
 const MessagePart = {
 	Text: MessagePartText,
 	Dynamic: MessagePartDynamicTool,
 	Tool: MessagePartTool,
 	Reasoning: MessagePartReasoning,
 	HelloWorld: MessagePartHelloWorld,
+	WiringDiagrams: MessagePartWiringDiagrams,
 } as const
 
 export function MessagePartSwitcher({
@@ -207,6 +213,9 @@ export function MessagePartSwitcher({
 		}
 		case 'tool-helloWorld': {
 			return <MessagePart.HelloWorld toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getWiringDiagrams': {
+			return <MessagePart.WiringDiagrams toolPart={part as ToolUIPart} />
 		}
 		case 'reasoning':
 			return <MessagePart.Reasoning reasoningPart={part as ReasoningUIPart} />

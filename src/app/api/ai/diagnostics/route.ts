@@ -147,8 +147,20 @@ Be helpful, accurate, and professional.`
 			)
 		}
 
-		// 12. Get tools
-		const tools = getMotorTools()
+		// 12. Get tools (with error handling)
+		let tools
+		try {
+			tools = getMotorTools()
+		} catch (toolError) {
+			console.error('Failed to initialize MOTOR tools:', toolError)
+			return Response.json(
+				{ 
+					error: 'Failed to initialize MOTOR DaaS tools',
+					message: toolError instanceof Error ? toolError.message : 'Unknown error'
+				},
+				{ status: 500 }
+			)
+		}
 
 		// 13. Stream response
 		const result = streamText({

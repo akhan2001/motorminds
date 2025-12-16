@@ -29,26 +29,26 @@ export class MotorDaasClient {
         // Ensure baseUrl doesn't have trailing slash, then append HelloWorld
         const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
         const url = new URL(`${baseUrlClean}/HelloWorld`);
-        
+
         // Use query string authentication (works in browsers)
         // Build query string manually to avoid double-encoding the signature
         const authParams = this.auth.buildAuthQueryParams('GET', uriPath);
         const queryParts: string[] = [];
-        
+
         // Add params in correct order: Scheme, ApiKey, Sig, Xdate
         queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
         queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
         queryParts.push(`Sig=${authParams.Sig}`); // Already encoded, don't encode again
         queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
-        
+
         // Add correlation ID if provided
         if (correlationId) {
             queryParts.push(`xcorrelationid=${encodeURIComponent(correlationId)}`);
         }
-        
+
         // Set the query string manually
         url.search = queryParts.join('&');
-        
+
         const headers: HeadersInit = {
             'Accept': 'application/json'
         };
@@ -83,7 +83,7 @@ export class MotorDaasClient {
 
         const data: MotorApiResponse<{ Text: string }> = await response.json();
         // console.log('[MOTOR DaaS] HelloWorld success:', data);
-        
+
         // Extract Body if wrapped
         return data.Body || data as any;
     }
@@ -106,7 +106,7 @@ export class MotorDaasClient {
         // Build query string manually to avoid double-encoding the signature
         const authParams = this.auth.buildAuthQueryParams(method, uriPath);
         const queryParts: string[] = [];
-        
+
         // Add params in correct order: Scheme, ApiKey, Sig, Xdate
         queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
         queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
@@ -124,7 +124,7 @@ export class MotorDaasClient {
         if (correlationId) {
             queryParts.push(`xcorrelationid=${encodeURIComponent(correlationId)}`);
         }
-        
+
         // Set the query string manually
         url.search = queryParts.join('&');
 
@@ -141,12 +141,102 @@ export class MotorDaasClient {
             headers
         });
 
-            if (!response.ok) {
+        if (!response.ok) {
             await this.handleError(response);
         }
 
         const data: MotorApiResponse<T> = await response.json();
         return (data.Body !== undefined ? data.Body : data) as T;
+    }
+
+    /**
+     * Get wiring diagrams taxonomy (subjects/categories)
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Taxonomies/Of/WiringDiagrams
+     */
+    async getWiringDiagramsTaxonomy(
+        baseVehicleId: number,
+        options?: {
+            engineId?: number;
+            resultType?: 'DrillDown' | 'List';
+        }
+    ): Promise<{ Subjects: Array<{ ID: number; Name: string }> }> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Taxonomies/Of/WiringDiagrams`;
+        const uriPath = `/v1${endpoint}`;
+        
+        const queryParams: Record<string, string> = {
+            ContentSilos: '56', // Wiring Diagrams content silo
+            ResultType: options?.resultType || 'DrillDown',
+            AttributeStandard: 'MOTOR'
+        };
+
+        if (options?.engineId) {
+            queryParams.EN = options.engineId.toString();
+        }
+
+        return this.request<{ Subjects: Array<{ ID: number; Name: string }> }>(
+            endpoint,
+            'GET',
+            queryParams
+        );
+    }
+
+    /**
+     * Get wiring diagrams summary (list of diagrams)
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Summaries/Of/WiringDiagrams
+     */
+    async getWiringDiagramsSummary(
+        baseVehicleId: number,
+        options?: {
+            subjectId?: number;
+            searchTerm?: string;
+            engineId?: number;
+            pageIndex?: number;
+            itemsPerPage?: number;
+        }
+    ): Promise<{
+        Applications: Array<{
+            ApplicationID: number;
+            DisplayName: string;
+            ContentSilos?: Array<{ ID: number; Name: string }>;
+            Links?: Array<{ Href: string; Rel: string }>;
+        }>;
+    }> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/WiringDiagrams`;
+        const uriPath = `/v1${endpoint}`;
+        
+        const queryParams: Record<string, string> = {
+            ContentSilos: '56', // Wiring Diagrams content silo
+            AttributeStandard: 'MOTOR'
+        };
+
+        if (options?.subjectId) {
+            queryParams.SAESubjectID = options.subjectId.toString();
+        }
+
+        if (options?.searchTerm) {
+            queryParams.SearchTerm = options.searchTerm;
+        }
+
+        if (options?.engineId) {
+            queryParams.EN = options.engineId.toString();
+        }
+
+        if (options?.pageIndex !== undefined) {
+            queryParams.PageIndex = options.pageIndex.toString();
+        }
+
+        if (options?.itemsPerPage !== undefined) {
+            queryParams.ItemsPerPage = options.itemsPerPage.toString();
+        }
+
+        return this.request<{
+            Applications: Array<{
+                ApplicationID: number;
+                DisplayName: string;
+                ContentSilos?: Array<{ ID: number; Name: string }>;
+                Links?: Array<{ Href: string; Rel: string }>;
+            }>;
+        }>(endpoint, 'GET', queryParams);
     }
 
     private async handleError(response: Response): Promise<never> {
@@ -156,9 +246,9 @@ export class MotorDaasClient {
         try {
             const errorText = await response.text();
             console.error('[MOTOR DaaS] Error response body:', errorText);
-            
+
             const errorData: MotorApiResponse<unknown> = JSON.parse(errorText);
-            
+
             if (errorData.Header?.Messages) {
                 const errors = errorData.Header.Messages.filter(m => m.Type === 'Error');
                 if (errors.length > 0) {
