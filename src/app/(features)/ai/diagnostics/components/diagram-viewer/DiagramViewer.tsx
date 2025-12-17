@@ -25,7 +25,7 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: Dia
 
 				// Fetch diagram details
 				const detailsResponse = await fetch(
-					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/${applicationId}/details`
+					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/details/${applicationId}`
 				)
 				
 				if (!detailsResponse.ok) {
@@ -43,7 +43,7 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: Dia
 
 				// Fetch document
 				const documentResponse = await fetch(
-					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/${document.DocumentID}/document`
+					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/document/${document.DocumentID}`
 				)
 
 				if (!documentResponse.ok) {

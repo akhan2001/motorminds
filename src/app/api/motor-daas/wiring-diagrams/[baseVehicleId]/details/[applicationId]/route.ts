@@ -3,7 +3,7 @@ import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { baseVehicleId: string; documentId: string } }
+	{ params }: { params: { baseVehicleId: string; applicationId: string } }
 ) {
 	try {
 		const publicKey = process.env.MOTOR_DAAS_PUBLIC_KEY
@@ -23,26 +23,20 @@ export async function GET(
 		})
 
 		const baseVehicleId = parseInt(params.baseVehicleId, 10)
-		const documentId = parseInt(params.documentId, 10)
+		const applicationId = parseInt(params.applicationId, 10)
 
-		if (isNaN(baseVehicleId) || isNaN(documentId)) {
+		if (isNaN(baseVehicleId) || isNaN(applicationId)) {
 			return NextResponse.json(
-				{ error: 'Invalid baseVehicleId or documentId' },
+				{ error: 'Invalid baseVehicleId or applicationId' },
 				{ status: 400 }
 			)
 		}
 
-		const { blob, contentType } = await client.getWiringDiagramDocument(baseVehicleId, documentId)
+		const details = await client.getWiringDiagramDetails(baseVehicleId, applicationId)
 
-		// Return the blob with proper content type
-		return new NextResponse(blob, {
-			headers: {
-				'Content-Type': contentType,
-				'Content-Disposition': `inline; filename="diagram-${documentId}"`,
-			},
-		})
+		return NextResponse.json(details)
 	} catch (error) {
-		console.error('[API] Error fetching wiring diagram document:', error)
+		console.error('[API] Error fetching wiring diagram details:', error)
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 		const statusCode = error instanceof Error && 'statusCode' in error ? (error as any).statusCode : 500
 
@@ -52,5 +46,4 @@ export async function GET(
 		)
 	}
 }
-
 

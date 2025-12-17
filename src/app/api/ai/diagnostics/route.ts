@@ -91,31 +91,32 @@ export async function POST(request: NextRequest) {
 					: 'No vehicle context'
 
 		// 8. Build system prompt - Simplified for Hello World testing
-		const systemPrompt = `You are an automotive diagnostic AI assistant integrated with MOTOR DaaS.
+		// const systemPrompt = `You are an automotive diagnostic AI assistant integrated with MOTOR DaaS.
 
-Your current capabilities:
-- Test MOTOR DaaS API connection using the helloWorld tool
+		// Your current capabilities:
+		// - Test MOTOR DaaS API connection using the helloWorld tool
 
-How to use your tools:
-- When users ask to "test the connection", "say hello", or want to verify the MOTOR API is working, use the helloWorld tool
-- The helloWorld tool will test the connection to MOTOR DaaS and return a simple "Hello World" message
+		// How to use your tools:
+		// - When users ask to "test the connection", "say hello", or want to verify the MOTOR API is working, use the helloWorld tool
+		// - The helloWorld tool will test the connection to MOTOR DaaS and return a simple "Hello World" message
 
-Scope:
-- You MUST only answer questions related to vehicle diagnostics and automotive topics
-- You MUST decline all other questions politely and redirect to automotive topics
+		// Scope:
+		// - You MUST only answer questions related to vehicle diagnostics and automotive topics
+		// - You MUST decline all other questions politely and redirect to automotive topics
 
-${contextString ? `Current vehicle context: ${contextString}` : ''}
+		// ${contextString ? `Current vehicle context: ${contextString}` : ''}
 
-Be helpful, accurate, and professional.`
-		// const systemPrompt = source`
-		// 	${AI_DIAGNOSTICS_PROMPT}
-		// 	${DIAGNOSTIC_WORKFLOW_PROMPT}
-		// 	${LIMITATIONS_PROMPT}
-		// 	${COMPLIANCE_PROMPT}
-		// 	${MOTOR_API_PROMPT}
-		// 	${contextString ? `Current vehicle context: ${contextString}` : ''}
-		// 	Be helpful, accurate, and professional.
-		// `
+		// Be helpful, accurate, and professional.`
+
+		const systemPrompt = source`
+			${AI_DIAGNOSTICS_PROMPT}
+			${DIAGNOSTIC_WORKFLOW_PROMPT}
+			${LIMITATIONS_PROMPT}
+			${COMPLIANCE_PROMPT}
+			${MOTOR_API_PROMPT}
+			${contextString ? `Current vehicle context: ${contextString}` : ''}
+			Be helpful, accurate, and professional.
+		`
 
 		// 9. Build messages
 		const convertedMessages = convertToModelMessages(cleanedMessages)
@@ -154,7 +155,7 @@ Be helpful, accurate, and professional.`
 		} catch (toolError) {
 			console.error('Failed to initialize MOTOR tools:', toolError)
 			return Response.json(
-				{ 
+				{
 					error: 'Failed to initialize MOTOR DaaS tools',
 					message: toolError instanceof Error ? toolError.message : 'Unknown error'
 				},
