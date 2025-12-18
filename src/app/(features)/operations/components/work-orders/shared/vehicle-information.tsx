@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { Save, Loader2, Search } from "lucide-react"
 import type { VehicleOption, VehicleFormData } from "@/app/(features)/customers/types/vehicle"
 import { VEHICLE_MAKES } from "@/app/(features)/customers/types/vehicle"
+import { getModelsForMake } from "@/app/(features)/customers/types/vehicle_models"
 
 export interface VehicleInformationProps {
     customerId?: string // Added to enable vehicle dropdown
@@ -59,6 +60,8 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [vinDecoding, setVinDecoding] = useState(false)
     const [isSavingNewVehicle, setIsSavingNewVehicle] = useState(false)
     const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
+    const [availableModels, setAvailableModels] = useState<string[]>([])
+    const [showCustomModel, setShowCustomModel] = useState(false)
 
     // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
     useEffect(() => {
@@ -72,6 +75,28 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             }
         }
     }, [vehicleMake, onFieldChange])
+
+    // Update available models whenever the make or current model changes.
+    // If the stored model isn't in the canonical list (e.g. "Tahoe" for Dodge),
+    // treat it as a custom model and show a free-text input.
+    useEffect(() => {
+        if (vehicleMake && vehicleMake.trim()) {
+            const canonicalModels = getModelsForMake(vehicleMake)
+            setAvailableModels(canonicalModels)
+
+            if (vehicleModel && vehicleModel.trim()) {
+                const exists = canonicalModels.some(
+                    (m) => m.toLowerCase() === vehicleModel.toLowerCase()
+                )
+                setShowCustomModel(!exists)
+            } else {
+                setShowCustomModel(false)
+            }
+        } else {
+            setAvailableModels([])
+            setShowCustomModel(false)
+        }
+    }, [vehicleMake, vehicleModel])
 
     const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string): string | undefined => {
         switch (field) {
@@ -380,20 +405,82 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="vehicle_model" className="text-muted-foreground dark:text-gray-400">Model *</Label>
-                            <Input
-                                id="vehicle_model"
-                                value={vehicleModel}
-                                onChange={(e) => {
-                                    if (!isEditing) return
-                                    onFieldChange('vehicleModel', e.target.value)
-                                    if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
-                                }}
-                                onBlur={() => handleBlur('vehicleModel', vehicleModel)}
-                                className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
-                                required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
-                                placeholder="e.g. Civic"
-                            />
+                            {availableModels.length > 0 && !showCustomModel ? (
+                                <Select
+                                    value={
+                                        vehicleModel &&
+                                        availableModels.some(
+                                            (m) => m.toLowerCase() === vehicleModel.toLowerCase()
+                                        )
+                                            ? vehicleModel
+                                            : ''
+                                    }
+                                    onValueChange={(value) => {
+                                        if (!isEditing) return
+                                        if (value === '__other') {
+                                            setShowCustomModel(true)
+                                            onFieldChange('vehicleModel', '')
+                                        } else {
+                                            onFieldChange('vehicleModel', value)
+                                            if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                        }
+                                    }}
+                                    disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                >
+                                    <SelectTrigger
+                                        id="vehicle_model"
+                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
+                                    >
+                                        <SelectValue placeholder="Select model" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                                        {availableModels.map((model) => (
+                                            <SelectItem
+                                                key={model}
+                                                value={model}
+                                                className="text-popover-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
+                                            >
+                                                {model}
+                                            </SelectItem>
+                                        ))}
+                                        <SelectItem value="__other" className="text-popover-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]">
+                                            + Other model
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <>
+                                    <Input
+                                        id="vehicle_model"
+                                        value={vehicleModel}
+                                        onChange={(e) => {
+                                            if (!isEditing) return
+                                            onFieldChange('vehicleModel', e.target.value)
+                                            if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                        }}
+                                        onBlur={() => handleBlur('vehicleModel', vehicleModel)}
+                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus-border-red-500' : ''}`}
+                                        readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                        required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
+                                        placeholder="e.g. Civic"
+                                    />
+                                    {availableModels.length > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setShowCustomModel(false)
+                                                onFieldChange('vehicleModel', '')
+                                            }}
+                                            className="mt-1 text-xs text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
+                                            disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                        >
+                                            Select from list
+                                        </Button>
+                                    )}
+                                </>
+                            )}
                             {errors.vehicleModel && (
                                 <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>

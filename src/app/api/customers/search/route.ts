@@ -73,27 +73,14 @@ export async function GET(request: NextRequest) {
 			const cleanPhone = searchTerm.replace(/\D/g, '')
 			dbQuery = dbQuery.or(`customer_phone.ilike.%${cleanPhone}%`)
 		} else if (searchTerm.includes('@')) {
-			// Email search - direct column match
+			// Email search - direct column match with partial matching
 			dbQuery = dbQuery.ilike('customer_email', `%${searchTerm}%`)
-		} else if (searchTerm.length >= 3) {
-			// Full-text search using GIN index for name/email
-			// Convert search term for tsquery compatibility
-			const tsQuery = searchTerm
-				.split(/\s+/)
-				.filter(word => word.length > 0)
-				.map(word => word.replace(/[^a-zA-Z0-9]/g, ''))
-				.join(' & ')
-
-			if (tsQuery) {
-				// Use the GIN index for efficient text search
-				dbQuery = dbQuery.textSearch('customer_name,customer_email', tsQuery)
-			} else {
-				// Fallback to ILIKE if no valid tsquery terms
-				dbQuery = dbQuery.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`)
-			}
 		} else {
-			// Short queries - use simple ILIKE on name
-			dbQuery = dbQuery.ilike('customer_name', `%${searchTerm}%`)
+			// Name / generic search: use ILIKE for partial matches on name and email
+			// This ensures queries like "Cam" will still match "Cameron"
+			dbQuery = dbQuery.or(
+				`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`
+			)
 		}
 
 		// Order by relevance: exact name matches first, then partial matches

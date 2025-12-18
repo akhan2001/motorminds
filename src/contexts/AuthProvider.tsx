@@ -36,13 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Track if we've already redirected to prevent loops
     const hasRedirectedRef = useRef(false)
+    // Track if we've completed the initial auth fetch
+    const hasInitializedRef = useRef(false)
 
     // Check if current route is public
     const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
 
     const fetchAuthData = useCallback(async () => {
         try {
-            setIsLoading(true)
+            // Only block the UI on the very first auth load
+            if (!hasInitializedRef.current) {
+                setIsLoading(true)
+            }
             setError(null)
 
             // Use getSession first - it doesn't throw on missing session
@@ -55,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setShopId(null)
                 setUserRole(null)
                 setIsLoading(false)
+                hasInitializedRef.current = true
                 return
             }
 
@@ -64,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setShopId(null)
                 setUserRole(null)
                 setIsLoading(false)
+                hasInitializedRef.current = true
                 return
             }
 
@@ -90,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             setIsLoading(false)
+            hasInitializedRef.current = true
         } catch (err) {
             console.error('Authentication error:', err)
             setError(err instanceof Error ? err.message : 'Authentication failed')
@@ -97,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setShopId(null)
             setUserRole(null)
             setIsLoading(false)
+            hasInitializedRef.current = true
         }
     }, [supabase])
 
