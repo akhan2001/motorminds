@@ -61,6 +61,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [isSavingNewVehicle, setIsSavingNewVehicle] = useState(false)
     const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
     const [availableModels, setAvailableModels] = useState<string[]>([])
+    const [showCustomModel, setShowCustomModel] = useState(false)
 
     // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
     useEffect(() => {
@@ -77,24 +78,23 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
 
     // Update available models whenever the make or current model changes.
     // If the stored model isn't in the canonical list (e.g. "Tahoe" for Dodge),
-    // we still include it so existing data is always selectable.
+    // treat it as a custom model and show a free-text input.
     useEffect(() => {
         if (vehicleMake && vehicleMake.trim()) {
             const canonicalModels = getModelsForMake(vehicleMake)
-            const models = [...canonicalModels]
+            setAvailableModels(canonicalModels)
 
             if (vehicleModel && vehicleModel.trim()) {
                 const exists = canonicalModels.some(
                     (m) => m.toLowerCase() === vehicleModel.toLowerCase()
                 )
-                if (!exists) {
-                    models.push(vehicleModel)
-                }
+                setShowCustomModel(!exists)
+            } else {
+                setShowCustomModel(false)
             }
-
-            setAvailableModels(models)
         } else {
             setAvailableModels([])
+            setShowCustomModel(false)
         }
     }, [vehicleMake, vehicleModel])
 
@@ -405,13 +405,25 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="vehicle_model" className="text-muted-foreground dark:text-gray-400">Model *</Label>
-                            {availableModels.length > 0 ? (
+                            {availableModels.length > 0 && !showCustomModel ? (
                                 <Select
-                                    value={vehicleModel}
+                                    value={
+                                        vehicleModel &&
+                                        availableModels.some(
+                                            (m) => m.toLowerCase() === vehicleModel.toLowerCase()
+                                        )
+                                            ? vehicleModel
+                                            : ''
+                                    }
                                     onValueChange={(value) => {
                                         if (!isEditing) return
-                                        onFieldChange('vehicleModel', value)
-                                        if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                        if (value === '__other') {
+                                            setShowCustomModel(true)
+                                            onFieldChange('vehicleModel', '')
+                                        } else {
+                                            onFieldChange('vehicleModel', value)
+                                            if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                        }
                                     }}
                                     disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 >
@@ -431,23 +443,43 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                                 {model}
                                             </SelectItem>
                                         ))}
+                                        <SelectItem value="__other" className="text-popover-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]">
+                                            + Other model
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             ) : (
-                                <Input
-                                    id="vehicle_model"
-                                    value={vehicleModel}
-                                    onChange={(e) => {
-                                        if (!isEditing) return
-                                        onFieldChange('vehicleModel', e.target.value)
-                                        if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
-                                    }}
-                                    onBlur={() => handleBlur('vehicleModel', vehicleModel)}
-                                    className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
-                                    readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
-                                    required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
-                                    placeholder="e.g. Civic"
-                                />
+                                <>
+                                    <Input
+                                        id="vehicle_model"
+                                        value={vehicleModel}
+                                        onChange={(e) => {
+                                            if (!isEditing) return
+                                            onFieldChange('vehicleModel', e.target.value)
+                                            if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                        }}
+                                        onBlur={() => handleBlur('vehicleModel', vehicleModel)}
+                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus-border-red-500' : ''}`}
+                                        readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                        required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
+                                        placeholder="e.g. Civic"
+                                    />
+                                    {availableModels.length > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setShowCustomModel(false)
+                                                onFieldChange('vehicleModel', '')
+                                            }}
+                                            className="mt-1 text-xs text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
+                                            disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                        >
+                                            Select from list
+                                        </Button>
+                                    )}
+                                </>
                             )}
                             {errors.vehicleModel && (
                                 <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
