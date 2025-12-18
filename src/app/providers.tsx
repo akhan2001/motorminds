@@ -16,9 +16,10 @@ export default function Providers({
 	const [queryClient] = useState(() => new QueryClient({
 		defaultOptions: {
 			queries: {
-				staleTime: 5 * 60 * 1000, // 5 minutes
+				staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh for 5 minutes
 				retry: 1,
-				refetchOnWindowFocus: true,
+				refetchOnWindowFocus: false, // Prevent refetch on tab focus to reduce connection pool usage
+				// refetchOnMount defaults to true - will only refetch if data is stale (>5 min old)
 			},
 		},
 	}))

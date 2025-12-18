@@ -95,16 +95,17 @@ export default function CustomerPage() {
                 
                 setWorkOrders(workOrderData || [])
                 
-                // Get invoices (including those from archived work orders)
+                // Get invoices (including those from archived work orders) - limit to recent 50
                 const { data: invoiceData } = await supabase
                     .from('invoices')
                     .select(`
-                        *,
+                        id, invoice_number, customer_id, shop_id, amount, status, issue_date, created_at, archived,
                         customers(customer_name),
                         work_orders!left(id, archived)
                     `)
                     .eq('customer_id', params?.customerId || '')
                     .order('created_at', { ascending: false })
+                    .limit(50)
                 
                 setInvoices(invoiceData || [])
                 

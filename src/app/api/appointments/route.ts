@@ -22,16 +22,21 @@ export async function GET(request: NextRequest) {
             .eq('id', shopId)
             .single()
 
+        // Get pagination params
+        const limit = parseInt(searchParams.get('limit') || '200', 10);
+        const offset = parseInt(searchParams.get('offset') || '0', 10);
+        
         let query = supabase
             .from('appointments')
             .select(`
-                *,
-                customer:customers(*),
-                vehicle:customer_vehicles(*),
-                repair_orders(*)
+                id, created_at, shop_id, customer_id, vehicle_id, appointment_date, notes, start_time, end_time, service_type, updated_at, status, confirmation_code, created_by_customer, customer_type, walk_in_vehicle_info,
+                customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
+                vehicle:customer_vehicles(id, year, make, model, license_plate, color, vin, mileage),
+                repair_orders(id, order_number, status, total_cost)
             `)
             .eq('shop_id', shopId)
-            .order('appointment_date', { ascending: true });
+            .order('appointment_date', { ascending: true })
+            .range(offset, offset + limit - 1);
 
         if (startDate && endDate) {
             query = query
