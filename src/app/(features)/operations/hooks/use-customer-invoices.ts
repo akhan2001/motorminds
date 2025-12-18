@@ -7,7 +7,7 @@ import type { InvoiceWithDetails } from '../../financials/types/invoice'
 const supabase = createClient()
 
 export function useCustomerInvoices(
-    customerId: string | null | undefined, 
+    customerId: string | null | undefined,
     shopId: string | undefined,
     organizationWide: boolean = true // Default to organization-wide for better customer experience
 ) {
@@ -26,7 +26,7 @@ export function useCustomerInvoices(
             let query = supabase
                 .from('invoices_table')
                 .select(`
-                    *,
+                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, status, total_amount, issue_date, due_date, paid_date, created_at, archived,
                     customer:customers(id, customer_name, customer_email),
                     vehicle:customer_vehicles(id, year, make, model, license_plate),
                     work_order:work_orders(id, work_order_number, title, status),

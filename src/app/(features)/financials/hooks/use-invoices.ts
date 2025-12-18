@@ -5,14 +5,14 @@ import type { Invoice, InvoiceWithDetails, InvoiceFormData, InvoiceFilters, Invo
 const supabase = createClient()
 
 // Fetch all invoices for a shop
-export function useInvoices(shopId: string, filters?: InvoiceFilters) {
+export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: number = 100, offset: number = 0) {
     return useQuery({
-        queryKey: ['invoices', shopId, filters],
+        queryKey: ['invoices', shopId, filters, limit, offset],
         queryFn: async () => {
             let query = supabase
                 .from('invoices_table')
                 .select(`
-                    *,
+                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
                     vehicle:customer_vehicles(id, year, make, model, license_plate),
                     work_order:work_orders(id, work_order_number, title, status)
@@ -20,6 +20,7 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters) {
                 .eq('shop_id', shopId)
                 .or('archived.eq.false,archived.is.null')
                 .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1)
 
             // Apply filters
             if (filters?.status && filters.status.length > 0) {
@@ -83,11 +84,12 @@ export function useInvoice(invoiceId: string) {
     })
 }
 
-// Fetch invoice stats
+// Fetch invoice stats (optimized with aggregation)
 export function useInvoiceStats(shopId: string) {
     return useQuery({
         queryKey: ['invoice-stats', shopId],
         queryFn: async () => {
+            // Fetch only necessary fields for stats calculation
             const { data, error } = await supabase
                 .from('invoices_table')
                 .select('status, total_amount, paid_date')
@@ -96,20 +98,22 @@ export function useInvoiceStats(shopId: string) {
 
             if (error) throw error
 
+            // Calculate stats in memory (more efficient than multiple queries)
             const stats: InvoiceStats = {
                 total_count: data.length,
                 draft_count: data.filter(i => i.status === 'draft').length,
                 sent_count: data.filter(i => i.status === 'sent').length,
                 paid_count: data.filter(i => i.status === 'paid').length,
                 overdue_count: data.filter(i => i.status === 'overdue').length,
-                total_amount: data.reduce((sum, i) => sum + Number(i.total_amount), 0),
-                paid_amount: data.filter(i => i.paid_date).reduce((sum, i) => sum + Number(i.total_amount), 0),
-                outstanding_amount: data.filter(i => !i.paid_date).reduce((sum, i) => sum + Number(i.total_amount), 0)
+                total_amount: data.reduce((sum, i) => sum + Number(i.total_amount || 0), 0),
+                paid_amount: data.filter(i => i.paid_date).reduce((sum, i) => sum + Number(i.total_amount || 0), 0),
+                outstanding_amount: data.filter(i => !i.paid_date).reduce((sum, i) => sum + Number(i.total_amount || 0), 0)
             }
 
             return stats
         },
-        enabled: !!shopId
+        enabled: !!shopId,
+        staleTime: 5 * 60 * 1000 // Cache for 5 minutes
     })
 }
 
