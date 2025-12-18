@@ -93,6 +93,8 @@ export interface InvoiceFormData {
     discount_amount: number
     issue_date: string
     due_date: string | null
+    // Optional: when the invoice was marked as paid
+    paid_date?: string | null
     payment_method: PaymentMethod | null
     payment_reference: string | null
     notes: string | null

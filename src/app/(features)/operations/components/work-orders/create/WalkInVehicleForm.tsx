@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { decodeVin } from '@/app/(features)/customers/vehicles/lib/vin-decode'
 import { VehicleSearchByPlate } from '../../../../customers/components/vehicles'
 import { VEHICLE_MAKES } from '../../../../customers/types/vehicle'
+import { getModelsForMake } from '../../../../customers/types/vehicle_models'
 import type { WalkInVehicleInfo, CustomerVehicle } from '../../../../customers/types/vehicle'
 
 interface WalkInVehicleFormProps {
@@ -37,6 +38,8 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
     const [showCustomMake, setShowCustomMake] = useState(() => {
         return data.make ? !VEHICLE_MAKES.includes(data.make) : false
     })
+    const [availableModels, setAvailableModels] = useState<string[]>([])
+    const [showCustomModel, setShowCustomModel] = useState(false)
 
     const handleFieldChange = (field: keyof WalkInVehicleInfo, value: string | number) => {
         const newData = { ...data, [field]: value }
@@ -47,6 +50,27 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
             setErrors(prev => ({ ...prev, [field]: undefined }))
         }
     }
+
+    // Update available models whenever make or model changes.
+    // If the current model isn't in the canonical list, treat it as a custom model.
+    useEffect(() => {
+        if (data.make && typeof data.make === 'string' && data.make.trim()) {
+            const canonical = getModelsForMake(data.make)
+            setAvailableModels(canonical)
+
+            if (data.model && typeof data.model === 'string' && data.model.trim()) {
+                const exists = canonical.some(
+                    (m) => m.toLowerCase() === data.model.toLowerCase()
+                )
+                setShowCustomModel(!exists)
+            } else {
+                setShowCustomModel(false)
+            }
+        } else {
+            setAvailableModels([])
+            setShowCustomModel(false)
+        }
+    }, [data.make, data.model])
 
     const validateField = (field: keyof WalkInVehicleInfo, value: string | number | undefined): string | undefined => {
         if (value === undefined || value === '') {
@@ -328,17 +352,80 @@ export const WalkInVehicleForm: React.FC<WalkInVehicleFormProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <Label htmlFor="model" className="text-foreground">Model *</Label>
-                            <Input
-                                id="model"
-                                value={data.model || ''}
-                                onChange={(e) => handleFieldChange('model', e.target.value)}
-                                onBlur={() => handleBlur('model')}
-                                placeholder="Camry"
-                                disabled={!isEditing}
-                                className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
-                                    errors.model ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
-                                }`}
-                            />
+                            {availableModels.length > 0 && !showCustomModel ? (
+                                <Select
+                                    value={
+                                        data.model &&
+                                        typeof data.model === 'string' &&
+                                        availableModels.some(
+                                            (m) => m.toLowerCase() === data.model.toLowerCase()
+                                        )
+                                            ? (data.model as string)
+                                            : ''
+                                    }
+                                    onValueChange={(value) => {
+                                        if (value === '__other') {
+                                            setShowCustomModel(true)
+                                            handleFieldChange('model', '')
+                                        } else {
+                                            handleFieldChange('model', value)
+                                        }
+                                    }}
+                                    disabled={!isEditing}
+                                >
+                                    <SelectTrigger
+                                        id="model"
+                                        className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                            errors.model ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
+                                        }`}
+                                    >
+                                        <SelectValue placeholder="Select model" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                                        {availableModels.map((model) => (
+                                            <SelectItem
+                                                key={model}
+                                                value={model}
+                                                className="hover:bg-accent dark:hover:bg-[#2a2a2a]"
+                                            >
+                                                {model}
+                                            </SelectItem>
+                                        ))}
+                                        <SelectItem value="__other" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">
+                                            + Other model
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <>
+                                    <Input
+                                        id="model"
+                                        value={data.model || ''}
+                                        onChange={(e) => handleFieldChange('model', e.target.value)}
+                                        onBlur={() => handleBlur('model')}
+                                        placeholder="Camry"
+                                        disabled={!isEditing}
+                                        className={`bg-white dark:bg-background text-foreground border-border focus:ring-red-600 focus:border-red-600 ${
+                                            errors.model ? 'border-red-600 dark:border-red-500 focus:border-red-600' : ''
+                                        }`}
+                                    />
+                                    {availableModels.length > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setShowCustomModel(false)
+                                                handleFieldChange('model', '')
+                                            }}
+                                            className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+                                            disabled={!isEditing}
+                                        >
+                                            Select from list
+                                        </Button>
+                                    )}
+                                </>
+                            )}
                             {errors.model && (
                                 <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs">
                                     <AlertCircle className="h-3 w-3" />

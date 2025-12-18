@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { VehicleService } from '../../lib/vehicle-service'
 import { VEHICLE_MAKES } from '../../types/vehicle'
+import { getModelsForMake } from '../../types/vehicle_models'
 import type { VehicleFormData, VehicleOption } from '../../types/vehicle'
 import { toast } from 'sonner'
 import { Save, Loader2, X } from 'lucide-react'
@@ -27,6 +28,8 @@ export function NewVehicleForm({
 }: NewVehicleFormProps) {
     const [isSaving, setIsSaving] = useState(false)
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [availableModels, setAvailableModels] = useState<string[]>([])
+    const [showCustomModel, setShowCustomModel] = useState(false)
 
     const [formData, setFormData] = useState<VehicleFormData>({
         year: new Date().getFullYear().toString(),
@@ -46,6 +49,27 @@ export function NewVehicleForm({
             setErrors(prev => ({ ...prev, [field]: '' }))
         }
     }
+
+    // Update available models whenever make or model changes.
+    // If the current model isn't in the canonical list, treat it as a custom model.
+    useEffect(() => {
+        if (formData.make && formData.make.trim()) {
+            const canonical = getModelsForMake(formData.make)
+            setAvailableModels(canonical)
+
+            if (formData.model && formData.model.trim()) {
+                const exists = canonical.some(
+                    (m) => m.toLowerCase() === formData.model.toLowerCase()
+                )
+                setShowCustomModel(!exists)
+            } else {
+                setShowCustomModel(false)
+            }
+        } else {
+            setAvailableModels([])
+            setShowCustomModel(false)
+        }
+    }, [formData.make, formData.model])
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {}
@@ -179,13 +203,67 @@ export function NewVehicleForm({
 
                     <div>
                         <Label className="text-muted-foreground text-xs">Model *</Label>
-                        <Input
-                            value={formData.model}
-                            onChange={(e) => handleInputChange('model', e.target.value)}
-                            placeholder="Camry"
-                            className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
-                            disabled={isSaving}
-                        />
+                        {availableModels.length > 0 && !showCustomModel ? (
+                            <Select
+                                value={
+                                    formData.model &&
+                                    availableModels.some(
+                                        (m) => m.toLowerCase() === formData.model.toLowerCase()
+                                    )
+                                        ? formData.model
+                                        : ''
+                                }
+                                onValueChange={(value) => {
+                                    if (value === '__other') {
+                                        setShowCustomModel(true)
+                                        handleInputChange('model', '')
+                                    } else {
+                                        handleInputChange('model', value)
+                                    }
+                                }}
+                                disabled={isSaving}
+                            >
+                                <SelectTrigger className="bg-white dark:bg-background text-foreground border-border text-sm">
+                                    <SelectValue placeholder="Select model" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-background border-border text-foreground">
+                                    {availableModels.map((model) => (
+                                        <SelectItem key={model} value={model} className="hover:bg-muted">
+                                            {model}
+                                        </SelectItem>
+                                    ))}
+                                    <SelectItem value="__other" className="hover:bg-muted">
+                                        + Other model
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                            <>
+                                <Input
+                                    value={formData.model}
+                                    onChange={(e) => handleInputChange('model', e.target.value)}
+                                    placeholder="Camry"
+                                    className="bg-white dark:bg-background text-foreground border-border text-sm focus:ring-red-600 dark:focus:ring-red-500"
+                                    disabled={isSaving}
+                                />
+                                {availableModels.length > 0 && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setShowCustomModel(false)
+                                            // When switching back to list, clear custom value so they pick from dropdown
+                                            handleInputChange('model', '')
+                                        }}
+                                        className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+                                        disabled={isSaving}
+                                    >
+                                        Select from list
+                                    </Button>
+                                )}
+                            </>
+                        )}
                         {errors.model && (
                             <p className="text-red-600 dark:text-red-400 text-xs mt-1">{errors.model}</p>
                         )}
