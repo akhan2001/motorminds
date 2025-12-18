@@ -6,11 +6,22 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
-    Edit, Download, Send, Trash2,
-    User, Car, LayoutIcon, X, Check, XCircle, Wrench
+    Edit,
+    Download,
+    Send,
+    Trash2,
+    User,
+    Car,
+    LayoutIcon,
+    X,
+    Check,
+    XCircle,
+    Wrench,
+    DollarSign,
 } from 'lucide-react'
-import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
+import { useInvoice, useDeleteInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -35,6 +46,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
+    const updateMutation = useUpdateInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
     const [isLandscape, setIsLandscape] = useState(false)
     const [isSendChoiceModalOpen, setIsSendChoiceModalOpen] = useState(false)
@@ -151,6 +163,27 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
 
     const formatDateString = (date: string) => {
         return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    }
+
+    const handleMarkAsPaid = async () => {
+        if (!invoice) return
+
+        const confirmed = confirm('Mark this invoice as paid?')
+        if (!confirmed) return
+
+        try {
+            await updateMutation.mutateAsync({
+                id: invoice.invoice_number,
+                data: {
+                    status: 'paid',
+                    paid_date: new Date().toISOString(),
+                },
+            })
+            toast.success('Invoice marked as paid')
+        } catch (err) {
+            console.error('Failed to mark invoice as paid:', err)
+            toast.error('Failed to mark invoice as paid')
+        }
     }
 
     if (isLoading) {
@@ -425,17 +458,47 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                         <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                     </div>
                                 </div>
-                                <Badge
-                                    variant="outline"
-                                    className={cn(
-                                        "text-sm px-3 py-1",
-                                        invoice.status === 'paid'
-                                            ? 'bg-green-600 text-white border-green-600'
-                                            : 'bg-red-600 text-white border-red-600'
+                                <div className="flex items-center justify-between gap-2 pt-2">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Badge
+                                                    variant="outline"
+                                                    onClick={
+                                                        invoice.status !== 'paid' &&
+                                                            invoice.status !== 'cancelled' &&
+                                                            invoice.status !== 'refunded' &&
+                                                            !updateMutation.isPending
+                                                            ? handleMarkAsPaid
+                                                            : undefined
+                                                    }
+                                                    className={cn(
+                                                        "text-sm px-3 py-1",
+                                                        invoice.status === 'paid'
+                                                            ? 'bg-green-600 text-white border-green-600 cursor-default'
+                                                            : 'bg-red-600 text-white border-red-600 cursor-pointer hover:bg-emerald-600 hover:border-emerald-600',
+                                                        updateMutation.isPending && "opacity-70 cursor-wait"
+                                                    )}
+                                                >
+                                                    <DollarSign className="w-3 h-3 mr-1" />
+                                                    {invoice.status.toUpperCase()}
+                                                </Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="left">
+                                                <p>
+                                                    {invoice.status === 'paid'
+                                                        ? 'This invoice is already marked as paid.'
+                                                        : 'Click to mark this invoice as paid.'}
+                                                </p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {invoice.paid_date && (
+                                        <span className="text-xs text-muted-foreground dark:text-gray-400">
+                                            Paid on {formatDateString(invoice.paid_date)}
+                                        </span>
                                     )}
-                                >
-                                    {invoice.status.toUpperCase()}
-                                </Badge>
+                                </div>
                             </div>
                         </div>
                     </Card>
