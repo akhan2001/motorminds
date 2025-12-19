@@ -22,6 +22,8 @@ interface PartFormItem {
     quantity: number;
     unit_price: number;
     total_price: number;
+    unit_cost?: number;
+    total_cost?: number;
     supplier?: string;
     category?: string;
     warranty_period?: string;
@@ -53,17 +55,19 @@ export function WorkOrderPartsItems({
     const activeSuppliers = suppliers.filter(supplier => supplier.status === 'active');
 
     // Helper function to convert form item to service format
+    // Ensures ALL fields are included when saving
     const convertToWorkOrderItem = (item: PartFormItem): WorkOrderItemCreateData => ({
         work_order_id: workOrderId!,
         item_type: 'part' as const,
         description: item.description,
-        part_number: item.part_number,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        supplier: item.supplier,
-        category: item.category,
-        warranty_period: item.warranty_period,
-        notes: item.notes,
+        part_number: item.part_number || undefined,
+        quantity: item.quantity ?? 1, // Default to 1 if not set (matches DB default)
+        unit_price: item.unit_price ?? 0, // Default to 0 if not set (matches DB default, use ?? to preserve 0)
+        unit_cost: item.unit_cost !== undefined && item.unit_cost !== null ? item.unit_cost : undefined, // Preserve 0 values
+        supplier: item.supplier || undefined,
+        category: item.category || undefined,
+        warranty_period: item.warranty_period || undefined,
+        notes: item.notes || undefined,
     });
 
     // Function to save item to database
@@ -73,13 +77,9 @@ export function WorkOrderPartsItems({
             return;
         }
 
+        // Only description is required for part items
         if (!item.description.trim()) {
             toast.error('Description is required');
-            return;
-        }
-
-        if (item.quantity <= 0) {
-            toast.error('Quantity must be greater than 0');
             return;
         }
 
@@ -106,6 +106,8 @@ export function WorkOrderPartsItems({
             quantity: 1, 
             unit_price: 0,
             total_price: 0,
+            unit_cost: 0,
+            total_cost: 0,
             supplier: "",
             category: "",
             warranty_period: "",
@@ -150,9 +152,34 @@ export function WorkOrderPartsItems({
             let updatedItem = { ...item };
             
             // Convert string values to numbers for numeric fields
-            if (field === 'quantity' || field === 'unit_price') {
-                const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
-                updatedItem[field] = numValue;
+            if (field === 'quantity' || field === 'unit_price' || field === 'unit_cost') {
+                if (typeof value === 'string') {
+                    // Handle empty string as undefined for optional fields
+                    if (value.trim() === '') {
+                        if (field === 'quantity') {
+                            updatedItem.quantity = 1;
+                        } else if (field === 'unit_cost') {
+                            updatedItem.unit_cost = undefined;
+                        } else {
+                            updatedItem.unit_price = 0;
+                        }
+                    } else {
+                        const parsed = parseFloat(value);
+                        if (isNaN(parsed)) {
+                            if (field === 'quantity') {
+                                updatedItem.quantity = 1;
+                            } else if (field === 'unit_cost') {
+                                updatedItem.unit_cost = undefined;
+                            } else {
+                                updatedItem.unit_price = 0;
+                            }
+                        } else {
+                            (updatedItem as any)[field] = parsed;
+                        }
+                    }
+                } else {
+                    (updatedItem as any)[field] = value;
+                }
             } else {
                 (updatedItem as any)[field] = value;
             }
@@ -160,6 +187,16 @@ export function WorkOrderPartsItems({
             // Calculate total price when quantity or unit price changes
             if (field === 'quantity' || field === 'unit_price') {
                 updatedItem.total_price = updatedItem.quantity * updatedItem.unit_price;
+            }
+            
+            // Calculate total cost when quantity or unit cost changes
+            if (field === 'quantity' || field === 'unit_cost') {
+                // Calculate total_cost if unit_cost is set (including 0)
+                if (updatedItem.unit_cost !== undefined && updatedItem.unit_cost !== null) {
+                    updatedItem.total_cost = updatedItem.quantity * updatedItem.unit_cost;
+                } else {
+                    updatedItem.total_cost = undefined;
+                }
             }
             
             return updatedItem;
@@ -222,6 +259,8 @@ export function WorkOrderPartsItems({
                                                     quantity: template.quantity,
                                                     unit_price: template.unit_price,
                                                     total_price: template.quantity * template.unit_price,
+                                                    unit_cost: template.unit_cost || item.unit_cost,
+                                                    total_cost: template.unit_cost ? template.quantity * template.unit_cost : item.total_cost,
                                                     supplier: template.supplier || item.supplier,
                                                     category: template.category || item.category,
                                                     warranty_period: template.warranty_period || item.warranty_period,
@@ -274,11 +313,11 @@ export function WorkOrderPartsItems({
                                     </div>
                                 </div>
 
-                                {/* Quantity, Unit Price, Total */}
-                                <div className="grid grid-cols-3 gap-3">
+                                {/* Quantity, Unit Cost, Unit Price, Total Price */}
+                                <div className="grid grid-cols-4 gap-3">
                                     <div>
                                         <Label htmlFor={`part_quantity_${index}`} className="text-muted-foreground text-xs">
-                                            Quantity *
+                                            Quantity
                                         </Label>
                                         <Input
                                             id={`part_quantity_${index}`}
@@ -292,8 +331,24 @@ export function WorkOrderPartsItems({
                                         />
                                     </div>
                                     <div>
+                                        <Label htmlFor={`part_unit_cost_${index}`} className="text-muted-foreground text-xs">
+                                            Unit Cost
+                                        </Label>
+                                        <Input
+                                            id={`part_unit_cost_${index}`}
+                                            type="number"
+                                            value={item.unit_cost || ''}
+                                            onChange={(e) => updateItem(item.id, 'unit_cost', e.target.value)}
+                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            disabled={!isEditing}
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <div>
                                         <Label htmlFor={`part_unit_price_${index}`} className="text-muted-foreground text-xs">
-                                            Unit Price *
+                                            Unit Price
                                         </Label>
                                         <Input
                                             id={`part_unit_price_${index}`}

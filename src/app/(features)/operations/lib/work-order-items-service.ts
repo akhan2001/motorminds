@@ -86,22 +86,27 @@ export class WorkOrderItemsService {
             throw new Error('Description is required')
         }
 
-        if (itemData.quantity <= 0) {
+        // For part items, only description is required
+        // Set defaults for quantity and unit_price if not provided
+        const quantity = itemData.quantity ?? 1
+        const unitPrice = itemData.unit_price ?? 0
+
+        // Validate quantity if provided (must be > 0)
+        if (quantity <= 0) {
             throw new Error('Quantity must be greater than 0')
         }
 
-        if (itemData.unit_price < 0) {
+        // Validate unit_price if provided (cannot be negative)
+        if (unitPrice < 0) {
             throw new Error('Unit price cannot be negative')
         }
 
-        // Validate unit_price is properly set
-        if (itemData.unit_price === null || itemData.unit_price === undefined) {
-            throw new Error('Unit price is required')
-        }
-
         // Calculate total price
-        const totalPrice = itemData.quantity * itemData.unit_price
-        const totalCost = itemData.unit_cost ? itemData.quantity * itemData.unit_cost : undefined
+        const totalPrice = quantity * unitPrice
+        // Calculate total_cost if unit_cost is provided (including 0)
+        const totalCost = itemData.unit_cost !== undefined && itemData.unit_cost !== null 
+            ? quantity * itemData.unit_cost 
+            : undefined
 
         // Get shop_id from the work order (required for RLS)
         const { data: workOrder, error: workOrderError } = await supabase
@@ -114,23 +119,24 @@ export class WorkOrderItemsService {
             throw new Error('Work order not found')
         }
 
+        // Ensure ALL fields are included in the payload
         const itemPayload = {
             work_order_id: itemData.work_order_id,
             shop_id: workOrder.shop_id,
             item_type: itemData.item_type,
             description: itemData.description.trim(),
             part_number: itemData.part_number?.trim() || null,
-            quantity: itemData.quantity,
-            unit_price: itemData.unit_price,
+            quantity: quantity,
+            unit_price: unitPrice,
             total_price: totalPrice,
-            unit_cost: itemData.unit_cost || null,
-            total_cost: totalCost || null,
+            unit_cost: itemData.unit_cost ?? null,
+            total_cost: totalCost ?? null,
             supplier: itemData.supplier?.trim() || null,
             category: itemData.category?.trim() || null,
             warranty_period: itemData.warranty_period?.trim() || null,
             notes: itemData.notes?.trim() || null,
-            labor_hours: itemData.labor_hours || null,
-            technician_id: itemData.technician_id || null,
+            labor_hours: itemData.labor_hours ?? null,
+            technician_id: itemData.technician_id ?? null,
         }
 
         const { data, error } = await supabase
@@ -210,12 +216,33 @@ export class WorkOrderItemsService {
             }
         }
 
+        // Recalculate total_cost if quantity or unit_cost changed
+        if (itemData.quantity !== undefined || itemData.unit_cost !== undefined) {
+            try {
+                const currentItem = await this.getWorkOrderItem(itemId)
+                const newQuantity = itemData.quantity ?? currentItem.quantity
+                const newUnitCost = itemData.unit_cost ?? currentItem.unit_cost
+                
+                // Calculate total_cost if unit_cost is provided (including 0)
+                if (newUnitCost !== null && newUnitCost !== undefined) {
+                    updatePayload.total_cost = newQuantity * newUnitCost
+                } else {
+                    updatePayload.total_cost = null
+                }
+            } catch (error) {
+                // If item doesn't exist, we can't update it
+                throw new Error(`Work order item with ID ${itemId} not found`)
+            }
+        }
+
+        // Ensure ALL fields are included in update payload
         if (itemData.supplier !== undefined) updatePayload.supplier = itemData.supplier?.trim() || null
         if (itemData.category !== undefined) updatePayload.category = itemData.category?.trim() || null
         if (itemData.warranty_period !== undefined) updatePayload.warranty_period = itemData.warranty_period?.trim() || null
         if (itemData.notes !== undefined) updatePayload.notes = itemData.notes?.trim() || null
         if (itemData.labor_hours !== undefined) updatePayload.labor_hours = itemData.labor_hours || null
         if (itemData.technician_id !== undefined) updatePayload.technician_id = itemData.technician_id || null
+        if (itemData.unit_cost !== undefined) updatePayload.unit_cost = itemData.unit_cost ?? null
         if (itemData.active !== undefined) updatePayload.active = itemData.active
 
         const { data, error } = await supabase
