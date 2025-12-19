@@ -10,7 +10,7 @@ interface UseSuppliersReturn {
     error: string | null
     fetchSuppliers: () => Promise<void>
     addSupplier: (supplier: Supplier) => void
-    updateSupplier: (id: string, supplier: Supplier) => void
+    updateSupplier: (id: string, supplier: Supplier) => Promise<void>
     deleteSupplier: (id: string) => Promise<void>
     handleCallSupplier: (supplier: Supplier) => void
 }
@@ -48,12 +48,42 @@ export function useSuppliers(): UseSuppliersReturn {
         setSuppliers(prev => [newSupplier, ...prev])
     }
 
-    const updateSupplier = (id: string, updatedSupplier: Supplier) => {
-        setSuppliers(prev => 
-            prev.map(supplier => 
-                supplier.id === id ? updatedSupplier : supplier
+    const updateSupplier = async (id: string, updatedSupplier: Supplier) => {
+        try {
+            const response = await fetch(`/api/suppliers/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: updatedSupplier.name,
+                    contact_person: updatedSupplier.contact_person,
+                    phone_number: updatedSupplier.phone_number,
+                    email: updatedSupplier.email,
+                    address: updatedSupplier.address,
+                    account_number: updatedSupplier.account_number,
+                    notes: updatedSupplier.notes,
+                    status: updatedSupplier.status
+                }),
+            })
+
+            if (!response.ok) {
+                const data = await response.json()
+                throw new Error(data.error || 'Failed to update supplier')
+            }
+
+            const data = await response.json()
+            setSuppliers(prev => 
+                prev.map(supplier => 
+                    supplier.id === id ? data.supplier : supplier
+                )
             )
-        )
+            toast.success('Supplier updated successfully')
+        } catch (error) {
+            console.error('Error updating supplier:', error)
+            toast.error(error instanceof Error ? error.message : 'Failed to update supplier')
+            throw error
+        }
     }
 
     const deleteSupplier = async (id: string) => {

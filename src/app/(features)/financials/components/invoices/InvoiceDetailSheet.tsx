@@ -222,9 +222,30 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex-1">
                                                 <div className="text-foreground dark:text-white text-sm font-medium">{item.description}</div>
-                                                <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
-                                                    Type: {item.item_type} • Qty: {item.quantity}
-                                                    {item.part_number && ` • Part #: ${item.part_number}`}
+                                                <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1 space-y-0.5">
+                                                    <div>
+                                                        <span className="font-medium">Type:</span> {item.item_type} • <span className="font-medium">Qty:</span> {item.quantity} × {formatCurrency(item.unit_price || 0)} = {formatCurrency(item.total_price || 0)}
+                                                    </div>
+                                                    {item.part_number && (
+                                                        <div>
+                                                            <span className="font-medium">Part #:</span> {item.part_number}
+                                                        </div>
+                                                    )}
+                                                    {item.supplier && (
+                                                        <div>
+                                                            <span className="font-medium">Supplier:</span> {item.supplier}
+                                                        </div>
+                                                    )}
+                                                    {item.category && (
+                                                        <div>
+                                                            <span className="font-medium">Category:</span> {item.category}
+                                                        </div>
+                                                    )}
+                                                    {item.warranty_period && (
+                                                        <div>
+                                                            <span className="font-medium">Warranty:</span> {item.warranty_period}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className={`text-sm font-medium ${
@@ -239,9 +260,9 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                                                 )}
                                             </div>
                                         </div>
-                                        {item.unit_price && (
-                                            <div className="text-muted-foreground dark:text-gray-400 text-xs">
-                                                Unit Price: {formatCurrency(item.unit_price)}
+                                        {item.notes && (
+                                            <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
+                                                <span className="font-medium">Notes:</span> {item.notes}
                                             </div>
                                         )}
                                     </div>

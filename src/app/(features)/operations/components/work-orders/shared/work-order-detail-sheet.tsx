@@ -328,13 +328,38 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                                                         )}
                                                     </div>
                                                     <div className="text-foreground dark:text-white text-sm font-medium">{item.description}</div>
-                                                    <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
+                                                    <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1 space-y-0.5">
                                                         {item.item_type === 'labor' ? (
-                                                            <span>{item.labor_hours || 0} hours @ {formatCurrency(item.unit_price || 0)}/hr</span>
+                                                            <div>
+                                                                <span>{item.labor_hours || 0} hours @ {formatCurrency(item.unit_price || 0)}/hr</span>
+                                                            </div>
                                                         ) : (
-                                                            <span>Qty: {item.quantity || 0} × {formatCurrency(item.unit_price || 0)}</span>
+                                                            <>
+                                                                <div>
+                                                                    <span>Qty: {item.quantity || 0} × {formatCurrency(item.unit_price || 0)} = {formatCurrency(itemTotal)}</span>
+                                                                </div>
+                                                                {item.part_number && (
+                                                                    <div>
+                                                                        <span className="font-medium">Part #:</span> {item.part_number}
+                                                                    </div>
+                                                                )}
+                                                                {item.supplier && (
+                                                                    <div>
+                                                                        <span className="font-medium">Supplier:</span> {item.supplier}
+                                                                    </div>
+                                                                )}
+                                                                {item.category && (
+                                                                    <div>
+                                                                        <span className="font-medium">Category:</span> {item.category}
+                                                                    </div>
+                                                                )}
+                                                                {item.warranty_period && (
+                                                                    <div>
+                                                                        <span className="font-medium">Warranty:</span> {item.warranty_period}
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
-                                                        {item.part_number && ` • Part #: ${item.part_number}`}
                                                     </div>
                                                 </div>
                                                 <div className={`text-sm font-medium ${!isActive ? 'text-red-600 dark:text-red-400' : 'text-foreground dark:text-white'}`}>
@@ -343,7 +368,7 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                                             </div>
                                             {item.notes && (
                                                 <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
-                                                    Notes: {item.notes}
+                                                    <span className="font-medium">Notes:</span> {item.notes}
                                                 </div>
                                             )}
                                         </div>

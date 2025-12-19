@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Package } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
 import { useAuth } from "../../../hooks/use-auth";
+import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
 
 interface PartFormItem {
     id: string;
@@ -45,6 +47,10 @@ export function WorkOrderPartsItems({
 }: WorkOrderPartsItemsProps) {
 
     const { shopId } = useAuth();
+    const { suppliers, loading: suppliersLoading } = useSuppliers();
+    
+    // Filter only active suppliers
+    const activeSuppliers = suppliers.filter(supplier => supplier.status === 'active');
 
     // Helper function to convert form item to service format
     const convertToWorkOrderItem = (item: PartFormItem): WorkOrderItemCreateData => ({
@@ -321,14 +327,69 @@ export function WorkOrderPartsItems({
                                         <Label htmlFor={`part_supplier_${index}`} className="text-muted-foreground text-xs">
                                             Supplier
                                         </Label>
-                                        <Input
-                                            id={`part_supplier_${index}`}
-                                            value={item.supplier || ''}
-                                            onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
-                                            disabled={!isEditing}
-                                            placeholder="Supplier name"
-                                        />
+                                        {suppliersLoading ? (
+                                            <Input
+                                                id={`part_supplier_${index}`}
+                                                value={item.supplier || ''}
+                                                disabled
+                                                className="bg-white dark:bg-background border-border text-foreground"
+                                                placeholder="Loading suppliers..."
+                                            />
+                                        ) : activeSuppliers.length > 0 ? (
+                                            <>
+                                                <Select
+                                                    value={activeSuppliers.find(s => s.name === item.supplier) ? item.supplier : (item.supplier ? 'custom' : '')}
+                                                    onValueChange={(value) => {
+                                                        if (value === 'custom') {
+                                                            updateItem(item.id, 'supplier', '')
+                                                        } else {
+                                                            updateItem(item.id, 'supplier', value)
+                                                        }
+                                                    }}
+                                                    disabled={!isEditing}
+                                                >
+                                                    <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
+                                                        <SelectValue placeholder="Select supplier" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {activeSuppliers.map((supplier) => (
+                                                            <SelectItem key={supplier.id} value={supplier.name}>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">{supplier.name}</span>
+                                                                    {supplier.contact_person && (
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            {supplier.contact_person}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                        <SelectItem value="custom">
+                                                            <span className="text-muted-foreground">Custom / Other</span>
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                {(!item.supplier || !activeSuppliers.find(s => s.name === item.supplier)) && (
+                                                    <Input
+                                                        id={`part_supplier_custom_${index}`}
+                                                        value={item.supplier || ''}
+                                                        onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
+                                                        className="bg-white dark:bg-background border-border text-foreground mt-2"
+                                                        disabled={!isEditing}
+                                                        placeholder="Enter supplier name"
+                                                    />
+                                                )}
+                                            </>
+                                        ) : (
+                                            <Input
+                                                id={`part_supplier_${index}`}
+                                                value={item.supplier || ''}
+                                                onChange={(e) => updateItem(item.id, 'supplier', e.target.value)}
+                                                className="bg-white dark:bg-background border-border text-foreground"
+                                                disabled={!isEditing}
+                                                placeholder="Supplier name"
+                                            />
+                                        )}
                                     </div>
                                     <div>
                                         <Label htmlFor={`part_category_${index}`} className="text-muted-foreground text-xs">
