@@ -3,9 +3,11 @@ import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { baseVehicleId: string; documentId: string } }
+	context: { params: Promise<{ baseVehicleId: string; documentId: string }> }
 ) {
 	try {
+		const params = await context.params
+
 		const publicKey = process.env.MOTOR_DAAS_PUBLIC_KEY
 		const privateKey = process.env.MOTOR_DAAS_PRIVATE_KEY
 

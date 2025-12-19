@@ -2,7 +2,9 @@
 
 import { tool } from 'ai'
 import { z } from 'zod'
+
 import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
+import { WIRING_DIAGRAM_SUBJECTS } from '../types/MotorDaaS'
 
 // Lazy client creation to avoid errors if env vars aren't set
 function getMotorClient(): MotorDaasClient {
@@ -59,22 +61,6 @@ export const helloWorldTool = tool({
 	}
 })
 
-// Common subject names for wiring diagrams
-const WIRING_DIAGRAM_SUBJECTS = [
-	'engine',
-	'brakes',
-	'electrical',
-	'body',
-	'hvac',
-	'lighting',
-	'transmission',
-	'steering',
-	'restraints',
-	'warning systems',
-	'body & accessories',
-	'electrical distribution',
-	'interior & driver amenity'
-]
 
 export const getWiringDiagramsTool = tool({
 	description: 'Search and retrieve wiring diagrams for the vehicle. Can browse by subject category (e.g., "Engine", "Brakes", "Electrical") or search by component name (e.g., "O2 sensor", "brake light circuit"). Returns a list of available diagrams with their IDs and names.',

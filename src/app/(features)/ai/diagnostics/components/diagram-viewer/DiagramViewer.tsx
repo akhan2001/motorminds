@@ -38,7 +38,9 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: Dia
 				// Get first document
 				const document = details.Documents?.[0]
 				if (!document || !document.DocumentID) {
-					throw new Error('No document found for this diagram')
+					console.warn('[DiagramViewer] No document found for this diagram details response:', details)
+					setError('No document is available for this wiring diagram from MOTOR. Try another diagram from the list.')
+					return
 				}
 
 				// Fetch document

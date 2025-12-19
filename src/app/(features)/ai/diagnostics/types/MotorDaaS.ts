@@ -1,3 +1,4 @@
+// Common subject names for wiring diagrams
 export const WIRING_DIAGRAM_SUBJECTS = [
 	'engine',
 	'brakes',
