@@ -82,6 +82,25 @@ export class WorkOrderService {
             return null
         }
 
+        // Fetch archived_by_user separately if archived_by is set
+        if (data?.archived_by) {
+            try {
+                const { data: userData } = await this.supabase
+                    .from('users')
+                    .select('id, email')
+                    .eq('id', data.archived_by)
+                    .single()
+                
+                return {
+                    ...data,
+                    archived_by_user: userData || undefined
+                }
+            } catch (err) {
+                // If user lookup fails, just return without archived_by_user
+                return data
+            }
+        }
+
         return data
     }
 

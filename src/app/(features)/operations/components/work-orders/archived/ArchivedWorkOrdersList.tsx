@@ -8,16 +8,34 @@ import { useArchivedWorkOrders } from '../../../hooks/use-archived-work-orders'
 import { ArchivedWorkOrderCard } from './ArchivedWorkOrderCard'
 import { Input } from '@/components/ui/input'
 import { useState } from 'react'
+import { WorkOrderDetailSheet } from '../shared/work-order-detail-sheet'
+import { useWorkOrderWithDetails } from '../../../hooks/use-work-orders'
+import type { WorkOrderWithDetails } from '../../../types/work-order'
 
 export function ArchivedWorkOrdersList() {
     const { shopId } = useAuth()
     const [searchTerm, setSearchTerm] = useState('')
+    const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null)
+    const [isSheetOpen, setIsSheetOpen] = useState(false)
 
     const {
         data: workOrders = [],
         isLoading,
         error
     } = useArchivedWorkOrders(shopId || '')
+
+    // Fetch full work order details when sheet is open
+    const { data: selectedWorkOrder } = useWorkOrderWithDetails(selectedWorkOrderId || '')
+
+    const handleWorkOrderClick = (workOrderId: string) => {
+        setSelectedWorkOrderId(workOrderId)
+        setIsSheetOpen(true)
+    }
+
+    const handleCloseSheet = () => {
+        setIsSheetOpen(false)
+        setSelectedWorkOrderId(null)
+    }
 
     // Client-side filtering since the hook returns all
     const filteredWorkOrders = workOrders.filter(wo => {
@@ -105,11 +123,19 @@ export function ArchivedWorkOrdersList() {
                             <ArchivedWorkOrderCard
                                 key={wo.id}
                                 workOrder={wo}
+                                onClick={() => handleWorkOrderClick(wo.id)}
                             />
                         ))}
                     </div>
                 )}
             </CardContent>
+
+            {/* Work Order Detail Sheet */}
+            <WorkOrderDetailSheet
+                workOrder={selectedWorkOrder || null}
+                isOpen={isSheetOpen}
+                onClose={handleCloseSheet}
+            />
         </Card>
     )
 }

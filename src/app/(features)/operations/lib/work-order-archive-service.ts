@@ -107,8 +107,8 @@ export class WorkOrderArchiveService {
             .from('work_orders')
             .select(`
                 *,
-                customer:customers(id, customer_name, customer_phone, customer_email),
-                vehicle:customer_vehicles(id, year, make, model, license_plate, color),
+                customer:customers(id, customer_name, customer_phone, customer_email, customer_address),
+                vehicle:customer_vehicles(id, year, make, model, license_plate, color, vin, mileage),
                 technician:employees(id, first_name, last_name)
             `)
             .eq('shop_id', shopId)
@@ -117,10 +117,34 @@ export class WorkOrderArchiveService {
 
         if (error) {
             console.error('Error fetching archived work orders:', error)
-            throw new Error(`Failed to fetch archived work orders: ${error.message}`)
+            throw new Error(`Failed to fetch archived work orders: ${error.message || JSON.stringify(error)}`)
         }
 
-        return data || []
+        // Fetch archived_by_user separately if archived_by is set
+        const workOrdersWithUsers = await Promise.all(
+            (data || []).map(async (workOrder) => {
+                if (workOrder.archived_by) {
+                    try {
+                        const { data: userData } = await this.supabase
+                            .from('users')
+                            .select('id, email')
+                            .eq('id', workOrder.archived_by)
+                            .single()
+                        
+                        return {
+                            ...workOrder,
+                            archived_by_user: userData || undefined
+                        }
+                    } catch (err) {
+                        // If user lookup fails, just return without archived_by_user
+                        return workOrder
+                    }
+                }
+                return workOrder
+            })
+        )
+
+        return workOrdersWithUsers
     }
 
     /**
