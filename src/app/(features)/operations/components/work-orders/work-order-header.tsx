@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette, Archive, PaintBucket } from 'lucide-react'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette, Archive, PaintBucket, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface WorkOrderHeaderProps {
@@ -151,6 +151,17 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Archive className="h-4 w-4 mr-2" />
                         Archived Work Orders
+                    </Button>
+                    
+                    {/* Archived Work Orders Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        // onClick={handlePartsClick}
+                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                        <Package className="h-4 w-4 mr-2" />
+                        Parts & Expenses
                     </Button>
                 </div>
             </div>
