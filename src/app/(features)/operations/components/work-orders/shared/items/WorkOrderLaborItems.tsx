@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "../../../hooks/use-auth";
-import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
-import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
-import { TemplateDropdown } from "../../work-order-items/shared";
-import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
+import { useAuth } from "../../../../hooks/use-auth";
+import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../../types/work-order-items";
+import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
 
 interface LaborFormItem {
     id: string;
@@ -393,4 +393,5 @@ export function WorkOrderLaborItems({
             )}
         </div>
     );
-} 
+}
+

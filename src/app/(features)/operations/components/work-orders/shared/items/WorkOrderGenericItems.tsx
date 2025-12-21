@@ -7,11 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, DollarSign, Tag, Package as PackageIcon } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
-import { WorkOrderItem, WorkOrderItemCreateData } from "../../../types/work-order-items";
-import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
-import { TemplateDropdown } from "../../work-order-items/shared";
-import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
-import { useAuth } from "../../../hooks/use-auth";
+import { WorkOrderItem, WorkOrderItemCreateData } from "../../../../types/work-order-items";
+import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
+import { useAuth } from "../../../../hooks/use-auth";
 
 interface GenericFormItem {
     id: string;

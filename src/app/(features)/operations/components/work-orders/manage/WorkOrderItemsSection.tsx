@@ -1,9 +1,7 @@
 // Unified items section component
 'use client'
 
-import { WorkOrderLaborItems } from '../shared/WorkOrderLaborItems'
-import { WorkOrderPartsItems } from '../shared/WorkOrderPartsItems'
-import { WorkOrderGenericItems } from '../shared/WorkOrderGenericItems'
+import { WorkOrderLaborItems, WorkOrderPartsItems, WorkOrderGenericItems } from '../shared'
 import type { LaborFormItem, PartFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
 
 interface WorkOrderItemsSectionProps {

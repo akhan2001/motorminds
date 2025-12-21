@@ -11,11 +11,11 @@ import { Plus, Trash2, Package } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 
-import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
-import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
-import { TemplateDropdown } from "../../work-order-items/shared";
-import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
-import { useAuth } from "../../../hooks/use-auth";
+import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../../types/work-order-items";
+import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
+import { TemplateDropdown } from "../../../work-order-items/shared";
+import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
+import { useAuth } from "../../../../hooks/use-auth";
 
 interface PartFormItem {
     id: string;
@@ -518,3 +518,4 @@ export function WorkOrderPartsItems({
         </div>
     );
 }
+
