@@ -31,7 +31,7 @@ export class WorkOrderService {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
-                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info,
+                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
                 technician:employees(id, first_name, last_name)
@@ -126,7 +126,7 @@ export class WorkOrderService {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
-                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info,
+                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
                 technician:employees(id, first_name, last_name)

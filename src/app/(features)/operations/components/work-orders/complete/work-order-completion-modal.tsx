@@ -81,6 +81,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
         if (!workOrder.customer?.customer_phone) {
             // Pass enableAutomatedMessage flag to control automated messaging
             onConfirm(false, undefined, enableAutomatedMessage)
+            onClose() // Close modal after confirmation
             return
         }
 
@@ -92,11 +93,13 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
         // Pass enableAutomatedMessage flag to control automated messaging
         onConfirm(true, customMessage, enableAutomatedMessage)
+        onClose() // Close modal after confirmation
     }
 
     const handleSkipMessage = async () => {
         // Pass enableAutomatedMessage flag to control automated messaging
         onConfirm(false, undefined, enableAutomatedMessage)
+        onClose() // Close modal after confirmation
     }
 
 

@@ -12,8 +12,8 @@ import { VehicleInformation } from '../shared/vehicle-information'
 import { WorkOrderNotes } from '../shared/work-order-notes'
 import { WorkOrderModalFooter } from '../shared/work-order-modal-footer'
 import { WorkOrderItemsSection } from './WorkOrderItemsSection'
-import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
+import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
 import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
@@ -125,7 +125,7 @@ export function WorkOrderEditLeftPanel({
             />
 
             {/* Edit Restriction Notice */}
-            {!form.canEdit && (
+            {/* {!form.canEdit && (
                 <div className="mx-6 my-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                     <p className="text-yellow-400 text-sm flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,7 +134,7 @@ export function WorkOrderEditLeftPanel({
                         This work order cannot be edited because it has been {workOrderDetails.status}.
                     </p>
                 </div>
-            )}
+            )} */}
 
             {/* Main Content - Scrollable */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
@@ -154,7 +154,7 @@ export function WorkOrderEditLeftPanel({
                         customerPhone={form.formData.customerPhone}
                         customerAddress={form.formData.customerAddress}
                         isEditing={form.isEditing}
-                        onFieldChange={form.handleFieldChange}
+                        onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
                     />
 
                     {/* Vehicle Information */}
@@ -168,7 +168,7 @@ export function WorkOrderEditLeftPanel({
                         vehicleLicensePlate={form.formData.vehicleLicensePlate}
                         vehicleMileage={form.formData.vehicleMileage}
                         isEditing={form.isEditing}
-                        onFieldChange={form.handleFieldChange}
+                        onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
                     />
 
                     {/* Work Order Information */}
@@ -180,22 +180,14 @@ export function WorkOrderEditLeftPanel({
                         assigneeId={workOrderDetails?.assigned_technician_id || ""}
                         date={form.formData.date}
                         tags={form.formData.tags}
+                        statusTracker={form.formData.statusTracker}
                         isEditing={form.isEditing}
                         isCreating={false}
-                        onFieldChange={form.handleFieldChange}
+                        onFieldChange={(field: string, value: any) => form.handleFieldChange(field as keyof typeof form.formData, value)}
                         onTechnicianSelect={handleTechnicianSelect}
                         onAddTag={handleAddTag}
                         onRemoveTag={handleRemoveTag}
                     />
-
-                    {/* Cost Summary - Only show for completed work orders */}
-                    {workOrderDetails.status === 'completed' && workOrderItems.length > 0 && (
-                        <div className="mt-6">
-                            <WorkOrderCostSummary
-                                workOrderItems={workOrderItems}
-                            />
-                        </div>
-                    )}
 
                     {/* Work Order Items - Show for editable statuses */}
                     {canEditItems && (
@@ -209,11 +201,18 @@ export function WorkOrderEditLeftPanel({
                         />
                     )}
 
+                    {/* Cost Summary - Show for completed work orders */}
+                    {showFinancialSummary && workOrderItems.length > 0 && (
+                        <WorkOrderCostSummary
+                            workOrderItems={workOrderItems}
+                        />
+                    )}
+
                     {/* Notes */}
                     <WorkOrderNotes
                         notes={form.formData.notes}
                         isEditing={form.isEditing}
-                        onFieldChange={form.handleFieldChange}
+                        onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
                     />
                 </div>
             </div>

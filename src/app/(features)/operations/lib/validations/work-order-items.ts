@@ -11,6 +11,13 @@ export const WorkOrderItemTypeSchema = z.enum([
     'package'
 ])
 
+// Technician schema for joined data
+const TechnicianSchema = z.object({
+    id: z.string().uuid(),
+    first_name: z.string(),
+    last_name: z.string().optional().nullable(),
+}).optional().nullable()
+
 // Full work order item schema (matches database)
 export const WorkOrderItemSchema = z.object({
     id: z.string().uuid(),
@@ -43,7 +50,10 @@ export const WorkOrderItemSchema = z.object({
     
     created_at: z.string(),
     completed_at: z.string().optional().nullable(),
-})
+    
+    // Joined technician data (optional, from Supabase join)
+    technician: TechnicianSchema,
+}).passthrough() // Allow extra fields from database joins
 
 // Schema for creating items (omits calculated/auto fields)
 export const WorkOrderItemCreateSchema = z.object({

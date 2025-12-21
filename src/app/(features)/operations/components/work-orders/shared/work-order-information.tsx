@@ -119,7 +119,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
     return (
         <div className={`space-y-4 ${className}`}>
             <h3 className="text-lg font-medium text-foreground dark:text-white">Work Order Information</h3>
-            <div className="bg-slate-50 dark:bg-[#1A1A1A] rounded-xl p-6">
+            <div className="bg-card dark:bg-[#131313] rounded-xl p-6 border border-border dark:border-[#333333]">
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
@@ -130,10 +130,14 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                         value={selectedCategory}
                                         onValueChange={handleCategoryChange}
                                     >
-                                        <SelectTrigger className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500">
+                                        <SelectTrigger className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}>
                                             <SelectValue placeholder="Select category" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-popover dark:bg-[#1a1a1a] text-popover-foreground dark:text-white border-border dark:border-[#2a2a2a]">
+                                        <SelectContent className="bg-popover dark:bg-[#1a1a1a] text-popover-foreground dark:text-white border-border dark:border-[#333333]">
                                             {WORK_ORDER_TITLE_CATEGORIES.map((category) => (
                                                 <SelectItem 
                                                     key={category} 
@@ -149,7 +153,11 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                         <Input
                                             value={customTitle}
                                             onChange={(e) => handleCustomTitleChange(e.target.value)}
-                                            className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
+                                            className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                                isEditing 
+                                                    ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                    : 'bg-card dark:bg-[#131313]'
+                                            }`}
                                             maxLength={100}
                                             placeholder="Enter custom title..."
                                         />
@@ -159,7 +167,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="h-10 px-3 bg-background dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md flex items-center">
+                                <div className="h-10 px-3 bg-card dark:bg-[#131313] border border-border dark:border-[#333333] rounded-md flex items-center">
                                     <span className="text-foreground dark:text-white text-sm">{title || '—'}</span>
                                 </div>
                             )}
@@ -171,10 +179,14 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     value={priority} 
                                     onValueChange={(value) => onFieldChange('priority', value as WorkOrderPriority)}
                                 >
-                                    <SelectTrigger className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500">
+                                    <SelectTrigger className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                        isEditing 
+                                            ? 'bg-background dark:bg-[#1a1a1a]' 
+                                            : 'bg-card dark:bg-[#131313]'
+                                    }`}>
                                         <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] text-popover-foreground dark:text-white border-border dark:border-[#2a2a2a]">
+                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] text-popover-foreground dark:text-white border-border dark:border-[#333333]">
                                         {priorityOptions.map((option) => (
                                             <SelectItem key={option.value} value={option.value} className="hover:bg-accent dark:hover:bg-[#2a2a2a]">
                                                 <div className="flex items-center">
@@ -186,7 +198,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     </SelectContent>
                                 </Select>
                             ) : (
-                                <div className="flex items-center gap-2 h-10 px-3 bg-background dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-md">
+                                <div className="flex items-center gap-2 h-10 px-3 bg-card dark:bg-[#131313] border border-border dark:border-[#333333] rounded-md">
                                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(priority)}`}></div>
                                     <span className="text-foreground dark:text-white capitalize text-sm">{priority}</span>
                                 </div>
@@ -199,7 +211,11 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                         <textarea
                             value={description}
                             onChange={(e) => isEditing && onFieldChange('description', e.target.value)}
-                            className="w-full bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white text-sm border border-border dark:border-[#2a2a2a] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto"
+                            className={`w-full text-foreground dark:text-white text-sm border border-border dark:border-[#333333] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto ${
+                                isEditing 
+                                    ? 'bg-background dark:bg-[#1a1a1a]' 
+                                    : 'bg-card dark:bg-[#131313]'
+                            }`}
                             readOnly={!isEditing}
                             placeholder={isEditing ? "Describe the work to be performed..." : ""}
                         />
@@ -229,7 +245,11 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                 type="date"
                                 value={date}
                                 onChange={(e) => isEditing && onFieldChange('date', e.target.value)}
-                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 dark:[&::-webkit-calendar-picker-indicator]:filter dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 dark:[&::-webkit-calendar-picker-indicator]:filter dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer ${
+                                    isEditing 
+                                        ? 'bg-background dark:bg-[#1a1a1a]' 
+                                        : 'bg-card dark:bg-[#131313]'
+                                }`}
                                 readOnly={!isEditing}
                             />
                         </div>

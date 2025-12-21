@@ -58,6 +58,8 @@ export const FINANCIAL_SUMMARY_STATUSES: readonly WorkOrderStatus[] = [
     WORK_ORDER_STATUS.APPROVED,
     WORK_ORDER_STATUS.IN_PROGRESS,
     WORK_ORDER_STATUS.READY,
+    WORK_ORDER_STATUS.COMPLETED,
+    WORK_ORDER_STATUS.INVOICED,
 ] as const
 
 // Statuses that allow MIA insights

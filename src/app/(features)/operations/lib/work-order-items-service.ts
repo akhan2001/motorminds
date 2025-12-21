@@ -18,6 +18,7 @@ export class WorkOrderItemsService {
 
     /**
      * Get all items for a specific work order
+     * Includes technician information for labor items
      */
     static async getWorkOrderItems(workOrderId: string): Promise<WorkOrderItem[]> {
         if (!workOrderId) {
@@ -26,7 +27,10 @@ export class WorkOrderItemsService {
 
         const { data, error } = await supabase
             .from('work_order_items')
-            .select('*')
+            .select(`
+                *,
+                technician:employees(id, first_name, last_name)
+            `)
             .eq('work_order_id', workOrderId)
             .order('created_at', { ascending: true })
 

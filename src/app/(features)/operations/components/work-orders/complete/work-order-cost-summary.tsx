@@ -38,8 +38,8 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 	}
 	
 	return (
-		<div className={`bg-slate-50 dark:bg-card rounded-lg p-4 border border-border ${className}`}>
-			<h3 className="text-lg font-semibold text-foreground mb-4">Cost Summary</h3>
+		<div className={`bg-card dark:bg-[#131313] rounded-lg p-4 border border-border dark:border-[#333333] ${className}`}>
+			<h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">Cost Summary</h3>
 			
 			{/* Summary Stats */}
 			<div className="grid grid-cols-2 gap-4 mb-4 text-sm">
@@ -61,10 +61,10 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 				{workOrderItems.map((item) => (
 					<div 
 						key={item.id} 
-						className={`p-3 rounded-lg border bg-white dark:bg-card ${
+						className={`p-3 rounded-lg border ${
 							item.active === false 
 								? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' 
-								: 'border-border'
+								: 'border-border dark:border-[#333333] bg-background dark:bg-[#1a1a1a]'
 						}`}
 					>
 						<div className="flex justify-between items-start mb-2">
@@ -102,17 +102,57 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</div>
 						</div>
 						
-						<div className="flex justify-between text-sm text-muted-foreground">
-							<div>
-								{item.item_type === 'labor' ? (
-									<span>{item.labor_hours || 0} hours @ {formatCurrency(item.unit_price || 0)}/hr</span>
-								) : (
-									<span>{item.quantity || 0} × {formatCurrency(item.unit_price || 0)}</span>
+						<div className="space-y-1 text-sm text-muted-foreground">
+							<div className="flex justify-between">
+								<div>
+									{item.item_type === 'labor' ? (
+										<span>{item.labor_hours || 0} hours @ {formatCurrency(item.unit_price || 0)}/hr</span>
+									) : (
+										<span>{item.quantity || 0} × {formatCurrency(item.unit_price || 0)}</span>
+									)}
+								</div>
+							</div>
+							
+							{/* Show all available fields if not null/empty */}
+							<div className="grid grid-cols-2 gap-2 text-xs">
+								{item.unit_cost !== null && item.unit_cost !== undefined && (
+									<div>
+										<span className="text-muted-foreground">Unit Cost: </span>
+										<span className="text-foreground">{formatCurrency(item.unit_cost)}</span>
+									</div>
+								)}
+								{item.item_type === 'part' && item.supplier && (
+									<div>
+										<span className="text-muted-foreground">Supplier: </span>
+										<span className="text-foreground">{item.supplier}</span>
+									</div>
+								)}
+								{item.category && (
+									<div>
+										<span className="text-muted-foreground">Category: </span>
+										<span className="text-foreground">{item.category}</span>
+									</div>
+								)}
+								{item.item_type === 'part' && item.warranty_period && (
+									<div>
+										<span className="text-muted-foreground">Warranty: </span>
+										<span className="text-foreground">{item.warranty_period}</span>
+									</div>
+								)}
+								{item.item_type === 'labor' && (item as any).technician && (
+									<div>
+										<span className="text-muted-foreground">Technician: </span>
+										<span className="text-foreground">
+											{(item as any).technician.first_name} {(item as any).technician.last_name || ''}
+										</span>
+									</div>
 								)}
 							</div>
+							
 							{item.notes && (
-								<div className="text-xs text-muted-foreground max-w-xs truncate">
-									{item.notes}
+								<div className="text-xs text-muted-foreground pt-1 border-t border-border">
+									<span className="font-medium">Notes: </span>
+									<span>{item.notes}</span>
 								</div>
 							)}
 						</div>
@@ -123,7 +163,8 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 			{/* Totals */}
 			<div className="mt-4 pt-4 border-t border-border">
 				<div className="space-y-2 text-sm">
-					{calculations.labourTotal > 0 && (
+					{/* Show all values if not null/empty (not just if > 0) */}
+					{(calculations.labourTotal !== null && calculations.labourTotal !== undefined && calculations.labourTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Labor</span>
 							<span className="text-foreground font-medium">
@@ -131,7 +172,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{calculations.partsTotal > 0 && (
+					{(calculations.partsTotal !== null && calculations.partsTotal !== undefined && calculations.partsTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Parts</span>
 							<span className="text-foreground font-medium">
@@ -139,7 +180,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{calculations.servicesTotal > 0 && (
+					{(calculations.servicesTotal !== null && calculations.servicesTotal !== undefined && calculations.servicesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Services</span>
 							<span className="text-foreground font-medium">
@@ -147,7 +188,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{calculations.feesTotal > 0 && (
+					{(calculations.feesTotal !== null && calculations.feesTotal !== undefined && calculations.feesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Fees</span>
 							<span className="text-foreground font-medium">
@@ -155,7 +196,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{calculations.packagesTotal > 0 && (
+					{(calculations.packagesTotal !== null && calculations.packagesTotal !== undefined && calculations.packagesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Packages</span>
 							<span className="text-foreground font-medium">
@@ -163,7 +204,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{calculations.discountsTotal > 0 && (
+					{(calculations.discountsTotal !== null && calculations.discountsTotal !== undefined && calculations.discountsTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-red-600 dark:text-red-400">Discounts</span>
 							<span className="text-red-600 dark:text-red-400 font-medium">

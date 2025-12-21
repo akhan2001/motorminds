@@ -181,7 +181,11 @@ export function WorkOrderGenericItems({
                     {items.map((item, index) => (
                         <div
                             key={item.id}
-                            className="bg-white dark:bg-card border border-border rounded-lg p-4"
+                            className={`border border-border dark:border-[#333333] rounded-lg p-4 ${
+                                isEditing 
+                                    ? 'bg-background dark:bg-[#1a1a1a]' 
+                                    : 'bg-card dark:bg-[#131313]'
+                            }`}
                         >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
@@ -256,7 +260,11 @@ export function WorkOrderGenericItems({
                                         }}
                                         placeholder={`Type here to search for a ${itemType} template...`}
                                         disabled={!isEditing}
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                     />
                                 </div>
 
@@ -268,7 +276,11 @@ export function WorkOrderGenericItems({
                                         onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                                         min="0"
                                         step="1"
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                         disabled={!isEditing}  
                                     />
                                 </div>
@@ -281,7 +293,11 @@ export function WorkOrderGenericItems({
                                         onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
                                         min={itemType === 'discount' ? undefined : "0"}
                                         step="0.01"
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                         disabled={!isEditing}
                                     />
                                 </div>
@@ -294,7 +310,11 @@ export function WorkOrderGenericItems({
                                         onChange={(e) => updateItem(item.id, 'unit_cost', parseFloat(e.target.value) || 0)}
                                         min="0"
                                         step="0.01"
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                         disabled={!isEditing}
                                         placeholder="0.00"
                                     />
@@ -306,7 +326,11 @@ export function WorkOrderGenericItems({
                                         type="text"
                                         value={item.category || ''}
                                         onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                                        className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                         disabled={!isEditing}  
                                         placeholder="e.g., engine, transmission"
                                     />
@@ -322,7 +346,11 @@ export function WorkOrderGenericItems({
                                             onChange={(e) => updateItem(item.id, 'labor_hours', parseFloat(e.target.value) || 0)}
                                             min="0"
                                             step="0.25"
-                                            className="bg-white dark:bg-background text-foreground border-border mt-1"
+                                            className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                             disabled={!isEditing}
                                             placeholder="0.00"
                                         />

@@ -3,18 +3,20 @@
 
 import { WorkOrderRightPanel } from '../shared/work-order-right-panel'
 import type { WorkOrderWithDetails } from '../../../types/work-order'
-import type { WorkOrderItemSummary } from '../../../types/work-order-items'
+import type { WorkOrderItem, WorkOrderItemSummary } from '../../../types/work-order-items'
 
 interface WorkOrderEditRightPanelProps {
     workOrderId: string
     workOrderDetails: WorkOrderWithDetails
     summary: WorkOrderItemSummary | undefined
+    workOrderItems?: WorkOrderItem[]
 }
 
 export function WorkOrderEditRightPanel({
     workOrderId,
     workOrderDetails,
     summary,
+    workOrderItems = [],
 }: WorkOrderEditRightPanelProps) {
     return (
         <WorkOrderRightPanel
@@ -24,6 +26,7 @@ export function WorkOrderEditRightPanel({
             technicianId={workOrderDetails.assigned_technician_id || undefined}
             customerId={workOrderDetails.customer_id}
             customerType={workOrderDetails.customer_type}
+            workOrderItems={workOrderItems}
         />
     )
 }

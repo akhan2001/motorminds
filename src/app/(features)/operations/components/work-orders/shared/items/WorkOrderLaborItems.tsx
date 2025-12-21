@@ -173,13 +173,17 @@ export function WorkOrderLaborItems({
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg bg-slate-50 dark:bg-card">
+                <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
                     No labor items added yet. Click "Add Labor" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
-                        <div key={item.id} className="bg-white dark:bg-card border border-border rounded-lg p-4">
+                        <div key={item.id} className={`border rounded-lg p-4 ${
+                            isEditing 
+                                ? 'bg-background dark:bg-[#1a1a1a] border-border dark:border-[#333333]' 
+                                : 'bg-card dark:bg-[#131313] border-border dark:border-[#333333]'
+                        }`}>
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Labor Item {index + 1}</h4>
@@ -250,7 +254,11 @@ export function WorkOrderLaborItems({
                                         }}
                                         placeholder="Type here to search for a labor item template..."
                                         disabled={!isEditing}
-                                        className="bg-white dark:bg-background border-border text-foreground"
+                                        className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                     />
                                 </div>
 
@@ -265,7 +273,11 @@ export function WorkOrderLaborItems({
                                             type="number"
                                             value={item.labor_hours || ''}
                                             onChange={(e) => updateItem(item.id, 'labor_hours', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                             placeholder="2.5"
                                             min="0"
                                             step="0.25"
@@ -281,7 +293,11 @@ export function WorkOrderLaborItems({
                                             type="number"
                                             value={item.unit_price || ''}
                                             onChange={(e) => updateItem(item.id, 'unit_price', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                             min="0"
                                             step="0.01"
                                             disabled={!isEditing}
@@ -301,7 +317,11 @@ export function WorkOrderLaborItems({
                                             type="number"
                                             value={item.unit_cost || ''}
                                             onChange={(e) => updateItem(item.id, 'unit_cost', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                             min="0"
                                             step="0.01"
                                             disabled={!isEditing}
@@ -317,7 +337,11 @@ export function WorkOrderLaborItems({
                                             type="text"
                                             value={item.category || ''}
                                             onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                                            className="bg-white dark:bg-background border-border text-foreground"
+                                            className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        }`}
                                             disabled={!isEditing}
                                             placeholder="e.g., engine, transmission"
                                         />

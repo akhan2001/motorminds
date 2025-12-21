@@ -58,7 +58,7 @@ export const WorkOrderFinancialSummary: React.FC<WorkOrderFinancialSummaryProps>
     }
 
     return (
-        <div className={`bg-slate-50 dark:bg-[#1a1a1a] border border-border dark:border-[#333333] rounded-lg ${className}`}>
+        <div className={`bg-card dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg ${className}`}>
             <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />

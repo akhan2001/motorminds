@@ -38,11 +38,21 @@ export function WorkOrderEditModalContent({
         initialItems: items,
     })
 
+    // Check if work order is completed (hide right panel for completed)
+    const isCompleted = workOrderDetails.status === 'completed' || 
+                       workOrderDetails.status === 'invoiced' || 
+                       workOrderDetails.status === 'cancelled'
+
     return (
         <div className={`fixed inset-0 bg-black/80 z-50 flex items-center justify-center overflow-hidden ${className}`}>
-            <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]">
-                <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                    <ResizablePanel defaultSize={60} minSize={50} maxSize={70}>
+            <div className={`bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg flex h-[90vh] max-h-[90vh] ${
+                isCompleted 
+                    ? 'w-[85vw] max-w-[85vw] sm:max-w-[75vw] md:max-w-[70vw]' // Narrower for completed
+                    : 'w-[95vw] max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw]' // Full width for active
+            }`}>
+                {isCompleted ? (
+                    // For completed work orders, show only left panel (full width)
+                    <div className="w-full h-full">
                         <WorkOrderEditLeftPanel
                             workOrder={workOrder}
                             workOrderDetails={workOrderDetails}
@@ -53,18 +63,35 @@ export function WorkOrderEditModalContent({
                             onSave={onSave}
                             onDelete={onDelete}
                         />
-                    </ResizablePanel>
+                    </div>
+                ) : (
+                    // For non-completed work orders, show resizable panels
+                    <ResizablePanelGroup direction="horizontal" className="w-full h-full">
+                        <ResizablePanel defaultSize={60} minSize={50} maxSize={70}>
+                            <WorkOrderEditLeftPanel
+                                workOrder={workOrder}
+                                workOrderDetails={workOrderDetails}
+                                form={form}
+                                itemManagement={itemManagement}
+                                workOrderItems={items}
+                                onClose={onClose}
+                                onSave={onSave}
+                                onDelete={onDelete}
+                            />
+                        </ResizablePanel>
 
-                    <ResizableHandle withHandle />
+                        <ResizableHandle withHandle />
 
-                    <ResizablePanel defaultSize={40} minSize={30}>
-                        <WorkOrderEditRightPanel
-                            workOrderId={workOrder.id}
-                            workOrderDetails={workOrderDetails}
-                            summary={summary}
-                        />
-                    </ResizablePanel>
-                </ResizablePanelGroup>
+                        <ResizablePanel defaultSize={40} minSize={30}>
+                            <WorkOrderEditRightPanel
+                                workOrderId={workOrder.id}
+                                workOrderDetails={workOrderDetails}
+                                summary={summary}
+                                workOrderItems={items}
+                            />
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                )}
 
                 <WorkOrderEditModals
                     workOrder={workOrder}
