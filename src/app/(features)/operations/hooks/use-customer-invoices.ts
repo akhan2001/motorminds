@@ -100,7 +100,7 @@ export function useCustomerInvoices(
 
             return invoicesWithContext as InvoiceWithDetails[]
         },
-        enabled: !!customerId && !!shopId && customerId !== null,
+        enabled: !!customerId && !!shopId && customerId !== null && customerId !== '' && customerId !== 'new' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId),
         staleTime: 2 * 60 * 1000, // 2 minutes
     })
 }

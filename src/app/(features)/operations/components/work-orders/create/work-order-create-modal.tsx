@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { toast } from "sonner"
-import { Package } from "lucide-react"
+import { Package, FileText } from "lucide-react"
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 
@@ -16,7 +16,8 @@ import { WorkOrderModalFooter } from "../shared/work-order-modal-footer"
 import { WorkOrderLaborItems } from "../shared/items/WorkOrderLaborItems"
 import { WorkOrderPartsItems } from "../shared/items/WorkOrderPartsItems"
 import { WorkOrderGenericItems } from "../shared/items/WorkOrderGenericItems"
-import { WorkOrderFinancialSummary } from "../shared/work-order-financial-summary"
+import { WorkOrderCostSummary } from "../complete/work-order-cost-summary"
+import { InvoiceHistoryPanel } from "../shared/invoice-history-panel"
 // Lazy load heavy components
 import dynamic from 'next/dynamic'
 
@@ -407,15 +408,114 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     {/* Optional Sections - Available after Step 3 is complete */}
                                     {isStep3Complete && (
                                         <>
-                                            {/* Financial Summary */}
+                                            {/* Cost Summary */}
                                             <div className="transition-opacity duration-200">
-                                                <WorkOrderFinancialSummary
-                                                    laborItems={formData.laborItems}
-                                                    partsItems={formData.partsItems}
-                                                    serviceItems={formData.serviceItems}
-                                                    feeItems={formData.feeItems}
-                                                    discountItems={formData.discountItems}
-                                                    packageItems={formData.packageItems}
+                                                <WorkOrderCostSummary
+                                                    workOrderItems={[
+                                                        ...formData.laborItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'labor' as const,
+                                                            description: item.description,
+                                                            quantity: 1,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            labor_hours: item.labor_hours,
+                                                            technician_id: item.technician_id,
+                                                            unit_cost: item.unit_cost,
+                                                            category: item.category,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                        ...formData.partsItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'part' as const,
+                                                            description: item.description,
+                                                            quantity: item.quantity,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            part_number: item.part_number,
+                                                            unit_cost: item.unit_cost,
+                                                            total_cost: item.total_cost,
+                                                            supplier: item.supplier,
+                                                            category: item.category,
+                                                            warranty_period: item.warranty_period,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                        ...formData.serviceItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'service' as const,
+                                                            description: item.description,
+                                                            quantity: item.quantity,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            unit_cost: item.unit_cost,
+                                                            category: item.category,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                        ...formData.feeItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'fee' as const,
+                                                            description: item.description,
+                                                            quantity: item.quantity,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            unit_cost: item.unit_cost,
+                                                            category: item.category,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                        ...formData.discountItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'discount' as const,
+                                                            description: item.description,
+                                                            quantity: item.quantity,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            unit_cost: item.unit_cost,
+                                                            category: item.category,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                        ...formData.packageItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'package' as const,
+                                                            description: item.description,
+                                                            quantity: item.quantity,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            unit_cost: item.unit_cost,
+                                                            category: item.category,
+                                                            labor_hours: item.labor_hours,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                    ]}
                                                 />
                                             </div>
 
@@ -452,32 +552,48 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                     {/* Resizable Handle */}
                     <ResizableHandle withHandle />
 
-                    {/* Right Panel - Work Order Item Templates */}
+                    {/* Right Panel - Customer History */}
                     <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                        <Suspense fallback={
-                            <div className="p-4">
-                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Package className="h-4 w-4 text-orange-500 animate-pulse" />
-                                        <span className="text-md font-medium text-foreground dark:text-white">Loading templates...</span>
-                                    </div>
-                                </div>
+                        <div className="h-full w-full bg-card dark:bg-[#131313] border-l border-border dark:border-[#333333] flex flex-col">
+                            {/* Header */}
+                            <div className="p-4 border-b border-border dark:border-[#333333] flex-shrink-0">
+                                <h3 className="text-foreground dark:text-white font-medium text-lg">
+                                    Customer History
+                                </h3>
+                                <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
+                                    {formData.customerId && formData.customerType === 'registered' 
+                                        ? 'Previous invoices and work orders'
+                                        : 'Select a customer to view history'
+                                    }
+                                </p>
                             </div>
-                        }>
-                            <PanelProvider
-                                allowTemplateActions={false}
-                                allowTemplateSelection={true}
-                                context="work-order-modal"
-                            >
-                                <WorkOrderItemTemplatesPanel
-                                    shopId={shopId || ""}
-                                    workOrderId="new" // Enable template selection for new work orders
-                                    onTemplateSelected={templateManagement.handleTemplateSelect}
-                                    selectedTemplateIds={templateManagement.selectedTemplates.map(t => t.id)}
-                                    className="h-full"
-                                />
-                            </PanelProvider>
-                        </Suspense>
+                            
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+                                {formData.customerId && 
+                                 formData.customerType === 'registered' && 
+                                 formData.customerId !== '' && 
+                                 formData.customerId !== 'new' &&
+                                 /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formData.customerId) ? (
+                                    <InvoiceHistoryPanel
+                                        customerId={formData.customerId}
+                                        shopId={shopId}
+                                    />
+                                ) : (
+                                    <div className="h-full flex items-center justify-center p-8">
+                                        <div className="text-center">
+                                            <FileText className="h-12 w-12 text-muted-foreground dark:text-gray-600 mx-auto mb-4" />
+                                            <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">
+                                                No Customer Selected
+                                            </h3>
+                                            <p className="text-muted-foreground dark:text-gray-400 text-sm">
+                                                Select a registered customer to view their invoice and work order history
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>

@@ -11,4 +11,3 @@ export { ChatPanel } from './chat-panel'
 export { InvoiceHistoryPanel } from './invoice-history-panel'
 // Item components (organized in items subdirectory)
 export { WorkOrderLaborItems, WorkOrderPartsItems, WorkOrderGenericItems } from './items'
-export { WorkOrderFinancialSummary } from './work-order-financial-summary'

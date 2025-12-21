@@ -48,7 +48,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     const isRegisteredCustomer = customerType === 'registered' && !!customerId
     
     
-    const [activeTab, setActiveTab] = useState<'insights' | 'summary' | 'chat' | 'history'>('insights')
+    const [activeTab, setActiveTab] = useState<'insights' | 'summary' | 'chat' | 'history'>('summary')
 
     return (
         <div className={`w-full bg-card dark:bg-[#131313] border-l border-border dark:border-[#333333] flex flex-col h-full min-h-0 ${className}`}>
@@ -58,35 +58,22 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                     {isCompleted 
                         ? 'Insights & Chat' 
                         : isInProgress && isRegisteredCustomer
-                        ? 'Insights, Summary & History'
-                        : 'Insights & Summary'
+                        ? 'Summary, Insights & History'
+                        : 'Summary & Insights'
                     }
                 </h3>
                 <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
                     {isCompleted 
                         ? 'AI insights and team communication' 
                         : isInProgress && isRegisteredCustomer
-                        ? 'AI insights, cost summary, and customer history'
-                        : 'AI insights and cost summary'
+                        ? 'Cost summary, AI insights, and customer history'
+                        : 'Cost summary and AI insights'
                     }
                 </p>
             </div>
 
             {/* Content Tabs */}
             <div className="flex border-b border-border dark:border-[#333333] flex-shrink-0">
-                <button 
-                    onClick={() => setActiveTab('insights')}
-                    className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
-                        activeTab === 'insights' 
-                            ? 'text-foreground dark:text-white bg-card dark:bg-[#1a1a1a] border-blue-500' 
-                            : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] border-transparent hover:border-muted dark:hover:border-gray-600'
-                    }`}
-                >
-                    <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                        <Lightbulb className="h-3 w-3" />
-                        <span>Insights</span>
-                    </div>
-                </button>
                 {!isCompleted && (
                     <button 
                         onClick={() => setActiveTab('summary')}
@@ -102,6 +89,19 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                         </div>
                     </button>
                 )}
+                <button 
+                    onClick={() => setActiveTab('insights')}
+                    className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
+                        activeTab === 'insights' 
+                            ? 'text-foreground dark:text-white bg-card dark:bg-[#1a1a1a] border-blue-500' 
+                            : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] border-transparent hover:border-muted dark:hover:border-gray-600'
+                    }`}
+                >
+                    <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                        <Lightbulb className="h-3 w-3" />
+                        <span>Insights</span>
+                    </div>
+                </button>
                 
                 {/* History tab - ONLY for registered customers in progress */}
                 {isInProgress && isRegisteredCustomer && (

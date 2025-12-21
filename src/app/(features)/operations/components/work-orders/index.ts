@@ -32,7 +32,6 @@ export { WorkOrderRightPanel } from './shared/work-order-right-panel'
 export { ChatPanel } from './shared/chat-panel'
 export { InvoiceHistoryPanel } from './shared/invoice-history-panel'
 export { WorkOrderLaborItems, WorkOrderPartsItems, WorkOrderGenericItems } from './shared/items'
-export { WorkOrderFinancialSummary } from './shared/work-order-financial-summary'
 
 // TODO: Add other work order components as they are created
 // export { default as WorkOrderList } from './work-order-list'
