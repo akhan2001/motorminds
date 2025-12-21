@@ -1,11 +1,14 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { useAuth } from '../hooks/use-auth'
 import { useWorkOrdersWithDetails } from '../hooks/use-work-orders'
 import { useWorkOrderStats } from '../hooks/use-work-order-stats'
 import { useWorkOrderPageState } from '../hooks/use-work-order-page-state'
 import { useWorkOrderOperations } from '../hooks/use-work-order-operations'
+import { useCreateInvoiceFromWorkOrder } from '../../financials/hooks/use-invoices'
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,6 +23,7 @@ import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 export function WorkOrdersPageContent() {
     // Authentication
     const { user, shopId, isLoading: authLoading } = useAuth()
+    const router = useRouter()
 
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
@@ -38,6 +42,55 @@ export function WorkOrdersPageContent() {
 
     // Work order operations
     const operations = useWorkOrderOperations(shopId, user, workOrders, refetch)
+
+    // Invoice generation
+    const createInvoiceMutation = useCreateInvoiceFromWorkOrder()
+
+    const handleGenerateInvoice = async (workOrderId: string) => {
+        if (!shopId) {
+            toast.error('Shop ID is required')
+            return
+        }
+
+        try {
+            const invoice = await createInvoiceMutation.mutateAsync({
+                work_order_id: workOrderId,
+                shop_id: shopId
+            })
+
+            if (invoice) {
+                toast.success('Invoice generated successfully')
+                refetch() // Refresh work orders to show invoice status
+                // Navigate to invoice page using query parameter
+                if (invoice.invoice_number) {
+                    router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
+                } else {
+                    router.push('/financials/invoices')
+                }
+            }
+        } catch (error: any) {
+            console.error('Error generating invoice:', error)
+            toast.error(error?.message || 'Failed to generate invoice')
+        }
+    }
+
+    const handleGoToInvoice = async (workOrderId: string) => {
+        // Fetch invoice for this work order to get invoice_number
+        const { createClient } = await import('@/utils/supabase/client')
+        const supabase = createClient()
+        const { data: invoice } = await supabase
+            .from('invoices_table')
+            .select('invoice_number')
+            .eq('work_order_id', workOrderId)
+            .limit(1)
+            .single()
+
+        if (invoice?.invoice_number) {
+            router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
+        } else {
+            router.push('/financials/invoices')
+        }
+    }
 
     // Loading state - show while auth is loading
     if (authLoading) {
@@ -159,6 +212,8 @@ export function WorkOrdersPageContent() {
                 )
             }
             onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
+            onGenerateInvoice={pageState.selectedWorkOrder ? () => handleGenerateInvoice(pageState.selectedWorkOrder!.id) : undefined}
+            onGoToInvoice={pageState.selectedWorkOrder ? () => handleGoToInvoice(pageState.selectedWorkOrder!.id) : undefined}
             refetch={refetch}
         />
     )

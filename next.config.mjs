@@ -39,6 +39,21 @@ const nextConfig = {
 				enforce: true,
 			}
 		}
+		
+		// Add detailed build stats in development
+		if (dev) {
+			config.stats = {
+				modules: true,
+				chunks: true,
+				chunkModules: true,
+				chunkOrigins: true,
+				assets: true,
+				entrypoints: true,
+				builtAt: true,
+				colors: true,
+			}
+		}
+		
 		return config
 	},
 }

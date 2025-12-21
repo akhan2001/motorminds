@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useWorkOrderWithDetails } from '../../../hooks/use-work-orders'
 import { useWorkOrderItemsWithSummary } from '../../../hooks/use-work-order-items'
+import { useWorkOrderInvoice } from '../../../hooks/work-orders/use-work-order-invoice'
 import { useAuth } from '../../../hooks/use-auth'
 import { WorkOrderEditModalContent } from './WorkOrderEditModalContent'
 import type { WorkOrderKanbanItem } from '../../../types/work-order'
@@ -14,6 +15,8 @@ export interface WorkOrderEditModalProps {
     onClose: () => void
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     onDelete?: (workOrderId: string) => void
+    onGenerateInvoice?: () => void
+    onGoToInvoice?: () => void
     className?: string
 }
 
@@ -25,6 +28,8 @@ export function WorkOrderEditModal({
     onClose,
     onSave,
     onDelete,
+    onGenerateInvoice,
+    onGoToInvoice,
     className = "",
 }: WorkOrderEditModalProps) {
     const { shopId } = useAuth()
@@ -33,6 +38,9 @@ export function WorkOrderEditModal({
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
 
     const { items, summary, isLoading: itemsLoading } = useWorkOrderItemsWithSummary(initialWorkOrder.id)
+
+    // Check if work order has an invoice
+    const { data: workOrderInvoice } = useWorkOrderInvoice(initialWorkOrder.id)
 
     if (isLoading || itemsLoading) {
         return (
@@ -76,6 +84,9 @@ export function WorkOrderEditModal({
             onClose={onClose}
             onSave={onSave}
             onDelete={onDelete}
+            onGenerateInvoice={onGenerateInvoice}
+            onGoToInvoice={onGoToInvoice}
+            workOrderInvoice={workOrderInvoice}
             className={className}
         />
     )

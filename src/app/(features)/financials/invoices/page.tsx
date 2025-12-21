@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 // import { Nav } from "@/components/navigation/nav";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,8 +28,18 @@ function InvoicesContent() {
     
     // State
     const [searchValue, setSearchValue] = useState('')
-    const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null)
+    // Initialize selected invoice from URL query parameter
+    const invoiceNumberFromUrl = searchParams.get('invoice_number')
+    const [selectedInvoice, setSelectedInvoice] = useState<string | null>(invoiceNumberFromUrl)
     const [showNewInvoiceDialog, setShowNewInvoiceDialog] = useState(false)
+    
+    // Update selected invoice when URL parameter changes
+    useEffect(() => {
+        const invoiceNumber = searchParams.get('invoice_number')
+        if (invoiceNumber) {
+            setSelectedInvoice(invoiceNumber)
+        }
+    }, [searchParams])
     
     // Handlers
     const handleNewInvoice = () => {

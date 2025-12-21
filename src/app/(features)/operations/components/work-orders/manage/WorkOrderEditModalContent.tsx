@@ -18,6 +18,9 @@ interface WorkOrderEditModalContentProps {
     onClose: () => void
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     onDelete?: (workOrderId: string) => void
+    onGenerateInvoice?: () => void
+    onGoToInvoice?: () => void
+    workOrderInvoice?: any
     className?: string
 }
 
@@ -29,6 +32,9 @@ export function WorkOrderEditModalContent({
     onClose,
     onSave,
     onDelete,
+    onGenerateInvoice,
+    onGoToInvoice,
+    workOrderInvoice,
     className = "",
 }: WorkOrderEditModalContentProps) {
     // Custom hooks for business logic
@@ -62,6 +68,9 @@ export function WorkOrderEditModalContent({
                             onClose={onClose}
                             onSave={onSave}
                             onDelete={onDelete}
+                            onGenerateInvoice={onGenerateInvoice}
+                            onGoToInvoice={onGoToInvoice}
+                            workOrderInvoice={workOrderInvoice}
                         />
                     </div>
                 ) : (
@@ -77,6 +86,9 @@ export function WorkOrderEditModalContent({
                                 onClose={onClose}
                                 onSave={onSave}
                                 onDelete={onDelete}
+                                onGenerateInvoice={onGenerateInvoice}
+                                onGoToInvoice={onGoToInvoice}
+                                workOrderInvoice={workOrderInvoice}
                             />
                         </ResizablePanel>
 

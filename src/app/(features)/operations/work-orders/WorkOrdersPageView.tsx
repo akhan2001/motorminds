@@ -71,6 +71,8 @@ interface WorkOrdersPageViewProps {
     onCompletionModalClose: () => void
     onCompletionConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean) => Promise<void>
     onWorkOrderCompletionAttempt: (item: WorkOrderKanbanItem) => void
+    onGenerateInvoice?: () => void
+    onGoToInvoice?: () => void
     refetch: () => void
 }
 
@@ -105,6 +107,8 @@ export function WorkOrdersPageView({
     onCompletionModalClose,
     onCompletionConfirm,
     onWorkOrderCompletionAttempt,
+    onGenerateInvoice,
+    onGoToInvoice,
     refetch,
 }: WorkOrdersPageViewProps) {
     return (
@@ -141,6 +145,8 @@ export function WorkOrdersPageView({
                             onClose={onModalClose}
                             onSave={onWorkOrderSave}
                             onDelete={onWorkOrderDelete}
+                            onGenerateInvoice={onGenerateInvoice}
+                            onGoToInvoice={onGoToInvoice}
                         />
                     </Suspense>
                 )}
