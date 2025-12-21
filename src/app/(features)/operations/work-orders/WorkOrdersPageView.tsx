@@ -1,11 +1,44 @@
+'use client'
+
+import { Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { WorkOrderKanban, WorkOrderHeader } from '../components/work-orders'
-import { WorkOrderCreateModal } from '../components/work-orders/create'
-import { WorkOrderEditModal } from '../components/work-orders/manage/work-order-edit-modal'
-import { WorkOrderCompletionModal } from '../components/work-orders/complete'
-import { WorkOrderItemTemplatesModal } from '../components/work-order-items/templates/work-order-item-templates-modal'
-import { StatusTrackerManagementModal } from '../components/work-orders/status-tracker-management-modal'
 import { DragDropProvider } from '../components/work-orders/DragDrop'
 import type { WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from '../types/work-order'
+
+// Lazy load modals to reduce initial bundle size (Supabase pattern)
+const WorkOrderCreateModal = dynamic(
+    () => import('../components/work-orders/create').then(m => ({ default: m.WorkOrderCreateModal })),
+    { ssr: false }
+)
+const WorkOrderEditModal = dynamic(
+    () => import('../components/work-orders/manage/work-order-edit-modal').then(m => ({ default: m.WorkOrderEditModal })),
+    { ssr: false }
+)
+const WorkOrderCompletionModal = dynamic(
+    () => import('../components/work-orders/complete').then(m => ({ default: m.WorkOrderCompletionModal })),
+    { ssr: false }
+)
+const WorkOrderItemTemplatesModal = dynamic(
+    () => import('../components/work-order-items/templates/work-order-item-templates-modal').then(m => ({ default: m.WorkOrderItemTemplatesModal })),
+    { ssr: false }
+)
+const StatusTrackerManagementModal = dynamic(
+    () => import('../components/work-orders/status-tracker-management-modal').then(m => ({ default: m.StatusTrackerManagementModal })),
+    { ssr: false }
+)
+
+// Loading skeleton for modals
+const ModalSkeleton = () => (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+        <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8">
+            <div className="flex items-center gap-3">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <p className="text-foreground">Loading...</p>
+            </div>
+        </div>
+    </div>
+)
 
 interface WorkOrdersPageViewProps {
     // Data
@@ -100,49 +133,61 @@ export function WorkOrdersPageView({
                     </div>
                 </div>
 
-                {/* Work Order Edit Modal (Manage Phase) */}
+                {/* Work Order Edit Modal (Manage Phase) - Lazy loaded */}
                 {isModalOpen && selectedWorkOrder && (
-                    <WorkOrderEditModal
-                        workOrder={selectedWorkOrder}
-                        onClose={onModalClose}
-                        onSave={onWorkOrderSave}
-                        onDelete={onWorkOrderDelete}
-                    />
+                    <Suspense fallback={<ModalSkeleton />}>
+                        <WorkOrderEditModal
+                            workOrder={selectedWorkOrder}
+                            onClose={onModalClose}
+                            onSave={onWorkOrderSave}
+                            onDelete={onWorkOrderDelete}
+                        />
+                    </Suspense>
                 )}
 
-                {/* Work Order Create Modal */}
+                {/* Work Order Create Modal - Lazy loaded */}
                 {isCreateModalOpen && (
-                    <WorkOrderCreateModal
-                        onClose={onCreateModalClose}
-                        onSave={onWorkOrderCreate}
-                        shopId={shopId}
-                    />
+                    <Suspense fallback={<ModalSkeleton />}>
+                        <WorkOrderCreateModal
+                            onClose={onCreateModalClose}
+                            onSave={onWorkOrderCreate}
+                            shopId={shopId}
+                        />
+                    </Suspense>
                 )}
 
-                {/* Work Order Completion Modal */}
+                {/* Work Order Completion Modal - Lazy loaded */}
                 {isCompletionModalOpen && completionWorkOrder && (
-                    <WorkOrderCompletionModal
-                        workOrder={completionWorkOrder}
-                        isOpen={isCompletionModalOpen}
-                        onClose={onCompletionModalClose}
-                        onConfirm={onCompletionConfirm}
-                    />
+                    <Suspense fallback={<ModalSkeleton />}>
+                        <WorkOrderCompletionModal
+                            workOrder={completionWorkOrder}
+                            isOpen={isCompletionModalOpen}
+                            onClose={onCompletionModalClose}
+                            onConfirm={onCompletionConfirm}
+                        />
+                    </Suspense>
                 )}
 
-                {/* Work Order Item Templates Modal */}
+                {/* Work Order Item Templates Modal - Lazy loaded */}
                 {isTemplatesModalOpen && shopId && (
-                    <WorkOrderItemTemplatesModal
-                        isOpen={isTemplatesModalOpen}
-                        onClose={onTemplatesModalClose}
-                        shopId={shopId}
-                    />
+                    <Suspense fallback={<ModalSkeleton />}>
+                        <WorkOrderItemTemplatesModal
+                            isOpen={isTemplatesModalOpen}
+                            onClose={onTemplatesModalClose}
+                            shopId={shopId}
+                        />
+                    </Suspense>
                 )}
 
-                {/* Status Tracker Management Modal */}
-                <StatusTrackerManagementModal
-                    isOpen={isStatusTrackersModalOpen}
-                    onClose={onStatusTrackersModalClose}
-                />
+                {/* Status Tracker Management Modal - Lazy loaded */}
+                {isStatusTrackersModalOpen && (
+                    <Suspense fallback={null}>
+                        <StatusTrackerManagementModal
+                            isOpen={isStatusTrackersModalOpen}
+                            onClose={onStatusTrackersModalClose}
+                        />
+                    </Suspense>
+                )}
             </div>
         </DragDropProvider>
     )

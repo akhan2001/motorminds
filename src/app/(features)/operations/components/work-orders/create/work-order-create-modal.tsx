@@ -1,24 +1,33 @@
 'use client'
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { toast } from "sonner"
+import { Package } from "lucide-react"
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 
-import {
-    WorkOrderModalHeader,
-    WorkOrderInformation,
-    CustomerInformation,
-    VehicleInformation,
-    WorkOrderNotes,
-    WorkOrderModalFooter,
-    WorkOrderLaborItems,
-    WorkOrderPartsItems,
-    WorkOrderGenericItems,
-    WorkOrderFinancialSummary
-} from "../shared"
-import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
-import { PanelProvider } from "../../../contexts"
+// Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
+import { WorkOrderModalHeader } from "../shared/work-order-modal-header"
+import { WorkOrderInformation } from "../shared/work-order-information"
+import { CustomerInformation } from "../shared/customer-information"
+import { VehicleInformation } from "../shared/vehicle-information"
+import { WorkOrderNotes } from "../shared/work-order-notes"
+import { WorkOrderModalFooter } from "../shared/work-order-modal-footer"
+import { WorkOrderLaborItems } from "../shared/items/WorkOrderLaborItems"
+import { WorkOrderPartsItems } from "../shared/items/WorkOrderPartsItems"
+import { WorkOrderGenericItems } from "../shared/items/WorkOrderGenericItems"
+import { WorkOrderFinancialSummary } from "../shared/work-order-financial-summary"
+// Lazy load heavy components
+import dynamic from 'next/dynamic'
+
+const WorkOrderItemTemplatesPanel = dynamic(
+    () => import("../../work-order-items/templates/work-order-item-templates-panel").then(m => ({ default: m.WorkOrderItemTemplatesPanel })),
+    { ssr: false }
+)
+const PanelProvider = dynamic(
+    () => import("../../../contexts").then(m => ({ default: m.PanelProvider })),
+    { ssr: false }
+)
 import { WalkInVehicleForm } from "./WalkInVehicleForm"
 import { useWorkOrderCreateForm } from "./hooks/use-work-order-create-form"
 import { useCreateTemplateManagement } from "./hooks/use-create-template-management"
@@ -445,19 +454,30 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                     {/* Right Panel - Work Order Item Templates */}
                     <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                        <PanelProvider
-                            allowTemplateActions={false}
-                            allowTemplateSelection={true}
-                            context="work-order-modal"
-                        >
-                            <WorkOrderItemTemplatesPanel
-                                shopId={shopId || ""}
-                                workOrderId="new" // Enable template selection for new work orders
-                                onTemplateSelected={templateManagement.handleTemplateSelect}
-                                selectedTemplateIds={templateManagement.selectedTemplates.map(t => t.id)}
-                                className="h-full"
-                            />
-                        </PanelProvider>
+                        <Suspense fallback={
+                            <div className="p-4">
+                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Package className="h-4 w-4 text-orange-500 animate-pulse" />
+                                        <span className="text-md font-medium text-foreground dark:text-white">Loading templates...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }>
+                            <PanelProvider
+                                allowTemplateActions={false}
+                                allowTemplateSelection={true}
+                                context="work-order-modal"
+                            >
+                                <WorkOrderItemTemplatesPanel
+                                    shopId={shopId || ""}
+                                    workOrderId="new" // Enable template selection for new work orders
+                                    onTemplateSelected={templateManagement.handleTemplateSelect}
+                                    selectedTemplateIds={templateManagement.selectedTemplates.map(t => t.id)}
+                                    className="h-full"
+                                />
+                            </PanelProvider>
+                        </Suspense>
                     </ResizablePanel>
                 </ResizablePanelGroup>
             </div>

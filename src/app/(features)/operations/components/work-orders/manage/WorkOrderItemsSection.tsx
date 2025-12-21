@@ -1,7 +1,10 @@
 // Unified items section component
 'use client'
 
-import { WorkOrderLaborItems, WorkOrderPartsItems, WorkOrderGenericItems } from '../shared'
+// Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
+import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
+import { WorkOrderPartsItems } from '../shared/items/WorkOrderPartsItems'
+import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'
 import type { LaborFormItem, PartFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
 
 interface WorkOrderItemsSectionProps {

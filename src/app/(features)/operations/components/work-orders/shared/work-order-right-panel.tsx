@@ -1,13 +1,25 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { Package, Lightbulb, MessageSquare, FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { MiaInsightsIntegration } from '@/app/(features)/ai/mia-insights'
-import { WorkOrderItemTemplatesPanel } from '../../work-order-items/templates/work-order-item-templates-panel'
-import { PanelProvider } from '../../../contexts/PanelContext'
 import { ChatPanel } from './chat-panel'
 import { InvoiceHistoryPanel } from './invoice-history-panel'
+
+// Lazy load heavy components to reduce initial bundle size (Supabase pattern)
+const MiaInsightsIntegration = dynamic(
+    () => import('@/app/(features)/ai/mia-insights').then(m => ({ default: m.MiaInsightsIntegration })),
+    { ssr: false }
+)
+const WorkOrderItemTemplatesPanel = dynamic(
+    () => import('../../work-order-items/templates/work-order-item-templates-panel').then(m => ({ default: m.WorkOrderItemTemplatesPanel })),
+    { ssr: false }
+)
+const PanelProvider = dynamic(
+    () => import('../../../contexts/PanelContext').then(m => ({ default: m.PanelProvider })),
+    { ssr: false }
+)
 
 export interface WorkOrderRightPanelProps {
     workOrderId: string
@@ -134,11 +146,20 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                 {activeTab === 'insights' && (
                     <div className="p-4">
                         {workOrderId && shopId ? (
-                            <MiaInsightsIntegration 
-                                workOrderId={workOrderId} 
-                                shopId={shopId}
-                                workOrderStatus={workOrderStatus}
-                            />
+                            <Suspense fallback={
+                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Lightbulb className="h-4 w-4 text-yellow-500 animate-pulse" />
+                                        <span className="text-sm font-medium text-foreground dark:text-white">Loading insights...</span>
+                                    </div>
+                                </div>
+                            }>
+                                <MiaInsightsIntegration 
+                                    workOrderId={workOrderId} 
+                                    shopId={shopId}
+                                    workOrderStatus={workOrderStatus}
+                                />
+                            </Suspense>
                         ) : (
                             <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
                                 <div className="flex items-center gap-2 mb-2">
@@ -157,18 +178,29 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                 {activeTab === 'templates' && (
                     <div className="h-full">
                         {shopId ? (
-                            <PanelProvider
-                                context="work-order-modal"
-                                allowTemplateActions={true}
-                                allowTemplateSelection={true}
-                            >
-                                <WorkOrderItemTemplatesPanel
-                                    shopId={shopId}
-                                    workOrderId={workOrderId}
-                                    technicianId={technicianId}
-                                    className="h-full"
-                                />
-                            </PanelProvider>
+                            <Suspense fallback={
+                                <div className="p-4">
+                                    <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Package className="h-4 w-4 text-orange-500 animate-pulse" />
+                                            <span className="text-md font-medium text-foreground dark:text-white">Loading templates...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }>
+                                <PanelProvider
+                                    context="work-order-modal"
+                                    allowTemplateActions={true}
+                                    allowTemplateSelection={true}
+                                >
+                                    <WorkOrderItemTemplatesPanel
+                                        shopId={shopId}
+                                        workOrderId={workOrderId}
+                                        technicianId={technicianId}
+                                        className="h-full"
+                                    />
+                                </PanelProvider>
+                            </Suspense>
                         ) : (
                             <div className="p-4">
                                 <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">

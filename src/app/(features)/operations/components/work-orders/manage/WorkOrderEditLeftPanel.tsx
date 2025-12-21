@@ -3,15 +3,14 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import {
-    WorkOrderModalHeader,
-    WorkOrderStatusBar,
-    WorkOrderInformation,
-    CustomerInformation,
-    VehicleInformation,
-    WorkOrderNotes,
-    WorkOrderModalFooter,
-} from '../shared'
+// Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
+import { WorkOrderModalHeader } from '../shared/work-order-modal-header'
+import { WorkOrderStatusBar } from '../shared/work-order-status-bar'
+import { WorkOrderInformation } from '../shared/work-order-information'
+import { CustomerInformation } from '../shared/customer-information'
+import { VehicleInformation } from '../shared/vehicle-information'
+import { WorkOrderNotes } from '../shared/work-order-notes'
+import { WorkOrderModalFooter } from '../shared/work-order-modal-footer'
 import { WorkOrderItemsSection } from './WorkOrderItemsSection'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
