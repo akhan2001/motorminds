@@ -1,13 +1,15 @@
 "use client";
 
+import { Plus, Trash2, Wrench } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from "sonner";
+
+import { TechnicianDropdown } from "@/app/(features)/technician/components/TechnicianDropdown";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Wrench } from "lucide-react";
-import { v4 as uuidv4 } from 'uuid';
-import { toast } from "sonner";
-import { TechnicianDropdown } from "@/app/(features)/technician/components/TechnicianDropdown";
 import { useAuth } from "../../../hooks/use-auth";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
@@ -53,11 +55,11 @@ export function WorkOrderLaborItems({
         description: item.description,
         quantity: 1, // Labor items typically have quantity of 1
         unit_price: item.unit_price,
-        unit_cost: item.unit_cost,
+        unit_cost: item.unit_cost || undefined,
         labor_hours: item.labor_hours,
-        category: item.category,
-        notes: item.notes,
-        technician_id: item.technician_id,
+        category: item.category || undefined,
+        notes: item.notes || undefined,
+        technician_id: item.technician_id || undefined,
     });
 
     // Function to save item to database
@@ -151,6 +153,7 @@ export function WorkOrderLaborItems({
             
             // Calculate total price when hours or unit price changes
             if (field === 'labor_hours' || field === 'unit_price') {
+                // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_price on save.
                 updatedItem.total_price = updatedItem.labor_hours * updatedItem.unit_price;
             }
             

@@ -58,10 +58,10 @@ export function WorkOrderGenericItems({
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        unit_cost: item.unit_cost,
-        category: item.category,
-        labor_hours: item.labor_hours,
-        notes: item.notes,
+        unit_cost: item.unit_cost || undefined,
+        category: item.category || undefined,
+        labor_hours: item.labor_hours || undefined,
+        notes: item.notes || undefined,
     });
 
     // Function to save item to database
@@ -140,6 +140,7 @@ export function WorkOrderGenericItems({
             if (item.id === id) {
                 const updated = { ...item, [field]: value };
                 // Recalculate total
+                // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_price on save.
                 if (field === 'quantity' || field === 'unit_price') {
                     updated.total_price = updated.quantity * updated.unit_price;
                 }

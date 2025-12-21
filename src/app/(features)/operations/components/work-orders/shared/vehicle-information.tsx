@@ -450,20 +450,20 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 </Select>
                             ) : (
                                 <>
-                                    <Input
-                                        id="vehicle_model"
-                                        value={vehicleModel}
-                                        onChange={(e) => {
-                                            if (!isEditing) return
-                                            onFieldChange('vehicleModel', e.target.value)
-                                            if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
-                                        }}
-                                        onBlur={() => handleBlur('vehicleModel', vehicleModel)}
+                            <Input
+                                id="vehicle_model"
+                                value={vehicleModel}
+                                onChange={(e) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleModel', e.target.value)
+                                    if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                }}
+                                onBlur={() => handleBlur('vehicleModel', vehicleModel)}
                                         className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus-border-red-500' : ''}`}
-                                        readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
-                                        required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
-                                        placeholder="e.g. Civic"
-                                    />
+                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
+                                placeholder="e.g. Civic"
+                            />
                                     {availableModels.length > 0 && (
                                         <Button
                                             type="button"

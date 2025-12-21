@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { MiaInsightsIntegration } from '@/app/(features)/ai/mia-insights'
 import { WorkOrderItemTemplatesPanel } from '../../work-order-items/templates/work-order-item-templates-panel'
 import { PanelProvider } from '../../../contexts/PanelContext'
-import { ChatPanel } from '../WorkOrderModal/chat-panel'
+import { ChatPanel } from './chat-panel'
 import { InvoiceHistoryPanel } from './invoice-history-panel'
 
 export interface WorkOrderRightPanelProps {

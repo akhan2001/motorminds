@@ -17,9 +17,6 @@ export * from './manage'
 export * from './complete'
 export * from './shared'
 
-// Backwards compatibility - export from old WorkOrderModal structure
-export * from './WorkOrderModal'
-
 // TODO: Add other work order components as they are created
 // export { default as WorkOrderList } from './work-order-list'
 // export { default as WorkOrderForm } from './work-order-form'

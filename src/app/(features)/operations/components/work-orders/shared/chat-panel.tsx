@@ -48,7 +48,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                         disabled
                         className="flex-1 bg-white dark:bg-background border-border text-foreground placeholder-muted-foreground"
                     />
-                    <Button 
+                    <Button
                         disabled
                         size="sm"
                         className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white"

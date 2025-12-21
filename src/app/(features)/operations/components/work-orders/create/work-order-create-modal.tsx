@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
-import { v4 as uuidv4 } from 'uuid'
+
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
-import { WorkOrderPriority } from "../../../types/work-order"
+
 import {
     WorkOrderModalHeader,
     WorkOrderInformation,
@@ -14,52 +14,14 @@ import {
     WorkOrderModalFooter,
     WorkOrderLaborItems,
     WorkOrderPartsItems,
-    WorkOrderGenericItems
+    WorkOrderGenericItems,
+    WorkOrderFinancialSummary
 } from "../shared"
-import { FinancialInformation } from "../manage/financial-information"
 import { WorkOrderItemTemplatesPanel } from "../../work-order-items/templates/work-order-item-templates-panel"
-import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates"
-import { WorkOrderItemsService } from "../../../lib/work-order-items-service"
-import type { WorkOrderItemCreateData } from "../../../types/work-order-items"
 import { PanelProvider } from "../../../contexts"
-import { Input } from "@/components/ui/input"
 import { WalkInVehicleForm } from "./WalkInVehicleForm"
-import type { WalkInVehicleInfo } from "../../../../customers/types/vehicle"
-
-// Define the LaborFormItem interface locally to match the component
-interface LaborFormItem {
-    id: string;
-    description: string;
-    labor_hours: number;
-    unit_price: number;
-    total_price: number;
-    notes?: string;
-    technician_id?: string;
-}
-
-// Define the PartFormItem interface locally to match the component
-interface PartFormItem {
-    id: string;
-    description: string;
-    part_number?: string;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    supplier?: string;
-    category?: string;
-    warranty_period?: string;
-    notes?: string;
-}
-
-// Define the GenericFormItem interface for Services, Fees, Discounts, Packages
-interface GenericFormItem {
-    id: string;
-    description: string;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    notes?: string;
-}
+import { useWorkOrderCreateForm } from "./hooks/use-work-order-create-form"
+import { useCreateTemplateManagement } from "./hooks/use-create-template-management"
 
 export interface WorkOrderCreateModalProps {
     onClose: () => void
@@ -68,75 +30,12 @@ export interface WorkOrderCreateModalProps {
     shopId?: string
 }
 
-interface NewWorkOrderFormData {
-    title: string
-    description: string
-    priority: WorkOrderPriority
-    assignee: string
-    assigneeId: string
-    date: string
-    customerId: string
-    customer: string
-    vehicleId: string // Added vehicle ID tracking
-    vehicle: string
-    tags: string[]
-
-    // Customer type selection
-    customerType: 'registered' | 'walk_in'
-
-    // Additional fields for comprehensive work order
-    customerEmail: string
-    customerPhone: string
-    customerAddress: string
-
-    // Vehicle details
-    vehicleYear: string
-    vehicleMake: string
-    vehicleModel: string
-    vehicleColor: string
-    vehicleMileage: string
-    vehicleVin: string
-    vehicleLicensePlate: string
-
-    // Walk-in vehicle information
-    walkInVehicleInfo: WalkInVehicleInfo
-
-    // Work order specifics
-    estimatedHours: string
-    laborCost: string
-    partsCost: string
-    totalCost: string
-    notes: string
-
-    // Labor items
-    laborItems: LaborFormItem[]
-
-    // Parts items
-    partsItems: PartFormItem[]
-
-    // Generic items (Services, Fees, Discounts, Packages)
-    serviceItems: GenericFormItem[]
-    feeItems: GenericFormItem[]
-    discountItems: GenericFormItem[]
-    packageItems: GenericFormItem[]
-}
-
-interface SelectedTemplate extends WorkOrderItemTemplate {
-    selectedQuantity?: number
-    selectedUnitPrice?: number
-    selectedLaborHours?: number
-    selectedTechnicianId?: string
-}
-
 export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     onClose,
     onSave,
-    className = "",
     shopId
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [currentStep, setCurrentStep] = useState(1) // Track current step (1, 2, 3)
-    const [selectedTemplates, setSelectedTemplates] = useState<SelectedTemplate[]>([])
 
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -145,392 +44,56 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         { id: 'tech-3', name: 'Mike Johnson' },
     ]
 
-    // Form state for new work order
-    const [formData, setFormData] = useState<NewWorkOrderFormData>({
-        title: "",
-        description: "",
-        priority: "medium" as WorkOrderPriority,
-        assignee: "",
-        assigneeId: "",
-        date: new Date().toISOString().split('T')[0], // Today's date as default
-        customerId: "",
-        customer: "",
-        vehicleId: "",
-        vehicle: "",
-        tags: [],
+    // Use form management hook
+    const form = useWorkOrderCreateForm()
+    const {
+        formData,
+        currentStep,
+        isStep1Complete,
+        isStep2Complete,
+        isStep3Complete,
+        handleFieldChange,
+        handleWalkInVehicleChange,
+        handleCustomerTypeChange,
+        handleAddTag,
+        handleRemoveTag,
+        handleLaborItemsChange,
+        handlePartsItemsChange,
+        handleServiceItemsChange,
+        handleFeeItemsChange,
+        handleDiscountItemsChange,
+        handlePackageItemsChange,
+    } = form
 
-        // Customer type selection
-        customerType: "registered",
-
-        // Customer details (will be populated when customer is selected)
-        customerEmail: "",
-        customerPhone: "",
-        customerAddress: "",
-
-        // Vehicle details (will be populated when vehicle is selected)
-        vehicleYear: "",
-        vehicleMake: "",
-        vehicleModel: "",
-        vehicleColor: "",
-        vehicleMileage: "",
-        vehicleVin: "",
-        vehicleLicensePlate: "",
-
-        // Walk-in vehicle information
-        walkInVehicleInfo: {
-            year: new Date().getFullYear(),
-            make: "",
-            model: "",
-            license_plate: "",
-            color: "",
-            vin: "",
-            mileage: 0
-        },
-
-        // Work order specifics
-        estimatedHours: "",
-        laborCost: "0.00",
-        partsCost: "0.00",
-        totalCost: "0.00",
-        notes: "",
-
-        // Labor items
-        laborItems: [],
-
-        // Parts items
-        partsItems: [],
-
-        // Generic items (Services, Fees, Discounts, Packages)
-        serviceItems: [],
-        feeItems: [],
-        discountItems: [],
-        packageItems: [],
-    })
-
-    // Calculate total cost when labor or parts change
-    useEffect(() => {
-        const labor = parseFloat(formData.laborCost) || 0
-        const parts = parseFloat(formData.partsCost) || 0
-        const total = labor + parts
-        setFormData(prev => ({
-            ...prev,
-            totalCost: total.toFixed(2)
-        }))
-    }, [formData.laborCost, formData.partsCost])
-
-    // Step validation functions
-    const isStep1Complete = () => {
-        if (formData.customerType === 'walk_in') {
-            // For walk-in customers, validate walk-in vehicle info
-            return formData.walkInVehicleInfo.year &&
-                formData.walkInVehicleInfo.make.trim() &&
-                formData.walkInVehicleInfo.model.trim() &&
-                true
+    // Use template management hook
+    const templateManagement = useCreateTemplateManagement(
+        handleLaborItemsChange,
+        handlePartsItemsChange,
+        handleServiceItemsChange,
+        handleFeeItemsChange,
+        handleDiscountItemsChange,
+        handlePackageItemsChange,
+        {
+            laborItems: formData.laborItems,
+            partsItems: formData.partsItems,
+            serviceItems: formData.serviceItems,
+            feeItems: formData.feeItems,
+            discountItems: formData.discountItems,
+            packageItems: formData.packageItems,
         }
+    )
 
-        // For registered customers, validate customer selection
-        // Must have a valid customer ID (not "new" or empty)
-        return formData.customerId && formData.customerId !== "" && formData.customerId !== "new"
-    }
-
-    const isStep2Complete = () => {
-        if (formData.customerType === 'walk_in') {
-            // For walk-in customers, step 2 is already complete (vehicle info is in step 1)
-            return isStep1Complete()
-        }
-
-        // For registered customers, validate vehicle selection
-        // Must have completed step 1 (customer saved) AND have valid vehicle
-        return isStep1Complete() &&
-            ((formData.vehicleId && formData.vehicleId !== "" && formData.vehicleId !== "new") || // Existing vehicle selected OR
-                ((!formData.vehicleId || formData.vehicleId === "new") && // New vehicle with required fields
-                    formData.vehicleMake.trim() &&
-                    formData.vehicleModel.trim() &&
-                    formData.vehicleYear.trim()
-                )
-            )
-    }
-
-    const isStep3Complete = () => {
-        return isStep2Complete() &&
-            formData.title.trim()
-    }
-
-    // Auto-advance to next step when current step is completed
-    useEffect(() => {
-        if (currentStep === 1 && isStep1Complete()) {
-            setCurrentStep(2)
-        } else if (currentStep === 2 && isStep2Complete()) {
-            setCurrentStep(3)
-        }
-    }, [currentStep, formData.customerId, formData.customer, formData.vehicleId, formData.vehicleMake, formData.vehicleModel, formData.vehicleYear, formData.title, formData.customerType, formData.walkInVehicleInfo])
-
-    const handleFieldChange = (field: string, value: any) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }))
-    }
-
-    const handleWalkInVehicleChange = (vehicleInfo: WalkInVehicleInfo) => {
-        setFormData(prev => ({
-            ...prev,
-            walkInVehicleInfo: vehicleInfo
-        }))
-    }
-
-    const handleCustomerTypeChange = (customerType: 'registered' | 'walk_in') => {
-        setFormData(prev => ({
-            ...prev,
-            customerType,
-            // Reset customer/vehicle data when switching types
-            customerId: customerType === 'registered' ? prev.customerId : '',
-            customer: customerType === 'registered' ? prev.customer : '',
-            vehicleId: customerType === 'registered' ? prev.vehicleId : (customerType === 'walk_in' ? prev.vehicleId : ''),
-            vehicle: customerType === 'registered' ? prev.vehicle : '',
-            // Reset walk-in data when switching to registered
-            walkInVehicleInfo: customerType === 'walk_in' ? prev.walkInVehicleInfo : {
-                year: new Date().getFullYear(),
-                make: "",
-                model: "",
-                license_plate: "",
-                color: "",
-                vin: "",
-                mileage: 0
-            }
-        }))
-    }
-
-    const handleAddTag = (newTag: string) => {
-        if (newTag && !formData.tags.includes(newTag)) {
-            setFormData(prev => ({
-                ...prev,
-                tags: [...prev.tags, newTag]
-            }))
-        }
-    }
-
-    const handleRemoveTag = (tagToRemove: string) => {
-        setFormData(prev => ({
-            ...prev,
-            tags: prev.tags.filter(tag => tag !== tagToRemove)
-        }))
-    }
-
-    // Labor items handlers
-    const handleLaborItemsChange = (items: LaborFormItem[]) => {
-        setFormData(prev => ({
-            ...prev,
-            laborItems: items
-        }))
-
-        // Update selected templates - remove any templates that no longer have corresponding items
-        // This ensures the green highlight is removed when items are deleted
-        const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template =>
-            template.item_type !== 'labor' || itemDescriptions.includes(template.name)
-        ))
-    }
-
+    // Item saved handlers
     const handleLaborItemSaved = (item: any) => {
-        // Handle successful save of individual labor item
         toast.success(`Labor item "${item.description}" saved successfully`)
     }
 
-    // Parts items handlers
-    const handlePartsItemsChange = (items: PartFormItem[]) => {
-        setFormData(prev => ({
-            ...prev,
-            partsItems: items
-        }))
-
-        // Update selected templates - remove any templates that no longer have corresponding items
-        // This ensures the green highlight is removed when items are deleted
-        const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template =>
-            template.item_type !== 'part' || itemDescriptions.includes(template.name)
-        ))
-    }
-
     const handlePartItemSaved = (item: any) => {
-        // Handle successful save of individual part item
         toast.success(`Part item "${item.description}" saved successfully`)
-    }
-
-    // Generic items handlers (Services, Fees, Discounts, Packages)
-    const handleServiceItemsChange = (items: GenericFormItem[]) => {
-        setFormData(prev => ({
-            ...prev,
-            serviceItems: items
-        }))
-
-        // Update selected templates - remove any templates that no longer have corresponding items
-        const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template =>
-            template.item_type !== 'service' || itemDescriptions.includes(template.name)
-        ))
-    }
-
-    const handleFeeItemsChange = (items: GenericFormItem[]) => {
-        setFormData(prev => ({
-            ...prev,
-            feeItems: items
-        }))
-
-        // Update selected templates - remove any templates that no longer have corresponding items
-        const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template =>
-            template.item_type !== 'fee' || itemDescriptions.includes(template.name)
-        ))
-    }
-
-    const handleDiscountItemsChange = (items: GenericFormItem[]) => {
-        setFormData(prev => ({
-            ...prev,
-            discountItems: items
-        }))
-
-        // Update selected templates - remove any templates that no longer have corresponding items
-        const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template =>
-            template.item_type !== 'discount' || itemDescriptions.includes(template.name)
-        ))
-    }
-
-    const handlePackageItemsChange = (items: GenericFormItem[]) => {
-        setFormData(prev => ({
-            ...prev,
-            packageItems: items
-        }))
-
-        // Update selected templates - remove any templates that no longer have corresponding items
-        const itemDescriptions = items.map(item => item.description)
-        setSelectedTemplates(prev => prev.filter(template =>
-            template.item_type !== 'package' || itemDescriptions.includes(template.name)
-        ))
     }
 
     const handleGenericItemSaved = (item: any) => {
         toast.success(`${item.item_type} item "${item.description}" saved successfully`)
-    }
-
-    // Template selection handlers
-    const handleTemplateSelect = (template: WorkOrderItemTemplate) => {
-        // Check if template is already selected
-        const isAlreadySelected = selectedTemplates.some(selected => selected.id === template.id)
-
-        if (isAlreadySelected) {
-            // Template already selected, don't add it again
-            toast.info('Template already selected')
-            return
-        }
-
-        // Add to selected templates
-        const selectedTemplate: SelectedTemplate = {
-            ...template,
-            selectedQuantity: template.quantity,
-            selectedUnitPrice: template.unit_price,
-            selectedLaborHours: template.labor_hours
-        }
-        setSelectedTemplates(prev => [...prev, selectedTemplate])
-
-        // Auto-populate the appropriate items list based on template type
-        if (template.item_type === 'labor') {
-            // Add to labor items
-            const newLaborItem: LaborFormItem = {
-                id: uuidv4(),
-                description: template.name,
-                labor_hours: template.labor_hours || 1,
-                unit_price: template.unit_price || 0,
-                total_price: (template.labor_hours || 1) * (template.unit_price || 0),
-                notes: template.description || '',
-                technician_id: ''
-            }
-            setFormData(prev => ({
-                ...prev,
-                laborItems: [...prev.laborItems, newLaborItem]
-            }))
-            toast.success(`Labor template "${template.name}" added to items`)
-        } else if (template.item_type === 'part') {
-            // Add to parts items
-            const newPartItem: PartFormItem = {
-                id: uuidv4(),
-                description: template.name,
-                part_number: template.part_number || '',
-                quantity: template.quantity || 1,
-                unit_price: template.unit_price || 0,
-                total_price: (template.quantity || 1) * (template.unit_price || 0),
-                supplier: template.supplier || '',
-                category: template.category || '',
-                warranty_period: template.warranty_period || '',
-                notes: template.description || ''
-            }
-            setFormData(prev => ({
-                ...prev,
-                partsItems: [...prev.partsItems, newPartItem]
-            }))
-            toast.success(`Part template "${template.name}" added to items`)
-        } else if (template.item_type === 'service') {
-            // Add to service items
-            const newServiceItem: GenericFormItem = {
-                id: uuidv4(),
-                description: template.name,
-                quantity: template.quantity || 1,
-                unit_price: template.unit_price || 0,
-                total_price: (template.quantity || 1) * (template.unit_price || 0),
-                notes: template.description || ''
-            }
-            setFormData(prev => ({
-                ...prev,
-                serviceItems: [...prev.serviceItems, newServiceItem]
-            }))
-            toast.success(`Service template "${template.name}" added to items`)
-        } else if (template.item_type === 'fee') {
-            // Add to fee items
-            const newFeeItem: GenericFormItem = {
-                id: uuidv4(),
-                description: template.name,
-                quantity: template.quantity || 1,
-                unit_price: template.unit_price || 0,
-                total_price: (template.quantity || 1) * (template.unit_price || 0),
-                notes: template.description || ''
-            }
-            setFormData(prev => ({
-                ...prev,
-                feeItems: [...prev.feeItems, newFeeItem]
-            }))
-            toast.success(`Fee template "${template.name}" added to items`)
-        } else if (template.item_type === 'discount') {
-            // Add to discount items
-            const newDiscountItem: GenericFormItem = {
-                id: uuidv4(),
-                description: template.name,
-                quantity: template.quantity || 1,
-                unit_price: template.unit_price || 0,
-                total_price: (template.quantity || 1) * (template.unit_price || 0),
-                notes: template.description || ''
-            }
-            setFormData(prev => ({
-                ...prev,
-                discountItems: [...prev.discountItems, newDiscountItem]
-            }))
-            toast.success(`Discount template "${template.name}" added to items`)
-        } else if (template.item_type === 'package') {
-            // Add to package items
-            const newPackageItem: GenericFormItem = {
-                id: uuidv4(),
-                description: template.name,
-                quantity: template.quantity || 1,
-                unit_price: template.unit_price || 0,
-                total_price: (template.quantity || 1) * (template.unit_price || 0),
-                notes: template.description || ''
-            }
-            setFormData(prev => ({
-                ...prev,
-                packageItems: [...prev.packageItems, newPackageItem]
-            }))
-            toast.success(`Package template "${template.name}" added to items`)
-        }
     }
 
     const handleSave = async () => {
@@ -538,21 +101,18 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
         try {
             // Validate all required steps are complete
-            if (!isStep1Complete()) {
+            if (!isStep1Complete) {
                 toast.error("Please complete customer information first")
-                setCurrentStep(1)
                 return
             }
 
-            if (!isStep2Complete()) {
+            if (!isStep2Complete) {
                 toast.error("Please complete vehicle information")
-                setCurrentStep(2)
                 return
             }
 
-            if (!isStep3Complete()) {
+            if (!isStep3Complete) {
                 toast.error("Please enter a work order title")
-                setCurrentStep(3)
                 return
             }
 
@@ -752,7 +312,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     </div>
 
                                     {/* Work Order Items Card - Only show after Step 3 is complete */}
-                                    {isStep3Complete() && (
+                                    {isStep3Complete && (
                                         <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                             <div className="p-4">
                                                 <div className="flex items-center gap-2 mb-4">
@@ -836,22 +396,19 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                     )}
 
                                     {/* Optional Sections - Available after Step 3 is complete */}
-                                    {isStep3Complete() && (
+                                    {isStep3Complete && (
                                         <>
-                                            {/* Financial Information */}
-                                            {/* <div className="transition-opacity duration-200">
-                                                <h3 className="text-lg font-semibold text-white mb-4">
-                                                    Financial Information <span className="text-xs text-gray-400 font-normal">(Optional)</span>
-                                                </h3>
-                                                <FinancialInformation 
-                                                    estimatedHours={formData.estimatedHours}
-                                                    laborCost={formData.laborCost}
-                                                    partsCost={formData.partsCost}
-                                                    totalCost={formData.totalCost}
-                                                    isEditing={true}
-                                                    onFieldChange={handleFieldChange}
+                                            {/* Financial Summary */}
+                                            <div className="transition-opacity duration-200">
+                                                <WorkOrderFinancialSummary
+                                                    laborItems={formData.laborItems}
+                                                    partsItems={formData.partsItems}
+                                                    serviceItems={formData.serviceItems}
+                                                    feeItems={formData.feeItems}
+                                                    discountItems={formData.discountItems}
+                                                    packageItems={formData.packageItems}
                                                 />
-                                            </div> */}
+                                            </div>
 
                                             {/* Notes */}
                                             <div className="transition-opacity duration-200">
@@ -896,8 +453,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                             <WorkOrderItemTemplatesPanel
                                 shopId={shopId || ""}
                                 workOrderId="new" // Enable template selection for new work orders
-                                onTemplateSelected={handleTemplateSelect}
-                                selectedTemplateIds={selectedTemplates.map(t => t.id)}
+                                onTemplateSelected={templateManagement.handleTemplateSelect}
+                                selectedTemplateIds={templateManagement.selectedTemplates.map(t => t.id)}
                                 className="h-full"
                             />
                         </PanelProvider>

@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
+
 import { Plus, Trash2, Package } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
+
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../types/work-order-item-templates";
 import { useAuth } from "../../../hooks/use-auth";
-import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
 
 interface PartFormItem {
     id: string;
@@ -185,11 +187,13 @@ export function WorkOrderPartsItems({
             }
             
             // Calculate total price when quantity or unit price changes
+            // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_price on save.
             if (field === 'quantity' || field === 'unit_price') {
                 updatedItem.total_price = updatedItem.quantity * updatedItem.unit_price;
             }
             
             // Calculate total cost when quantity or unit cost changes
+            // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_cost on save.
             if (field === 'quantity' || field === 'unit_cost') {
                 // Calculate total_cost if unit_cost is set (including 0)
                 if (updatedItem.unit_cost !== undefined && updatedItem.unit_cost !== null) {
@@ -337,7 +341,7 @@ export function WorkOrderPartsItems({
                                         <Input
                                             id={`part_unit_cost_${index}`}
                                             type="number"
-                                            value={item.unit_cost || ''}
+                                            value={item.unit_cost !== undefined && item.unit_cost !== null ? item.unit_cost : ''}
                                             onChange={(e) => updateItem(item.id, 'unit_cost', e.target.value)}
                                             className="bg-white dark:bg-background border-border text-foreground"
                                             disabled={!isEditing}
