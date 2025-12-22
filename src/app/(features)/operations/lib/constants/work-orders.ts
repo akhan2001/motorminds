@@ -1,6 +1,5 @@
-/**
- * Work Order contants - single source of truth
- */
+// Work Order Constants
+// Centralized constants for work order statuses, priorities, and validation
 
 export const WORK_ORDER_STATUS = {
     PENDING: 'pending',
@@ -26,107 +25,146 @@ export const WORK_ORDER_PRIORITY = {
 
 export type WorkOrderPriority = typeof WORK_ORDER_PRIORITY[keyof typeof WORK_ORDER_PRIORITY]
 
-/**
- * Kanban column groupings - SINGLE SOURCE OF TRUTH
- * Used throughout the application for filtering and display
- */
-export const KANBAN_COLUMNS = {
-    ESTIMATES: [WORK_ORDER_STATUS.PENDING, WORK_ORDER_STATUS.APPROVED],
-    IN_PROGRESS: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.WAITING_PARTS,
-        WORK_ORDER_STATUS.WAITING_CUSTOMER,
-    ],
-    READY: [WORK_ORDER_STATUS.READY],
-    COMPLETED: [WORK_ORDER_STATUS.COMPLETED, WORK_ORDER_STATUS.INVOICED],
-} as const
+// Editable statuses - work orders in these statuses can be edited
+export const EDITABLE_STATUSES: readonly WorkOrderStatus[] = [
+    WORK_ORDER_STATUS.PENDING,
+    WORK_ORDER_STATUS.APPROVED,
+    WORK_ORDER_STATUS.IN_PROGRESS,
+    WORK_ORDER_STATUS.WAITING_PARTS,
+    WORK_ORDER_STATUS.WAITING_CUSTOMER,
+    WORK_ORDER_STATUS.ON_HOLD,
+    WORK_ORDER_STATUS.READY,
+] as const
+
+// Deletable statuses - work orders in these statuses can be deleted/archived
+export const DELETABLE_STATUSES: readonly WorkOrderStatus[] = [
+    ...EDITABLE_STATUSES,
+    WORK_ORDER_STATUS.COMPLETED,
+] as const
+
+// Statuses that allow item editing
+export const ITEM_EDITABLE_STATUSES: readonly WorkOrderStatus[] = [
+    WORK_ORDER_STATUS.PENDING,
+    WORK_ORDER_STATUS.APPROVED,
+    WORK_ORDER_STATUS.IN_PROGRESS,
+    WORK_ORDER_STATUS.WAITING_PARTS,
+    WORK_ORDER_STATUS.WAITING_CUSTOMER,
+    WORK_ORDER_STATUS.ON_HOLD,
+    WORK_ORDER_STATUS.READY,
+] as const
+
+// Statuses that show financial summary
+export const FINANCIAL_SUMMARY_STATUSES: readonly WorkOrderStatus[] = [
+    WORK_ORDER_STATUS.APPROVED,
+    WORK_ORDER_STATUS.IN_PROGRESS,
+    WORK_ORDER_STATUS.READY,
+    WORK_ORDER_STATUS.COMPLETED,
+    WORK_ORDER_STATUS.INVOICED,
+] as const
+
+// Statuses that allow MIA insights
+export const MIA_INSIGHTS_STATUSES: readonly WorkOrderStatus[] = [
+    WORK_ORDER_STATUS.READY,
+] as const
 
 /**
- * Status labels for UI display
+ * Check if a work order can be edited
  */
-export const STATUS_TO_LABEL: Record<WorkOrderStatus, string> = {
-    [WORK_ORDER_STATUS.PENDING]: 'Pending',
-    [WORK_ORDER_STATUS.APPROVED]: 'Approved',
-    [WORK_ORDER_STATUS.IN_PROGRESS]: 'In Progress',
-    [WORK_ORDER_STATUS.WAITING_PARTS]: 'Waiting for Parts',
-    [WORK_ORDER_STATUS.WAITING_CUSTOMER]: 'Waiting for Customer',
-    [WORK_ORDER_STATUS.READY]: 'Ready',
-    [WORK_ORDER_STATUS.COMPLETED]: 'Completed',
-    [WORK_ORDER_STATUS.INVOICED]: 'Invoiced',
-    [WORK_ORDER_STATUS.CANCELLED]: 'Cancelled',
-    [WORK_ORDER_STATUS.ON_HOLD]: 'On Hold',
+export function canEditWorkOrder(status: string): boolean {
+    return EDITABLE_STATUSES.includes(status as WorkOrderStatus)
 }
 
 /**
- * Status groups for styling and business logic
+ * Check if a work order can be deleted/archived
  */
-export const STATUS_GROUPS = {
-    ACTIVE: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.WAITING_PARTS,
-        WORK_ORDER_STATUS.WAITING_CUSTOMER,
-    ],
-    COMPLETED: [WORK_ORDER_STATUS.COMPLETED, WORK_ORDER_STATUS.INVOICED],
-    CANCELLED: [WORK_ORDER_STATUS.CANCELLED],
-    ARCHIVED: [WORK_ORDER_STATUS.INVOICED], // Auto-archived statuses
-} as const
-
-/**
- * Valid status transitions
- * Prevents invalid state changes
- */
-export const VALID_STATUS_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
-    [WORK_ORDER_STATUS.PENDING]: [
-        WORK_ORDER_STATUS.APPROVED,
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.CANCELLED,
-        WORK_ORDER_STATUS.ON_HOLD,
-    ],
-    [WORK_ORDER_STATUS.APPROVED]: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.PENDING,
-        WORK_ORDER_STATUS.CANCELLED,
-    ],
-    [WORK_ORDER_STATUS.IN_PROGRESS]: [
-        WORK_ORDER_STATUS.WAITING_PARTS,
-        WORK_ORDER_STATUS.WAITING_CUSTOMER,
-        WORK_ORDER_STATUS.READY,
-        WORK_ORDER_STATUS.COMPLETED,
-        WORK_ORDER_STATUS.ON_HOLD,
-    ],
-    [WORK_ORDER_STATUS.WAITING_PARTS]: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.READY,
-        WORK_ORDER_STATUS.COMPLETED,
-    ],
-    [WORK_ORDER_STATUS.WAITING_CUSTOMER]: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.READY,
-        WORK_ORDER_STATUS.COMPLETED,
-    ],
-    [WORK_ORDER_STATUS.READY]: [
-        WORK_ORDER_STATUS.COMPLETED,
-        WORK_ORDER_STATUS.IN_PROGRESS,
-    ],
-    [WORK_ORDER_STATUS.COMPLETED]: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.READY,
-        WORK_ORDER_STATUS.INVOICED,
-    ],
-    [WORK_ORDER_STATUS.INVOICED]: [], // Terminal state - cannot transition
-    [WORK_ORDER_STATUS.CANCELLED]: [], // Terminal state - cannot transition
-    [WORK_ORDER_STATUS.ON_HOLD]: [
-        WORK_ORDER_STATUS.IN_PROGRESS,
-        WORK_ORDER_STATUS.CANCELLED,
-    ],
+export function canDeleteWorkOrder(status: string): boolean {
+    return DELETABLE_STATUSES.includes(status as WorkOrderStatus)
 }
 
 /**
- * Helper function to check if status transition is valid
+ * Check if work order items can be edited
  */
-export function isValidStatusTransition(
-    from: WorkOrderStatus,
-    to: WorkOrderStatus
-): boolean {
-    return VALID_STATUS_TRANSITIONS[from]?.includes(to) ?? false
+export function canEditWorkOrderItems(status: string): boolean {
+    return ITEM_EDITABLE_STATUSES.includes(status as WorkOrderStatus)
 }
+
+/**
+ * Check if financial summary should be shown
+ */
+export function shouldShowFinancialSummary(status: string): boolean {
+    return FINANCIAL_SUMMARY_STATUSES.includes(status as WorkOrderStatus)
+}
+
+/**
+ * Check if MIA insights should be available
+ */
+export function shouldShowMiaInsights(status: string): boolean {
+    return MIA_INSIGHTS_STATUSES.includes(status as WorkOrderStatus)
+}
+
+/**
+ * Get status display label
+ */
+export function getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+        [WORK_ORDER_STATUS.PENDING]: 'Pending',
+        [WORK_ORDER_STATUS.APPROVED]: 'Approved',
+        [WORK_ORDER_STATUS.IN_PROGRESS]: 'In Progress',
+        [WORK_ORDER_STATUS.WAITING_PARTS]: 'Waiting for Parts',
+        [WORK_ORDER_STATUS.WAITING_CUSTOMER]: 'Waiting for Customer',
+        [WORK_ORDER_STATUS.READY]: 'Ready',
+        [WORK_ORDER_STATUS.COMPLETED]: 'Completed',
+        [WORK_ORDER_STATUS.INVOICED]: 'Invoiced',
+        [WORK_ORDER_STATUS.CANCELLED]: 'Cancelled',
+        [WORK_ORDER_STATUS.ON_HOLD]: 'On Hold',
+    }
+    return labels[status] || status
+}
+
+/**
+ * Get priority display label
+ */
+export function getPriorityLabel(priority: string): string {
+    const labels: Record<string, string> = {
+        [WORK_ORDER_PRIORITY.LOW]: 'Low',
+        [WORK_ORDER_PRIORITY.MEDIUM]: 'Medium',
+        [WORK_ORDER_PRIORITY.HIGH]: 'High',
+        [WORK_ORDER_PRIORITY.URGENT]: 'Urgent',
+    }
+    return labels[priority] || priority
+}
+
+/**
+ * Kanban column configuration
+ * Defines the columns displayed in the work orders Kanban board
+ */
+export const KANBAN_COLUMNS_CONFIG = [
+    {
+        id: 'pending',
+        title: 'Estimates',
+        color: 'bg-yellow-500',
+        statuses: [WORK_ORDER_STATUS.PENDING, WORK_ORDER_STATUS.APPROVED] as const,
+    },
+    {
+        id: 'in-progress',
+        title: 'In Progress',
+        color: 'bg-blue-500',
+        statuses: [
+            WORK_ORDER_STATUS.IN_PROGRESS,
+            WORK_ORDER_STATUS.WAITING_PARTS,
+            WORK_ORDER_STATUS.WAITING_CUSTOMER,
+        ] as const,
+    },
+    {
+        id: 'ready',
+        title: 'Ready',
+        color: 'bg-purple-500',
+        statuses: [WORK_ORDER_STATUS.READY] as const,
+    },
+    {
+        id: 'completed',
+        title: 'Completed',
+        color: 'bg-green-500',
+        statuses: [WORK_ORDER_STATUS.COMPLETED, WORK_ORDER_STATUS.INVOICED] as const,
+    },
+] as const

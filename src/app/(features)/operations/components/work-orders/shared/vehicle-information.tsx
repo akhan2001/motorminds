@@ -328,7 +328,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     return (
         <div className={`space-y-4 ${className}`}>
         <h3 className="text-lg font-medium text-foreground dark:text-white">Vehicle Information</h3>
-            <div className="bg-slate-50 dark:bg-[#1A1A1A] rounded-xl p-6">
+            <div className="bg-card dark:bg-[#131313] rounded-xl p-6 border border-border dark:border-[#333333]">
                 {/* Vehicle Selection Dropdown (only for creation mode) */}
                 {isCreating && isEditing && customerId && customerId !== "new" && (
                     <div className="mb-4">
@@ -343,7 +343,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     </div>
                 )}
                 {/* Vehicle Information Fields */}
-                <div className="space-y-2 mt-2 p-3 border border-border dark:border-[#2a2a2a] rounded-md">
+                <div className="space-y-2 mt-2 p-3 border border-border dark:border-[#333333] rounded-md">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="space-y-1.5">
                             <Label htmlFor="vehicle_year" className="text-muted-foreground dark:text-gray-400">Year *</Label>
@@ -357,7 +357,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     if (errors.vehicleYear) setErrors(prev => ({ ...prev, vehicleYear: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleYear', vehicleYear)}
-                                className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
+                                className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                    isEditing 
+                                        ? 'bg-background dark:bg-[#1a1a1a]' 
+                                        : 'bg-card dark:bg-[#131313]'
+                                } ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="2020"
@@ -384,11 +388,15 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             >
                                 <SelectTrigger 
                                     id="vehicle_make"
-                                    className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
+                                    className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                        isEditing 
+                                            ? 'bg-background dark:bg-[#1a1a1a]' 
+                                            : 'bg-card dark:bg-[#131313]'
+                                    } ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
                                 >
                                     <SelectValue placeholder="Select make" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                                <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#333333]">
                                     {VEHICLE_MAKES.map((make) => (
                                         <SelectItem key={make} value={make} className="text-popover-foreground dark:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]">
                                             {make}
@@ -429,11 +437,15 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 >
                                     <SelectTrigger
                                         id="vehicle_model"
-                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        } ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
                                     >
                                         <SelectValue placeholder="Select model" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+                                    <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#333333]">
                                         {availableModels.map((model) => (
                                             <SelectItem
                                                 key={model}
@@ -450,20 +462,24 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 </Select>
                             ) : (
                                 <>
-                                    <Input
-                                        id="vehicle_model"
-                                        value={vehicleModel}
-                                        onChange={(e) => {
-                                            if (!isEditing) return
-                                            onFieldChange('vehicleModel', e.target.value)
-                                            if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
-                                        }}
-                                        onBlur={() => handleBlur('vehicleModel', vehicleModel)}
-                                        className={`bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 ${errors.vehicleModel ? 'border-red-500 focus-border-red-500' : ''}`}
-                                        readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
-                                        required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
-                                        placeholder="e.g. Civic"
-                                    />
+                            <Input
+                                id="vehicle_model"
+                                value={vehicleModel}
+                                onChange={(e) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleModel', e.target.value)
+                                    if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
+                                }}
+                                onBlur={() => handleBlur('vehicleModel', vehicleModel)}
+                                        className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                            isEditing 
+                                                ? 'bg-background dark:bg-[#1a1a1a]' 
+                                                : 'bg-card dark:bg-[#131313]'
+                                        } ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
+                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
+                                placeholder="e.g. Civic"
+                            />
                                     {availableModels.length > 0 && (
                                         <Button
                                             type="button"
@@ -493,7 +509,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleColor}
                                 onChange={(e) => isEditing && onFieldChange('vehicleColor', e.target.value)}
-                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
+                                className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                    isEditing 
+                                        ? 'bg-background dark:bg-[#1a1a1a]' 
+                                        : 'bg-card dark:bg-[#131313]'
+                                }`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="e.g. Blue"
                             />
@@ -508,7 +528,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 <Input
                                     value={vehicleVin}
                                     onChange={(e) => isEditing && onFieldChange('vehicleVin', e.target.value.toUpperCase())}
-                                    className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500 pr-20"
+                                    className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 pr-20 ${
+                                        isEditing 
+                                            ? 'bg-background dark:bg-[#1a1a1a]' 
+                                            : 'bg-card dark:bg-[#131313]'
+                                    }`}
                                     readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                     placeholder="17-character VIN"
                                     maxLength={17}
@@ -537,7 +561,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleLicensePlate}
                                 onChange={(e) => isEditing && onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())}
-                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
+                                className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                    isEditing 
+                                        ? 'bg-background dark:bg-[#1a1a1a]' 
+                                        : 'bg-card dark:bg-[#131313]'
+                                }`}
                                 readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="ABC123"
                             />
@@ -547,7 +575,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Input
                                 value={vehicleMileage}
                                 onChange={(e) => isEditing && onFieldChange('vehicleMileage', e.target.value)}
-                                className="bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border-border dark:border-[#2a2a2a] focus:ring-gray-500"
+                                className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
+                                    isEditing 
+                                        ? 'bg-background dark:bg-[#1a1a1a]' 
+                                        : 'bg-card dark:bg-[#131313]'
+                                }`}
                                 readOnly={!isEditing}
                                 placeholder="Current mileage"
                                 type="number"

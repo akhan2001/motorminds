@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Building2, Phone, Mail, PhoneCall, Edit, Trash2 } from 'lucide-react'
+import { Building2, Phone, Mail, Edit, Trash2 } from 'lucide-react'
 import { Supplier } from '@/app/(features)/suppliers/types/supplier'
 import { toast } from 'sonner'
 
@@ -15,14 +15,6 @@ interface SupplierCardProps {
 }
 
 export default function SupplierCard({ supplier, onCallSupplier, onEdit, onDelete }: SupplierCardProps) {
-    const handleCallClick = () => {
-        if (!supplier.phone_number) {
-            toast.error('No phone number available for this supplier')
-            return
-        }
-        onCallSupplier?.(supplier)
-    }
-
     const handleEditClick = (e: React.MouseEvent) => {
         e.stopPropagation()
         onEdit?.(supplier)
@@ -63,85 +55,76 @@ export default function SupplierCard({ supplier, onCallSupplier, onEdit, onDelet
 
     return (
         <Card className="bg-card dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
-            <CardHeader>
-                <CardTitle className="text-foreground dark:text-white flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    {supplier.name}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {supplier.contact_person && (
-                    <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
-                        <span className="text-sm">Contact: {supplier.contact_person}</span>
-                    </div>
-                )}
-
-                {supplier.phone_number && (
-                    <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
-                        <Phone className="h-4 w-4" />
-                        <span className="text-sm">{supplier.phone_number}</span>
-                    </div>
-                )}
-
-                {supplier.email && (
-                    <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
-                        <Mail className="h-4 w-4" />
-                        <span className="text-sm">{supplier.email}</span>
-                    </div>
-                )}
-
-                {supplier.account_number && (
-                    <div className="text-xs text-muted-foreground dark:text-gray-400">
-                        Account: {supplier.account_number}
-                    </div>
-                )}
-
-                {supplier.address?.city && supplier.address?.province && (
-                    <div className="text-xs text-muted-foreground dark:text-gray-400">
-                        {supplier.address.city}, {supplier.address.province}
-                    </div>
-                )}
-
-                <div className="pt-2">
+            <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-foreground dark:text-white flex items-center gap-2 text-base">
+                        <Building2 className="h-4 w-4" />
+                        {supplier.name}
+                    </CardTitle>
                     <Badge
                         variant={supplier.status === 'active' ? "default" : "secondary"}
-                        className={getStatusBadgeColor(supplier.status)}
+                        className={`${getStatusBadgeColor(supplier.status)} text-xs`}
                     >
                         {getStatusText(supplier.status)}
                     </Badge>
                 </div>
+            </CardHeader>
+            <CardContent className="space-y-2 pt-0">
+                <div className="grid grid-cols-1 gap-1.5 text-sm">
+                    {supplier.contact_person && (
+                        <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
+                            <span className="text-xs text-muted-foreground dark:text-gray-400">Contact:</span>
+                            <span className="text-xs">{supplier.contact_person}</span>
+                        </div>
+                    )}
+
+                    {supplier.phone_number && (
+                        <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
+                            <Phone className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
+                            <span className="text-xs">{supplier.phone_number}</span>
+                        </div>
+                    )}
+
+                    {supplier.email && (
+                        <div className="flex items-center gap-2 text-foreground dark:text-gray-300">
+                            <Mail className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
+                            <span className="text-xs truncate">{supplier.email}</span>
+                        </div>
+                    )}
+
+                    {supplier.account_number && (
+                        <div className="text-xs text-muted-foreground dark:text-gray-400">
+                            Account: {supplier.account_number}
+                        </div>
+                    )}
+
+                    {supplier.address?.city && supplier.address?.province && (
+                        <div className="text-xs text-muted-foreground dark:text-gray-400">
+                            {supplier.address.city}, {supplier.address.province}
+                        </div>
+                    )}
+                </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col gap-2 pt-4">
+                <div className="flex gap-2 pt-2 border-t border-border dark:border-[#2a2a2a]">
                     <Button
-                        onClick={handleCallClick}
-                        disabled={!supplier.phone_number}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        onClick={handleEditClick}
+                        variant="outline"
+                        className="flex-1 border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a] h-8 text-xs"
                         size="sm"
                     >
-                        <PhoneCall className="h-4 w-4 mr-2" />
-                        Call for Parts
+                        <Edit className="h-3 w-3 mr-1.5" />
+                        Edit
                     </Button>
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={handleEditClick}
-                            variant="outline"
-                            className="flex-1 border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#2a2a2a]"
-                            size="sm"
-                        >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                        </Button>
-                        <Button
-                            onClick={handleDeleteClick}
-                            variant="outline"
-                            className="flex-1 border-red-800/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-500/10 dark:hover:bg-red-900/20"
-                            size="sm"
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                        </Button>
-                    </div>
+                    <Button
+                        onClick={handleDeleteClick}
+                        variant="outline"
+                        className="flex-1 border-red-800/30 dark:border-red-800/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-500/10 dark:hover:bg-red-900/20 h-8 text-xs"
+                        size="sm"
+                    >
+                        <Trash2 className="h-3 w-3 mr-1.5" />
+                        Delete
+                    </Button>
                 </div>
             </CardContent>
         </Card>

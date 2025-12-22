@@ -7,7 +7,7 @@ export { WorkOrderModalHeader } from './work-order-modal-header'
 export { WorkOrderModalFooter } from './work-order-modal-footer'
 export { WorkOrderStatusBar } from './work-order-status-bar'
 export { WorkOrderRightPanel } from './work-order-right-panel'
-export { WorkOrderLaborItems } from './WorkOrderLaborItems'
-export { WorkOrderPartsItems } from './WorkOrderPartsItems'
-export { WorkOrderGenericItems } from './WorkOrderGenericItems'
-
+export { ChatPanel } from './chat-panel'
+export { InvoiceHistoryPanel } from './invoice-history-panel'
+// Item components (organized in items subdirectory)
+export { WorkOrderLaborItems, WorkOrderPartsItems, WorkOrderGenericItems } from './items'

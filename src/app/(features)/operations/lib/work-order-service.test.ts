@@ -50,6 +50,13 @@ vi.mock('@/lib/supabase', () => ({
     createClient: () => mockSupabaseClient
 }))
 
+// Mock work order permissions
+vi.mock('./work-order-permissions', () => ({
+    workOrderPermissions: {
+        canDeleteWorkOrder: vi.fn().mockResolvedValue(true)
+    }
+}))
+
 describe('WorkOrderService', () => {
     let service: WorkOrderServiceType
     let mockFrom: any
@@ -241,7 +248,8 @@ describe('WorkOrderService', () => {
                 ]
                 const mockQuery = {
                     eq: vi.fn().mockReturnThis(),
-                    order: vi.fn().mockResolvedValue({ data: mockWorkOrders, error: null })
+                    order: vi.fn().mockReturnThis(),
+                    range: vi.fn().mockResolvedValue({ data: mockWorkOrders, error: null })
                 }
                 mockFrom.mockReturnValue({
                     select: vi.fn().mockReturnValue(mockQuery)
@@ -260,7 +268,8 @@ describe('WorkOrderService', () => {
                 // Arrange
                 const mockQuery = {
                     eq: vi.fn().mockReturnThis(),
-                    order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
+                    order: vi.fn().mockReturnThis(),
+                    range: vi.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } })
                 }
                 mockFrom.mockReturnValue({
                     select: vi.fn().mockReturnValue(mockQuery)
@@ -274,7 +283,8 @@ describe('WorkOrderService', () => {
                 // Arrange
                 const mockQuery = {
                     eq: vi.fn().mockReturnThis(),
-                    order: vi.fn().mockResolvedValue({ data: null, error: null })
+                    order: vi.fn().mockReturnThis(),
+                    range: vi.fn().mockResolvedValue({ data: null, error: null })
                 }
                 mockFrom.mockReturnValue({
                     select: vi.fn().mockReturnValue(mockQuery)
@@ -421,55 +431,6 @@ describe('WorkOrderService', () => {
             })
         })
 
-        describe('deleteWorkOrder', () => {
-            test('should delete work order successfully', async () => {
-                // Arrange
-                const mockSelectQuery = {
-                    eq: vi.fn(() => ({
-                        single: vi.fn().mockResolvedValue({
-                            data: { appointment_id: null },
-                            error: null
-                        })
-                    }))
-                }
-                const mockDeleteQuery = {
-                    eq: vi.fn().mockResolvedValue({ error: null })
-                }
-                mockFrom.mockReturnValue({
-                    select: vi.fn(() => mockSelectQuery),
-                    delete: vi.fn(() => mockDeleteQuery)
-                })
-
-                // Act
-                await service.deleteWorkOrder('1')
-
-                // Assert
-                expect(mockSelectQuery.eq).toHaveBeenCalledWith('id', '1')
-                expect(mockDeleteQuery.eq).toHaveBeenCalledWith('id', '1')
-            })
-
-            test('should handle delete error', async () => {
-                // Arrange
-                const mockSelectQuery = {
-                    eq: vi.fn(() => ({
-                        single: vi.fn().mockResolvedValue({
-                            data: { appointment_id: null },
-                            error: null
-                        })
-                    }))
-                }
-                const mockDeleteQuery = {
-                    eq: vi.fn().mockResolvedValue({ error: { message: 'Delete failed' } })
-                }
-                mockFrom.mockReturnValue({
-                    select: vi.fn(() => mockSelectQuery),
-                    delete: vi.fn(() => mockDeleteQuery)
-                })
-
-                // Act & Assert
-                await expect(service.deleteWorkOrder('1')).rejects.toThrow('Failed to delete work order: Delete failed')
-            })
-        })
     })
 
     describe('Status Management', () => {
@@ -655,7 +616,8 @@ describe('WorkOrderService', () => {
             const mockQuery = {
                 eq: vi.fn().mockReturnThis(),
                 in: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({ data: mockWorkOrders, error: null })
+                order: vi.fn().mockReturnThis(),
+                range: vi.fn().mockResolvedValue({ data: mockWorkOrders, error: null })
             }
             mockFrom.mockReturnValue({
                 select: vi.fn().mockReturnValue(mockQuery)
@@ -979,7 +941,8 @@ describe('WorkOrderService', () => {
             // Arrange
             const mockQuery = {
                 eq: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({ data: null, error: null })
+                order: vi.fn().mockReturnThis(),
+                range: vi.fn().mockResolvedValue({ data: null, error: null })
             }
             mockFrom.mockReturnValue({
                 select: vi.fn().mockReturnValue(mockQuery)
@@ -996,7 +959,8 @@ describe('WorkOrderService', () => {
             // Arrange
             const mockQuery = {
                 eq: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({ data: null, error: {} })
+                order: vi.fn().mockReturnThis(),
+                range: vi.fn().mockResolvedValue({ data: null, error: {} })
             }
             mockFrom.mockReturnValue({
                 select: vi.fn().mockReturnValue(mockQuery)

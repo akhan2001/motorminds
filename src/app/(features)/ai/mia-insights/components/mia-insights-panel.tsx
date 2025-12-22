@@ -37,7 +37,7 @@ export const MiaInsightsPanel: React.FC<MiaInsightsPanelProps> = ({
     // Check if work order is eligible for insights generation
     const isEligibleForInsights = !insights?.analysis && 
         workOrderStatus && 
-        ['pending', 'approved', 'in_progress', 'in progress', 'in-progress'].includes(workOrderStatus.toLowerCase()) &&
+        ['pending', 'approved', 'in_progress', 'in progress', 'in-progress', 'ready'].includes(workOrderStatus.toLowerCase()) &&
         !workOrderStatus.toLowerCase().includes('completed')
 
     // Check if work order is completed (disable adding upsell items)
