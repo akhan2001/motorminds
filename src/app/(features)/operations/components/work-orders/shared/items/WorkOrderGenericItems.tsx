@@ -142,7 +142,9 @@ export function WorkOrderGenericItems({
                 // Recalculate total
                 // NOTE: This is for UI feedback only. The database trigger will calculate the actual total_price on save.
                 if (field === 'quantity' || field === 'unit_price') {
-                    updated.total_price = updated.quantity * updated.unit_price;
+                    const quantity = field === 'quantity' ? (value || 0) : updated.quantity;
+                    const unitPrice = field === 'unit_price' ? (value || 0) : updated.unit_price;
+                    updated.total_price = quantity * unitPrice;
                 }
                 return updated;
             }
@@ -289,8 +291,11 @@ export function WorkOrderGenericItems({
                                     <Label className="text-muted-foreground text-xs">Unit Price</Label>
                                     <Input
                                         type="number"
-                                        value={item.unit_price}
-                                        onChange={(e) => updateItem(item.id, 'unit_price', parseFloat(e.target.value) || 0)}
+                                        value={item.unit_price === 0 ? '0' : item.unit_price || ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                            updateItem(item.id, 'unit_price', value);
+                                        }}
                                         min={itemType === 'discount' ? undefined : "0"}
                                         step="0.01"
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${

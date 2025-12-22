@@ -13,8 +13,7 @@ import { WorkOrderNotes } from '../shared/work-order-notes'
 import { WorkOrderModalFooter } from '../shared/work-order-modal-footer'
 import { WorkOrderItemsSection } from './WorkOrderItemsSection'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
-import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
-import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
+import { canEditWorkOrderItems } from '../../../lib/constants/work-orders'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
 
@@ -50,7 +49,6 @@ export function WorkOrderEditLeftPanel({
     onRevert,
 }: WorkOrderEditLeftPanelProps) {
     const canEditItems = canEditWorkOrderItems(workOrderDetails.status)
-    const showFinancialSummary = shouldShowFinancialSummary(workOrderDetails.status)
 
     // Delete confirmation state
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
@@ -198,13 +196,6 @@ export function WorkOrderEditLeftPanel({
                             isEditing={form.isEditing}
                             onItemSaved={handleItemSaved}
                             onItemDeleted={handleItemDeleted}
-                        />
-                    )}
-
-                    {/* Cost Summary - Show for completed work orders */}
-                    {showFinancialSummary && workOrderItems.length > 0 && (
-                        <WorkOrderCostSummary
-                            workOrderItems={workOrderItems}
                         />
                     )}
 
