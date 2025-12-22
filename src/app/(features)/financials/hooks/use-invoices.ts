@@ -12,7 +12,7 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: num
             let query = supabase
                 .from('invoices_table')
                 .select(`
-                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes,
+                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
                     vehicle:customer_vehicles(id, year, make, model, license_plate),
                     work_order:work_orders(id, work_order_number, title, status)
@@ -241,17 +241,33 @@ export function useDeleteInvoice() {
 
     return useMutation({
         mutationFn: async ({ id, shop_id }: { id: string; shop_id: string }) => {
+            // First, fetch the invoice to get work_order_id before deleting
+            const { data: invoice, error: fetchError } = await supabase
+                .from('invoices_table')
+                .select('work_order_id')
+                .eq('invoice_number', id)
+                .single()
+
+            if (fetchError && fetchError.code !== 'PGRST116') {
+                throw fetchError
+            }
+
+            // Delete the invoice
             const { error } = await supabase
                 .from('invoices_table')
                 .delete()
                 .eq('invoice_number', id)
 
             if (error) throw error
-            return { id, shop_id }
+            return { id, shop_id, work_order_id: invoice?.work_order_id }
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
+            // Invalidate work order invoice query to update the modal without refresh
+            if (data.work_order_id) {
+                queryClient.invalidateQueries({ queryKey: ['work-order-invoice', data.work_order_id] })
+            }
         }
     })
 }
@@ -428,10 +444,12 @@ export function useCreateInvoiceFromWorkOrder() {
             // No need to update work order - relationship is maintained via invoices_table.work_order_id
             return invoice as Invoice
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['work-orders'] })
+            // Invalidate work order invoice query to update the modal without refresh
+            queryClient.invalidateQueries({ queryKey: ['work-order-invoice', variables.work_order_id] })
         }
     })
 }

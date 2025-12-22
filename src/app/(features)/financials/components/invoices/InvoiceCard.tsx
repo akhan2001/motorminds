@@ -50,7 +50,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                     {/* <FileText className="h-3.5 w-3.5 text-muted-foreground dark:text-gray-400" /> */}
                     <div>
                         <h3 className="text-sm font-medium text-foreground dark:text-white">
-                            {invoice.title || 'Untitled Invoice'}
+                            {invoice.title || invoice.work_order?.title || 'Invoice'}
                         </h3>
                         <p className="text-xs text-muted-foreground dark:text-gray-400">#{invoice.display_id || invoice.invoice_number}</p>
                     </div>

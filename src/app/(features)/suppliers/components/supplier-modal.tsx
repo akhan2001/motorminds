@@ -1,6 +1,6 @@
 'use client'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Building2, Plus } from 'lucide-react'
 import SupplierIntakeForm from './supplier-intake-form'
@@ -48,6 +48,9 @@ export default function SupplierModal({
                         <Building2 className="h-5 w-5" />
                         {supplier ? 'Edit Supplier' : 'Add New Supplier'}
                     </DialogTitle>
+                    <DialogDescription className="text-muted-foreground dark:text-gray-400">
+                        {supplier ? 'Update supplier information below' : 'Enter supplier details to add a new supplier'}
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-hidden">
                     <SupplierIntakeForm

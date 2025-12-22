@@ -1,13 +1,19 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Package, Lightbulb, MessageSquare, FileText } from "lucide-react"
+import React, { useState, Suspense } from 'react'
+import dynamic from 'next/dynamic'
+import { DollarSign, Lightbulb, MessageSquare, FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { MiaInsightsIntegration } from '@/app/(features)/ai/mia-insights'
-import { WorkOrderItemTemplatesPanel } from '../../work-order-items/templates/work-order-item-templates-panel'
-import { PanelProvider } from '../../../contexts/PanelContext'
-import { ChatPanel } from '../WorkOrderModal/chat-panel'
+import { ChatPanel } from './chat-panel'
 import { InvoiceHistoryPanel } from './invoice-history-panel'
+import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
+import type { WorkOrderItem } from '../../../types/work-order-items'
+
+// Lazy load heavy components to reduce initial bundle size (Supabase pattern)
+const MiaInsightsIntegration = dynamic(
+    () => import('@/app/(features)/ai/mia-insights').then(m => ({ default: m.MiaInsightsIntegration })),
+    { ssr: false }
+)
 
 export interface WorkOrderRightPanelProps {
     workOrderId: string
@@ -16,6 +22,7 @@ export interface WorkOrderRightPanelProps {
     technicianId?: string
     customerId?: string | null
     customerType?: 'registered' | 'walk_in'
+    workOrderItems?: WorkOrderItem[]
     className?: string
 }
 
@@ -26,6 +33,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     technicianId,
     customerId,
     customerType,
+    workOrderItems = [],
     className = ""
 }) => {
     // Determine if work order is completed (read-only mode)
@@ -40,37 +48,52 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     const isRegisteredCustomer = customerType === 'registered' && !!customerId
     
     
-    const [activeTab, setActiveTab] = useState<'insights' | 'templates' | 'chat' | 'history'>('insights')
+    const [activeTab, setActiveTab] = useState<'insights' | 'summary' | 'chat' | 'history'>('summary')
 
     return (
-        <div className={`w-full bg-slate-50 dark:bg-[#131313] border-l border-border dark:border-[#222222] flex flex-col h-full min-h-0 ${className}`}>
+        <div className={`w-full bg-card dark:bg-[#131313] border-l border-border dark:border-[#333333] flex flex-col h-full min-h-0 ${className}`}>
             {/* Header */}
-            <div className="p-4 border-b border-border dark:border-[#222222] flex-shrink-0">
+            <div className="p-4 border-b border-border dark:border-[#333333] flex-shrink-0">
                 <h3 className="text-foreground dark:text-white font-medium text-lg">
                     {isCompleted 
                         ? 'Insights & Chat' 
                         : isInProgress && isRegisteredCustomer
-                        ? 'Insights, Templates & History'
-                        : 'Insights & Templates'
+                        ? 'Summary, Insights & History'
+                        : 'Summary & Insights'
                     }
                 </h3>
                 <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
                     {isCompleted 
                         ? 'AI insights and team communication' 
                         : isInProgress && isRegisteredCustomer
-                        ? 'AI insights, reusable items, and customer history'
-                        : 'AI insights and reusable work order items'
+                        ? 'Cost summary, AI insights, and customer history'
+                        : 'Cost summary and AI insights'
                     }
                 </p>
             </div>
 
             {/* Content Tabs */}
-            <div className="flex border-b border-border dark:border-[#222222] flex-shrink-0">
+            <div className="flex border-b border-border dark:border-[#333333] flex-shrink-0">
+                {!isCompleted && (
+                    <button 
+                        onClick={() => setActiveTab('summary')}
+                        className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
+                            activeTab === 'summary' 
+                                ? 'text-foreground dark:text-white bg-card dark:bg-[#1a1a1a] border-blue-500' 
+                                : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] border-transparent hover:border-muted dark:hover:border-gray-600'
+                        }`}
+                    >
+                        <div className="flex items-center justify-center gap-1 text-sm font-medium">
+                            <DollarSign className="h-3 w-3" />
+                            <span>Summary</span>
+                        </div>
+                    </button>
+                )}
                 <button 
                     onClick={() => setActiveTab('insights')}
                     className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
                         activeTab === 'insights' 
-                            ? 'text-foreground dark:text-white bg-white dark:bg-[#1a1a1a] border-blue-500' 
+                            ? 'text-foreground dark:text-white bg-card dark:bg-[#1a1a1a] border-blue-500' 
                             : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] border-transparent hover:border-muted dark:hover:border-gray-600'
                     }`}
                 >
@@ -79,21 +102,6 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                         <span>Insights</span>
                     </div>
                 </button>
-                {!isCompleted && (
-                    <button 
-                        onClick={() => setActiveTab('templates')}
-                        className={`flex-1 px-4 py-2 text-xs transition-colors border-b-2 ${
-                            activeTab === 'templates' 
-                                ? 'text-foreground dark:text-white bg-white dark:bg-[#1a1a1a] border-blue-500' 
-                                : 'text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] border-transparent hover:border-muted dark:hover:border-gray-600'
-                        }`}
-                    >
-                        <div className="flex items-center justify-center gap-1 text-sm font-medium">
-                            <Package className="h-3 w-3" />
-                            <span>Templates</span>
-                        </div>
-                    </button>
-                )}
                 
                 {/* History tab - ONLY for registered customers in progress */}
                 {isInProgress && isRegisteredCustomer && (
@@ -134,11 +142,20 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                 {activeTab === 'insights' && (
                     <div className="p-4">
                         {workOrderId && shopId ? (
-                            <MiaInsightsIntegration 
-                                workOrderId={workOrderId} 
-                                shopId={shopId}
-                                workOrderStatus={workOrderStatus}
-                            />
+                            <Suspense fallback={
+                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Lightbulb className="h-4 w-4 text-yellow-500 animate-pulse" />
+                                        <span className="text-sm font-medium text-foreground dark:text-white">Loading insights...</span>
+                                    </div>
+                                </div>
+                            }>
+                                <MiaInsightsIntegration 
+                                    workOrderId={workOrderId} 
+                                    shopId={shopId}
+                                    workOrderStatus={workOrderStatus}
+                                />
+                            </Suspense>
                         ) : (
                             <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
                                 <div className="flex items-center gap-2 mb-2">
@@ -154,32 +171,21 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                     </div>
                 )}
 
-                {activeTab === 'templates' && (
-                    <div className="h-full">
-                        {shopId ? (
-                            <PanelProvider
-                                context="work-order-modal"
-                                allowTemplateActions={true}
-                                allowTemplateSelection={true}
-                            >
-                                <WorkOrderItemTemplatesPanel
-                                    shopId={shopId}
-                                    workOrderId={workOrderId}
-                                    technicianId={technicianId}
-                                    className="h-full"
-                                />
-                            </PanelProvider>
+                {activeTab === 'summary' && (
+                    <div className="h-full p-4">
+                        {workOrderItems.length > 0 ? (
+                            <WorkOrderCostSummary
+                                workOrderItems={workOrderItems}
+                            />
                         ) : (
-                            <div className="p-4">
-                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Package className="h-4 w-4 text-orange-500" />
-                                        <span className="text-md font-medium text-foreground dark:text-white">Templates</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground dark:text-gray-400">
-                                        Shop ID is required to load templates.
-                                    </p>
+                            <div className="bg-card dark:bg-[#131313] rounded-lg p-4 border border-border dark:border-[#333333]">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <DollarSign className="h-4 w-4 text-green-500" />
+                                    <span className="text-md font-medium text-foreground dark:text-white">Cost Summary</span>
                                 </div>
+                                <p className="text-sm text-muted-foreground dark:text-gray-400">
+                                    No items added yet. Add items to see the cost summary.
+                                </p>
                             </div>
                         )}
                     </div>

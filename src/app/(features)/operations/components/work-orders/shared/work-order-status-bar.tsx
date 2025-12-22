@@ -39,7 +39,7 @@ export const WorkOrderStatusBar: React.FC<WorkOrderStatusBarProps> = ({
 
     const formattedStartedAt = formatStartedAt(startedAt)
     return (
-        <div className={`flex items-center justify-between p-4 bg-slate-50 dark:bg-[#1A1A1A] border-b border-border dark:border-[#222222] ${className}`}>
+        <div className={`flex items-center justify-between p-4 bg-card dark:bg-[#131313] border-b border-border dark:border-[#333333] ${className}`}>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${getPriorityColor(priority)}`} />

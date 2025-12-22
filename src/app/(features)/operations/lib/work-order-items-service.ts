@@ -1,6 +1,16 @@
 // Work Order Items service for API interactions
 import { createClient } from '@/utils/supabase/client'
-import type { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData, WorkOrderItemSummary } from '../types/work-order-items'
+import {
+    WorkOrderItemSchema,
+    WorkOrderItemCreateSchema,
+    WorkOrderItemUpdateSchema,
+    WorkOrderItemSummarySchema,
+    type WorkOrderItem,
+    type WorkOrderItemCreateData,
+    type WorkOrderItemUpdateData,
+    type WorkOrderItemSummary,
+} from '../lib/validations/work-order-items'
+import type { WorkOrderItemFormData } from '../types/work-order-items'
 
 const supabase = createClient()
 
@@ -8,6 +18,7 @@ export class WorkOrderItemsService {
 
     /**
      * Get all items for a specific work order
+     * Includes technician information for labor items
      */
     static async getWorkOrderItems(workOrderId: string): Promise<WorkOrderItem[]> {
         if (!workOrderId) {
@@ -16,7 +27,10 @@ export class WorkOrderItemsService {
 
         const { data, error } = await supabase
             .from('work_order_items')
-            .select('*')
+            .select(`
+                *,
+                technician:employees(id, first_name, last_name)
+            `)
             .eq('work_order_id', workOrderId)
             .order('created_at', { ascending: true })
 
@@ -44,7 +58,43 @@ export class WorkOrderItemsService {
             throw new Error(`Failed to fetch work order items: ${error.message}`)
         }
 
-        return data || []
+        // Validate and return array (use passthrough to allow extra fields)
+        return (data || []).map(item => WorkOrderItemSchema.passthrough().parse(item))
+    }
+
+    /**
+     * Get all items for a specific work order with pagination
+     */
+    static async getWorkOrderItemsPaginated(
+        workOrderId: string,
+        options?: { page?: number; pageSize?: number }
+    ): Promise<{ data: WorkOrderItem[]; count: number }> {
+        if (!workOrderId) {
+            throw new Error('Work Order ID is required')
+        }
+
+        const page = options?.page || 1
+        const pageSize = options?.pageSize || 50
+        const from = (page - 1) * pageSize
+        const to = from + pageSize - 1
+
+        const { data, error, count } = await supabase
+            .from('work_order_items')
+            .select('*', { count: 'exact' })
+            .eq('work_order_id', workOrderId)
+            .order('created_at', { ascending: true })
+            .range(from, to)
+
+        if (error) {
+            console.error('Error fetching work order items:', error)
+            throw new Error(`Failed to fetch work order items: ${error.message}`)
+        }
+
+        // Validate and return
+        return {
+            data: (data || []).map(item => WorkOrderItemSchema.parse(item)),
+            count: count || 0
+        }
     }
 
     /**
@@ -76,61 +126,62 @@ export class WorkOrderItemsService {
 
     /**
      * Create a new work order item
+     * Note: total_price and total_cost are calculated by database trigger
+     * Requires database trigger 'item_total_calculation' to be active
      */
     static async createWorkOrderItem(itemData: WorkOrderItemCreateData): Promise<WorkOrderItem> {
-        if (!itemData.work_order_id) {
-            throw new Error('Work Order ID is required')
+        // Pre-process: Convert empty strings to null/undefined for optional UUID fields
+        const processedData = {
+            ...itemData,
+            technician_id: itemData.technician_id && itemData.technician_id.trim() !== '' 
+                ? itemData.technician_id 
+                : undefined,
         }
 
-        if (!itemData.description?.trim()) {
-            throw new Error('Description is required')
+        // Validate input with Zod
+        let validated: WorkOrderItemCreateData
+        try {
+            validated = WorkOrderItemCreateSchema.parse(processedData)
+        } catch (validationError: any) {
+            // Format Zod errors for better debugging
+            const errorMessages = validationError.errors?.map((err: any) => 
+                `${err.path.join('.')}: ${err.message}`
+            ).join(', ') || validationError.message || 'Validation failed'
+            
+            console.error('Validation error creating work order item:', {
+                itemData: processedData,
+                errors: validationError.errors || validationError
+            })
+            throw new Error(`Invalid item data: ${errorMessages}`)
         }
-
-        if (itemData.quantity <= 0) {
-            throw new Error('Quantity must be greater than 0')
-        }
-
-        if (itemData.unit_price < 0) {
-            throw new Error('Unit price cannot be negative')
-        }
-
-        // Validate unit_price is properly set
-        if (itemData.unit_price === null || itemData.unit_price === undefined) {
-            throw new Error('Unit price is required')
-        }
-
-        // Calculate total price
-        const totalPrice = itemData.quantity * itemData.unit_price
-        const totalCost = itemData.unit_cost ? itemData.quantity * itemData.unit_cost : undefined
 
         // Get shop_id from the work order (required for RLS)
         const { data: workOrder, error: workOrderError } = await supabase
             .from('work_orders')
             .select('shop_id')
-            .eq('id', itemData.work_order_id)
+            .eq('id', validated.work_order_id)
             .single()
 
         if (workOrderError || !workOrder) {
             throw new Error('Work order not found')
         }
 
+        // Prepare payload (database trigger will calculate total_price and total_cost)
         const itemPayload = {
-            work_order_id: itemData.work_order_id,
+            work_order_id: validated.work_order_id,
             shop_id: workOrder.shop_id,
-            item_type: itemData.item_type,
-            description: itemData.description.trim(),
-            part_number: itemData.part_number?.trim() || null,
-            quantity: itemData.quantity,
-            unit_price: itemData.unit_price,
-            total_price: totalPrice,
-            unit_cost: itemData.unit_cost || null,
-            total_cost: totalCost || null,
-            supplier: itemData.supplier?.trim() || null,
-            category: itemData.category?.trim() || null,
-            warranty_period: itemData.warranty_period?.trim() || null,
-            notes: itemData.notes?.trim() || null,
-            labor_hours: itemData.labor_hours || null,
-            technician_id: itemData.technician_id || null,
+            item_type: validated.item_type,
+            description: validated.description.trim(),
+            part_number: validated.part_number?.trim() || null,
+            quantity: validated.quantity,
+            unit_price: validated.unit_price,
+            unit_cost: validated.unit_cost ?? null,
+            supplier: validated.supplier?.trim() || null,
+            category: validated.category?.trim() || null,
+            warranty_period: validated.warranty_period?.trim() || null,
+            notes: validated.notes?.trim() || null,
+            labor_hours: validated.labor_hours ?? null,
+            technician_id: validated.technician_id ?? null,
         }
 
         const { data, error } = await supabase
@@ -140,83 +191,73 @@ export class WorkOrderItemsService {
             .single()
 
         if (error) {
-            console.error('Error creating work order item:', error)
+            console.error('Error creating work order item:', {
+                workOrderId: validated.work_order_id,
+                itemType: validated.item_type,
+                error: error.message,
+                code: error.code,
+                details: error.details
+            })
             throw new Error(`Failed to create work order item: ${error.message}`)
         }
 
-        return data
+        // Validate output with Zod (use passthrough to allow extra fields from DB)
+        try {
+            // Use passthrough to allow extra fields that might exist in DB but not in schema
+            return WorkOrderItemSchema.passthrough().parse(data)
+        } catch (validationError: any) {
+            // Format Zod errors for better debugging
+            const errorMessages = validationError.errors?.map((err: any) => 
+                `${err.path.join('.')}: ${err.message}`
+            ).join(', ') || validationError.message || 'Validation failed'
+            
+            console.error('Validation error for created work order item:', {
+                data,
+                errors: validationError.errors || validationError,
+                errorMessages
+            })
+            throw new Error(`Invalid data format returned from database: ${errorMessages}`)
+        }
     }
 
     /**
      * Update an existing work order item
+     * Note: total_price and total_cost are recalculated by database trigger
      */
     static async updateWorkOrderItem(itemId: string, itemData: Partial<WorkOrderItemFormData>): Promise<WorkOrderItem> {
         if (!itemId) {
             throw new Error('Item ID is required')
         }
 
+        // Validate input with Zod (partial update)
+        const validated = WorkOrderItemUpdateSchema.parse(itemData)
+
+        // Build update payload (database trigger will recalculate totals)
         const updatePayload: any = {}
 
-        if (itemData.item_type !== undefined) updatePayload.item_type = itemData.item_type
-        if (itemData.description !== undefined) {
-            if (!itemData.description.trim()) {
-                throw new Error('Description cannot be empty')
-            }
-            updatePayload.description = itemData.description.trim()
+        if (validated.item_type !== undefined) updatePayload.item_type = validated.item_type
+        if (validated.description !== undefined) updatePayload.description = validated.description.trim()
+        if (validated.part_number !== undefined) updatePayload.part_number = validated.part_number?.trim() || null
+        if (validated.quantity !== undefined) updatePayload.quantity = validated.quantity
+        if (validated.unit_price !== undefined) updatePayload.unit_price = validated.unit_price
+        // Handle unit_cost: preserve 0, convert undefined to null, keep null as null
+        if (validated.unit_cost !== undefined) {
+            updatePayload.unit_cost = validated.unit_cost !== null && validated.unit_cost !== undefined 
+                ? validated.unit_cost 
+                : null
         }
-        if (itemData.part_number !== undefined) updatePayload.part_number = itemData.part_number?.trim() || null
-        if (itemData.quantity !== undefined) {
-            if (itemData.quantity <= 0) {
-                throw new Error('Quantity must be greater than 0')
-            }
-            updatePayload.quantity = itemData.quantity
-        }
-        if (itemData.unit_price !== undefined) {
-            if (itemData.unit_price < 0) {
-                throw new Error('Unit price cannot be negative')
-            }
-            updatePayload.unit_price = itemData.unit_price
-        }
+        if (validated.supplier !== undefined) updatePayload.supplier = validated.supplier?.trim() || null
+        if (validated.category !== undefined) updatePayload.category = validated.category?.trim() || null
+        if (validated.warranty_period !== undefined) updatePayload.warranty_period = validated.warranty_period?.trim() || null
+        if (validated.notes !== undefined) updatePayload.notes = validated.notes?.trim() || null
+        if (validated.labor_hours !== undefined) updatePayload.labor_hours = validated.labor_hours ?? null
+        if (validated.technician_id !== undefined) updatePayload.technician_id = validated.technician_id ?? null
+        if (validated.active !== undefined) updatePayload.active = validated.active
 
-        // Recalculate total price if quantity or unit_price changed
-        if (itemData.quantity !== undefined || itemData.unit_price !== undefined || itemData.labor_hours !== undefined) {
-            // Get current item to get missing values
-            try {
-                const currentItem = await this.getWorkOrderItem(itemId)
-                const newQuantity = itemData.quantity ?? currentItem.quantity
-                const newUnitPrice = itemData.unit_price ?? currentItem.unit_price
-                const newLaborHours = itemData.labor_hours ?? currentItem.labor_hours
-                
-                // Validate unit_price is not null/undefined
-                if (newUnitPrice === null || newUnitPrice === undefined) {
-                    throw new Error('Unit price cannot be null or undefined')
-                }
-                
-                // Calculate based on item type
-                if (currentItem.item_type === 'labor') {
-                    updatePayload.total_price = (newLaborHours || 0) * newUnitPrice
-                } else {
-                    updatePayload.total_price = newQuantity * newUnitPrice
-                }
-                
-                // Ensure unit_price is stored if it was calculated
-                if (itemData.unit_price === undefined && currentItem.unit_price !== newUnitPrice) {
-                    updatePayload.unit_price = newUnitPrice
-                }
-            } catch (error) {
-                console.error('Error fetching current item for price calculation:', error)
-                // If item doesn't exist, we can't update it
-                throw new Error(`Work order item with ID ${itemId} not found`)
-            }
+        // If no fields to update, return current item
+        if (Object.keys(updatePayload).length === 0) {
+            return this.getWorkOrderItem(itemId)
         }
-
-        if (itemData.supplier !== undefined) updatePayload.supplier = itemData.supplier?.trim() || null
-        if (itemData.category !== undefined) updatePayload.category = itemData.category?.trim() || null
-        if (itemData.warranty_period !== undefined) updatePayload.warranty_period = itemData.warranty_period?.trim() || null
-        if (itemData.notes !== undefined) updatePayload.notes = itemData.notes?.trim() || null
-        if (itemData.labor_hours !== undefined) updatePayload.labor_hours = itemData.labor_hours || null
-        if (itemData.technician_id !== undefined) updatePayload.technician_id = itemData.technician_id || null
-        if (itemData.active !== undefined) updatePayload.active = itemData.active
 
         const { data, error } = await supabase
             .from('work_order_items')
@@ -238,7 +279,8 @@ export class WorkOrderItemsService {
             throw new Error(`Failed to update work order item: ${error.message || 'Unknown error'}`)
         }
 
-        return data
+        // Validate output with Zod (use passthrough to allow extra fields)
+        return WorkOrderItemSchema.passthrough().parse(data)
     }
 
     /**
@@ -261,66 +303,54 @@ export class WorkOrderItemsService {
     }
 
     /**
-     * Get summary of work order items (totals by type) - excludes rejected items
+     * Get summary of work order items (totals by type) - uses database function
+     * Note: Requires database function 'get_work_order_items_summary' to be created
      */
     static async getWorkOrderItemsSummary(workOrderId: string): Promise<WorkOrderItemSummary> {
-        const items = await this.getWorkOrderItems(workOrderId)
+        if (!workOrderId) {
+            throw new Error('Work Order ID is required')
+        }
 
-        // Filter out rejected items (active = false)
-        const approvedItems = items.filter(item => item.active !== false)
+        try {
+            const { data, error } = await supabase.rpc('get_work_order_items_summary', {
+                p_work_order_id: workOrderId
+            })
 
-        const summary = approvedItems.reduce((acc, item) => {
-            // Calculate total based on item type
-            let total = 0
-            if (item.item_type === 'labor') {
-                // For labor: labor_hours * unit_price
-                total = (item.labor_hours || 0) * (item.unit_price || 0)
-            } else {
-                // For parts, services, fees, discounts, packages: quantity * unit_price
-                total = (item.quantity || 0) * (item.unit_price || 0)
+            if (error) {
+                console.error('Error fetching work order items summary:', {
+                    workOrderId,
+                    error: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                })
+                
+                // Check if function doesn't exist
+                if (error.code === '42883' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+                    throw new Error('Database function not found. Please run the migration SQL scripts to create required functions.')
+                }
+                
+                throw new Error(`Failed to fetch work order items summary: ${error.message}`)
             }
-            
-            switch (item.item_type) {
-                case 'labor':
-                    acc.totalLabor += total
-                    acc.grandTotal += total
-                    break
-                case 'part':
-                    acc.totalParts += total
-                    acc.grandTotal += total
-                    break
-                case 'service':
-                    acc.totalServices += total
-                    acc.grandTotal += total
-                    break
-                case 'fee':
-                    acc.totalFees += total
-                    acc.grandTotal += total
-                    break
-                case 'discount':
-                    acc.totalDiscounts += total
-                    acc.grandTotal -= total // Subtract discounts instead of adding
-                    break
-                case 'package':
-                    acc.totalPackages += total
-                    acc.grandTotal += total
-                    break
-            }
-            acc.itemCount += 1
-            
-            return acc
-        }, {
-            totalLabor: 0,
-            totalParts: 0,
-            totalServices: 0,
-            totalFees: 0,
-            totalDiscounts: 0,
-            totalPackages: 0,
-            grandTotal: 0,
-            itemCount: 0
-        })
 
-        return summary
+            // Validate and return
+            try {
+                return WorkOrderItemSummarySchema.parse(data)
+            } catch (validationError) {
+                console.error('Validation error for work order items summary:', {
+                    workOrderId,
+                    data,
+                    error: validationError
+                })
+                throw new Error('Invalid data format returned from database')
+            }
+        } catch (error) {
+            // Re-throw if already an Error, otherwise wrap
+            if (error instanceof Error) {
+                throw error
+            }
+            throw new Error(`Unexpected error fetching work order items summary: ${String(error)}`)
+        }
     }
 
     /**
@@ -372,7 +402,9 @@ export class WorkOrderItemsService {
             throw new Error(`Failed to complete work order item: ${error.message}`)
         }
 
-        return data
+        // Validate output with Zod (use passthrough to allow extra fields)
+        return WorkOrderItemSchema.passthrough().parse(data)
+        return WorkOrderItemSchema.parse(data)
     }
 
     /**
@@ -388,6 +420,236 @@ export class WorkOrderItemsService {
             return true
         } catch (error) {
             return false
+        }
+    }
+
+    /**
+     * Bulk create items from templates (uses database function)
+     * Note: Requires database function 'create_items_from_templates' to be created
+     */
+    static async bulkCreateFromTemplates(
+        workOrderId: string,
+        templateIds: string[],
+        overrides?: Record<string, {
+            quantity?: number
+            unit_price?: number
+            labor_hours?: number
+            technician_id?: string
+        }>
+    ): Promise<Array<{ item_id: string; item_type: string }>> {
+        if (!workOrderId) {
+            throw new Error('Work Order ID is required')
+        }
+
+        if (!templateIds || templateIds.length === 0) {
+            throw new Error('Template IDs are required')
+        }
+
+        try {
+            // Convert overrides to JSONB format expected by database function
+            const overridesJsonb: Record<string, any> = {}
+            if (overrides) {
+                Object.entries(overrides).forEach(([templateId, override]) => {
+                    overridesJsonb[templateId] = override
+                })
+            }
+
+            const { data, error } = await supabase.rpc('create_items_from_templates', {
+                p_work_order_id: workOrderId,
+                p_template_ids: templateIds,
+                p_overrides: overridesJsonb
+            })
+
+            if (error) {
+                console.error('Error creating items from templates:', {
+                    workOrderId,
+                    templateIds,
+                    error: error.message,
+                    code: error.code,
+                    details: error.details
+                })
+                
+                // Check if function doesn't exist
+                if (error.code === '42883' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+                    throw new Error('Database function not found. Please run the migration SQL scripts to create required functions.')
+                }
+                
+                throw new Error(`Failed to create items from templates: ${error.message}`)
+            }
+
+            return data || []
+        } catch (error) {
+            // Re-throw if already an Error, otherwise wrap
+            if (error instanceof Error) {
+                throw error
+            }
+            throw new Error(`Unexpected error creating items from templates: ${String(error)}`)
+        }
+    }
+
+    /**
+     * Bulk upsert items (create new, update existing)
+     * Note: Updates use database function 'bulk_update_work_order_items' if available
+     * Falls back to individual updates if function doesn't exist
+     */
+    static async bulkUpsertItems(
+        workOrderId: string,
+        items: Array<{ id?: string; data: WorkOrderItemFormData }>
+    ): Promise<WorkOrderItem[]> {
+        if (!workOrderId) {
+            throw new Error('Work Order ID is required')
+        }
+
+        if (!items || items.length === 0) {
+            return []
+        }
+
+        try {
+            // Separate new vs existing items
+            const newItems = items.filter(item => !item.id)
+            const existingItems = items.filter(item => item.id)
+
+            const results: WorkOrderItem[] = []
+
+            // Batch insert new items
+            if (newItems.length > 0) {
+            // Get shop_id from work order
+            const { data: workOrder, error: workOrderError } = await supabase
+                .from('work_orders')
+                .select('shop_id')
+                .eq('id', workOrderId)
+                .single()
+
+            if (workOrderError || !workOrder) {
+                throw new Error('Work order not found')
+            }
+
+            // Validate and prepare insert payloads
+            const insertPayloads = newItems.map(item => {
+                const validated = WorkOrderItemCreateSchema.parse({
+                    ...item.data,
+                    work_order_id: workOrderId
+                })
+
+                return {
+                    work_order_id: workOrderId,
+                    shop_id: workOrder.shop_id,
+                    item_type: validated.item_type,
+                    description: validated.description.trim(),
+                    part_number: validated.part_number?.trim() || null,
+                    quantity: validated.quantity,
+                    unit_price: validated.unit_price,
+                    unit_cost: validated.unit_cost ?? null,
+                    supplier: validated.supplier?.trim() || null,
+                    category: validated.category?.trim() || null,
+                    warranty_period: validated.warranty_period?.trim() || null,
+                    notes: validated.notes?.trim() || null,
+                    labor_hours: validated.labor_hours ?? null,
+                    technician_id: validated.technician_id ?? null,
+                }
+            })
+
+            const { data: insertedData, error: insertError } = await supabase
+                .from('work_order_items')
+                .insert(insertPayloads)
+                .select()
+
+            if (insertError) {
+                console.error('Error bulk inserting items:', insertError)
+                throw new Error(`Failed to bulk insert items: ${insertError.message}`)
+            }
+
+            // Validate and add to results
+            results.push(...(insertedData || []).map(item => WorkOrderItemSchema.parse(item)))
+        }
+
+        // Batch update existing items using database function
+        if (existingItems.length > 0) {
+            // Prepare updates array for database function
+            const updates = existingItems.map(item => {
+                const validated = WorkOrderItemUpdateSchema.parse(item.data)
+                
+                return {
+                    id: item.id!,
+                    description: validated.description,
+                    part_number: validated.part_number,
+                    quantity: validated.quantity,
+                    unit_price: validated.unit_price,
+                    unit_cost: validated.unit_cost,
+                    supplier: validated.supplier,
+                    category: validated.category,
+                    warranty_period: validated.warranty_period,
+                    notes: validated.notes,
+                    labor_hours: validated.labor_hours,
+                    technician_id: validated.technician_id,
+                    active: validated.active,
+                }
+            })
+
+            const { data: updatedData, error: updateError } = await supabase.rpc(
+                'bulk_update_work_order_items',
+                { p_updates: updates }
+            )
+
+                if (updateError) {
+                    console.error('Error bulk updating items:', {
+                        workOrderId,
+                        itemCount: existingItems.length,
+                        error: updateError.message,
+                        code: updateError.code
+                    })
+                    
+                    // Check if function doesn't exist - fallback to individual updates
+                    if (updateError.code === '42883' || updateError.message?.includes('function') || updateError.message?.includes('does not exist')) {
+                        console.warn('Bulk update function not found, falling back to individual updates')
+                        // Fallback to individual updates
+                        for (const item of existingItems) {
+                            try {
+                                const validated = WorkOrderItemUpdateSchema.parse(item.data)
+                                // Convert null to undefined for compatibility
+                                const updateData: Partial<WorkOrderItemFormData> = {
+                                    ...validated,
+                                    part_number: validated.part_number ?? undefined,
+                                    unit_cost: validated.unit_cost ?? undefined,
+                                    supplier: validated.supplier ?? undefined,
+                                    category: validated.category ?? undefined,
+                                    warranty_period: validated.warranty_period ?? undefined,
+                                    notes: validated.notes ?? undefined,
+                                    labor_hours: validated.labor_hours ?? undefined,
+                                    technician_id: validated.technician_id ?? undefined,
+                                    active: validated.active ?? undefined,
+                                }
+                                const updated = await this.updateWorkOrderItem(item.id!, updateData)
+                                results.push(updated)
+                            } catch (err) {
+                                console.error(`Error updating item ${item.id}:`, err)
+                                throw err
+                            }
+                        }
+                    } else {
+                        throw new Error(`Failed to bulk update items: ${updateError.message}`)
+                    }
+                } else if (updatedData) {
+                    // Validate and add to results
+                    try {
+                        results.push(...updatedData.map((item: any) => WorkOrderItemSchema.parse(item)))
+                    } catch (validationError) {
+                        console.error('Validation error for bulk updated items:', {
+                            updatedData,
+                            error: validationError
+                        })
+                        throw new Error('Invalid data format returned from bulk update')
+                    }
+                }
+            }
+
+            return results
+        } catch (error) {
+            // Re-throw if already an Error, otherwise wrap
+            if (error instanceof Error) {
+                throw error
+            }
+            throw new Error(`Unexpected error in bulk upsert: ${String(error)}`)
         }
     }
 }

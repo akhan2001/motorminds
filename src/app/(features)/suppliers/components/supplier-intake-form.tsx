@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,16 +8,17 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, User, Phone, Mail, MapPin, FileText } from 'lucide-react'
 import { toast } from 'sonner'
-import { CreateSupplierRequest } from '@/app/(features)/suppliers/types/supplier'
+import { CreateSupplierRequest, Supplier } from '@/app/(features)/suppliers/types/supplier'
 import { formatPhoneNumber, cleanPhoneNumber } from '@/utils/format-phone'
 
 interface SupplierIntakeFormProps {
 	onSuccess?: (supplier: any) => void
 	onCancel?: () => void
 	isModal?: boolean
+	supplier?: Supplier | null
 }
 
-export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = false }: SupplierIntakeFormProps) {
+export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = false, supplier }: SupplierIntakeFormProps) {
 	const [formData, setFormData] = useState<CreateSupplierRequest>({
 		name: '',
 		contact_person: '',
@@ -34,6 +35,27 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 		notes: ''
 	})
 	const [isLoading, setIsLoading] = useState(false)
+
+	// Populate form when supplier prop changes (for editing)
+	useEffect(() => {
+		if (supplier) {
+			setFormData({
+				name: supplier.name || '',
+				contact_person: supplier.contact_person || '',
+				phone_number: supplier.phone_number || '',
+				email: supplier.email || '',
+				address: supplier.address || {
+					street: '',
+					city: '',
+					province: '',
+					postal_code: '',
+					country: 'Canada'
+				},
+				account_number: supplier.account_number || '',
+				notes: supplier.notes || ''
+			})
+		}
+	}, [supplier])
 
 	const handleInputChange = (field: keyof CreateSupplierRequest, value: string) => {
 		setFormData(prev => ({
@@ -77,8 +99,12 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 				phone_number: cleanPhoneNumber(formData.phone_number || '')
 			}
 
-			const response = await fetch('/api/suppliers', {
-				method: 'POST',
+			const isEditing = !!supplier
+			const url = isEditing ? `/api/suppliers/${supplier.id}` : '/api/suppliers'
+			const method = isEditing ? 'PUT' : 'POST'
+
+			const response = await fetch(url, {
+				method,
 				headers: {
 					'Content-Type': 'application/json',
 				},
@@ -88,30 +114,32 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 			const data = await response.json()
 
 			if (response.ok) {
-				toast.success('Supplier added successfully!')
+				toast.success(isEditing ? 'Supplier updated successfully!' : 'Supplier added successfully!')
 				onSuccess?.(data.supplier)
-				// Reset form
-				setFormData({
-					name: '',
-					contact_person: '',
-					phone_number: '',
-					email: '',
-					address: {
-						street: '',
-						city: '',
-						province: '',
-						postal_code: '',
-						country: 'Canada'
-					},
-					account_number: '',
-					notes: ''
-				})
+				// Reset form only if not editing
+				if (!isEditing) {
+					setFormData({
+						name: '',
+						contact_person: '',
+						phone_number: '',
+						email: '',
+						address: {
+							street: '',
+							city: '',
+							province: '',
+							postal_code: '',
+							country: 'Canada'
+						},
+						account_number: '',
+						notes: ''
+					})
+				}
 			} else {
-				toast.error(data.error || 'Failed to add supplier')
+				toast.error(data.error || (isEditing ? 'Failed to update supplier' : 'Failed to add supplier'))
 			}
 		} catch (error) {
-			console.error('Error adding supplier:', error)
-			toast.error('Failed to add supplier')
+			console.error(`Error ${supplier ? 'updating' : 'adding'} supplier:`, error)
+			toast.error(supplier ? 'Failed to update supplier' : 'Failed to add supplier')
 		} finally {
 			setIsLoading(false)
 		}
@@ -307,7 +335,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 						disabled={isLoading}
 						className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
 					>
-						{isLoading ? 'Adding Supplier...' : 'Add Supplier'}
+						{isLoading ? (supplier ? 'Updating Supplier...' : 'Adding Supplier...') : (supplier ? 'Update Supplier' : 'Add Supplier')}
 					</Button>
 				</div>
 			</form>
@@ -513,7 +541,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 							disabled={isLoading}
 							className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
 						>
-							{isLoading ? 'Adding Supplier...' : 'Add Supplier'}
+							{isLoading ? (supplier ? 'Updating Supplier...' : 'Adding Supplier...') : (supplier ? 'Update Supplier' : 'Add Supplier')}
 						</Button>
 					</div>
 				</form>

@@ -31,7 +31,7 @@ export class WorkOrderService {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
-                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info,
+                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
                 technician:employees(id, first_name, last_name)
@@ -82,6 +82,25 @@ export class WorkOrderService {
             return null
         }
 
+        // Fetch archived_by_user separately if archived_by is set
+        if (data?.archived_by) {
+            try {
+                const { data: userData } = await this.supabase
+                    .from('users')
+                    .select('id, email')
+                    .eq('id', data.archived_by)
+                    .single()
+                
+                return {
+                    ...data,
+                    archived_by_user: userData || undefined
+                }
+            } catch (err) {
+                // If user lookup fails, just return without archived_by_user
+                return data
+            }
+        }
+
         return data
     }
 
@@ -107,7 +126,7 @@ export class WorkOrderService {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
-                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info,
+                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
                 technician:employees(id, first_name, last_name)
