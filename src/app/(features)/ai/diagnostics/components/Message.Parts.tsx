@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 import { Tool } from './elements/Tool'
 import { useMessageInfoContext } from './Message.Context'
 import { WiringDiagramsToolRenderer } from './tool-renderers/WiringDiagramsToolRenderer'
+import { OEMComponentsToolRenderer } from './tool-renderers/OEMComponentsToolRenderer'
+import { RelatedDiagramsToolRenderer } from './tool-renderers/RelatedDiagramsToolRenderer'
 
 // Type definitions based on AI SDK v5 structure
 type TextUIPart = { type: 'text'; text: string }
@@ -191,6 +193,22 @@ function MessagePartWiringDiagrams({ toolPart }: { toolPart: ToolUIPart }) {
 	return <WiringDiagramsToolRenderer toolPart={toolPart} />
 }
 
+function MessagePartOEMComponents({ toolPart }: { toolPart: ToolUIPart }) {
+	return <OEMComponentsToolRenderer toolPart={toolPart} />
+}
+
+function MessagePartRelatedDiagrams({ toolPart }: { toolPart: ToolUIPart }) {
+	return <RelatedDiagramsToolRenderer toolPart={toolPart} />
+}
+
+function MessagePartRelatedOEMComponents({ toolPart }: { toolPart: ToolUIPart }) {
+	return <OEMComponentsToolRenderer toolPart={toolPart} />
+}
+
+function MessagePartDiagramComponents({ toolPart }: { toolPart: ToolUIPart }) {
+	return <OEMComponentsToolRenderer toolPart={toolPart} />
+}
+
 const MessagePart = {
 	Text: MessagePartText,
 	Dynamic: MessagePartDynamicTool,
@@ -198,6 +216,10 @@ const MessagePart = {
 	Reasoning: MessagePartReasoning,
 	HelloWorld: MessagePartHelloWorld,
 	WiringDiagrams: MessagePartWiringDiagrams,
+	OEMComponents: MessagePartOEMComponents,
+	RelatedDiagrams: MessagePartRelatedDiagrams,
+	RelatedOEMComponents: MessagePartRelatedOEMComponents,
+	DiagramComponents: MessagePartDiagramComponents,
 } as const
 
 export function MessagePartSwitcher({
@@ -216,6 +238,18 @@ export function MessagePartSwitcher({
 		}
 		case 'tool-getWiringDiagrams': {
 			return <MessagePart.WiringDiagrams toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getOEMComponents': {
+			return <MessagePart.OEMComponents toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getRelatedWiringDiagrams': {
+			return <MessagePart.RelatedDiagrams toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getRelatedOEMComponents': {
+			return <MessagePart.RelatedOEMComponents toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getDiagramComponents': {
+			return <MessagePart.DiagramComponents toolPart={part as ToolUIPart} />
 		}
 		case 'reasoning':
 			return <MessagePart.Reasoning reasoningPart={part as ReasoningUIPart} />

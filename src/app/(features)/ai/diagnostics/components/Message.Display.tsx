@@ -1,8 +1,9 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
+
 import { cn } from '@/lib/utils'
-import { User, Sparkles } from 'lucide-react'
 
 interface MessageDisplayContainerProps {
 	children: React.ReactNode
@@ -42,10 +43,10 @@ export function MessageDisplayContent({ children, isUser, className }: MessageDi
 	return (
 		<div
 			className={cn(
-				'rounded-lg px-4 py-3 max-w-[80%]',
+				'rounded-lg px-4 max-w-[80%]',
 				isUser
-					? 'bg-red-600 dark:bg-red-500 text-white'
-					: 'bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-gray-100',
+					? 'bg-red-600 dark:bg-red-500 text-white py-3'
+					: 'text-gray-900 dark:text-gray-100 py-0',
 				className
 			)}
 		>
@@ -61,17 +62,13 @@ interface MessageDisplayProfileImageProps {
 
 export function MessageDisplayProfileImage({ isUser, className }: MessageDisplayProfileImageProps) {
 	return (
-		<div className={cn('flex-shrink-0', className)}>
-			{isUser ? (
-				<div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
-					<User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+		!isUser && (
+			<div className={cn('flex-shrink-0', className)}>
+				<div className="w-8 h-8 rounded-full bg-white dark:bg-black flex items-center justify-center border border-gray-200 dark:border-gray-700">
+					<Image src="/red-motorminds-logo-svg.svg" alt="Motorminds Logo" width={18} height={18} />
 				</div>
-			) : (
-				<div className="w-8 h-8 rounded-full bg-red-600 dark:bg-red-500 flex items-center justify-center">
-					<Sparkles className="w-4 h-4 text-white" />
-				</div>
-			)}
-		</div>
+			</div>
+		)
 	)
 }
 

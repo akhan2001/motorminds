@@ -86,7 +86,7 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 			)
 		}
 
-		// Success - show diagrams list
+		// Success - show diagrams list directly (not in collapsible)
 		const diagrams = parsedResult.diagrams || []
 		const mode = parsedResult.mode || 'search'
 		const subject = parsedResult.subject
@@ -101,50 +101,47 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 			: defaultVehicleId
 
 		return (
-			<Tool
-				icon={<CheckIcon strokeWidth={1.5} size={12} className="text-green-600 dark:text-green-400" />}
-				label={
-					<div>
-						<span>Found </span>
-						<span className="text-gray-500 dark:text-gray-400">{totalCount} wiring diagram{totalCount !== 1 ? 's' : ''}</span>
-					</div>
-				}
-			>
-				<div className="space-y-3 w-full max-w-full">
-					{/* Context info */}
-					{(subject || searchTerm) && (
-						<div className="text-xs text-gray-600 dark:text-gray-400 break-words">
-							{mode === 'browse' && subject && (
-								<span>
-									<strong>Subject:</strong> {subject}
-								</span>
-							)}
-							{mode === 'search' && searchTerm && (
-								<span>
-									<strong>Search:</strong> "{searchTerm}"
-								</span>
-							)}
-						</div>
-					)}
+			<div className="space-y-3 w-full max-w-full mt-2">
+				{/* Status indicator */}
+				<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+					<CheckIcon strokeWidth={1.5} size={14} className="text-green-600 dark:text-green-400" />
+					<span>Found {totalCount} wiring diagram{totalCount !== 1 ? 's' : ''}</span>
+				</div>
 
-					{/* Viewing diagram */}
-					{viewingDiagramId && currentBaseVehicleId && (
-						<div className="mt-4 space-y-2">
-							<div className="flex items-center justify-between">
-								<h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-									Wiring Diagram
-								</h4>
-								<Button
-									size="sm"
-									variant="ghost"
-									className="h-6 w-6 p-0"
-									onClick={() => {
-										setViewingDiagramId(null)
-									}}
-								>
-									<X className="w-4 h-4" />
-								</Button>
-							</div>
+				{/* Context info */}
+				{(subject || searchTerm) && (
+					<div className="text-xs text-gray-600 dark:text-gray-400 break-words">
+						{mode === 'browse' && subject && (
+							<span>
+								<strong>Subject:</strong> {subject}
+							</span>
+						)}
+						{mode === 'search' && searchTerm && (
+							<span>
+								<strong>Search:</strong> "{searchTerm}"
+							</span>
+						)}
+					</div>
+				)}
+
+				{/* Viewing diagram */}
+				{viewingDiagramId && currentBaseVehicleId && (
+					<div className="mt-4 space-y-2">
+						<div className="flex items-center justify-between">
+							<h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+								Wiring Diagram
+							</h4>
+							<Button
+								size="sm"
+								variant="ghost"
+								className="h-6 w-6 p-0"
+								onClick={() => {
+									setViewingDiagramId(null)
+								}}
+							>
+								<X className="w-4 h-4" />
+							</Button>
+						</div>
 							<DiagramViewer
 								baseVehicleId={currentBaseVehicleId}
 								applicationId={viewingDiagramId}
@@ -152,54 +149,54 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 									diagrams.find((d: { id: number }) => d.id === viewingDiagramId)?.name ||
 									`Diagram ${viewingDiagramId}`
 								}
+								engineId={input?.engineId || 2913}
 							/>
-						</div>
-					)}
+					</div>
+				)}
 
-					{/* Diagrams list */}
-					{diagrams.length > 0 ? (
-						<div className="space-y-2 max-h-[400px] overflow-y-auto w-full">
-							{diagrams.map((diagram: { id: number; name: string; href?: string }, idx: number) => {
-								const diagramName = diagram.name || `Diagram ${diagram.id || idx + 1}`
-								const isViewing = viewingDiagramId === diagram.id
-								
-								return (
-									<div key={diagram.id || idx}>
-										<div
-											className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors w-full"
-										>
-											<div className="flex items-start gap-2 flex-1 min-w-0 overflow-hidden">
-												<FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-												<span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-0">
-													{diagramName}
-												</span>
-											</div>
-											<Button
-												size="sm"
-												variant={isViewing ? 'default' : 'outline'}
-												className="h-7 px-3 text-xs flex-shrink-0"
-												onClick={() => {
-													if (isViewing) {
-														setViewingDiagramId(null)
-													} else {
-														setViewingDiagramId(diagram.id)
-													}
-												}}
-											>
-												{isViewing ? 'Hide' : 'View'}
-											</Button>
+				{/* Diagrams list */}
+				{diagrams.length > 0 ? (
+					<div className="space-y-2 max-h-[400px] overflow-y-auto w-full">
+						{diagrams.map((diagram: { id: number; name: string; href?: string }, idx: number) => {
+							const diagramName = diagram.name || `Diagram ${diagram.id || idx + 1}`
+							const isViewing = viewingDiagramId === diagram.id
+							
+							return (
+								<div key={diagram.id || idx}>
+									<div
+										className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors w-full"
+									>
+										<div className="flex items-start gap-2 flex-1 min-w-0 overflow-hidden">
+											<FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+											<span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-0">
+												{diagramName}
+											</span>
 										</div>
+										<Button
+											size="sm"
+											variant={isViewing ? 'default' : 'outline'}
+											className="h-7 px-3 text-xs flex-shrink-0"
+											onClick={() => {
+												if (isViewing) {
+													setViewingDiagramId(null)
+												} else {
+													setViewingDiagramId(diagram.id)
+												}
+											}}
+										>
+											{isViewing ? 'Hide' : 'View'}
+										</Button>
 									</div>
-								)
-							})}
-						</div>
-					) : (
-						<div className="text-xs text-gray-500 dark:text-gray-400">
-							No wiring diagrams found.
-						</div>
-					)}
-				</div>
-			</Tool>
+								</div>
+							)
+						})}
+					</div>
+				) : (
+					<div className="text-xs text-gray-500 dark:text-gray-400">
+						No wiring diagrams found.
+					</div>
+				)}
+			</div>
 		)
 	}
 

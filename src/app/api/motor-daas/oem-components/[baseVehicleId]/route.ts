@@ -3,7 +3,7 @@ import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
 
 export async function GET(
 	request: NextRequest,
-	context: { params: Promise<{ baseVehicleId: string; applicationId: string }> }
+	context: { params: Promise<{ baseVehicleId: string }> }
 ) {
 	try {
 		const params = await context.params
@@ -26,31 +26,29 @@ export async function GET(
 		})
 
 		const baseVehicleId = parseInt(params.baseVehicleId, 10)
-		const applicationId = parseInt(params.applicationId, 10)
 
-		if (isNaN(baseVehicleId) || isNaN(applicationId)) {
+		if (isNaN(baseVehicleId)) {
 			return NextResponse.json(
-				{ error: 'Invalid baseVehicleId or applicationId' },
+				{ error: 'Invalid baseVehicleId' },
 				{ status: 400 }
 			)
 		}
 
-		// Note: getWiringDiagramDetails doesn't currently support engineId parameter
-		// but we'll add it if needed. For now, just call without it.
-		const details = await client.getWiringDiagramDetails(baseVehicleId, applicationId)
+		const engineId = searchParams.get('engineId') ? parseInt(searchParams.get('engineId')!, 10) : undefined
+		const pageIndex = searchParams.get('pageIndex') ? parseInt(searchParams.get('pageIndex')!, 10) : undefined
+		const itemsPerPage = searchParams.get('itemsPerPage') ? parseInt(searchParams.get('itemsPerPage')!, 10) : undefined
+		const searchTerm = searchParams.get('searchTerm') || undefined
 
-		// Log the response structure for debugging
-		console.log('[API] Wiring diagram details response structure:', {
-			hasDocuments: !!details.Documents,
-			documentsLength: details.Documents?.length || 0,
-			hasBody: !!(details as any).Body,
-			hasApplications: !!(details as any).Applications,
-			keys: Object.keys(details)
+		const summary = await client.getOEMComponentsSummary(baseVehicleId, {
+			engineId,
+			pageIndex,
+			itemsPerPage,
+			searchTerm
 		})
 
-		return NextResponse.json(details)
+		return NextResponse.json(summary)
 	} catch (error) {
-		console.error('[API] Error fetching wiring diagram details:', error)
+		console.error('[API] Error fetching OEM components summary:', error)
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 		const statusCode = error instanceof Error && 'statusCode' in error ? (error as any).statusCode : 500
 

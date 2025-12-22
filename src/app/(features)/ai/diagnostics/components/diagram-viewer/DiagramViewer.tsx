@@ -9,9 +9,10 @@ interface DiagramViewerProps {
 	baseVehicleId: number
 	applicationId: number
 	diagramName: string
+	engineId?: number
 }
 
-export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: DiagramViewerProps) {
+export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engineId }: DiagramViewerProps) {
 	const [loading, setLoading] = React.useState(true)
 	const [error, setError] = React.useState<string | null>(null)
 	const [diagramDetails, setDiagramDetails] = React.useState<any>(null)
@@ -23,10 +24,14 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: Dia
 				setLoading(true)
 				setError(null)
 
+				// Build details URL with optional engineId
+				let detailsUrl = `/api/motor-daas/wiring-diagrams/${baseVehicleId}/details/${applicationId}`
+				if (engineId) {
+					detailsUrl += `?engineId=${engineId}`
+				}
+
 				// Fetch diagram details
-				const detailsResponse = await fetch(
-					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/details/${applicationId}`
-				)
+				const detailsResponse = await fetch(detailsUrl)
 				
 				if (!detailsResponse.ok) {
 					throw new Error(`Failed to fetch diagram details: ${detailsResponse.statusText}`)
@@ -35,17 +40,52 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: Dia
 				const details = await detailsResponse.json()
 				setDiagramDetails(details)
 
-				// Get first document
-				const document = details.Documents?.[0]
-				if (!document || !document.DocumentID) {
-					console.warn('[DiagramViewer] No document found for this diagram details response:', details)
+				// Extract document ID from the response structure
+				// The actual structure is: details.WiringDiagrams[0].DiagramSet.Documents[0].DocumentID
+				let documentId: number | null = null
+
+				// Method 1: Check WiringDiagrams array (actual structure from API)
+				if (details.WiringDiagrams && Array.isArray(details.WiringDiagrams) && details.WiringDiagrams.length > 0) {
+					const wiringDiagram = details.WiringDiagrams[0]
+					if (wiringDiagram.DiagramSet?.Documents && Array.isArray(wiringDiagram.DiagramSet.Documents) && wiringDiagram.DiagramSet.Documents.length > 0) {
+						// Get the first active document
+						const activeDoc = wiringDiagram.DiagramSet.Documents.find((doc: any) => doc.IsActive !== false) || wiringDiagram.DiagramSet.Documents[0]
+						documentId = activeDoc.DocumentID
+					}
+				}
+				// Method 2: Check Documents array (fallback)
+				else if (details.Documents && Array.isArray(details.Documents) && details.Documents.length > 0) {
+					documentId = details.Documents[0].DocumentID
+				}
+				// Method 3: Check if response is wrapped in Body
+				else if (details.Body?.WiringDiagrams && Array.isArray(details.Body.WiringDiagrams) && details.Body.WiringDiagrams.length > 0) {
+					const wiringDiagram = details.Body.WiringDiagrams[0]
+					if (wiringDiagram.DiagramSet?.Documents && Array.isArray(wiringDiagram.DiagramSet.Documents) && wiringDiagram.DiagramSet.Documents.length > 0) {
+						const activeDoc = wiringDiagram.DiagramSet.Documents.find((doc: any) => doc.IsActive !== false) || wiringDiagram.DiagramSet.Documents[0]
+						documentId = activeDoc.DocumentID
+					}
+				}
+				// Method 4: Check Body.Documents (fallback)
+				else if (details.Body?.Documents && Array.isArray(details.Body.Documents) && details.Body.Documents.length > 0) {
+					documentId = details.Body.Documents[0].DocumentID
+				}
+				// Method 5: Check Applications array (legacy format)
+				else if (details.Applications && Array.isArray(details.Applications) && details.Applications.length > 0) {
+					const app = details.Applications[0]
+					if (app.Documents && Array.isArray(app.Documents) && app.Documents.length > 0) {
+						documentId = app.Documents[0].DocumentID
+					}
+				}
+
+				if (!documentId) {
+					console.warn('[DiagramViewer] No document ID found. Response keys:', Object.keys(details))
 					setError('No document is available for this wiring diagram from MOTOR. Try another diagram from the list.')
 					return
 				}
 
 				// Fetch document
 				const documentResponse = await fetch(
-					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/document/${document.DocumentID}`
+					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/document/${documentId}`
 				)
 
 				if (!documentResponse.ok) {
@@ -65,7 +105,7 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName }: Dia
 		}
 
 		fetchDiagram()
-	}, [baseVehicleId, applicationId])
+	}, [baseVehicleId, applicationId, engineId])
 
 	if (loading) {
 		return (

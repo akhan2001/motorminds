@@ -24,6 +24,10 @@ export const toolSetValidationSchema = z.record(
         'getWorkTime',
         'getTSB',
         'getWiringDiagrams',
+        'getOEMComponents',
+        'getRelatedWiringDiagrams',
+        'getRelatedOEMComponents',
+        'getDiagramComponents',
         'getBulkVehicleAttributes',
         'estimateRepairCost',
 
@@ -81,6 +85,10 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     getWorkTime: TOOL_CATEGORIES.MOTOR_API,
     getTSB: TOOL_CATEGORIES.MOTOR_API,
     getWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
+    getOEMComponents: TOOL_CATEGORIES.MOTOR_API,
+    getRelatedWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
+    getRelatedOEMComponents: TOOL_CATEGORIES.MOTOR_API,
+    getDiagramComponents: TOOL_CATEGORIES.MOTOR_API,
     getBulkVehicleAttributes: TOOL_CATEGORIES.MOTOR_API,
     estimateRepairCost: TOOL_CATEGORIES.MOTOR_API,
 
