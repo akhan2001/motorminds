@@ -2,7 +2,7 @@
 
 import { MotorDaasAuth, MotorAuthConfig } from './auth'
 import { buildAuthQueryString, buildMotorUrl, buildStandardQueryParams } from './client.utils'
-import { MOTOR_API_DEFAULTS } from './constants'
+import { MOTOR_API_DEFAULTS } from './constants/constants'
 
 export interface MotorApiResponse<T> {
     Body?: T;

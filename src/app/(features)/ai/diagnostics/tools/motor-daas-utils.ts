@@ -2,7 +2,7 @@
  * Utility functions for MOTOR DaaS tool error handling and response formatting
  */
 
-import { DEFAULT_BASE_VEHICLE_ID, DEFAULT_ENGINE_ID } from '@/lib/integrations/motor-daas/constants'
+import { DEFAULT_BASE_VEHICLE_ID, DEFAULT_ENGINE_ID } from '@/lib/integrations/motor-daas/constants/constants'
 
 /**
  * Get default vehicle ID (for development/testing)

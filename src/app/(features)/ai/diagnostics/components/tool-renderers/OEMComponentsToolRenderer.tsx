@@ -3,6 +3,8 @@
 import React from 'react'
 import { Tool } from '../elements/Tool'
 import { CheckIcon, Loader2, AlertCircle, Package } from 'lucide-react'
+import { OEMCopyrightHover, OEMCopyrightPrint } from '../interfaces'
+import { detectOEMsInContent } from '@/lib/integrations/motor-daas/oem-detection'
 
 interface OEMComponentsToolRendererProps {
 	toolPart: {
@@ -88,13 +90,24 @@ export function OEMComponentsToolRenderer({ toolPart }: OEMComponentsToolRendere
 		const totalCount = parsedResult.totalCount || components.length
 		const searchTerm = parsedResult.searchTerm
 
+		// Detect OEMs from vehicle make (if available) or use default (Honda)
+		const vehicleMake = input?.vehicleMake || parsedResult?.vehicleMake || 'Honda'
+		const detectedOEMs = detectOEMsInContent({ 
+			vehicleMake,
+			partNumbers: components.map((c: any) => c.partNumber || c.partNumbers?.[0]?.PartNumber).filter(Boolean),
+			contentMetadata: parsedResult 
+		})
+
 		return (
 			<Tool
 				icon={<CheckIcon strokeWidth={1.5} size={12} className="text-green-600 dark:text-green-400" />}
 				label={
-					<div>
+					<div className="flex items-center gap-2">
 						<span>Found </span>
 						<span className="text-gray-500 dark:text-gray-400">{totalCount} component{totalCount !== 1 ? 's' : ''}</span>
+						{detectedOEMs.length > 0 && (
+							<OEMCopyrightHover oems={detectedOEMs} iconSize={12} />
+						)}
 					</div>
 				}
 			>
@@ -141,6 +154,11 @@ export function OEMComponentsToolRenderer({ toolPart }: OEMComponentsToolRendere
 						<div className="text-xs text-gray-500 dark:text-gray-400">
 							No components found.
 						</div>
+					)}
+
+					{/* Print-only OEM copyright notice */}
+					{detectedOEMs.length > 0 && (
+						<OEMCopyrightPrint oems={detectedOEMs} />
 					)}
 				</div>
 			</Tool>

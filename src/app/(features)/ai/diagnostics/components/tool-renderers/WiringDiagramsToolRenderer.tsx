@@ -5,6 +5,8 @@ import { Tool } from '../elements/Tool'
 import { CheckIcon, Loader2, AlertCircle, FileText, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DiagramViewer } from '../diagram-viewer/DiagramViewer'
+import { OEMCopyrightHover, OEMCopyrightPrint } from '../interfaces'
+import { detectOEMsInContent } from '@/lib/integrations/motor-daas/oem-detection'
 
 interface WiringDiagramsToolRendererProps {
 	toolPart: {
@@ -120,6 +122,13 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 			? (typeof vehicleIdFromInput === 'string' ? parseInt(vehicleIdFromInput, 10) : vehicleIdFromInput)
 			: defaultVehicleId
 
+		// Detect OEMs from vehicle make (if available in input/output) or use default (Honda)
+		const vehicleMake = input?.vehicleMake || parsedResult?.vehicleMake || 'Honda' // Default to Honda for 2010 Civic
+		const detectedOEMs = detectOEMsInContent({ 
+			vehicleMake,
+			contentMetadata: parsedResult 
+		})
+
 		const toggleDiagram = (diagramId: number) => {
 			setViewingDiagramIds(prev => {
 				const newSet = new Set(prev)
@@ -134,10 +143,13 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 
 		return (
 			<div className="space-y-3 w-full max-w-full mt-2 overflow-hidden">
-				{/* Status indicator */}
+				{/* Status indicator with OEM copyright hover */}
 				<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 					<CheckIcon strokeWidth={1.5} size={14} className="text-green-600 dark:text-green-400" />
 					<span>Found {totalCount} wiring diagram{totalCount !== 1 ? 's' : ''}</span>
+					{detectedOEMs.length > 0 && (
+						<OEMCopyrightHover oems={detectedOEMs} iconSize={14} />
+					)}
 				</div>
 
 				{/* Context info */}
@@ -197,6 +209,7 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 												applicationId={diagram.id}
 												diagramName={diagramName}
 												engineId={input?.engineId || 2913}
+												vehicleMake={vehicleMake}
 											/>
 										</div>
 									)}
@@ -211,6 +224,11 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 							Try searching for a different component or browse by subject (e.g., "Engine", "Brakes", "Electrical").
 						</p>
 					</div>
+				)}
+
+				{/* Print-only OEM copyright notice */}
+				{detectedOEMs.length > 0 && (
+					<OEMCopyrightPrint oems={detectedOEMs} />
 				)}
 			</div>
 		)
