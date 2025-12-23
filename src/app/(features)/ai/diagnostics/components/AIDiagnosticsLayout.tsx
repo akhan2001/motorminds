@@ -11,6 +11,7 @@ import {
 	mockServiceHistory,
 	mockDiagrams
 } from '../types/MockData'
+import { RightSidebar } from './right-panel'
 
 interface AIDiagnosticsLayoutProps {
 	shopId?: string
@@ -18,15 +19,6 @@ interface AIDiagnosticsLayoutProps {
 
 // Temporary placeholder types
 type SandboxVehicle = any
-
-const RightSidebar = ({ vehicle, workOrders, dtcCodes, parts, serviceHistory, diagrams }: any) => (
-	<div className="h-full bg-gray-50 dark:bg-[#131313] border-l border-gray-200 dark:border-[#222222] p-4">
-		<div className="flex justify-between items-center mb-4">
-			<h3 className="font-semibold">Context</h3>
-		</div>
-		<p className="text-sm text-muted-foreground">RightSidebar component - TODO: Implement</p>
-	</div>
-)
 
 export function AIDiagnosticsLayout({ shopId }: AIDiagnosticsLayoutProps) {
 	const [selectedVehicle, setSelectedVehicle] = useState(mockVehicleData)
