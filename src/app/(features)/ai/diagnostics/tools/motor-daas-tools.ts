@@ -4,6 +4,8 @@ import { tool } from 'ai'
 import { z } from 'zod'
 
 import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
+import { extractDiagramName } from '@/lib/integrations/motor-daas/wiring-diagrams.utils'
+import { getDefaultVehicleId, getDefaultEngineId, formatToolError } from './motor-daas-utils'
 import { WIRING_DIAGRAM_SUBJECTS } from '../types/MotorDaaS'
 
 // Lazy client creation to avoid errors if env vars aren't set
@@ -30,33 +32,16 @@ export const helloWorldTool = tool({
 	inputSchema: z.object({}),
 	execute: async () => {
 		try {
-			const motorClient = getMotorClient() // Initialize client here
-			// console.log('[helloWorldTool] Starting MOTOR DaaS HelloWorld call...')
+			const motorClient = getMotorClient()
 			const result = await motorClient.helloWorld()
 			console.log('[helloWorldTool] Success:', result)
 			return {
 				success: true,
 				message: result.Text || 'Hello World',
-				note: 'MOTOR DaaS API connection successful'
+				note: 'MOTOR DaaS API connection successful',
 			}
 		} catch (error) {
-			console.error('[helloWorldTool] Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-			const errorDetails = error instanceof Error && 'statusCode' in error 
-				? `Status ${(error as any).statusCode}: ${errorMessage}`
-				: errorMessage
-			
-			return {
-				success: false,
-				error: errorDetails,
-				message: `Failed to connect to MOTOR DaaS API: ${errorDetails}`,
-				details: error instanceof Error ? {
-					name: error.name,
-					message: error.message,
-					...(error as any).statusCode && { statusCode: (error as any).statusCode },
-					...(error as any).errorCode && { errorCode: (error as any).errorCode }
-				} : undefined
-			}
+			return formatToolError(error, 'helloWorld')
 		}
 	}
 })
@@ -73,9 +58,9 @@ export const getWiringDiagramsTool = tool({
 		try {
 			const motorClient = getMotorClient()
 
-			// Default to Honda Civic test data if not provided
-			const vehicleId = baseVehicleId || 22124 // 2010 Honda Civic
-			const engId = engineId || 2913 // 1.8L L4
+			// Get vehicle and engine IDs with defaults
+			const vehicleId = getDefaultVehicleId(baseVehicleId)
+			const engId = getDefaultEngineId(engineId)
 
 			// Normalize query for comparison
 			const normalizedQuery = query.toLowerCase().trim()
@@ -120,45 +105,11 @@ export const getWiringDiagramsTool = tool({
 					console.log('[getWiringDiagramsTool] SAESubjects:', summary.Applications[0].SAESubjects)
 				}
 
-				// Helper function to extract diagram name from application
-				const getDiagramName = (app: any): string => {
-					// Use DisplayName if available and not empty
-					if (app.DisplayName && typeof app.DisplayName === 'string' && app.DisplayName.trim()) {
-						return app.DisplayName.trim()
-					}
-					
-					// Build name from SAE Subjects and Systems
-					if (app.SAESubjects && Array.isArray(app.SAESubjects) && app.SAESubjects.length > 0) {
-						const subjectNames = app.SAESubjects
-							.filter((subject: any) => subject && subject.Name)
-							.map((subject: any) => {
-								if (subject.Systems && Array.isArray(subject.Systems) && subject.Systems.length > 0) {
-									const activeSystems = subject.Systems
-										.filter((sys: any) => sys && sys.Name && sys.IsActive !== false)
-										.map((sys: any) => sys.Name)
-									
-									if (activeSystems.length > 0) {
-										return `${subject.Name} - ${activeSystems.join(', ')}`
-									}
-								}
-								return subject.Name
-							})
-							.filter(Boolean)
-						
-						if (subjectNames.length > 0) {
-							return subjectNames.join(', ')
-						}
-					}
-					
-					// Fallback to ApplicationID
-					return `Wiring Diagram ${app.ApplicationID}`
-				}
-
-				// Map applications to diagram objects
+				// Map applications to diagram objects using shared utility
 				const diagrams = summary.Applications.map(app => ({
 					id: app.ApplicationID,
-					name: getDiagramName(app),
-					href: app.Links?.find(l => l.Rel === 'Self')?.Href
+					name: extractDiagramName(app),
+					href: app.Links?.find(l => l.Rel === 'Self')?.Href,
 				}))
 
 				return {
@@ -167,7 +118,7 @@ export const getWiringDiagramsTool = tool({
 					subject: subject.Name,
 					subjectId: subject.ID,
 					diagrams,
-					totalCount: diagrams.length
+					totalCount: diagrams.length,
 				}
 			} else {
 				// Search mode: Search summaries directly by component name
@@ -175,48 +126,14 @@ export const getWiringDiagramsTool = tool({
 					searchTerm: query,
 					engineId: engId,
 					pageIndex: 0,
-					itemsPerPage: 30
+					itemsPerPage: 30,
 				})
 
-				// Helper function to extract diagram name from application
-				const getDiagramName = (app: any): string => {
-					// Use DisplayName if available and not empty
-					if (app.DisplayName && typeof app.DisplayName === 'string' && app.DisplayName.trim()) {
-						return app.DisplayName.trim()
-					}
-					
-					// Build name from SAE Subjects and Systems
-					if (app.SAESubjects && Array.isArray(app.SAESubjects) && app.SAESubjects.length > 0) {
-						const subjectNames = app.SAESubjects
-							.filter((subject: any) => subject && subject.Name)
-							.map((subject: any) => {
-								if (subject.Systems && Array.isArray(subject.Systems) && subject.Systems.length > 0) {
-									const activeSystems = subject.Systems
-										.filter((sys: any) => sys && sys.Name && sys.IsActive !== false)
-										.map((sys: any) => sys.Name)
-									
-									if (activeSystems.length > 0) {
-										return `${subject.Name} - ${activeSystems.join(', ')}`
-									}
-								}
-								return subject.Name
-							})
-							.filter(Boolean)
-						
-						if (subjectNames.length > 0) {
-							return subjectNames.join(', ')
-						}
-					}
-					
-					// Fallback to ApplicationID
-					return `Wiring Diagram ${app.ApplicationID}`
-				}
-
-				// Map applications to diagram objects
+				// Map applications to diagram objects using shared utility
 				const diagrams = summary.Applications.map(app => ({
 					id: app.ApplicationID,
-					name: getDiagramName(app),
-					href: app.Links?.find(l => l.Rel === 'Self')?.Href
+					name: extractDiagramName(app),
+					href: app.Links?.find(l => l.Rel === 'Self')?.Href,
 				}))
 
 				return {
@@ -228,23 +145,7 @@ export const getWiringDiagramsTool = tool({
 				}
 			}
 		} catch (error) {
-			console.error('[getWiringDiagramsTool] Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-			const errorDetails = error instanceof Error && 'statusCode' in error 
-				? `Status ${(error as any).statusCode}: ${errorMessage}`
-				: errorMessage
-			
-			return {
-				success: false,
-				error: errorDetails,
-				message: `Failed to retrieve wiring diagrams: ${errorDetails}`,
-				details: error instanceof Error ? {
-					name: error.name,
-					message: error.message,
-					...(error as any).statusCode && { statusCode: (error as any).statusCode },
-					...(error as any).errorCode && { errorCode: (error as any).errorCode }
-				} : undefined
-			}
+			return formatToolError(error, 'getWiringDiagrams')
 		}
 	}
 })
@@ -268,8 +169,8 @@ export const getOEMComponentsTool = tool({
 		try {
 			const motorClient = getMotorClient()
 
-			const vehicleId = baseVehicleId || 22124 // 2010 Honda Civic
-			const engId = engineId || 2913 // 1.8L L4
+			const vehicleId = getDefaultVehicleId(baseVehicleId)
+			const engId = getDefaultEngineId(engineId)
 
 			const summary = await motorClient.getOEMComponentsSummary(vehicleId, {
 				engineId: engId,
@@ -294,23 +195,7 @@ export const getOEMComponentsTool = tool({
 				searchTerm: searchTerm || undefined
 			}
 		} catch (error) {
-			console.error('[getOEMComponentsTool] Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-			const errorDetails = error instanceof Error && 'statusCode' in error 
-				? `Status ${(error as any).statusCode}: ${errorMessage}`
-				: errorMessage
-			
-			return {
-				success: false,
-				error: errorDetails,
-				message: `Failed to retrieve OEM components: ${errorDetails}`,
-				details: error instanceof Error ? {
-					name: error.name,
-					message: error.message,
-					...(error as any).statusCode && { statusCode: (error as any).statusCode },
-					...(error as any).errorCode && { errorCode: (error as any).errorCode }
-				} : undefined
-			}
+			return formatToolError(error, 'getOEMComponents')
 		}
 	}
 })
@@ -342,44 +227,11 @@ export const getRelatedWiringDiagramsTool = tool({
 				itemsPerPage: itemsPerPage || 30
 			})
 
-			// Helper function to extract diagram name from application
-			const getDiagramName = (app: any): string => {
-				// Use DisplayName if available and not empty
-				if (app.DisplayName && typeof app.DisplayName === 'string' && app.DisplayName.trim()) {
-					return app.DisplayName.trim()
-				}
-				
-				// Build name from SAE Subjects and Systems
-				if (app.SAESubjects && Array.isArray(app.SAESubjects) && app.SAESubjects.length > 0) {
-					const subjectNames = app.SAESubjects
-						.filter((subject: any) => subject && subject.Name)
-						.map((subject: any) => {
-							if (subject.Systems && Array.isArray(subject.Systems) && subject.Systems.length > 0) {
-								const activeSystems = subject.Systems
-									.filter((sys: any) => sys && sys.Name && sys.IsActive !== false)
-									.map((sys: any) => sys.Name)
-								
-								if (activeSystems.length > 0) {
-									return `${subject.Name} - ${activeSystems.join(', ')}`
-								}
-							}
-							return subject.Name
-						})
-						.filter(Boolean)
-					
-					if (subjectNames.length > 0) {
-						return subjectNames.join(', ')
-					}
-				}
-				
-				// Fallback to ApplicationID
-				return `Wiring Diagram ${app.ApplicationID}`
-			}
-
+			// Map applications to diagram objects using shared utility
 			const diagrams = summary.Applications.map(app => ({
 				id: app.ApplicationID,
-				name: getDiagramName(app),
-				href: app.Links?.find(l => l.Rel === 'Self')?.Href
+				name: extractDiagramName(app),
+				href: app.Links?.find(l => l.Rel === 'Self')?.Href,
 			}))
 
 			return {
@@ -390,23 +242,7 @@ export const getRelatedWiringDiagramsTool = tool({
 				totalCount: diagrams.length
 			}
 		} catch (error) {
-			console.error('[getRelatedWiringDiagramsTool] Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-			const errorDetails = error instanceof Error && 'statusCode' in error 
-				? `Status ${(error as any).statusCode}: ${errorMessage}`
-				: errorMessage
-			
-			return {
-				success: false,
-				error: errorDetails,
-				message: `Failed to retrieve related wiring diagrams: ${errorDetails}`,
-				details: error instanceof Error ? {
-					name: error.name,
-					message: error.message,
-					...(error as any).statusCode && { statusCode: (error as any).statusCode },
-					...(error as any).errorCode && { errorCode: (error as any).errorCode }
-				} : undefined
-			}
+			return formatToolError(error, 'getRelatedWiringDiagrams')
 		}
 	}
 })
@@ -455,23 +291,7 @@ export const getRelatedOEMComponentsTool = tool({
 				totalCount: components.length
 			}
 		} catch (error) {
-			console.error('[getRelatedOEMComponentsTool] Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-			const errorDetails = error instanceof Error && 'statusCode' in error 
-				? `Status ${(error as any).statusCode}: ${errorMessage}`
-				: errorMessage
-			
-			return {
-				success: false,
-				error: errorDetails,
-				message: `Failed to retrieve related OEM components: ${errorDetails}`,
-				details: error instanceof Error ? {
-					name: error.name,
-					message: error.message,
-					...(error as any).statusCode && { statusCode: (error as any).statusCode },
-					...(error as any).errorCode && { errorCode: (error as any).errorCode }
-				} : undefined
-			}
+			return formatToolError(error, 'getRelatedOEMComponents')
 		}
 	}
 })
@@ -523,23 +343,7 @@ export const getDiagramComponentsTool = tool({
 				totalCount: components.length
 			}
 		} catch (error) {
-			console.error('[getDiagramComponentsTool] Error:', error)
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-			const errorDetails = error instanceof Error && 'statusCode' in error 
-				? `Status ${(error as any).statusCode}: ${errorMessage}`
-				: errorMessage
-			
-			return {
-				success: false,
-				error: errorDetails,
-				message: `Failed to retrieve diagram components: ${errorDetails}`,
-				details: error instanceof Error ? {
-					name: error.name,
-					message: error.message,
-					...(error as any).statusCode && { statusCode: (error as any).statusCode },
-					...(error as any).errorCode && { errorCode: (error as any).errorCode }
-				} : undefined
-			}
+			return formatToolError(error, 'getDiagramComponents')
 		}
 	}
 })

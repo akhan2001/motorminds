@@ -13,7 +13,7 @@ interface ConversationProps {
 
 export function Conversation({ children, className }: ConversationProps) {
 	return (
-		<StickToBottom className={cn('flex-1 min-h-0 overflow-hidden', className)}>
+		<StickToBottom className={cn('relative flex-1 min-h-0 overflow-hidden', className)}>
 			{children}
 		</StickToBottom>
 	)
@@ -40,16 +40,14 @@ export function ConversationScrollButton() {
 	if (isAtBottom) return null
 
 	return (
-		<div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
-			<Button
-				variant="default"
-				onClick={() => scrollToBottom()}
-				className="bg-red-600 hover:bg-red-700 text-white rounded-full pointer-events-auto"
-				size="sm"
-			>
-				<ArrowDown className="w-4 h-4" />
-			</Button>
-		</div>
+		<Button
+			variant="default"
+			onClick={() => scrollToBottom()}
+			className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 hover:bg-red-700 text-white rounded-full z-10"
+			size="sm"
+		>
+			<ArrowDown className="w-4 h-4" />
+		</Button>
 	)
 }
 

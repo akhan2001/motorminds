@@ -1,6 +1,6 @@
 export type ProviderName = 'openai'
 
-export type OpenAIModel = 'gpt-4' | 'gpt-3.5-turbo' | 'gpt-4-turbo'
+export type OpenAIModel = 'gpt-4' | 'gpt-3.5-turbo' | 'gpt-4-turbo' | 'gpt-4.1-mini'
 
 export type Model = OpenAIModel
 
@@ -22,8 +22,9 @@ export const PROVIDERS: ProviderRegistry = {
     openai: {
         models: {
             'gpt-4': { default: false },
-            'gpt-3.5-turbo': { default: true },
+            'gpt-3.5-turbo': { default: false },
             'gpt-4-turbo': { default: false },
+            'gpt-4.1-mini': { default: true }, // Default model with higher rate limits
         },
         providerOptions: {
             openai: {

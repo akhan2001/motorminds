@@ -189,7 +189,7 @@ export const MOTOR_API_PROMPT = `
 ## API Client Usage
 
 ### Authentication
-- Always use HMAC-SHA1 authentication for MOTOR API requests
+- Always use HMAC-SHA256 authentication for MOTOR API requests (not HMAC-SHA1)
 - Never expose API credentials in client-side code
 - Use server-side API routes for all MOTOR API calls
 
@@ -212,6 +212,8 @@ export const MOTOR_API_PROMPT = `
 - **TSBs**: 6 hours - frequently updated
 - **Labor Times**: 12 hours - relatively stable
 - **Parts Information**: 6 hours - pricing may change
+- **Wiring Diagrams**: 12 hours - diagrams are relatively stable but may be updated
+- **OEM Components**: 12 hours - component data is relatively stable
 
 ### Cache Invalidation:
 - Invalidate cache when user explicitly requests fresh data
@@ -265,6 +267,58 @@ export const MOTOR_API_PROMPT = `
    - User asks about fluid specifications
    - Need fluid capacity information
    - Maintenance schedule questions
+
+7. **getWiringDiagrams** - Use when:
+   - User explicitly asks for "wiring diagrams", "electrical schematics", "circuit diagrams"
+   - User mentions specific components needing wiring (e.g., "O2 sensor wiring", "brake light circuit")
+   - User wants to troubleshoot electrical issues
+   - User asks to "show me the wiring for [component]"
+   - User needs to trace electrical circuits
+   - User asks about connector locations or wire colors
+   - User mentions electrical problems that require diagram reference
+   
+   **Query Format:**
+   - **Subject browse**: Use category names like "engine", "brakes", "electrical", "hvac" → Browses diagrams by subject category
+   - **Component search**: Use component names like "O2 sensor", "fuel pump", "starter", "alternator" → Searches for specific component wiring
+   
+   **Input Examples:**
+   - query: "engine" → Browses all engine wiring diagrams
+   - query: "O2 sensor" → Searches for O2 sensor wiring diagrams
+   - query: "brake light circuit" → Searches for brake light wiring
+   - query: "electrical distribution" → Browses electrical distribution diagrams
+   
+   **IMPORTANT - Response Guidelines:**
+   - **DO NOT include links or URLs in your text response** - The wiring diagrams will be displayed automatically in the UI
+   - Simply acknowledge that you found the diagrams (e.g., "I found X wiring diagrams for the engine")
+   - Let the tool renderer display the diagrams - do not try to format them as markdown links or lists
+   - Keep your response brief and let the visual diagram display do the work
+
+8. **getOEMComponents** - Use when:
+   - User asks about specific vehicle components
+   - User needs part numbers for components
+   - User wants to identify components by name or function
+   - User asks "what components are in [system]"
+   - User needs component locations or descriptions
+   
+   **Input Examples:**
+   - searchTerm: "alternator" → Finds alternator components
+   - searchTerm: "fuel pump" → Finds fuel pump components
+   - No searchTerm → Returns all components for the vehicle
+
+9. **getRelatedWiringDiagrams** - Use when:
+   - User is viewing a service procedure and needs related wiring diagrams
+   - User is viewing a component and needs its wiring diagrams
+   - User asks "show me wiring diagrams for this procedure/component"
+
+10. **getRelatedOEMComponents** - Use when:
+    - User is viewing a wiring diagram and needs related components
+    - User is viewing a service procedure and needs related components
+    - User asks "what components are used in this diagram/procedure"
+
+11. **getDiagramComponents** - Use when:
+    - User is viewing a wiring diagram and needs detailed component information
+    - User needs part numbers, connector IDs, pin numbers, wire colors from a diagram
+    - User asks "what components are in this wiring diagram" or "show me component details"
 
 ## Cost Estimation
 

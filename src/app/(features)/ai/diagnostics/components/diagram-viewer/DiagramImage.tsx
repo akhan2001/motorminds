@@ -46,15 +46,16 @@ export function DiagramImage({ imageBlob, diagramName }: DiagramImageProps) {
 	}
 
 	return (
-		<div className="w-full bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-[#2a2a2a] overflow-hidden">
+		<div className="w-full max-w-full min-w-0 bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-[#2a2a2a] overflow-hidden">
 			<div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0a0a0a]">
-				<p className="text-sm font-medium text-gray-900 dark:text-gray-100">{diagramName}</p>
+				<p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words overflow-wrap-anywhere">{diagramName}</p>
 			</div>
-			<div className="p-4 overflow-auto max-h-[600px] flex items-center justify-center">
+			<div className="p-4 overflow-x-auto overflow-y-auto max-h-[600px] flex items-center justify-center w-full min-w-0">
 				<img
 					src={imageUrl}
 					alt={diagramName}
-					className="max-w-full h-auto rounded"
+					className="max-w-full h-auto rounded w-full min-w-0"
+					style={{ maxWidth: '100%', height: 'auto' }}
 					onError={() => setError('Failed to load diagram image')}
 					onLoad={() => setIsLoading(false)}
 				/>

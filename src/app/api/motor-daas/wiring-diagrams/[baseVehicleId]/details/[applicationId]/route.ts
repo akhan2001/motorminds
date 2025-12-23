@@ -35,9 +35,8 @@ export async function GET(
 			)
 		}
 
-		// Note: getWiringDiagramDetails doesn't currently support engineId parameter
-		// but we'll add it if needed. For now, just call without it.
-		const details = await client.getWiringDiagramDetails(baseVehicleId, applicationId)
+		const engineId = searchParams.get('engineId') ? parseInt(searchParams.get('engineId')!, 10) : undefined
+		const details = await client.getWiringDiagramDetails(baseVehicleId, applicationId, engineId)
 
 		// Log the response structure for debugging
 		console.log('[API] Wiring diagram details response structure:', {

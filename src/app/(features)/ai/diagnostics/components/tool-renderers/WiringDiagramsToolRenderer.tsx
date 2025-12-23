@@ -17,7 +17,40 @@ interface WiringDiagramsToolRendererProps {
 
 export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRendererProps) {
 	const { state, input, output } = toolPart
-	const [viewingDiagramId, setViewingDiagramId] = React.useState<number | null>(null)
+	// Auto-show first diagram by default, allow toggling
+	const [viewingDiagramIds, setViewingDiagramIds] = React.useState<Set<number>>(new Set())
+	const [autoExpanded, setAutoExpanded] = React.useState(false)
+
+	// Parse output early (before conditional returns)
+	let parsedResult: any = null
+	let diagrams: Array<{ id: number; name: string; href?: string }> = []
+	
+	if (state === 'output-available' && output) {
+		try {
+			if (typeof output === 'string') {
+				parsedResult = JSON.parse(output)
+			} else {
+				parsedResult = output
+			}
+		} catch {
+			parsedResult = { message: String(output) }
+		}
+
+		if (parsedResult.success !== false) {
+			diagrams = parsedResult.diagrams || []
+		}
+	}
+
+	// Get first diagram ID for stable dependency
+	const firstDiagramId = diagrams.length > 0 ? diagrams[0].id : null
+
+	// Auto-expand first diagram on mount (must be at top level, before conditional returns)
+	React.useEffect(() => {
+		if (!autoExpanded && firstDiagramId !== null && viewingDiagramIds.size === 0) {
+			setViewingDiagramIds(new Set([firstDiagramId]))
+			setAutoExpanded(true)
+		}
+	}, [autoExpanded, firstDiagramId, viewingDiagramIds.size])
 
 	// Loading state
 	if (state === 'input-streaming') {
@@ -54,19 +87,7 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 	}
 
 	// Success state with output
-	if (state === 'output-available' && output) {
-		let parsedResult: any
-
-		try {
-			if (typeof output === 'string') {
-				parsedResult = JSON.parse(output)
-			} else {
-				parsedResult = output
-			}
-		} catch {
-			parsedResult = { message: String(output) }
-		}
-
+	if (state === 'output-available' && output && parsedResult) {
 		// Check if request failed
 		if (parsedResult.success === false) {
 			return (
@@ -87,7 +108,6 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 		}
 
 		// Success - show diagrams list directly (not in collapsible)
-		const diagrams = parsedResult.diagrams || []
 		const mode = parsedResult.mode || 'search'
 		const subject = parsedResult.subject
 		const searchTerm = parsedResult.searchTerm
@@ -100,8 +120,20 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 			? (typeof vehicleIdFromInput === 'string' ? parseInt(vehicleIdFromInput, 10) : vehicleIdFromInput)
 			: defaultVehicleId
 
+		const toggleDiagram = (diagramId: number) => {
+			setViewingDiagramIds(prev => {
+				const newSet = new Set(prev)
+				if (newSet.has(diagramId)) {
+					newSet.delete(diagramId)
+				} else {
+					newSet.add(diagramId)
+				}
+				return newSet
+			})
+		}
+
 		return (
-			<div className="space-y-3 w-full max-w-full mt-2">
+			<div className="space-y-3 w-full max-w-full mt-2 overflow-hidden">
 				{/* Status indicator */}
 				<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 					<CheckIcon strokeWidth={1.5} size={14} className="text-green-600 dark:text-green-400" />
@@ -110,7 +142,7 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 
 				{/* Context info */}
 				{(subject || searchTerm) && (
-					<div className="text-xs text-gray-600 dark:text-gray-400 break-words">
+					<div className="text-xs text-gray-600 dark:text-gray-400 break-words overflow-wrap-anywhere">
 						{mode === 'browse' && subject && (
 							<span>
 								<strong>Subject:</strong> {subject}
@@ -124,51 +156,23 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 					</div>
 				)}
 
-				{/* Viewing diagram */}
-				{viewingDiagramId && currentBaseVehicleId && (
-					<div className="mt-4 space-y-2">
-						<div className="flex items-center justify-between">
-							<h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-								Wiring Diagram
-							</h4>
-							<Button
-								size="sm"
-								variant="ghost"
-								className="h-6 w-6 p-0"
-								onClick={() => {
-									setViewingDiagramId(null)
-								}}
-							>
-								<X className="w-4 h-4" />
-							</Button>
-						</div>
-							<DiagramViewer
-								baseVehicleId={currentBaseVehicleId}
-								applicationId={viewingDiagramId}
-								diagramName={
-									diagrams.find((d: { id: number }) => d.id === viewingDiagramId)?.name ||
-									`Diagram ${viewingDiagramId}`
-								}
-								engineId={input?.engineId || 2913}
-							/>
-					</div>
-				)}
-
-				{/* Diagrams list */}
+				{/* Diagrams with inline viewing */}
 				{diagrams.length > 0 ? (
-					<div className="space-y-2 max-h-[400px] overflow-y-auto w-full">
+					<div className="space-y-3 w-full">
 						{diagrams.map((diagram: { id: number; name: string; href?: string }, idx: number) => {
 							const diagramName = diagram.name || `Diagram ${diagram.id || idx + 1}`
-							const isViewing = viewingDiagramId === diagram.id
+							const isViewing = viewingDiagramIds.has(diagram.id)
 							
 							return (
-								<div key={diagram.id || idx}>
+								<div key={diagram.id || idx} className="w-full overflow-hidden">
+									{/* Diagram header */}
 									<div
-										className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors w-full"
+										className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#222222] transition-colors w-full cursor-pointer"
+										onClick={() => toggleDiagram(diagram.id)}
 									>
 										<div className="flex items-start gap-2 flex-1 min-w-0 overflow-hidden">
 											<FileText className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-											<span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-0">
+											<span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words min-w-0 overflow-wrap-anywhere">
 												{diagramName}
 											</span>
 										</div>
@@ -176,24 +180,36 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 											size="sm"
 											variant={isViewing ? 'default' : 'outline'}
 											className="h-7 px-3 text-xs flex-shrink-0"
-											onClick={() => {
-												if (isViewing) {
-													setViewingDiagramId(null)
-												} else {
-													setViewingDiagramId(diagram.id)
-												}
+											onClick={(e) => {
+												e.stopPropagation()
+												toggleDiagram(diagram.id)
 											}}
 										>
-											{isViewing ? 'Hide' : 'View'}
+											{isViewing ? 'Hide' : 'Show'}
 										</Button>
 									</div>
+									
+									{/* Diagram viewer (inline) */}
+									{isViewing && currentBaseVehicleId && (
+										<div className="mt-2 p-3 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#1a1a1a] w-full overflow-hidden">
+											<DiagramViewer
+												baseVehicleId={currentBaseVehicleId}
+												applicationId={diagram.id}
+												diagramName={diagramName}
+												engineId={input?.engineId || 2913}
+											/>
+										</div>
+									)}
 								</div>
 							)
 						})}
 					</div>
 				) : (
-					<div className="text-xs text-gray-500 dark:text-gray-400">
-						No wiring diagrams found.
+					<div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+						<p>No wiring diagrams found for "{searchTerm || subject}".</p>
+						<p className="text-gray-400 dark:text-gray-500">
+							Try searching for a different component or browse by subject (e.g., "Engine", "Brakes", "Electrical").
+						</p>
 					</div>
 				)}
 			</div>

@@ -6,7 +6,7 @@ import { WorkOrderKanban, WorkOrderHeader } from '../components/work-orders'
 import { DragDropProvider } from '../components/work-orders/DragDrop'
 import type { WorkOrderKanbanColumn, WorkOrderKanbanItem, WorkOrderWithDetails } from '../types/work-order'
 
-// Lazy load modals to reduce initial bundle size (Supabase pattern)
+// Lazy load modals to reduce initial bundle size
 const WorkOrderCreateModal = dynamic(
     () => import('../components/work-orders/create').then(m => ({ default: m.WorkOrderCreateModal })),
     { ssr: false }

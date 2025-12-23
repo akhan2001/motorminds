@@ -47,15 +47,16 @@ export function DiagramPDF({ pdfBlob, diagramName }: DiagramPDFProps) {
 	}
 
 	return (
-		<div className="w-full bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-[#2a2a2a] overflow-hidden">
-			<div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0a0a0a] flex items-center justify-between">
-				<div className="flex items-center gap-2">
-					<FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-					<p className="text-sm font-medium text-gray-900 dark:text-gray-100">{diagramName}</p>
+		<div className="w-full max-w-full min-w-0 bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-[#2a2a2a] overflow-hidden">
+			<div className="p-3 border-b border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#0a0a0a] flex items-center justify-between gap-2 min-w-0">
+				<div className="flex items-center gap-2 min-w-0 flex-1">
+					<FileText className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+					<p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words overflow-wrap-anywhere min-w-0">{diagramName}</p>
 				</div>
 				<Button
 					size="sm"
 					variant="outline"
+					className="flex-shrink-0"
 					onClick={() => {
 						window.open(pdfUrl, '_blank')
 					}}
@@ -63,10 +64,10 @@ export function DiagramPDF({ pdfBlob, diagramName }: DiagramPDFProps) {
 					Open in New Tab
 				</Button>
 			</div>
-			<div className="p-4">
+			<div className="p-4 w-full min-w-0 overflow-hidden">
 				<iframe
 					src={pdfUrl}
-					className="w-full h-[600px] rounded border border-gray-200 dark:border-[#2a2a2a]"
+					className="w-full max-w-full h-[600px] rounded border border-gray-200 dark:border-[#2a2a2a] min-w-0"
 					title={diagramName}
 					onError={() => setError('Failed to load PDF')}
 				/>

@@ -1,7 +1,7 @@
 // Unified items section component
 'use client'
 
-// Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
+// Direct imports for better tree-shaking
 import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
 import { WorkOrderPartsItems } from '../shared/items/WorkOrderPartsItems'
 import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'

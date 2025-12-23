@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Send, StopCircle } from 'lucide-react'
+import { Send, StopCircle, Loader2 } from 'lucide-react'
 
 interface DiagnosticsChatFormProps {
 	onSubmit: (message: string) => void
@@ -74,19 +74,22 @@ export function DiagnosticsChatForm({
 					style={{ scrollbarWidth: 'thin' }}
 				/>
 
-				{/* Submit/Stop Button */}
+				{/* Submit/Stop/Loading Button */}
 				<div className="flex-shrink-0 pb-1">
 					{isLoading ? (
-						<Button
-							type="button"
-							size="sm"
-							variant="destructive"
-							onClick={handleStop}
-							className="h-8 w-8 p-0 rounded-full"
-							disabled={!onStop}
-						>
-							<StopCircle className="h-4 w-4" />
-						</Button>
+						onStop ? (
+							<Button
+								type="button"
+								size="sm"
+								variant="destructive"
+								onClick={handleStop}
+								className="h-8 w-8 p-0 rounded-full"
+							>
+								<StopCircle className="h-4 w-4" />
+							</Button>
+						) : (
+							<Loader2 className="h-5 w-5 animate-spin text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+						)
 					) : (
 						<Button
 							type="submit"

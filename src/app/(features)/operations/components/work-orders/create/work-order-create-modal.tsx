@@ -6,7 +6,7 @@ import { Package, FileText } from "lucide-react"
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 
-// Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
+// Direct imports for better tree-shaking
 import { WorkOrderModalHeader } from "../shared/work-order-modal-header"
 import { WorkOrderInformation } from "../shared/work-order-information"
 import { CustomerInformation } from "../shared/customer-information"

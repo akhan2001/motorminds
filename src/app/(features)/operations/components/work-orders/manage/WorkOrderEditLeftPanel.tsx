@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-// Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
+// Direct imports for better tree-shaking
 import { WorkOrderModalHeader } from '../shared/work-order-modal-header'
 import { WorkOrderStatusBar } from '../shared/work-order-status-bar'
 import { WorkOrderInformation } from '../shared/work-order-information'

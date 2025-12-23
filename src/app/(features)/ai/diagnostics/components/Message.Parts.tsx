@@ -36,7 +36,7 @@ function MessagePartText({ textPart }: { textPart: TextUIPart }) {
 	return (
 		<div
 			className={cn(
-				'text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none',
+				'text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none w-full min-w-0 overflow-wrap-anywhere break-words',
 				isUserMessage && 'text-gray-900 dark:text-gray-100 font-medium'
 			)}
 		>

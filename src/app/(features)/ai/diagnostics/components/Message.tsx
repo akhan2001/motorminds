@@ -104,13 +104,14 @@ function MessageContent({ message, isUser }: MessageContentProps) {
 	}
 
 	return (
-		<div className="space-y-2">
+		<div className="space-y-2 w-full min-w-0 overflow-hidden">
 			{parts.map((part: any, idx: number) => (
-				<MessagePartSwitcher
-					key={idx}
-					part={part}
-					isLastPart={idx === partsCount - 1}
-				/>
+				<div key={idx} className="w-full min-w-0 overflow-hidden">
+					<MessagePartSwitcher
+						part={part}
+						isLastPart={idx === partsCount - 1}
+					/>
+				</div>
 			))}
 		</div>
 	)

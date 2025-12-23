@@ -1,6 +1,8 @@
 // src/lib/integrations/motor-daas/client.ts
 
-import { MotorDaasAuth, MotorAuthConfig } from './auth';
+import { MotorDaasAuth, MotorAuthConfig } from './auth'
+import { buildAuthQueryString, buildMotorUrl, buildStandardQueryParams } from './client.utils'
+import { MOTOR_API_DEFAULTS } from './constants'
 
 export interface MotorApiResponse<T> {
     Body?: T;
@@ -83,29 +85,12 @@ export class MotorDaasClient {
      * Endpoint: /v1/HelloWorld
      */
     async helloWorld(correlationId?: string): Promise<{ Text: string }> {
-        const uriPath = '/v1/HelloWorld';
-        // Ensure baseUrl doesn't have trailing slash, then append HelloWorld
-        const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-        const url = new URL(`${baseUrlClean}/HelloWorld`);
+        const uriPath = '/v1/HelloWorld'
+        const url = buildMotorUrl(this.baseUrl, '/HelloWorld')
 
-        // Use query string authentication (works in browsers)
-        // Build query string manually to avoid double-encoding the signature
-        const authParams = this.auth.buildAuthQueryParams('GET', uriPath);
-        const queryParts: string[] = [];
-
-        // Add params in correct order: Scheme, ApiKey, Sig, Xdate
-        queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
-        queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
-        queryParts.push(`Sig=${authParams.Sig}`); // Already encoded, don't encode again
-        queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
-
-        // Add correlation ID if provided
-        if (correlationId) {
-            queryParts.push(`xcorrelationid=${encodeURIComponent(correlationId)}`);
-        }
-
-        // Set the query string manually
-        url.search = queryParts.join('&');
+        // Build authenticated query string
+        const authParams = this.auth.buildAuthQueryParams('GET', uriPath)
+        url.search = buildAuthQueryString(authParams, undefined, correlationId)
 
         const headers: HeadersInit = {
             'Accept': 'application/json'
@@ -156,35 +141,12 @@ export class MotorDaasClient {
         correlationId?: string
     ): Promise<T> {
         // Ensure endpoint starts with /v1
-        const uriPath = endpoint.startsWith('/v1') ? endpoint : `/v1${endpoint}`;
-        const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-        const url = new URL(`${baseUrlClean}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
+        const uriPath = endpoint.startsWith('/v1') ? endpoint : `/v1${endpoint}`
+        const url = buildMotorUrl(this.baseUrl, endpoint)
 
-        // Add authentication query params
-        // Build query string manually to avoid double-encoding the signature
-        const authParams = this.auth.buildAuthQueryParams(method, uriPath);
-        const queryParts: string[] = [];
-
-        // Add params in correct order: Scheme, ApiKey, Sig, Xdate
-        queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
-        queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
-        queryParts.push(`Sig=${authParams.Sig}`); // Already encoded, don't encode again
-        queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
-
-        // Add custom query params
-        if (queryParams) {
-            Object.entries(queryParams).forEach(([key, value]) => {
-                queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
-            });
-        }
-
-        // Add correlation ID
-        if (correlationId) {
-            queryParts.push(`xcorrelationid=${encodeURIComponent(correlationId)}`);
-        }
-
-        // Set the query string manually
-        url.search = queryParts.join('&');
+        // Build authenticated query string with additional params
+        const authParams = this.auth.buildAuthQueryParams(method, uriPath)
+        url.search = buildAuthQueryString(authParams, queryParams, correlationId)
 
         const headers: HeadersInit = {
             'Accept': 'application/json'
@@ -214,28 +176,20 @@ export class MotorDaasClient {
     async getWiringDiagramsTaxonomy(
         baseVehicleId: number,
         options?: {
-            engineId?: number;
-            resultType?: 'DrillDown' | 'List';
+            engineId?: number
+            resultType?: 'DrillDown' | 'List'
         }
     ): Promise<{ Subjects: Array<{ ID: number; Name: string }> }> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Taxonomies/Of/WiringDiagrams`;
-        const uriPath = `/v1${endpoint}`;
-        
-        const queryParams: Record<string, string> = {
-            ContentSilos: '56', // Wiring Diagrams content silo
-            ResultType: options?.resultType || 'DrillDown',
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Taxonomies/Of/WiringDiagrams`
 
-        if (options?.engineId) {
-            queryParams.EN = options.engineId.toString();
-        }
+        const queryParams = buildStandardQueryParams({
+            contentSilos: MOTOR_API_DEFAULTS.WIRING_DIAGRAMS_CONTENT_SILO,
+            resultType: options?.resultType || MOTOR_API_DEFAULTS.DEFAULT_RESULT_TYPE,
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            engineId: options?.engineId,
+        })
 
-        return this.request<{ Subjects: Array<{ ID: number; Name: string }> }>(
-            endpoint,
-            'GET',
-            queryParams
-        );
+        return this.request<{ Subjects: Array<{ ID: number; Name: string }> }>(endpoint, 'GET', queryParams)
     }
 
     /**
@@ -245,80 +199,64 @@ export class MotorDaasClient {
     async getWiringDiagramsSummary(
         baseVehicleId: number,
         options?: {
-            subjectId?: number;
-            searchTerm?: string;
-            engineId?: number;
-            pageIndex?: number;
-            itemsPerPage?: number;
+            subjectId?: number
+            searchTerm?: string
+            engineId?: number
+            pageIndex?: number
+            itemsPerPage?: number
         }
     ): Promise<{
         Applications: Array<{
-            ApplicationID: number;
-            DisplayName: string;
+            ApplicationID: number
+            DisplayName: string
             Item?: {
-                DocumentCount?: number;
-            };
+                DocumentCount?: number
+            }
             SAESubjects?: Array<{
-                ID: number;
-                Name: string;
+                ID: number
+                Name: string
                 Systems?: Array<{
-                    ID: number;
-                    Name: string;
-                    IsActive?: boolean;
-                }>;
-            }>;
-            ContentSilos?: Array<{ ID: number; Name: string }>;
-            Links?: Array<{ Href: string; Rel: string }>;
-        }>;
+                    ID: number
+                    Name: string
+                    IsActive?: boolean
+                }>
+            }>
+            ContentSilos?: Array<{ ID: number; Name: string }>
+            Links?: Array<{ Href: string; Rel: string }>
+        }>
     }> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/WiringDiagrams`;
-        const uriPath = `/v1${endpoint}`;
-        
-        const queryParams: Record<string, string> = {
-            ContentSilos: '56', // Wiring Diagrams content silo
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/WiringDiagrams`
 
-        if (options?.subjectId) {
-            queryParams.SAESubjectID = options.subjectId.toString();
-        }
-
-        if (options?.searchTerm) {
-            queryParams.SearchTerm = options.searchTerm;
-        }
-
-        if (options?.engineId) {
-            queryParams.EN = options.engineId.toString();
-        }
-
-        if (options?.pageIndex !== undefined) {
-            queryParams.PageIndex = options.pageIndex.toString();
-        }
-
-        if (options?.itemsPerPage !== undefined) {
-            queryParams.ItemsPerPage = options.itemsPerPage.toString();
-        }
+        const queryParams = buildStandardQueryParams({
+            contentSilos: MOTOR_API_DEFAULTS.WIRING_DIAGRAMS_CONTENT_SILO,
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            subjectId: options?.subjectId,
+            searchTerm: options?.searchTerm,
+            engineId: options?.engineId,
+            pageIndex: options?.pageIndex,
+            itemsPerPage: options?.itemsPerPage,
+        })
 
         return this.request<{
             Applications: Array<{
-                ApplicationID: number;
-                DisplayName: string;
+                ApplicationID: number
+                DisplayName: string
                 Item?: {
-                    DocumentCount?: number;
-                };
+                    DocumentCount?: number
+                }
                 SAESubjects?: Array<{
-                    ID: number;
-                    Name: string;
+                    ID: number
+                    Name: string
                     Systems?: Array<{
-                        ID: number;
-                        Name: string;
-                        IsActive?: boolean;
-                    }>;
-                }>;
-                ContentSilos?: Array<{ ID: number; Name: string }>;
-                Links?: Array<{ Href: string; Rel: string }>;
-            }>;
-        }>(endpoint, 'GET', queryParams);
+                        ID: number
+                        Name: string
+                        IsActive?: boolean
+                    }>
+                }>
+                ContentSilos?: Array<{ ID: number; Name: string }>
+                Links?: Array<{ Href: string; Rel: string }>
+            }>
+        }>(endpoint, 'GET', queryParams)
     }
 
     /**
@@ -327,7 +265,8 @@ export class MotorDaasClient {
      */
     async getWiringDiagramDetails(
         baseVehicleId: number,
-        applicationId: number
+        applicationId: number,
+        engineId?: number
     ): Promise<{
         ApplicationID?: number;
         DisplayName?: string;
@@ -353,11 +292,12 @@ export class MotorDaasClient {
         Components?: Array<any>;
         Connectors?: Array<any>;
     }> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Details/Of/WiringDiagrams/${applicationId}`;
-        
-        const queryParams: Record<string, string> = {
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Details/Of/WiringDiagrams/${applicationId}`
+
+        const queryParams = buildStandardQueryParams({
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            engineId,
+        })
 
         return this.request<{
             ApplicationID?: number;
@@ -395,22 +335,15 @@ export class MotorDaasClient {
         baseVehicleId: number,
         documentId: number
     ): Promise<{ blob: Blob; contentType: string }> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Documents/Of/WiringDiagrams/${documentId}`;
-        const uriPath = `/v1${endpoint}`;
-        const baseUrlClean = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-        const url = new URL(`${baseUrlClean}${endpoint}`);
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Documents/Of/WiringDiagrams/${documentId}`
+        const uriPath = `/v1${endpoint}`
+        const url = buildMotorUrl(this.baseUrl, endpoint)
 
-        // Add authentication query params
-        const authParams = this.auth.buildAuthQueryParams('GET', uriPath);
-        const queryParts: string[] = [];
-
-        queryParts.push(`Scheme=${encodeURIComponent(authParams.Scheme)}`);
-        queryParts.push(`ApiKey=${encodeURIComponent(authParams.ApiKey)}`);
-        queryParts.push(`Sig=${authParams.Sig}`);
-        queryParts.push(`Xdate=${encodeURIComponent(authParams.Xdate)}`);
-        queryParts.push(`AttributeStandard=MOTOR`);
-
-        url.search = queryParts.join('&');
+        // Build authenticated query string with AttributeStandard
+        const authParams = this.auth.buildAuthQueryParams('GET', uriPath)
+        url.search = buildAuthQueryString(authParams, {
+            AttributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+        })
 
         const headers: HeadersInit = {
             'Accept': '*/*' // Accept any content type for binary data
@@ -440,27 +373,20 @@ export class MotorDaasClient {
         contentType: ContentType,
         applicationId: number,
         options?: {
-            engineId?: number;
-            resultType?: 'DrillDown' | 'List';
+            engineId?: number
+            resultType?: 'DrillDown' | 'List'
         }
     ): Promise<WiringDiagramsTaxonomyWithRelationResponse> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Taxonomies/Of/WiringDiagrams/RelatedTo/${contentType}/${applicationId}`;
-        
-        const queryParams: Record<string, string> = {
-            ContentSilos: '56', // Wiring Diagrams content silo
-            ResultType: options?.resultType || 'DrillDown',
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Taxonomies/Of/WiringDiagrams/RelatedTo/${contentType}/${applicationId}`
 
-        if (options?.engineId) {
-            queryParams.EN = options.engineId.toString();
-        }
+        const queryParams = buildStandardQueryParams({
+            contentSilos: MOTOR_API_DEFAULTS.WIRING_DIAGRAMS_CONTENT_SILO,
+            resultType: options?.resultType || MOTOR_API_DEFAULTS.DEFAULT_RESULT_TYPE,
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            engineId: options?.engineId,
+        })
 
-        return this.request<WiringDiagramsTaxonomyWithRelationResponse>(
-            endpoint,
-            'GET',
-            queryParams
-        );
+        return this.request<WiringDiagramsTaxonomyWithRelationResponse>(endpoint, 'GET', queryParams)
     }
 
     /**
@@ -470,39 +396,23 @@ export class MotorDaasClient {
     async getOEMComponentsSummary(
         baseVehicleId: number,
         options?: {
-            engineId?: number;
-            pageIndex?: number;
-            itemsPerPage?: number;
-            searchTerm?: string;
+            engineId?: number
+            pageIndex?: number
+            itemsPerPage?: number
+            searchTerm?: string
         }
     ): Promise<OEMComponentsSummaryResponse> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/OEMComponents`;
-        
-        const queryParams: Record<string, string> = {
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/OEMComponents`
 
-        if (options?.engineId) {
-            queryParams.EN = options.engineId.toString();
-        }
+        const queryParams = buildStandardQueryParams({
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            engineId: options?.engineId,
+            pageIndex: options?.pageIndex,
+            itemsPerPage: options?.itemsPerPage,
+            searchTerm: options?.searchTerm,
+        })
 
-        if (options?.pageIndex !== undefined) {
-            queryParams.PageIndex = options.pageIndex.toString();
-        }
-
-        if (options?.itemsPerPage !== undefined) {
-            queryParams.ItemsPerPage = options.itemsPerPage.toString();
-        }
-
-        if (options?.searchTerm) {
-            queryParams.SearchTerm = options.searchTerm;
-        }
-
-        return this.request<OEMComponentsSummaryResponse>(
-            endpoint,
-            'GET',
-            queryParams
-        );
+        return this.request<OEMComponentsSummaryResponse>(endpoint, 'GET', queryParams)
     }
 
     /**
@@ -514,34 +424,21 @@ export class MotorDaasClient {
         contentType: ContentType,
         applicationId: number,
         options?: {
-            engineId?: number;
-            pageIndex?: number;
-            itemsPerPage?: number;
+            engineId?: number
+            pageIndex?: number
+            itemsPerPage?: number
         }
     ): Promise<OEMComponentsSummaryWithRelationResponse> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/OEMComponents/RelatedTo/${contentType}/${applicationId}`;
-        
-        const queryParams: Record<string, string> = {
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/OEMComponents/RelatedTo/${contentType}/${applicationId}`
 
-        if (options?.engineId) {
-            queryParams.EN = options.engineId.toString();
-        }
+        const queryParams = buildStandardQueryParams({
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            engineId: options?.engineId,
+            pageIndex: options?.pageIndex,
+            itemsPerPage: options?.itemsPerPage,
+        })
 
-        if (options?.pageIndex !== undefined) {
-            queryParams.PageIndex = options.pageIndex.toString();
-        }
-
-        if (options?.itemsPerPage !== undefined) {
-            queryParams.ItemsPerPage = options.itemsPerPage.toString();
-        }
-
-        return this.request<OEMComponentsSummaryWithRelationResponse>(
-            endpoint,
-            'GET',
-            queryParams
-        );
+        return this.request<OEMComponentsSummaryWithRelationResponse>(endpoint, 'GET', queryParams)
     }
 
     /**
@@ -553,35 +450,22 @@ export class MotorDaasClient {
         contentType: ContentType,
         applicationId: number,
         options?: {
-            engineId?: number;
-            pageIndex?: number;
-            itemsPerPage?: number;
+            engineId?: number
+            pageIndex?: number
+            itemsPerPage?: number
         }
     ): Promise<WiringDiagramsSummaryWithRelationResponse> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/WiringDiagrams/RelatedTo/${contentType}/${applicationId}`;
-        
-        const queryParams: Record<string, string> = {
-            ContentSilos: '56', // Wiring Diagrams content silo
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/WiringDiagrams/RelatedTo/${contentType}/${applicationId}`
 
-        if (options?.engineId) {
-            queryParams.EN = options.engineId.toString();
-        }
+        const queryParams = buildStandardQueryParams({
+            contentSilos: MOTOR_API_DEFAULTS.WIRING_DIAGRAMS_CONTENT_SILO,
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+            engineId: options?.engineId,
+            pageIndex: options?.pageIndex,
+            itemsPerPage: options?.itemsPerPage,
+        })
 
-        if (options?.pageIndex !== undefined) {
-            queryParams.PageIndex = options.pageIndex.toString();
-        }
-
-        if (options?.itemsPerPage !== undefined) {
-            queryParams.ItemsPerPage = options.itemsPerPage.toString();
-        }
-
-        return this.request<WiringDiagramsSummaryWithRelationResponse>(
-            endpoint,
-            'GET',
-            queryParams
-        );
+        return this.request<WiringDiagramsSummaryWithRelationResponse>(endpoint, 'GET', queryParams)
     }
 
     /**
@@ -594,17 +478,13 @@ export class MotorDaasClient {
         applicationId: number,
         documentId: number
     ): Promise<OEMComponentsDetailListResponse> {
-        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Details/Of/${contentType}/${applicationId}/Documents/${documentId}/OEMComponents`;
-        
-        const queryParams: Record<string, string> = {
-            AttributeStandard: 'MOTOR'
-        };
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Details/Of/${contentType}/${applicationId}/Documents/${documentId}/OEMComponents`
 
-        return this.request<OEMComponentsDetailListResponse>(
-            endpoint,
-            'GET',
-            queryParams
-        );
+        const queryParams = buildStandardQueryParams({
+            attributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+        })
+
+        return this.request<OEMComponentsDetailListResponse>(endpoint, 'GET', queryParams)
     }
 
     private async handleError(response: Response): Promise<never> {

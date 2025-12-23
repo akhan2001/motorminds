@@ -9,7 +9,7 @@ import { InvoiceHistoryPanel } from './invoice-history-panel'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
 import type { WorkOrderItem } from '../../../types/work-order-items'
 
-// Lazy load heavy components to reduce initial bundle size (Supabase pattern)
+// Lazy load heavy components to reduce initial bundle size
 const MiaInsightsIntegration = dynamic(
     () => import('@/app/(features)/ai/mia-insights').then(m => ({ default: m.MiaInsightsIntegration })),
     { ssr: false }

@@ -34,7 +34,7 @@ export function WorkOrderEditModal({
 }: WorkOrderEditModalProps) {
     const { shopId } = useAuth()
 
-    // Data fetching - Supabase pattern
+    // Data fetching
     const { data: workOrderDetails, isLoading, error } = useWorkOrderWithDetails(initialWorkOrder.id)
 
     const { items, summary, isLoading: itemsLoading } = useWorkOrderItemsWithSummary(initialWorkOrder.id)

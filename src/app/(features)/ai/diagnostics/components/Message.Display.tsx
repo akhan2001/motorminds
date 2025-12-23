@@ -4,6 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 
 import { cn } from '@/lib/utils'
+import { useMessageInfoContext } from './Message.Context'
 
 interface MessageDisplayContainerProps {
 	children: React.ReactNode
@@ -40,17 +41,26 @@ interface MessageDisplayContentProps {
 }
 
 export function MessageDisplayContent({ children, isUser, className }: MessageDisplayContentProps) {
+	const { isLoading } = useMessageInfoContext()
+	
 	return (
 		<div
 			className={cn(
-				'rounded-lg px-4 max-w-[80%]',
+				'rounded-lg px-4 transition-opacity',
 				isUser
-					? 'bg-red-600 dark:bg-red-500 text-white py-3'
-					: 'text-gray-900 dark:text-gray-100 py-0',
+					? 'bg-red-600 dark:bg-red-500 text-white py-3 max-w-[70%] min-w-fit flex-shrink-0' // User messages: wider, allow natural width
+					: 'text-gray-900 dark:text-gray-100 py-0 max-w-[90%] w-full min-w-0 overflow-hidden', // Assistant messages: up to 90%
+				isLoading && !isUser && 'opacity-70', // Reduce opacity when loading
 				className
 			)}
 		>
-			{children}
+			<div className={cn(
+				isUser 
+					? 'break-words' // Normal word breaking for user messages, allow natural width
+					: 'w-full min-w-0 overflow-wrap-anywhere break-words' // More aggressive wrapping for assistant messages
+			)}>
+				{children}
+			</div>
 		</div>
 	)
 }

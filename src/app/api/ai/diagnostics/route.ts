@@ -21,7 +21,7 @@ const requestSchema = z.object({
 		model: z.string().optional(),
 		year: z.number().optional(),
 	}).optional(),
-	model: z.enum(['gpt-4', 'gpt-3.5-turbo']).optional(),
+	model: z.enum(['gpt-4', 'gpt-3.5-turbo', 'gpt-4.1-mini']).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 		// 6. Get model
 		const modelResult = await getModel({
 			provider: 'openai',
-			model: requestedModel ?? 'gpt-4',
+			model: requestedModel ?? 'gpt-4.1-mini', // Default to gpt-4.1-mini for higher rate limits
 			routingKey: shopId,
 			isLimited,
 		})
