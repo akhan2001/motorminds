@@ -144,6 +144,11 @@ export const navigationConfig: NavItem[] = [
                 adminTypes: ['super-admin', 'shop-admin']
             }
         ]
+    },
+    {
+        name: "AI Diagnostics",
+        href: "/ai/diagnostics",
+        requiredRoles: ['admin', 'super', 'user']
     }
 ];
 

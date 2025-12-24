@@ -9,6 +9,7 @@ import { useMessageInfoContext } from './Message.Context'
 import { WiringDiagramsToolRenderer } from './tool-renderers/WiringDiagramsToolRenderer'
 import { OEMComponentsToolRenderer } from './tool-renderers/OEMComponentsToolRenderer'
 import { RelatedDiagramsToolRenderer } from './tool-renderers/RelatedDiagramsToolRenderer'
+import { PerplexityResearchToolRenderer } from './tool-renderers/PerplexityResearchToolRenderer'
 
 // Type definitions based on AI SDK v5 structure
 type TextUIPart = { type: 'text'; text: string }
@@ -209,6 +210,10 @@ function MessagePartDiagramComponents({ toolPart }: { toolPart: ToolUIPart }) {
 	return <OEMComponentsToolRenderer toolPart={toolPart} />
 }
 
+function MessagePartPerplexityResearch({ toolPart }: { toolPart: ToolUIPart }) {
+	return <PerplexityResearchToolRenderer toolPart={toolPart} />
+}
+
 const MessagePart = {
 	Text: MessagePartText,
 	Dynamic: MessagePartDynamicTool,
@@ -220,6 +225,7 @@ const MessagePart = {
 	RelatedDiagrams: MessagePartRelatedDiagrams,
 	RelatedOEMComponents: MessagePartRelatedOEMComponents,
 	DiagramComponents: MessagePartDiagramComponents,
+	PerplexityResearch: MessagePartPerplexityResearch,
 } as const
 
 export function MessagePartSwitcher({
@@ -250,6 +256,9 @@ export function MessagePartSwitcher({
 		}
 		case 'tool-getDiagramComponents': {
 			return <MessagePart.DiagramComponents toolPart={part as ToolUIPart} />
+		}
+		case 'tool-perplexityResearchTool': {
+			return <MessagePart.PerplexityResearch toolPart={part as ToolUIPart} />
 		}
 		case 'reasoning':
 			return <MessagePart.Reasoning reasoningPart={part as ReasoningUIPart} />

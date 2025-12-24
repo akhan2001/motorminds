@@ -2,6 +2,7 @@ import { ToolSet } from 'ai'
 import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
 import { getMotorTools } from './motor-daas-tools'
 import { getRenderingTools } from './rendering-tools'
+import { getPerplexityTools } from './perplexity-research-tool'
 import { filterToolsByOptInLevel } from './tool-filter'
 
 type AiOptInLevel = 'disabled' | 'schema' | 'full'
@@ -27,12 +28,16 @@ export const getTools = async ({
     // 2. Add MOTOR DaaS tools
     const motorTools = getMotorTools()
 
+    // 3. Add Perplexity research tools
+    const perplexityTools = getPerplexityTools()
+
     tools = {
         ...tools,
         ...motorTools,
+        ...perplexityTools,
     }
 
-    // 3. Filter by opt-in level
+    // 4. Filter by opt-in level
     const filteredTools = filterToolsByOptInLevel(tools, aiOptInLevel)
 
     return filteredTools

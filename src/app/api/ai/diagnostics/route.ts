@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { source } from 'common-tags'
 
 import { getModel } from '@/lib/ai/model'
-import { getMotorTools } from '@/app/(features)/ai/diagnostics/tools/motor-daas-tools'
+import { getTools } from '@/app/(features)/ai/diagnostics/tools'
 import { AI_DIAGNOSTICS_PROMPT, LIMITATIONS_PROMPT, COMPLIANCE_PROMPT, MOTOR_API_PROMPT, DIAGNOSTIC_WORKFLOW_PROMPT } from '@/app/(features)/ai/diagnostics/tools/prompts'
 
 const requestSchema = z.object({
@@ -151,12 +151,27 @@ export async function POST(request: NextRequest) {
 		// 12. Get tools (with error handling)
 		let tools
 		try {
-			tools = getMotorTools()
+			// Create a mock MotorDaasClient for getTools (it's not used for Perplexity tools)
+			const { MotorDaasClient } = await import('@/lib/integrations/motor-daas/client')
+			const motorClient = new MotorDaasClient({
+				publicKey: process.env.MOTOR_DAAS_PUBLIC_KEY!,
+				privateKey: process.env.MOTOR_DAAS_PRIVATE_KEY!,
+				baseUrl: 'https://api.motor.com/v1'
+			})
+
+			tools = await getTools({
+				shopId,
+				vehicleId,
+				authorization: authorization || undefined,
+				aiOptInLevel,
+				accessToken: accessToken || undefined,
+				motorClient,
+			})
 		} catch (toolError) {
-			console.error('Failed to initialize MOTOR tools:', toolError)
+			console.error('Failed to initialize tools:', toolError)
 			return Response.json(
 				{
-					error: 'Failed to initialize MOTOR DaaS tools',
+					error: 'Failed to initialize tools',
 					message: toolError instanceof Error ? toolError.message : 'Unknown error'
 				},
 				{ status: 500 }

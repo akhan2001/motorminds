@@ -40,6 +40,7 @@ export const toolSetValidationSchema = z.record(
 
         // Online Tools
         'lookupForums',
+        'perplexityResearchTool'
     ]),
     basicToolSchema
 )
@@ -101,6 +102,7 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
 
     // Online Tools
     lookupForums: TOOL_CATEGORIES.ONLINE,
+    perplexityResearchTool: TOOL_CATEGORIES.ONLINE,
 }
 
 /**
