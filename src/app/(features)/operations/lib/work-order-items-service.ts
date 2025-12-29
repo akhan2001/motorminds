@@ -63,6 +63,46 @@ export class WorkOrderItemsService {
     }
 
     /**
+     * Get parts and expenses items for a shop with work order information
+     * Includes pagination support
+     */
+    static async getPartsAndExpensesByShopId(
+        shopId: string,
+        options?: { page?: number; pageSize?: number }
+    ): Promise<{ data: (WorkOrderItem & { work_order: { id: string; work_order_number: string; title: string | null } })[], count: number }> {
+        if (!shopId) {
+            throw new Error('Shop ID is required')
+        }
+
+        const page = options?.page || 1
+        const pageSize = options?.pageSize || 50
+        const from = (page - 1) * pageSize
+        const to = from + pageSize - 1
+
+        const { data, error, count } = await supabase
+            .from('work_order_items')
+            .select(`
+                *,
+                work_order:work_orders(id, work_order_number, title)
+            `, { count: 'exact' })
+            .eq('shop_id', shopId)
+            .in('item_type', ['part', 'expense'])
+            .order('created_at', { ascending: false })
+            .range(from, to)
+
+        if (error) {
+            console.error('Error fetching parts and expenses:', error)
+            throw new Error(`Failed to fetch parts and expenses: ${error.message}`)
+        }
+
+        // Validate and return array (use passthrough to allow extra fields)
+        return {
+            data: (data || []).map(item => WorkOrderItemSchema.passthrough().parse(item)),
+            count: count || 0
+        }
+    }
+
+    /**
      * Get all items for a specific work order with pagination
      */
     static async getWorkOrderItemsPaginated(

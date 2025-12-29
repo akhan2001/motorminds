@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Wrench, Calendar, DollarSign, User, Car, Package, Clock, MapPin, Tag, FileText, Archive } from 'lucide-react'
@@ -101,8 +101,14 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                             {getPriorityBadge(workOrder.priority)}
                         </div>
                     </div>
-                    {workOrder.title && (
-                        <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">{workOrder.title}</p>
+                    {workOrder.title ? (
+                        <SheetDescription className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
+                            {workOrder.title}
+                        </SheetDescription>
+                    ) : (
+                        <SheetDescription className="sr-only">
+                            Work order details
+                        </SheetDescription>
                     )}
                 </SheetHeader>
 
