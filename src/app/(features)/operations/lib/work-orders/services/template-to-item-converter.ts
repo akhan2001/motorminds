@@ -3,6 +3,7 @@ import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templ
 import type {
     LaborFormItem,
     PartFormItem,
+    ExpenseFormItem,
     GenericFormItem,
     SelectedTemplate,
     WorkOrderItemsByType
@@ -15,7 +16,7 @@ import type {
  */
 
 // Re-export for backwards compatibility
-export type { LaborFormItem, PartFormItem, GenericFormItem, SelectedTemplate }
+export type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem, SelectedTemplate }
 
 export interface ConvertedItems extends WorkOrderItemsByType {}
 
@@ -64,6 +65,27 @@ export class TemplateToItemConverter {
     }
 
     /**
+     * Convert a single template to an expense form item (same structure as part)
+     */
+    static templateToExpenseItem(template: SelectedTemplate): ExpenseFormItem {
+        const quantity = template.selectedQuantity ?? template.quantity ?? 1
+        const unitPrice = template.selectedUnitPrice ?? template.unit_price ?? 0
+
+        return {
+            id: uuidv4(),
+            description: template.name,
+            part_number: template.part_number || '',
+            quantity,
+            unit_price: unitPrice,
+            total_price: quantity * unitPrice,
+            supplier: template.supplier || '',
+            category: template.category || '',
+            warranty_period: template.warranty_period || '',
+            notes: template.description || ''
+        }
+    }
+
+    /**
      * Convert a single template to a generic form item (service, fee, discount, package)
      */
     static templateToGenericItem(template: SelectedTemplate): GenericFormItem {
@@ -85,8 +107,8 @@ export class TemplateToItemConverter {
      * Returns the converted item and the item type
      */
     static convertTemplate(template: SelectedTemplate): {
-        item: LaborFormItem | PartFormItem | GenericFormItem
-        itemType: 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package'
+        item: LaborFormItem | PartFormItem | ExpenseFormItem | GenericFormItem
+        itemType: 'labor' | 'part' | 'expense' | 'service' | 'fee' | 'discount' | 'package'
     } {
         const itemType = template.item_type
 
@@ -95,6 +117,8 @@ export class TemplateToItemConverter {
                 return { item: this.templateToLaborItem(template), itemType }
             case 'part':
                 return { item: this.templateToPartItem(template), itemType }
+            case 'expense':
+                return { item: this.templateToExpenseItem(template), itemType }
             case 'service':
             case 'fee':
             case 'discount':
@@ -112,6 +136,7 @@ export class TemplateToItemConverter {
         const items: ConvertedItems = {
             laborItems: [],
             partsItems: [],
+            expenseItems: [],
             serviceItems: [],
             feeItems: [],
             discountItems: [],
@@ -127,6 +152,9 @@ export class TemplateToItemConverter {
                     break
                 case 'part':
                     items.partsItems.push(item as PartFormItem)
+                    break
+                case 'expense':
+                    items.expenseItems.push(item as ExpenseFormItem)
                     break
                 case 'service':
                     items.serviceItems.push(item as GenericFormItem)
@@ -164,6 +192,7 @@ export class TemplateToItemConverter {
         itemsByType: {
             laborItems?: LaborFormItem[]
             partsItems?: PartFormItem[]
+            expenseItems?: ExpenseFormItem[]
             serviceItems?: GenericFormItem[]
             feeItems?: GenericFormItem[]
             discountItems?: GenericFormItem[]
@@ -179,6 +208,10 @@ export class TemplateToItemConverter {
                 case 'part':
                     return itemsByType.partsItems
                         ? this.isTemplateInItems(template, itemsByType.partsItems)
+                        : true
+                case 'expense':
+                    return itemsByType.expenseItems
+                        ? this.isTemplateInItems(template, itemsByType.expenseItems)
                         : true
                 case 'service':
                     return itemsByType.serviceItems

@@ -9,11 +9,12 @@ import type { WorkOrderItem } from '../../../../types/work-order-items'
 import type {
     LaborFormItem,
     PartFormItem,
+    ExpenseFormItem,
     GenericFormItem
 } from '../../../../types/work-order-item-forms'
 
 // Re-export for backwards compatibility
-export type { LaborFormItem, PartFormItem, GenericFormItem }
+export type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem }
 
 interface UseWorkOrderItemManagementProps {
     workOrderId: string
@@ -31,6 +32,7 @@ export function useWorkOrderItemManagement({
     const convertToFormItems = useCallback((items: WorkOrderItem[]) => {
         const labor: LaborFormItem[] = []
         const parts: PartFormItem[] = []
+        const expenses: ExpenseFormItem[] = []
         const services: GenericFormItem[] = []
         const fees: GenericFormItem[] = []
         const discounts: GenericFormItem[] = []
@@ -58,8 +60,24 @@ export function useWorkOrderItemManagement({
                     quantity: item.quantity || 1,
                     unit_price: item.unit_price || 0,
                     total_price: (item.quantity || 1) * (item.unit_price || 0),
-                    unit_cost: item.unit_cost,
-                    total_cost: item.total_cost,
+                    unit_cost: item.unit_cost ?? undefined,
+                    total_cost: item.total_cost ?? undefined,
+                    supplier: item.supplier || '',
+                    category: item.category || '',
+                    warranty_period: item.warranty_period || '',
+                    notes: item.notes || '',
+                    active: item.active ?? undefined,
+                })
+            } else if (item.item_type === 'expense') {
+                expenses.push({
+                    id: item.id,
+                    description: item.description,
+                    part_number: item.part_number || '',
+                    quantity: item.quantity || 1,
+                    unit_price: item.unit_price || 0,
+                    total_price: (item.quantity || 1) * (item.unit_price || 0),
+                    unit_cost: item.unit_cost ?? undefined,
+                    total_cost: item.total_cost ?? undefined,
                     supplier: item.supplier || '',
                     category: item.category || '',
                     warranty_period: item.warranty_period || '',
@@ -119,7 +137,7 @@ export function useWorkOrderItemManagement({
             }
         })
 
-        return { labor, parts, services, fees, discounts, packages }
+        return { labor, parts, expenses, services, fees, discounts, packages }
     }, [])
 
     // Initialize local state from initial items
@@ -127,6 +145,7 @@ export function useWorkOrderItemManagement({
 
     const [laborItems, setLaborItems] = useState<LaborFormItem[]>(initialFormItems.labor)
     const [partsItems, setPartsItems] = useState<PartFormItem[]>(initialFormItems.parts)
+    const [expenseItems, setExpenseItems] = useState<ExpenseFormItem[]>(initialFormItems.expenses)
     const [serviceItems, setServiceItems] = useState<GenericFormItem[]>(initialFormItems.services)
     const [feeItems, setFeeItems] = useState<GenericFormItem[]>(initialFormItems.fees)
     const [discountItems, setDiscountItems] = useState<GenericFormItem[]>(initialFormItems.discounts)
@@ -137,6 +156,7 @@ export function useWorkOrderItemManagement({
         const formItems = convertToFormItems(initialItems)
         setLaborItems(formItems.labor)
         setPartsItems(formItems.parts)
+        setExpenseItems(formItems.expenses)
         setServiceItems(formItems.services)
         setFeeItems(formItems.fees)
         setDiscountItems(formItems.discounts)
@@ -147,20 +167,24 @@ export function useWorkOrderItemManagement({
     const itemsByType = useMemo(() => ({
         labor: laborItems,
         parts: partsItems,
+        expenses: expenseItems,
         services: serviceItems,
         fees: feeItems,
         discounts: discountItems,
         packages: packageItems,
-    }), [laborItems, partsItems, serviceItems, feeItems, discountItems, packageItems])
+    }), [laborItems, partsItems, expenseItems, serviceItems, feeItems, discountItems, packageItems])
 
     // Handle items change by type
-    const handleItemsChange = useCallback((type: 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package', items: any[]) => {
+    const handleItemsChange = useCallback((type: 'labor' | 'part' | 'expense' | 'service' | 'fee' | 'discount' | 'package', items: any[]) => {
         switch (type) {
             case 'labor':
                 setLaborItems(items as LaborFormItem[])
                 break
             case 'part':
                 setPartsItems(items as PartFormItem[])
+                break
+            case 'expense':
+                setExpenseItems(items as ExpenseFormItem[])
                 break
             case 'service':
                 setServiceItems(items as GenericFormItem[])
@@ -178,33 +202,48 @@ export function useWorkOrderItemManagement({
     }, [])
 
     // Convert form items to WorkOrderItemFormData for bulk upsert
-    const convertToWorkOrderItemFormData = useCallback((item: LaborFormItem | PartFormItem | GenericFormItem, itemType: string): any => {
+    const convertToWorkOrderItemFormData = useCallback((item: LaborFormItem | PartFormItem | ExpenseFormItem | GenericFormItem, itemType: string): any => {
         const base = {
             item_type: itemType as any,
             description: item.description,
             quantity: 'quantity' in item ? item.quantity : 1,
             unit_price: item.unit_price,
-            notes: item.notes || undefined,
+            notes: item.notes?.trim() || null, // Convert empty strings to null for database
         }
 
         if (itemType === 'labor' && 'labor_hours' in item) {
             return {
                 ...base,
                 labor_hours: item.labor_hours,
-                technician_id: item.technician_id || undefined,
+                technician_id: 'technician_id' in item ? item.technician_id || undefined : undefined,
                 unit_cost: 'unit_cost' in item ? item.unit_cost || undefined : undefined,
                 category: 'category' in item ? item.category || undefined : undefined,
             }
         }
 
         if (itemType === 'part' && 'part_number' in item) {
+            const partItem = item as PartFormItem
             return {
                 ...base,
-                part_number: item.part_number || undefined,
-                unit_cost: item.unit_cost || undefined,
-                supplier: item.supplier || undefined,
-                category: item.category || undefined,
-                warranty_period: item.warranty_period || undefined,
+                // Explicitly include all fields, converting empty strings to null for database
+                part_number: partItem.part_number?.trim() || null,
+                unit_cost: partItem.unit_cost !== undefined && partItem.unit_cost !== null ? partItem.unit_cost : null,
+                supplier: partItem.supplier?.trim() || null,
+                category: partItem.category?.trim() || null,
+                warranty_period: partItem.warranty_period?.trim() || null,
+            }
+        }
+
+        if (itemType === 'expense' && 'part_number' in item) {
+            const expenseItem = item as ExpenseFormItem
+            return {
+                ...base,
+                // Explicitly include all fields, converting empty strings to null for database
+                part_number: expenseItem.part_number?.trim() || null,
+                unit_cost: expenseItem.unit_cost !== undefined && expenseItem.unit_cost !== null ? expenseItem.unit_cost : null,
+                supplier: expenseItem.supplier?.trim() || null,
+                category: expenseItem.category?.trim() || null,
+                warranty_period: expenseItem.warranty_period?.trim() || null,
             }
         }
 
@@ -233,6 +272,7 @@ export function useWorkOrderItemManagement({
             const currentItemIds = new Set([
                 ...laborItems.map(i => i.id),
                 ...partsItems.map(i => i.id),
+                ...expenseItems.map(i => i.id),
                 ...serviceItems.map(i => i.id),
                 ...feeItems.map(i => i.id),
                 ...discountItems.map(i => i.id),
@@ -267,6 +307,15 @@ export function useWorkOrderItemManagement({
                     itemsToUpsert.push({
                         id: existingItemIds.has(item.id) ? item.id : undefined,
                         data: convertToWorkOrderItemFormData(item, 'part'),
+                    })
+                }
+            })
+
+            expenseItems.forEach(item => {
+                if (item.description.trim()) {
+                    itemsToUpsert.push({
+                        id: existingItemIds.has(item.id) ? item.id : undefined,
+                        data: convertToWorkOrderItemFormData(item, 'expense'),
                     })
                 }
             })
@@ -309,10 +358,24 @@ export function useWorkOrderItemManagement({
 
             // Use bulk upsert
             if (itemsToUpsert.length > 0) {
-                await WorkOrderItemsService.bulkUpsertItems(workOrderId, itemsToUpsert)
+                const savedItems = await WorkOrderItemsService.bulkUpsertItems(workOrderId, itemsToUpsert)
+                
+                // Refetch items to get the latest state from database
+                // This ensures UI is in sync with database, especially for new items that got database IDs
+                const refetchedItems = await WorkOrderItemsService.getWorkOrderItems(workOrderId)
+                const refetchedFormItems = convertToFormItems(refetchedItems)
+                
+                // Update local state with refetched items
+                setLaborItems(refetchedFormItems.labor)
+                setPartsItems(refetchedFormItems.parts)
+                setExpenseItems(refetchedFormItems.expenses)
+                setServiceItems(refetchedFormItems.services)
+                setFeeItems(refetchedFormItems.fees)
+                setDiscountItems(refetchedFormItems.discounts)
+                setPackageItems(refetchedFormItems.packages)
             }
 
-            // Invalidate queries
+            // Invalidate queries to ensure data is fresh
             if (shopId) {
                 await Promise.all([
                     queryClient.invalidateQueries({
@@ -335,6 +398,7 @@ export function useWorkOrderItemManagement({
         workOrderId,
         laborItems,
         partsItems,
+        expenseItems,
         serviceItems,
         feeItems,
         discountItems,

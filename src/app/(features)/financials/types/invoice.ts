@@ -132,6 +132,7 @@ export type PaymentMethod =
 export type ItemType = 
     | 'labor'
     | 'part'
+    | 'expense'
     | 'service'
     | 'fee'
     | 'discount'

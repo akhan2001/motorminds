@@ -196,8 +196,16 @@ export class WorkOrderItemsService {
                 itemType: validated.item_type,
                 error: error.message,
                 code: error.code,
-                details: error.details
+                details: error.details,
+                hint: error.hint,
+                itemPayload
             })
+            
+            // Check if it's a constraint violation for item_type
+            if (error.code === '23514' || error.message?.includes('item_type') || error.message?.includes('check constraint')) {
+                throw new Error(`Database constraint error: The 'expense' item type may not be allowed in the database. Please ensure the work_order_items table allows 'expense' as a valid item_type. Original error: ${error.message}`)
+            }
+            
             throw new Error(`Failed to create work order item: ${error.message}`)
         }
 
@@ -404,7 +412,6 @@ export class WorkOrderItemsService {
 
         // Validate output with Zod (use passthrough to allow extra fields)
         return WorkOrderItemSchema.passthrough().parse(data)
-        return WorkOrderItemSchema.parse(data)
     }
 
     /**
@@ -526,26 +533,37 @@ export class WorkOrderItemsService {
 
             // Validate and prepare insert payloads
             const insertPayloads = newItems.map(item => {
-                const validated = WorkOrderItemCreateSchema.parse({
-                    ...item.data,
-                    work_order_id: workOrderId
-                })
+                try {
+                    const validated = WorkOrderItemCreateSchema.parse({
+                        ...item.data,
+                        work_order_id: workOrderId
+                    })
 
-                return {
-                    work_order_id: workOrderId,
-                    shop_id: workOrder.shop_id,
-                    item_type: validated.item_type,
-                    description: validated.description.trim(),
-                    part_number: validated.part_number?.trim() || null,
-                    quantity: validated.quantity,
-                    unit_price: validated.unit_price,
-                    unit_cost: validated.unit_cost ?? null,
-                    supplier: validated.supplier?.trim() || null,
-                    category: validated.category?.trim() || null,
-                    warranty_period: validated.warranty_period?.trim() || null,
-                    notes: validated.notes?.trim() || null,
-                    labor_hours: validated.labor_hours ?? null,
-                    technician_id: validated.technician_id ?? null,
+                    const payload = {
+                        work_order_id: workOrderId,
+                        shop_id: workOrder.shop_id,
+                        item_type: validated.item_type,
+                        description: validated.description.trim(),
+                        part_number: validated.part_number?.trim() || null,
+                        quantity: validated.quantity,
+                        unit_price: validated.unit_price,
+                        unit_cost: validated.unit_cost ?? null,
+                        supplier: validated.supplier?.trim() || null,
+                        category: validated.category?.trim() || null,
+                        warranty_period: validated.warranty_period?.trim() || null,
+                        notes: validated.notes?.trim() || null,
+                        labor_hours: validated.labor_hours ?? null,
+                        technician_id: validated.technician_id ?? null,
+                    }
+                    
+                    return payload
+                } catch (validationError: any) {
+                    console.error('Validation error in bulk upsert for item:', {
+                        itemData: item.data,
+                        itemType: item.data?.item_type,
+                        error: validationError.errors || validationError.message
+                    })
+                    throw validationError
                 }
             })
 
@@ -555,7 +573,20 @@ export class WorkOrderItemsService {
                 .select()
 
             if (insertError) {
-                console.error('Error bulk inserting items:', insertError)
+                console.error('Error bulk inserting items:', {
+                    error: insertError.message,
+                    code: insertError.code,
+                    details: insertError.details,
+                    hint: insertError.hint,
+                    itemCount: insertPayloads.length,
+                    itemTypes: insertPayloads.map(p => p.item_type)
+                })
+                
+                // Check if it's a constraint violation for item_type
+                if (insertError.code === '23514' || insertError.message?.includes('item_type') || insertError.message?.includes('check constraint')) {
+                    throw new Error(`Database constraint error: One or more item types may not be allowed in the database. Please ensure the work_order_items table allows all item types including 'expense'. Original error: ${insertError.message}`)
+                }
+                
                 throw new Error(`Failed to bulk insert items: ${insertError.message}`)
             }
 
@@ -567,22 +598,35 @@ export class WorkOrderItemsService {
         if (existingItems.length > 0) {
             // Prepare updates array for database function
             const updates = existingItems.map(item => {
-                const validated = WorkOrderItemUpdateSchema.parse(item.data)
-                
-                return {
-                    id: item.id!,
-                    description: validated.description,
-                    part_number: validated.part_number,
-                    quantity: validated.quantity,
-                    unit_price: validated.unit_price,
-                    unit_cost: validated.unit_cost,
-                    supplier: validated.supplier,
-                    category: validated.category,
-                    warranty_period: validated.warranty_period,
-                    notes: validated.notes,
-                    labor_hours: validated.labor_hours,
-                    technician_id: validated.technician_id,
-                    active: validated.active,
+                try {
+                    const validated = WorkOrderItemUpdateSchema.parse(item.data)
+                    
+                    const updatePayload: any = {
+                        id: item.id!,
+                        item_type: validated.item_type, // Include item_type for proper routing
+                        description: validated.description,
+                        part_number: validated.part_number,
+                        quantity: validated.quantity,
+                        unit_price: validated.unit_price,
+                        unit_cost: validated.unit_cost,
+                        supplier: validated.supplier,
+                        category: validated.category,
+                        warranty_period: validated.warranty_period,
+                        notes: validated.notes,
+                        labor_hours: validated.labor_hours,
+                        technician_id: validated.technician_id,
+                        active: validated.active,
+                    }
+                    
+                    return updatePayload
+                } catch (validationError: any) {
+                    console.error('Validation error in bulk upsert update for item:', {
+                        itemId: item.id,
+                        itemData: item.data,
+                        itemType: item.data?.item_type,
+                        error: validationError.errors || validationError.message
+                    })
+                    throw validationError
                 }
             })
 
@@ -606,9 +650,12 @@ export class WorkOrderItemsService {
                         for (const item of existingItems) {
                             try {
                                 const validated = WorkOrderItemUpdateSchema.parse(item.data)
-                                // Convert null to undefined for compatibility
+                                // Convert null to undefined for compatibility with individual update method
                                 const updateData: Partial<WorkOrderItemFormData> = {
-                                    ...validated,
+                                    item_type: validated.item_type, // Include item_type
+                                    description: validated.description,
+                                    quantity: validated.quantity,
+                                    unit_price: validated.unit_price,
                                     part_number: validated.part_number ?? undefined,
                                     unit_cost: validated.unit_cost ?? undefined,
                                     supplier: validated.supplier ?? undefined,

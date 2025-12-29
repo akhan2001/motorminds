@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Package, Wrench, Star, DollarSign, Loader2, Save, Tag, Layers } from 'lucide-react'
+import { Package, Wrench, Star, DollarSign, Loader2, Save, Tag, Layers, Receipt } from 'lucide-react'
 import { useCreateWorkOrderItemTemplate, useUpdateWorkOrderItemTemplate } from '../../../hooks/use-work-order-item-templates'
 import { getTemplateCategories } from './Categories/template-categories'
 import type { WorkOrderItemTemplate, WorkOrderItemTemplateFormData } from '../../../types/work-order-item-templates'
@@ -21,6 +21,7 @@ import type { WorkOrderItemTemplate, WorkOrderItemTemplateFormData } from '../..
 const itemTypeOptions = [
     { value: 'labor', label: 'Labor', icon: Wrench },
     { value: 'part', label: 'Part', icon: Package },
+    { value: 'expense', label: 'Expense', icon: Receipt },
     { value: 'service', label: 'Service', icon: Star },
     { value: 'fee', label: 'Fee', icon: DollarSign },
     { value: 'discount', label: 'Discount', icon: Tag },
@@ -82,7 +83,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
 
     // Ensure form always has a valid item_type
     useEffect(() => {
-        if (!formData.item_type || !['labor', 'part', 'service', 'fee', 'discount', 'package'].includes(formData.item_type)) {
+        if (!formData.item_type || !['labor', 'part', 'expense', 'service', 'fee', 'discount', 'package'].includes(formData.item_type)) {
             setFormData(prev => ({
                 ...prev,
                 item_type: 'labor'
@@ -174,6 +175,7 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
 
     const isLabor = formData.item_type === 'labor'
     const isPart = formData.item_type === 'part'
+    const isExpense = formData.item_type === 'expense'
     const isService = formData.item_type === 'service'
     const isFee = formData.item_type === 'fee'
     const isDiscount = formData.item_type === 'discount'
@@ -322,8 +324,8 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                 </div>
             )}
 
-            {/* Part Number (for parts and some services) */}
-            {(isPart || formData.item_type === 'service') && (
+            {/* Part Number (for parts, expenses and some services) */}
+            {(isPart || isExpense || formData.item_type === 'service') && (
                 <div className="space-y-2">
                     <Label htmlFor="part_number" className="text-sm font-medium text-foreground dark:text-gray-300">
                         Part Number {isPart ? '*' : ''}
@@ -339,8 +341,8 @@ export const WorkOrderItemTemplateForm: React.FC<WorkOrderItemTemplateFormProps>
                 </div>
             )}
 
-            {/* Supplier (for parts and services only) */}
-            {(isPart || formData.item_type === 'service') && (
+            {/* Supplier (for parts, expenses and services only) */}
+            {(isPart || isExpense || formData.item_type === 'service') && (
                 <div className="space-y-2">
                     <Label htmlFor="supplier" className="text-sm font-medium text-foreground dark:text-gray-300">
                         Supplier

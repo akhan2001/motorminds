@@ -92,6 +92,34 @@ export class WorkOrderCreationService {
     }
 
     /**
+     * Create work order items from expense items (same structure as parts)
+     */
+    static async createWorkOrderItemsFromExpenseItems(
+        workOrderId: string,
+        expenseItems: any[]
+    ): Promise<void> {
+        const itemPromises = expenseItems.map(async (item) => {
+            const itemData: WorkOrderItemCreateData = {
+                work_order_id: workOrderId,
+                item_type: 'expense' as const,
+                description: item.description,
+                part_number: item.part_number || undefined,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                unit_cost: item.unit_cost || undefined,
+                supplier: item.supplier || undefined,
+                category: item.category || undefined,
+                warranty_period: item.warranty_period || undefined,
+                notes: item.notes || undefined,
+            }
+
+            return WorkOrderItemsService.createWorkOrderItem(itemData)
+        })
+
+        await Promise.all(itemPromises)
+    }
+
+    /**
      * Create work order items from generic items (services, fees, discounts, packages)
      */
     static async createWorkOrderItemsFromGenericItems(
@@ -158,6 +186,17 @@ export class WorkOrderCreationService {
                 totalItemsCreated += workOrderData.partsItems.length
             } catch (error) {
                 console.error('Failed to create work order items from parts items:', error)
+                // Don't fail the entire operation if items creation fails
+            }
+        }
+
+        // Create work order items from expense items
+        if (workOrderData.expenseItems && workOrderData.expenseItems.length > 0) {
+            try {
+                await this.createWorkOrderItemsFromExpenseItems(workOrderId, workOrderData.expenseItems)
+                totalItemsCreated += workOrderData.expenseItems.length
+            } catch (error: any) {
+                console.error('Failed to create work order items from expense items:', error)
                 // Don't fail the entire operation if items creation fails
             }
         }
