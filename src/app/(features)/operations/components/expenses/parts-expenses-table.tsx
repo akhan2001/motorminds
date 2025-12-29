@@ -9,7 +9,7 @@ import { format } from 'date-fns'
 import { Package, Receipt } from 'lucide-react'
 import { WorkOrderDetailSheet } from '../work-orders/shared/work-order-detail-sheet'
 import { useWorkOrderWithDetails } from '../../hooks/use-work-orders'
-import type { WorkOrderItem } from '../../../lib/validations/work-order-items'
+import type { WorkOrderItem } from '../../types/work-order-items'
 
 interface PartsExpensesTableProps {
     items: (WorkOrderItem & { work_order: { id: string; work_order_number: string; title: string | null } })[]
@@ -60,20 +60,6 @@ export function PartsExpensesTable({ items, isLoading, error }: PartsExpensesTab
         return null
     }
 
-    const getStatusBadge = (active: boolean | null | undefined) => {
-        if (active === false) {
-            return (
-                <Badge variant="outline" className="bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20">
-                    Rejected
-                </Badge>
-            )
-        }
-        return (
-            <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
-                Approved
-            </Badge>
-        )
-    }
 
     if (isLoading) {
         return (
@@ -118,16 +104,16 @@ export function PartsExpensesTable({ items, isLoading, error }: PartsExpensesTab
                             <TableHead className="w-[120px]">Part #</TableHead>
                             <TableHead className="w-[100px] text-right">Quantity</TableHead>
                             <TableHead className="w-[120px] text-right">Unit Price</TableHead>
+                            <TableHead className="w-[120px] text-right">Cost</TableHead>
                             <TableHead className="w-[120px] text-right">Total</TableHead>
                             <TableHead className="w-[150px]">Supplier</TableHead>
-                            <TableHead className="w-[120px]">Category</TableHead>
-                            <TableHead className="w-[100px]">Status</TableHead>
                             <TableHead className="w-[150px]">Date</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {items.map((item) => {
                             const itemTotal = (item.quantity || 0) * (item.unit_price || 0)
+                            const itemCost = item.total_cost || 0
                             const isActive = item.active !== false
 
                             return (
@@ -167,6 +153,11 @@ export function PartsExpensesTable({ items, isLoading, error }: PartsExpensesTab
                                         <div className="text-foreground">{formatCurrency(item.unit_price || 0)}</div>
                                     </TableCell>
                                     <TableCell className="text-right">
+                                        <div className="text-muted-foreground text-sm">
+                                            {itemCost > 0 ? formatCurrency(itemCost) : '-'}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
                                         <div className={`font-medium ${!isActive ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
                                             {formatCurrency(itemTotal)}
                                         </div>
@@ -175,14 +166,6 @@ export function PartsExpensesTable({ items, isLoading, error }: PartsExpensesTab
                                         <div className="text-muted-foreground text-sm">
                                             {item.supplier || '-'}
                                         </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="text-muted-foreground text-sm">
-                                            {item.category || '-'}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {getStatusBadge(item.active)}
                                     </TableCell>
                                     <TableCell>
                                         <div className="text-muted-foreground text-sm">

@@ -12,7 +12,7 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: num
             let query = supabase
                 .from('invoices_table')
                 .select(`
-                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes,
+                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes, payments, amount_paid, outstanding_balance,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
                     vehicle:customer_vehicles(id, year, make, model, license_plate),
                     work_order:work_orders(id, work_order_number, title, status)
