@@ -11,6 +11,7 @@ interface ChatAreaProps {
 	shopId?: string
 	selectedSandboxVehicle: SandboxVehicle | null
 	onSandboxVehicleSelect: (vehicle: SandboxVehicle) => void
+	sessionId?: string
 }
 
 export function ChatArea({ 
@@ -18,7 +19,8 @@ export function ChatArea({
 	workOrder, 
 	shopId, 
 	selectedSandboxVehicle,
-	onSandboxVehicleSelect 
+	onSandboxVehicleSelect,
+	sessionId
 }: ChatAreaProps) {
 	// Use sandbox vehicle if selected, otherwise use mock vehicle
 	const activeVehicle = selectedSandboxVehicle || vehicle
@@ -74,9 +76,18 @@ export function ChatArea({
 			<div className="flex-1 min-h-0">
 				<AIDiagnosticsPanel
 					shopId={shopId}
+					sessionId={sessionId}
 					workOrderId={workOrder?.id}
 					vehicleId={activeVehicle.id || activeVehicle.motorId}
 					baseVehicleId={activeVehicle.baseVehicleId}
+					vehicleContext={selectedSandboxVehicle || (activeVehicle.year && activeVehicle.make && activeVehicle.model && activeVehicle.baseVehicleId ? {
+						motorId: activeVehicle.motorId || activeVehicle.id,
+						baseVehicleId: activeVehicle.baseVehicleId,
+						year: activeVehicle.year,
+						make: activeVehicle.make,
+						model: activeVehicle.model,
+						vin: activeVehicle.vin
+					} as SandboxVehicle : null)}
 					dtcCodes={activeVehicle.activeDTCCodes}
 					reportedIssue={workOrder?.reportedIssue}
 					className="h-full"
