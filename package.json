@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 {
     "name": "motorminds",
     "version": "1.0.0",
@@ -147,6 +148,8 @@
     "license": "ISC"
 }
 =======
+=======
+>>>>>>> c4b91d3da158105ba07cbb85d3ad947d3077decb
 {
   "name": "motorminds",
   "version": "1.0.0",
@@ -294,4 +297,7 @@
   "author": "",
   "license": "ISC"
 }
+<<<<<<< HEAD
 >>>>>>> d138abc50c69683f7917e3760d9d74f5bc169563
+=======
+>>>>>>> c4b91d3da158105ba07cbb85d3ad947d3077decb
