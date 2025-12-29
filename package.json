@@ -1,7 +1,7 @@
 {
   "name": "motorminds",
   "version": "1.0.0",
-  "description": "Motorminds - A Shop Management Platform for Automotive Businesses",
+  "description": "MotorMinds - AI Powered Operating System for Automotive Repair",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
