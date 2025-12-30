@@ -5,6 +5,7 @@ import type {
     SelectedTemplate,
     LaborFormItem,
     PartFormItem,
+    ExpenseFormItem,
     GenericFormItem
 } from '../../../../types/work-order-item-forms'
 import { TemplateToItemConverter } from '../../../../lib/template-to-item-converter'
@@ -15,6 +16,7 @@ import { TemplateToItemConverter } from '../../../../lib/template-to-item-conver
 export function useCreateTemplateManagement(
     onLaborItemsChange: (items: LaborFormItem[]) => void,
     onPartsItemsChange: (items: PartFormItem[]) => void,
+    onExpenseItemsChange: (items: ExpenseFormItem[]) => void,
     onServiceItemsChange: (items: GenericFormItem[]) => void,
     onFeeItemsChange: (items: GenericFormItem[]) => void,
     onDiscountItemsChange: (items: GenericFormItem[]) => void,
@@ -22,6 +24,7 @@ export function useCreateTemplateManagement(
     currentItems: {
         laborItems: LaborFormItem[]
         partsItems: PartFormItem[]
+        expenseItems: ExpenseFormItem[]
         serviceItems: GenericFormItem[]
         feeItems: GenericFormItem[]
         discountItems: GenericFormItem[]
@@ -64,6 +67,10 @@ export function useCreateTemplateManagement(
                 onPartsItemsChange([...currentItems.partsItems, item as PartFormItem])
                 toast.success(`Part template "${template.name}" added to items`)
                 break
+            case 'expense':
+                onExpenseItemsChange([...currentItems.expenseItems, item as ExpenseFormItem])
+                toast.success(`Expense template "${template.name}" added to items`)
+                break
             case 'service':
                 onServiceItemsChange([...currentItems.serviceItems, item as GenericFormItem])
                 toast.success(`Service template "${template.name}" added to items`)
@@ -86,6 +93,7 @@ export function useCreateTemplateManagement(
         currentItems,
         onLaborItemsChange,
         onPartsItemsChange,
+        onExpenseItemsChange,
         onServiceItemsChange,
         onFeeItemsChange,
         onDiscountItemsChange,

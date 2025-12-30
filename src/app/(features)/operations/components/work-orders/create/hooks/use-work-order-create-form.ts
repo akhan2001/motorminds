@@ -4,6 +4,7 @@ import type { WalkInVehicleInfo } from '../../../../../customers/types/vehicle'
 import type {
     LaborFormItem,
     PartFormItem,
+    ExpenseFormItem,
     GenericFormItem
 } from '../../../../types/work-order-item-forms'
 
@@ -54,6 +55,7 @@ export interface WorkOrderCreateFormData {
     // Items
     laborItems: LaborFormItem[]
     partsItems: PartFormItem[]
+    expenseItems: ExpenseFormItem[]
     serviceItems: GenericFormItem[]
     feeItems: GenericFormItem[]
     discountItems: GenericFormItem[]
@@ -111,6 +113,7 @@ export function useWorkOrderCreateForm() {
 
         laborItems: [],
         partsItems: [],
+        expenseItems: [],
         serviceItems: [],
         feeItems: [],
         discountItems: [],
@@ -226,6 +229,10 @@ export function useWorkOrderCreateForm() {
         setFormData(prev => ({ ...prev, partsItems: items }))
     }
 
+    const handleExpenseItemsChange = (items: ExpenseFormItem[]) => {
+        setFormData(prev => ({ ...prev, expenseItems: items }))
+    }
+
     const handleServiceItemsChange = (items: GenericFormItem[]) => {
         setFormData(prev => ({ ...prev, serviceItems: items }))
     }
@@ -256,6 +263,7 @@ export function useWorkOrderCreateForm() {
         handleRemoveTag,
         handleLaborItemsChange,
         handlePartsItemsChange,
+        handleExpenseItemsChange,
         handleServiceItemsChange,
         handleFeeItemsChange,
         handleDiscountItemsChange,

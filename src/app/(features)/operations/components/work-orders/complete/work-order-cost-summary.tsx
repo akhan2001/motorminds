@@ -121,7 +121,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 										<span className="text-foreground">{formatCurrency(item.unit_cost)}</span>
 									</div>
 								)}
-								{item.item_type === 'part' && item.supplier && (
+								{(item.item_type === 'part' || item.item_type === 'expense') && item.supplier && (
 									<div>
 										<span className="text-muted-foreground">Supplier: </span>
 										<span className="text-foreground">{item.supplier}</span>
@@ -133,7 +133,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 										<span className="text-foreground">{item.category}</span>
 									</div>
 								)}
-								{item.item_type === 'part' && item.warranty_period && (
+								{(item.item_type === 'part' || item.item_type === 'expense') && item.warranty_period && (
 									<div>
 										<span className="text-muted-foreground">Warranty: </span>
 										<span className="text-foreground">{item.warranty_period}</span>
@@ -177,6 +177,14 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							<span className="text-muted-foreground">Parts</span>
 							<span className="text-foreground font-medium">
 								{formatCurrency(calculations.partsTotal)}
+							</span>
+						</div>
+					)}
+					{(calculations.expensesTotal !== null && calculations.expensesTotal !== undefined && calculations.expensesTotal !== 0) && (
+						<div className="flex justify-between">
+							<span className="text-muted-foreground">Expenses</span>
+							<span className="text-foreground font-medium">
+								{formatCurrency(calculations.expensesTotal)}
 							</span>
 						</div>
 					)}

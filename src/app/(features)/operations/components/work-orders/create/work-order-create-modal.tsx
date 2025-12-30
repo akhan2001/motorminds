@@ -15,6 +15,7 @@ import { WorkOrderNotes } from "../shared/work-order-notes"
 import { WorkOrderModalFooter } from "../shared/work-order-modal-footer"
 import { WorkOrderLaborItems } from "../shared/items/WorkOrderLaborItems"
 import { WorkOrderPartsItems } from "../shared/items/WorkOrderPartsItems"
+import { WorkOrderExpenseItems } from "../shared/items/WorkOrderExpenseItems"
 import { WorkOrderGenericItems } from "../shared/items/WorkOrderGenericItems"
 import { WorkOrderCostSummary } from "../complete/work-order-cost-summary"
 import { InvoiceHistoryPanel } from "../shared/invoice-history-panel"
@@ -69,6 +70,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         handleRemoveTag,
         handleLaborItemsChange,
         handlePartsItemsChange,
+        handleExpenseItemsChange,
         handleServiceItemsChange,
         handleFeeItemsChange,
         handleDiscountItemsChange,
@@ -79,6 +81,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     const templateManagement = useCreateTemplateManagement(
         handleLaborItemsChange,
         handlePartsItemsChange,
+        handleExpenseItemsChange,
         handleServiceItemsChange,
         handleFeeItemsChange,
         handleDiscountItemsChange,
@@ -86,6 +89,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         {
             laborItems: formData.laborItems,
             partsItems: formData.partsItems,
+            expenseItems: formData.expenseItems,
             serviceItems: formData.serviceItems,
             feeItems: formData.feeItems,
             discountItems: formData.discountItems,
@@ -100,6 +104,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
     const handlePartItemSaved = (item: any) => {
         toast.success(`Part item "${item.description}" saved successfully`)
+    }
+
+    const handleExpenseItemSaved = (item: any) => {
+        toast.success(`Expense item "${item.description}" saved successfully`)
     }
 
     const handleGenericItemSaved = (item: any) => {
@@ -150,6 +158,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 // Don't pass selectedTemplates - items are already in laborItems/partsItems
                 laborItems: formData.laborItems, // Include labor items
                 partsItems: formData.partsItems, // Include parts items
+                expenseItems: formData.expenseItems, // Include expense items
                 serviceItems: formData.serviceItems, // Include service items
                 feeItems: formData.feeItems, // Include fee items
                 discountItems: formData.discountItems, // Include discount items
@@ -350,6 +359,16 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                     />
                                                 </div>
 
+                                                {/* Expense Items */}
+                                                <div className="mb-6">
+                                                    <WorkOrderExpenseItems
+                                                        items={formData.expenseItems}
+                                                        onItemsChange={handleExpenseItemsChange}
+                                                        workOrderId={undefined} // No workOrderId for creation
+                                                        onItemSaved={handleExpenseItemSaved}
+                                                    />
+                                                </div>
+
                                                 {/* Service Items */}
                                                 <div className="mb-6">
                                                     <WorkOrderGenericItems
@@ -435,6 +454,26 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                             work_order_id: '',
                                                             shop_id: shopId || '',
                                                             item_type: 'part' as const,
+                                                            description: item.description,
+                                                            quantity: item.quantity,
+                                                            unit_price: item.unit_price,
+                                                            total_price: item.total_price,
+                                                            part_number: item.part_number,
+                                                            unit_cost: item.unit_cost,
+                                                            total_cost: item.total_cost,
+                                                            supplier: item.supplier,
+                                                            category: item.category,
+                                                            warranty_period: item.warranty_period,
+                                                            notes: item.notes,
+                                                            active: item.active !== false,
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                        })),
+                                                        ...formData.expenseItems.map(item => ({
+                                                            id: item.id,
+                                                            work_order_id: '',
+                                                            shop_id: shopId || '',
+                                                            item_type: 'expense' as const,
                                                             description: item.description,
                                                             quantity: item.quantity,
                                                             unit_price: item.unit_price,

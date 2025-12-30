@@ -89,7 +89,7 @@ export interface WorkOrderItem {
     work_order_id: string
     shop_service_id?: string
 
-    item_type: 'labor' | 'part' | 'service' | 'fee'
+    item_type: 'labor' | 'part' | 'service' | 'fee' | 'expense'
     description: string
     part_number?: string
 

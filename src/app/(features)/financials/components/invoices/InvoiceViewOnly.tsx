@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
+import { InvoicePaymentsSection } from './InvoicePaymentsSection'
 import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
@@ -427,6 +428,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         </div>
                     </Card>
 
+                    {/* Payments Section */}
+                    <InvoicePaymentsSection invoice={invoice} />
+
                     {/* Amount and Status Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
@@ -452,43 +456,65 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 <Separator className="bg-border dark:bg-gray-700" />
                                 <div className="flex justify-between items-center pt-2">
                                     <div>
-                                        <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Due:</p>
+                                        <p className="text-muted-foreground dark:text-gray-400 font-medium">Total Amount:</p>
                                     </div>
                                     <div>
                                         <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                     </div>
                                 </div>
+                                {(invoice.amount_paid !== undefined && invoice.amount_paid > 0) && (
+                                    <>
+                                        <Separator className="bg-border dark:bg-gray-700" />
+                                        <div className="flex justify-between items-center pt-2">
+                                            <div>
+                                                <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Paid:</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xl font-semibold text-green-600 dark:text-green-400">
+                                                    {formatCurrency(invoice.amount_paid)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-muted-foreground dark:text-gray-400 font-medium">Outstanding:</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                                                        {formatCurrency(invoice.outstanding_balance)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                                 <div className="flex items-center justify-between gap-2 pt-2">
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Badge
                                                     variant="outline"
-                                                    onClick={
-                                                        invoice.status !== 'paid' &&
-                                                            invoice.status !== 'cancelled' &&
-                                                            invoice.status !== 'refunded' &&
-                                                            !updateMutation.isPending
-                                                            ? handleMarkAsPaid
-                                                            : undefined
-                                                    }
                                                     className={cn(
                                                         "text-sm px-3 py-1",
                                                         invoice.status === 'paid'
                                                             ? 'bg-green-600 text-white border-green-600 cursor-default'
-                                                            : 'bg-red-600 text-white border-red-600 cursor-pointer hover:bg-emerald-600 hover:border-emerald-600',
-                                                        updateMutation.isPending && "opacity-70 cursor-wait"
+                                                            : invoice.status === 'partially_paid'
+                                                            ? 'bg-yellow-600 text-white border-yellow-600 cursor-default'
+                                                            : 'bg-red-600 text-white border-red-600 cursor-default'
                                                     )}
                                                 >
                                                     <DollarSign className="w-3 h-3 mr-1" />
-                                                    {invoice.status.toUpperCase()}
+                                                    {invoice.status === 'partially_paid' ? 'PARTIALLY PAID' : invoice.status.toUpperCase()}
                                                 </Badge>
                                             </TooltipTrigger>
                                             <TooltipContent side="left">
                                                 <p>
                                                     {invoice.status === 'paid'
-                                                        ? 'This invoice is already marked as paid.'
-                                                        : 'Click to mark this invoice as paid.'}
+                                                        ? 'This invoice is fully paid.'
+                                                        : invoice.status === 'partially_paid'
+                                                        ? 'This invoice has partial payments.'
+                                                        : 'This invoice is unpaid.'}
                                                 </p>
                                             </TooltipContent>
                                         </Tooltip>
