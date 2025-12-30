@@ -4,6 +4,7 @@ export interface InvoiceCalculations {
 	subtotal: number
 	labourTotal: number
 	partsTotal: number
+	expensesTotal: number
 	servicesTotal: number
 	feesTotal: number
 	discountsTotal: number
@@ -12,6 +13,7 @@ export interface InvoiceCalculations {
 	rejectedItems: WorkOrderItem[]
 	labourItems: WorkOrderItem[]
 	partsItems: WorkOrderItem[]
+	expensesItems: WorkOrderItem[]
 	servicesItems: WorkOrderItem[]
 	feesItems: WorkOrderItem[]
 	discountsItems: WorkOrderItem[]
@@ -29,6 +31,7 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	// Separate approved items by type
 	const labourItems = approvedItems.filter(item => item.item_type === 'labor')
 	const partsItems = approvedItems.filter(item => item.item_type === 'part')
+	const expensesItems = approvedItems.filter(item => item.item_type === 'expense')
 	const servicesItems = approvedItems.filter(item => item.item_type === 'service')
 	const feesItems = approvedItems.filter(item => item.item_type === 'fee')
 	const discountsItems = approvedItems.filter(item => item.item_type === 'discount')
@@ -43,6 +46,12 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	
 	const partsTotal = partsItems.reduce((sum, item) => {
 		// For parts: quantity * unit_price
+		const total = (item.quantity || 0) * (item.unit_price || 0)
+		return sum + total
+	}, 0)
+	
+	const expensesTotal = expensesItems.reduce((sum, item) => {
+		// For expenses: quantity * unit_price
 		const total = (item.quantity || 0) * (item.unit_price || 0)
 		return sum + total
 	}, 0)
@@ -72,12 +81,13 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	}, 0)
 	
 	// Subtract discounts from subtotal (discounts reduce the total)
-	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
+	const subtotal = labourTotal + partsTotal + expensesTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
 	
 	return {
 		subtotal,
 		labourTotal,
 		partsTotal,
+		expensesTotal,
 		servicesTotal,
 		feesTotal,
 		discountsTotal,
@@ -86,6 +96,7 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		rejectedItems,
 		labourItems,
 		partsItems,
+		expensesItems,
 		servicesItems,
 		feesItems,
 		discountsItems,

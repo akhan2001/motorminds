@@ -31,6 +31,11 @@ export interface Invoice {
     created_at: string
     updated_at: string
     
+    // Payment tracking (new fields)
+    payments: Payment[]
+    amount_paid: number
+    outstanding_balance: number
+    
     // Walk-in customer support
     customer_type: 'registered' | 'walk_in'
     walk_in_vehicle_info?: WalkInVehicleInfo
@@ -109,6 +114,7 @@ export type InvoiceStatus =
     | 'draft'
     | 'sent'
     | 'viewed'
+    | 'partially_paid'
     | 'paid'
     | 'unpaid'
     | 'overdue'
@@ -129,9 +135,22 @@ export type PaymentMethod =
     | 'check'
     | 'other'
 
+// Payment record stored in payments JSONB array
+export interface Payment {
+    id: string  // UUID generated on client
+    amount: number
+    payment_method: PaymentMethod
+    payment_date: string  // ISO date string
+    payment_reference?: string | null
+    notes?: string | null
+    created_at: string
+    created_by?: string  // user_id if available
+}
+
 export type ItemType = 
     | 'labor'
     | 'part'
+    | 'expense'
     | 'service'
     | 'fee'
     | 'discount'

@@ -9,6 +9,7 @@ export const WORK_ORDER_ITEM_TYPES = {
     FEE: 'fee',
     DISCOUNT: 'discount',
     PACKAGE: 'package',
+    EXPENSE: 'expense',
 } as const
 
 export type WorkOrderItemType =
@@ -21,6 +22,7 @@ export const ITEM_TYPE_LABELS: Record<WorkOrderItemType, string> = {
     [WORK_ORDER_ITEM_TYPES.FEE]: 'Fee',
     [WORK_ORDER_ITEM_TYPES.DISCOUNT]: 'Discount',
     [WORK_ORDER_ITEM_TYPES.PACKAGE]: 'Package',
+    [WORK_ORDER_ITEM_TYPES.EXPENSE]: 'Expense',
 }
 
 /**
