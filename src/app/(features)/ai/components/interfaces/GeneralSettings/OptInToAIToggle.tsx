@@ -29,15 +29,22 @@ export const OptInToAIToggle = () => {
                     <p>
                         By default, no shop data is shared with third-party AI providers. With your permission,
                         MotorMinds may share vehicle technical data, work order history, and customer information
-                        with these providers based on your selected opt-in level. This information is used solely
-                        to generate responses to your queries and is not retained by the providers or used to
-                        train their models.
+                        with these providers based on your selected opt-in level. MotorMinds configures third-party 
+                        AI providers to process data transiently and not use it for model training, in accordance 
+                        with our agreements and provider policies.
                     </p>
 
                     <p>
-                        For organizations with HIPAA compliance enabled, any consented information will only be
-                        shared with third-party AI providers with whom MotorMinds has established a Business
-                        Associate Agreement (BAA).
+                        <strong>Important:</strong> MotorMinds AI does not generate, rewrite, or replace OEM service 
+                        procedures. OEM information is retrieved verbatim from licensed sources and presented separately 
+                        from AI-generated guidance. AI responses are intended as diagnostic guidance only. Technicians 
+                        should always refer to OEM procedures for complete and authoritative instructions.
+                    </p>
+
+                    <p>
+                        For organizations that handle regulated personal or health-related information and have enabled 
+                        enhanced compliance controls, MotorMinds will only share consented data with AI providers under 
+                        appropriate contractual safeguards (e.g., BAAs where applicable).
                     </p>
 
                     <p>

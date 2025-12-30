@@ -42,7 +42,7 @@ export const AIOptInLevelSelector = ({
         },
         {
             value: 'full' as const,
-            title: 'Full Access',
+            title: 'Full Context (Explicit Consent)',
             description:
                 'You consent to sharing all shop data including customer information, vehicle data, work orders, and invoices with third-party AI providers. Responses will be fully personalized with maximum context and assistance.',
         },
@@ -63,9 +63,9 @@ export const AIOptInLevelSelector = ({
                     setting, so please select the level of data you are comfortable sharing.
                 </p>
                 <p className="text-sm text-muted-foreground">
-                    For shops with HIPAA compliance enabled, any consented information will only be shared 
-                    with third-party AI providers with whom MotorMinds has established a Business Associate 
-                    Agreement (BAA).
+                    <strong>Important:</strong> AI responses are intended as diagnostic guidance only. Technicians 
+                    should always refer to OEM procedures for complete and authoritative instructions. MotorMinds AI 
+                    does not generate, rewrite, or replace OEM service procedures.
                 </p>
                 <OptInToAIToggle />
             </div>
