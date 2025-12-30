@@ -15,7 +15,7 @@ import {
 import { prepareMessagesForAPI } from '@/app/(features)/ai/diagnostics/lib/message-utils'
 import { sanitizeMessage, type DiagnosticAiOptInLevel } from '@/app/(features)/ai/diagnostics/lib/tool-sanitizer'
 
-export const maxDuration = 120
+export const maxDuration = 60
 
 const requestSchema = z.object({
 	messages: z.array(z.any()),
