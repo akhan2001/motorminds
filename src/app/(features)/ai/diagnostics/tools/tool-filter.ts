@@ -111,6 +111,15 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
 export type AiOptInLevel = 'disabled' | 'schema' | 'full'
 
 /**
+ * TODO:
+ */
+export type DiagnosticAiOptInLevel = 
+  | 'disabled' 
+  | 'vehicle_only' 
+  | 'vehicle_and_work_orders' 
+  | 'full'
+
+/**
  * Get the minimum opt-in level required for a tool category
  */
 function getMinimumOptInLevel(category: ToolCategory): AiOptInLevel | null {

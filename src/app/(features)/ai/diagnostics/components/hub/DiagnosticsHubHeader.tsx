@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Plus, Flame, Clock, Calendar, Folder } from 'lucide-react'
+import { Search, Plus, Flame, Clock, Calendar, Folder, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type SessionFilterTab = 'active' | 'pending_review' | 'recent' | 'completed'
@@ -12,6 +12,7 @@ interface DiagnosticsHubHeaderProps {
 	searchQuery: string
 	onSearchChange: (query: string) => void
 	onNewSession: () => void
+	onSettingsClick?: () => void
 	activeTab: SessionFilterTab
 	onTabChange: (tab: SessionFilterTab) => void
 	counts?: {
@@ -26,6 +27,7 @@ export function DiagnosticsHubHeader({
 	searchQuery,
 	onSearchChange,
 	onNewSession,
+	onSettingsClick,
 	activeTab,
 	onTabChange,
 	counts,
@@ -90,6 +92,19 @@ export function DiagnosticsHubHeader({
 							className="pl-9 pr-4 h-9 text-sm"
 						/>
 					</div>
+
+					{/* Settings Button */}
+					{onSettingsClick && (
+						<Button
+							variant="outline"
+							size="icon"
+							onClick={onSettingsClick}
+							className="h-9 w-9 border-border hover:bg-accent"
+							title="AI Settings"
+						>
+							<Settings className="w-4 h-4" />
+						</Button>
+					)}
 
 					{/* New Session Button */}
 					<Button

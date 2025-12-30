@@ -10,12 +10,23 @@ import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 import { AlertCircle } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { useDiagnosticSessions } from './hooks/use-diagnostic-sessions'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { AIOptInLevelSelector } from '../components/interfaces/GeneralSettings/AIOptInLevelSelector'
+import { useAIOptInForm } from './hooks/forms/useAIOptInForm'
+import { Form } from '@/components/ui/form'
 
 export default function AIDiagnosticsPage() {
 	const { user, shopId, isLoading, error } = useAuth()
 	const [searchQuery, setSearchQuery] = useState('')
 	const [activeTab, setActiveTab] = useState<SessionFilterTab>('active')
 	const [isNewSessionDialogOpen, setIsNewSessionDialogOpen] = useState(false)
+	const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
+
+	// AI Opt-in form
+	const { form, onSubmit, isUpdating } = useAIOptInForm(() => {
+		setIsSettingsDialogOpen(false)
+	})
 
 	// Fetch all sessions for counts
 	const { data: allSessions } = useDiagnosticSessions(shopId || '', { limit: 1000 })
@@ -105,6 +116,7 @@ export default function AIDiagnosticsPage() {
 						searchQuery={searchQuery}
 						onSearchChange={setSearchQuery}
 						onNewSession={() => setIsNewSessionDialogOpen(true)}
+						onSettingsClick={() => setIsSettingsDialogOpen(true)}
 						activeTab={activeTab}
 						onTabChange={setActiveTab}
 						counts={counts}
@@ -137,6 +149,40 @@ export default function AIDiagnosticsPage() {
 				onOpenChange={setIsNewSessionDialogOpen}
 				shopId={shopId}
 			/>
+
+			{/* AI Settings Dialog */}
+			<Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
+				<DialogContent className="bg-white dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>AI Diagnostics Settings</DialogTitle>
+					</DialogHeader>
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+							<AIOptInLevelSelector
+								control={form.control}
+								label="Data Sharing Level"
+							/>
+							<div className="flex justify-end gap-3 pt-4 border-t">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => setIsSettingsDialogOpen(false)}
+									disabled={isUpdating}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									disabled={isUpdating}
+									className="bg-blue-600 hover:bg-blue-700"
+								>
+									{isUpdating ? 'Saving...' : 'Save Settings'}
+								</Button>
+							</div>
+						</form>
+					</Form>
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 }
