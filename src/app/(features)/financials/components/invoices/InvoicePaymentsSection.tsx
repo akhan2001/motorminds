@@ -23,9 +23,14 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
 
     const payments = (invoice.payments || []) as Payment[]
     const amountPaid = invoice.amount_paid || 0
-    const outstanding = invoice.outstanding_balance !== undefined 
-        ? invoice.outstanding_balance 
-        : invoice.total_amount - amountPaid
+    
+    // For draft invoices, outstanding balance should be total_amount if not calculated yet
+    // For other invoices, use calculated outstanding_balance or calculate it
+    const outstanding = invoice.status === 'draft' && (invoice.outstanding_balance === undefined || invoice.outstanding_balance === 0)
+        ? invoice.total_amount
+        : invoice.outstanding_balance !== undefined 
+            ? invoice.outstanding_balance 
+            : invoice.total_amount - amountPaid
     const paymentProgress = invoice.total_amount > 0 
         ? (amountPaid / invoice.total_amount) * 100 
         : 0

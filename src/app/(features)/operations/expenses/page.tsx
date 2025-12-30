@@ -1,11 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 import { usePartsAndExpenses } from '../hooks/use-parts-expenses'
 import { PartsExpensesTable } from '../components/expenses/parts-expenses-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, Receipt } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Package, Receipt, ArrowLeft } from 'lucide-react'
 import {
     Pagination,
     PaginationContent,
@@ -16,6 +18,7 @@ import {
 } from '@/components/ui/pagination'
 
 export default function ExpensesPage() {
+    const router = useRouter()
     const { shopId } = useAuth()
     const [currentPage, setCurrentPage] = useState(1)
     const pageSize = 50
@@ -33,8 +36,15 @@ export default function ExpensesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Parts & Expenses</h1>
-                    <p className="text-muted-foreground mt-1">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Button variant="ghost" size="icon" onClick={() => router.push('/operations/work-orders')} className="-ml-2">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                        <h1 className="text-3xl font-bold text-foreground dark:text-white">
+                            Parts & Expenses
+                        </h1>
+                    </div>
+                    <p className="text-muted-foreground dark:text-gray-400 ml-11">
                         View all parts and expenses across all work orders
                     </p>
                 </div>
