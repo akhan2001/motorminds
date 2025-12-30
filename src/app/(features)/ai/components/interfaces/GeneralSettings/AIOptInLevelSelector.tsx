@@ -1,0 +1,106 @@
+import { ReactNode } from "react"
+import { Control } from "react-hook-form"
+import { FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { OptInToAIToggle } from "./OptInToAIToggle"
+import type { AIOptInFormValues } from "../../../diagnostics/hooks/forms/useAIOptInForm"
+
+interface AIOptInLevelSelectorProps {
+    control: Control<AIOptInFormValues>
+    disabled?: boolean
+    label?: ReactNode
+    layout?: 'horizontal' | 'vertical' | 'flex-row-reverse'
+}
+
+export const AIOptInLevelSelector = ({
+    control,
+    disabled,
+    label,
+    layout = 'vertical'
+}: AIOptInLevelSelectorProps) => {
+    // TODO: Implement feature flags when ready
+    // For now, show all levels
+    const AI_OPT_IN_LEVELS = [
+        {
+            value: 'vehicle_only' as const,
+            title: 'Vehicle Only',
+            description:
+                'You consent to sharing vehicle technical data (year, make, model, VIN, specifications) with third-party AI providers. Customer information (names, emails, phones) and work order details will not be shared.',
+        },
+        {
+            value: 'vehicle_and_work_orders' as const,
+            title: 'Vehicle & Work Orders',
+            description:
+                'You consent to sharing vehicle data and work order history with third-party AI providers. Customer names and contact information will be anonymized. Responses will be tailored to your vehicle and service history patterns.',
+        },
+        {
+            value: 'full' as const,
+            title: 'Full Context (Explicit Consent)',
+            description:
+                'You consent to sharing all shop data including customer information, vehicle data, work orders, and invoices with third-party AI providers. Responses will be fully personalized with maximum context and assistance.',
+        },
+    ]
+
+    return (
+        <div className="space-y-4">
+            {label && (
+                <div>
+                    <h3 className="text-sm font-medium text-foreground">{label}</h3>
+                </div>
+            )}
+            
+            <div className="flex flex-col gap-y-4 my-4 max-w-xl">
+                <p className="text-sm text-muted-foreground">
+                    MotorMinds AI can provide more relevant answers if you choose to share different levels of
+                    data. This feature is powered by third-party AI providers. This is a shop-wide
+                    setting, so please select the level of data you are comfortable sharing.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                    <strong>Important:</strong> AI responses are intended as diagnostic guidance only. Technicians 
+                    should always refer to OEM procedures for complete and authoritative instructions. MotorMinds AI 
+                    does not generate, rewrite, or replace OEM service procedures.
+                </p>
+                <OptInToAIToggle />
+            </div>
+
+            <div className="max-w-xl">
+                <FormField
+                    control={control}
+                    name="aiOptInLevel"
+                    render={({ field }) => (
+                        <FormItem>
+                            <RadioGroup
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                disabled={disabled}
+                                className="space-y-3"
+                            >
+                                {AI_OPT_IN_LEVELS.map((item) => (
+                                    <div key={item.value} className="flex items-start space-x-3">
+                                        <RadioGroupItem
+                                            value={item.value}
+                                            id={`ai-opt-in-${item.value}`}
+                                            className="mt-0.5"
+                                        />
+                                        <Label
+                                            htmlFor={`ai-opt-in-${item.value}`}
+                                            className="cursor-pointer flex flex-col flex-1"
+                                        >
+                                            <span className="text-sm font-medium text-foreground">
+                                                {item.title}
+                                            </span>
+                                            <span className="text-sm text-muted-foreground mt-1">
+                                                {item.description}
+                                            </span>
+                                        </Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                        </FormItem>
+                    )}
+                />
+            </div>
+        </div>
+    )
+}

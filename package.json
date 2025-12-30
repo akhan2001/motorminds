@@ -1,7 +1,7 @@
 {
   "name": "motorminds",
   "version": "1.0.0",
-  "description": "Motorminds - A Shop Management Platform for Automotive Businesses",
+  "description": "MotorMinds - AI Powered Operating System for Automotive Repair",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
@@ -48,6 +48,7 @@
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-radio-group": "^1.3.8",
     "@radix-ui/react-scroll-area": "^1.2.3",
     "@radix-ui/react-select": "^2.1.6",
     "@radix-ui/react-separator": "^1.1.2",

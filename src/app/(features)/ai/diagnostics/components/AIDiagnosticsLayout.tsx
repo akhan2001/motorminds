@@ -12,17 +12,26 @@ import {
 	mockDiagrams
 } from '../types/MockData'
 import { RightSidebar } from './right-panel'
+import type { SandboxVehicle } from './VehicleSelector'
 
 interface AIDiagnosticsLayoutProps {
 	shopId?: string
+	sessionId?: string
+	vehicleContext?: SandboxVehicle | null
 }
 
-// Temporary placeholder types
-type SandboxVehicle = any
-
-export function AIDiagnosticsLayout({ shopId }: AIDiagnosticsLayoutProps) {
-	const [selectedVehicle, setSelectedVehicle] = useState(mockVehicleData)
-	const [selectedSandboxVehicle, setSelectedSandboxVehicle] = useState<SandboxVehicle | null>(null)
+export function AIDiagnosticsLayout({ 
+	shopId, 
+	sessionId,
+	vehicleContext 
+}: AIDiagnosticsLayoutProps) {
+	// Use vehicleContext from session if provided, otherwise use mock data
+	const [selectedVehicle, setSelectedVehicle] = useState(
+		vehicleContext || mockVehicleData
+	)
+	const [selectedSandboxVehicle, setSelectedSandboxVehicle] = useState<SandboxVehicle | null>(
+		vehicleContext || null
+	)
 	const [selectedWorkOrder, setSelectedWorkOrder] = useState(mockWorkOrders[0] || null)
 
 	return (
@@ -37,6 +46,7 @@ export function AIDiagnosticsLayout({ shopId }: AIDiagnosticsLayoutProps) {
 							shopId={shopId}
 							selectedSandboxVehicle={selectedSandboxVehicle}
 							onSandboxVehicleSelect={setSelectedSandboxVehicle}
+							sessionId={sessionId}
 						/>
 					</div>
 				</ResizablePanel>

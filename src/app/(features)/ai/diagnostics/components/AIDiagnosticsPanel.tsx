@@ -7,12 +7,15 @@ import { DiagnosticsChatForm } from './DiagnosticsChatForm'
 import { DiagnosticsOnboarding } from './DiagnosticsOnboarding'
 import { Message } from './Message'
 import { Conversation, ConversationContent, ConversationScrollButton } from './elements/Conversation'
+import type { SandboxVehicle } from './VehicleSelector'
 
 interface AIDiagnosticsPanelProps {
 	shopId?: string
+	sessionId?: string
 	workOrderId?: string
 	vehicleId?: number
 	baseVehicleId?: number
+	vehicleContext?: SandboxVehicle | null
 	dtcCodes?: string[]
 	reportedIssue?: string
 	className?: string
@@ -21,9 +24,11 @@ interface AIDiagnosticsPanelProps {
 
 export function AIDiagnosticsPanel({
 	shopId,
+	sessionId,
 	workOrderId,
 	vehicleId,
 	baseVehicleId,
+	vehicleContext,
 	dtcCodes = [],
 	reportedIssue,
 	className = '',
@@ -39,15 +44,27 @@ export function AIDiagnosticsPanel({
 		id: 'ai-diagnostics',
 		transport: new DefaultChatTransport({
 			api: '/api/ai/diagnostics',
-			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[]; [key: string]: any }) {
+			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[];[key: string]: any }) {
+				// Build vehicle context object from vehicleContext if available
+				const vehicleContextData = vehicleContext
+					? {
+						year: vehicleContext.year,
+						make: vehicleContext.make,
+						model: vehicleContext.model,
+						vin: vehicleContext.vin
+					}
+					: undefined
+
 				return {
 					...options,
 					body: {
 						messages,
 						shopId: shopId || '',
+						sessionId,
 						workOrderId,
-						selectedVehicleId: vehicleId,
-						baseVehicleId
+						vehicleId: vehicleId || vehicleContext?.motorId,
+						baseVehicleId: baseVehicleId || vehicleContext?.baseVehicleId,
+						vehicleContext: vehicleContextData
 					}
 				}
 			}

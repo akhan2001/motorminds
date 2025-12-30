@@ -3,9 +3,7 @@ import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
 import { getMotorTools } from './motor-daas-tools'
 import { getRenderingTools } from './rendering-tools'
 import { getPerplexityTools } from './perplexity-research-tool'
-import { filterToolsByOptInLevel } from './tool-filter'
-
-type AiOptInLevel = 'disabled' | 'schema' | 'full'
+import { filterToolsByOptInLevel, type DiagnosticAiOptInLevel } from './tool-filter'
 
 export const getTools = async ({
     shopId,
@@ -18,7 +16,7 @@ export const getTools = async ({
     shopId: string
     vehicleId?: number
     authorization?: string
-    aiOptInLevel: AiOptInLevel
+    aiOptInLevel: DiagnosticAiOptInLevel
     accessToken?: string
     motorClient: MotorDaasClient
 }): ToolSet => {
