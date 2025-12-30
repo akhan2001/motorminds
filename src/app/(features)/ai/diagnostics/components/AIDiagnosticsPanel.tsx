@@ -44,15 +44,15 @@ export function AIDiagnosticsPanel({
 		id: 'ai-diagnostics',
 		transport: new DefaultChatTransport({
 			api: '/api/ai/diagnostics',
-			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[]; [key: string]: any }) {
+			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[];[key: string]: any }) {
 				// Build vehicle context object from vehicleContext if available
 				const vehicleContextData = vehicleContext
 					? {
-							year: vehicleContext.year,
-							make: vehicleContext.make,
-							model: vehicleContext.model,
-							vin: vehicleContext.vin
-						}
+						year: vehicleContext.year,
+						make: vehicleContext.make,
+						model: vehicleContext.model,
+						vin: vehicleContext.vin
+					}
 					: undefined
 
 				return {
