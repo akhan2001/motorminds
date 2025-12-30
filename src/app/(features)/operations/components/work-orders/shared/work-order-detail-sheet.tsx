@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Wrench, Calendar, DollarSign, User, Car, Package, Clock, MapPin, Tag, FileText, Archive } from 'lucide-react'
@@ -85,6 +85,15 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
     const calculations = workOrderItems.length > 0 ? calculateInvoiceTotals(workOrderItems) : null
     const TAX_RATE = 0.13
 
+    // Calculate parts and expenses costs
+    const partsCost = workOrderItems
+        .filter(item => item.item_type === 'part' && item.active !== false)
+        .reduce((sum, item) => sum + (item.total_cost || 0), 0)
+    
+    const expensesCost = workOrderItems
+        .filter(item => item.item_type === 'expense' && item.active !== false)
+        .reduce((sum, item) => sum + (item.total_cost || 0), 0)
+
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent className="w-[600px] sm:w-[700px] bg-white dark:bg-[#0a0a0a] border-border dark:border-[#222222] overflow-y-auto">
@@ -101,8 +110,14 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                             {getPriorityBadge(workOrder.priority)}
                         </div>
                     </div>
-                    {workOrder.title && (
-                        <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">{workOrder.title}</p>
+                    {workOrder.title ? (
+                        <SheetDescription className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
+                            {workOrder.title}
+                        </SheetDescription>
+                    ) : (
+                        <SheetDescription className="sr-only">
+                            Work order details
+                        </SheetDescription>
                     )}
                 </SheetHeader>
 
@@ -245,6 +260,12 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                                         <span className="text-foreground dark:text-white">{formatCurrency(calculations.partsTotal)}</span>
                                     </div>
                                 )}
+                                {calculations.expensesTotal > 0 && (
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground dark:text-gray-400">Expenses:</span>
+                                        <span className="text-foreground dark:text-white">{formatCurrency(calculations.expensesTotal)}</span>
+                                    </div>
+                                )}
                                 {calculations.servicesTotal > 0 && (
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground dark:text-gray-400">Services:</span>
@@ -338,6 +359,11 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                                                                 <div>
                                                                     <span>Qty: {item.quantity || 0} × {formatCurrency(item.unit_price || 0)} = {formatCurrency(itemTotal)}</span>
                                                                 </div>
+                                                                {(item.item_type === 'part' || item.item_type === 'expense') && item.total_cost && item.total_cost > 0 && (
+                                                                    <div>
+                                                                        <span className="font-medium">Cost:</span> {formatCurrency(item.total_cost)}
+                                                                    </div>
+                                                                )}
                                                                 {item.part_number && (
                                                                     <div>
                                                                         <span className="font-medium">Part #:</span> {item.part_number}

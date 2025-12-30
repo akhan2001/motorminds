@@ -12,7 +12,8 @@ import {
     Layers,
     Clock,
     ChevronDown,
-    Search
+    Search,
+    Receipt
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/currency'
 import { useSearchWorkOrderItemTemplates, useWorkOrderItemTemplatesByType } from '../../../hooks/use-work-order-item-templates'
@@ -20,7 +21,7 @@ import type { WorkOrderItemTemplate } from '../../../types/work-order-item-templ
 
 interface TemplateDropdownProps {
     shopId: string
-    itemType: 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package'
+    itemType: 'labor' | 'part' | 'expense' | 'service' | 'fee' | 'discount' | 'package'
     value: string
     onChange: (value: string) => void
     onTemplateSelect: (template: WorkOrderItemTemplate) => void
@@ -35,6 +36,8 @@ const getItemTypeIcon = (type: string) => {
             return <Wrench className="h-3 w-3" />
         case 'part':
             return <Package className="h-3 w-3" />
+        case 'expense':
+            return <Receipt className="h-3 w-3" />
         case 'service':
             return <Star className="h-3 w-3" />
         case 'fee':

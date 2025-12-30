@@ -8,7 +8,8 @@ export const WorkOrderItemTypeSchema = z.enum([
     'service',
     'fee',
     'discount',
-    'package'
+    'package',
+    'expense'
 ])
 
 // Technician schema for joined data

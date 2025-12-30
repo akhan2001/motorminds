@@ -47,6 +47,10 @@ export function calculateWorkOrderItemsTotals(items: WorkOrderItem[]) {
                     acc.partsTotal += item.total_price
                     acc.subtotal += item.total_price
                     break
+                case 'expense':
+                    acc.expensesTotal += item.total_price
+                    acc.subtotal += item.total_price
+                    break
                 case 'labor':
                     acc.laborTotal += item.total_price
                     acc.laborHours += item.labor_hours || 0
@@ -79,6 +83,7 @@ export function calculateWorkOrderItemsTotals(items: WorkOrderItem[]) {
         {
             subtotal: 0,
             partsTotal: 0,
+            expensesTotal: 0,
             laborTotal: 0,
             servicesTotal: 0,
             feesTotal: 0,

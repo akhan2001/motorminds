@@ -41,6 +41,25 @@ export interface PartFormItem {
 }
 
 /**
+ * Expense item form data (duplicate of PartFormItem but stored as generic item type)
+ */
+export interface ExpenseFormItem {
+    id: string
+    description: string
+    part_number?: string
+    quantity: number
+    unit_price: number
+    total_price: number
+    unit_cost?: number // Optional cost tracking
+    total_cost?: number // Optional cost tracking
+    supplier?: string
+    category?: string
+    warranty_period?: string
+    notes?: string
+    active?: boolean // For edit mode tracking
+}
+
+/**
  * Generic item form data (used for Services, Fees, Discounts, Packages)
  */
 export interface GenericFormItem {
@@ -72,6 +91,7 @@ export interface SelectedTemplate extends WorkOrderItemTemplate {
 export interface WorkOrderItemsByType {
     laborItems: LaborFormItem[]
     partsItems: PartFormItem[]
+    expenseItems: ExpenseFormItem[]
     serviceItems: GenericFormItem[]
     feeItems: GenericFormItem[]
     discountItems: GenericFormItem[]

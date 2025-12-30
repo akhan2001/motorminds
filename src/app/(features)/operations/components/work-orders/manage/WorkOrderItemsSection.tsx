@@ -4,19 +4,21 @@
 // Direct imports for better tree-shaking
 import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
 import { WorkOrderPartsItems } from '../shared/items/WorkOrderPartsItems'
+import { WorkOrderExpenseItems } from '../shared/items/WorkOrderExpenseItems'
 import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'
-import type { LaborFormItem, PartFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
+import type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
 
 interface WorkOrderItemsSectionProps {
     itemsByType: {
         labor: LaborFormItem[]
         parts: PartFormItem[]
+        expenses: ExpenseFormItem[]
         services: GenericFormItem[]
         fees: GenericFormItem[]
         discounts: GenericFormItem[]
         packages: GenericFormItem[]
     }
-    onItemsChange: (type: 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package', items: any[]) => void
+    onItemsChange: (type: 'labor' | 'part' | 'expense' | 'service' | 'fee' | 'discount' | 'package', items: any[]) => void
     workOrderId: string
     isEditing: boolean
     onItemSaved?: (item: any) => void
@@ -47,6 +49,15 @@ export function WorkOrderItemsSection({
             <WorkOrderPartsItems
                 items={itemsByType.parts}
                 onItemsChange={(items) => onItemsChange('part', items)}
+                workOrderId={workOrderId}
+                isEditing={isEditing}
+                onItemSaved={onItemSaved}
+                onItemDeleted={onItemDeleted}
+            />
+
+            <WorkOrderExpenseItems
+                items={itemsByType.expenses}
+                onItemsChange={(items) => onItemsChange('expense', items)}
                 workOrderId={workOrderId}
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
