@@ -106,15 +106,14 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
 }
 
 /**
- * AI Opt-in levels for MotorMinds
+ * AI Opt-in levels for MotorMinds (legacy - kept for compatibility)
  */
 export type AiOptInLevel = 'disabled' | 'schema' | 'full'
 
 /**
- * TODO:
+ * Diagnostic AI Opt-in levels for MotorMinds
  */
 export type DiagnosticAiOptInLevel = 
-  | 'disabled' 
   | 'vehicle_only' 
   | 'vehicle_and_work_orders' 
   | 'full'
@@ -122,16 +121,16 @@ export type DiagnosticAiOptInLevel =
 /**
  * Get the minimum opt-in level required for a tool category
  */
-function getMinimumOptInLevel(category: ToolCategory): AiOptInLevel | null {
+function getMinimumOptInLevel(category: ToolCategory): DiagnosticAiOptInLevel | null {
     switch (category) {
         case TOOL_CATEGORIES.UI:
             return null // Always available
         case TOOL_CATEGORIES.MOTOR_API:
-            return 'schema' // Requires at least schema level
+            return 'vehicle_only' // Requires at least vehicle context
         case TOOL_CATEGORIES.CRM:
-            return 'full' // Requires full access
+            return 'vehicle_and_work_orders' // Requires work order access
         case TOOL_CATEGORIES.ONLINE:
-            return 'schema' // Requires at least schema level
+            return 'vehicle_only' // Requires at least vehicle context
         default:
             return null
     }
@@ -140,7 +139,7 @@ function getMinimumOptInLevel(category: ToolCategory): AiOptInLevel | null {
 /**
  * Check if a tool is allowed based on the current opt-in level
  */
-function isToolAllowed(toolName: string, aiOptInLevel: AiOptInLevel): boolean {
+function isToolAllowed(toolName: string, aiOptInLevel: DiagnosticAiOptInLevel): boolean {
     const category = TOOL_CATEGORY_MAP[toolName]
 
     // Unknown tools are not allowed
@@ -156,7 +155,7 @@ function isToolAllowed(toolName: string, aiOptInLevel: AiOptInLevel): boolean {
     }
 
     // Check if current opt-in level meets the minimum requirement
-    const optInHierarchy: AiOptInLevel[] = ['disabled', 'schema', 'full']
+    const optInHierarchy: DiagnosticAiOptInLevel[] = ['vehicle_only', 'vehicle_and_work_orders', 'full']
 
     const currentLevelIndex = optInHierarchy.indexOf(aiOptInLevel)
     const minimumLevelIndex = optInHierarchy.indexOf(minimumLevel)
@@ -189,7 +188,7 @@ export function createPrivacyMessageTool(toolInstance: Tool<any, any>) {
  */
 export function filterToolsByOptInLevel(
     tools: ToolSet,
-    aiOptInLevel: AiOptInLevel
+    aiOptInLevel: DiagnosticAiOptInLevel
 ): ToolSet {
     return Object.fromEntries(
         Object.entries(tools)

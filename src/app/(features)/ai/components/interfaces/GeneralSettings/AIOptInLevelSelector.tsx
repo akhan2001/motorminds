@@ -23,16 +23,10 @@ export const AIOptInLevelSelector = ({
     // For now, show all levels
     const AI_OPT_IN_LEVELS = [
         {
-            value: 'disabled' as const,
-            title: 'Disabled',
-            description:
-                'You do not consent to sharing any shop data with third-party AI providers. Responses will be generic automotive advice and not tailored to your shop\'s vehicles, work orders, or customer information.',
-        },
-        {
             value: 'vehicle_only' as const,
             title: 'Vehicle Only',
             description:
-                'You consent to sharing vehicle technical data (year, make, model, VIN, specifications) with third-party AI providers. Customer information (names, emails, phones) and work order details will not be shared. Responses will be tailored to vehicle-specific diagnostics and repairs.',
+                'You consent to sharing vehicle technical data (year, make, model, VIN, specifications) with third-party AI providers. Customer information (names, emails, phones) and work order details will not be shared.',
         },
         {
             value: 'vehicle_and_work_orders' as const,

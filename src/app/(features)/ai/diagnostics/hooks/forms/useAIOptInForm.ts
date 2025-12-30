@@ -4,7 +4,7 @@ import * as z from 'zod'
 
 // Shared schema definition
 export const AIOptInSchema = z.object({
-    aiOptInLevel: z.enum(['disabled', 'vehicle_only', 'vehicle_and_work_orders', 'full'], {
+    aiOptInLevel: z.enum(['vehicle_only', 'vehicle_and_work_orders', 'full'], {
         required_error: 'AI Opt-in level selection is required',
     }),
 })
@@ -23,7 +23,7 @@ export const useAIOptInForm = (onSuccessCallback?: () => void) => {
     const form = useForm<AIOptInFormValues>({
         resolver: zodResolver(AIOptInSchema),
         defaultValues: {
-            aiOptInLevel: 'disabled', // TODO: Get from shop settings
+            aiOptInLevel: 'vehicle_only', // TODO: Get from shop settings
         },
     })
 
@@ -42,6 +42,6 @@ export const useAIOptInForm = (onSuccessCallback?: () => void) => {
         form,
         onSubmit,
         isUpdating: false, // TODO: Track actual loading state
-        currentOptInLevel: 'disabled' as const, // TODO: Get from shop settings
+        currentOptInLevel: 'vehicle_only' as const, // TODO: Get from shop settings
     }
 }

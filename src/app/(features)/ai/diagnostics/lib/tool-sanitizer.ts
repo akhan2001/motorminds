@@ -3,12 +3,12 @@
  * Sanitizes tool outputs based on AI opt-in level
  */
 
-export type DiagnosticAiOptInLevel = 'disabled' | 'schema' | 'full'
+export type DiagnosticAiOptInLevel = 'vehicle_only' | 'vehicle_and_work_orders' | 'full'
 
 /**
  * Sanitizes a message part based on the AI opt-in level
- * - disabled: No tool outputs shown
- * - schema: Only schema-related outputs shown
+ * - vehicle_only: Show vehicle-related tool outputs, filter customer data
+ * - vehicle_and_work_orders: Show vehicle and work order outputs, anonymize customer info
  * - full: All outputs shown
  */
 export function sanitizeMessagePart(part: any, aiOptInLevel: DiagnosticAiOptInLevel): any {
@@ -17,18 +17,39 @@ export function sanitizeMessagePart(part: any, aiOptInLevel: DiagnosticAiOptInLe
 		return part
 	}
 
-	// If opt-in is disabled, remove all tool outputs
-	if (aiOptInLevel === 'disabled') {
-		return {
-			...part,
-			result: null,
+	// If opt-in is vehicle_only, filter customer data from tool outputs
+	if (aiOptInLevel === 'vehicle_only') {
+		// Allow MOTOR API tool outputs (vehicle data only)
+		// Filter out customer information from any tool outputs
+		if (part.result && typeof part.result === 'object') {
+			const sanitized = { ...part.result }
+			// Remove customer-specific fields
+			delete sanitized.customer_name
+			delete sanitized.customer_email
+			delete sanitized.customer_phone
+			delete sanitized.customer_address
+			return {
+				...part,
+				result: sanitized,
+			}
 		}
+		return part
 	}
 
-	// If opt-in is schema-only, filter sensitive data
-	if (aiOptInLevel === 'schema') {
-		// For now, allow all tool outputs for schema level
-		// You can add more granular filtering here based on tool name
+	// If opt-in is vehicle_and_work_orders, anonymize customer info
+	if (aiOptInLevel === 'vehicle_and_work_orders') {
+		// Allow vehicle and work order data, but anonymize customer names/contact
+		if (part.result && typeof part.result === 'object') {
+			const sanitized = { ...part.result }
+			// Anonymize customer information
+			if (sanitized.customer_name) sanitized.customer_name = '[Anonymized]'
+			if (sanitized.customer_email) sanitized.customer_email = '[Anonymized]'
+			if (sanitized.customer_phone) sanitized.customer_phone = '[Anonymized]'
+			return {
+				...part,
+				result: sanitized,
+			}
+		}
 		return part
 	}
 
