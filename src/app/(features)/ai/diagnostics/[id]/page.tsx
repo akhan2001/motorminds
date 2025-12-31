@@ -100,34 +100,15 @@ export default function DiagnosticSessionPage() {
 		)
 	}
 
-	// Session not found
-	if (!session) {
-		return (
-			<div className="h-screen flex flex-col bg-background">
-				<div className="flex-1 flex items-center justify-center">
-					<Card className="bg-card border-border">
-						<CardContent className="flex items-center gap-4 p-6">
-							<AlertCircle className="h-6 w-6 text-yellow-500" />
-							<div>
-								<p className="text-foreground font-medium">Session Not Found</p>
-								<p className="text-muted-foreground text-sm mb-3">
-									The diagnostic session you're looking for doesn't exist or has been deleted.
-								</p>
-							</div>
-						</CardContent>
-					</Card>
-				</div>
-			</div>
-		)
-	}
-
+	// No storage - allow page to work without stored session
+	// Session will be null since we don't store sessions, but we can still use the sessionId from URL
 	return (
 		<div className="h-screen flex flex-col bg-background">
 			<div className="flex-1 overflow-hidden">
 				<AIDiagnosticsLayout
 					shopId={shopId}
 					sessionId={sessionId}
-					vehicleContext={session.vehicle_context}
+					vehicleContext={session?.vehicle_context || null}
 				/>
 			</div>
 		</div>

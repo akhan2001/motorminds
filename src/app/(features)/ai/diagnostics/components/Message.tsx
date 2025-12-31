@@ -2,6 +2,10 @@
 
 import React from 'react'
 import type { UIMessage } from '@ai-sdk/react'
+import { Loader2 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+
 import { MessageProvider, useMessageInfoContext } from './Message.Context'
 import {
 	MessageDisplayContainer,
@@ -72,6 +76,8 @@ interface MessageContentProps {
 }
 
 function MessageContent({ message, isUser }: MessageContentProps) {
+	const { isLoading } = useMessageInfoContext()
+	
 	if (isUser) {
 		// User messages: just show text
 		const textParts = message.parts?.filter((part: any) => part.type === 'text') || []
@@ -91,11 +97,24 @@ function MessageContent({ message, isUser }: MessageContentProps) {
 		const content = (message as any).content
 		if (content) {
 			return (
-				<div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
-					{content}
+				<div className="text-sm prose prose-sm dark:prose-invert max-w-none break-words prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-headings:font-semibold prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-strong:font-semibold">
+					<ReactMarkdown remarkPlugins={[remarkGfm]}>
+						{content}
+					</ReactMarkdown>
 				</div>
 			)
 		}
+		
+		// Show loading indicator if message is loading, otherwise show "No content available"
+		if (isLoading) {
+			return (
+				<div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+					<Loader2 className="h-4 w-4 animate-spin" />
+					<span>Thinking...</span>
+				</div>
+			)
+		}
+		
 		return (
 			<div className="text-sm text-gray-500 dark:text-gray-400 italic">
 				No content available

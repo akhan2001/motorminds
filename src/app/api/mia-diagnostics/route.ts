@@ -52,35 +52,8 @@ export async function POST(req: NextRequest) {
         // Handle fallback sessions (for debugging when no shop_id)
         let isValidSession = true
         
-        if (!sessionId.startsWith('fallback_session_')) {
-            // Verify session belongs to shop for normal sessions
-            const { data: session, error: sessionError } = await supabase
-                .from('mia_sessions')
-                .select('*')
-                .eq('session_id', sessionId)
-                .eq('shop_id', shopId)
-                .single()
-
-            if (sessionError) {
-                console.error('Error verifying session:', sessionError)
-                return new Response('Session not found', { status: 404 })
-            }
-
-            // Save the latest user message to database (last message should be from user)
-            const lastMessage = messages[messages.length - 1]
-            if (lastMessage.role === 'user') {
-                await supabase
-                    .from('mia_messages')
-                    .insert({
-                        session_id: sessionId,
-                        role: 'user',
-                        content: lastMessage.content,
-                        metadata: { vehicleInfo, diagnosticMode }
-                    })
-            }
-        } else {
-            console.log('Using fallback session - skipping database operations')
-        }
+        // DISABLED: No longer saves to database
+        // Session verification and message saving removed
 
         console.log('MIA Diagnostics Request:', { 
             messagesCount: messages?.length, 
@@ -141,35 +114,7 @@ export async function POST(req: NextRequest) {
         const citations = data.citations || []
         const searchResults = data.search_results || []
         
-        // Save assistant response to database (only for real sessions)
-        if (!sessionId.startsWith('fallback_session_')) {
-            await supabase
-                .from('mia_messages')
-                .insert({
-                    session_id: sessionId,
-                    role: 'assistant',
-                    content: content,
-                    metadata: { 
-                        citations, 
-                        searchResults, 
-                        diagnosticMode,
-                        vehicleInfo 
-                    }
-                })
-
-            // Update session with latest vehicle context
-            if (vehicleInfo && Object.keys(vehicleInfo).length > 0) {
-                await supabase
-                    .from('mia_sessions')
-                    .update({ 
-                        vehicle_context: vehicleInfo,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('session_id', sessionId)
-            }
-        } else {
-            console.log('Fallback session - skipping assistant message storage')
-        }
+        // DISABLED: No longer saves assistant messages or updates sessions to database
         
         return Response.json({
             success: true,

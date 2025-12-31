@@ -24,154 +24,66 @@ export class DiagnosticSessionService {
 		return user?.id || null
 	}
 
-	// Get sessions with filters
+	// Get sessions with filters - DISABLED: No storage, return empty array
 	async getSessions(shopId: string, filters?: SessionFilters): Promise<DiagnosticSession[]> {
-		let query = this.supabase
-			.from('mia_sessions')
-			.select('*')
-			.eq('shop_id', shopId)
-			.order('created_at', { ascending: false })
-
-		// Apply status filter
-		if (filters?.status) {
-			query = query.eq('status', filters.status)
-		}
-
-		// Apply search filter (search in vehicle_context JSONB)
-		if (filters?.search && filters.search.trim()) {
-			const searchTerm = filters.search.trim()
-			// Search in vehicle_context JSONB fields
-			query = query.or(
-				`vehicle_context->>'make'.ilike.%${searchTerm}%,vehicle_context->>'model'.ilike.%${searchTerm}%,vehicle_context->>'vin'.ilike.%${searchTerm}%`
-			)
-		}
-
-		// Apply pagination
-		const limit = filters?.limit || 100
-		const offset = filters?.offset || 0
-		query = query.range(offset, offset + limit - 1)
-
-		const { data, error } = await query
-
-		if (error) {
-			console.error('Error fetching diagnostic sessions:', error)
-			throw new Error(`Failed to fetch diagnostic sessions: ${error.message}`)
-		}
-
-		return (data || []).map(this.mapRowToSession)
+		// No storage - return empty array
+		return []
 	}
 
-	// Get single session by session_id
+	// Get single session by session_id - DISABLED: No storage, return null
 	async getSession(shopId: string, sessionId: string): Promise<DiagnosticSession | null> {
-		const { data, error } = await this.supabase
-			.from('mia_sessions')
-			.select('*')
-			.eq('shop_id', shopId)
-			.eq('session_id', sessionId)
-			.single()
-
-		if (error) {
-			if (error.code === 'PGRST116') {
-				// No rows returned
-				return null
-			}
-			console.error('Error fetching diagnostic session:', error)
-			throw new Error(`Failed to fetch diagnostic session: ${error.message}`)
-		}
-
-		return this.mapRowToSession(data)
+		// No storage - return null (sessions don't exist in database)
+		return null
 	}
 
-	// Create new session
+	// Create new session - DISABLED: No longer saves to database
 	async createSession(shopId: string, data: DiagnosticSessionCreateData): Promise<DiagnosticSession> {
-		const userId = await this.getCurrentUserId()
-		if (!userId) {
-			throw new Error('User not authenticated')
-		}
-
 		const sessionId = this.generateSessionId()
 
-		const { data: sessionData, error } = await this.supabase
-			.from('mia_sessions')
-			.insert({
-				session_id: sessionId,
-				shop_id: shopId,
-				vehicle_context: data.vehicle_context,
-				status: data.status || 'active',
-			})
-			.select()
-			.single()
-
-		if (error) {
-			console.error('Error creating diagnostic session:', error)
-			throw new Error(`Failed to create diagnostic session: ${error.message}`)
+		// Return mock session without saving to database
+		return {
+			id: `mock-${sessionId}`,
+			session_id: sessionId,
+			shop_id: shopId,
+			user_id: '',
+			work_order_id: null,
+			vehicle_context: data.vehicle_context || {},
+			status: data.status || 'active',
+			initial_issue: null,
+			ai_recommendation: null,
+			last_activity_at: new Date().toISOString(),
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
 		}
-
-		return this.mapRowToSession(sessionData)
 	}
 
-	// Update session
+	// Update session - DISABLED: No longer saves to database
 	async updateSession(
 		shopId: string,
 		sessionId: string,
 		updates: DiagnosticSessionUpdateData
 	): Promise<DiagnosticSession> {
-		const updateData: any = {
+		// Get existing session to merge updates
+		const existingSession = await this.getSession(shopId, sessionId)
+		if (!existingSession) {
+			throw new Error('Session not found')
+		}
+
+		// Return updated session without saving to database
+		return {
+			...existingSession,
+			status: updates.status !== undefined ? updates.status : existingSession.status,
+			work_order_id: updates.work_order_id !== undefined ? updates.work_order_id : existingSession.work_order_id,
+			initial_issue: updates.initial_issue !== undefined ? updates.initial_issue : existingSession.initial_issue,
+			ai_recommendation: updates.ai_recommendation !== undefined ? updates.ai_recommendation : existingSession.ai_recommendation,
 			updated_at: new Date().toISOString(),
 		}
-
-		if (updates.status !== undefined) {
-			updateData.status = updates.status
-		}
-		// Note: Store optional fields in metadata if columns don't exist in mia_sessions
-		// For now, we'll need to fetch existing metadata first
-		if (updates.ai_recommendation !== undefined || updates.initial_issue !== undefined || updates.work_order_id !== undefined) {
-			// Fetch existing session to preserve metadata
-			const existingSession = await this.getSession(shopId, sessionId)
-			const existingMetadata = (existingSession as any)?.metadata || {}
-			updateData.metadata = { ...existingMetadata }
-			
-			if (updates.ai_recommendation !== undefined) {
-				updateData.metadata.ai_recommendation = updates.ai_recommendation
-			}
-			if (updates.initial_issue !== undefined) {
-				updateData.metadata.initial_issue = updates.initial_issue
-			}
-			if (updates.work_order_id !== undefined) {
-				updateData.metadata.work_order_id = updates.work_order_id
-			}
-		}
-
-		const { data, error } = await this.supabase
-			.from('mia_sessions')
-			.update(updateData)
-			.eq('shop_id', shopId)
-			.eq('session_id', sessionId)
-			.select()
-			.single()
-
-		if (error) {
-			console.error('Error updating diagnostic session:', error)
-			throw new Error(`Failed to update diagnostic session: ${error.message}`)
-		}
-
-		return this.mapRowToSession(data)
 	}
 
-	// Update last activity timestamp
+	// Update last activity timestamp - DISABLED: No longer saves to database
 	async updateLastActivity(shopId: string, sessionId: string): Promise<void> {
-		const { error } = await this.supabase
-			.from('mia_sessions')
-			.update({
-				updated_at: new Date().toISOString(),
-			})
-			.eq('shop_id', shopId)
-			.eq('session_id', sessionId)
-
-		if (error) {
-			console.error('Error updating last activity:', error)
-			// Don't throw - this is a non-critical update
-		}
+		// No-op: Activity tracking disabled
+		return
 	}
 
 	// Get session messages
@@ -203,7 +115,7 @@ export class DiagnosticSessionService {
 		}))
 	}
 
-	// Save message to session
+	// Save message to session - DISABLED: No longer saves to database
 	async saveMessage(
 		shopId: string,
 		sessionId: string,
@@ -211,38 +123,14 @@ export class DiagnosticSessionService {
 		content: string,
 		metadata?: Record<string, any>
 	): Promise<DiagnosticMessage> {
-		// Verify session belongs to shop
-		const session = await this.getSession(shopId, sessionId)
-		if (!session) {
-			throw new Error('Session not found')
-		}
-
-		const { data, error } = await this.supabase
-			.from('mia_messages')
-			.insert({
-				session_id: sessionId,
-				role,
-				content,
-				metadata: metadata || {},
-			})
-			.select()
-			.single()
-
-		if (error) {
-			console.error('Error saving message:', error)
-			throw new Error(`Failed to save message: ${error.message}`)
-		}
-
-		// Update session updated_at
-		await this.updateLastActivity(shopId, sessionId)
-
+		// Return mock message without saving to database
 		return {
-			id: data.id,
-			session_id: data.session_id,
-			role: data.role as 'user' | 'assistant',
-			content: data.content,
-			metadata: data.metadata,
-			created_at: data.created_at,
+			id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+			session_id: sessionId,
+			role,
+			content,
+			metadata: metadata || {},
+			created_at: new Date().toISOString(),
 		}
 	}
 

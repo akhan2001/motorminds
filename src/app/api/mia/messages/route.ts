@@ -125,37 +125,18 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
 		}
 
-		// Verify session belongs to shop
-		const { data: session, error: sessionError } = await supabase
-			.from('mia_sessions')
-			.select('id')
-			.eq('session_id', sessionId)
-			.eq('shop_id', shopId)
-			.single()
-
-		if (sessionError) {
-			console.error('Error verifying session:', sessionError)
-			return NextResponse.json({ error: 'Session not found' }, { status: 404 })
-		}
-
-		// Insert the message
-		const { data: message, error } = await supabase
-			.from('mia_messages')
-			.insert({
+		// DISABLED: No longer saves to database
+		// Return mock message without saving
+		return NextResponse.json({
+			message: {
+				id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
 				session_id: sessionId,
 				role,
 				content,
-				metadata
-			})
-			.select()
-			.single()
-
-		if (error) {
-			console.error('Error storing message:', error)
-			return NextResponse.json({ error: 'Failed to store message' }, { status: 500 })
-		}
-
-		return NextResponse.json({ message })
+				metadata,
+				created_at: new Date().toISOString()
+			}
+		})
 	} catch (error) {
 		console.error('Messages POST API error:', error)
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

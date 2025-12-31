@@ -87,20 +87,7 @@ export async function POST(request: NextRequest) {
         // Use vehicle context from session if not provided in request
         const contextToUse = vehicleContext || session.vehicle_context
 
-        // Store user message
-        const { error: userMessageError } = await supabase
-            .from('mia_messages')
-            .insert({
-                session_id: sessionId,
-                role: 'user',
-                content: message,
-                metadata: { vehicleContext: contextToUse }
-            })
-
-        if (userMessageError) {
-            console.error('Error storing user message:', userMessageError)
-            return NextResponse.json({ error: 'Failed to store message' }, { status: 500 })
-        }
+        // DISABLED: No longer saves user messages to database
 
         // Check if Perplexity API key is configured
         if (!process.env.PERPLEXITY_API_KEY) {
@@ -238,19 +225,7 @@ IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no cod
                     description: citation.text || ''
                 }))
 
-                await supabase
-                    .from('mia_messages')
-                    .insert({
-                        session_id: sessionId,
-                        role: 'assistant',
-                        content: fallbackMessage,
-                        metadata: { 
-                            products: [],
-                            sources: fallbackSources,
-                            type: 'text_response',
-                            parseError: true
-                        }
-                    })
+                // DISABLED: No longer saves fallback messages to database
 
                 return NextResponse.json({
                     success: true,
@@ -282,20 +257,7 @@ IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no cod
             const responseMessage = parsedResponse.message || `Found ${parts.length} real parts from suppliers:`
             const limitedSources = sources.slice(0, 5)
 
-            // Store AI response
-            await supabase
-                .from('mia_messages')
-                .insert({
-                    session_id: sessionId,
-                    role: 'assistant',
-                    content: responseMessage,
-                    metadata: { 
-                        parts: parts,
-                        sources: limitedSources,
-                        type: 'search_results',
-                        vehicleContext: contextToUse
-                    }
-                })
+            // DISABLED: No longer saves AI responses to database
 
             return NextResponse.json({
                 success: true,
@@ -307,22 +269,8 @@ IMPORTANT: Respond with ONLY a valid JSON object. No markdown formatting, no cod
         } catch (aiError) {
             console.error('Perplexity API error:', aiError)
             
-            // Store fallback AI error response
+            // DISABLED: No longer saves error responses to database
             const errorMessage = "I'm having trouble searching for parts right now. Please try the catalog search above or rephrase your question."
-            
-            await supabase
-                .from('mia_messages')
-                .insert({
-                    session_id: sessionId,
-                    role: 'assistant',
-                    content: errorMessage,
-                    metadata: { 
-                        products: [],
-                        sources: [],
-                        type: 'error_response',
-                        error: aiError instanceof Error ? aiError.message : 'Unknown error'
-                    }
-                })
 
             return NextResponse.json({
                 success: true,
