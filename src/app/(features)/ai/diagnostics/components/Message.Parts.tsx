@@ -3,6 +3,8 @@
 import React from 'react'
 import { type UIMessage as VercelMessage } from '@ai-sdk/react'
 import { BrainIcon, CheckIcon, Loader2 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import { Tool } from './elements/Tool'
 import { useMessageInfoContext } from './Message.Context'
@@ -37,11 +39,21 @@ function MessagePartText({ textPart }: { textPart: TextUIPart }) {
 	return (
 		<div
 			className={cn(
-				'text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none w-full min-w-0 overflow-wrap-anywhere break-words',
-				isUserMessage && 'text-gray-900 dark:text-gray-100 font-medium'
+				'text-sm prose prose-sm dark:prose-invert max-w-none w-full min-w-0 overflow-wrap-anywhere break-words',
+				'prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-headings:font-semibold',
+				'prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-p:leading-relaxed',
+				'prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-strong:font-semibold',
+				'prose-ul:text-gray-800 dark:prose-ul:text-gray-200',
+				'prose-ol:text-gray-800 dark:prose-ol:text-gray-200',
+				'prose-li:text-gray-800 dark:prose-li:text-gray-200',
+				'prose-code:text-gray-900 dark:prose-code:text-gray-100',
+				'prose-pre:bg-gray-100 dark:prose-pre:bg-gray-900',
+				isUserMessage && 'prose-p:text-gray-900 dark:prose-p:text-gray-100 prose-p:font-medium'
 			)}
 		>
-			{textPart.text}
+			<ReactMarkdown remarkPlugins={[remarkGfm]}>
+				{textPart.text}
+			</ReactMarkdown>
 		</div>
 	)
 }

@@ -1,25 +1,23 @@
-import { streamText } from 'ai'
-import { source } from 'common-tags'
-import { NextRequest } from 'next/server'
-import { z } from 'zod'
+import { streamText, convertToModelMessages, stepCountIs } from 'ai';
 
-import { getModel } from '@/lib/ai/model'
-import { getTools } from '@/app/(features)/ai/diagnostics/tools'
+import { openai } from '@ai-sdk/openai';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { source } from 'common-tags';
+
+import { getModel } from '@/lib/ai/model';
+import { getTools } from '@/app/(features)/ai/diagnostics/tools';
 import {
 	AI_DIAGNOSTICS_PROMPT,
 	LIMITATIONS_PROMPT,
 	COMPLIANCE_PROMPT,
 	MOTOR_API_PROMPT,
 	DIAGNOSTIC_WORKFLOW_PROMPT,
-} from '@/app/(features)/ai/diagnostics/tools/prompts'
-import { prepareMessagesForAPI } from '@/app/(features)/ai/diagnostics/lib/message-utils'
-import { sanitizeMessage, type DiagnosticAiOptInLevel } from '@/app/(features)/ai/diagnostics/lib/tool-sanitizer'
-
-export const maxDuration = 60
+} from '@/app/(features)/ai/diagnostics/tools/prompts';
 
 const requestSchema = z.object({
 	messages: z.array(z.any()),
-	shopId: z.string(),
+	shopId: z.string().optional(),
 	sessionId: z.string().optional(),
 	vehicleId: z.number().optional(),
 	baseVehicleId: z.number().optional(),
@@ -34,54 +32,100 @@ const requestSchema = z.object({
 		})
 		.optional(),
 	model: z.enum(['gpt-4', 'gpt-3.5-turbo', 'gpt-4.1-mini']).optional(),
-})
+});
 
 export async function POST(request: NextRequest) {
 	try {
 		// 1. Parse and validate request
-		const body = await request.json()
-		const { data, error: parseError } = requestSchema.safeParse(body)
+		const body = await request.json();
+		const { data, error } = requestSchema.safeParse(body);
 
-		if (parseError) {
+		if (error) {
 			return Response.json(
 				{
-					error: 'Invalid request body',
-					issues: parseError.issues,
+					error: 'Invalid request',
+					issues: error.issues,
 				},
-				{ status: 400 }
-			)
+				{
+					status: 400,
+				}
+			);
 		}
 
-		const { messages: rawMessages, shopId, sessionId, vehicleId, baseVehicleId, engineId, vehicleContext, model: requestedModel } = data
+		const {
+			messages,
+			shopId,
+			sessionId,
+			vehicleId,
+			baseVehicleId,
+			vehicleContext,
+			model: requestedModel,
+		} = data;
 
-		// 2. Get auth token
-		const authorization = request.headers.get('authorization')
-		const accessToken = authorization?.replace('Bearer ', '')
+		// 2. Validate shopId (required for routing)
+		if (!shopId) {
+			return Response.json(
+				{ error: 'shopId is required' },
+				{ status: 400 }
+			);
+		}
 
-		// 3. Determine AI opt-in level
-		// TODO: Add proper permission logic
-		let aiOptInLevel: DiagnosticAiOptInLevel = 'full'
-		let isLimited = false
+		// 3. Get auth token
+		const authorization = request.headers.get('authorization');
+		const accessToken = authorization?.replace('Bearer ', '');
 
-		// 4. Prepare messages for API (last 7 only, sanitized)
-		const preparedMessages = prepareMessagesForAPI(rawMessages || []).map((msg) => sanitizeMessage(msg, aiOptInLevel))
+		// 4. Get AI opt-in level (simplified for now)
+		let aiOptInLevel: 'disabled' | 'schema' | 'full' = 'full';
+		let isLimited = false;
 
-		// 5. Get AI model
+		// TODO: Add permission logic here
+		// ...
+
+		// 5. Clean messages (last 7 only)
+		const cleanedMessages = (messages || []).slice(-7);
+
+		// 7. Get model
 		const modelResult = await getModel({
 			provider: 'openai',
-			model: requestedModel ?? 'gpt-4.1-mini',
+			model: (requestedModel ?? 'gpt-4o-mini') as any, // Default to gpt-4o-mini for higher rate limits
 			routingKey: shopId,
 			isLimited,
-		})
+		});
 
 		if (modelResult.error) {
-			return Response.json({ error: modelResult.error.message }, { status: 500 })
+			return Response.json(
+				{ error: modelResult.error.message },
+				{ status: 500 }
+			);
 		}
 
-		// 6. Build context string
-		const contextString = buildVehicleContext(vehicleContext, baseVehicleId, vehicleId, engineId)
+		// 8. Build context string - prioritize vehicleContext for richer context
+		const contextString = vehicleContext
+			? `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}`
+			: baseVehicleId
+				? `Base Vehicle ID: ${baseVehicleId}`
+				: vehicleId
+					? `Vehicle ID: ${vehicleId}`
+					: 'No vehicle context';
 
-		// 7. Build system prompt
+		// 9. Build system prompt - Simplified for Hello World testing
+		// const systemPrompt = `You are an automotive diagnostic AI assistant integrated with MOTOR DaaS.
+
+		// Your current capabilities:
+		// - Test MOTOR DaaS API connection using the helloWorld tool
+
+		// How to use your tools:
+		// - When users ask to "test the connection", "say hello", or want to verify the MOTOR API is working, use the helloWorld tool
+		// - The helloWorld tool will test the connection to MOTOR DaaS and return a simple "Hello World" message
+
+		// Scope:
+		// - You MUST only answer questions related to vehicle diagnostics and automotive topics
+		// - You MUST decline all other questions politely and redirect to automotive topics
+
+		// ${contextString ? `Current vehicle context: ${contextString}` : ''}
+
+		// Be helpful, accurate, and professional.`
+
 		const systemPrompt = source`
 			${AI_DIAGNOSTICS_PROMPT}
 			${DIAGNOSTIC_WORKFLOW_PROMPT}
@@ -90,28 +134,10 @@ export async function POST(request: NextRequest) {
 			${MOTOR_API_PROMPT}
 			${contextString ? `Current vehicle context: ${contextString}` : ''}
 			Be helpful, accurate, and professional.
-		`
+		`;
 
-		// 8. Build core messages - convert UIMessages to CoreMessages format
-		const convertedMessages = preparedMessages.map((msg: any) => {
-			// Extract text content from parts array if present
-			let content = ''
-			if (msg.parts && Array.isArray(msg.parts)) {
-				content = msg.parts
-					.filter((part: any) => part.type === 'text')
-					.map((part: any) => part.text || part.content || '')
-					.join('\n')
-			} else if (msg.content) {
-				content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)
-			} else if (msg.text) {
-				content = msg.text
-			}
-
-			return {
-				role: msg.role,
-				content: content || '',
-			}
-		})
+		// 10. Build messages
+		const convertedMessages = await convertToModelMessages(cleanedMessages);
 
 		const coreMessages = [
 			{
@@ -126,126 +152,90 @@ export async function POST(request: NextRequest) {
 				content: `Shop ID: ${shopId}. ${contextString}`,
 			},
 			...convertedMessages,
-		]
+		];
 
-		// 9. Setup abort controller
-		const abortController = new AbortController()
-		request.signal.addEventListener('abort', () => abortController.abort())
+		// 11. Setup abort controller
+		const abortController = new AbortController();
+		request.signal.addEventListener('abort', () => abortController.abort());
 
-		// 10. Validate MOTOR DaaS credentials
-		if (!process.env.MOTOR_DAAS_PUBLIC_KEY || !process.env.MOTOR_DAAS_PRIVATE_KEY) {
-			return Response.json({ error: 'MOTOR DaaS credentials not configured' }, { status: 500 })
+		// 12. Validate MOTOR DaaS credentials
+		if (
+			!process.env.MOTOR_DAAS_PUBLIC_KEY ||
+			!process.env.MOTOR_DAAS_PRIVATE_KEY
+		) {
+			return Response.json(
+				{ error: 'MOTOR DaaS credentials not configured' },
+				{ status: 500 }
+			);
 		}
 
-		// 11. Get tools
-		const tools = await getToolsWithErrorHandling({
-			shopId,
-			vehicleId,
-			authorization: authorization || undefined,
-			aiOptInLevel,
-			accessToken: accessToken || undefined,
-		})
+		// 13. Get tools (with error handling)
+		let tools;
+		try {
+			// Create a mock MotorDaasClient for getTools (it's not used for Perplexity tools)
+			const { MotorDaasClient } = await import(
+				'@/lib/integrations/motor-daas/client'
+			);
+			const motorClient = new MotorDaasClient({
+				publicKey: process.env.MOTOR_DAAS_PUBLIC_KEY!,
+				privateKey: process.env.MOTOR_DAAS_PRIVATE_KEY!,
+				baseUrl: 'https://api.motor.com/v1',
+			});
 
-		if (!tools) {
-			return Response.json({ error: 'Failed to initialize tools' }, { status: 500 })
+			tools = await getTools({
+				shopId,
+				vehicleId,
+				authorization: authorization || undefined,
+				aiOptInLevel,
+				accessToken: accessToken || undefined,
+				motorClient,
+			});
+		} catch (toolError) {
+			console.error('Failed to initialize tools:', toolError);
+			return Response.json(
+				{
+					error: 'Failed to initialize tools',
+					message:
+						toolError instanceof Error
+							? toolError.message
+							: 'Unknown error',
+				},
+				{ status: 500 }
+			);
 		}
 
-		// 12. Stream response
+		// 14. Stream response
 		const result = streamText({
 			model: modelResult.model,
-			maxSteps: 5,
+			stopWhen: stepCountIs(3), // Reduced from 5 to limit unnecessary tool calls
 			messages: coreMessages,
-			...(modelResult.providerOptions && { providerOptions: modelResult.providerOptions }),
+			...(modelResult.providerOptions && {
+				providerOptions: modelResult.providerOptions,
+			}),
 			tools,
 			abortSignal: abortController.signal,
-		})
+		});
 
-		// 13. Return stream
+		// 15. Return stream
 		return result.toUIMessageStreamResponse({
-			originalMessages: preparedMessages,
+			originalMessages: cleanedMessages,
 			sendReasoning: true,
-			onError: handleStreamError,
-		})
+			onError: (error: any) => {
+				if (error == null) return 'unknown error';
+				if (typeof error === 'string') return error;
+				if (error instanceof Error) return error.message;
+				return JSON.stringify(error);
+			},
+		});
 	} catch (error) {
-		console.error('Diagnostics API error:', error)
+		console.error('Diagnostics API error:', error);
 		return Response.json(
 			{
 				error: 'Internal server error',
-				message: error instanceof Error ? error.message : 'Unknown error',
+				message:
+					error instanceof Error ? error.message : 'Unknown error',
 			},
 			{ status: 500 }
-		)
+		);
 	}
-}
-
-// Helper Functions
-
-/**
- * Builds vehicle context string
- */
-function buildVehicleContext(vehicleContext: any, baseVehicleId?: number, vehicleId?: number, engineId?: number): string {
-	if (vehicleContext) {
-		let context = `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}`
-		if (engineId) {
-			context += ` (Engine ID: ${engineId})`
-		}
-		return context
-	}
-	if (baseVehicleId) {
-		let context = `Base Vehicle ID: ${baseVehicleId}`
-		if (engineId) {
-			context += ` (Engine ID: ${engineId})`
-		}
-		return context
-	}
-	if (vehicleId) {
-		let context = `Vehicle ID: ${vehicleId}`
-		if (engineId) {
-			context += ` (Engine ID: ${engineId})`
-		}
-		return context
-	}
-	return 'No vehicle context'
-}
-
-/**
- * Gets tools with error handling
- */
-async function getToolsWithErrorHandling(params: {
-	shopId: string
-	vehicleId?: number
-	authorization?: string
-	aiOptInLevel: DiagnosticAiOptInLevel
-	accessToken?: string
-}): Promise<any | null> {
-	try {
-		const { MotorDaasClient } = await import('@/lib/integrations/motor-daas/client')
-		const motorClient = new MotorDaasClient({
-			publicKey: process.env.MOTOR_DAAS_PUBLIC_KEY!,
-			privateKey: process.env.MOTOR_DAAS_PRIVATE_KEY!,
-			baseUrl: 'https://api.motor.com/v1',
-		})
-
-		return await getTools({
-			shopId: params.shopId,
-			vehicleId: params.vehicleId,
-			authorization: params.authorization,
-			aiOptInLevel: params.aiOptInLevel,
-			accessToken: params.accessToken,
-			motorClient,
-		})
-	} catch (error) {
-		console.error('Failed to initialize tools:', error)
-		return null
-	}
-}
-
-/**
- * Handles streaming errors
- */
-function handleStreamError(error: any): string {
-	if (error == null) return 'unknown error'
-	if (typeof error === 'string') return error
-	if (error instanceof Error) return error.message
-	return JSON.stringify(error)
 }
