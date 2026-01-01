@@ -4,12 +4,76 @@ import { MotorDaasAuth, MotorAuthConfig } from './auth'
 import { buildAuthQueryString, buildMotorUrl, buildStandardQueryParams } from './client.utils'
 import { MOTOR_API_DEFAULTS } from './constants/constants'
 
+export interface YearResponse {
+    Year: number;
+    Links?: Array<{ Href: string; Rel: string; Count?: number }>
+}
+
+export interface MakeResponse {
+    MakeID: number;
+    MakeName: string;
+    Links?: Array<{ Href: string; Rel: string; Count?: number }>;
+}
+
+export interface ModelResponse {
+    ModelID: number;
+    ModelName: string;
+    Type ?: {
+        Type: string;
+        VehicleTypeID: number;
+    };
+    SubModels ?: Array<{
+        SubModelID: number;
+        SubModelName: string;
+    }>;
+    Countries ?: Array<{
+        Code: string;
+        CountryID: number;
+        Name: string;
+    }>;
+    Links ?: Array<{ Href: string; Rel: string; Count?: number }>;
+}
+
+export interface EngineResponse {
+    Aspiration: string;
+    BlockType: string;
+    CID: string;
+    CylinderCC: string;
+    CylinderHeadType: string;
+    CylinderLiter: string;
+    Cylinders: string;
+    Description: string;
+    Designation: string;
+    EngineBoreInch: string;
+    EngineBoreMetric: string;
+    EngineID: number;
+    FuelDeliveryInfo?: {
+        ControlType: string;
+        FuelDeliveryID: number;
+        SubType: string;
+        SystemDesign: string;
+        Type: string;
+    };
+    FuelType: string;
+    HorsePower: string;
+    IgnitionSystem: string;
+    KilowattPower: string;
+    Manufacturer: string;
+    ManufacturerType: string;
+    Valves: string;
+    Version: string;
+}
+
 export interface MotorApiResponse<T> {
     Body?: T;
     Header?: {
-        StatusCode?: number;
-        Messages?: Array<{ Type: string; Code?: string; ShortDescription?: string; LongDescription?: string }>;
+        Date?: string;
+        Messages?: Array<{ Code: string; LongDescription: string; ShortDescription: string; Type: string }>;
+        IdentifierType?: string;
+        Identifier?: string;
+        Package?: string;
         Status?: string;
+        StatusCode?: number;
     };
 }
 
@@ -81,6 +145,145 @@ export class MotorDaasClient {
     }
 
     /**
+     * Get available years
+     * Endpoint: /v1/Information/YMME/Years
+     * @param options - Query parameters
+     * @returns Array of YearResponse objects
+     */
+    async getYears(options?: {
+        min?: number;
+        max?: number;
+        vehicleTypes?: number[];
+        withRel?: string[];
+        attributeStandard?: "MOTOR"; // default
+    }): Promise<YearResponse[]> {
+        const endpoint = 'Information/YMME/Years';
+    
+        const queryParams: Record<string, string> = {
+            AttributeStandard: 'MOTOR'
+        };
+        
+        if (options?.min) {
+            queryParams.Min = options.min.toString();
+        }
+        if (options?.max) {
+            queryParams.Max = options.max.toString();
+        }
+        if (options?.vehicleTypes && options.vehicleTypes.length > 0) {
+            queryParams.VehicleTypes = options.vehicleTypes.join(',');
+        }
+        if (options?.withRel && options.withRel.length > 0) {
+            queryParams.WithRel = options.withRel.join(',');
+        }
+        
+        return this.request<YearResponse[]>(endpoint, 'GET', queryParams);
+    }
+
+    /**
+     * Get available makes for a specific year
+     * Endpoint: /v1/Information/YMME/Years/{Year}/Makes
+     * @param year - The year to get makes for
+     * @param options - Query parameters
+     * @returns Array of MakeResponse objects
+     */
+    async getMakes(
+        year: number,
+        options?: {
+            vehicleTypes?: number[];
+            withRel?: string[];
+        }
+    ): Promise<MakeResponse[]> {
+        const endpoint = `Information/YMME/Years/${year}/Makes`;
+    
+        const queryParams: Record<string, string> = {
+            AttributeStandard: 'MOTOR'
+        };
+    
+        if (options?.vehicleTypes && options.vehicleTypes.length > 0) {
+            queryParams.VehicleTypes = options.vehicleTypes.join(',');
+        }
+        if (options?.withRel && options.withRel.length > 0) {
+            queryParams.WithRel = options.withRel.join(',');
+        }
+
+        return this.request<MakeResponse[]>(endpoint, 'GET', queryParams);
+    }
+
+    /**
+     * Get models for a specific year and make
+     * Endpoint: /v1/Information/YMME/Years/{Year}/Makes/{MakeID}/Models
+     * @param year - The year of the models to get
+     * @param makeID - The ID of the make to get models for
+     * @param options - Query parameters
+     * @returns Array of ModelResponse objects
+     */
+    async getModels(
+        year: number,
+        makeID: number,
+        options?: {
+            vehicleTypes?: number[];
+            countryIDs?: number[];
+            withRel?: string[];
+        }
+    ): Promise<ModelResponse[]> {
+        const endpoint = `/Information/YMME/Years/${year}/Makes/${makeID}/Models`;
+        
+        const queryParams: Record<string, string> = {
+            AttributeStandard: 'MOTOR'
+        };
+        
+        if (options?.vehicleTypes && options.vehicleTypes.length > 0) {
+            queryParams.VehicleTypes = options.vehicleTypes.join(',');
+        }
+        if (options?.countryIDs && options.countryIDs.length > 0) {
+            queryParams.CO = options.countryIDs.join(',');
+        }
+        if (options?.withRel && options.withRel.length > 0) {
+            queryParams.WithRel = options.withRel.join(',');
+        }
+        
+        return this.request<ModelResponse[]>(endpoint, 'GET', queryParams);
+    }
+
+    /**
+     * Get engines for a specific year, make, and model
+     * Endpoint: /v1/Information/YMME/Years/{Year}/Makes/{MakeID}/Models/{ModelID}/Engines
+     * @param year - The year of the vehicle
+     * @param makeID - The ID of the make
+     * @param modelID - The ID of the model
+     * @param options - Query parameters
+     * @returns Array of EngineResponse objects
+     */
+    async getEngines(
+        year: number,
+        makeID: number,
+        modelID: number,
+        options?: {
+            vehicleTypes?: number[];
+            countryIDs?: number[];
+        }
+    ): Promise<EngineResponse[]> {
+        const endpoint = `/Information/YMME/Years/${year}/Makes/${makeID}/Models/${modelID}/Engines`;
+        
+        const queryParams: Record<string, string> = {
+            AttributeStandard: 'MOTOR'
+        };
+        
+        if (options?.vehicleTypes && options.vehicleTypes.length > 0) {
+            queryParams.VehicleTypes = options.vehicleTypes.join(',');
+        }
+        if (options?.countryIDs && options.countryIDs.length > 0) {
+            queryParams.CO = options.countryIDs.join(',');
+        }
+        
+        return this.request<EngineResponse[]>(endpoint, 'GET', queryParams);
+    }
+
+
+
+
+
+    /**
      * Simple HelloWorld test
      * Endpoint: /v1/HelloWorld
      */
@@ -140,9 +343,24 @@ export class MotorDaasClient {
         queryParams?: Record<string, string>,
         correlationId?: string
     ): Promise<T> {
-        // Ensure endpoint starts with /v1
-        const uriPath = endpoint.startsWith('/v1') ? endpoint : `/v1${endpoint}`
-        const url = buildMotorUrl(this.baseUrl, endpoint)
+        // Normalize endpoint: ensure it starts with / but doesn't duplicate /v1
+        // baseUrl is already https://api.motor.com/v1
+        let endpointPath = endpoint
+        if (endpointPath.startsWith('/v1/')) {
+            endpointPath = endpointPath.slice(4) // Remove '/v1/'
+        } else if (endpointPath.startsWith('/v1')) {
+            endpointPath = endpointPath.slice(3) // Remove '/v1'
+        }
+        if (!endpointPath.startsWith('/')) {
+            endpointPath = `/${endpointPath}`
+        }
+        
+        // Build URL (baseUrl already includes /v1)
+        const url = buildMotorUrl(this.baseUrl, endpointPath)
+        
+        // For authentication signature, use the full pathname from the URL
+        // This ensures the signature matches the actual request path
+        const uriPath = url.pathname
 
         // Build authenticated query string with additional params
         const authParams = this.auth.buildAuthQueryParams(method, uriPath)
@@ -165,8 +383,17 @@ export class MotorDaasClient {
             await this.handleError(response);
         }
 
-        const data: MotorApiResponse<T> = await response.json();
-        return (data.Body !== undefined ? data.Body : data) as T;
+        const data = await response.json();
+        
+        // Handle both response formats:
+        // 1. Wrapped: { Body: [...], Header: {...} }
+        // 2. Direct array: [...]
+        if (data && typeof data === 'object' && 'Body' in data && data.Body !== undefined) {
+            return data.Body as T;
+        }
+        
+        // If it's an array directly or the data itself, return it
+        return data as T;
     }
 
     /**

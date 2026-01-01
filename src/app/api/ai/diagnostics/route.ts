@@ -23,6 +23,7 @@ const requestSchema = z.object({
 	sessionId: z.string().optional(),
 	vehicleId: z.number().optional(),
 	baseVehicleId: z.number().optional(),
+	engineId: z.number().optional(),
 	workOrderId: z.string().optional(),
 	vehicleContext: z
 		.object({
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
 			)
 		}
 
-		const { messages: rawMessages, shopId, sessionId, vehicleId, baseVehicleId, vehicleContext, model: requestedModel } = data
+		const { messages: rawMessages, shopId, sessionId, vehicleId, baseVehicleId, engineId, vehicleContext, model: requestedModel } = data
 
 		// 2. Get auth token
 		const authorization = request.headers.get('authorization')
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// 6. Build context string
-		const contextString = buildVehicleContext(vehicleContext, baseVehicleId, vehicleId)
+		const contextString = buildVehicleContext(vehicleContext, baseVehicleId, vehicleId, engineId)
 
 		// 7. Build system prompt
 		const systemPrompt = source`
@@ -182,15 +183,27 @@ export async function POST(request: NextRequest) {
 /**
  * Builds vehicle context string
  */
-function buildVehicleContext(vehicleContext: any, baseVehicleId?: number, vehicleId?: number): string {
+function buildVehicleContext(vehicleContext: any, baseVehicleId?: number, vehicleId?: number, engineId?: number): string {
 	if (vehicleContext) {
-		return `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}`
+		let context = `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}`
+		if (engineId) {
+			context += ` (Engine ID: ${engineId})`
+		}
+		return context
 	}
 	if (baseVehicleId) {
-		return `Base Vehicle ID: ${baseVehicleId}`
+		let context = `Base Vehicle ID: ${baseVehicleId}`
+		if (engineId) {
+			context += ` (Engine ID: ${engineId})`
+		}
+		return context
 	}
 	if (vehicleId) {
-		return `Vehicle ID: ${vehicleId}`
+		let context = `Vehicle ID: ${vehicleId}`
+		if (engineId) {
+			context += ` (Engine ID: ${engineId})`
+		}
+		return context
 	}
 	return 'No vehicle context'
 }

@@ -35,7 +35,8 @@ export function NewSessionDialog({ open, onOpenChange, shopId }: NewSessionDialo
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 
-		if (!selectedVehicle) {
+		// Validate that vehicle has required fields (year, make, model)
+		if (!selectedVehicle || !selectedVehicle.year || !selectedVehicle.make || !selectedVehicle.model) {
 			return
 		}
 
@@ -82,15 +83,16 @@ export function NewSessionDialog({ open, onOpenChange, shopId }: NewSessionDialo
 
 				<form onSubmit={handleSubmit}>
 					<div className="space-y-4 py-4">
-						{/* Vehicle Selector */}
+						{/* Vehicle Selector - YMME Selector */}
 						<div className="space-y-2">
 							<Label htmlFor="vehicle">Vehicle *</Label>
 							<VehicleSelector
 								selectedVehicle={selectedVehicle}
 								onVehicleSelect={setSelectedVehicle}
+								showEngineSelector={true}
 							/>
-							{!selectedVehicle && (
-								<p className="text-xs text-red-500">Please select a vehicle</p>
+							{(!selectedVehicle || !selectedVehicle.year || !selectedVehicle.make || !selectedVehicle.model) && (
+								<p className="text-xs text-red-500">Please select year, make, and model</p>
 							)}
 						</div>
 
@@ -131,7 +133,7 @@ export function NewSessionDialog({ open, onOpenChange, shopId }: NewSessionDialo
 						</Button>
 						<Button
 							type="submit"
-							disabled={!selectedVehicle || createSession.isPending}
+							disabled={!selectedVehicle || !selectedVehicle.year || !selectedVehicle.make || !selectedVehicle.model || createSession.isPending}
 							className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
 						>
 							{createSession.isPending ? (

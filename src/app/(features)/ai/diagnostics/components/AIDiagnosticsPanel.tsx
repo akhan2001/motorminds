@@ -64,6 +64,7 @@ export function AIDiagnosticsPanel({
 						workOrderId,
 						vehicleId: vehicleId || vehicleContext?.motorId,
 						baseVehicleId: baseVehicleId || vehicleContext?.baseVehicleId,
+						engineId: vehicleContext?.engineId,
 						vehicleContext: vehicleContextData
 					}
 				}

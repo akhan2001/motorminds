@@ -24,6 +24,7 @@ export function ChatArea({
 }: ChatAreaProps) {
 	// Use sandbox vehicle if selected, otherwise use mock vehicle
 	const activeVehicle = selectedSandboxVehicle || vehicle
+	const isSessionActive = !!sessionId
 
 	return (
 		<div className="flex flex-col h-full bg-white dark:bg-[#0a0a0a]">
@@ -34,7 +35,10 @@ export function ChatArea({
 					<div className="flex-shrink-0">
 						<VehicleSelector
 							selectedVehicle={selectedSandboxVehicle}
-							onVehicleSelect={onSandboxVehicleSelect}
+							onVehicleSelect={isSessionActive ? () => {} : onSandboxVehicleSelect}
+							readOnly={isSessionActive}
+							lockMessage="Vehicle and engine are locked for this diagnostic session"
+							showEngineSelector={!isSessionActive}
 						/>
 					</div>
 
@@ -86,7 +90,9 @@ export function ChatArea({
 						year: activeVehicle.year,
 						make: activeVehicle.make,
 						model: activeVehicle.model,
-						vin: activeVehicle.vin
+						vin: activeVehicle.vin,
+						engineId: activeVehicle.engineId,
+						engineName: activeVehicle.engineName
 					} as SandboxVehicle : null)}
 					dtcCodes={activeVehicle.activeDTCCodes}
 					reportedIssue={workOrder?.reportedIssue}

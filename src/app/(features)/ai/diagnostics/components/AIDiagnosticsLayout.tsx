@@ -25,12 +25,15 @@ export function AIDiagnosticsLayout({
 	sessionId,
 	vehicleContext 
 }: AIDiagnosticsLayoutProps) {
-	// Use vehicleContext from session if provided, otherwise use mock data
-	const [selectedVehicle, setSelectedVehicle] = useState(
-		vehicleContext || mockVehicleData
-	)
+	// Lock vehicle when session exists - use vehicleContext directly
+	const isSessionActive = !!sessionId
+	const activeVehicle = isSessionActive 
+		? vehicleContext  // Lock to session vehicle
+		: (vehicleContext || mockVehicleData)  // Allow selection for new sessions
+
+	// Only allow vehicle selection if no session
 	const [selectedSandboxVehicle, setSelectedSandboxVehicle] = useState<SandboxVehicle | null>(
-		vehicleContext || null
+		isSessionActive ? null : (vehicleContext || null)  // Don't allow state changes if session active
 	)
 	const [selectedWorkOrder, setSelectedWorkOrder] = useState(mockWorkOrders[0] || null)
 
@@ -41,11 +44,11 @@ export function AIDiagnosticsLayout({
 				<ResizablePanel defaultSize={70} minSize={60} maxSize={75}>
 					<div className="flex-1 flex flex-col min-w-0 h-full">
 						<ChatArea
-							vehicle={selectedVehicle}
+							vehicle={activeVehicle}
 							workOrder={selectedWorkOrder}
 							shopId={shopId}
-							selectedSandboxVehicle={selectedSandboxVehicle}
-							onSandboxVehicleSelect={setSelectedSandboxVehicle}
+							selectedSandboxVehicle={isSessionActive ? vehicleContext : selectedSandboxVehicle}
+							onSandboxVehicleSelect={isSessionActive ? () => {} : setSelectedSandboxVehicle}
 							sessionId={sessionId}
 						/>
 					</div>
@@ -56,7 +59,7 @@ export function AIDiagnosticsLayout({
 				{/* Right Sidebar - Contextual Data */}
 				<ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
 					<RightSidebar
-						vehicle={selectedSandboxVehicle || selectedVehicle}
+						vehicle={isSessionActive ? vehicleContext : (selectedSandboxVehicle || activeVehicle)}
 						workOrders={mockWorkOrders}
 						dtcCodes={mockDTCCodes.active}
 						parts={mockParts}
