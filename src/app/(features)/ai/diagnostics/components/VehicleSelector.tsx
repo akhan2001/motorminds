@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react'
 import { YMMESelector, type YMMESelection } from './YMMESelector'
 
+import type { EngineResponse } from '@/lib/integrations/motor-daas/client'
+
 export interface SandboxVehicle {
 	id?: number
 	motorId?: number
@@ -13,6 +15,7 @@ export interface SandboxVehicle {
 	modelID?: number
 	engineId?: number
 	engineName?: string
+	engineData?: EngineResponse // Full engine response object
 	baseVehicleId?: number
 	vin?: string
 	plate?: string
@@ -48,6 +51,7 @@ export default function VehicleSelector({
 			modelName: selectedVehicle.model,
 			engineID: selectedVehicle.engineId,
 			engineName: selectedVehicle.engineName,
+			engineData: selectedVehicle.engineData,
 		}
 	})
 
@@ -62,6 +66,7 @@ export default function VehicleSelector({
 				modelName: selectedVehicle.model,
 				engineID: selectedVehicle.engineId,
 				engineName: selectedVehicle.engineName,
+				engineData: selectedVehicle.engineData,
 			})
 		} else {
 			setInternalSelection({})
@@ -83,6 +88,7 @@ export default function VehicleSelector({
 				modelID: selection.modelID,
 				engineId: selection.engineID,
 				engineName: selection.engineName,
+				engineData: selection.engineData, // Include full engine data
 				// Use modelID as baseVehicleId for now (may need lookup later)
 				baseVehicleId: selection.modelID,
 				// Preserve existing fields

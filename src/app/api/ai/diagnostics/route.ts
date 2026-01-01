@@ -29,6 +29,9 @@ const requestSchema = z.object({
 			make: z.string().optional(),
 			model: z.string().optional(),
 			year: z.number().optional(),
+			engineId: z.number().optional(),
+			engineName: z.string().optional(),
+			engineData: z.any().optional(), // Full EngineResponse object
 		})
 		.optional(),
 	model: z.enum(['gpt-4', 'gpt-3.5-turbo', 'gpt-4.1-mini']).optional(),
@@ -58,6 +61,7 @@ export async function POST(request: NextRequest) {
 			sessionId,
 			vehicleId,
 			baseVehicleId,
+			engineId,
 			vehicleContext,
 			model: requestedModel,
 		} = data;
@@ -100,12 +104,47 @@ export async function POST(request: NextRequest) {
 		}
 
 		// 8. Build context string - prioritize vehicleContext for richer context
+		// Use engineId from vehicleContext or top-level engineId
+		const finalEngineId = vehicleContext?.engineId || engineId;
+		const finalEngineName = vehicleContext?.engineName;
+		const engineData = vehicleContext?.engineData;
+		
+		// Build engine details string from full engine data if available
+		let engineDetails = '';
+		if (engineData && engineData.EngineID) {
+			// Verify EngineID matches to ensure correct engine data
+			const engineParts: string[] = [];
+			engineParts.push(`Engine ID: ${engineData.EngineID}`); // Always include EngineID first
+			if (engineData.Description) engineParts.push(`Description: ${engineData.Description}`);
+			if (engineData.Designation) engineParts.push(`Designation: ${engineData.Designation}`);
+			if (engineData.CylinderLiter) engineParts.push(`${engineData.CylinderLiter}L`);
+			if (engineData.Cylinders) engineParts.push(`${engineData.Cylinders} cylinders`);
+			if (engineData.FuelType) engineParts.push(`Fuel: ${engineData.FuelType}`);
+			if (engineData.Aspiration) engineParts.push(`Aspiration: ${engineData.Aspiration}`);
+			if (engineData.HorsePower) engineParts.push(`${engineData.HorsePower} HP`);
+			if (engineData.KilowattPower) engineParts.push(`${engineData.KilowattPower} kW`);
+			if (engineData.Valves) engineParts.push(`${engineData.Valves} valves`);
+			if (engineData.BlockType) engineParts.push(`Block: ${engineData.BlockType}`);
+			if (engineData.CylinderHeadType) engineParts.push(`Head: ${engineData.CylinderHeadType}`);
+			if (engineData.IgnitionSystem) engineParts.push(`Ignition: ${engineData.IgnitionSystem}`);
+			if (engineData.Manufacturer) engineParts.push(`Manufacturer: ${engineData.Manufacturer}`);
+			if (engineData.Version) engineParts.push(`Version: ${engineData.Version}`);
+			if (engineData.CID) engineParts.push(`CID: ${engineData.CID}`);
+			if (engineData.CylinderCC) engineParts.push(`CC: ${engineData.CylinderCC}`);
+			
+			engineDetails = ` Engine: ${engineParts.join(', ')}.`;
+		} else if (finalEngineId) {
+			engineDetails = finalEngineName 
+				? ` Engine ID: ${finalEngineId} (${finalEngineName}).`
+				: ` Engine ID: ${finalEngineId}.`;
+		}
+		
 		const contextString = vehicleContext
-			? `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}`
+			? `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}.${engineDetails}`
 			: baseVehicleId
-				? `Base Vehicle ID: ${baseVehicleId}`
+				? `Base Vehicle ID: ${baseVehicleId}${finalEngineId ? `, Engine ID: ${finalEngineId}` : ''}`
 				: vehicleId
-					? `Vehicle ID: ${vehicleId}`
+					? `Vehicle ID: ${vehicleId}${finalEngineId ? `, Engine ID: ${finalEngineId}` : ''}`
 					: 'No vehicle context';
 
 		// 9. Build system prompt - Simplified for Hello World testing

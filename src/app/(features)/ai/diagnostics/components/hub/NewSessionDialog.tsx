@@ -48,6 +48,20 @@ export function NewSessionDialog({ open, onOpenChange, shopId }: NewSessionDialo
 				status: 'active',
 			})
 
+			// Store vehicle context in localStorage as fallback (since sessions aren't persisted to DB)
+			try {
+				localStorage.setItem(
+					`diagnostic-session-${newSession.session_id}`,
+					JSON.stringify({
+						vehicle_context: selectedVehicle,
+						work_order_id: workOrderId || undefined,
+						initial_issue: initialIssue || undefined,
+					})
+				)
+			} catch (storageError) {
+				console.warn('Failed to store session in localStorage:', storageError)
+			}
+
 			// Reset form
 			setSelectedVehicle(null)
 			setWorkOrderId('')

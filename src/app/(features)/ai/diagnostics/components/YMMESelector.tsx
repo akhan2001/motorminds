@@ -15,6 +15,8 @@ import { useMotorMakesQuery } from '../data/motor/makes-query'
 import { useMotorModelsQuery } from '../data/motor/models-query'
 import { useMotorEnginesQuery } from '../data/motor/engines-query'
 
+import type { EngineResponse } from '@/lib/integrations/motor-daas/client'
+
 export interface YMMESelection {
 	year?: number
 	makeID?: number
@@ -23,6 +25,7 @@ export interface YMMESelection {
 	modelName?: string
 	engineID?: number
 	engineName?: string
+	engineData?: EngineResponse // Full engine response object
 }
 
 interface YMMESelectorProps {
@@ -120,6 +123,7 @@ export function YMMESelector({
 			...selection,
 			engineID,
 			engineName,
+			engineData: selectedEngine, // Store full engine response
 		})
 	}
 

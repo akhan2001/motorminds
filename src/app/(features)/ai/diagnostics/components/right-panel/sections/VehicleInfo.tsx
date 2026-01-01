@@ -16,10 +16,26 @@ interface VehicleInfoProps {
 		customerPhone?: string
 		baseVehicleId?: number
 		engineId?: number
-	}
+	} | null
 }
 
 export function VehicleInfo({ vehicle }: VehicleInfoProps) {
+	if (!vehicle) {
+		return (
+			<Card>
+				<CardHeader className="pb-3">
+					<CardTitle className="text-base flex items-center gap-2">
+						<Car className="w-4 h-4" />
+						Vehicle Information
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<p className="text-sm text-muted-foreground">No vehicle information available</p>
+				</CardContent>
+			</Card>
+		)
+	}
+
 	return (
 		<Card>
 			<CardHeader className="pb-3">

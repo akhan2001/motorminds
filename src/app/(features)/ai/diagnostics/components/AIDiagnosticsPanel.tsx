@@ -46,12 +46,16 @@ export function AIDiagnosticsPanel({
 			api: '/api/ai/diagnostics',
 			async prepareSendMessagesRequest({ messages, ...options }: { messages: UIMessage[]; [key: string]: any }) {
 				// Build vehicle context object from vehicleContext if available
+				// Include full engine data for accurate context
 				const vehicleContextData = vehicleContext
 					? {
 							year: vehicleContext.year,
 							make: vehicleContext.make,
 							model: vehicleContext.model,
-							vin: vehicleContext.vin
+							vin: vehicleContext.vin,
+							engineId: vehicleContext.engineId,
+							engineName: vehicleContext.engineName,
+							engineData: vehicleContext.engineData, // Full EngineResponse object
 						}
 					: undefined
 

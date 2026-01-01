@@ -28,7 +28,7 @@ export function AIDiagnosticsLayout({
 	// Lock vehicle when session exists - use vehicleContext directly
 	const isSessionActive = !!sessionId
 	const activeVehicle = isSessionActive 
-		? vehicleContext  // Lock to session vehicle
+		? (vehicleContext || mockVehicleData)  // Lock to session vehicle, fallback to mock if null
 		: (vehicleContext || mockVehicleData)  // Allow selection for new sessions
 
 	// Only allow vehicle selection if no session
@@ -47,7 +47,7 @@ export function AIDiagnosticsLayout({
 							vehicle={activeVehicle}
 							workOrder={selectedWorkOrder}
 							shopId={shopId}
-							selectedSandboxVehicle={isSessionActive ? vehicleContext : selectedSandboxVehicle}
+							selectedSandboxVehicle={isSessionActive ? (vehicleContext || null) : selectedSandboxVehicle}
 							onSandboxVehicleSelect={isSessionActive ? () => {} : setSelectedSandboxVehicle}
 							sessionId={sessionId}
 						/>
@@ -59,7 +59,7 @@ export function AIDiagnosticsLayout({
 				{/* Right Sidebar - Contextual Data */}
 				<ResizablePanel defaultSize={30} minSize={25} maxSize={40}>
 					<RightSidebar
-						vehicle={isSessionActive ? vehicleContext : (selectedSandboxVehicle || activeVehicle)}
+						vehicle={isSessionActive ? (vehicleContext || mockVehicleData) : (selectedSandboxVehicle || activeVehicle)}
 						workOrders={mockWorkOrders}
 						dtcCodes={mockDTCCodes.active}
 						parts={mockParts}
