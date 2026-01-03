@@ -19,5 +19,10 @@ export const motorKeys = {
 		modelID: number,
 		options?: { vehicleTypes?: number[]; countryIDs?: number[] }
 	) => [...motorKeys.all, 'years', year, 'makes', makeID, 'models', modelID, 'engines', options] as const,
+	baseVehicle: (
+		year: number,
+		makeID: number,
+		modelID: number
+	) => [...motorKeys.all, 'years', year, 'makes', makeID, 'models', modelID, 'baseVehicle'] as const,
 }
 

@@ -6,10 +6,24 @@ import { z } from 'zod'
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 export const perplexityResearchTool = tool({
-	description: `Search online forums, technical documentation, and automotive resources to find detailed information, troubleshooting guides, and community solutions for complex diagnostic questions. Use this when the user asks detailed questions that may benefit from online research or forum discussions.`,
+	description: `PRIMARY DIAGNOSTIC TOOL - Use for most customer complaints and diagnostic questions.
+
+Search real-world sources for:
+- Common failures and fixes for specific make/model/year
+- TSB lookups and recall info
+- Forum-proven solutions
+- DTC troubleshooting steps
+
+USE THIS TOOL when user reports symptoms like:
+- "rough idle", "check engine light", "no start", "stalling"
+- "noise from [location]", "vibration", "hesitation"
+- Any DTC code troubleshooting
+- "What's the most likely cause of..."
+
+Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] [make] fix"`,
 	
 	inputSchema: z.object({
-		query: z.string().describe('The research query or question to search for'),
+		query: z.string().describe('Search query - include symptom + year + make + model for best results. Example: "P0420 2010 Camaro fix" or "rough idle Chevrolet V8 common causes"'),
 		vehicleContext: z.object({
 			make: z.string().optional(),
 			model: z.string().optional(),
@@ -43,9 +57,13 @@ export const perplexityResearchTool = tool({
 					messages: [
 						{
 							role: 'system',
-							content: `You are an automotive diagnostic research assistant. Search online forums, technical documentation, 
-								and automotive resources to provide comprehensive answers with citations. Focus on practical solutions, 
-								troubleshooting steps, and real-world experiences from automotive forums.`,
+							content: `You're a master tech researching a fix. Find:
+1. Most common cause for this specific make/model/year
+2. Quick diagnostic test to confirm
+3. Known TSBs or recalls
+4. What gets missed
+
+Be concise. Lead with the most likely fix. Skip obvious stuff.`,
 						},
 						{
 							role: 'user',
@@ -53,7 +71,7 @@ export const perplexityResearchTool = tool({
 						},
 					],
 					stream: false,
-					max_tokens: 4000,
+					max_tokens: 2000,
 					temperature: 0.2,
 				}),
 			})

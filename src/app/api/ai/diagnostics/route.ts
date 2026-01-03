@@ -1,12 +1,21 @@
-import { streamText, convertToModelMessages, stepCountIs } from 'ai';
+/**
+ * AI Diagnostics API Route
+ * 
+ * Following Supabase patterns:
+ * - Static system prompt (cacheable)
+ * - Dynamic context in assistant message
+ * - Stateless tools with dependency injection
+ * - AI SDK handles tool chaining (maxSteps)
+ */
 
-import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages, maxSteps } from 'ai';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { source } from 'common-tags';
 
 import { getModel } from '@/lib/ai/model';
 import { getTools } from '@/app/(features)/ai/diagnostics/tools';
+import { MotorDaasClient } from '@/lib/integrations/motor-daas/client';
 import {
 	AI_DIAGNOSTICS_PROMPT,
 	LIMITATIONS_PROMPT,
@@ -14,6 +23,7 @@ import {
 	MOTOR_API_PROMPT,
 	DIAGNOSTIC_WORKFLOW_PROMPT,
 } from '@/app/(features)/ai/diagnostics/tools/prompts';
+import type { DiagnosticAiOptInLevel } from '@/app/(features)/ai/diagnostics/tools/tool-filter';
 
 const requestSchema = z.object({
 	messages: z.array(z.any()),
@@ -29,13 +39,84 @@ const requestSchema = z.object({
 			make: z.string().optional(),
 			model: z.string().optional(),
 			year: z.number().optional(),
+			baseVehicleId: z.number().optional(),
 			engineId: z.number().optional(),
 			engineName: z.string().optional(),
-			engineData: z.any().optional(), // Full EngineResponse object
+			engineData: z.any().optional(),
 		})
 		.optional(),
 	model: z.enum(['gpt-4', 'gpt-3.5-turbo', 'gpt-4.1-mini']).optional(),
 });
+
+/**
+ * Build vehicle context string for AI
+ */
+function buildVehicleContext(params: {
+	vehicleContext?: {
+		year?: number;
+		make?: string;
+		model?: string;
+		vin?: string;
+		baseVehicleId?: number;
+		engineId?: number;
+		engineName?: string;
+		engineData?: any;
+	};
+	vehicleId?: number;
+	baseVehicleId?: number;
+	engineId?: number;
+}): string {
+	const { vehicleContext, vehicleId, baseVehicleId, engineId } = params;
+	
+	// Use vehicleContext for richer context
+	const finalEngineId = vehicleContext?.engineId || engineId;
+	const finalEngineName = vehicleContext?.engineName;
+	const engineData = vehicleContext?.engineData;
+	const finalBaseVehicleId = vehicleContext?.baseVehicleId || baseVehicleId;
+	
+	// Build engine details string
+	let engineDetails = '';
+	if (engineData && engineData.EngineID) {
+		const engineParts: string[] = [];
+		engineParts.push(`Engine ID: ${engineData.EngineID}`);
+		if (engineData.Description) engineParts.push(`Description: ${engineData.Description}`);
+		if (engineData.Designation) engineParts.push(`Designation: ${engineData.Designation}`);
+		if (engineData.CylinderLiter) engineParts.push(`${engineData.CylinderLiter}L`);
+		if (engineData.Cylinders) engineParts.push(`${engineData.Cylinders} cylinders`);
+		if (engineData.FuelType) engineParts.push(`Fuel: ${engineData.FuelType}`);
+		if (engineData.Aspiration) engineParts.push(`Aspiration: ${engineData.Aspiration}`);
+		if (engineData.HorsePower) engineParts.push(`${engineData.HorsePower} HP`);
+		if (engineData.KilowattPower) engineParts.push(`${engineData.KilowattPower} kW`);
+		if (engineData.Valves) engineParts.push(`${engineData.Valves} valves`);
+		if (engineData.BlockType) engineParts.push(`Block: ${engineData.BlockType}`);
+		if (engineData.CylinderHeadType) engineParts.push(`Head: ${engineData.CylinderHeadType}`);
+		if (engineData.IgnitionSystem) engineParts.push(`Ignition: ${engineData.IgnitionSystem}`);
+		if (engineData.Manufacturer) engineParts.push(`Manufacturer: ${engineData.Manufacturer}`);
+		if (engineData.Version) engineParts.push(`Version: ${engineData.Version}`);
+		if (engineData.CID) engineParts.push(`CID: ${engineData.CID}`);
+		if (engineData.CylinderCC) engineParts.push(`CC: ${engineData.CylinderCC}`);
+		
+		engineDetails = ` Engine: ${engineParts.join(', ')}.`;
+	} else if (finalEngineId) {
+		engineDetails = finalEngineName 
+			? ` Engine ID: ${finalEngineId} (${finalEngineName}).`
+			: ` Engine ID: ${finalEngineId}.`;
+	}
+	
+	if (vehicleContext?.year && vehicleContext?.make && vehicleContext?.model) {
+		return `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${finalBaseVehicleId ? ` (Base Vehicle ID: ${finalBaseVehicleId})` : ''}.${engineDetails}`;
+	}
+	
+	if (finalBaseVehicleId) {
+		return `Base Vehicle ID: ${finalBaseVehicleId}${finalEngineId ? `, Engine ID: ${finalEngineId}` : ''}`;
+	}
+	
+	if (vehicleId) {
+		return `Vehicle ID: ${vehicleId}${finalEngineId ? `, Engine ID: ${finalEngineId}` : ''}`;
+	}
+	
+	return 'No vehicle context';
+}
 
 export async function POST(request: NextRequest) {
 	try {
@@ -45,13 +126,8 @@ export async function POST(request: NextRequest) {
 
 		if (error) {
 			return Response.json(
-				{
-					error: 'Invalid request',
-					issues: error.issues,
-				},
-				{
-					status: 400,
-				}
+				{ error: 'Invalid request', issues: error.issues },
+				{ status: 400 }
 			);
 		}
 
@@ -66,7 +142,7 @@ export async function POST(request: NextRequest) {
 			model: requestedModel,
 		} = data;
 
-		// 2. Validate shopId (required for routing)
+		// 2. Validate shopId
 		if (!shopId) {
 			return Response.json(
 				{ error: 'shopId is required' },
@@ -78,20 +154,18 @@ export async function POST(request: NextRequest) {
 		const authorization = request.headers.get('authorization');
 		const accessToken = authorization?.replace('Bearer ', '');
 
-		// 4. Get AI opt-in level (simplified for now)
-		let aiOptInLevel: 'disabled' | 'schema' | 'full' = 'full';
-		let isLimited = false;
-
-		// TODO: Add permission logic here
-		// ...
+		// 4. Get AI opt-in level (default to full for now)
+		// TODO: Fetch from shop settings
+		const aiOptInLevel: DiagnosticAiOptInLevel = 'full';
+		const isLimited = false;
 
 		// 5. Clean messages (last 7 only)
 		const cleanedMessages = (messages || []).slice(-7);
 
-		// 7. Get model
+		// 6. Get model
 		const modelResult = await getModel({
 			provider: 'openai',
-			model: (requestedModel ?? 'gpt-4o-mini') as any, // Default to gpt-4o-mini for higher rate limits
+			model: (requestedModel ?? 'gpt-4o-mini') as any,
 			routingKey: shopId,
 			isLimited,
 		});
@@ -103,79 +177,30 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// 8. Build context string - prioritize vehicleContext for richer context
-		// Use engineId from vehicleContext or top-level engineId
+		// 7. Build context string
+		const finalBaseVehicleId = vehicleContext?.baseVehicleId || baseVehicleId;
 		const finalEngineId = vehicleContext?.engineId || engineId;
-		const finalEngineName = vehicleContext?.engineName;
-		const engineData = vehicleContext?.engineData;
 		
-		// Build engine details string from full engine data if available
-		let engineDetails = '';
-		if (engineData && engineData.EngineID) {
-			// Verify EngineID matches to ensure correct engine data
-			const engineParts: string[] = [];
-			engineParts.push(`Engine ID: ${engineData.EngineID}`); // Always include EngineID first
-			if (engineData.Description) engineParts.push(`Description: ${engineData.Description}`);
-			if (engineData.Designation) engineParts.push(`Designation: ${engineData.Designation}`);
-			if (engineData.CylinderLiter) engineParts.push(`${engineData.CylinderLiter}L`);
-			if (engineData.Cylinders) engineParts.push(`${engineData.Cylinders} cylinders`);
-			if (engineData.FuelType) engineParts.push(`Fuel: ${engineData.FuelType}`);
-			if (engineData.Aspiration) engineParts.push(`Aspiration: ${engineData.Aspiration}`);
-			if (engineData.HorsePower) engineParts.push(`${engineData.HorsePower} HP`);
-			if (engineData.KilowattPower) engineParts.push(`${engineData.KilowattPower} kW`);
-			if (engineData.Valves) engineParts.push(`${engineData.Valves} valves`);
-			if (engineData.BlockType) engineParts.push(`Block: ${engineData.BlockType}`);
-			if (engineData.CylinderHeadType) engineParts.push(`Head: ${engineData.CylinderHeadType}`);
-			if (engineData.IgnitionSystem) engineParts.push(`Ignition: ${engineData.IgnitionSystem}`);
-			if (engineData.Manufacturer) engineParts.push(`Manufacturer: ${engineData.Manufacturer}`);
-			if (engineData.Version) engineParts.push(`Version: ${engineData.Version}`);
-			if (engineData.CID) engineParts.push(`CID: ${engineData.CID}`);
-			if (engineData.CylinderCC) engineParts.push(`CC: ${engineData.CylinderCC}`);
-			
-			engineDetails = ` Engine: ${engineParts.join(', ')}.`;
-		} else if (finalEngineId) {
-			engineDetails = finalEngineName 
-				? ` Engine ID: ${finalEngineId} (${finalEngineName}).`
-				: ` Engine ID: ${finalEngineId}.`;
-		}
-		
-		const contextString = vehicleContext
-			? `Vehicle: ${vehicleContext.year} ${vehicleContext.make} ${vehicleContext.model}${vehicleContext.vin ? `, VIN: ${vehicleContext.vin}` : ''}${baseVehicleId ? ` (Base Vehicle ID: ${baseVehicleId})` : ''}.${engineDetails}`
-			: baseVehicleId
-				? `Base Vehicle ID: ${baseVehicleId}${finalEngineId ? `, Engine ID: ${finalEngineId}` : ''}`
-				: vehicleId
-					? `Vehicle ID: ${vehicleId}${finalEngineId ? `, Engine ID: ${finalEngineId}` : ''}`
-					: 'No vehicle context';
+		const contextString = buildVehicleContext({
+			vehicleContext,
+			vehicleId,
+			baseVehicleId: finalBaseVehicleId,
+			engineId: finalEngineId,
+		});
 
-		// 9. Build system prompt - Simplified for Hello World testing
-		// const systemPrompt = `You are an automotive diagnostic AI assistant integrated with MOTOR DaaS.
-
-		// Your current capabilities:
-		// - Test MOTOR DaaS API connection using the helloWorld tool
-
-		// How to use your tools:
-		// - When users ask to "test the connection", "say hello", or want to verify the MOTOR API is working, use the helloWorld tool
-		// - The helloWorld tool will test the connection to MOTOR DaaS and return a simple "Hello World" message
-
-		// Scope:
-		// - You MUST only answer questions related to vehicle diagnostics and automotive topics
-		// - You MUST decline all other questions politely and redirect to automotive topics
-
-		// ${contextString ? `Current vehicle context: ${contextString}` : ''}
-
-		// Be helpful, accurate, and professional.`
-
+		// 8. Build system prompt (STATIC - cacheable with Bedrock)
+		// Following Supabase pattern: keep system prompt static for caching
 		const systemPrompt = source`
 			${AI_DIAGNOSTICS_PROMPT}
 			${DIAGNOSTIC_WORKFLOW_PROMPT}
 			${LIMITATIONS_PROMPT}
 			${COMPLIANCE_PROMPT}
 			${MOTOR_API_PROMPT}
-			${contextString ? `Current vehicle context: ${contextString}` : ''}
 			Be helpful, accurate, and professional.
 		`;
 
-		// 10. Build messages
+		// 9. Build messages with dynamic context in assistant message
+		// Following Supabase pattern: dynamic context goes in assistant message, not system
 		const convertedMessages = await convertToModelMessages(cleanedMessages);
 
 		const coreMessages = [
@@ -187,43 +212,40 @@ export async function POST(request: NextRequest) {
 				}),
 			},
 			{
+				// Dynamic context in assistant message (Supabase pattern)
 				role: 'assistant' as const,
 				content: `Shop ID: ${shopId}. ${contextString}`,
 			},
 			...convertedMessages,
 		];
 
-		// 11. Setup abort controller
+		// 10. Setup abort controller
 		const abortController = new AbortController();
 		request.signal.addEventListener('abort', () => abortController.abort());
 
-		// 12. Validate MOTOR DaaS credentials
-		if (
-			!process.env.MOTOR_DAAS_PUBLIC_KEY ||
-			!process.env.MOTOR_DAAS_PRIVATE_KEY
-		) {
+		// 11. Validate MOTOR DaaS credentials
+		if (!process.env.MOTOR_DAAS_PUBLIC_KEY || !process.env.MOTOR_DAAS_PRIVATE_KEY) {
 			return Response.json(
 				{ error: 'MOTOR DaaS credentials not configured' },
 				{ status: 500 }
 			);
 		}
 
-		// 13. Get tools (with error handling)
+		// 12. Create Motor client and get tools
 		let tools;
 		try {
-			// Create a mock MotorDaasClient for getTools (it's not used for Perplexity tools)
-			const { MotorDaasClient } = await import(
-				'@/lib/integrations/motor-daas/client'
-			);
 			const motorClient = new MotorDaasClient({
 				publicKey: process.env.MOTOR_DAAS_PUBLIC_KEY!,
 				privateKey: process.env.MOTOR_DAAS_PRIVATE_KEY!,
 				baseUrl: 'https://api.motor.com/v1',
 			});
 
+			// Get tools with context injected via closure
 			tools = await getTools({
 				shopId,
 				vehicleId,
+				baseVehicleId: finalBaseVehicleId,
+				engineId: finalEngineId,
 				authorization: authorization || undefined,
 				aiOptInLevel,
 				accessToken: accessToken || undefined,
@@ -234,19 +256,17 @@ export async function POST(request: NextRequest) {
 			return Response.json(
 				{
 					error: 'Failed to initialize tools',
-					message:
-						toolError instanceof Error
-							? toolError.message
-							: 'Unknown error',
+					message: toolError instanceof Error ? toolError.message : 'Unknown error',
 				},
 				{ status: 500 }
 			);
 		}
 
-		// 14. Stream response
+		// 13. Stream response
+		// Following Supabase pattern: maxSteps limits tool roundtrips, AI SDK handles chaining
 		const result = streamText({
 			model: modelResult.model,
-			stopWhen: stepCountIs(3), // Reduced from 5 to limit unnecessary tool calls
+			maxSteps: 5, // Limit tool calling rounds (Supabase uses stepCountIs(5))
 			messages: coreMessages,
 			...(modelResult.providerOptions && {
 				providerOptions: modelResult.providerOptions,
@@ -255,7 +275,7 @@ export async function POST(request: NextRequest) {
 			abortSignal: abortController.signal,
 		});
 
-		// 15. Return stream
+		// 14. Return stream
 		return result.toUIMessageStreamResponse({
 			originalMessages: cleanedMessages,
 			sendReasoning: true,
@@ -271,8 +291,7 @@ export async function POST(request: NextRequest) {
 		return Response.json(
 			{
 				error: 'Internal server error',
-				message:
-					error instanceof Error ? error.message : 'Unknown error',
+				message: error instanceof Error ? error.message : 'Unknown error',
 			},
 			{ status: 500 }
 		);

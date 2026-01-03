@@ -1,5 +1,8 @@
-import type { Tool, ToolSet } from 'ai'
 import { z } from 'zod'
+
+// Tool types - using generic since 'ai' package exports vary by version
+type Tool = Record<string, unknown>
+type ToolSet = Record<string, Tool>
 
 const basicToolSchema = z.custom<Tool>((value) => typeof value === 'object')
 
@@ -14,6 +17,14 @@ export const toolSetValidationSchema = z.record(
 
         // MOTOR API Tools
         'helloWorld',
+        'getWiringDiagrams',
+        'getDiagramDetails',
+        'getDiagramComponents',
+        'getOEMComponents',
+        'getRelatedWiringDiagrams',
+        'getRelatedOEMComponents',
+        
+        // MOTOR API Tools (legacy - for backwards compatibility)
         'getServiceProcedures',
         'getVehicleInfo',
         'lookupDTC',
@@ -23,11 +34,6 @@ export const toolSetValidationSchema = z.record(
         'getSpecifications',
         'getWorkTime',
         'getTSB',
-        'getWiringDiagrams',
-        'getOEMComponents',
-        'getRelatedWiringDiagrams',
-        'getRelatedOEMComponents',
-        'getDiagramComponents',
         'getBulkVehicleAttributes',
         'estimateRepairCost',
 
@@ -74,8 +80,16 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     render_diagram: TOOL_CATEGORIES.UI,
     rename_chat: TOOL_CATEGORIES.UI,
 
-    // MOTOR API Tools
+    // MOTOR API Tools (Supabase-style - current)
     helloWorld: TOOL_CATEGORIES.MOTOR_API,
+    getWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
+    getDiagramDetails: TOOL_CATEGORIES.MOTOR_API,
+    getDiagramComponents: TOOL_CATEGORIES.MOTOR_API,
+    getOEMComponents: TOOL_CATEGORIES.MOTOR_API,
+    getRelatedWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
+    getRelatedOEMComponents: TOOL_CATEGORIES.MOTOR_API,
+    
+    // MOTOR API Tools (legacy - for backwards compatibility)
     getServiceProcedures: TOOL_CATEGORIES.MOTOR_API,
     getVehicleInfo: TOOL_CATEGORIES.MOTOR_API,
     lookupDTC: TOOL_CATEGORIES.MOTOR_API,
@@ -85,11 +99,6 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     getSpecifications: TOOL_CATEGORIES.MOTOR_API,
     getWorkTime: TOOL_CATEGORIES.MOTOR_API,
     getTSB: TOOL_CATEGORIES.MOTOR_API,
-    getWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
-    getOEMComponents: TOOL_CATEGORIES.MOTOR_API,
-    getRelatedWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
-    getRelatedOEMComponents: TOOL_CATEGORIES.MOTOR_API,
-    getDiagramComponents: TOOL_CATEGORIES.MOTOR_API,
     getBulkVehicleAttributes: TOOL_CATEGORIES.MOTOR_API,
     estimateRepairCost: TOOL_CATEGORIES.MOTOR_API,
 
@@ -166,7 +175,7 @@ function isToolAllowed(toolName: string, aiOptInLevel: DiagnosticAiOptInLevel): 
 /**
  * Create a privacy message tool that explains why the tool is not available
  */
-export function createPrivacyMessageTool(toolInstance: Tool<any, any>) {
+export function createPrivacyMessageTool(toolInstance: Tool) {
     const privacyMessage =
         "You don't have permission to use this tool. This requires opting in to AI features in your shop settings. Please contact your administrator to enable AI features."
 

@@ -31,6 +31,10 @@ export interface ModelResponse {
         CountryID: number;
         Name: string;
     }>;
+    BaseVehicles ?: Array<{
+        BaseVehicleID: number;
+        BaseVehicleName?: string;
+    }>;
     Links ?: Array<{ Href: string; Rel: string; Count?: number }>;
 }
 
@@ -279,8 +283,39 @@ export class MotorDaasClient {
         return this.request<EngineResponse[]>(endpoint, 'GET', queryParams);
     }
 
-
-
+    /**
+     * Get base vehicle ID for a YMME selection
+     * Endpoint: /v1/Information/YMME/Years/{Year}/Makes/{MakeID}/Models/{ModelID}/BaseVehicle
+     * @param year - The year
+     * @param makeID - The make ID
+     * @param modelID - The model ID
+     * @returns Base vehicle information including BaseVehicleID
+     */
+    async getBaseVehicle(
+        year: number,
+        makeID: number,
+        modelID: number
+    ): Promise<{
+        BaseVehicleID: number;
+        Year: number;
+        Make: { MakeID: number; MakeName: string };
+        Model: { ModelID: number; ModelName: string };
+        Links?: Array<{ Href: string; Rel: string }>;
+    }> {
+        const endpoint = `/Information/YMME/Years/${year}/Makes/${makeID}/Models/${modelID}/BaseVehicle`;
+        
+        const queryParams: Record<string, string> = {
+            AttributeStandard: 'MOTOR'
+        };
+        
+        return this.request<{
+            BaseVehicleID: number;
+            Year: number;
+            Make: { MakeID: number; MakeName: string };
+            Model: { ModelID: number; ModelName: string };
+            Links?: Array<{ Href: string; Rel: string }>;
+        }>(endpoint, 'GET', queryParams);
+    }
 
 
     /**

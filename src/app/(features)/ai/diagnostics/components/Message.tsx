@@ -3,8 +3,6 @@
 import React from 'react'
 import type { UIMessage } from '@ai-sdk/react'
 import { Loader2 } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 
 import { MessageProvider, useMessageInfoContext } from './Message.Context'
 import {
@@ -13,6 +11,7 @@ import {
 	MessageDisplayContent,
 	MessageDisplayProfileImage
 } from './Message.Display'
+import { MessageMarkdown } from './Message.Markdown'
 import { MessagePartSwitcher } from './Message.Parts'
 
 interface MessageProps {
@@ -96,13 +95,7 @@ function MessageContent({ message, isUser }: MessageContentProps) {
 	if (partsCount === 0) {
 		const content = (message as any).content
 		if (content) {
-			return (
-				<div className="text-sm prose prose-sm dark:prose-invert max-w-none break-words prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-headings:font-semibold prose-p:text-gray-800 dark:prose-p:text-gray-200 prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-strong:font-semibold">
-					<ReactMarkdown remarkPlugins={[remarkGfm]}>
-						{content}
-					</ReactMarkdown>
-				</div>
-			)
+			return <MessageMarkdown>{content}</MessageMarkdown>
 		}
 		
 		// Show loading indicator if message is loading, otherwise show "No content available"

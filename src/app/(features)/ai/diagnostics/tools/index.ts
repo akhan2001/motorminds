@@ -1,42 +1,69 @@
-import { ToolSet } from 'ai'
-import { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
-import { getMotorTools } from './motor-daas-tools'
+/**
+ * AI Diagnostics Tool Registry
+ * 
+ * Following Supabase patterns:
+ * - Tools receive context via parameters (dependency injection)
+ * - No global state
+ * - Tools are stateless
+ */
+
+import type { MotorDaasClient } from '@/lib/integrations/motor-daas/client'
+
+// Tool types - using generic since 'ai' package exports vary by version
+type ToolSet = Record<string, Record<string, unknown>>
+import { getMotorTools } from './motor-tools'
 import { getRenderingTools } from './rendering-tools'
 import { getPerplexityTools } from './perplexity-research-tool'
 import { filterToolsByOptInLevel, type DiagnosticAiOptInLevel } from './tool-filter'
 
+export interface GetToolsParams {
+	shopId: string
+	vehicleId?: number
+	baseVehicleId?: number
+	engineId?: number
+	authorization?: string
+	aiOptInLevel: DiagnosticAiOptInLevel
+	accessToken?: string
+	motorClient: MotorDaasClient
+}
+
 export const getTools = async ({
-    shopId,
-    vehicleId,
-    authorization,
-    aiOptInLevel,
-    accessToken,
-    motorClient,
-}: {
-    shopId: string
-    vehicleId?: number
-    authorization?: string
-    aiOptInLevel: DiagnosticAiOptInLevel
-    accessToken?: string
-    motorClient: MotorDaasClient
-}): ToolSet => {
-    // 1. Always include rendering tools (UI-only)
-    let tools: ToolSet = getRenderingTools()
+	shopId,
+	vehicleId,
+	baseVehicleId,
+	engineId,
+	authorization,
+	aiOptInLevel,
+	accessToken,
+	motorClient,
+}: GetToolsParams): Promise<ToolSet> => {
+	// 1. Always include rendering tools (UI-only)
+	let tools: ToolSet = getRenderingTools()
 
-    // 2. Add MOTOR DaaS tools
-    const motorTools = getMotorTools()
+	// 2. Add MOTOR DaaS tools if we have vehicle context
+	if (baseVehicleId && motorClient) {
+		const motorTools = getMotorTools({
+			baseVehicleId,
+			engineId,
+			motorClient,
+		})
 
-    // 3. Add Perplexity research tools
-    const perplexityTools = getPerplexityTools()
+		tools = {
+			...tools,
+			...motorTools,
+		}
+	}
 
-    tools = {
-        ...tools,
-        ...motorTools,
-        ...perplexityTools,
-    }
+	// 3. Add Perplexity research tools
+	const perplexityTools = getPerplexityTools()
 
-    // 4. Filter by opt-in level
-    const filteredTools = filterToolsByOptInLevel(tools, aiOptInLevel)
+	tools = {
+		...tools,
+		...perplexityTools,
+	}
 
-    return filteredTools
+	// 4. Filter by opt-in level
+	const filteredTools = filterToolsByOptInLevel(tools, aiOptInLevel)
+
+	return filteredTools
 }
