@@ -246,6 +246,7 @@ export async function POST(request: NextRequest) {
 				vehicleId,
 				baseVehicleId: finalBaseVehicleId,
 				engineId: finalEngineId,
+				vehicleMake: vehicleContext?.make,
 				authorization: authorization || undefined,
 				aiOptInLevel,
 				accessToken: accessToken || undefined,

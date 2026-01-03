@@ -13,7 +13,11 @@ interface ConversationProps {
 
 export function Conversation({ children, className }: ConversationProps) {
 	return (
-		<StickToBottom className={cn('relative flex-1 min-h-0 overflow-hidden', className)}>
+		<StickToBottom 
+			className={cn('relative flex-1 min-h-0 overflow-hidden', className)}
+			initial="smooth"
+			resize="smooth"
+		>
 			{children}
 		</StickToBottom>
 	)

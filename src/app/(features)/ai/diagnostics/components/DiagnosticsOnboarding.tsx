@@ -8,9 +8,16 @@ interface DiagnosticsOnboardingProps {
 }
 
 const examplePrompts = [
-	'What does DTC P0420 mean?',
-	'Customer reports rough idle and check engine light',
-	'How do I diagnose a misfire on cylinder 3?'
+	'Customer reports rough idle and CEL, no codes stored',
+	'P0300 random misfire, already replaced plugs and coils',
+	'Intermittent no-start, cranks fine but won\'t fire',
+	'AC blows warm at idle, cold when driving',
+	'Transmission slipping between 2nd and 3rd, no CEL',
+	'ABS and traction control lights on after brake job',
+	'Customer hears clicking noise from front end when turning',
+	'Battery keeps dying overnight, already tested alternator',
+	'P0171 and P0174 together, lean codes both banks',
+	'Coolant leak but can\'t find the source, no visible drips',
 ]
 
 export function DiagnosticsOnboarding({ onSendMessage }: DiagnosticsOnboardingProps) {

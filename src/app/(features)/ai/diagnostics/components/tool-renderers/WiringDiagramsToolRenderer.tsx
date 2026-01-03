@@ -5,8 +5,6 @@ import { Tool } from '../elements/Tool'
 import { CheckIcon, Loader2, AlertCircle, FileText, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DiagramViewer } from '../diagram-viewer/DiagramViewer'
-import { OEMCopyrightHover, OEMCopyrightPrint } from '../interfaces'
-import { detectOEMsInContent } from '@/lib/integrations/motor-daas/oem-detection'
 
 interface WiringDiagramsToolRendererProps {
 	toolPart: {
@@ -115,19 +113,18 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 		const searchTerm = parsedResult.searchTerm
 		const totalCount = parsedResult.totalCount || diagrams.length
 		
-		// Extract baseVehicleId from input (tool input) or use default
+		// Extract baseVehicleId from tool output (preferred) or input
+		const vehicleIdFromOutput = parsedResult?.baseVehicleId
 		const vehicleIdFromInput = input?.baseVehicleId
-		const defaultVehicleId = 22124 // 2010 Honda Civic
-		const currentBaseVehicleId: number = vehicleIdFromInput 
-			? (typeof vehicleIdFromInput === 'string' ? parseInt(vehicleIdFromInput, 10) : vehicleIdFromInput)
-			: defaultVehicleId
-
-		// Detect OEMs from vehicle make (if available in input/output) or use default (Honda)
-		const vehicleMake = input?.vehicleMake || parsedResult?.vehicleMake || 'Honda' // Default to Honda for 2010 Civic
-		const detectedOEMs = detectOEMsInContent({ 
-			vehicleMake,
-			contentMetadata: parsedResult 
-		})
+		const rawVehicleId = vehicleIdFromOutput || vehicleIdFromInput
+		
+		if (!rawVehicleId) {
+			console.warn('[WiringDiagramsToolRenderer] No baseVehicleId in output or input')
+		}
+		
+		const currentBaseVehicleId: number = rawVehicleId 
+			? (typeof rawVehicleId === 'string' ? parseInt(rawVehicleId, 10) : rawVehicleId)
+			: 0 // No default - will show error if missing
 
 		const toggleDiagram = (diagramId: number) => {
 			setViewingDiagramIds(prev => {
@@ -147,9 +144,6 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 				<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 					<CheckIcon strokeWidth={1.5} size={14} className="text-green-600 dark:text-green-400" />
 					<span>Found {totalCount} wiring diagram{totalCount !== 1 ? 's' : ''}</span>
-					{detectedOEMs.length > 0 && (
-						<OEMCopyrightHover oems={detectedOEMs} iconSize={14} />
-					)}
 				</div>
 
 				{/* Context info */}
@@ -208,8 +202,7 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 												baseVehicleId={currentBaseVehicleId}
 												applicationId={diagram.id}
 												diagramName={diagramName}
-												engineId={input?.engineId || 2913}
-												vehicleMake={vehicleMake}
+												engineId={parsedResult?.engineId || input?.engineId}
 											/>
 										</div>
 									)}
@@ -226,11 +219,7 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 					</div>
 				)}
 
-				{/* Print-only OEM copyright notice */}
-				{detectedOEMs.length > 0 && (
-					<OEMCopyrightPrint oems={detectedOEMs} />
-				)}
-			</div>
+				</div>
 		)
 	}
 

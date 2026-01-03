@@ -66,9 +66,15 @@ function findMatchingSubject(
  */
 function formatDiagramResponse(
 	applications: Array<any>,
-	metadata: { mode: 'browse' | 'search'; subject?: string; subjectId?: number; searchTerm?: string }
+	metadata: { mode: 'browse' | 'search'; subject?: string; subjectId?: number; searchTerm?: string; vehicleMake?: string; baseVehicleId?: number; engineId?: number }
 ) {
-	const diagrams = applications.map(app => ({
+	// #region agent log
+	const inputAppIds = applications.map(app => app.ApplicationID);
+	const uniqueInputIds = [...new Set(inputAppIds)];
+	fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:formatDiagramResponse:entry',message:'Formatting diagrams',data:{inputCount:applications.length,uniqueCount:uniqueInputIds.length,hasDuplicates:inputAppIds.length!==uniqueInputIds.length,mode:metadata.mode,subject:metadata.subject||null,searchTerm:metadata.searchTerm||null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,D'})}).catch(()=>{});
+	// #endregion
+	
+	const allDiagrams = applications.map(app => ({
 		id: app.ApplicationID,
 		name: extractDiagramName(app),
 		documentCount: app.Item?.DocumentCount || 0,
@@ -78,6 +84,20 @@ function formatDiagramResponse(
 		) || [],
 		href: app.Links?.find((l: any) => l.Rel === 'Self')?.Href,
 	}))
+	
+	// Deduplicate by name - keep first occurrence of each unique diagram name
+	const seenNames = new Set<string>()
+	const diagrams = allDiagrams.filter(d => {
+		if (seenNames.has(d.name)) {
+			return false
+		}
+		seenNames.add(d.name)
+		return true
+	})
+	
+	// #region agent log
+	fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:formatDiagramResponse:exit',message:'Returning diagrams',data:{beforeDedup:allDiagrams.length,afterDedup:diagrams.length,uniqueNames:diagrams.map(d=>d.name)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+	// #endregion
 
 	return {
 		success: true,
@@ -92,7 +112,7 @@ function formatDiagramResponse(
  */
 function formatComponentResponse(
 	applications: Array<any>,
-	metadata?: { searchTerm?: string }
+	metadata?: { searchTerm?: string; vehicleMake?: string }
 ) {
 	const components = applications.map(app => ({
 		id: app.ApplicationID,
@@ -171,6 +191,7 @@ function extractDocumentList(details: any): Array<{ id: number; name: string; fo
 export type MotorToolsContext = {
 	baseVehicleId: number
 	engineId?: number
+	vehicleMake?: string
 	motorClient: MotorDaasClient
 }
 
@@ -181,6 +202,7 @@ export type MotorToolsContext = {
 export const getMotorTools = ({
 	baseVehicleId,
 	engineId,
+	vehicleMake,
 	motorClient,
 }: MotorToolsContext) => ({
 
@@ -215,12 +237,19 @@ export const getMotorTools = ({
 				// Debug: Log context values
 				console.log('[getWiringDiagrams] Context:', { baseVehicleId, engineId, query, mode })
 				
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:getWiringDiagrams:entry',message:'Tool called',data:{query,mode,baseVehicleId,engineId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});
+				// #endregion
+				
 				// Determine execution mode
 				const executionMode = mode === 'auto' 
 					? detectWiringDiagramMode(query)
 					: mode
 				
 				console.log('[getWiringDiagrams] Execution mode:', executionMode)
+				
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:getWiringDiagrams:mode',message:'Execution mode determined',data:{executionMode,queryLower:query.toLowerCase()},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
 
 				if (executionMode === 'browse') {
 					// Try taxonomy first (with fallback to search)
@@ -241,6 +270,10 @@ export const getMotorTools = ({
 							const subject = findMatchingSubject(taxonomy.Subjects, query)
 							console.log('[getWiringDiagrams] Matched subject:', subject)
 							
+							// #region agent log
+							fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:getWiringDiagrams:taxonomy',message:'Taxonomy subjects found',data:{subjectCount:taxonomy.Subjects.length,subjects:taxonomy.Subjects.map(s=>s.Name),matchedSubject:subject?.Name||null,matchedSubjectId:subject?.ID||null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+							// #endregion
+							
 							if (subject) {
 								console.log('[getWiringDiagrams] Fetching summary for subject:', subject.ID)
 								const summary = await motorClient.getWiringDiagramsSummary(baseVehicleId, {
@@ -253,11 +286,20 @@ export const getMotorTools = ({
 								console.log('[getWiringDiagrams] Summary result:', {
 									applicationCount: summary?.Applications?.length || 0
 								})
+								
+								// #region agent log
+								const appIds = summary?.Applications?.map((a: any) => a.ApplicationID) || [];
+								const uniqueAppIds = [...new Set(appIds)];
+								fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:getWiringDiagrams:summary',message:'API summary result',data:{totalApps:appIds.length,uniqueApps:uniqueAppIds.length,hasDuplicates:appIds.length!==uniqueAppIds.length,sampleAppIds:appIds.slice(0,10)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+								// #endregion
 
 								return formatDiagramResponse(summary.Applications, {
 									mode: 'browse',
 									subject: subject.Name,
 									subjectId: subject.ID,
+									vehicleMake,
+									baseVehicleId,
+									engineId,
 								})
 							}
 							
@@ -278,6 +320,11 @@ export const getMotorTools = ({
 
 				// Search mode (or fallback from browse)
 				console.log('[getWiringDiagrams] Using search mode for:', query)
+				
+				// #region agent log
+				fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:getWiringDiagrams:searchMode',message:'Using search mode',data:{query,baseVehicleId,engineId},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+				// #endregion
+				
 				const summary = await motorClient.getWiringDiagramsSummary(baseVehicleId, {
 					searchTerm: query,
 					engineId,
@@ -288,10 +335,19 @@ export const getMotorTools = ({
 				console.log('[getWiringDiagrams] Search result:', {
 					applicationCount: summary?.Applications?.length || 0
 				})
+				
+				// #region agent log
+				const searchAppIds = summary?.Applications?.map((a: any) => a.ApplicationID) || [];
+				const uniqueSearchAppIds = [...new Set(searchAppIds)];
+				fetch('http://127.0.0.1:7242/ingest/dc692189-dfb9-43d5-9c3b-bdcc7236349c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'motor-tools.ts:getWiringDiagrams:searchResult',message:'Search API result',data:{totalApps:searchAppIds.length,uniqueApps:uniqueSearchAppIds.length,hasDuplicates:searchAppIds.length!==uniqueSearchAppIds.length,sampleAppIds:searchAppIds.slice(0,10)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+				// #endregion
 
 				return formatDiagramResponse(summary.Applications, {
 					mode: 'search',
 					searchTerm: query,
+					vehicleMake,
+					baseVehicleId,
+					engineId,
 				})
 			} catch (error) {
 				console.error('[getWiringDiagrams] Error:', error)
@@ -443,7 +499,7 @@ export const getMotorTools = ({
 					itemsPerPage,
 				})
 
-				return formatComponentResponse(summary.Applications, { searchTerm })
+				return formatComponentResponse(summary.Applications, { searchTerm, vehicleMake })
 			} catch (error) {
 				console.error('[getOEMComponents] Error:', error)
 				return `Failed to fetch OEM components: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -495,6 +551,9 @@ export const getMotorTools = ({
 					success: true,
 					contentType,
 					relatedToApplicationId: applicationId,
+					vehicleMake,
+					baseVehicleId,
+					engineId,
 					diagrams,
 					totalCount: diagrams.length,
 				}
@@ -552,6 +611,7 @@ export const getMotorTools = ({
 					success: true,
 					contentType,
 					relatedToApplicationId: applicationId,
+					vehicleMake,
 					components,
 					totalCount: components.length,
 				}

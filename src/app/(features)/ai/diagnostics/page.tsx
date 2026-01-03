@@ -12,7 +12,7 @@ import { useState, useMemo } from 'react'
 import { useDiagnosticSessions } from './hooks/use-diagnostic-sessions'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { AIOptInLevelSelector } from '../components/interfaces/GeneralSettings/AIOptInLevelSelector'
+import { AIOptInLevelSelector } from './components/interfaces/GeneralSettings/AIOptInLevelSelector'
 import { useAIOptInForm } from './hooks/forms/useAIOptInForm'
 import { Form } from '@/components/ui/form'
 

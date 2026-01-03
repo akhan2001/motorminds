@@ -49,7 +49,7 @@ export function MessageDisplayContent({ children, isUser, className }: MessageDi
 				'rounded-lg px-4 transition-opacity',
 				isUser
 					? 'bg-red-600 dark:bg-red-500 text-white py-3 max-w-[70%] min-w-fit flex-shrink-0' // User messages: wider, allow natural width
-					: 'text-gray-900 dark:text-gray-100 py-0 max-w-[90%] w-full min-w-0 overflow-hidden', // Assistant messages: up to 90%
+					: 'text-gray-900 dark:text-gray-100 py-2 max-w-[90%] w-full min-w-0 overflow-hidden', // Assistant messages: up to 90%
 				isLoading && !isUser && 'opacity-70', // Reduce opacity when loading
 				className
 			)}

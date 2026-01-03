@@ -4,6 +4,8 @@ import React from 'react'
 import { AIDiagnosticsPanel } from './AIDiagnosticsPanel'
 import VehicleSelector, { SandboxVehicle } from './VehicleSelector'
 import { Car, Calendar, User } from 'lucide-react'
+import { OEMCopyrightHover } from './interfaces'
+import { detectOEMsInContent } from '@/lib/integrations/motor-daas/oem-detection'
 
 interface ChatAreaProps {
 	vehicle: any
@@ -25,6 +27,12 @@ export function ChatArea({
 	// Use sandbox vehicle if selected, otherwise use mock vehicle
 	const activeVehicle = selectedSandboxVehicle || vehicle
 	const isSessionActive = !!sessionId
+
+	// Detect OEMs for copyright notice based on vehicle make
+	const detectedOEMs = React.useMemo(() => 
+		detectOEMsInContent({ vehicleMake: activeVehicle?.make }),
+		[activeVehicle?.make]
+	)
 
 	// Handle null vehicle case
 	if (!activeVehicle) {
@@ -53,10 +61,15 @@ export function ChatArea({
 
 					{/* Vehicle Info */}
 					<div className="flex-1 min-w-0">
-						<h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-							{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}
-							{activeVehicle.engineName && <span className="text-sm text-gray-500 dark:text-gray-400"> ({activeVehicle.engineName})</span>}
-						</h1>
+						<div className="flex items-center gap-2">
+							<h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+								{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}
+								{activeVehicle.engineName && <span className="text-sm text-gray-500 dark:text-gray-400"> ({activeVehicle.engineName})</span>}
+							</h1>
+							{detectedOEMs.length > 0 && (
+								<OEMCopyrightHover oems={detectedOEMs} iconSize={16} />
+							)}
+						</div>
 						<div className="flex items-center gap-4 mt-1">
 							<div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
 								<Car className="w-3.5 h-3.5" />

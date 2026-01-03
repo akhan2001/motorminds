@@ -21,6 +21,7 @@ export interface GetToolsParams {
 	vehicleId?: number
 	baseVehicleId?: number
 	engineId?: number
+	vehicleMake?: string
 	authorization?: string
 	aiOptInLevel: DiagnosticAiOptInLevel
 	accessToken?: string
@@ -32,6 +33,7 @@ export const getTools = async ({
 	vehicleId,
 	baseVehicleId,
 	engineId,
+	vehicleMake,
 	authorization,
 	aiOptInLevel,
 	accessToken,
@@ -45,6 +47,7 @@ export const getTools = async ({
 		const motorTools = getMotorTools({
 			baseVehicleId,
 			engineId,
+			vehicleMake,
 			motorClient,
 		})
 

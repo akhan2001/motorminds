@@ -5,6 +5,7 @@ import { ExternalLink, Loader2, CheckIcon, AlertCircle } from 'lucide-react'
 import { Tool } from '../elements/Tool'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { markdownComponents } from '../Message.Markdown'
 
 type ToolUIPart = {
 	type: string
@@ -99,8 +100,8 @@ export function PerplexityResearchToolRenderer({ toolPart }: { toolPart: ToolUIP
 
 				{/* Research content */}
 				{content && (
-					<div className="text-sm prose prose-sm dark:prose-invert max-w-none break-words">
-						<ReactMarkdown remarkPlugins={[remarkGfm]}>
+					<div className="text-sm max-w-none break-words">
+						<ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
 							{content}
 						</ReactMarkdown>
 					</div>

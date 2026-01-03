@@ -3,25 +3,27 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 
+import { PERPLEXITY_RESEARCH_TOOL_PROMPT } from './prompts'
+
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 export const perplexityResearchTool = tool({
 	description: `PRIMARY DIAGNOSTIC TOOL - Use for most customer complaints and diagnostic questions.
 
-Search real-world sources for:
-- Common failures and fixes for specific make/model/year
-- TSB lookups and recall info
-- Forum-proven solutions
-- DTC troubleshooting steps
+	Search real-world sources for:
+	- Common failures and fixes for specific make/model/year
+	- TSB lookups and recall info
+	- Forum-proven solutions
+	- DTC troubleshooting steps
 
-USE THIS TOOL when user reports symptoms like:
-- "rough idle", "check engine light", "no start", "stalling"
-- "noise from [location]", "vibration", "hesitation"
-- Any DTC code troubleshooting
-- "What's the most likely cause of..."
+	USE THIS TOOL when user reports symptoms like:
+	- "rough idle", "check engine light", "no start", "stalling"
+	- "noise from [location]", "vibration", "hesitation"
+	- Any DTC code troubleshooting
+	- "What's the most likely cause of..."
 
-Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] [make] fix"`,
-	
+	Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] [make] fix"`,
+
 	inputSchema: z.object({
 		query: z.string().describe('Search query - include symptom + year + make + model for best results. Example: "P0420 2010 Camaro fix" or "rough idle Chevrolet V8 common causes"'),
 		vehicleContext: z.object({
@@ -31,7 +33,7 @@ Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] 
 			engine: z.string().optional(),
 		}).optional().describe('Vehicle context to refine search'),
 	}),
-	
+
 	execute: async ({ query, vehicleContext }: { query: string; vehicleContext?: { make?: string; model?: string; year?: string; engine?: string } }) => {
 		try {
 			if (!process.env.PERPLEXITY_API_KEY) {
@@ -42,7 +44,7 @@ Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] 
 			}
 
 			// Build enhanced query with vehicle context
-			const enhancedQuery = vehicleContext 
+			const enhancedQuery = vehicleContext
 				? `${query} (Vehicle: ${vehicleContext.year || ''} ${vehicleContext.make || ''} ${vehicleContext.model || ''} ${vehicleContext.engine || ''})`
 				: query
 
@@ -55,16 +57,10 @@ Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] 
 				body: JSON.stringify({
 					model: 'sonar-pro',
 					messages: [
-						{
-							role: 'system',
-							content: `You're a master tech researching a fix. Find:
-1. Most common cause for this specific make/model/year
-2. Quick diagnostic test to confirm
-3. Known TSBs or recalls
-4. What gets missed
-
-Be concise. Lead with the most likely fix. Skip obvious stuff.`,
-						},
+					{
+						role: 'system',
+						content: PERPLEXITY_RESEARCH_TOOL_PROMPT,
+					},
 						{
 							role: 'user',
 							content: enhancedQuery,
@@ -85,7 +81,13 @@ Be concise. Lead with the most likely fix. Skip obvious stuff.`,
 			}
 
 			const data = await response.json()
-			const content = data.choices?.[0]?.message?.content || 'No research results found.'
+			const rawContent = data.choices?.[0]?.message?.content || 'No research results found.'
+			// Strip inline citation references like [1], [2], [1][2], etc.
+			// Only collapse multiple spaces on same line, preserve newlines for markdown
+			const content = rawContent
+				.replace(/\[\d+\]/g, '')
+				.replace(/[ \t]+/g, ' ')  // Collapse spaces/tabs only, not newlines
+				.trim()
 			const citations = data.citations || []
 			const searchResults = data.search_results || []
 

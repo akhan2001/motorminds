@@ -9,7 +9,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { OptInToAIToggle } from './OptInToAIToggle';
-import type { AIOptInFormValues } from '../../../diagnostics/hooks/forms/useAIOptInForm';
+import type { AIOptInFormValues } from '../../../hooks/forms/useAIOptInForm';
 
 interface AIOptInLevelSelectorProps {
 	control: Control<AIOptInFormValues>;
@@ -111,3 +111,4 @@ export const AIOptInLevelSelector = ({
 		</div>
 	);
 };
+

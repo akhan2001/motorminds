@@ -4,29 +4,20 @@ import React from 'react'
 import { DiagramImage } from './DiagramImage'
 import { DiagramPDF } from './DiagramPDF'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { OEMCopyrightHover, OEMCopyrightPrint } from '../interfaces'
-import { detectOEMsInContent } from '@/lib/integrations/motor-daas/oem-detection'
 
 interface DiagramViewerProps {
 	baseVehicleId: number
 	applicationId: number
 	diagramName: string
 	engineId?: number
-	vehicleMake?: string
 }
 
-export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engineId, vehicleMake }: DiagramViewerProps) {
+export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engineId }: DiagramViewerProps) {
 	const [loading, setLoading] = React.useState(true)
 	const [error, setError] = React.useState<string | null>(null)
 	const [diagramDetails, setDiagramDetails] = React.useState<any>(null)
 	const [documentData, setDocumentData] = React.useState<{ blob: Blob; contentType: string } | null>(null)
 
-	// Detect OEMs from vehicle make (default to Honda for baseVehicleId 22124)
-	const defaultMake = baseVehicleId === 22124 ? 'Honda' : undefined
-	const detectedOEMs = detectOEMsInContent({ 
-		vehicleMake: vehicleMake || defaultMake,
-		contentMetadata: diagramDetails 
-	})
 
 	React.useEffect(() => {
 		async function fetchDiagram() {
@@ -44,6 +35,9 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engin
 				const detailsResponse = await fetch(detailsUrl)
 				
 				if (!detailsResponse.ok) {
+					if (detailsResponse.status === 403) {
+						throw new Error('Access denied by MOTOR API. This vehicle make may not be included in the current subscription, or API credentials need to be verified.')
+					}
 					throw new Error(`Failed to fetch diagram details: ${detailsResponse.statusText}`)
 				}
 
@@ -155,22 +149,13 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engin
 
 	return (
 		<div className="space-y-3">
-			{/* Diagram header with OEM copyright hover */}
-			<div className="flex items-center justify-between gap-2">
-				<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{diagramName}</h3>
-				{detectedOEMs.length > 0 && (
-					<OEMCopyrightHover oems={detectedOEMs} iconSize={14} />
-				)}
-			</div>
+			{/* Diagram header */}
+			<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{diagramName}</h3>
 			
 			{/* Diagram content */}
 			{diagramContent}
 
-			{/* Print-only OEM copyright notice */}
-			{detectedOEMs.length > 0 && (
-				<OEMCopyrightPrint oems={detectedOEMs} />
-			)}
-		</div>
+			</div>
 	)
 }
 

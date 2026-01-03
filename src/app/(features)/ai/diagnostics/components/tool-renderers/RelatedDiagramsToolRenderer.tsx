@@ -5,8 +5,6 @@ import { Tool } from '../elements/Tool'
 import { CheckIcon, Loader2, AlertCircle, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DiagramViewer } from '../diagram-viewer/DiagramViewer'
-import { OEMCopyrightHover, OEMCopyrightPrint } from '../interfaces'
-import { detectOEMsInContent } from '@/lib/integrations/motor-daas/oem-detection'
 
 interface RelatedDiagramsToolRendererProps {
 	toolPart: {
@@ -94,19 +92,14 @@ export function RelatedDiagramsToolRenderer({ toolPart }: RelatedDiagramsToolRen
 		const contentType = parsedResult.contentType
 		const relatedToApplicationId = parsedResult.relatedToApplicationId
 		
-		// Extract baseVehicleId from input
+		// Extract baseVehicleId from tool output (preferred) or input
+		const vehicleIdFromOutput = parsedResult?.baseVehicleId
 		const vehicleIdFromInput = input?.baseVehicleId
-		const defaultVehicleId = 22124 // 2010 Honda Civic
-		const currentBaseVehicleId: number = vehicleIdFromInput 
-			? (typeof vehicleIdFromInput === 'string' ? parseInt(vehicleIdFromInput, 10) : vehicleIdFromInput)
-			: defaultVehicleId
-
-		// Detect OEMs from vehicle make (if available) or use default (Honda)
-		const vehicleMake = input?.vehicleMake || parsedResult?.vehicleMake || 'Honda'
-		const detectedOEMs = detectOEMsInContent({ 
-			vehicleMake,
-			contentMetadata: parsedResult 
-		})
+		const rawVehicleId = vehicleIdFromOutput || vehicleIdFromInput
+		
+		const currentBaseVehicleId: number = rawVehicleId 
+			? (typeof rawVehicleId === 'string' ? parseInt(rawVehicleId, 10) : rawVehicleId)
+			: 0
 
 		return (
 			<Tool
@@ -115,9 +108,6 @@ export function RelatedDiagramsToolRenderer({ toolPart }: RelatedDiagramsToolRen
 					<div className="flex items-center gap-2">
 						<span>Found </span>
 						<span className="text-gray-500 dark:text-gray-400">{totalCount} related diagram{totalCount !== 1 ? 's' : ''}</span>
-						{detectedOEMs.length > 0 && (
-							<OEMCopyrightHover oems={detectedOEMs} iconSize={12} />
-						)}
 					</div>
 				}
 			>
@@ -163,7 +153,6 @@ export function RelatedDiagramsToolRenderer({ toolPart }: RelatedDiagramsToolRen
 									diagrams.find((d: { id: number }) => d.id === viewingDiagramId)?.name ||
 									`Diagram ${viewingDiagramId}`
 								}
-								vehicleMake={vehicleMake}
 							/>
 						</div>
 					)}
@@ -209,11 +198,7 @@ export function RelatedDiagramsToolRenderer({ toolPart }: RelatedDiagramsToolRen
 						</div>
 					)}
 
-					{/* Print-only OEM copyright notice */}
-					{detectedOEMs.length > 0 && (
-						<OEMCopyrightPrint oems={detectedOEMs} />
-					)}
-				</div>
+					</div>
 			</Tool>
 		)
 	}

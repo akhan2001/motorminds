@@ -101,7 +101,7 @@ function MessageContent({ message, isUser }: MessageContentProps) {
 		// Show loading indicator if message is loading, otherwise show "No content available"
 		if (isLoading) {
 			return (
-				<div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+				<div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-2">
 					<Loader2 className="h-4 w-4 animate-spin" />
 					<span>Thinking...</span>
 				</div>
@@ -109,7 +109,7 @@ function MessageContent({ message, isUser }: MessageContentProps) {
 		}
 		
 		return (
-			<div className="text-sm text-gray-500 dark:text-gray-400 italic">
+			<div className="text-sm text-gray-500 dark:text-gray-400 italic py-2">
 				No content available
 			</div>
 		)
