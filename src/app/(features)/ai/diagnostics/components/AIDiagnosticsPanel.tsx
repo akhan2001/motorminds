@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import { useChat, type UIMessage } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { DiagnosticsChatForm } from './DiagnosticsChatForm'
 import { DiagnosticsOnboarding } from './DiagnosticsOnboarding'
 import { Message } from './Message'
 import { Conversation, ConversationContent, ConversationScrollButton } from './elements/Conversation'
+import { ChatProvider } from './Chat.Context'
 import type { SandboxVehicle } from './VehicleSelector'
 
 interface AIDiagnosticsPanelProps {
@@ -83,7 +84,7 @@ export function AIDiagnosticsPanel({
 	// Track immediate loading state when message is submitted
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
-	const handleFormSubmit = async (messageText: string) => {
+	const handleFormSubmit = useCallback(async (messageText: string) => {
 		if (typeof chat.sendMessage === 'function') {
 			// Set loading state immediately
 			setIsSubmitting(true)
@@ -103,7 +104,7 @@ export function AIDiagnosticsPanel({
 				setIsSubmitting(false)
 			}
 		}
-	}
+	}, [chat])
 
 	const hasMessages = chat.messages.length > 0
 	// Show loading immediately on submit OR when chat is streaming/submitted
@@ -117,55 +118,57 @@ export function AIDiagnosticsPanel({
 	}, [chat.status, isSubmitting])
 
 	return (
-		<div className={`flex flex-col h-full bg-white dark:bg-[#0a0a0a] ${className}`}>
+		<ChatProvider sendMessage={handleFormSubmit}>
+			<div className={`flex flex-col h-full bg-white dark:bg-[#0a0a0a] ${className}`}>
 
-			{/* Conversation Container */}
-			<Conversation>
-				{hasMessages || isSubmitting ? (
-					<>
+				{/* Conversation Container */}
+				<Conversation>
+					{hasMessages || isSubmitting ? (
+						<>
+							<ConversationContent>
+								<div className="flex flex-col max-w-[768px] mx-auto pb-12 w-full px-4">
+									{chat.messages.map((message: UIMessage) => (
+										<Message
+											key={message.id}
+											id={message.id}
+											message={message}
+											isLoading={isChatLoading && message.id === chat.messages[chat.messages.length - 1]?.id}
+										/>
+									))}
+									{/* Show loading message immediately when submitting but before streaming starts */}
+									{isSubmitting && chat.status !== 'streaming' && (
+										<Message
+											key="loading-placeholder"
+											id="loading-placeholder"
+											message={{
+												id: 'loading-placeholder',
+												role: 'assistant',
+												content: '',
+												parts: []
+											} as UIMessage}
+											isLoading={true}
+										/>
+									)}
+								</div>
+							</ConversationContent>
+							<ConversationScrollButton />
+						</>
+					) : (
 						<ConversationContent>
-							<div className="flex flex-col max-w-[768px] mx-auto pb-12 w-full px-4">
-								{chat.messages.map((message: UIMessage) => (
-									<Message
-										key={message.id}
-										id={message.id}
-										message={message}
-										isLoading={isChatLoading && message.id === chat.messages[chat.messages.length - 1]?.id}
-									/>
-								))}
-								{/* Show loading message immediately when submitting but before streaming starts */}
-								{isSubmitting && chat.status !== 'streaming' && (
-									<Message
-										key="loading-placeholder"
-										id="loading-placeholder"
-										message={{
-											id: 'loading-placeholder',
-											role: 'assistant',
-											content: '',
-											parts: []
-										} as UIMessage}
-										isLoading={true}
-									/>
-								)}
-							</div>
+							<DiagnosticsOnboarding onSendMessage={handleFormSubmit} />
 						</ConversationContent>
-						<ConversationScrollButton />
-					</>
-				) : (
-					<ConversationContent>
-						<DiagnosticsOnboarding onSendMessage={handleFormSubmit} />
-					</ConversationContent>
-				)}
-			</Conversation>
+					)}
+				</Conversation>
 
-			{/* Input Form */}
-			<div className="flex-shrink-0 border-t border-gray-200 dark:border-[#222222] bg-gray-50 dark:bg-[#131313] p-4">
-				<DiagnosticsChatForm
-					onSubmit={handleFormSubmit}
-					isLoading={isChatLoading}
-					onStop={chat.stop}
-				/>
+				{/* Input Form */}
+				<div className="flex-shrink-0 border-t border-gray-200 dark:border-[#222222] bg-gray-50 dark:bg-[#131313] p-4">
+					<DiagnosticsChatForm
+						onSubmit={handleFormSubmit}
+						isLoading={isChatLoading}
+						onStop={chat.stop}
+					/>
+				</div>
 			</div>
-		</div>
+		</ChatProvider>
 	)
 }

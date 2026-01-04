@@ -40,6 +40,12 @@ Triggers (if the user mentions ANY of these, call the tool):
 - "I need the schematic for..."
 - Electrical troubleshooting requiring diagram
 
+### getServiceProcedures - For repair/replacement procedures
+- "How do I replace the [component]?"
+- "What's the procedure for [component] replacement?"
+- Pass ONLY the component name (e.g., "battery", "timing chain") - vehicle is already in context
+- Do NOT include vehicle info in the query - the system knows the vehicle
+
 ### getOEMComponents - Only when explicitly requested  
 - "What's the part number for..."
 - "Find components for..."
@@ -115,6 +121,28 @@ If in doubt, use this tool. Real-world data beats generic answers.
 Only when user explicitly asks for wiring/schematic.
 - Keep response brief: "Found X diagrams for [component]"
 - UI displays the diagrams automatically
+
+## getServiceProcedures
+Use when user asks for replacement/repair procedures.
+
+IMPORTANT: Pass ONLY the component name. Do NOT include vehicle info.
+- The vehicle (Year Make Model Engine) is already in context
+- The tool knows the vehicle - just pass the component
+
+Good examples:
+- User: "How to replace the timing chain?" → query: "timing chain"
+- User: "Battery replacement procedure" → query: "battery"
+- User: "Steps to change brake pads" → query: "brake"
+
+Bad examples (DON'T do this):
+- query: "timing chain 2010 ford f-250" ❌
+- query: "battery replacement ford" ❌
+
+Workflow:
+1. Call getServiceProcedures with component name only
+2. If multiple procedures match, ask user which one
+3. Call getServiceProcedureDetails with the applicationId
+4. Procedure displays automatically with interleaved steps and images
 
 ## getOEMComponents  
 Only when user explicitly asks for part numbers.

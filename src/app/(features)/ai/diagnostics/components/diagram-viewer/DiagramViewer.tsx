@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { DiagramImage } from './DiagramImage'
+import { DocumentImage } from '../elements/DocumentImage'
 import { DiagramPDF } from './DiagramPDF'
 import { Loader2, AlertCircle } from 'lucide-react'
 
@@ -12,18 +12,25 @@ interface DiagramViewerProps {
 	engineId?: number
 }
 
+/**
+ * Displays a wiring diagram by fetching details and rendering the document
+ * Uses the shared DocumentImage component for consistency with service procedures
+ */
 export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engineId }: DiagramViewerProps) {
 	const [loading, setLoading] = React.useState(true)
 	const [error, setError] = React.useState<string | null>(null)
-	const [diagramDetails, setDiagramDetails] = React.useState<any>(null)
-	const [documentData, setDocumentData] = React.useState<{ blob: Blob; contentType: string } | null>(null)
-
+	const [documentId, setDocumentId] = React.useState<number | null>(null)
+	const [isPDF, setIsPDF] = React.useState(false)
+	const [pdfBlob, setPdfBlob] = React.useState<Blob | null>(null)
 
 	React.useEffect(() => {
-		async function fetchDiagram() {
+		async function fetchDiagramDetails() {
 			try {
 				setLoading(true)
 				setError(null)
+				setDocumentId(null)
+				setIsPDF(false)
+				setPdfBlob(null)
 
 				// Build details URL with optional engineId
 				let detailsUrl = `/api/motor-daas/wiring-diagrams/${baseVehicleId}/details/${applicationId}`
@@ -31,75 +38,69 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engin
 					detailsUrl += `?engineId=${engineId}`
 				}
 
-				// Fetch diagram details
+				// Fetch diagram details to get document ID
 				const detailsResponse = await fetch(detailsUrl)
 				
 				if (!detailsResponse.ok) {
 					if (detailsResponse.status === 403) {
-						throw new Error('Access denied by MOTOR API. This vehicle make may not be included in the current subscription, or API credentials need to be verified.')
+						throw new Error('Access denied. This vehicle make may not be included in the subscription.')
 					}
 					throw new Error(`Failed to fetch diagram details: ${detailsResponse.statusText}`)
 				}
 
 				const details = await detailsResponse.json()
-				setDiagramDetails(details)
 
 				// Extract document ID from the response structure
-				// The actual structure is: details.WiringDiagrams[0].DiagramSet.Documents[0].DocumentID
-				let documentId: number | null = null
+				let docId: number | null = null
+				let format = 'image'
 
-				// Method 1: Check WiringDiagrams array (actual structure from API)
-				if (details.WiringDiagrams && Array.isArray(details.WiringDiagrams) && details.WiringDiagrams.length > 0) {
-					const wiringDiagram = details.WiringDiagrams[0]
-					if (wiringDiagram.DiagramSet?.Documents && Array.isArray(wiringDiagram.DiagramSet.Documents) && wiringDiagram.DiagramSet.Documents.length > 0) {
-						// Get the first active document
-						const activeDoc = wiringDiagram.DiagramSet.Documents.find((doc: any) => doc.IsActive !== false) || wiringDiagram.DiagramSet.Documents[0]
-						documentId = activeDoc.DocumentID
-					}
+				// Method 1: Check WiringDiagrams array
+				if (details.WiringDiagrams?.[0]?.DiagramSet?.Documents?.length > 0) {
+					const docs = details.WiringDiagrams[0].DiagramSet.Documents
+					const activeDoc = docs.find((doc: any) => doc.IsActive !== false) || docs[0]
+					docId = activeDoc.DocumentID
+					format = activeDoc.Format || 'image'
 				}
-				// Method 2: Check Documents array (fallback)
-				else if (details.Documents && Array.isArray(details.Documents) && details.Documents.length > 0) {
-					documentId = details.Documents[0].DocumentID
+				// Method 2: Check Documents array
+				else if (details.Documents?.length > 0) {
+					docId = details.Documents[0].DocumentID
+					format = details.Documents[0].Format || 'image'
 				}
-				// Method 3: Check if response is wrapped in Body
-				else if (details.Body?.WiringDiagrams && Array.isArray(details.Body.WiringDiagrams) && details.Body.WiringDiagrams.length > 0) {
-					const wiringDiagram = details.Body.WiringDiagrams[0]
-					if (wiringDiagram.DiagramSet?.Documents && Array.isArray(wiringDiagram.DiagramSet.Documents) && wiringDiagram.DiagramSet.Documents.length > 0) {
-						const activeDoc = wiringDiagram.DiagramSet.Documents.find((doc: any) => doc.IsActive !== false) || wiringDiagram.DiagramSet.Documents[0]
-						documentId = activeDoc.DocumentID
-					}
+				// Method 3: Body wrapper
+				else if (details.Body?.WiringDiagrams?.[0]?.DiagramSet?.Documents?.length > 0) {
+					const docs = details.Body.WiringDiagrams[0].DiagramSet.Documents
+					const activeDoc = docs.find((doc: any) => doc.IsActive !== false) || docs[0]
+					docId = activeDoc.DocumentID
+					format = activeDoc.Format || 'image'
 				}
-				// Method 4: Check Body.Documents (fallback)
-				else if (details.Body?.Documents && Array.isArray(details.Body.Documents) && details.Body.Documents.length > 0) {
-					documentId = details.Body.Documents[0].DocumentID
-				}
-				// Method 5: Check Applications array (legacy format)
-				else if (details.Applications && Array.isArray(details.Applications) && details.Applications.length > 0) {
-					const app = details.Applications[0]
-					if (app.Documents && Array.isArray(app.Documents) && app.Documents.length > 0) {
-						documentId = app.Documents[0].DocumentID
-					}
+				// Method 4: Applications array
+				else if (details.Applications?.[0]?.Documents?.length > 0) {
+					docId = details.Applications[0].Documents[0].DocumentID
+					format = details.Applications[0].Documents[0].Format || 'image'
 				}
 
-				if (!documentId) {
-					console.warn('[DiagramViewer] No document ID found. Response keys:', Object.keys(details))
-					setError('No document is available for this wiring diagram from MOTOR. Try another diagram from the list.')
+				if (!docId) {
+					setError('No document available for this wiring diagram. Try another diagram.')
 					return
 				}
 
-				// Fetch document
-				const documentResponse = await fetch(
-					`/api/motor-daas/wiring-diagrams/${baseVehicleId}/document/${documentId}`
-				)
+				// Check if PDF
+				const isPdfFormat = format.toLowerCase().includes('pdf')
+				setIsPDF(isPdfFormat)
 
-				if (!documentResponse.ok) {
-					throw new Error(`Failed to fetch diagram document: ${documentResponse.statusText}`)
+				if (isPdfFormat) {
+					// For PDFs, we need to fetch the blob
+					const docResponse = await fetch(
+						`/api/motor-daas/wiring-diagrams/${baseVehicleId}/document/${docId}`
+					)
+					if (!docResponse.ok) {
+						throw new Error(`Failed to fetch PDF: ${docResponse.statusText}`)
+					}
+					const blob = await docResponse.blob()
+					setPdfBlob(blob)
 				}
 
-				const blob = await documentResponse.blob()
-				const contentType = documentResponse.headers.get('content-type') || 'application/octet-stream'
-
-				setDocumentData({ blob, contentType })
+				setDocumentId(docId)
 			} catch (err) {
 				console.error('[DiagramViewer] Error:', err)
 				setError(err instanceof Error ? err.message : 'Failed to load diagram')
@@ -108,7 +109,7 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engin
 			}
 		}
 
-		fetchDiagram()
+		fetchDiagramDetails()
 	}, [baseVehicleId, applicationId, engineId])
 
 	if (loading) {
@@ -131,32 +132,30 @@ export function DiagramViewer({ baseVehicleId, applicationId, diagramName, engin
 		)
 	}
 
-	if (!documentData) {
+	if (!documentId) {
 		return null
 	}
 
-	// Determine if it's an image or PDF
-	const isImage = documentData.contentType.startsWith('image/')
-	const isPDF = documentData.contentType === 'application/pdf' || documentData.contentType.includes('pdf')
+	// Render PDF or Image
+	if (isPDF && pdfBlob) {
+		return (
+			<div className="space-y-3">
+				<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{diagramName}</h3>
+				<DiagramPDF pdfBlob={pdfBlob} diagramName={diagramName} />
+			</div>
+		)
+	}
 
-	const diagramContent = isImage ? (
-		<DiagramImage imageBlob={documentData.blob} diagramName={diagramName} />
-	) : isPDF ? (
-		<DiagramPDF pdfBlob={documentData.blob} diagramName={diagramName} />
-	) : (
-		<DiagramImage imageBlob={documentData.blob} diagramName={diagramName} />
-	)
+	// Use shared DocumentImage component for images
+	const imageUrl = `/api/motor-daas/wiring-diagrams/${baseVehicleId}/document/${documentId}`
 
 	return (
-		<div className="space-y-3">
-			{/* Diagram header */}
-			<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">{diagramName}</h3>
-			
-			{/* Diagram content */}
-			{diagramContent}
-
-			</div>
+		<DocumentImage
+			src={imageUrl}
+			alt={diagramName}
+			title={diagramName}
+			showHeader={true}
+			maxHeight={700}
+		/>
 	)
 }
-
-

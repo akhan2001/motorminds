@@ -24,8 +24,11 @@ export const toolSetValidationSchema = z.record(
         'getRelatedWiringDiagrams',
         'getRelatedOEMComponents',
         
-        // MOTOR API Tools (legacy - for backwards compatibility)
+        // Service Procedures (current)
         'getServiceProcedures',
+        'getServiceProcedureDetails',
+        
+        // MOTOR API Tools (legacy - for backwards compatibility)
         'getVehicleInfo',
         'lookupDTC',
         'getServiceProcedure',
@@ -89,8 +92,11 @@ export const TOOL_CATEGORY_MAP: Record<string, ToolCategory> = {
     getRelatedWiringDiagrams: TOOL_CATEGORIES.MOTOR_API,
     getRelatedOEMComponents: TOOL_CATEGORIES.MOTOR_API,
     
-    // MOTOR API Tools (legacy - for backwards compatibility)
+    // Service Procedures (current)
     getServiceProcedures: TOOL_CATEGORIES.MOTOR_API,
+    getServiceProcedureDetails: TOOL_CATEGORIES.MOTOR_API,
+    
+    // MOTOR API Tools (legacy - for backwards compatibility)
     getVehicleInfo: TOOL_CATEGORIES.MOTOR_API,
     lookupDTC: TOOL_CATEGORIES.MOTOR_API,
     getServiceProcedure: TOOL_CATEGORIES.MOTOR_API,

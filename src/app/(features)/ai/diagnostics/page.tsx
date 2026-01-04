@@ -3,7 +3,6 @@
 import { useAuth } from '@/contexts/AuthProvider'
 import { DiagnosticsHubHeader, type SessionFilterTab } from './components/hub/DiagnosticsHubHeader'
 import { SessionList } from './components/hub/SessionList'
-import { DiagnosticsOverview } from './components/hub/DiagnosticsOverview'
 import { NewSessionDialog } from './components/hub/NewSessionDialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
@@ -125,21 +124,11 @@ export default function AIDiagnosticsPage() {
 
 				{/* Main Content */}
 				<div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 py-6">
-					<div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
-						{/* Sessions List - Takes 2 columns on large screens */}
-						<div className="lg:col-span-2 overflow-auto">
-							<SessionList
-								shopId={shopId}
-								activeTab={activeTab}
-								searchQuery={searchQuery}
-							/>
-						</div>
-
-						{/* Overview Sidebar - Takes 1 column on large screens */}
-						<div className="lg:col-span-1 overflow-auto">
-							<DiagnosticsOverview shopId={shopId} />
-						</div>
-					</div>
+					<SessionList
+						shopId={shopId}
+						activeTab={activeTab}
+						searchQuery={searchQuery}
+					/>
 				</div>
 			</div>
 

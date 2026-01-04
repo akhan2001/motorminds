@@ -10,6 +10,8 @@ import { WiringDiagramsToolRenderer } from './tool-renderers/WiringDiagramsToolR
 import { OEMComponentsToolRenderer } from './tool-renderers/OEMComponentsToolRenderer'
 import { RelatedDiagramsToolRenderer } from './tool-renderers/RelatedDiagramsToolRenderer'
 import { PerplexityResearchToolRenderer } from './tool-renderers/PerplexityResearchToolRenderer'
+import { ServiceProceduresToolRenderer } from './tool-renderers/ServiceProceduresToolRenderer'
+import { ServiceProcedureDetailsToolRenderer } from './tool-renderers/ServiceProcedureDetailsToolRenderer'
 
 // Type definitions based on AI SDK v5 structure
 type TextUIPart = { type: 'text'; text: string }
@@ -205,6 +207,14 @@ function MessagePartPerplexityResearch({ toolPart }: { toolPart: ToolUIPart }) {
 	return <PerplexityResearchToolRenderer toolPart={toolPart} />
 }
 
+function MessagePartServiceProcedures({ toolPart }: { toolPart: ToolUIPart }) {
+	return <ServiceProceduresToolRenderer toolPart={toolPart} />
+}
+
+function MessagePartServiceProcedureDetails({ toolPart }: { toolPart: ToolUIPart }) {
+	return <ServiceProcedureDetailsToolRenderer toolPart={toolPart} />
+}
+
 const MessagePart = {
 	Text: MessagePartText,
 	Dynamic: MessagePartDynamicTool,
@@ -217,6 +227,8 @@ const MessagePart = {
 	RelatedOEMComponents: MessagePartRelatedOEMComponents,
 	DiagramComponents: MessagePartDiagramComponents,
 	PerplexityResearch: MessagePartPerplexityResearch,
+	ServiceProcedures: MessagePartServiceProcedures,
+	ServiceProcedureDetails: MessagePartServiceProcedureDetails,
 } as const
 
 export function MessagePartSwitcher({
@@ -250,6 +262,12 @@ export function MessagePartSwitcher({
 		}
 		case 'tool-perplexityResearchTool': {
 			return <MessagePart.PerplexityResearch toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getServiceProcedures': {
+			return <MessagePart.ServiceProcedures toolPart={part as ToolUIPart} />
+		}
+		case 'tool-getServiceProcedureDetails': {
+			return <MessagePart.ServiceProcedureDetails toolPart={part as ToolUIPart} />
 		}
 		case 'reasoning':
 			return <MessagePart.Reasoning reasoningPart={part as ReasoningUIPart} />

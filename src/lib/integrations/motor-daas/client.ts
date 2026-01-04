@@ -139,6 +139,93 @@ export interface OEMComponentsDetailListResponse {
     Components: Array<OEMComponentDetail>;
 }
 
+// Service Procedures types
+export interface ServiceProcedureCategory {
+    Article: string;
+    ID: number;
+    Product?: string;
+    ProductType?: string;
+}
+
+export interface ServiceProcedureItem {
+    ProcedureID: number;
+}
+
+export interface ServiceProcedureApplication {
+    ApplicationID: number;
+    DisplayName?: string;
+    SortOrderSequence?: number;
+    Category?: ServiceProcedureCategory;
+    Item?: ServiceProcedureItem;
+    Position?: {
+        Name: string;
+        PositionID: number;
+        PCDBPositionID?: number;
+        Type?: string;
+    };
+    Taxonomy?: {
+        Action?: string;
+        CommonName?: string;
+        GroupID?: number;
+        GroupName?: string;
+        LiteralName?: string;
+        SubGroupID?: number;
+        SubGroupName?: string;
+        SystemID?: number;
+        SystemName?: string;
+        TaxonomyID?: number;
+    };
+    ContentSilos?: Array<{ ID: number; Name: string }>;
+    IsActive?: boolean;
+    Links?: Array<{ Href: string; Rel: string; Count?: number }>;
+}
+
+export interface ServiceProceduresSummaryResponse {
+    Applications: Array<ServiceProcedureApplication>;
+}
+
+export interface ServiceProcedureDocument {
+    DocumentID: number;
+    Name?: string;
+    Caption?: string;
+    Format?: string;
+    Type?: string;
+    Sequence?: number;
+    IsActive?: boolean;
+    IsGenericImage?: boolean;
+    AnchorDocumentID?: number;
+    Notes?: Array<{ NoteID: number; Text: string }>;
+    Links?: Array<{ Href: string; Rel: string; Count?: number }>;
+}
+
+export interface ServiceProcedureDetailItem {
+    ProcedureID?: number;
+    Sequence?: number;
+    Schema?: string;
+    Data?: string; // HTML/text content of the procedure
+    IsActive?: boolean;
+    ReferenceSet?: {
+        Documents?: Array<ServiceProcedureDocument>;
+    };
+}
+
+export interface ServiceProcedureDetail {
+    ApplicationID: number;
+    Category?: ServiceProcedureCategory;
+    Position?: {
+        Name: string;
+        PositionID: number;
+    };
+    ContentSilos?: Array<{ ID: number; Name: string }>;
+    IsActive?: boolean;
+    Items?: Array<ServiceProcedureDetailItem>;
+    Links?: Array<{ Href: string; Rel: string; Count?: number }>;
+}
+
+export interface ServiceProcedureDetailsResponse {
+    ServiceProcedures: Array<ServiceProcedureDetail>;
+}
+
 export class MotorDaasClient {
     private auth: MotorDaasAuth;
     private baseUrl: string;
@@ -747,6 +834,105 @@ export class MotorDaasClient {
         })
 
         return this.request<OEMComponentsDetailListResponse>(endpoint, 'GET', queryParams)
+    }
+
+    /**
+     * Get service procedures summary
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Summaries/Of/ServiceProcedures
+     */
+    async getServiceProceduresSummary(
+        baseVehicleId: number,
+        options?: {
+            contentSilos?: number[]
+            engineId?: number
+            pageIndex?: number
+            itemsPerPage?: number
+            searchTerm?: string
+        }
+    ): Promise<ServiceProceduresSummaryResponse> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Summaries/Of/ServiceProcedures`
+
+        const queryParams: Record<string, string> = {
+            AttributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+        }
+
+        if (options?.contentSilos && options.contentSilos.length > 0) {
+            queryParams.ContentSilos = options.contentSilos.join(',')
+        }
+        if (options?.engineId) {
+            queryParams.EN = options.engineId.toString()
+        }
+        if (options?.pageIndex !== undefined) {
+            queryParams.PageIndex = options.pageIndex.toString()
+        }
+        if (options?.itemsPerPage !== undefined) {
+            queryParams.ItemsPerPage = options.itemsPerPage.toString()
+        }
+        if (options?.searchTerm) {
+            queryParams.SearchTerm = options.searchTerm
+        }
+
+        return this.request<ServiceProceduresSummaryResponse>(endpoint, 'GET', queryParams)
+    }
+
+    /**
+     * Get service procedure details by application ID
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Details/Of/ServiceProcedures/{ApplicationID}
+     */
+    async getServiceProcedureDetails(
+        baseVehicleId: number,
+        applicationId: number,
+        engineId?: number
+    ): Promise<ServiceProcedureDetailsResponse> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Details/Of/ServiceProcedures/${applicationId}`
+
+        const queryParams: Record<string, string> = {
+            AttributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+        }
+
+        if (engineId) {
+            queryParams.EN = engineId.toString()
+        }
+
+        return this.request<ServiceProcedureDetailsResponse>(endpoint, 'GET', queryParams)
+    }
+
+    /**
+     * Get service procedure document (image)
+     * Endpoint: /v1/Information/Vehicles/Attributes/BaseVehicleID/{BaseVehicleID}/Content/Documents/Of/ServiceProcedures/{DocumentID}
+     * Returns binary data (Blob)
+     */
+    async getServiceProcedureDocument(
+        baseVehicleId: number,
+        documentId: number
+    ): Promise<{ blob: Blob; contentType: string }> {
+        const endpoint = `/Information/Vehicles/Attributes/BaseVehicleID/${baseVehicleId}/Content/Documents/Of/ServiceProcedures/${documentId}`
+        const uriPath = `/v1${endpoint}`
+        const url = buildMotorUrl(this.baseUrl, endpoint)
+
+        // Build authenticated query string with AttributeStandard
+        const authParams = this.auth.buildAuthQueryParams('GET', uriPath)
+        url.search = buildAuthQueryString(authParams, {
+            AttributeStandard: MOTOR_API_DEFAULTS.ATTRIBUTE_STANDARD,
+        })
+
+        const headers: HeadersInit = {
+            'Accept': '*/*' // Accept any content type for binary data
+        };
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) {
+            await this.handleError(response);
+        }
+
+        const contentType = response.headers.get('content-type') || 'application/octet-stream';
+        const blob = await response.blob();
+
+        return { blob, contentType };
     }
 
     private async handleError(response: Response): Promise<never> {
