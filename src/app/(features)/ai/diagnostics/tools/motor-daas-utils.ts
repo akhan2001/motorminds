@@ -130,8 +130,44 @@ export interface ProcedureStep {
 }
 
 /**
+ * Clean step text - convert XML/HTML to readable text
+ */
+function cleanStepText(text: string): string {
+	return text
+		// Handle emphasis/bold
+		.replace(/<emph[^>]*type="bold"[^>]*>([\s\S]*?)<\/emph>/gi, '**$1**')
+		.replace(/<emph[^>]*>([\s\S]*?)<\/emph>/gi, '*$1*')
+		// Replace xref with "See Figure" text
+		.replace(/<xref[^>]*idref="([^"]*)"[^>]*\/>/gi, '(See Figure)')
+		// Handle nested step groups
+		.replace(/<stepgrp2>/gi, '\n')
+		.replace(/<\/stepgrp2>/gi, '')
+		.replace(/<stepgrp>/gi, '')
+		.replace(/<\/stepgrp>/gi, '')
+		// Remove other tags
+		.replace(/<\/?MOTOR_Procedure>/gi, '')
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/p>/gi, '\n')
+		.replace(/<p>/gi, '')
+		// Clean remaining tags
+		.replace(/<\/?[^>]+(>|$)/g, '')
+		// HTML entities
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		// Clean whitespace
+		.replace(/\n{3,}/g, '\n\n')
+		.trim()
+}
+
+/**
  * Extract procedure content as interleaved steps with images
- * Returns array of [step1, image1, step2, image2, ...]
+ * Parses MOTOR XML format: <MOTOR_Procedure><stepgrp><step>...</step></stepgrp></MOTOR_Procedure>
+ * Matches xref references to corresponding images
+ * 
+ * Format: [Step 1 text] [Image 1] [Step 2 text] [Image 2] ...
  */
 export function extractProcedureSteps(items: Array<{
 	Data?: string
@@ -140,43 +176,75 @@ export function extractProcedureSteps(items: Array<{
 }>): ProcedureStep[] {
 	const steps: ProcedureStep[] = []
 	
-	// Sort by sequence
+	// Sort items by sequence
 	const sortedItems = [...items].sort((a, b) => (a.Sequence || 0) - (b.Sequence || 0))
 	
 	for (const item of sortedItems) {
 		if (!item.Data) continue
 		
-		// Clean HTML to markdown
-		let text = item.Data
-			.replace(/<br\s*\/?>/gi, '\n')
-			.replace(/<\/p>/gi, '\n\n')
-			.replace(/<\/li>/gi, '\n')
-			.replace(/<li>/gi, '• ')
-			.replace(/<\/h\d>/gi, '\n')
-			.replace(/<h\d>/gi, '\n## ')
-			.replace(/<\/?[^>]+(>|$)/g, '')
-			.replace(/&nbsp;/g, ' ')
-			.replace(/&amp;/g, '&')
-			.replace(/&lt;/g, '<')
-			.replace(/&gt;/g, '>')
-			.replace(/\n{3,}/g, '\n\n')
-			.trim()
+		// Build image lookup map by name (e.g., "TBM1200000000560" -> document)
+		const imageMap = new Map<string, ServiceProcedureDocument>()
+		if (item.ReferenceSet?.Documents) {
+			for (const doc of item.ReferenceSet.Documents) {
+				if (doc.IsActive !== false && doc.DocumentID && doc.Name) {
+					// Store by lowercase name for case-insensitive matching
+					imageMap.set(doc.Name.toLowerCase(), doc)
+				}
+			}
+		}
 		
-		if (!text) continue
+		// Extract individual <step> elements from XML
+		// Matches both <step>content</step> and nested structures
+		const stepRegex = /<step>([\s\S]*?)<\/step>/gi
+		let match
 		
-		// Get first image for this step (if any)
-		const image = item.ReferenceSet?.Documents?.find(d => d.IsActive !== false && d.DocumentID)
+		while ((match = stepRegex.exec(item.Data)) !== null) {
+			const rawStepContent = match[1]
+			
+			// Check for xref (figure reference) in this step
+			// Format: <xref idref="tbm1200000000560" />
+			const xrefMatch = rawStepContent.match(/<xref[^>]*idref="([^"]+)"[^>]*\/?>/i)
+			let referencedImage: ServiceProcedureDocument | undefined
+			
+			if (xrefMatch) {
+				const xrefId = xrefMatch[1].toLowerCase()
+				referencedImage = imageMap.get(xrefId)
+			}
+			
+			// Clean up the step text
+			const cleanedText = cleanStepText(rawStepContent)
+			
+			if (!cleanedText) continue
+			
+			steps.push({
+				sequence: steps.length + 1,
+				text: cleanedText,
+				image: referencedImage ? {
+					id: referencedImage.DocumentID,
+					name: referencedImage.Name || `Image ${referencedImage.DocumentID}`,
+					caption: referencedImage.Caption,
+					format: referencedImage.Format || 'unknown',
+				} : undefined,
+			})
+		}
 		
-		steps.push({
-			sequence: item.Sequence || steps.length,
-			text,
-			image: image ? {
-				id: image.DocumentID,
-				name: image.Name || `Image ${image.DocumentID}`,
-				caption: image.Caption,
-				format: image.Format || 'unknown',
-			} : undefined,
-		})
+		// Fallback: if no <step> tags found, treat entire content as one step
+		if (steps.length === 0 && item.Data) {
+			const cleanedText = cleanStepText(item.Data)
+			if (cleanedText) {
+				const firstImage = item.ReferenceSet?.Documents?.find(d => d.IsActive !== false && d.DocumentID)
+				steps.push({
+					sequence: 1,
+					text: cleanedText,
+					image: firstImage ? {
+						id: firstImage.DocumentID,
+						name: firstImage.Name || `Image ${firstImage.DocumentID}`,
+						caption: firstImage.Caption,
+						format: firstImage.Format || 'unknown',
+					} : undefined,
+				})
+			}
+		}
 	}
 	
 	return steps

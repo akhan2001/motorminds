@@ -43,7 +43,7 @@ interface ProcedureImage {
  */
 export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedureDetailsToolRendererProps) {
 	const { state, output } = toolPart
-	const [expandedImages, setExpandedImages] = React.useState<Set<number>>(new Set([0])) // First image expanded by default
+	const [collapsedImages, setCollapsedImages] = React.useState<Set<number>>(new Set()) // Images expanded by default
 
 	// Parse output
 	let parsedResult: any = null
@@ -64,7 +64,7 @@ export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedu
 	}
 
 	const toggleImage = (index: number) => {
-		setExpandedImages(prev => {
+		setCollapsedImages(prev => {
 			const newSet = new Set(prev)
 			if (newSet.has(index)) {
 				newSet.delete(index)
@@ -74,6 +74,9 @@ export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedu
 			return newSet
 		})
 	}
+
+	// Count steps with images
+	const stepsWithImages = steps.filter(s => s.image).length
 
 	// Loading state
 	if (state === 'input-streaming') {
@@ -132,7 +135,6 @@ export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedu
 		const category = parsedResult.category
 		const position = parsedResult.position
 		const baseVehicleId = parsedResult.baseVehicleId
-		const imageCount = allImages.length
 
 		return (
 			<div className="space-y-4 w-full max-w-full mt-2 overflow-hidden">
@@ -149,65 +151,78 @@ export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedu
 								{position && ` • ${position}`}
 							</div>
 						)}
-						{imageCount > 0 && (
-							<div className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
-								<ImageIcon className="w-3 h-3" />
-								{imageCount} illustration{imageCount !== 1 ? 's' : ''} included
-							</div>
-						)}
+						<div className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-3">
+							<span>{steps.length} step{steps.length !== 1 ? 's' : ''}</span>
+							{stepsWithImages > 0 && (
+								<span className="flex items-center gap-1">
+									<ImageIcon className="w-3 h-3" />
+									{stepsWithImages} illustration{stepsWithImages !== 1 ? 's' : ''}
+								</span>
+							)}
+						</div>
 					</div>
 				</div>
 
 				{/* Interleaved Steps and Images */}
 				{steps.length > 0 && (
-					<div className="space-y-4">
-						{steps.map((step, index) => (
-							<div key={index} className="space-y-2">
-								{/* Step text */}
-								<div className="p-4 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a]">
-									<div className="prose prose-sm dark:prose-invert max-w-none">
-										<ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-											{step.text}
-										</ReactMarkdown>
+					<div className="space-y-3">
+						{steps.map((step, index) => {
+							const isImageCollapsed = collapsedImages.has(index)
+							
+							return (
+								<div key={index} className="space-y-2">
+									{/* Step with number */}
+									<div className="flex gap-3 items-start">
+										{/* Step number */}
+										<div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-xs font-medium mt-0.5">
+											{step.sequence}
+										</div>
+										
+										{/* Step text */}
+										<div className="flex-1 min-w-0 prose prose-sm dark:prose-invert max-w-none">
+											<ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+												{step.text}
+											</ReactMarkdown>
+										</div>
 									</div>
-								</div>
 
-								{/* Step image (if present) */}
-								{step.image && baseVehicleId && (
-									<div className="ml-4 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#141414] overflow-hidden">
-										<div
-											className={cn(
-												"flex items-center justify-between gap-3 p-2 cursor-pointer transition-colors",
-												"hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
-											)}
-											onClick={() => toggleImage(index)}
-										>
-											<div className="flex items-center gap-2 min-w-0">
-												{expandedImages.has(index) ? (
-													<ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-												) : (
+									{/* Step image - auto-expanded if present */}
+									{step.image && baseVehicleId && (
+										<div className="ml-10 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#141414] overflow-hidden">
+											{/* Collapsible header */}
+											<div
+												className={cn(
+													"flex items-center gap-2 p-2 cursor-pointer transition-colors",
+													"hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+												)}
+												onClick={() => toggleImage(index)}
+											>
+												{isImageCollapsed ? (
 													<ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
+												) : (
+													<ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
 												)}
 												<ImageIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
 												<span className="text-sm text-gray-700 dark:text-gray-300 truncate">
 													{step.image.caption || step.image.name || `Figure ${index + 1}`}
 												</span>
 											</div>
-										</div>
 
-										{expandedImages.has(index) && (
-											<div className="p-3 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a]">
-												<DocumentImageCompact
-													src={`/api/motor-daas/service-procedures/${baseVehicleId}/document/${step.image.id}`}
-													alt={step.image.caption || step.image.name || 'Procedure illustration'}
-													caption={step.image.caption}
-												/>
-											</div>
-										)}
-									</div>
-								)}
-							</div>
-						))}
+											{/* Image content - expanded by default */}
+											{!isImageCollapsed && (
+												<div className="p-3 border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a]">
+													<DocumentImageCompact
+														src={`/api/motor-daas/service-procedures/${baseVehicleId}/document/${step.image.id}`}
+														alt={step.image.caption || step.image.name || 'Procedure illustration'}
+														caption={step.image.caption}
+													/>
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+							)
+						})}
 					</div>
 				)}
 
@@ -220,7 +235,7 @@ export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedu
 						</h4>
 						<div className="grid gap-3">
 							{allImages.map((image, index) => {
-								const isExpanded = expandedImages.has(index)
+								const isCollapsed = collapsedImages.has(index)
 								const imageUrl = baseVehicleId 
 									? `/api/motor-daas/service-procedures/${baseVehicleId}/document/${image.id}`
 									: null
@@ -231,23 +246,21 @@ export function ServiceProcedureDetailsToolRenderer({ toolPart }: ServiceProcedu
 										className="rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] overflow-hidden"
 									>
 										<div
-											className="flex items-center justify-between gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#222222]"
+											className="flex items-center gap-2 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#222222]"
 											onClick={() => toggleImage(index)}
 										>
-											<div className="flex items-center gap-2 min-w-0">
-												{isExpanded ? (
-													<ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
-												) : (
-													<ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
-												)}
-												<ImageIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
-												<span className="text-sm text-gray-700 dark:text-gray-300 truncate">
-													{image.caption || image.name || `Image ${index + 1}`}
-												</span>
-											</div>
+											{isCollapsed ? (
+												<ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
+											) : (
+												<ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+											)}
+											<ImageIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+											<span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+												{image.caption || image.name || `Image ${index + 1}`}
+											</span>
 										</div>
 
-										{isExpanded && imageUrl && (
+										{!isCollapsed && imageUrl && (
 											<div className="p-3 border-t border-gray-200 dark:border-[#2a2a2a]">
 												<DocumentImageCompact
 													src={imageUrl}

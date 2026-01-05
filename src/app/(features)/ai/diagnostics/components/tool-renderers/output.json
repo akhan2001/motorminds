@@ -1,0 +1,147 @@
+"Items": [
+    {
+        "Data": "<MOTOR_Procedure><stepgrp><step>Remove engine front cover.</step><step>Disconnect ignition wires from lower spark plugs.</step><step>Remove lower spark plugs.</step><step>Rotate engine clockwise until No. 1 intake valve is open.</step><step>Remove bolts and lefthand intake rocker arm shaft assembly.</step><step>Rotate engine clockwise until No. 1 exhaust valve is open.</step><step>Remove bolts and lefthand exhaust rocker arm shaft assembly.</step><step>Rotate engine clockwise until No. 1 intake valve is closed.</step><step>Remove bolts and righthand intake rocker arm shaft assembly.</step><step>Rotate engine clockwise until No. 1 exhaust valve is closed.</step><step>Remove bolts and righthand exhaust rocker arm shaft assembly.</step><step>Position crankshaft keyway at 11 o'clock position.</step><step>Remove bolt and righthand timing chain guide.</step><step>Remove righthand timing chain.</step><step>Remove bolts and timing chain tensioner.</step><step>Remove lefthand timing chain tensioner arm.</step><step>Remove bolt and lefthand timing chain guide.</step><step>Remove lefthand timing chain.</step><step>Remove crankshaft sprocket.</step><step>Reverse procedure to install, note following:</step><stepgrp2><step>If blue links are not visible, mark two links on each end, and use as timing marks.</step><step>Position upper end of lefthand (inner) timing chain on lefthand camshaft phaser and sprocket, aligning timing mark on outer flange of camshaft phaser and sprocket with single blue marked link on chain, <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000560\" />.</emph></step><step>Position lower end of lefthand (inner) timing chain on crankshaft sprocket, aligning timing mark on outer flange of crankshaft sprocket with single blue marked link on chain and install crankshaft sprocket onto crankshaft, then verify crankshaft keyway is at 11 o'clock position, <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000561\" />.</emph></step><step><emph type=\"bold\">Torque</emph> lefthand timing chain tensioner to 89 inch lbs., then tighten an additional 45°.</step><step><emph type=\"bold\">Torque</emph> lefthand timing chain bolt to 89 inch lbs., then tighten an additional 45°.</step><step>Position lower end of righthand (outer) timing chain on crankshaft sprocket, aligning timing mark on sprocket with single blue marked chain link, <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000562\" />.</emph></step><step>Position upper end of righthand (outer) timing chain on righthand camshaft phaser and sprocket, aligning timing mark on outer flange of camshaft phaser and sprocket with single blue marked link on chain, <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000563\" />.</emph></step><step><emph type=\"bold\">Torque</emph> righthand timing chain tensioner to 89 inch lbs., then tighten an additional 45°.</step><step><emph type=\"bold\">Torque</emph> righthand timing chain bolt to 89 inch lbs., then tighten an additional 45°.</step><step>Tighten lefthand intake rocker arm shaft assembly bolts in sequence as illustrated in <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000564\" />.</emph> First step, <emph type=\"bold\">torque</emph> bolts to 89 inch lbs., second step, <emph type=\"bold\">torque</emph> to 177 inch lbs., third step, tighten an additional 60°.</step><step>Tighten lefthand exhaust rocker arm shaft assembly bolts in sequence as illustrated in <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000565\" />.</emph> First step, <emph type=\"bold\">torque</emph> bolts to 89 inch lbs., second step, <emph type=\"bold\">torque</emph> to 177 inch lbs., third step, tighten an additional 60°.</step><step>Tighten righthand intake rocker arm shaft assembly bolts in sequence as illustrated in <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000566\" />.</emph> First step, <emph type=\"bold\">torque</emph> bolts to 89 inch lbs., second step, <emph type=\"bold\">torque</emph> to 177 inch lbs., third step, tighten an additional 60°.</step><step>Tighten righthand exhaust rocker arm shaft assembly bolts in sequence as illustrated in <emph type=\"bold\">Fig. <xref idref=\"tbm1200000000567\" />.</emph> First step, <emph type=\"bold\">torque</emph> bolts to 89 inch lbs., second step, <emph type=\"bold\">torque</emph> to 177 inch lbs., third step, tighten an additional 60°.</step><step><emph type=\"bold\">Torque</emph> spark plugs to 159 inch lbs.</step></stepgrp2></stepgrp></MOTOR_Procedure>",
+        "IsActive": true,
+        "ReferenceSet": {
+            "Documents": [
+                {
+                    "AnchorDocumentID": 14684547,
+                    "IsActive": true,
+                    "Name": "TBM1200000000562",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Outer crankshaft alignment marks",
+                    "DocumentID": 14684547,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684547",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684548,
+                    "IsActive": true,
+                    "Name": "TBM1200000000563",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Outer camshaft alignment mark",
+                    "DocumentID": 14684548,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684548",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684546,
+                    "IsActive": true,
+                    "Name": "TBM1200000000561",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Inner crankshaft alignment marks",
+                    "DocumentID": 14684546,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684546",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684545,
+                    "IsActive": true,
+                    "Name": "TBM1200000000560",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Inner camshaft alignment mark",
+                    "DocumentID": 14684545,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684545",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684552,
+                    "IsActive": true,
+                    "Name": "TBM1200000000567",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Exhaust rocker arm shaft tightening sequence. Righthand",
+                    "DocumentID": 14684552,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684552",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684551,
+                    "IsActive": true,
+                    "Name": "TBM1200000000566",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Intake rocker arm shaft tightening sequence. Righthand",
+                    "DocumentID": 14684551,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684551",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684549,
+                    "IsActive": true,
+                    "Name": "TBM1200000000564",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Intake rocker arm shaft tightening sequence. Lefthand",
+                    "DocumentID": 14684549,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684549",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                },
+                {
+                    "AnchorDocumentID": 14684550,
+                    "IsActive": true,
+                    "Name": "TBM1200000000565",
+                    "Notes": [],
+                    "Sequence": 1,
+                    "Type": "",
+                    "Caption": "Exhaust rocker arm shaft tightening sequence. Lefthand",
+                    "DocumentID": 14684550,
+                    "Format": "image/gif",
+                    "Links": [
+                        {
+                            "Href": "/v1/Information/Vehicles/Attributes/BaseVehicleID/26332/Content/Documents/Of/ServiceProcedures/14684550",
+                            "Rel": "ServiceProceduresDocument"
+                        }
+                    ]
+                }
+            ]
+        },
+        "Schema": "MOTOR_Procedure",
+        "Sequence": 9,
+        "ProcedureID": 20604
