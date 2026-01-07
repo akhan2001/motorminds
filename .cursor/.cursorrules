@@ -1,0 +1,276 @@
+# MotorMinds - Cursor AI Agent Rules
+
+## Project Overview
+
+MotorMinds is an AI-powered automotive shop management platform built with Next.js 15, TypeScript, and Supabase. The platform provides comprehensive shop management including work orders, customer CRM, parts ordering, financial analytics, and AI-powered diagnostics.
+
+## Core Technologies
+
+- **Framework**: Next.js 15.3.8 (App Router)
+- **Language**: TypeScript 4.9.5 (strict mode)
+- **UI**: React 18, Tailwind CSS, Radix UI, shadcn/ui
+- **Database**: Supabase (PostgreSQL) with Row-Level Security (RLS)
+- **State Management**: TanStack Query (React Query)
+- **Authentication**: NextAuth.js + Supabase Auth
+- **AI**: Vercel AI SDK (`ai` package), OpenAI GPT-4, Perplexity AI
+- **Voice AI**: Vapi AI for automated supplier calls
+- **Deployment**: Vercel Platform
+
+## Architecture Patterns
+
+### 1. Feature-Based Routing
+- Routes organized by feature in `src/app/(features)/`
+- Each feature is self-contained with components, hooks, and utilities
+- Example: `src/app/(features)/ai/diagnostics/` contains all AI diagnostics code
+
+### 2. Stateless AI Tools (Supabase Pattern)
+- **CRITICAL**: All AI tools are stateless - no global state or caching
+- Tools receive context via dependency injection (closure pattern)
+- Context includes: `motorClient`, `baseVehicleId`, `engineId`, `vehicleMake`
+- Tools defined in `src/app/(features)/ai/diagnostics/tools/`
+- Tool registration in `src/app/(features)/ai/diagnostics/tools/index.ts`
+
+### 3. API Route Structure
+- API routes in `src/app/api/`
+- MOTOR DaaS routes: `src/app/api/motor-daas/`
+- AI routes: `src/app/api/ai/diagnostics/`
+- All routes use Next.js 15 App Router conventions
+
+### 4. Component Organization
+- Shared UI components: `src/components/ui/` (shadcn/ui)
+- Feature components: `src/app/(features)/[feature]/components/`
+- Layout components: `src/components/layout/`
+- Business components: `src/components/common/`
+
+## Key Integrations
+
+### MOTOR DaaS API
+- **Client**: `src/lib/integrations/motor-daas/client.ts`
+- **Auth**: HMAC-SHA256 signature-based authentication
+- **Endpoints**: Wiring diagrams, service procedures, OEM components, YMME data
+- **Base URL**: `https://api.motor.com/v1`
+- **Rate Limit**: 1500 requests per 15 minutes
+- **Credentials**: `MOTOR_DAAS_PUBLIC_KEY`, `MOTOR_DAAS_PRIVATE_KEY` (server-side only)
+
+### Supabase
+- **Client**: `src/lib/supabase.ts` (client-side), `src/lib/supabase-admin.ts` (server-side)
+- **RLS**: Row-Level Security enabled on all tables
+- **Realtime**: Supabase Realtime subscriptions for live updates
+- **Storage**: Supabase Storage for file uploads
+
+### AI Tools
+- **AI SDK**: Vercel AI SDK (`ai` package) for streaming and tool calling
+- **Model Selection**: Configurable via `getModel()` in `src/lib/ai/model.ts`
+- **Tool Calling**: Dynamic tool selection based on user intent
+- **Max Steps**: Limited to 5 tool calls per conversation (`maxSteps: 5`)
+
+## Coding Conventions
+
+### TypeScript
+- **Strict Mode**: Always enabled
+- **Types**: Explicit types, avoid `any` unless necessary
+- **Interfaces**: Use interfaces for object shapes
+- **Enums**: Use const enums for constants
+
+### React Components
+- **Functional Components**: Always use functional components with hooks
+- **Props**: Define explicit props interfaces
+- **Naming**: PascalCase for components (e.g., `UserProfile.tsx`)
+- **Files**: kebab-case for file names (e.g., `user-profile.tsx`)
+
+### API Routes
+- **Validation**: Use Zod schemas for request validation
+- **Error Handling**: Consistent error response format
+- **Status Codes**: Use appropriate HTTP status codes
+- **Authentication**: Check `shopId` and user permissions
+
+### Database
+- **Queries**: Use Supabase client with TypeScript types
+- **RLS**: Always respect Row-Level Security policies
+- **Migrations**: Version-controlled in `supabase/migrations/`
+- **Naming**: snake_case for database columns
+
+## AI Diagnostics System
+
+### Tool Architecture
+- **Location**: `src/app/(features)/ai/diagnostics/tools/`
+- **Pattern**: Stateless tools with dependency injection
+- **Registration**: Tools registered in `getTools()` function
+- **Filtering**: Tools filtered by `aiOptInLevel` (disabled | schema | full)
+
+### Key Tools
+1. **MOTOR Tools**: `motor-tools.ts` - Wiring diagrams, service procedures, OEM components
+2. **Perplexity Tool**: `perplexity-research-tool.ts` - Online research for diagnostics
+3. **Rendering Tools**: UI-only tools for displaying results
+
+### Tool Context
+Tools receive context via closure:
+```typescript
+{
+  baseVehicleId: number,
+  engineId?: number,
+  vehicleMake?: string,
+  motorClient: MotorDaasClient
+}
+```
+
+### Prompts
+- **Location**: `src/app/(features)/ai/diagnostics/tools/prompts.ts`
+- **Style**: Concise, mechanic-focused, actionable
+- **Primary Tool**: `perplexityResearchTool` is mandatory for diagnostics
+
+## File Structure
+
+```
+src/
+├── app/
+│   ├── (features)/          # Feature-based routes
+│   │   ├── ai/
+│   │   │   └── diagnostics/ # AI diagnostics feature
+│   │   ├── operations/     # Work orders, scheduling
+│   │   ├── customers/      # Customer CRM
+│   │   └── financials/     # Financial analytics
+│   ├── (auth)/             # Authentication routes
+│   ├── (public)/           # Public routes
+│   └── api/                # API routes
+│       ├── ai/             # AI endpoints
+│       └── motor-daas/     # MOTOR DaaS endpoints
+├── components/             # Shared components
+│   ├── ui/                # Base UI (shadcn/ui)
+│   └── common/            # Business components
+├── lib/                    # Core libraries
+│   ├── integrations/      # External integrations
+│   │   └── motor-daas/    # MOTOR DaaS client
+│   ├── ai/                # AI utilities
+│   └── utils/             # Utility functions
+├── hooks/                  # Custom React hooks
+├── contexts/               # React contexts
+└── types/                  # TypeScript types
+```
+
+## Domain Knowledge
+
+### Automotive Shop Management
+- **Work Orders**: Service orders with status tracking
+- **YMME**: Year, Make, Model, Engine identification
+- **Base Vehicle ID**: MOTOR DaaS identifier for vehicle configuration
+- **DTCs**: Diagnostic Trouble Codes (P0xxx, Bxxxx, Cxxxx, Uxxxx)
+- **Service Procedures**: OEM repair procedures from MOTOR DaaS
+- **Wiring Diagrams**: Electrical schematics from MOTOR DaaS
+- **OEM Components**: Original Equipment Manufacturer parts data
+
+### MOTOR DaaS Data Flow
+1. User selects vehicle (Year, Make, Model, Engine)
+2. System fetches `BaseVehicleID` from YMME endpoint
+3. `BaseVehicleID` used for all MOTOR DaaS content queries
+4. Content types: WiringDiagrams, ServiceProcedures, OEMComponents
+5. Documents served as blobs (images/PDFs) with inline display
+
+## Important Patterns
+
+### 1. Dependency Injection for Tools
+```typescript
+// Tools receive dependencies via closure, not global state
+export const getMotorTools = ({
+  baseVehicleId,
+  engineId,
+  vehicleMake,
+  motorClient,
+}: MotorToolsContext) => {
+  return {
+    getWiringDiagrams: tool({...}), // Uses motorClient from closure
+  };
+};
+```
+
+### 2. React Query for Data Fetching
+- Use React Query hooks for all data fetching
+- Query keys defined in feature-specific `keys.ts` files
+- Example: `src/app/(features)/ai/diagnostics/data/motor/keys.ts`
+
+### 3. Error Handling
+- Use `formatToolError()` utility for consistent error formatting
+- Return user-friendly error messages
+- Log errors with context (tool name, parameters)
+
+### 4. Markdown Rendering
+- Custom markdown components in `Message.Markdown.tsx`
+- Styled with Tailwind Typography
+- Headers (H1-H4) properly sized and styled
+
+## Security Considerations
+
+### Server-Side Only
+- MOTOR DaaS credentials never exposed to client
+- All MOTOR API calls happen server-side
+- Tools execute in API routes, not frontend
+
+### Authentication
+- All API routes require `shopId`
+- User authentication via NextAuth.js
+- Row-Level Security (RLS) on database tables
+
+### Rate Limiting
+- MOTOR DaaS: 1500 requests per 15 minutes (global)
+- Consider per-shop rate limiting for OEM compliance
+
+## Common Tasks
+
+### Adding a New MOTOR Tool
+1. Define tool in `src/app/(features)/ai/diagnostics/tools/motor-tools.ts`
+2. Add tool name to `TOOL_CATEGORY_MAP` in `tool-filter.ts`
+3. Tool automatically available when `baseVehicleId` is present
+
+### Adding a New API Route
+1. Create route file in `src/app/api/[feature]/route.ts`
+2. Validate request with Zod schema
+3. Check authentication and permissions
+4. Return consistent response format
+
+### Adding a New React Component
+1. Create component file in appropriate feature directory
+2. Use TypeScript interfaces for props
+3. Follow naming conventions (PascalCase component, kebab-case file)
+4. Use Tailwind CSS for styling
+
+## Testing
+
+- **Framework**: Vitest
+- **Test Files**: `*.test.ts` or `*.test.tsx`
+- **Location**: Co-located with source files or in `tests/` directory
+- **Coverage**: Aim for 80%+ coverage on critical paths
+
+## Environment Variables
+
+### Required
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `MOTOR_DAAS_PUBLIC_KEY` (server-side)
+- `MOTOR_DAAS_PRIVATE_KEY` (server-side)
+- `OPENAI_API_KEY`
+- `PERPLEXITY_API_KEY`
+
+### Optional
+- `VAPI_API_KEY` (voice calling)
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (SMS/Voice)
+- `RESEND_API_KEY` (email)
+
+## When Making Changes
+
+1. **Follow existing patterns** - Match the codebase style
+2. **Keep tools stateless** - No global state in AI tools
+3. **Validate inputs** - Use Zod schemas
+4. **Handle errors gracefully** - User-friendly error messages
+5. **Log appropriately** - Use structured logging
+6. **Update types** - Keep TypeScript types in sync
+7. **Test changes** - Write tests for new functionality
+
+## OEM Compliance Notes
+
+- **No data storage**: OEM data is not stored, only displayed
+- **Audit logging**: Consider implementing usage logging for OEM compliance
+- **Rate limiting**: Per-shop rate limits prevent abuse
+- **Source citation**: Always cite MOTOR DaaS as source
+- **Copyright notices**: Display OEM copyright notices in UI
+- **No generative AI**: Don't generate OEM procedures, only display actual data
