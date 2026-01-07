@@ -1,14 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { 
-    Plus, 
-    Calendar, 
-    CalendarDays, 
-    CalendarRange
-} from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { MonthCard } from './MonthCard'
 import { WeekCard } from './WeekCard'
@@ -28,6 +21,9 @@ interface CalendarViewProps {
     onMonthChange?: (date: Date) => void
     onWeekChange?: (startDate: Date) => void
     onNewAppointment?: () => void
+    onCustomersClick?: () => void
+    currentView?: CalendarViewType
+    onViewChange?: (view: CalendarViewType) => void
     className?: string
 }
 
@@ -41,9 +37,21 @@ export function CalendarView({
     onMonthChange,
     onWeekChange,
     onNewAppointment,
+    onCustomersClick,
+    currentView: externalCurrentView,
+    onViewChange,
     className
 }: CalendarViewProps) {
-    const [currentView, setCurrentView] = useState<CalendarViewType>('month')
+    const [internalView, setInternalView] = useState<CalendarViewType>('month')
+    const currentView = externalCurrentView ?? internalView
+    
+    const handleViewChange = (view: CalendarViewType) => {
+        if (onViewChange) {
+            onViewChange(view)
+        } else {
+            setInternalView(view)
+        }
+    }
 
     const handleSlotClick = (slot: AvailableSlot & { date: string }) => {
         onSlotClick?.(slot.date, slot.time)
@@ -54,7 +62,7 @@ export function CalendarView({
         
         // Auto-switch to day view when clicking a date in month view
         if (currentView === 'month') {
-            setCurrentView('day')
+            handleViewChange('day')
         }
     }
 
@@ -101,84 +109,7 @@ export function CalendarView({
     }
 
     return (
-        <Card className={cn("bg-background border-border h-full flex flex-col", className)}>
-            <CardHeader className="flex-shrink-0 space-y-4">
-                {/* Title, View Toggle and Actions Row */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <Calendar className="h-6 w-6" />
-                                Appointments
-                            </h1>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Schedule and manage customer appointments, create them into work orders as well.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* View Toggle Buttons */}
-                        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                            <Button
-                                variant={currentView === 'day' ? 'default' : 'ghost'}
-                                size="sm"
-                                onClick={() => setCurrentView('day')}
-                                className={cn(
-                                    "h-8 px-3",
-                                    currentView === 'day' 
-                                        ? "bg-background text-foreground shadow-sm" 
-                                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                )}
-                            >
-                                <Calendar className="h-4 w-4 mr-1" />
-                                Day
-                            </Button>
-                            
-                            <Button
-                                variant={currentView === 'week' ? 'default' : 'ghost'}
-                                size="sm"
-                                onClick={() => setCurrentView('week')}
-                                className={cn(
-                                    "h-8 px-3",
-                                    currentView === 'week' 
-                                        ? "bg-background text-foreground shadow-sm" 
-                                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                )}
-                            >
-                                <CalendarDays className="h-4 w-4 mr-1" />
-                                Week
-                            </Button>
-                            
-                            <Button
-                                variant={currentView === 'month' ? 'default' : 'ghost'}
-                                size="sm"
-                                onClick={() => setCurrentView('month')}
-                                className={cn(
-                                    "h-8 px-3",
-                                    currentView === 'month' 
-                                        ? "bg-background text-foreground shadow-sm" 
-                                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                                )}
-                            >
-                                <CalendarRange className="h-4 w-4 mr-1" />
-                                Month
-                            </Button>
-                        </div>
-                        
-                        {onNewAppointment && (
-                            <Button
-                                onClick={onNewAppointment}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add New Appointment
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </CardHeader>
-
+        <Card className={cn("bg-background border-none h-full flex flex-col", className)}>
             <CardContent className="flex-1 min-h-0 p-0">
                 {renderCalendarContent()}
             </CardContent>

@@ -35,13 +35,13 @@ const requestSchema = z.object({
 	workOrderId: z.string().optional(),
 	vehicleContext: z
 		.object({
-			vin: z.string().optional(),
-			make: z.string().optional(),
-			model: z.string().optional(),
-			year: z.number().optional(),
-			baseVehicleId: z.number().optional(),
-			engineId: z.number().optional(),
-			engineName: z.string().optional(),
+			vin: z.string().nullable().optional(),
+			make: z.string().nullable().optional(),
+			model: z.string().nullable().optional(),
+			year: z.union([z.number(), z.string().transform((val) => parseInt(val, 10))]).nullable().optional(),
+			baseVehicleId: z.number().nullable().optional(),
+			engineId: z.number().nullable().optional(),
+			engineName: z.string().nullable().optional(),
 			engineData: z.any().optional(),
 		})
 		.optional(),

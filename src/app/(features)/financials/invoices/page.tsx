@@ -95,7 +95,7 @@ function InvoicesContent() {
     return (
         <div className="h-screen flex flex-col bg-background">
             {/* <Nav /> */}
-            <div className="flex-1 flex flex-col overflow-hidden px-4">
+            <div className="flex-1 flex flex-col overflow-hidden">
                 <InvoiceHeader 
                     searchValue={searchValue}
                     onSearchChange={setSearchValue}

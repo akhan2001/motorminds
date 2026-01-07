@@ -1,14 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Plus, Flame, Clock, Calendar, Folder, Settings } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Search, Plus, Flame, Clock, Calendar, Folder, Settings, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type SessionFilterTab = 'active' | 'pending_review' | 'recent' | 'completed'
 
 interface DiagnosticsHubHeaderProps {
+	className?: string
+	isCompactView?: boolean
+	onToggleView?: () => void
 	searchQuery: string
 	onSearchChange: (query: string) => void
 	onNewSession: () => void
@@ -24,6 +28,9 @@ interface DiagnosticsHubHeaderProps {
 }
 
 export function DiagnosticsHubHeader({
+	className,
+	isCompactView = false,
+	onToggleView,
 	searchQuery,
 	onSearchChange,
 	onNewSession,
@@ -35,7 +42,7 @@ export function DiagnosticsHubHeader({
 	const [localSearch, setLocalSearch] = useState(searchQuery)
 
 	// Debounce search
-	React.useEffect(() => {
+	useEffect(() => {
 		const timer = setTimeout(() => {
 			onSearchChange(localSearch)
 		}, 300)
@@ -46,112 +53,154 @@ export function DiagnosticsHubHeader({
 	const tabs: Array<{
 		id: SessionFilterTab
 		label: string
-		icon: React.ReactNode
+		icon: React.ComponentType<{ className?: string }>
 	}> = [
 		{
 			id: 'active',
 			label: 'Active Sessions',
-			icon: <Flame className="w-4 h-4" />,
+			icon: Flame,
 		},
 		{
 			id: 'pending_review',
 			label: 'Pending Review',
-			icon: <Clock className="w-4 h-4" />,
+			icon: Clock,
 		},
 		{
 			id: 'recent',
 			label: 'Recent Sessions',
-			icon: <Calendar className="w-4 h-4" />,
+			icon: Calendar,
 		},
 		{
 			id: 'completed',
 			label: 'All Completed',
-			icon: <Folder className="w-4 h-4" />,
+			icon: Folder,
 		},
 	]
 
 	return (
-		<div className="space-y-4">
-			{/* Top Row: Title, Search, and New Session Button */}
-			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-				<div className="flex items-center gap-3">
-					<h2 className="text-2xl font-semibold text-foreground">
-						AI Diagnostics Hub
-					</h2>
-				</div>
-
-				<div className="flex items-center gap-3 w-full sm:w-auto">
-					{/* Search Input */}
-					<div className="relative flex-1 sm:flex-initial sm:w-64">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-						<Input
-							type="text"
-							placeholder="Search Sessions (e.g., VIN, Plate, WO#, Mechanic)"
-							value={localSearch}
-							onChange={(e) => setLocalSearch(e.target.value)}
-							className="pl-9 pr-4 h-9 text-sm"
-						/>
+		<div className={cn("bg-background border-b border-border flex-shrink-0", className)}>
+			{/* Main Header */}
+			<div className="px-6 py-3">
+				<div className="flex items-center justify-between">
+					{/* Left Section - Title */}
+					<div className="flex items-center gap-6">
+						<div>
+							<h1 className="text-2xl font-bold text-foreground">AI Diagnostics Hub</h1>
+							<p className="text-sm text-muted-foreground mt-1">
+								Manage and analyze diagnostic sessions
+							</p>
+						</div>
 					</div>
 
-					{/* Settings Button */}
-					{onSettingsClick && (
-						<Button
-							variant="outline"
-							size="icon"
-							onClick={onSettingsClick}
-							className="h-9 w-9 border-border hover:bg-accent"
-							title="AI Settings"
-						>
-							<Settings className="w-4 h-4" />
-						</Button>
-					)}
+					{/* Right Section - Actions */}
+					<div className="flex items-center gap-3">
+						{/* Search Bar */}
+						<div className="relative w-80">
+							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+							<Input
+								placeholder="Search Sessions (e.g., VIN, Plate, WO#, Mechanic)"
+								value={localSearch}
+								onChange={(e) => setLocalSearch(e.target.value)}
+								className="pl-10 h-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-red-500"
+							/>
+						</div>
 
-					{/* New Session Button */}
-					<Button
-						onClick={onNewSession}
-						className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white whitespace-nowrap"
-					>
-						<Plus className="w-4 h-4 mr-2" />
-						New Session
-					</Button>
+						{/* Settings Button */}
+						{onSettingsClick && (
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={onSettingsClick}
+											className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground w-9 h-9"
+										>
+											<Settings className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>AI Settings</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						)}
+
+						{/* New Session Button */}
+						<Button
+							size="sm"
+							className="bg-red-600 hover:bg-red-700 text-white"
+							onClick={onNewSession}
+						>
+							<Plus className="h-4 w-4 mr-2" />
+							New Session
+						</Button>
+
+						{/* Compact View Toggle - Icon Only */}
+						{onToggleView && (
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="outline"
+											size="icon"
+											className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground w-9 h-9"
+											onClick={onToggleView}
+										>
+											{isCompactView ? (
+												<Maximize2 className="h-4 w-4" />
+											) : (
+												<Minimize2 className="h-4 w-4" />
+											)}
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>{isCompactView ? 'Enlarge View' : 'Compact View'}</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						)}
+					</div>
 				</div>
 			</div>
 
-			{/* Bottom Row: Filter Tabs */}
-			<div className="flex items-center gap-2 flex-wrap">
-				{tabs.map((tab) => {
-					const count = counts?.[tab.id]
-					const isActive = activeTab === tab.id
+			{/* Action Buttons Bar */}
+			<div className="px-6 pb-3">
+				<div className="flex items-center gap-2">
+					{tabs.map((tab) => {
+						const count = counts?.[tab.id]
+						const isActive = activeTab === tab.id
+						const Icon = tab.icon
 
-					return (
-						<Button
-							key={tab.id}
-							variant={isActive ? 'default' : 'outline'}
-							onClick={() => onTabChange(tab.id)}
-							className={cn(
-								'flex items-center gap-2 h-9 px-4 text-sm',
-								isActive
-									? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white'
-									: 'bg-card border-border text-foreground hover:bg-accent'
-							)}
-						>
-							{tab.icon}
-							<span>{tab.label}</span>
-							{count !== undefined && (
-								<span
-									className={cn(
-										'ml-1 px-1.5 py-0.5 rounded text-xs',
-										isActive
-											? 'bg-blue-700 dark:bg-blue-800 text-white'
-											: 'bg-muted text-muted-foreground'
-									)}
-								>
-									{count}
-								</span>
-							)}
-						</Button>
-					)
-				})}
+						return (
+							<Button
+								key={tab.id}
+								variant="outline"
+								size="sm"
+								onClick={() => onTabChange(tab.id)}
+								className={cn(
+									"bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground",
+									isActive && "bg-red-600 text-white hover:bg-red-600 hover:text-white border-red-600"
+								)}
+							>
+								<Icon className="h-4 w-4 mr-2" />
+								{tab.label}
+								{count !== undefined && (
+									<span
+										className={cn(
+											"ml-2 px-1.5 py-0.5 rounded text-xs",
+											isActive
+												? "bg-red-700 text-white"
+												: "bg-muted text-muted-foreground"
+										)}
+									>
+										{count}
+									</span>
+								)}
+							</Button>
+						)
+					})}
+				</div>
 			</div>
 		</div>
 	)

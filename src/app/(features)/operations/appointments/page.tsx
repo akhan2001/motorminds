@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+
+type CalendarViewType = 'day' | 'week' | 'month'
 // import { Nav } from '@/components/navigation/nav'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,6 +15,7 @@ import { CalendarView } from '../components/appointments/Calendar/CalendarView'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
 import { DayAppointmentsDialog } from '../components/appointments/DayAppointmentsDialog'
 import { AppointmentDetailsSheet } from '../components/appointments/AppointmentDetailsSheet'
+import { AppointmentHeader } from '../components/appointments/appointment-header'
 import type { AppointmentWithDetails } from '../types/appointment'
 
 export default function AppointmentsPage() {
@@ -23,6 +26,7 @@ export default function AppointmentsPage() {
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [selectedDateForForm, setSelectedDateForForm] = useState<string>()
     const [selectedTimeForForm, setSelectedTimeForForm] = useState<string>()
+    const [currentView, setCurrentView] = useState<CalendarViewType>('month')
     
     // Modal state
     const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
@@ -247,10 +251,16 @@ export default function AppointmentsPage() {
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            {/* <Nav /> */}
+            {/* Header */}
+            <AppointmentHeader
+                onNewAppointment={handleShowNewAppointmentForm}
+                onCustomersClick={handleCustomersClick}
+                currentView={currentView}
+                onViewChange={setCurrentView}
+            />
 
             {/* Main Content - Calendar with Large Horizontal Padding */}
-            <div className="flex-1 overflow-hidden px-12 py-6">
+            <div className="flex-1 overflow-hidden">
                 <CalendarView
                     selectedDate={selectedDate}
                     shopId={shopId}
@@ -262,6 +272,8 @@ export default function AppointmentsPage() {
                     onWeekChange={setSelectedDate}
                     onNewAppointment={handleShowNewAppointmentForm}
                     onCustomersClick={handleCustomersClick}
+                    currentView={currentView}
+                    onViewChange={setCurrentView}
                 />
             </div>
 

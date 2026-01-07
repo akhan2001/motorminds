@@ -110,20 +110,18 @@ export default function AIDiagnosticsPage() {
 		<div className="h-screen flex flex-col bg-background">
 			<div className="flex-1 flex flex-col overflow-hidden">
 				{/* Header */}
-				<div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 border-b border-border">
-					<DiagnosticsHubHeader
-						searchQuery={searchQuery}
-						onSearchChange={setSearchQuery}
-						onNewSession={() => setIsNewSessionDialogOpen(true)}
-						onSettingsClick={() => setIsSettingsDialogOpen(true)}
-						activeTab={activeTab}
-						onTabChange={setActiveTab}
-						counts={counts}
-					/>
-				</div>
+				<DiagnosticsHubHeader
+					searchQuery={searchQuery}
+					onSearchChange={setSearchQuery}
+					onNewSession={() => setIsNewSessionDialogOpen(true)}
+					onSettingsClick={() => setIsSettingsDialogOpen(true)}
+					activeTab={activeTab}
+					onTabChange={setActiveTab}
+					counts={counts}
+				/>
 
 				{/* Main Content */}
-				<div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 py-6">
+				<div className="flex-1 overflow-hidden p-2">
 					<SessionList
 						shopId={shopId}
 						activeTab={activeTab}

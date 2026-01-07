@@ -19,9 +19,20 @@ const customerSubItems = [
 ];
 
 export const navigationConfig: NavItem[] = [
+    // Core Workflow Items (Demo Priority Order)
+    {
+        name: "Appointments",
+        href: "/operations/appointments",
+        requiredRoles: ['admin', 'super', 'user']
+    },
     {
         name: "Work Orders",
         href: "/operations/work-orders",
+        requiredRoles: ['admin', 'super', 'user']
+    },
+    {
+        name: "AI Diagnostics",
+        href: "/ai/diagnostics",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
@@ -30,6 +41,7 @@ export const navigationConfig: NavItem[] = [
         requiredRoles: ['admin', 'super', 'user'],
         excludedShopIds: ['850e8400-e29b-41d4-a716-446655440003'] // Hide for this specific shop
     },
+    // Secondary Navigation Items
     {
         name: "Old Invoices",
         href: "/invoices",
@@ -46,11 +58,6 @@ export const navigationConfig: NavItem[] = [
         href: "/customers",
         hasDropdown: true,
         subItems: customerSubItems,
-        requiredRoles: ['admin', 'super', 'user']
-    },
-    {
-        name: "Appointments",
-        href: "/operations/appointments",
         requiredRoles: ['admin', 'super', 'user']
     },
     {
@@ -144,11 +151,6 @@ export const navigationConfig: NavItem[] = [
                 adminTypes: ['super-admin', 'shop-admin']
             }
         ]
-    },
-    {
-        name: "AI Diagnostics",
-        href: "/ai/diagnostics",
-        requiredRoles: ['admin', 'super', 'user']
     }
 ];
 

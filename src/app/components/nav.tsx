@@ -5,8 +5,6 @@ import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MobileNav } from "./mobile-nav"
@@ -36,7 +34,7 @@ export function Nav() {
 	// Get filtered navigation items based on user role, admin type, and shop ID
 	const navItems = useMemo(() => {
 		const items = getFilteredNavItems(
-			userRole ?? null, 
+			userRole ?? null,
 			adminType || undefined,
 			shopInfo?.id || undefined
 		);
@@ -88,7 +86,7 @@ export function Nav() {
 		try {
 			const supabase = createClient()
 			const { error } = await supabase.auth.signOut()
-			
+
 			if (error) {
 				console.error("Logout error:", error)
 			} else {
@@ -105,9 +103,9 @@ export function Nav() {
 	// Show loading state while fetching role and shop info
 	if (isLoadingRole || isLoadingShop) {
 		return (
-			<header className="bg-white dark:bg-[#0d0d0d] px-4 pt-2 border-b border-border z-50 sticky top-0">
-				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
-					<div className="flex items-center gap-4 py-3">
+			<header className="bg-gray-50 dark:bg-[#1a1a1a] px-8 py-4 border-b border-border z-50">
+				<nav className="flex items-center justify-between w-full">
+					<div className="flex items-center gap-4">
 						<div className="flex items-center gap-2">
 							<Image
 								src="/motorminds-logo-white (1).svg"
@@ -126,58 +124,37 @@ export function Nav() {
 	}
 
 	return (
-		<header className="bg-white dark:bg-[#0d0d0d] px-4 pt-2 border-b border-border z-50 sticky top-0">
-			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
-				<div className="flex flex-col items-start">
-					{/* Left: Logo and Premium Badge */}
-					<div className="flex items-center gap-4 py-3">
-						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-accent px-2 py-1 rounded-md transition-opacity"
+		<header className="bg-gray-50 dark:bg-[#1a1a1a] px-8 py-4 border-b border-border z-50">
+			<nav className="flex items-center justify-between w-full">
+				{/* Left: Logo and Navigation Items - all on same line */}
+				<div className="hidden lg:flex items-center gap-8">
+					{/* Logo */}
+					<div
+						className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
 						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
-						>
-							<Image
+					>
+						<Image
 							src="/motorminds-logo-white (1).svg"
 							alt="Motorminds Logo"
 							width={35}
 							height={35}
 							className="w-8 h-8 dark:invert-0 invert"
-							/>
-							<span className="text-foreground font-medium">Motorminds</span>
-						</div>
-						<div className="hidden lg:block">
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-foreground border-muted-foreground">
-										{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
-									</Badge>
-								</TooltipTrigger>
-								<TooltipContent className="bg-popover text-popover-foreground border-border">
-									<p className="text-xs text-[#FBBC05]">
-										{userRole === 'demo' && 'Demo Access - Limited Features'}
-										{userRole === 'admin' && 'Administrator - Full Access'}
-										{userRole === 'super' && 'Super User - Full Access'}
-										{userRole === 'user' && 'Premium User - Standard Access'}
-										{!userRole && 'Loading user role...'}
-									</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
-						</div>
+						/>
+						<span className="text-foreground font-medium">Motorminds</span>
 					</div>
-					{/* Center: Navigation Links */}
-					<div className="hidden lg:flex items-center gap-8">
+
+					{/* Navigation items on same line */}
+					<div className="flex items-center gap-2">
 						{navItems.map((item) => (
 							item.hasDropdown ? (
-								<div key={item.name} className="relative flex flex-col">
+								<div key={item.name} className="relative">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<button 
-												className={`py-2 border-b-2 flex items-center gap-1 ${
-													activeLink === item.name
-													? "text-[#b22222] border-[#b22222]"
-													: "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground transition-colors"
-												}`}
+											<button
+												className={`px-6 py-2.5 rounded-full flex items-center gap-1.5 transition-all whitespace-nowrap text-sm font-medium ${activeLink === item.name
+														? "bg-blue-600 text-white shadow-md"
+														: "bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+													}`}
 											>
 												{item.name}
 												<ChevronDown className="h-4 w-4" />
@@ -186,7 +163,7 @@ export function Nav() {
 										<DropdownMenuContent className="bg-popover text-popover-foreground border-border min-w-[180px]">
 											{item.subItems && item.subItems.length > 0 ? (
 												item.subItems.map((subItem) => (
-													<DropdownMenuItem 
+													<DropdownMenuItem
 														key={subItem.name}
 														onClick={() => handleSubItemClick(item.name, subItem.href)}
 														className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
@@ -203,34 +180,33 @@ export function Nav() {
 									</DropdownMenu>
 								</div>
 							) : (
-								<a
+								<button
 									key={item.name}
-									href="#"
 									onClick={() => handleNavClick(item.name, item.href)}
-									className={`py-2 border-b-2 flex items-center gap-1 group ${
-										activeLink === item.name
-										? "text-[#b22222] border-[#b22222]"
-										: "text-muted-foreground border-transparent hover:border-red-500 transition-colors"
-									} ${item.name === 'Mia AI' ? 'text-foreground hover:text-red-500 hover:animate-pulse' : 'hover:text-foreground'}`}
+									className={`px-6 py-2.5 rounded-full flex items-center gap-1.5 transition-all group whitespace-nowrap text-sm font-medium ${activeLink === item.name
+											? "bg-blue-600 text-white shadow-md"
+											: "bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+										} ${item.name === 'Mia AI' ? 'hover:bg-red-500 hover:text-white hover:animate-pulse' : ''}`}
 								>
 									{item.name}
 									{item.name === 'Mia AI' && (
-										<Sparkles className="h-3 w-3 text-foreground transition-colors group-hover:text-red-500" />
+										<Sparkles className={`h-3 w-3 transition-colors ${activeLink === item.name ? 'text-white' : 'group-hover:text-white'
+											}`} />
 									)}
-								</a>
+								</button>
 							)
 						))}
 					</div>
 				</div>
-				{/* Right: Actions */}
+
+				{/* Right: Actions + Profile */}
 				<div className="hidden lg:flex items-center gap-4">
 					{/* Full navigation for non-demo users */}
 					{userRole !== 'demo' && (
 						<>
-							<button 
-								className={`${
-									activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
-								} hover:text-foreground transition-colors`} 
+							<button
+								className={`${activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
+									} hover:text-foreground transition-colors`}
 								onClick={() => router.push("/messages")}
 							>
 								<MessageCircleMore className="inline-block w-5 h-5" />
@@ -242,9 +218,9 @@ export function Nav() {
 							</button>
 						</>
 					)}
-					
+
 					{/* Profile Dropdown - shown for all users */}
-					<ProfileDropdown 
+					<ProfileDropdown
 						avatar={shopInfo?.logo_image_url || ""}
 						shopOwnerName={shopInfo?.shop_owner}
 						shopName={shopInfo?.shop_name}
@@ -255,7 +231,7 @@ export function Nav() {
 				<div className="lg:hidden">
 					{userRole === 'demo' ? (
 						/* Simplified mobile menu for demo users - just profile dropdown */
-						<ProfileDropdown 
+						<ProfileDropdown
 							avatar={shopInfo?.logo_image_url || ""}
 							shopOwnerName={shopInfo?.shop_owner}
 							shopName={shopInfo?.shop_name}
@@ -263,7 +239,7 @@ export function Nav() {
 						/>
 					) : (
 						/* Full mobile navigation for non-demo users */
-						<MobileNav 
+						<MobileNav
 							navItems={navItems}
 							activeLink={activeLink}
 							avatar={shopInfo?.logo_image_url || ""}

@@ -1,13 +1,10 @@
 "use client"
 
 import { createClient } from "@/utils/supabase/client"
-import { Settings, ChevronDown, MessageCircleMore, Sparkles } from "lucide-react"
+import { Settings, ChevronDown, MessageCircleMore, Sparkles, Menu, X } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MobileNav } from "@/components/navigation/mobile-nav"
 import { useQueryClient } from '@tanstack/react-query'
@@ -18,7 +15,12 @@ import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
 import { useAdminContextWithRole } from "@/contexts/admin-context"
 
-export function Nav() {
+interface NavProps {
+	sidebarOpen?: boolean
+	setSidebarOpen?: (open: boolean) => void
+}
+
+export function Nav({ sidebarOpen, setSidebarOpen }: NavProps = {}) {
 	const router = useRouter()
 	const pathname = usePathname()
 	const [open, setOpen] = useState(false)
@@ -36,11 +38,12 @@ export function Nav() {
 	// Get filtered navigation items based on user role, admin type, and shop ID
 	const navItems = useMemo(() => {
 		const items = getFilteredNavItems(
-			userRole ?? null, 
+			userRole ?? null,
 			adminType || undefined,
 			shopInfo?.id || undefined
 		);
-		return items;
+		// For demo branch: only show first 4 items (Appointments, Work Orders, AI Diagnostics, Invoices)
+		return items.slice(0, 4);
 	}, [userRole, adminType, shopInfo?.id]);
 
 	let activeLink = ""
@@ -105,9 +108,9 @@ export function Nav() {
 	// Show loading state while fetching role and shop info
 	if (isLoadingRole || isLoadingShop) {
 		return (
-			<header className="bg-background dark:bg-[#0d0d0d] px-4 pt-2 border-b border-border z-50 sticky top-0">
-				<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
-					<div className="flex items-center gap-4 py-3">
+			<header className="bg-gray-50 dark:bg-[#1a1a1a] px-8 py-6 border-b border-border z-50 flex-shrink-0">
+				<nav className="flex items-center justify-between w-full">
+					<div className="flex items-center gap-4">
 						<div className="flex items-center gap-2">
 							<Image
 								src="/motorminds-logo-white (1).svg"
@@ -116,7 +119,7 @@ export function Nav() {
 								height={35}
 								className="w-8 h-8 dark:invert-0 invert"
 							/>
-							<span className="text-foreground font-medium">Motorminds</span>
+							<h1 className="text-foreground font-bold text-lg">MotorMinds</h1>
 						</div>
 						<div className="text-muted-foreground text-sm">Loading...</div>
 					</div>
@@ -126,136 +129,147 @@ export function Nav() {
 	}
 
 	return (
-		<header className="bg-white dark:bg-[#0d0d0d] px-4 pt-2 border-b border-border z-50">
-			<nav className="flex items-center justify-between max-w-[1400px] mx-auto">
-				<div className="flex flex-col items-start">
-					{/* Left: Logo and Premium Badge */}
-					<div className="flex items-center gap-4 py-3">
-						<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-accent px-2 py-1 rounded-md transition-opacity"
-						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
+		<header className="bg-gray-50 dark:bg-[#1a1a1a] px-4 py-6 border-b border-border dark:border-[#2a2a2a] z-50 flex-shrink-0">
+			<nav className="flex items-center justify-between w-full">
+				{/* Left: Hamburger + Logo */}
+				<div className="hidden lg:flex items-center gap-3">
+					{setSidebarOpen && (
+						<button
+							onClick={() => setSidebarOpen(!sidebarOpen)}
+							className="p-2 rounded-lg hover:bg-accent hover:text-foreground transition-colors duration-200"
+							aria-label="Toggle sidebar"
 						>
-							<Image
+							{sidebarOpen ? (
+								<X className="h-5 w-5 text-foreground" />
+							) : (
+								<Menu className="h-5 w-5 text-foreground" />
+							)}
+						</button>
+					)}
+					<div
+						className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity duration-200"
+						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
+					>
+						<Image
 							src="/motorminds-logo-white (1).svg"
 							alt="Motorminds Logo"
 							width={35}
 							height={35}
 							className="w-8 h-8 dark:invert-0 invert"
-							/>
-							<span className="text-foreground font-medium">Motorminds</span>
-						</div>
-						<div className="hidden lg:block">
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Badge variant="outline" className="cursor-default text-foreground border-muted-foreground">
-										{userRole === 'demo' ? 'Demo' : userRole === 'admin' ? 'Admin' : userRole === 'super' ? 'Super' : 'Premium'}
-									</Badge>
-								</TooltipTrigger>
-								<TooltipContent className="bg-popover text-popover-foreground border-border">
-									<p className="text-xs text-[#FBBC05]">
-										{userRole === 'demo' && 'Demo Access - Limited Features'}
-										{userRole === 'admin' && 'Administrator - Full Access'}
-										{userRole === 'super' && 'Super User - Full Access'}
-										{userRole === 'user' && 'Premium User - Standard Access'}
-										{!userRole && 'Loading user role...'}
-									</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
-						</div>
-					</div>
-					{/* Center: Navigation Links */}
-					<div className="hidden lg:flex items-center gap-8">
-						{navItems.map((item) => (
-							item.hasDropdown ? (
-								<div key={item.name} className="relative flex flex-col">
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<button 
-												className={`py-2 border-b-2 flex items-center gap-1 ${
-													activeLink === item.name
-													? "text-[#b22222] border-[#b22222]"
-													: "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground transition-colors"
-												}`}
-											>
-												{item.name}
-												<ChevronDown className="h-4 w-4" />
-											</button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent className="bg-popover text-popover-foreground border-border min-w-[180px]">
-											{item.subItems && item.subItems.length > 0 ? (
-												item.subItems.map((subItem) => (
-													<DropdownMenuItem 
-														key={subItem.name}
-														onClick={() => handleSubItemClick(item.name, subItem.href)}
-														className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
-													>
-														{subItem.name}
-													</DropdownMenuItem>
-												))
-											) : (
-												<DropdownMenuItem className="text-muted-foreground cursor-default">
-													No items available
-												</DropdownMenuItem>
-											)}
-										</DropdownMenuContent>
-									</DropdownMenu>
-								</div>
-							) : (
-								<a
-									key={item.name}
-									href="#"
-									onClick={() => handleNavClick(item.name, item.href)}
-									className={`py-2 border-b-2 flex items-center gap-1 group ${
-										activeLink === item.name
-										? "text-[#b22222] border-[#b22222]"
-										: "text-muted-foreground border-transparent hover:border-red-500 transition-colors"
-									} ${item.name === 'Mia AI' ? 'text-foreground hover:text-red-500 hover:animate-pulse' : 'hover:text-foreground'}`}
-								>
-									{item.name}
-									{item.name === 'Mia AI' && (
-										<Sparkles className="h-3 w-3 text-foreground transition-colors group-hover:text-red-500" />
-									)}
-								</a>
-							)
-						))}
+						/>
+						<h1 className="text-foreground font-bold text-lg m-0">MotorMinds</h1>
 					</div>
 				</div>
-				{/* Right: Actions */}
-				<div className="hidden lg:flex items-center gap-4">
+
+				{/* Center: Navigation items */}
+				<div className="hidden lg:flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
+					{navItems.map((item) => (
+						item.hasDropdown ? (
+							<div key={item.name} className="relative">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button
+											className={`px-6 py-2.5 rounded-full flex items-center gap-1.5 transition-all duration-200 whitespace-nowrap text-sm font-medium ${
+												activeLink === item.name
+												? "bg-red-600 text-white shadow-md"
+												: "bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground dark:hover:bg-accent/50"
+											}`}
+										>
+											{item.name}
+											<ChevronDown className="h-4 w-4" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent className="bg-popover text-popover-foreground border-border min-w-[180px]">
+										{item.subItems && item.subItems.length > 0 ? (
+											item.subItems.map((subItem) => (
+												<DropdownMenuItem
+													key={subItem.name}
+													onClick={() => handleSubItemClick(item.name, subItem.href)}
+													className="cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+												>
+													{subItem.name}
+												</DropdownMenuItem>
+											))
+										) : (
+											<DropdownMenuItem className="text-muted-foreground cursor-default">
+												No items available
+											</DropdownMenuItem>
+										)}
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+						) : (
+							<button
+								key={item.name}
+								onClick={() => handleNavClick(item.name, item.href)}
+								className={`px-6 py-2.5 rounded-full flex items-center gap-1.5 transition-all duration-200 group whitespace-nowrap text-sm font-medium ${
+									activeLink === item.name
+									? "bg-red-600 text-white shadow-md"
+									: "bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground dark:hover:bg-accent/50"
+								} ${item.name === 'Mia AI' ? 'hover:bg-red-500 hover:text-white hover:animate-pulse' : ''}`}
+							>
+								{item.name}
+								{item.name === 'Mia AI' && (
+									<Sparkles className={`h-3 w-3 transition-colors ${
+										activeLink === item.name ? 'text-white' : 'group-hover:text-white'
+									}`} />
+								)}
+							</button>
+						)
+					))}
+				</div>
+
+				{/* Right: Actions + Profile */}
+				<div className="hidden lg:flex items-center gap-3">
 					{/* Full navigation for non-demo users */}
 					{userRole !== 'demo' && (
 						<>
-							<button 
-								className={`${
-									activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
-								} hover:text-foreground transition-colors`} 
+							<button
+								className={`p-2 rounded-full border border-border dark:border-[#2a2a2a] ${
+									activeLink === "Messages" ? "text-white bg-red-600" : "text-muted-foreground"
+								} hover:text-foreground hover:bg-accent dark:hover:bg-accent/50 transition-colors duration-200`}
 								onClick={() => router.push("/messages")}
 							>
-								<MessageCircleMore className="inline-block w-5 h-5" />
+								<MessageCircleMore className="w-5 h-5" />
 							</button>
 							{/* Feedback Dropdown */}
-							<FeedbackDropdown />
-							<button className="text-muted-foreground hover:text-foreground transition-colors">
-								<Settings className="inline-block w-5 h-5" onClick={() => router.push("/settings")} />
+							<div className="p-2 rounded-full border border-border dark:border-[#2a2a2a] text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent/50 transition-colors duration-200">
+								<FeedbackDropdown />
+							</div>
+							<button className="p-2 rounded-full border border-border dark:border-[#2a2a2a] text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent/50 transition-colors duration-200">
+								<Settings className="w-5 h-5" onClick={() => router.push("/settings")} />
 							</button>
 						</>
 					)}
-					
+
 					{/* Profile Dropdown - shown for all users */}
-					<ProfileDropdown 
+					<ProfileDropdown
 						avatar={shopInfo?.logo_image_url || ""}
 						shopOwnerName={shopInfo?.shop_owner}
 						shopName={shopInfo?.shop_name}
 						userRole={userRole || undefined}
 					/>
 				</div>
-				{/* Right: Mobile Menu (only visible on mobile) */}
-				<div className="lg:hidden">
+
+				{/* Mobile Menu (only visible on mobile) */}
+				<div className="lg:hidden flex items-center gap-4 w-full justify-between">
+					<div
+						className="flex items-center gap-2 cursor-pointer"
+						onClick={() => userRole === 'demo' ? router.push("/mia") : router.push("/")}
+					>
+						<Image
+							src="/motorminds-logo-white (1).svg"
+							alt="Motorminds Logo"
+							width={35}
+							height={35}
+							className="w-8 h-8 dark:invert-0 invert"
+						/>
+						<h1 className="text-foreground font-bold text-base m-0">MotorMinds</h1>
+					</div>
+
 					{userRole === 'demo' ? (
 						/* Simplified mobile menu for demo users - just profile dropdown */
-						<ProfileDropdown 
+						<ProfileDropdown
 							avatar={shopInfo?.logo_image_url || ""}
 							shopOwnerName={shopInfo?.shop_owner}
 							shopName={shopInfo?.shop_name}
@@ -263,7 +277,7 @@ export function Nav() {
 						/>
 					) : (
 						/* Full mobile navigation for non-demo users */
-						<MobileNav 
+						<MobileNav
 							navItems={navItems}
 							activeLink={activeLink}
 							avatar={shopInfo?.logo_image_url || ""}

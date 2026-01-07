@@ -74,9 +74,9 @@ export function WorkOrderEditModalContent({
                         />
                     </div>
                 ) : (
-                    // For non-completed work orders, show resizable panels
+                    // For non-completed work orders, show resizable panels with AI Diagnostics
                     <ResizablePanelGroup direction="horizontal" className="w-full h-full">
-                        <ResizablePanel defaultSize={60} minSize={50} maxSize={70}>
+                        <ResizablePanel defaultSize={55} minSize={45} maxSize={65}>
                             <WorkOrderEditLeftPanel
                                 workOrder={workOrder}
                                 workOrderDetails={workOrderDetails}
@@ -94,7 +94,7 @@ export function WorkOrderEditModalContent({
 
                         <ResizableHandle withHandle />
 
-                        <ResizablePanel defaultSize={40} minSize={30}>
+                        <ResizablePanel defaultSize={45} minSize={35}>
                             <WorkOrderEditRightPanel
                                 workOrderId={workOrder.id}
                                 workOrderDetails={workOrderDetails}

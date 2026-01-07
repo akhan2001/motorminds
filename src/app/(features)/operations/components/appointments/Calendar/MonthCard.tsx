@@ -228,7 +228,7 @@ export function MonthCard({
         return (
             <div className="h-full flex flex-col">
                 {/* Loading Header */}
-                <div className="pb-4 flex-shrink-0 px-6">
+                <div className="py-4 flex-shrink-0 px-6">
                     <div className="flex items-center justify-between">
                         <Skeleton className="h-6 w-32" />
                         <div className="flex items-center gap-1">
@@ -240,7 +240,7 @@ export function MonthCard({
                 </div>
 
                 {/* Loading Calendar Content */}
-                <div className="flex-1 min-h-0 px-6">
+                <div className="flex-1 min-h-0 py-4 px-6">
                     <ScrollArea className="h-full">
                         {/* Week Headers */}
                         <div className="grid grid-cols-7 gap-1 mb-2">
@@ -264,7 +264,7 @@ export function MonthCard({
     return (
         <div className="h-full flex flex-col">
             {/* Month Navigation Header */}
-            <div className="pb-4 flex-shrink-0 px-6">
+            <div className="py-4 flex-shrink-0 px-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         {format(currentMonth, 'MMMM yyyy')}

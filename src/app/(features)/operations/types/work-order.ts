@@ -58,6 +58,12 @@ export interface WorkOrderWithDetails extends WorkOrder {
         color?: string
         vin?: string
         mileage?: number
+        // MOTOR DaaS integration fields
+        base_vehicle_id?: number
+        engine_id?: number
+        engine_name?: string
+        make_id?: number
+        model_id?: number
     }
     technician?: {
         id: string

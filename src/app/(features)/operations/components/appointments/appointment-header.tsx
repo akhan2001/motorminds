@@ -1,12 +1,13 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Calendar, Filter, Maximize2, Minimize2, Lock, Loader2, Users } from 'lucide-react'
+import { Plus, MessageSquare, Calendar, Maximize2, Minimize2, Users, CalendarDays, CalendarRange } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useMessagingAvailability } from '../../hooks/use-work-order-messaging'
+
+type CalendarViewType = 'day' | 'week' | 'month'
 
 interface AppointmentHeaderProps {
     className?: string
@@ -14,8 +15,8 @@ interface AppointmentHeaderProps {
     onToggleView?: () => void
     onNewAppointment?: () => void
     onCustomersClick?: () => void
-    searchValue?: string
-    onSearchChange?: (value: string) => void
+    currentView?: CalendarViewType
+    onViewChange?: (view: CalendarViewType) => void
 }
 
 export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
@@ -24,9 +25,15 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
     onToggleView,
     onNewAppointment,
     onCustomersClick,
-    searchValue = '',
-    onSearchChange
+    currentView = 'month',
+    onViewChange
 }) => {
+    const router = useRouter()
+
+    const handleMessagesClick = () => {
+        window.open('/messaging', '_blank')
+    }
+
     return (
         <div className={cn("bg-background border-b border-border flex-shrink-0", className)}>
             {/* Main Header */}
@@ -35,57 +42,106 @@ export const AppointmentHeader: React.FC<AppointmentHeaderProps> = ({
                     {/* Left Section - Title */}
                     <div className="flex items-center gap-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                Appointments
-                            </h1>
+                            <h1 className="text-2xl font-bold text-foreground">Appointments</h1>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Schedule and manage customer appointments, create them into work orders as well.
+                                Schedule and manage customer appointments
                             </p>
                         </div>
                     </div>
 
                     {/* Right Section - Actions */}
                     <div className="flex items-center gap-3">
+                        {/* New Appointment Button */}
                         {onNewAppointment && (
                             <Button
+                                size="sm"
+                                className="bg-red-600 hover:bg-red-700 text-white"
                                 onClick={onNewAppointment}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
                                 <Plus className="h-4 w-4 mr-2" />
-                                Add New Appointment
+                                New Appointment
                             </Button>
+                        )}
+
+                        {/* Compact View Toggle - Icon Only */}
+                        {onToggleView && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground w-9 h-9"
+                                            onClick={onToggleView}
+                                        >
+                                            {isCompactView ? (
+                                                <Maximize2 className="h-4 w-4" />
+                                            ) : (
+                                                <Minimize2 className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{isCompactView ? 'Enlarge View' : 'Compact View'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Search & Filters Bar
-            <div className="px-6 pb-3">
-                <div className="flex items-center gap-3">
-                    {/* Search Bar 
-                    <div className="relative flex-1 max-w-lg">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                            placeholder="Search appointments by customer, service, or date..."
-                            value={searchValue}
-                            onChange={(e) => onSearchChange?.(e.target.value)}
-                            className="pl-10 bg-[#1a1a1a] border-[#3a3a3a] text-white placeholder:text-gray-500 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Filter Buttons 
-                    <div className="flex items-center gap-2">
+            {/* View Toggle Buttons Bar */}
+            {onViewChange && (
+                <div className="px-6 pb-3">
+                    <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
                         <Button
-                            variant="outline"
+                            variant={currentView === 'day' ? 'default' : 'ghost'}
                             size="sm"
-                            className="bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
+                            onClick={() => onViewChange('day')}
+                            className={cn(
+                                "h-8 px-3",
+                                currentView === 'day' 
+                                    ? "bg-background text-foreground shadow-sm" 
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                            )}
                         >
-                            <Filter className="h-4 w-4 mr-2" />
-                            Filters
+                            <Calendar className="h-4 w-4 mr-1" />
+                            Day
+                        </Button>
+                        
+                        <Button
+                            variant={currentView === 'week' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => onViewChange('week')}
+                            className={cn(
+                                "h-8 px-3",
+                                currentView === 'week' 
+                                    ? "bg-background text-foreground shadow-sm" 
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                            )}
+                        >
+                            <CalendarDays className="h-4 w-4 mr-1" />
+                            Week
+                        </Button>
+                        
+                        <Button
+                            variant={currentView === 'month' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => onViewChange('month')}
+                            className={cn(
+                                "h-8 px-3",
+                                currentView === 'month' 
+                                    ? "bg-background text-foreground shadow-sm" 
+                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                            )}
+                        >
+                            <CalendarRange className="h-4 w-4 mr-1" />
+                            Month
                         </Button>
                     </div>
                 </div>
-            </div> */}
+            )}
         </div>
     )
 }
