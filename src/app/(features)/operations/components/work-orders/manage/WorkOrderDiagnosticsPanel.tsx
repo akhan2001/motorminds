@@ -259,10 +259,6 @@ export function WorkOrderDiagnosticsPanel({
         return (
             <div className={`flex flex-col items-center justify-center h-full bg-card dark:bg-[#131313] p-6 ${className}`}>
                 <div className="text-center max-w-md">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                        <Wrench className="h-8 w-8 text-blue-500" />
-                        <Sparkles className="h-6 w-6 text-yellow-500" />
-                    </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">AI Diagnostics</h3>
                     <p className="text-sm text-muted-foreground mb-6">
                         Get AI-powered diagnostic assistance for this work order. Access MOTOR DaaS wiring diagrams,

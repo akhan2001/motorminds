@@ -203,8 +203,7 @@ export default function EfficiencyClient() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
-      <Nav />
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-background text-foreground">
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
         <Header value={timeRange} onTimeRangeChange={handleTimeRangeChange} />

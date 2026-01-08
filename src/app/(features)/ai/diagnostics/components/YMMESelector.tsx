@@ -252,7 +252,7 @@ export function YMMESelector({
 			{/* Engine Selector */}
 			{selection.year && selection.makeID && selection.modelID && (
 				<div className="space-y-2">
-					<Label htmlFor="engine">Engine {selection.engineID ? '' : '(Optional)'}</Label>
+					<Label htmlFor="engine">Engine *</Label>
 					{enginesLoading ? (
 						<div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
 							<Loader2 className="w-4 h-4 animate-spin" />

@@ -1,6 +1,5 @@
 "use client"
 
-import { Nav } from "@/app/components/nav"
 import LoadingPage from "@/components/loading"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,8 +30,7 @@ export default function Messages() {
     // Loading state
     if (authLoading) {
         return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
+            <div className="h-full flex flex-col bg-background">
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -51,8 +49,7 @@ export default function Messages() {
     // Error state
     if (authError) {
         return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
+            <div className="h-full flex flex-col bg-background">
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -67,8 +64,7 @@ export default function Messages() {
     // Don't render main content if we don't have authentication data
     if (!shopId || !user) {
         return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
+            <div className="h-full flex flex-col bg-background">
                 <div className="flex-1 flex items-center justify-center">
                     <Card className="bg-card border-border">
                         <CardContent className="flex items-center gap-4 p-6">
@@ -87,8 +83,7 @@ export default function Messages() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-background text-foreground">
-            <Nav />
+        <div className="flex flex-col h-full bg-background text-foreground">
             <div className="flex items-center justify-center py-4 sm:py-8 px-4 sm:px-6">
                 <div className="container mx-auto max-w-[1300px]">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">

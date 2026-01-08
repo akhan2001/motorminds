@@ -105,9 +105,6 @@ export function NewSessionDialog({ open, onOpenChange, shopId }: NewSessionDialo
 								onVehicleSelect={setSelectedVehicle}
 								showEngineSelector={true}
 							/>
-							{(!selectedVehicle || !selectedVehicle.year || !selectedVehicle.make || !selectedVehicle.model) && (
-								<p className="text-xs text-red-500">Please select year, make, and model</p>
-							)}
 						</div>
 
 						{/* Work Order ID (Optional) */}
