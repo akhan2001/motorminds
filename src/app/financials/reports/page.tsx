@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Nav } from '@/components/navigation/nav';
 import BreadcrumbNav from './components/BreadcrumbNav';
 import { generateIncomeStatementPDF } from './components/IncomeStatementPDF';
 import { checkUser } from '@/utils/supabase/supabase-auth';
@@ -69,8 +68,7 @@ const ReportsPage = () => {
 
 	if (isLoading) {
 		return (
-			<div className="flex flex-col min-h-screen bg-background text-foreground">
-				<Nav />
+			<div className="flex flex-col h-full bg-background text-foreground">
 				<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
 					<BreadcrumbNav />
 					<p className="text-muted-foreground">Loading...</p>
@@ -80,8 +78,7 @@ const ReportsPage = () => {
 	}
 
 	return (
-		<div className="flex flex-col min-h-screen bg-background text-foreground">
-			<Nav />
+		<div className="flex flex-col h-full bg-background text-foreground">
 			<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
 				<BreadcrumbNav />
 				<Header />

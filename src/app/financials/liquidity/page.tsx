@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Nav } from "@/app/components/nav"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, BarChart, FileText, Info } from "lucide-react"
 import { checkUser } from "@/utils/supabase/supabase-auth"
@@ -106,8 +105,7 @@ export default function LiquidityPage() {
 	// Skeleton loader
 	if (isLoading || !data) {
 		return (
-			<div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
-				<Nav />
+			<div className="flex flex-col h-full bg-slate-50 dark:bg-background text-foreground">
 				<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
 					<div className="animate-pulse space-y-8">
 						<div className="h-8 bg-slate-50 dark:bg-muted rounded w-1/3"></div>
@@ -124,8 +122,7 @@ export default function LiquidityPage() {
 	}
 
 	return (
-		<div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background text-foreground">
-			<Nav />
+		<div className="flex flex-col h-full bg-slate-50 dark:bg-background text-foreground">
 			<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
 				<BreadcrumbNav />
 

@@ -8,6 +8,7 @@ import {
 	Wrench as WrenchIcon,
 	Brain,
 	Calendar,
+    MessageSquareDiff,
 	UsersRound,
 	Building2,
 	FileArchive,
@@ -44,7 +45,7 @@ export const sidebarNavSections: NavSection[] = [
 			},
 			{
 				name: "Suppliers",
-				href: "/operations/suppliers",
+				href: "/suppliers",
 				icon: Building2,
 			},
 			{
@@ -64,7 +65,7 @@ export const sidebarNavSections: NavSection[] = [
 			},
 			{
 				name: "Mia Parts",
-				href: "/mia-parts",
+				href: "/parts-ordering",
 				icon: WrenchIcon,
 			},
 			// {
@@ -102,6 +103,11 @@ export const sidebarNavSections: NavSection[] = [
 				href: "/customers",
 				icon: UsersRound,
 			},
+            {
+                name: "Automated Messages",
+                href: "/messaging",
+                icon: MessageSquareDiff,
+            }
 		],
 	},
 ]

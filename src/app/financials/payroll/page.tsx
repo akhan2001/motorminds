@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Nav } from "@/app/components/nav"
 import { Button } from "@/components/ui/button"
 import { FileText, PlusCircle } from "lucide-react"
 import { checkUser } from "@/utils/supabase/supabase-auth"
@@ -120,8 +119,7 @@ export default function PayrollPage() {
   // Skeleton loader
   if (isLoading || !data) {
     return (
-      <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <Nav activeLink="Financials" />
+      <div className="flex flex-col h-full bg-background text-foreground">
         <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
           <div className="animate-pulse space-y-8">
             <div className="h-8 bg-slate-50 dark:bg-muted rounded w-1/3"></div>
@@ -138,8 +136,7 @@ export default function PayrollPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Nav activeLink="Financials" />
+    <div className="flex flex-col h-full bg-background text-foreground">
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
         <BreadcrumbNav />
 

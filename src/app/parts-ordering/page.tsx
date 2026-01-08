@@ -1,7 +1,6 @@
 "use client"
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
-import { Nav } from "../components/nav"
 import { useState, useEffect, useRef } from "react"
 import MakeModelSelector, { MakeModelSelection } from "@/components/ui/make-model-selector"
 import { decodeVin } from "@/app/(features)/customers/vehicles/lib/vin-decode"
@@ -635,8 +634,7 @@ export default function PartsOrdering() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background">
-            <Nav />
+        <div className="h-full flex flex-col bg-background">
             <div className="flex-1 overflow-hidden">
                 <ResizablePanelGroup direction="horizontal" className="h-full">
                     <ResizablePanel defaultSize={60} minSize={55} maxSize={65}>

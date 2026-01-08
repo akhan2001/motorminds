@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Nav } from "@/app/components/nav";
 import { checkUser } from "@/utils/supabase/supabase-auth";
 import { getShopId } from "@/utils/supabase/supabase-shop";
 import FinancialsHeader from "./components/FinancialsHeader";
@@ -93,8 +92,7 @@ export default function Financials() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col min-h-screen bg-white dark:bg-background text-foreground">
-                <Nav />
+            <div className="flex flex-col h-full bg-white dark:bg-background text-foreground">
                 <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                     <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
                         <span className="font-semibold text-foreground">Financials Dashboard</span>
@@ -106,8 +104,7 @@ export default function Financials() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-background text-foreground">
-            <Nav />
+        <div className="flex flex-col h-full bg-white dark:bg-background text-foreground">
             <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
                 <FinancialsHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
 

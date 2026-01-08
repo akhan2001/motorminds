@@ -101,7 +101,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
             <div className="px-6 pb-3">
                 <div className="flex items-center gap-2">
                     {/* Messages Button */}
-                    <TooltipProvider>
+                    {/* <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button
@@ -118,7 +118,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                                 <p>Open messaging hub to view templates and queue</p>
                             </TooltipContent>
                         </Tooltip>
-                    </TooltipProvider>
+                    </TooltipProvider> */}
 
                     {/* Items Templates Button */}
                     <Button
@@ -143,7 +143,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     </Button>
 
                     {/* Archived Work Orders Button */}
-                    <Button
+                    {/* <Button
                         variant="outline"
                         size="sm"
                         onClick={handleArchivedClick}
@@ -151,10 +151,10 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Archive className="h-4 w-4 mr-2" />
                         Archived Work Orders
-                    </Button>
+                    </Button> */}
 
-                    {/* Archived Work Orders Button */}
-                    <Button
+                    {/* Suppliers Button */}
+                    {/* <Button
                         variant="outline"
                         size="sm"
                         onClick={() => router.push('/suppliers')}
@@ -162,10 +162,10 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Building2 className="h-4 w-4 mr-2" />
                         Suppliers
-                    </Button>
+                    </Button> */}
 
                     {/* Parts & Expenses Button */}
-                    <Button
+                    {/* <Button
                         variant="outline"
                         size="sm"
                         onClick={() => router.push('/operations/expenses')}
@@ -173,7 +173,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Package className="h-4 w-4 mr-2" />
                         Parts & Expenses
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
         </div>

@@ -4,7 +4,6 @@ import { useChat } from '@ai-sdk/react'
 import type { Message } from 'ai'
 import { ChangeEvent, useState, useEffect } from 'react'
 
-import { Nav } from "../components/nav"
 import { MiaOnboarding } from "../components/ui/MiaDiagnosticChat/MiaOnboarding"
 import { MiaDiagnosticsHeader } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsHeader"
 import { DiagnosticChatForm } from "../components/ui/MiaDiagnosticChat/MiaDiagnosticsChatForm"
@@ -233,8 +232,7 @@ export default function MiaPage() {
     // Show loading screen while session is initializing
     if (sessionLoading) {
         return (
-            <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-                <Nav />
+            <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-red-600 mx-auto mb-4"></div>
@@ -248,8 +246,7 @@ export default function MiaPage() {
     // Show error screen if session failed to initialize
     if (error && !currentSessionId) {
         return (
-            <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-                <Nav />
+            <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md">
                         <div className="text-red-600 mb-4">
@@ -275,8 +272,7 @@ export default function MiaPage() {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-            <Nav />
+        <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
 
             {/* Header controls */}
             <div className="px-4 py-3 border-b border-border bg-slate-50 dark:bg-card">
