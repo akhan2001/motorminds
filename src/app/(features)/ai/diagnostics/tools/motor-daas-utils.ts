@@ -7,6 +7,9 @@
  * - Reusable helpers for data extraction
  */
 
+import { generateObject } from 'ai'
+import { z } from 'zod'
+import { getModel } from '@/lib/ai/model'
 import type { ServiceProcedureApplication, ServiceProcedureDocument } from '@/lib/integrations/motor-daas/client'
 import { 
 	SERVICE_PROCEDURE_SILOS, 
@@ -340,14 +343,28 @@ export function extractProcedureImages(items: Array<{ ReferenceSet?: { Documents
 // WIRING DIAGRAMS
 // ============================================================================
 
+// Simple in-memory cache for LLM classifications (5 min TTL)
+const classificationCache = new Map<string, { result: { id: number; name: string } | null; timestamp: number }>()
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+const wiringDiagramSubjectSchema = z.object({
+	subjectId: z.number().nullable(),
+	subjectName: z.string().nullable(),
+	confidence: z.enum(['high', 'medium', 'low']),
+	reasoning: z.string().optional(),
+})
+
 /**
- * Map a user query to a wiring diagram subject category
- * Returns the subject with id and name if found, null otherwise
+ * Map a user query to a wiring diagram subject category using hybrid approach:
+ * 1. Fast keyword matching (exact + partial)
+ * 2. LLM classification fallback (with caching)
  */
-export function mapQueryToWiringDiagramSubject(query: string): { id: number; name: string } | null {
+export async function mapQueryToWiringDiagramSubject(
+	query: string
+): Promise<{ id: number; name: string } | null> {
 	const normalized = query.toLowerCase().trim()
 	
-	// 1. Check exact match in keyword map
+	// 1. Check exact match in keyword map (fastest)
 	if (WIRING_DIAGRAM_KEYWORD_MAP[normalized]) {
 		const subjectId = WIRING_DIAGRAM_KEYWORD_MAP[normalized]
 		const subject = Object.values(WIRING_DIAGRAM_SUBJECTS).find(s => s.id === subjectId)
@@ -356,9 +373,14 @@ export function mapQueryToWiringDiagramSubject(query: string): { id: number; nam
 		}
 	}
 	
-	// 2. Check partial match in keyword map (keywords contained in query)
-	for (const [keyword, subjectId] of Object.entries(WIRING_DIAGRAM_KEYWORD_MAP)) {
-		if (normalized.includes(keyword) && keyword.length >= 3) {
+	// 2. Check partial match in keyword map (prioritize longer keywords)
+	const keywordEntries = Object.entries(WIRING_DIAGRAM_KEYWORD_MAP)
+		.filter(([keyword]) => keyword.length >= 3)
+		.sort(([a], [b]) => b.length - a.length) // Longest first
+	
+	for (const [keyword, subjectId] of keywordEntries) {
+		// Check if query contains the keyword OR keyword contains the query (for plurals/singulars)
+		if (normalized.includes(keyword) || keyword.includes(normalized)) {
 			const subject = Object.values(WIRING_DIAGRAM_SUBJECTS).find(s => s.id === subjectId)
 			if (subject) {
 				return { id: subject.id, name: subject.name }
@@ -366,7 +388,74 @@ export function mapQueryToWiringDiagramSubject(query: string): { id: number; nam
 		}
 	}
 	
-	// 3. Check if query directly matches a subject name
+	// 3. Check cache for LLM classification
+	const cacheKey = normalized
+	const cached = classificationCache.get(cacheKey)
+	if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+		return cached.result
+	}
+	
+	// 4. LLM classification fallback
+	try {
+		const modelResult = await getModel({ provider: 'openai', routingKey: 'diagnostics' })
+		if (modelResult.error) {
+			console.warn('[mapQueryToWiringDiagramSubject] Model error, falling back to direct match:', modelResult.error)
+			// Fall through to step 5
+		} else {
+			const { object } = await generateObject({
+				model: modelResult.model,
+				schema: wiringDiagramSubjectSchema,
+				prompt: `You are an expert at categorizing automotive wiring diagram queries.
+
+User query: "${query}"
+
+Available wiring diagram subjects:
+${Object.values(WIRING_DIAGRAM_SUBJECTS).map(s => `- ${s.id}: ${s.name}`).join('\n')}
+
+Task: Map the user query to the most appropriate wiring diagram subject.
+
+Rules:
+1. Return null if no clear match (confidence: low)
+2. Consider synonyms, plurals, and related terms
+3. "lights" should match Lighting (id: 9)
+4. "headlight" should match Lighting (id: 9)
+5. "wiring diagram for lights" should match Lighting (id: 9)
+6. "brake" should match Brakes (id: 2)
+7. "abs" should match Brakes (id: 2)
+8. Extract the core component/subject from phrases like "wiring diagram for X"
+
+Return the subjectId, subjectName, confidence level, and brief reasoning.`,
+			})
+
+			// Cache and return result
+			let result: { id: number; name: string } | null = null
+			if (object.subjectId && object.confidence !== 'low') {
+				const subject = Object.values(WIRING_DIAGRAM_SUBJECTS).find(s => s.id === object.subjectId)
+				if (subject) {
+					result = { id: subject.id, name: subject.name }
+				}
+			}
+			
+			classificationCache.set(cacheKey, { result, timestamp: Date.now() })
+			
+			// Clean old cache entries (keep cache size reasonable)
+			if (classificationCache.size > 100) {
+				const now = Date.now()
+				for (const [key, value] of classificationCache.entries()) {
+					if (now - value.timestamp > CACHE_TTL_MS) {
+						classificationCache.delete(key)
+					}
+				}
+			}
+			
+			return result
+		}
+	} catch (error) {
+		console.error('[mapQueryToWiringDiagramSubject] LLM classification error:', error)
+		// Fall through to step 5
+	}
+	
+	// 5. Fallback: Direct subject name matching
 	for (const subject of Object.values(WIRING_DIAGRAM_SUBJECTS)) {
 		if (subject.name.toLowerCase().includes(normalized) || normalized.includes(subject.name.toLowerCase())) {
 			return { id: subject.id, name: subject.name }
@@ -378,25 +467,25 @@ export function mapQueryToWiringDiagramSubject(query: string): { id: number; nam
 
 /**
  * Detect if query is a subject category (browse mode) or component search
- * Uses keyword mapping to improve categorization
+ * Uses keyword mapping + LLM classification to improve categorization
  */
-export function detectWiringDiagramMode(query: string): 'browse' | 'search' {
-	const mappedSubject = mapQueryToWiringDiagramSubject(query)
+export async function detectWiringDiagramMode(query: string): Promise<'browse' | 'search'> {
+	const mappedSubject = await mapQueryToWiringDiagramSubject(query)
 	return mappedSubject ? 'browse' : 'search'
 }
 
 /**
  * Find matching subject in taxonomy response
- * Uses keyword mapping to find the correct subject by ID
+ * Uses keyword mapping + LLM classification to find the correct subject by ID
  */
-export function findMatchingSubject(
+export async function findMatchingSubject(
 	subjects: Array<{ ID: number; Name: string }>,
 	query: string
-): { ID: number; Name: string } | null {
+): Promise<{ ID: number; Name: string } | null> {
 	const normalized = query.toLowerCase().trim()
 	
-	// 1. Try keyword mapping first (match by ID for accuracy)
-	const mappedSubject = mapQueryToWiringDiagramSubject(query)
+	// 1. Try keyword mapping + LLM classification first (match by ID for accuracy)
+	const mappedSubject = await mapQueryToWiringDiagramSubject(query)
 	if (mappedSubject) {
 		const matchedSubject = subjects.find(s => s.ID === mappedSubject.id)
 		if (matchedSubject) {

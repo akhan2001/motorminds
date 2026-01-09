@@ -154,7 +154,7 @@ export const Hyperlink = memo(({ href, children }: { href?: string; children?: R
 					<ExternalLink className="h-3 w-3" />
 				</span>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="bg-white dark:bg-[#1a1a1a] max-w-md">
 				<DialogHeader>
 					<DialogTitle>External Link</DialogTitle>
 				</DialogHeader>

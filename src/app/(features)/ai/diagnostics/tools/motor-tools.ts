@@ -85,15 +85,22 @@ export const getMotorTools = ({
 	// ==========================================================================
 
 	getWiringDiagrams: tool({
-		description: `Search and retrieve wiring diagrams for the vehicle.
+		description: `PRIMARY TOOL for finding wiring diagrams. Use this FIRST when user asks for wiring diagrams.
 
 Use when user asks for:
 - "wiring diagram", "electrical schematic", "circuit diagram"
 - "show wiring for [component/subject]"
+- "wiring diagram for [component]" (e.g., "wiring diagram for lights", "wiring diagram for headlight")
 
 Auto-detects browse vs search mode:
-- Subject category ("engine", "brakes", "electrical") → Browse mode
-- Component name ("O2 sensor", "fuel pump") → Search mode
+- Subject category ("engine", "brakes", "electrical", "lighting") → Browse mode
+- Component name ("O2 sensor", "fuel pump", "headlight") → Search mode
+
+IMPORTANT:
+- ALWAYS call this tool first for ANY wiring diagram request
+- NEVER call getDiagramDetails directly - it's only for viewing details after diagrams are found
+- Pass the user's query directly (e.g., "lights", "headlight", "interior illumination system")
+- The tool handles categorization automatically
 
 Returns list of diagrams. Frontend renders them automatically.`,
 
@@ -104,7 +111,7 @@ Returns list of diagrams. Frontend renders them automatically.`,
 
 		execute: async ({ query, mode = 'auto' }: { query: string; mode?: 'auto' | 'browse' | 'search' }) => {
 			try {
-				const executionMode = mode === 'auto' ? detectWiringDiagramMode(query) : mode
+				const executionMode = mode === 'auto' ? await detectWiringDiagramMode(query) : mode
 
 				if (executionMode === 'browse') {
 					try {
@@ -114,7 +121,7 @@ Returns list of diagrams. Frontend renders them automatically.`,
 						})
 
 						if (taxonomy?.Subjects?.length > 0) {
-							const subject = findMatchingSubject(taxonomy.Subjects, query)
+							const subject = await findMatchingSubject(taxonomy.Subjects, query)
 
 							if (subject) {
 								const summary = await motorClient.getWiringDiagramsSummary(baseVehicleId, {
@@ -167,7 +174,16 @@ Returns list of diagrams. Frontend renders them automatically.`,
 	}),
 
 	getDiagramDetails: tool({
-		description: `Get details and document list for a wiring diagram. Requires applicationId from getWiringDiagrams.`,
+		description: `INTERNAL HELPER TOOL - DO NOT CALL DIRECTLY.
+
+This tool is ONLY used internally by the frontend when viewing diagram details.
+NEVER call this tool when user asks for wiring diagrams - use getWiringDiagrams instead.
+
+Only use if:
+- User explicitly clicks on a specific diagram that was already returned by getWiringDiagrams
+- You have an applicationId from a previous getWiringDiagrams call
+
+For all wiring diagram searches, use getWiringDiagrams.`,
 
 		inputSchema: z.object({
 			applicationId: z.number().describe('Application ID from wiring diagram'),
@@ -186,7 +202,13 @@ Returns list of diagrams. Frontend renders them automatically.`,
 	}),
 
 	getDiagramComponents: tool({
-		description: `Get OEM component list for a wiring diagram document. Requires applicationId. Uses first document if documentId not provided.`,
+		description: `INTERNAL HELPER TOOL - DO NOT CALL DIRECTLY.
+
+This tool is ONLY used internally by the frontend when viewing components from a specific wiring diagram document.
+NEVER call this tool directly - use getWiringDiagrams to find diagrams first.
+
+For all wiring diagram searches, use getWiringDiagrams.
+For parts lookup, use perplexityResearchTool.`,
 
 		inputSchema: z.object({
 			applicationId: z.number().describe('Application ID from wiring diagram'),
@@ -235,7 +257,12 @@ Returns list of diagrams. Frontend renders them automatically.`,
 	}),
 
 	getRelatedWiringDiagrams: tool({
-		description: `Find wiring diagrams related to a component or procedure. Requires contentType and applicationId.`,
+		description: `INTERNAL HELPER TOOL - DO NOT CALL DIRECTLY.
+
+This tool is ONLY used internally by the frontend to find related diagrams.
+NEVER call this tool directly - use getWiringDiagrams to find diagrams.
+
+For all wiring diagram searches, use getWiringDiagrams.`,
 
 		inputSchema: z.object({
 			contentType: z.string().describe('Content type (e.g., "OEMComponents", "ServiceProcedures")'),
@@ -269,11 +296,13 @@ Returns list of diagrams. Frontend renders them automatically.`,
 	// ==========================================================================
 
 	getOEMComponents: tool({
-		description: `
-			Get OEM components related to wiring diagrams ONLY. Use this ONLY when user explicitly asks for components/part numbers FROM a wiring diagram they're viewing.
-			DO NOT use this for general parts lookup - use perplexityResearchTool instead.
-			This tool is specifically for finding components that appear in wiring diagrams.
-		`,
+		description: `INTERNAL HELPER TOOL - DO NOT CALL DIRECTLY.
+
+This tool is ONLY used internally by the frontend for wiring diagram component lookups.
+NEVER call this tool directly.
+
+For ALL parts queries (including parts from wiring diagrams), use perplexityResearchTool instead.
+For wiring diagrams, use getWiringDiagrams.`,
 
 		inputSchema: z.object({
 			searchTerm: z.string().optional().describe('Component name or part number'),
@@ -305,7 +334,13 @@ Returns list of diagrams. Frontend renders them automatically.`,
 	}),
 
 	getRelatedOEMComponents: tool({
-		description: `Get OEM components related to a wiring diagram or other content.`,
+		description: `INTERNAL HELPER TOOL - DO NOT CALL DIRECTLY.
+
+This tool is ONLY used internally by the frontend to find related OEM components.
+NEVER call this tool directly.
+
+For ALL parts queries, use perplexityResearchTool instead.
+For wiring diagrams, use getWiringDiagrams.`,
 
 		inputSchema: z.object({
 			contentType: z.string().describe('Content type (e.g., "WiringDiagrams")'),

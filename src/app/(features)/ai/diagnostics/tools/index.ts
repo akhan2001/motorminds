@@ -51,9 +51,20 @@ export const getTools = async ({
 			motorClient,
 		})
 
+		// Exclude internal helper tools that should not be called by AI
+		// These tools are only used internally by the frontend
+		const {
+			getDiagramDetails,
+			getDiagramComponents,
+			getRelatedWiringDiagrams,
+			getOEMComponents,
+			getRelatedOEMComponents,
+			...publicMotorTools
+		} = motorTools
+
 		tools = {
 			...tools,
-			...motorTools,
+			...publicMotorTools,
 		}
 	}
 
