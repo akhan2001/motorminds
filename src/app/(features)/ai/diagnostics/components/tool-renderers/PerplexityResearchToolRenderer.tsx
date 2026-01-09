@@ -24,8 +24,7 @@ export function PerplexityResearchToolRenderer({ toolPart }: { toolPart: ToolUIP
 				icon={<Loader2 strokeWidth={1.5} size={12} className="animate-spin text-gray-600 dark:text-gray-400" />}
 				label={
 					<div>
-						<span>Searching online for </span>
-						<span className="text-gray-500 dark:text-gray-400">research information</span>
+						<span>Searching for research information...</span>
 					</div>
 				}
 			/>

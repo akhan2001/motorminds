@@ -371,7 +371,7 @@ export default function VoiceCallingPage() {
                         </Breadcrumb>
 
                         {/* Work in Progress Banner */}
-                        <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                        {/* <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                             <div className="flex items-start gap-3">
                                 <AlertTriangle className="h-5 w-5 text-yellow-500 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1">
@@ -382,7 +382,7 @@ export default function VoiceCallingPage() {
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Header */}
                         <div className="flex items-center justify-between">

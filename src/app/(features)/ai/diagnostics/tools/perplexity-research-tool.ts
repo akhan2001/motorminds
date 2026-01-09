@@ -3,7 +3,7 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 
-import { PERPLEXITY_RESEARCH_TOOL_PROMPT } from './prompts'
+import { PERPLEXITY_RESEARCH_SYSTEM_PROMPT, PERPLEXITY_RESEARCH_FORMAT_PROMPT } from './prompts'
 
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
@@ -15,6 +15,7 @@ export const perplexityResearchTool = tool({
 		- For PARTS: part numbers, pricing, availability, suppliers, OEM/aftermarket options
 		- DO NOT use getOEMComponents for parts - that tool is ONLY for wiring diagram components.
 		- Use this tool for ALL general parts queries.
+		- RESPONSE FORMAT: ${PERPLEXITY_RESEARCH_FORMAT_PROMPT}
 	`,
 	inputSchema: z.object({
 		query: z.string().describe('Search query - include symptom + year + make + model for best results. Example: "P0420 2010 Camaro fix" or "rough idle Chevrolet V8 common causes"'),
@@ -51,7 +52,7 @@ export const perplexityResearchTool = tool({
 					messages: [
 					{
 						role: 'system',
-						content: PERPLEXITY_RESEARCH_TOOL_PROMPT,
+						content: `${PERPLEXITY_RESEARCH_SYSTEM_PROMPT}\n\n${PERPLEXITY_RESEARCH_FORMAT_PROMPT}`,
 					},
 						{
 							role: 'user',
