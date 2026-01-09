@@ -24,9 +24,19 @@ export function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails):
     let vehicleDisplay: string
     if (workOrder.customer_type === 'walk_in' && workOrder.walk_in_vehicle_info) {
         const info = workOrder.walk_in_vehicle_info
-        vehicleDisplay = `${info.year} ${info.make} ${info.model}${info.license_plate ? ` (${info.license_plate})` : ''}`
+        const hasLicensePlate = info.license_plate && 
+                                info.license_plate !== 'NULL' && 
+                                info.license_plate !== null &&
+                                typeof info.license_plate === 'string' &&
+                                info.license_plate.trim() !== ''
+        vehicleDisplay = `${info.year} ${info.make} ${info.model}${hasLicensePlate ? ` (${info.license_plate})` : ''}`
     } else if (workOrder.vehicle) {
-        vehicleDisplay = `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}${workOrder.vehicle.license_plate ? ` (${workOrder.vehicle.license_plate})` : ''}`
+        const hasLicensePlate = workOrder.vehicle.license_plate && 
+                                workOrder.vehicle.license_plate !== 'NULL' && 
+                                workOrder.vehicle.license_plate !== null &&
+                                typeof workOrder.vehicle.license_plate === 'string' &&
+                                workOrder.vehicle.license_plate.trim() !== ''
+        vehicleDisplay = `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}${hasLicensePlate ? ` (${workOrder.vehicle.license_plate})` : ''}`
     } else {
         vehicleDisplay = 'Unknown Vehicle'
     }

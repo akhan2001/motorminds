@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useQuery } from '@tanstack/react-query';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
-import { CustomerDetailSheet } from "./customer-detail-sheet";
+import { CustomerDetailSheet } from '@/app/(features)/admin/components/shared/CustomerDetailSheet';
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Search, Building2, Filter } from "lucide-react";
@@ -178,25 +178,6 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 		retry: 1 // Only retry once on failure
 	});
 
-	// Fetch customer vehicles when a customer is selected
-	const { data: customerVehicles, isLoading: vehiclesLoading } = useQuery({
-		queryKey: ['customer-vehicles', selectedCustomer?.id],
-		queryFn: async () => {
-			if (!selectedCustomer) return []
-			
-			const res = await fetch(`/api/customers/${selectedCustomer.id}/vehicles`)
-			
-			if (!res.ok) {
-				console.error('Failed to fetch customer vehicles:', res.status)
-				return [] // Return empty array on error instead of throwing
-			}
-			
-			return res.json()
-		},
-		enabled: !!selectedCustomer,
-		staleTime: 60000, // 1 minute
-		retry: 1
-	});
 
 	// Handle search input changes (same as admin)
 	const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -349,13 +330,12 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 							<TableHead>Phone</TableHead>
 							<TableHead>License Plate</TableHead>
 							<TableHead>Shop</TableHead>
-							<TableHead>Created</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{customers.length === 0 ? (
 							<TableRow>
-								<TableCell colSpan={6} className="text-center py-8">
+								<TableCell colSpan={5} className="text-center py-8">
 									<div className="flex flex-col items-center gap-2">
 										<Search className="h-8 w-8 text-muted-foreground" />
 										<p className="text-muted-foreground">
@@ -389,9 +369,6 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 										<span className="text-sm text-muted-foreground">
 											{customer.shopName || 'Unknown'}
 										</span>
-									</TableCell>
-									<TableCell>
-										{new Date(customer.created_at).toLocaleDateString()}
 									</TableCell>
 								</TableRow>
 							))
@@ -442,12 +419,10 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 			{selectedCustomer && (
 				<CustomerDetailSheet
 					customer={selectedCustomer}
-					customerHistory={customerHistory}
-					vehicles={customerVehicles || []}
+					customerHistory={customerHistory || null}
 					isOpen={isSheetOpen}
 					onClose={handleSheetClose}
 					loading={historyLoading}
-					vehiclesLoading={vehiclesLoading}
 					error={historyError?.message || null}
 				/>
 			)}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useQuery } from '@tanstack/react-query';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
-import { CustomerSheet } from "./customer-sheet";
+import { CustomerDetailSheet } from '@/app/(features)/admin/components/shared/CustomerDetailSheet';
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -98,6 +99,27 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		setSelectedCustomer(customer);
 		setIsSheetOpen(true);
 	};
+
+	// Fetch customer history when a customer is selected
+	const { data: customerHistory, isLoading: historyLoading, error: historyError } = useQuery({
+		queryKey: ['customer-history', selectedCustomer?.id],
+		queryFn: async () => {
+			if (!selectedCustomer) return null
+			
+			const res = await fetch(`/api/admin/customers/${selectedCustomer.id}/history`)
+			
+			if (!res.ok) {
+				const errorText = await res.text()
+				console.error('Failed to fetch customer history:', res.status, errorText)
+				throw new Error(`Failed to fetch customer history: ${res.status}`)
+			}
+			
+			return res.json()
+		},
+		enabled: !!selectedCustomer,
+		staleTime: 60000, // 1 minute
+		retry: 1 // Only retry once on failure
+	});
 
 	// Calculate pagination values
 	const totalPages = Math.ceil(customers.length / ITEMS_PER_PAGE);
@@ -327,11 +349,17 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 				)}
 
 				{selectedCustomer && (
-					<CustomerSheet
+					<CustomerDetailSheet
 						customer={selectedCustomer}
+						customerHistory={customerHistory || null}
 						isOpen={isSheetOpen}
-						onOpenChange={setIsSheetOpen}
-						onCustomerUpdated={fetchCustomers}
+						onClose={() => {
+							setIsSheetOpen(false);
+							setSelectedCustomer(null);
+							fetchCustomers(); // Refresh customers list when sheet closes
+						}}
+						loading={historyLoading}
+						error={historyError?.message || null}
 					/>
 				)}
 			</div>
