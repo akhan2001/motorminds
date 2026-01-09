@@ -85,7 +85,7 @@ export function PerplexityResearchToolRenderer({ toolPart }: { toolPart: ToolUIP
 
 		// Render inline content directly (not in collapsible Tool)
 		return (
-			<div className="space-y-3 w-full max-w-full mt-2 overflow-hidden">
+			<div className="space-y-3 w-full max-w-full overflow-hidden">
 				{/* Status indicator */}
 				<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 					<CheckIcon strokeWidth={1.5} size={14} className="text-green-600 dark:text-green-400" />
