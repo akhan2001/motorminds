@@ -8,22 +8,14 @@ import { PERPLEXITY_RESEARCH_TOOL_PROMPT } from './prompts'
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
 export const perplexityResearchTool = tool({
-	description: `PRIMARY RESEARCH TOOL - Use for most customer complaints and diagnostic questions.
-
-	Search real-world sources for:
-	- Common failures and fixes for specific make/model/year
-	- TSB lookups and recall info
-	- Forum-proven solutions
-	- DTC troubleshooting steps
-
-	USE THIS TOOL when user reports symptoms like:
-	- "rough idle", "check engine light", "no start", "stalling"
-	- "noise from [location]", "vibration", "hesitation"
-	- Any DTC code troubleshooting
-	- "What's the most likely cause of..."
-
-	Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] [make] fix"`,
-
+	description: 
+	`
+		PRIMARY RESEARCH TOOL - Use for diagnostic and parts lookup questions.
+		- For DIAGNOSTICS: symptoms, DTCs, TSBs, specs, component locations, labor estimates
+		- For PARTS: part numbers, pricing, availability, suppliers, OEM/aftermarket options
+		- DO NOT use getOEMComponents for parts - that tool is ONLY for wiring diagram components.
+		- Use this tool for ALL general parts queries.
+	`,
 	inputSchema: z.object({
 		query: z.string().describe('Search query - include symptom + year + make + model for best results. Example: "P0420 2010 Camaro fix" or "rough idle Chevrolet V8 common causes"'),
 		vehicleContext: z.object({

@@ -24,6 +24,8 @@ import {
 	findMatchingSubject,
 	extractDocumentId,
 	extractDocumentList,
+	validateSearchResults,
+	isCategoryRelevant,
 } from './motor-daas-utils'
 
 // ============================================================================
@@ -50,12 +52,12 @@ function formatDiagramResponse(
 		name: extractDiagramName(app),
 		documentCount: app.Item?.DocumentCount || 0,
 		subjects: app.SAESubjects?.map((s: any) => s.Name) || [],
-		systems: app.SAESubjects?.flatMap((s: any) => 
+		systems: app.SAESubjects?.flatMap((s: any) =>
 			s.Systems?.filter((sys: any) => sys.IsActive)?.map((sys: any) => sys.Name) || []
 		) || [],
 		href: app.Links?.find((l: any) => l.Rel === 'Self')?.Href,
 	}))
-	
+
 	// Deduplicate by name
 	const seenNames = new Set<string>()
 	const diagrams = allDiagrams.filter(d => {
@@ -113,7 +115,7 @@ Returns list of diagrams. Frontend renders them automatically.`,
 
 						if (taxonomy?.Subjects?.length > 0) {
 							const subject = findMatchingSubject(taxonomy.Subjects, query)
-							
+
 							if (subject) {
 								const summary = await motorClient.getWiringDiagramsSummary(baseVehicleId, {
 									subjectId: subject.ID,
@@ -131,7 +133,7 @@ Returns list of diagrams. Frontend renders them automatically.`,
 									engineId,
 								})
 							}
-							
+
 							return {
 								success: false,
 								error: `Subject "${query}" not found. Available: ${taxonomy.Subjects.map(s => s.Name).join(', ')}`,
@@ -194,14 +196,16 @@ Returns list of diagrams. Frontend renders them automatically.`,
 		execute: async ({ applicationId, documentId }: { applicationId: number; documentId?: number }) => {
 			try {
 				let finalDocumentId = documentId
-				
+
 				if (!finalDocumentId) {
 					const details = await motorClient.getWiringDiagramDetails(baseVehicleId, applicationId, engineId)
-					finalDocumentId = extractDocumentId(details)
-					
-					if (!finalDocumentId) {
+					const extractedId = extractDocumentId(details)
+
+					if (!extractedId) {
 						return { success: false, error: 'No documents found for this wiring diagram' }
 					}
+					
+					finalDocumentId = extractedId
 				}
 
 				const componentDetails = await motorClient.getOEMComponentsDetailListByApplicationAndDocument(
@@ -265,7 +269,11 @@ Returns list of diagrams. Frontend renders them automatically.`,
 	// ==========================================================================
 
 	getOEMComponents: tool({
-		description: `Search for OEM components by name or part number.`,
+		description: `
+			Get OEM components related to wiring diagrams ONLY. Use this ONLY when user explicitly asks for components/part numbers FROM a wiring diagram they're viewing.
+			DO NOT use this for general parts lookup - use perplexityResearchTool instead.
+			This tool is specifically for finding components that appear in wiring diagrams.
+		`,
 
 		inputSchema: z.object({
 			searchTerm: z.string().optional().describe('Component name or part number'),
@@ -353,31 +361,67 @@ Use category for best results. Falls back to search if no category match.`,
 
 		execute: async ({ query, category }: { query: string; category?: string }) => {
 			try {
-				// Try to match category first (most reliable)
-				const matchedSilo = category 
-					? getServiceProcedureCategory(category) 
+				// Phase 1: Try category match with confidence-based validation
+				// Following Supabase pattern: explicit mappings with validation
+				const categoryMatch = category
+					? getServiceProcedureCategory(category)
 					: getServiceProcedureCategory(query)
-				
+
 				let summary
-				
-				if (matchedSilo) {
+				let source: 'category' | 'search' = 'search'
+				let matchedCategoryName: string | undefined
+				let warning: string | undefined
+
+				// Only use category if high or medium confidence
+				if (categoryMatch && (categoryMatch.confidence === 'high' || categoryMatch.confidence === 'medium')) {
 					summary = await motorClient.getServiceProceduresSummary(baseVehicleId, {
-						contentSilos: [matchedSilo.id],
+						contentSilos: [categoryMatch.id],
 						engineId,
 						pageIndex: 0,
 						itemsPerPage: 30,
 					})
+
+					// Validate category results are relevant
+					if (summary?.Applications?.length) {
+						const formattedProcedures = formatServiceProcedures(summary.Applications)
+						
+						if (isCategoryRelevant(formattedProcedures, query)) {
+							// Category results are relevant - use them
+							source = 'category'
+							matchedCategoryName = categoryMatch.name
+							
+							// Validate and filter results
+							const validated = validateSearchResults(formattedProcedures, query)
+							const procedures = deduplicateProcedures(validated)
+							
+							if (validated.length < formattedProcedures.length) {
+								warning = 'Some results filtered as potentially irrelevant'
+							}
+
+							return {
+								success: true,
+								query,
+								source,
+								matchedCategory: matchedCategoryName,
+								procedures,
+								totalCount: procedures.length,
+								baseVehicleId,
+								engineId,
+								vehicleMake,
+								warning,
+							}
+						}
+						// Category results not relevant - fall through to search
+					}
 				}
-				
-				// Fallback to search if no category match or no results
-				if (!summary?.Applications?.length) {
-					summary = await motorClient.getServiceProceduresSummary(baseVehicleId, {
-						searchTerm: query,
-						engineId,
-						pageIndex: 0,
-						itemsPerPage: 30,
-					})
-				}
+
+				// Phase 2: Fallback to search
+				summary = await motorClient.getServiceProceduresSummary(baseVehicleId, {
+					searchTerm: query,
+					engineId,
+					pageIndex: 0,
+					itemsPerPage: 30,
+				})
 
 				if (!summary?.Applications?.length) {
 					return {
@@ -387,17 +431,26 @@ Use category for best results. Falls back to search if no category match.`,
 					}
 				}
 
-				const procedures = deduplicateProcedures(formatServiceProcedures(summary.Applications))
+				// Validate search results
+				const formattedProcedures = formatServiceProcedures(summary.Applications)
+				const validated = validateSearchResults(formattedProcedures, query)
+				const procedures = deduplicateProcedures(validated)
+
+				if (validated.length < formattedProcedures.length) {
+					warning = 'Some results filtered as potentially irrelevant'
+				}
 
 				return {
 					success: true,
 					query,
-					matchedCategory: matchedSilo?.name,
+					source,
+					matchedCategory: matchedCategoryName,
 					procedures,
 					totalCount: procedures.length,
 					baseVehicleId,
 					engineId,
 					vehicleMake,
+					warning,
 				}
 			} catch (error) {
 				return formatToolError(error, 'getServiceProcedures')
@@ -425,7 +478,7 @@ Returns interleaved steps with images for proper display:
 				}
 
 				const procedure = details.ServiceProcedures[0]
-				
+
 				// Get interleaved steps with images
 				const steps = extractProcedureSteps(procedure.Items || [])
 				// Also get all images separately for gallery view

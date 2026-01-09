@@ -8,7 +8,8 @@
  */
 
 import type { ServiceProcedureApplication, ServiceProcedureDocument } from '@/lib/integrations/motor-daas/client'
-import { SERVICE_PROCEDURE_SILOS } from '@/lib/integrations/motor-daas/constants/constants'
+import { SERVICE_PROCEDURE_SILOS, SERVICE_PROCEDURE_KEYWORD_MAP } from '@/lib/integrations/motor-daas/constants/constants'
+import { cleanStepText } from '../utils/text-formatters'
 
 // ============================================================================
 // ERROR HANDLING
@@ -55,22 +56,46 @@ export function formatToolError(error: unknown, toolName: string): string | {
 // ============================================================================
 
 /**
- * Get service procedure category by name (case-insensitive)
- * Returns the silo ID and name if found
+ * Get service procedure category with confidence level
+ * Returns the silo ID, name, and confidence if found
+ * Following Supabase pattern: explicit mappings with confidence scoring
  */
-export function getServiceProcedureCategory(categoryName: string): { id: number; name: string } | null {
+export function getServiceProcedureCategory(
+	categoryName: string
+): { id: number; name: string; confidence: 'high' | 'medium' | 'low' } | null {
 	const normalized = categoryName.toLowerCase().trim()
 	
-	for (const silo of Object.values(SERVICE_PROCEDURE_SILOS)) {
-		if (silo.name.toLowerCase().includes(normalized) || normalized.includes(silo.name.toLowerCase())) {
-			return silo
+	// High confidence: exact match in keyword map
+	if (SERVICE_PROCEDURE_KEYWORD_MAP[normalized]) {
+		const categoryId = SERVICE_PROCEDURE_KEYWORD_MAP[normalized]
+		const silo = Object.values(SERVICE_PROCEDURE_SILOS).find(s => s.id === categoryId)
+		if (silo) {
+			return { ...silo, confidence: 'high' }
 		}
-		// Also check key words
-		const siloWords = silo.name.toLowerCase().split(/[\s&\/]+/)
-		for (const word of siloWords) {
-			if (word.length > 3 && normalized.includes(word)) {
-				return silo
+	}
+	
+	// Medium confidence: substantial partial match (keyword length >= 4)
+	for (const [keyword, categoryId] of Object.entries(SERVICE_PROCEDURE_KEYWORD_MAP)) {
+		if (normalized.includes(keyword) && keyword.length >= 4) {
+			const silo = Object.values(SERVICE_PROCEDURE_SILOS).find(s => s.id === categoryId)
+			if (silo) {
+				return { ...silo, confidence: 'medium' }
 			}
+		}
+		// Also check reverse: keyword includes normalized (for plurals, etc.)
+		if (keyword.includes(normalized) && normalized.length >= 3) {
+			const silo = Object.values(SERVICE_PROCEDURE_SILOS).find(s => s.id === categoryId)
+			if (silo) {
+				return { ...silo, confidence: 'medium' }
+			}
+		}
+	}
+	
+	// Low confidence: fallback to original fuzzy matching (only for category names)
+	for (const silo of Object.values(SERVICE_PROCEDURE_SILOS)) {
+		const siloNameLower = silo.name.toLowerCase()
+		if (siloNameLower.includes(normalized) || normalized.includes(siloNameLower)) {
+			return { ...silo, confidence: 'low' }
 		}
 	}
 	
@@ -84,6 +109,50 @@ export function getServiceProcedureCategoryList(): string {
 	return Object.values(SERVICE_PROCEDURE_SILOS)
 		.map(s => s.name)
 		.join(', ')
+}
+
+/**
+ * Validate search results are relevant to the search term
+ * Following Supabase pattern: validate results before returning
+ * Returns filtered results that match at least 50% of search keywords
+ */
+export function validateSearchResults(
+	results: Array<{ name: string; category?: string }>,
+	searchTerm: string
+): Array<{ name: string; category?: string }> {
+	const normalized = searchTerm.toLowerCase().trim()
+	const keywords = normalized.split(/\s+/).filter(kw => kw.length >= 2) // Filter out single characters
+	
+	if (keywords.length === 0) {
+		return results // If no meaningful keywords, return all results
+	}
+	
+	return results.filter(procedure => {
+		const procedureText = `${procedure.name} ${procedure.category || ''}`.toLowerCase()
+		
+		// Count how many keywords match
+		const matchingKeywords = keywords.filter(kw => procedureText.includes(kw))
+		
+		// At least 50% of keywords should match
+		return matchingKeywords.length / keywords.length >= 0.5
+	})
+}
+
+/**
+ * Check if category results are relevant to the search term
+ * Following Supabase pattern: validate category matches before using them
+ * Returns true if at least 30% of results are relevant
+ */
+export function isCategoryRelevant(
+	results: Array<{ name: string; category?: string }>,
+	searchTerm: string
+): boolean {
+	if (results.length === 0) return false
+	
+	const validated = validateSearchResults(results, searchTerm)
+	
+	// At least 30% of results should be relevant
+	return validated.length / results.length >= 0.3
 }
 
 /**
@@ -127,39 +196,6 @@ export interface ProcedureStep {
 		caption?: string
 		format: string
 	}
-}
-
-/**
- * Clean step text - convert XML/HTML to readable text
- */
-function cleanStepText(text: string): string {
-	return text
-		// Handle emphasis/bold
-		.replace(/<emph[^>]*type="bold"[^>]*>([\s\S]*?)<\/emph>/gi, '**$1**')
-		.replace(/<emph[^>]*>([\s\S]*?)<\/emph>/gi, '*$1*')
-		// Replace xref with "See Figure" text
-		.replace(/<xref[^>]*idref="([^"]*)"[^>]*\/>/gi, '(See Figure)')
-		// Handle nested step groups
-		.replace(/<stepgrp2>/gi, '\n')
-		.replace(/<\/stepgrp2>/gi, '')
-		.replace(/<stepgrp>/gi, '')
-		.replace(/<\/stepgrp>/gi, '')
-		// Remove other tags
-		.replace(/<\/?MOTOR_Procedure>/gi, '')
-		.replace(/<br\s*\/?>/gi, '\n')
-		.replace(/<\/p>/gi, '\n')
-		.replace(/<p>/gi, '')
-		// Clean remaining tags
-		.replace(/<\/?[^>]+(>|$)/g, '')
-		// HTML entities
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&amp;/g, '&')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
-		// Clean whitespace
-		.replace(/\n{3,}/g, '\n\n')
-		.trim()
 }
 
 /**

@@ -59,6 +59,111 @@ export const SERVICE_PROCEDURE_SILOS = {
 export const ALL_SERVICE_PROCEDURE_SILO_IDS = Object.values(SERVICE_PROCEDURE_SILOS).map(s => s.id)
 
 /**
+ * Explicit keyword mapping for service procedure categories
+ * Following Supabase pattern: explicit mappings over fuzzy matching
+ */
+export const SERVICE_PROCEDURE_KEYWORD_MAP: Record<string, number> = {
+	// Maintenance Procedures (id: 27)
+	'oil change': 27,
+	'oil': 27,
+	'lube': 27,
+	'lubrication': 27,
+	'fluid change': 27,
+	'fluid service': 27,
+	'maintenance': 27,
+	'service': 27,
+	'oil service': 27,
+	'engine oil': 27,
+	'transmission fluid': 27,
+	'coolant change': 27,
+	'brake fluid': 27,
+	
+	// Battery Replacement (id: 6)
+	'battery': 6,
+	'battery replacement': 6,
+	
+	// Brake Service (id: 8)
+	'brake': 8,
+	'brake pads': 8,
+	'brake service': 8,
+	'brake replacement': 8,
+	'brake disc': 8,
+	'brake rotor': 8,
+	
+	// Timing Chain (id: 44)
+	'timing chain': 44,
+	'chain': 44,
+	
+	// Timing Belt (id: 43)
+	'timing belt': 43,
+	'cam belt': 43,
+	
+	// Transmission (id: 48)
+	'transmission': 48,
+	'trans': 48,
+	
+	// Engine Service (id: 21)
+	'engine': 21,
+	'engine service': 21,
+	'engine repair': 21,
+	
+	// A/C & Heater (id: 1)
+	'ac': 1,
+	'heater': 1,
+	'air conditioning': 1,
+	'climate control': 1,
+	
+	// Starter & Alternator (id: 40)
+	'starter': 40,
+	'alternator': 40,
+	
+	// Serpentine Belt (id: 39)
+	'serpentine belt': 39,
+	'drive belt': 39,
+	'accessory belt': 39,
+	
+	// Clutch (id: 11)
+	'clutch': 11,
+	
+	// Fuel Filter (id: 23)
+	'fuel filter': 23,
+	
+	// Cabin Air Filter (id: 10)
+	'cabin air filter': 10,
+	'cabin filter': 10,
+	
+	// Radiator & Hose (id: 37)
+	'radiator': 37,
+	'hose': 37,
+	'cooling system': 37,
+	
+	// Steering & Suspension (id: 41)
+	'steering': 41,
+	'suspension': 41,
+	'struts': 41,
+	'shocks': 41,
+	
+	// Exhaust (id: 22)
+	'exhaust': 22,
+	'muffler': 22,
+	'catalytic converter': 22,
+	
+	// Electrical (id: 17)
+	'electrical': 17,
+	'wiring': 17,
+	
+	// Air Bag (id: 4)
+	'airbag': 4,
+	'air bag': 4,
+	'srs': 4,
+	
+	// TPMS (id: 46)
+	'tpms': 46,
+	'tire pressure': 46,
+	'pressure monitoring': 46,
+}
+
+/**
  * Standard MOTOR API parameters
  */
 export const MOTOR_API_DEFAULTS = {
