@@ -164,6 +164,201 @@ export const SERVICE_PROCEDURE_KEYWORD_MAP: Record<string, number> = {
 }
 
 /**
+ * Wiring Diagram Subject Categories (from MOTOR API taxonomy)
+ * These are the MOTOR API subject IDs and names for wiring diagrams
+ */
+export const WIRING_DIAGRAM_SUBJECTS = {
+	BODY_ACCESSORIES: { id: 1, name: 'Body & Accessories' },
+	BRAKES: { id: 2, name: 'Brakes' },
+	ELECTRICAL_DISTRIBUTION: { id: 4, name: 'Electrical Distribution' },
+	ENGINE: { id: 5, name: 'Engine' },
+	HVAC: { id: 6, name: 'HVAC' },
+	INTERIOR_DRIVER_AMENITY: { id: 7, name: 'Interior & Driver Amenity' },
+	INTERIOR_SWITCH: { id: 8, name: 'Interior Switch' },
+	LIGHTING: { id: 9, name: 'Lighting' },
+	RESTRAINTS: { id: 12, name: 'Restraints' },
+	STEERING: { id: 13, name: 'Steering' },
+	TRANSMISSION_TRANSAXLE: { id: 16, name: 'Transmission/Transaxle' },
+	WARNING_SYSTEMS: { id: 17, name: 'Warning Systems' },
+} as const
+
+/**
+ * Explicit keyword mapping for wiring diagram subjects
+ * Maps common search terms to MOTOR API subject IDs
+ */
+export const WIRING_DIAGRAM_KEYWORD_MAP: Record<string, number> = {
+	// Lighting (id: 9)
+	'headlight': 9,
+	'headlights': 9,
+	'headlamp': 9,
+	'headlamps': 9,
+	'tail light': 9,
+	'taillight': 9,
+	'taillights': 9,
+	'brake light': 9,
+	'turn signal': 9,
+	'blinker': 9,
+	'fog light': 9,
+	'fog lamp': 9,
+	'daytime running': 9,
+	'drl': 9,
+	'parking light': 9,
+	'marker light': 9,
+	'interior light': 9,
+	'dome light': 9,
+	'courtesy light': 9,
+	'map light': 9,
+	'backup light': 9,
+	'reverse light': 9,
+	'license plate light': 9,
+	'lighting': 9,
+	'light': 9,
+	'lights': 9,
+	'lamp': 9,
+	'lamps': 9,
+	
+	// Engine (id: 5)
+	'engine': 5,
+	'motor': 5,
+	'fuel injection': 5,
+	'ignition': 5,
+	'spark plug': 5,
+	'coil': 5,
+	'injector': 5,
+	'throttle': 5,
+	'camshaft': 5,
+	'crankshaft': 5,
+	'oil pressure': 5,
+	'coolant': 5,
+	'water pump': 5,
+	'thermostat': 5,
+	'timing': 5,
+	'variable valve': 5,
+	'vvt': 5,
+	'vtec': 5,
+	
+	// Brakes (id: 2)
+	'brake': 2,
+	'brakes': 2,
+	'abs': 2,
+	'antilock': 2,
+	'anti-lock': 2,
+	'brake pedal': 2,
+	'brake switch': 2,
+	'brake sensor': 2,
+	'wheel speed': 2,
+	
+	// Electrical Distribution (id: 4)
+	'fuse': 4,
+	'fuse box': 4,
+	'relay': 4,
+	'junction': 4,
+	'power distribution': 4,
+	'electrical distribution': 4,
+	'battery': 4,
+	'alternator': 4,
+	'starter': 4,
+	'ground': 4,
+	'charging': 4,
+	'starting': 4,
+	
+	// HVAC (id: 6)
+	'hvac': 6,
+	'heater': 6,
+	'air conditioning': 6,
+	'a/c': 6,
+	'ac': 6,
+	'climate': 6,
+	'blower': 6,
+	'blower motor': 6,
+	'compressor': 6,
+	'evaporator': 6,
+	'condenser': 6,
+	'defroster': 6,
+	'defrost': 6,
+	
+	// Body & Accessories (id: 1)
+	'body': 1,
+	'door': 1,
+	'window': 1,
+	'power window': 1,
+	'door lock': 1,
+	'power lock': 1,
+	'mirror': 1,
+	'side mirror': 1,
+	'wiper': 1,
+	'washer': 1,
+	'horn': 1,
+	'trunk': 1,
+	'liftgate': 1,
+	'sunroof': 1,
+	'moonroof': 1,
+	'convertible': 1,
+	
+	// Interior & Driver Amenity (id: 7)
+	'seat': 7,
+	'power seat': 7,
+	'heated seat': 7,
+	'seat heater': 7,
+	'steering wheel': 7,
+	'cruise control': 7,
+	'cruise': 7,
+	'keyless': 7,
+	'remote start': 7,
+	'push button start': 7,
+	'immobilizer': 7,
+	
+	// Interior Switch (id: 8)
+	'switch': 8,
+	'multifunction switch': 8,
+	'combination switch': 8,
+	'column switch': 8,
+	'dash switch': 8,
+	
+	// Transmission/Transaxle (id: 16)
+	'transmission': 16,
+	'transaxle': 16,
+	'automatic': 16,
+	'manual transmission': 16,
+	'shift': 16,
+	'shifter': 16,
+	'gear': 16,
+	'neutral safety': 16,
+	'range sensor': 16,
+	
+	// Steering (id: 13)
+	'steering': 13,
+	'power steering': 13,
+	'eps': 13,
+	'electric power steering': 13,
+	
+	// Restraints (id: 12)
+	'airbag': 12,
+	'air bag': 12,
+	'srs': 12,
+	'seatbelt': 12,
+	'seat belt': 12,
+	'restraint': 12,
+	'restraints': 12,
+	'crash sensor': 12,
+	'impact sensor': 12,
+	'pretensioner': 12,
+	
+	// Warning Systems (id: 17)
+	'warning': 17,
+	'gauge': 17,
+	'speedometer': 17,
+	'tachometer': 17,
+	'instrument cluster': 17,
+	'cluster': 17,
+	'dash': 17,
+	'dashboard': 17,
+	'indicator': 17,
+	'tpms': 17,
+	'tire pressure': 17,
+}
+
+/**
  * Standard MOTOR API parameters
  */
 export const MOTOR_API_DEFAULTS = {

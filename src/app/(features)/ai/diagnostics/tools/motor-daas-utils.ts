@@ -8,7 +8,12 @@
  */
 
 import type { ServiceProcedureApplication, ServiceProcedureDocument } from '@/lib/integrations/motor-daas/client'
-import { SERVICE_PROCEDURE_SILOS, SERVICE_PROCEDURE_KEYWORD_MAP } from '@/lib/integrations/motor-daas/constants/constants'
+import { 
+	SERVICE_PROCEDURE_SILOS, 
+	SERVICE_PROCEDURE_KEYWORD_MAP,
+	WIRING_DIAGRAM_KEYWORD_MAP,
+	WIRING_DIAGRAM_SUBJECTS,
+} from '@/lib/integrations/motor-daas/constants/constants'
 import { cleanStepText } from '../utils/text-formatters'
 
 // ============================================================================
@@ -336,42 +341,70 @@ export function extractProcedureImages(items: Array<{ ReferenceSet?: { Documents
 // ============================================================================
 
 /**
- * Known subject categories for wiring diagrams
+ * Map a user query to a wiring diagram subject category
+ * Returns the subject with id and name if found, null otherwise
  */
-export const WIRING_DIAGRAM_SUBJECTS = [
-	'body & accessories',
-	'brakes',
-	'electrical distribution',
-	'engine',
-	'hvac',
-	'interior & driver amenity',
-	'interior switch',
-	'lighting',
-	'restraints',
-	'steering',
-	'transmission/transaxle',
-	'warning systems',
-]
+export function mapQueryToWiringDiagramSubject(query: string): { id: number; name: string } | null {
+	const normalized = query.toLowerCase().trim()
+	
+	// 1. Check exact match in keyword map
+	if (WIRING_DIAGRAM_KEYWORD_MAP[normalized]) {
+		const subjectId = WIRING_DIAGRAM_KEYWORD_MAP[normalized]
+		const subject = Object.values(WIRING_DIAGRAM_SUBJECTS).find(s => s.id === subjectId)
+		if (subject) {
+			return { id: subject.id, name: subject.name }
+		}
+	}
+	
+	// 2. Check partial match in keyword map (keywords contained in query)
+	for (const [keyword, subjectId] of Object.entries(WIRING_DIAGRAM_KEYWORD_MAP)) {
+		if (normalized.includes(keyword) && keyword.length >= 3) {
+			const subject = Object.values(WIRING_DIAGRAM_SUBJECTS).find(s => s.id === subjectId)
+			if (subject) {
+				return { id: subject.id, name: subject.name }
+			}
+		}
+	}
+	
+	// 3. Check if query directly matches a subject name
+	for (const subject of Object.values(WIRING_DIAGRAM_SUBJECTS)) {
+		if (subject.name.toLowerCase().includes(normalized) || normalized.includes(subject.name.toLowerCase())) {
+			return { id: subject.id, name: subject.name }
+		}
+	}
+	
+	return null
+}
 
 /**
  * Detect if query is a subject category (browse mode) or component search
+ * Uses keyword mapping to improve categorization
  */
 export function detectWiringDiagramMode(query: string): 'browse' | 'search' {
-	const normalized = query.toLowerCase().trim()
-	const matchingSubject = WIRING_DIAGRAM_SUBJECTS.find(subject => 
-		normalized.includes(subject) || subject.includes(normalized)
-	)
-	return matchingSubject ? 'browse' : 'search'
+	const mappedSubject = mapQueryToWiringDiagramSubject(query)
+	return mappedSubject ? 'browse' : 'search'
 }
 
 /**
  * Find matching subject in taxonomy response
+ * Uses keyword mapping to find the correct subject by ID
  */
 export function findMatchingSubject(
 	subjects: Array<{ ID: number; Name: string }>,
 	query: string
 ): { ID: number; Name: string } | null {
 	const normalized = query.toLowerCase().trim()
+	
+	// 1. Try keyword mapping first (match by ID for accuracy)
+	const mappedSubject = mapQueryToWiringDiagramSubject(query)
+	if (mappedSubject) {
+		const matchedSubject = subjects.find(s => s.ID === mappedSubject.id)
+		if (matchedSubject) {
+			return matchedSubject
+		}
+	}
+	
+	// 2. Fallback to direct name matching
 	return subjects.find(s => 
 		s.Name.toLowerCase().includes(normalized) ||
 		normalized.includes(s.Name.toLowerCase())
