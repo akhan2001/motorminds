@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/use-auth'
@@ -8,9 +8,10 @@ import { useWorkOrdersWithDetails } from '../hooks/use-work-orders'
 import { useWorkOrderStats } from '../hooks/use-work-order-stats'
 import { useWorkOrderPageState } from '../hooks/use-work-order-page-state'
 import { useWorkOrderOperations } from '../hooks/use-work-order-operations'
-import { useCreateInvoiceFromWorkOrder } from '../../financials/hooks/use-invoices'
+import { useCreateInvoiceFromWorkOrder, useSyncInvoiceFromWorkOrder, getWorkOrderInvoiceStatus } from '../../financials/hooks/use-invoices'
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
+import { InvoiceSyncWarningDialog } from '../components/work-orders/invoice-sync-warning-dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
@@ -43,8 +44,23 @@ export function WorkOrdersPageContent() {
     // Work order operations
     const operations = useWorkOrderOperations(shopId, user, workOrders, refetch)
 
-    // Invoice generation
+    // Invoice generation and sync
     const createInvoiceMutation = useCreateInvoiceFromWorkOrder()
+    const syncInvoiceMutation = useSyncInvoiceFromWorkOrder()
+
+    // Invoice sync warning dialog state
+    const [invoiceSyncWarningOpen, setInvoiceSyncWarningOpen] = useState(false)
+    const [pendingCompletionData, setPendingCompletionData] = useState<{
+        sendMessage: boolean
+        customMessage?: string
+        enableAutomatedMessages: boolean
+        workOrder: typeof pageState.completionWorkOrder
+        invoiceInfo?: {
+            invoice_number: string
+            amount_paid: number
+            total_amount: number
+        }
+    } | null>(null)
 
     const handleGenerateInvoice = async (workOrderId: string) => {
         if (!shopId) {
@@ -90,6 +106,100 @@ export function WorkOrdersPageContent() {
         } else {
             router.push('/financials/invoices')
         }
+    }
+
+    // Handle completion with invoice sync
+    const handleCompletionConfirmWithSync = async (
+        sendMessage: boolean,
+        customMessage?: string,
+        enableAutomatedMessages: boolean = true
+    ) => {
+        if (!pageState.completionWorkOrder || !shopId) return
+
+        try {
+            // Check if this work order has an existing invoice
+            const invoiceStatus = await getWorkOrderInvoiceStatus(pageState.completionWorkOrder.id)
+
+            if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
+                // Invoice exists - check if it has payments
+                if (invoiceStatus.invoice.amount_paid > 0) {
+                    // Show warning dialog for invoice with payments
+                    // Store work order in pending data since pageState might reset
+                    setPendingCompletionData({
+                        sendMessage,
+                        customMessage,
+                        enableAutomatedMessages,
+                        workOrder: pageState.completionWorkOrder,
+                        invoiceInfo: invoiceStatus.invoice
+                    })
+                    setInvoiceSyncWarningOpen(true)
+                    return
+                }
+
+                // No payments - sync automatically
+                await syncInvoiceMutation.mutateAsync({
+                    work_order_id: pageState.completionWorkOrder.id,
+                    shop_id: shopId
+                })
+                toast.success('Invoice synced with updated work order items')
+            }
+
+            // Proceed with completion
+            await operations.handleCompletionConfirm(
+                pageState.completionWorkOrder,
+                sendMessage,
+                customMessage,
+                enableAutomatedMessages
+            )
+        } catch (error: any) {
+            console.error('Error during completion with sync:', error)
+            toast.error(error?.message || 'Failed to complete work order')
+        }
+    }
+
+    // Handle confirmed sync after warning dialog
+    const handleConfirmSyncWithPayments = async () => {
+        // Capture data immediately - use workOrder from pendingCompletionData since pageState may have reset
+        const completionData = pendingCompletionData
+        const workOrder = pendingCompletionData?.workOrder
+        const currentShopId = shopId
+
+        // Close dialog immediately
+        setInvoiceSyncWarningOpen(false)
+        setPendingCompletionData(null)
+
+        if (!completionData || !workOrder || !currentShopId) {
+            console.error('Missing data for completion:', { completionData, workOrder, currentShopId })
+            toast.error('Failed to complete work order - missing data')
+            return
+        }
+
+        try {
+            // Sync the invoice
+            await syncInvoiceMutation.mutateAsync({
+                work_order_id: workOrder.id,
+                shop_id: currentShopId
+            })
+            toast.success('Invoice synced with updated work order items')
+
+            // Proceed with completion
+            await operations.handleCompletionConfirm(
+                workOrder,
+                completionData.sendMessage,
+                completionData.customMessage,
+                completionData.enableAutomatedMessages
+            )
+        } catch (error: any) {
+            console.error('Error syncing invoice:', error)
+            toast.error(error?.message || 'Failed to sync invoice')
+        }
+    }
+
+    const handleCancelSyncWarning = () => {
+        setInvoiceSyncWarningOpen(false)
+        setPendingCompletionData(null)
+        // Also close the completion modal since user cancelled
+        pageState.handleCompletionModalClose()
     }
 
     // Loading state - show while auth is loading
@@ -179,6 +289,7 @@ export function WorkOrdersPageContent() {
     }
 
     return (
+    <>
         <WorkOrdersPageView
             kanbanData={kanbanData}
             selectedWorkOrder={pageState.selectedWorkOrder}
@@ -203,18 +314,22 @@ export function WorkOrdersPageContent() {
             onWorkOrderCreate={operations.handleWorkOrderCreate}
             onCreateModalClose={pageState.handleCreateModalClose}
             onCompletionModalClose={pageState.handleCompletionModalClose}
-            onCompletionConfirm={(sendMessage, customMessage, enableAutomatedMessages) =>
-                operations.handleCompletionConfirm(
-                    pageState.completionWorkOrder,
-                    sendMessage,
-                    customMessage,
-                    enableAutomatedMessages
-                )
-            }
+            onCompletionConfirm={handleCompletionConfirmWithSync}
             onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
             onGenerateInvoice={pageState.selectedWorkOrder ? () => handleGenerateInvoice(pageState.selectedWorkOrder!.id) : undefined}
             onGoToInvoice={pageState.selectedWorkOrder ? () => handleGoToInvoice(pageState.selectedWorkOrder!.id) : undefined}
             refetch={refetch}
         />
+
+        {/* Invoice Sync Warning Dialog */}
+        <InvoiceSyncWarningDialog
+            isOpen={invoiceSyncWarningOpen}
+            onClose={handleCancelSyncWarning}
+            onConfirm={handleConfirmSyncWithPayments}
+            amountPaid={pendingCompletionData?.invoiceInfo?.amount_paid || 0}
+            totalAmount={pendingCompletionData?.invoiceInfo?.total_amount || 0}
+            isSyncing={syncInvoiceMutation.isPending}
+        />
+    </>
     )
 }
