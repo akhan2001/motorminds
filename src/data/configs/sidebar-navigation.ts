@@ -6,7 +6,7 @@ import {
 	CircleDollarSign,
 	Sparkles,
 	Wrench as WrenchIcon,
-	Brain,
+	Phone,
 	Calendar,
     MessageSquareDiff,
 	UsersRound,
@@ -59,12 +59,12 @@ export const sidebarNavSections: NavSection[] = [
 		title: "Diagnostics",
 		items: [
 			{
-				name: "Mia AI",
-				href: "/mia",
-				icon: Sparkles,
+				name: "AI Calling",
+				href: "/voice-calling",
+				icon: Phone,
 			},
 			{
-				name: "Mia Parts",
+				name: "AI Parts Sourcing",
 				href: "/parts-ordering",
 				icon: WrenchIcon,
 			},
