@@ -43,9 +43,9 @@ export function TimeSelect({ value, onChange, className = '', placeholder = 'Sel
                     {value ? formatTimeDisplay(value) : placeholder}
                 </SelectValue>
             </SelectTrigger>
-            <SelectContent className="max-h-60 bg-[#1a1a1a] border-[#2a2a2a]">
+            <SelectContent className="max-h-60 bg-white dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                 {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time} className="text-white hover:bg-[#2a2a2a]/80 hover:text-white focus:bg-[#2a2a2a]/80 focus:text-white">
+                    <SelectItem key={time} value={time} className="text-foreground hover:bg-accent dark:hover:bg-[#2a2a2a]/80 focus:bg-accent dark:focus:bg-[#2a2a2a]/80">
                         {formatTimeDisplay(time)}
                     </SelectItem>
                 ))}

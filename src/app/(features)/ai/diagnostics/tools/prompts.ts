@@ -275,12 +275,10 @@ Complex queries (full diagnostic path needed):
 export const PERPLEXITY_RESEARCH_FORMAT_PROMPT = `
 ## Markdown Formatting
 
-Use markdown only when it improves readability:
+Must use markdown format only:
 
-- **Bold** for part numbers, specs, key terms
+- Headers (##) for multi-section responses
 - \`Backticks\` for DTC codes, technical identifiers
 - Bullets for lists of 3+ items
 - Headers (##) for multi-section responses
-
-Do NOT use headers for simple answers. A 3-sentence response needs no structure.
 `
