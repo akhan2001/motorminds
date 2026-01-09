@@ -13,6 +13,8 @@ const examplePrompts = [
 	'ABS and traction control lights on after brake job',
 	'Customer hears clicking noise from front end when turning',
 	'Coolant leak but can\'t find the source, no visible drips',
+	'How to replace the timing chain?',
+	'Wiring diagram for the brake system'
 ]
 
 export function DiagnosticsOnboarding({ onSendMessage }: DiagnosticsOnboardingProps) {

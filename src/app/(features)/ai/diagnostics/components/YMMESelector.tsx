@@ -178,7 +178,7 @@ export function YMMESelector({
 					</Select>
 				) : (
 					<p className="text-sm text-muted-foreground py-2">
-						No years available. Please check your MOTOR DaaS credentials.
+						No years available.
 					</p>
 				)}
 			</div>
@@ -252,7 +252,7 @@ export function YMMESelector({
 			{/* Engine Selector */}
 			{selection.year && selection.makeID && selection.modelID && (
 				<div className="space-y-2">
-					<Label htmlFor="engine">Engine *</Label>
+					<Label htmlFor="engine">Engine {selection.engineID ? '' : ''}</Label>
 					{enginesLoading ? (
 						<div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
 							<Loader2 className="w-4 h-4 animate-spin" />

@@ -2,7 +2,7 @@
 'use client'
 
 import { WorkOrderRightPanel } from '../shared/work-order-right-panel'
-import { WorkOrderDiagnosticsPanel } from './WorkOrderDiagnosticsPanel'
+// import { WorkOrderDiagnosticsPanel } from './WorkOrderDiagnosticsPanel'
 import type { WorkOrderWithDetails } from '../../../types/work-order'
 import type { WorkOrderItem, WorkOrderItemSummary } from '../../../types/work-order-items'
 
@@ -40,11 +40,25 @@ export function WorkOrderEditRightPanel({
     }
 
     // For active work orders, show AI Diagnostics panel
+    // return (
+    //     <WorkOrderDiagnosticsPanel
+    //         workOrder={workOrderDetails}
+    //         shopId={workOrderDetails.shop_id}
+    //         className="h-full"
+    //     />
+    // )
+
+    
+    // Always show the right panel with financials (Summary tab)
     return (
-        <WorkOrderDiagnosticsPanel
-            workOrder={workOrderDetails}
+        <WorkOrderRightPanel
+            workOrderId={workOrderId}
             shopId={workOrderDetails.shop_id}
-            className="h-full"
+            workOrderStatus={workOrderDetails.status}
+            technicianId={workOrderDetails.assigned_technician_id || undefined}
+            customerId={workOrderDetails.customer_id}
+            customerType={workOrderDetails.customer_type}
+            workOrderItems={workOrderItems}
         />
     )
 }

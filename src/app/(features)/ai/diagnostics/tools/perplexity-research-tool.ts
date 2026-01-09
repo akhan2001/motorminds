@@ -3,44 +3,26 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 
-import { PERPLEXITY_DIAGNOSTIC_PROMPT, PERPLEXITY_PARTS_PROMPT } from './prompts'
+import { PERPLEXITY_RESEARCH_TOOL_PROMPT } from './prompts'
 
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions'
 
-// Detect if query is asking for parts
-function isPartsQuery(query: string): boolean {
-	const partsKeywords = [
-		'part', 'parts', 'part number', 'part numbers',
-		'price', 'pricing', 'cost', 'buy', 'purchase',
-		'where to buy', 'supplier', 'retailer', 'store',
-		'oem part', 'aftermarket', 'replacement part',
-		'find part', 'locate part', 'get part'
-	]
-	const lowerQuery = query.toLowerCase()
-	return partsKeywords.some(keyword => lowerQuery.includes(keyword))
-}
-
 export const perplexityResearchTool = tool({
-		description: `PRIMARY RESEARCH TOOL - Use for diagnostic questions AND parts searches.
+	description: `PRIMARY RESEARCH TOOL - Use for most customer complaints and diagnostic questions.
 
-	For DIAGNOSTICS (symptoms, DTCs, troubleshooting):
+	Search real-world sources for:
 	- Common failures and fixes for specific make/model/year
 	- TSB lookups and recall info
 	- Forum-proven solutions
 	- DTC troubleshooting steps
-	
-	For PARTS (when user asks about parts, pricing, suppliers):
-	- Part numbers and availability
-	- Pricing from US/Canadian retailers
-	- OEM and aftermarket options
 
-	USE THIS TOOL when user reports:
-	- Symptoms: "rough idle", "check engine light", "no start", "stalling"
-	- DTC codes: P0xxx, Bxxxx, Cxxxx, Uxxxx
-	- Parts: "find part", "part number", "price", "where to buy"
+	USE THIS TOOL when user reports symptoms like:
+	- "rough idle", "check engine light", "no start", "stalling"
+	- "noise from [location]", "vibration", "hesitation"
+	- Any DTC code troubleshooting
 	- "What's the most likely cause of..."
 
-	Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] [make] fix" or "[part name] [year] [make] [model]"`,
+	Format query as: "[symptom] [year] [make] [model] common causes" or "[DTC code] [make] fix"`,
 
 	inputSchema: z.object({
 		query: z.string().describe('Search query - include symptom + year + make + model for best results. Example: "P0420 2010 Camaro fix" or "rough idle Chevrolet V8 common causes"'),
@@ -66,10 +48,6 @@ export const perplexityResearchTool = tool({
 				? `${query} (Vehicle: ${vehicleContext.year || ''} ${vehicleContext.make || ''} ${vehicleContext.model || ''} ${vehicleContext.engine || ''})`
 				: query
 
-			// Detect if this is a parts query and use appropriate prompt
-			const isParts = isPartsQuery(query)
-			const systemPrompt = isParts ? PERPLEXITY_PARTS_PROMPT : PERPLEXITY_DIAGNOSTIC_PROMPT
-
 			const response = await fetch(PERPLEXITY_API_URL, {
 				method: 'POST',
 				headers: {
@@ -81,7 +59,7 @@ export const perplexityResearchTool = tool({
 					messages: [
 					{
 						role: 'system',
-						content: systemPrompt,
+						content: PERPLEXITY_RESEARCH_TOOL_PROMPT,
 					},
 						{
 							role: 'user',
@@ -135,4 +113,3 @@ export const perplexityResearchTool = tool({
 export const getPerplexityTools = () => ({
 	perplexityResearchTool,
 })
-
