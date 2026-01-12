@@ -106,7 +106,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		queryFn: async () => {
 			if (!selectedCustomer) return null
 			
-			const res = await fetch(`/api/admin/customers/${selectedCustomer.id}/history`)
+			const res = await fetch(`/api/customers/${selectedCustomer.id}/history`)
 			
 			if (!res.ok) {
 				const errorText = await res.text()
