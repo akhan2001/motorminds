@@ -392,7 +392,7 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 										</span>
 									</TableCell>
 									<TableCell>
-										{new Date(customer.created_at).toLocaleDateString()}
+										{customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
 									</TableCell>
 								</TableRow>
 							))
