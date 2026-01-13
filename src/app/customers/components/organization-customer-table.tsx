@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
 import { CustomerDetailSheet } from "./customer-detail-sheet";
 import { toast } from "sonner";
@@ -66,6 +66,7 @@ interface OrganizationCustomerTableProps {
 }
 
 export function OrganizationCustomerTable({ shopId, user, refreshIndex }: OrganizationCustomerTableProps) {
+	const queryClient = useQueryClient();
 	const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -157,6 +158,15 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 		setIsSheetOpen(false);
 		setSelectedCustomer(null);
 	}, []);
+
+	const handleCustomerUpdated = useCallback(() => {
+		// Invalidate and refetch the customers list
+		queryClient.invalidateQueries({ queryKey: ['customers', 'organization-list'] });
+		// Also invalidate the customer history to refresh it
+		if (selectedCustomer) {
+			queryClient.invalidateQueries({ queryKey: ['customer-history', selectedCustomer.id] });
+		}
+	}, [queryClient, selectedCustomer]);
 
 	// Fetch customer history when a customer is selected
 	const { data: customerHistory, isLoading: historyLoading, error: historyError } = useQuery({
@@ -450,6 +460,7 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 					loading={historyLoading}
 					vehiclesLoading={vehiclesLoading}
 					error={historyError?.message || null}
+					onCustomerUpdated={handleCustomerUpdated}
 				/>
 			)}
 		</div>
