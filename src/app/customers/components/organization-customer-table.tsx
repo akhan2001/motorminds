@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/pagination";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatPhoneNumber } from "@/utils/format-phone";
+import { capitalizeCustomerName } from "@/lib/utils/text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -373,7 +374,7 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 								>
 									<TableCell className="font-medium">
 										<div className="flex items-center gap-2">
-											{customer.customer_name}
+											{capitalizeCustomerName(customer.customer_name)}
 											{!customer.isFromCurrentShop && customer.shopName && (
 												<Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
 													<Building2 className="h-3 w-3 mr-1" />

@@ -10,8 +10,8 @@ import { getShopId } from "@/utils/supabase/supabase-shop";
 import BreadcrumbNav from "./components/BreadcrumbNav";
 import FixedCostsTable from "./components/FixedCostsTable";
 import AddFixedCostModal from "./components/AddFixedCostModal";
-import AddOneTimeCostModal from "./components/AddOneTimeCostModal";
-import OneTimeCostsTable from "./components/OneTimeCostsTable";
+import AddExpenseModal from "./components/AddExpenseModal";
+import ExpensesTable from "./components/ExpensesTable";
 import SummaryCards from "./components/SummaryCards";
 import CostBreakdownChart from "./components/CostBreakdownChart";
 import HistoricalChart from "./components/HistoricalChart";
@@ -63,7 +63,7 @@ const Header = ({ value, onTimeRangeChange }: { value: string, onTimeRangeChange
 export default function EfficiencyClient() {
   const [efficiencyData, setEfficiencyData] = useState<EfficiencyData | null>(null);
   const [fixedCosts, setFixedCosts] = useState([]); // For the raw data table
-  const [oneTimeCosts, setOneTimeCosts] = useState([]); // For the raw data table
+  const [expenses, setExpenses] = useState([]); // For the raw data table
   const [isLoading, setIsLoading] = useState(true);
   const [shopId, setShopId] = useState<string | null>(null);
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function EfficiencyClient() {
         case 'costs':
             title = "Operating Expenses Breakdown";
             const fixedItems = breakdown.fixedCosts.map(i => ({ source: 'Fixed Cost', date: i.date, name: i.cost_name, amount: i.amount }));
-            const oneTimeItems = breakdown.oneTimeCosts.map(i => ({ source: 'One-Time Cost', date: i.cost_date, name: i.cost_name, amount: i.amount }));
+            const oneTimeItems = breakdown.oneTimeCosts.map(i => ({ source: 'Expense', date: i.cost_date, name: i.cost_name, amount: i.amount }));
             data = [...fixedItems, ...oneTimeItems];
             columns = [
                 { key: 'source', header: 'Source' },
@@ -161,7 +161,7 @@ export default function EfficiencyClient() {
         }
         
         setFixedCosts(await fixedCostsRes.json());
-        setOneTimeCosts(await oneTimeCostsRes.json());
+        setExpenses(await oneTimeCostsRes.json());
         setEfficiencyData(await efficiencyRes.json());
 
     } catch (error) {
@@ -249,17 +249,17 @@ export default function EfficiencyClient() {
 
             <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-foreground">One-Time Costs</h2>
+                <h2 className="text-xl font-semibold text-foreground">Expenses</h2>
                 {shopId && (
-                  <AddOneTimeCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
+                  <AddExpenseModal shopId={shopId} onExpenseAdded={() => fetchData(timeRange)}>
                     <Button className="bg-red-600 hover:bg-red-700 text-white">
                       <PlusCircle className="w-4 h-4 mr-2" />
-                      Add Cost
+                      Add Expense
                     </Button>
-                  </AddOneTimeCostModal>
+                  </AddExpenseModal>
                 )}
               </div>
-              <OneTimeCostsTable costs={oneTimeCosts} onCostUpdated={() => fetchData(timeRange)} onCostDeleted={() => fetchData(timeRange)}/>
+              <ExpensesTable expenses={expenses} onExpenseUpdated={() => fetchData(timeRange)} onExpenseDeleted={() => fetchData(timeRange)}/>
             </div>
         </div>
       </main>

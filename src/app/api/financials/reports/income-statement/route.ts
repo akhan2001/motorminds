@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
         const totalOperatingExpenses = totalOneTimeCosts + totalFixedCosts;
 
         const operatingExpenseDetails = [
-            ...oneTimeCosts.map(item => ({ category: item.category || 'One-time Cost', cost_name: item.cost_name, total_amount: item.amount })),
+            ...oneTimeCosts.map(item => ({ category: item.category || 'Expense', cost_name: item.cost_name, total_amount: item.amount })),
             ...fixedCosts.map(item => ({ category: item.category || 'Fixed Cost', cost_name: item.cost_name, total_amount: item.amount }))
         ];
         

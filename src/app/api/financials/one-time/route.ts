@@ -33,12 +33,21 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// POST create new one-time cost
+// POST create new expense
 export async function POST(req: NextRequest) {
     try {
         const supabase = await createClient();
         const body = await req.json();
-        const { shop_id, cost_name, amount, category, cost_date } = body;
+        const { 
+            shop_id, 
+            cost_name, 
+            amount, 
+            category, 
+            cost_date,
+            payment_method = 'credit_card', // Default to credit card
+            vendor,
+            notes
+        } = body;
 
         if (!shop_id || !cost_name || !amount || !cost_date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -46,7 +55,16 @@ export async function POST(req: NextRequest) {
 
         const { data, error } = await supabase
             .from("one_time_costs")
-            .insert({ shop_id, cost_name, amount, category, cost_date })
+            .insert({ 
+                shop_id, 
+                cost_name, 
+                amount, 
+                category, 
+                cost_date,
+                payment_method,
+                vendor: vendor || null,
+                notes: notes || null
+            })
             .select()
             .single();
 
@@ -78,31 +96,43 @@ export async function DELETE(req: NextRequest) {
     }
 }
 
-// PUT update an existing one-time cost
+// PUT update an existing expense
 export async function PUT(req: NextRequest) {
     try {
         const supabase = await createClient();
         const body = await req.json();
-        const { id, cost_name, amount, category, cost_date } = body;
+        const { id, cost_name, amount, category, cost_date, payment_method, vendor, notes } = body;
 
         if (!id || !cost_name || !amount || !cost_date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        const updateData: Record<string, any> = { 
+            cost_name, 
+            amount, 
+            category, 
+            cost_date 
+        };
+
+        // Only include optional fields if provided
+        if (payment_method !== undefined) updateData.payment_method = payment_method;
+        if (vendor !== undefined) updateData.vendor = vendor || null;
+        if (notes !== undefined) updateData.notes = notes || null;
+
         const { data, error } = await supabase
             .from("one_time_costs")
-            .update({ cost_name, amount, category, cost_date })
+            .update(updateData)
             .eq("id", id)
             .select()
             .single();
 
         if (error) {
-            console.error("Supabase error updating one-time cost:", error);
+            console.error("Supabase error updating expense:", error);
             return NextResponse.json({ error: `Supabase error: ${error.message}` }, { status: 500 });
         }
 
         if (!data) {
-            return NextResponse.json({ error: "Cost not found or no changes needed" }, { status: 404 });
+            return NextResponse.json({ error: "Expense not found or no changes needed" }, { status: 404 });
         }
 
         return NextResponse.json(data, { status: 200 });

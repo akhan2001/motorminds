@@ -207,7 +207,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     </div>
                     
                     <div className="space-y-1.5">
-                        <Label className="text-muted-foreground dark:text-gray-400">Description</Label>
+                        <Label className="text-muted-foreground dark:text-gray-400">Customer Requests</Label>
                         <textarea
                             value={description}
                             onChange={(e) => isEditing && onFieldChange('description', e.target.value)}
@@ -217,11 +217,11 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                                     : 'bg-card dark:bg-[#131313]'
                             }`}
                             readOnly={!isEditing}
-                            placeholder={isEditing ? "Describe the work to be performed..." : ""}
+                            placeholder={isEditing ? "What does the customer want done?..." : ""}
                         />
                         {isEditing && (
                             <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
-                                💡 Adding a detailed description helps the AI better understand and assist with this work order
+                                💡 Adding detailed customer requests helps the AI better understand and assist with this work order
                             </p>
                         )}
                     </div>

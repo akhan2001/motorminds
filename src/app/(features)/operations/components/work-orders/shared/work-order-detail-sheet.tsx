@@ -463,18 +463,18 @@ export const WorkOrderDetailSheet: React.FC<WorkOrderDetailSheetProps> = ({
                         </div>
                     </div>
 
-                    {/* Description */}
+                    {/* Customer Requests */}
                     {workOrder.description && (
                         <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
-                            <h3 className="text-foreground dark:text-white font-medium mb-2">Description</h3>
+                            <h3 className="text-foreground dark:text-white font-medium mb-2">Customer Requests</h3>
                             <p className="text-muted-foreground dark:text-gray-400 text-sm whitespace-pre-wrap">{workOrder.description}</p>
                         </div>
                     )}
 
-                    {/* Notes */}
+                    {/* Recommendation */}
                     {workOrder.notes && (
                         <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
-                            <h3 className="text-foreground dark:text-white font-medium mb-2">Notes</h3>
+                            <h3 className="text-foreground dark:text-white font-medium mb-2">Recommendation</h3>
                             <p className="text-muted-foreground dark:text-gray-400 text-sm whitespace-pre-wrap">{workOrder.notes}</p>
                         </div>
                     )}

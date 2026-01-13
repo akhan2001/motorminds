@@ -7,7 +7,7 @@ import { usePartsAndExpenses } from '../hooks/use-parts-expenses'
 import { PartsExpensesTable } from '../components/expenses/parts-expenses-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Package, Receipt, ArrowLeft } from 'lucide-react'
+import { Package, Receipt, ArrowLeft, Plus } from 'lucide-react'
 import {
     Pagination,
     PaginationContent,
@@ -16,6 +16,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination'
+import AddExpenseModal from '@/app/financials/efficiency/components/AddExpenseModal'
 
 export default function ExpensesPage() {
     const router = useRouter()
@@ -23,7 +24,7 @@ export default function ExpensesPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const pageSize = 50
 
-    const { data, isLoading, error } = usePartsAndExpenses(shopId, currentPage, pageSize)
+    const { data, isLoading, error, refetch } = usePartsAndExpenses(shopId, currentPage, pageSize)
 
     const totalPages = data ? Math.ceil(data.count / pageSize) : 0
 
@@ -47,6 +48,16 @@ export default function ExpensesPage() {
                     <p className="text-muted-foreground dark:text-gray-400 ml-11">
                         View all parts and expenses across all work orders
                     </p>
+                </div>
+                <div className="flex gap-2">
+                    {shopId && (
+                        <AddExpenseModal shopId={shopId} onExpenseAdded={refetch}>
+                            <Button className="bg-red-600 hover:bg-red-700 text-white">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Expense
+                            </Button>
+                        </AddExpenseModal>
+                    )}
                 </div>
             </div>
 

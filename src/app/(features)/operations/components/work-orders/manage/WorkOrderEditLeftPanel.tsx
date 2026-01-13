@@ -208,12 +208,17 @@ export function WorkOrderEditLeftPanel({
                         />
                     )}
 
-                    {/* Notes */}
-                    <WorkOrderNotes
-                        notes={form.formData.notes}
-                        isEditing={form.isEditing}
-                        onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
-                    />
+                    {/* Recommendation */}
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-foreground dark:text-white">
+                            Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
+                        </h3>
+                        <WorkOrderNotes
+                            notes={form.formData.notes}
+                            isEditing={form.isEditing}
+                            onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
+                        />
+                    </div>
                 </div>
             </div>
 

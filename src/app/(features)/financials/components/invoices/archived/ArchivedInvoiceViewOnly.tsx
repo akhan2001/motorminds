@@ -93,10 +93,22 @@ const ArchivedInvoiceViewOnly: React.FC<ArchivedInvoiceViewOnlyProps> = ({ invoi
                             {invoice.id}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <p className="text-muted-foreground dark:text-gray-400 text-sm">
+                            Created: {formatDateString(invoice.created_at)}
+                        </p>
+                        <span className="text-muted-foreground dark:text-gray-500">|</span>
                         <p className="text-muted-foreground dark:text-gray-400 text-sm">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
+                        {invoice.paid_date && (
+                            <>
+                                <span className="text-muted-foreground dark:text-gray-500">|</span>
+                                <p className="text-green-600 dark:text-green-400 text-sm font-medium">
+                                    Paid: {formatDateString(invoice.paid_date)}
+                                </p>
+                            </>
+                        )}
                         <Button
                             variant="ghost"
                             size="sm"

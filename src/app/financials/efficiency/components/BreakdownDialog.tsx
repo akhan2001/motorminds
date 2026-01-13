@@ -35,8 +35,8 @@ export function BreakdownDialog({ open, onOpenChange, title, data, columns }: Br
             link = `/invoices?invoiceId=${item.invoice_number}`;
         } else if (item.source === 'Fixed Cost') {
             link = '/financials/efficiency#fixed-costs';
-        } else if (item.source === 'One-Time Cost') {
-            link = '/financials/efficiency#one-time-costs';
+        } else if (item.source === 'Expense') {
+            link = '/financials/efficiency#expenses';
         }
         
         if (link) {
