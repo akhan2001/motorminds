@@ -96,6 +96,7 @@ export default function EfficiencyClient() {
 					{ key: 'invoice_number', header: 'Invoice #', render: (v: any, item: any) => (
 						<a 
 							href={`/financials/invoices?invoice_number=${v}`} 
+							target="_blank"
 							className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
 							onClick={(e) => e.stopPropagation()}
 						>
