@@ -1,6 +1,6 @@
 'use client'
 
-import { Trash2, FileText } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -10,16 +10,12 @@ export interface WorkOrderModalFooterProps {
     isSubmitting?: boolean
     canEdit?: boolean
     canDelete?: boolean
-    canGenerateInvoice?: boolean
     workOrderStatus?: string
-    hasInvoice?: boolean
     onEdit?: () => void
     onSave: () => void
     onCancel: () => void
     onClose: () => void
     onDelete?: () => void
-    onGenerateInvoice?: () => void
-    onGoToInvoice?: () => void
     deleteDisabledReason?: string
     className?: string
 }
@@ -30,16 +26,12 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
     isSubmitting = false,
     canEdit = true,
     canDelete = true,
-    canGenerateInvoice = false,
     workOrderStatus,
-    hasInvoice = false,
     onEdit,
     onSave,
     onCancel,
     onClose,
     onDelete,
-    onGenerateInvoice,
-    onGoToInvoice,
     deleteDisabledReason,
     className = ""
 }) => {
@@ -117,27 +109,6 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                             >
                                 Edit
                             </Button>
-                        )}
-                        {canGenerateInvoice && workOrderStatus === 'completed' && (
-                            hasInvoice ? (
-                                <Button
-                                    variant="outline"
-                                    className="border border-green-500/50 text-green-500 dark:text-green-400 hover:bg-green-500/10 hover:text-green-600 dark:hover:text-white px-8"
-                                    onClick={onGoToInvoice}
-                                >
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Go to Invoice
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="outline"
-                                    className="border border-blue-500/50 text-blue-500 dark:text-blue-400 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-white px-8"
-                                    onClick={onGenerateInvoice}
-                                >
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Generate Invoice
-                                </Button>
-                            )
                         )}
                         <Button
                             variant="outline"

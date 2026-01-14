@@ -35,11 +35,10 @@ export function EmailDashboard() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <Mail className="h-6 w-6" />
                         Email History
                     </h2>
                     <p className="text-muted-foreground">
-                        View and track all invoice emails sent via Resend
+                        View and track all invoice emails sent
                     </p>
                 </div>
             </div>

@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link, CheckCircle2 } from 'lucide-react'
+import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, CheckCircle2, FileText } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
 import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
@@ -25,6 +25,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     const [selectedTemplate, setSelectedTemplate] = useState<string>('ready_for_pickup')
     const [isEditing, setIsEditing] = useState(false)
     const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
+    const [generateInvoice, setGenerateInvoice] = useState(true) // Default ON
     const [automatedTemplates, setAutomatedTemplates] = useState<MessageTemplate[]>([])
     const [loadingTemplates, setLoadingTemplates] = useState(false)
     const { sendCompletionMessage, isLoading, messagingAvailability} = useWorkOrderMessaging()
@@ -79,8 +80,8 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
 
     const handleSendMessage = async () => {
         if (!workOrder.customer?.customer_phone) {
-            // Pass enableAutomatedMessage flag to control automated messaging
-            onConfirm(false, undefined, enableAutomatedMessage)
+            // Pass enableAutomatedMessage and generateInvoice flags
+            onConfirm(false, undefined, enableAutomatedMessage, generateInvoice)
             onClose() // Close modal after confirmation
             return
         }
@@ -91,14 +92,14 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
             customerName: workOrder.customer.customer_name
         })
 
-        // Pass enableAutomatedMessage flag to control automated messaging
-        onConfirm(true, customMessage, enableAutomatedMessage)
+        // Pass enableAutomatedMessage and generateInvoice flags
+        onConfirm(true, customMessage, enableAutomatedMessage, generateInvoice)
         onClose() // Close modal after confirmation
     }
 
     const handleSkipMessage = async () => {
-        // Pass enableAutomatedMessage flag to control automated messaging
-        onConfirm(false, undefined, enableAutomatedMessage)
+        // Pass enableAutomatedMessage and generateInvoice flags
+        onConfirm(false, undefined, enableAutomatedMessage, generateInvoice)
         onClose() // Close modal after confirmation
     }
 
@@ -189,6 +190,28 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                     </div>
 
                     <Separator className="bg-border dark:bg-[#2a2a2a]" />
+
+                    {/* Generate Invoice Toggle */}
+                    <div className="bg-green-500/10 dark:bg-green-500/10 border border-green-500/20 dark:border-green-500/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-green-500 dark:text-green-400" />
+                                <div>
+                                    <Label htmlFor="generate-invoice" className="text-sm font-medium text-foreground dark:text-white cursor-pointer">
+                                        Generate Invoice
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">
+                                        Automatically create an invoice when completing this work order
+                                    </p>
+                                </div>
+                            </div>
+                            <Switch
+                                id="generate-invoice"
+                                checked={generateInvoice}
+                                onCheckedChange={setGenerateInvoice}
+                            />
+                        </div>
+                    </div>
 
                     {/* Automated Follow-Up Toggle */}
                     <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">

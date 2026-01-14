@@ -112,7 +112,8 @@ export function WorkOrdersPageContent() {
     const handleCompletionConfirmWithSync = async (
         sendMessage: boolean,
         customMessage?: string,
-        enableAutomatedMessages: boolean = true
+        enableAutomatedMessages: boolean = true,
+        generateInvoice: boolean = true
     ) => {
         if (!pageState.completionWorkOrder || !shopId) return
 
@@ -142,6 +143,19 @@ export function WorkOrdersPageContent() {
                     shop_id: shopId
                 })
                 toast.success('Invoice synced with updated work order items')
+            } else if (generateInvoice) {
+                // No invoice exists and user wants to generate one
+                try {
+                    await createInvoiceMutation.mutateAsync({
+                        work_order_id: pageState.completionWorkOrder.id,
+                        shop_id: shopId
+                    })
+                    toast.success('Invoice generated successfully')
+                } catch (invoiceError: any) {
+                    console.error('Error generating invoice:', invoiceError)
+                    toast.error(invoiceError?.message || 'Failed to generate invoice')
+                    // Continue with completion even if invoice generation fails
+                }
             }
 
             // Proceed with completion
@@ -316,8 +330,6 @@ export function WorkOrdersPageContent() {
             onCompletionModalClose={pageState.handleCompletionModalClose}
             onCompletionConfirm={handleCompletionConfirmWithSync}
             onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
-            onGenerateInvoice={pageState.selectedWorkOrder ? () => handleGenerateInvoice(pageState.selectedWorkOrder!.id) : undefined}
-            onGoToInvoice={pageState.selectedWorkOrder ? () => handleGoToInvoice(pageState.selectedWorkOrder!.id) : undefined}
             refetch={refetch}
         />
 
