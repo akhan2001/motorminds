@@ -406,8 +406,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             <View style={styles.workOrderSection}>
                                 {invoice.work_order && (
                                     <View style={{ marginBottom: 4 }}>
-                                        <Text style={styles.label}>Work Order #</Text>
-                                        <Text style={styles.value}>{invoice.work_order.work_order_number}</Text>
+                                        <Text style={styles.label}>Customer Request</Text>
                                     </View>
                                 )}
                                 {invoice.title && (
