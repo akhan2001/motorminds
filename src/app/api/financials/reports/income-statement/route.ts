@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import {
+    calculateTotalCOGS,
+    aggregateRevenueBreakdown,
+    generateRevenueDetails,
+    type InvoiceTableRecord
+} from '../../_utils/invoice-calculations';
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
@@ -14,13 +20,31 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        // Fetch revenue data from invoices, including parts items for COGS calculation
+        // Fetch revenue data from invoices_table (new structure)
+        // Only get paid invoices within the date range
         const { data: revenueData, error: revenueError } = await supabase
-            .from('invoices')
-            .select('invoice_number, amount, description, paid_at, parts_items')
+            .from('invoices_table')
+            .select(`
+                id,
+                invoice_number,
+                shop_id,
+                status,
+                total_amount,
+                subtotal,
+                tax_amount,
+                discount_amount,
+                labor_total,
+                parts_total,
+                services_total,
+                fees_total,
+                invoice_items,
+                paid_date,
+                created_at
+            `)
             .eq('shop_id', shopId)
-            .gte('paid_at', startDate)
-            .lte('paid_at', endDate);
+            .eq('status', 'paid')
+            .gte('paid_date', startDate)
+            .lte('paid_date', endDate);
 
         if (revenueError) throw revenueError;
 
@@ -41,60 +65,88 @@ export async function GET(req: NextRequest) {
         
         if (fixedCostsError) throw fixedCostsError;
 
-        // Calculate total revenue
-        const totalRevenue = revenueData.reduce((acc, item) => acc + item.amount, 0);
-        const revenueDetails = revenueData.map(item => ({
-            description: item.description || `Invoice #${item.invoice_number}`,
-            total_amount: item.amount,
+        // Cast revenue data to typed records
+        const typedRevenueData = (revenueData || []) as InvoiceTableRecord[];
+
+        // Calculate revenue breakdown using actual granular totals from invoices_table
+        const revenueBreakdown = aggregateRevenueBreakdown(typedRevenueData);
+        const totalRevenue = revenueBreakdown.totalRevenue;
+
+        // Generate detailed revenue info
+        const revenueDetails = generateRevenueDetails(typedRevenueData);
+
+        // Calculate COGS from invoice_items (parts with unit_cost)
+        const cogsBreakdown = calculateTotalCOGS(typedRevenueData);
+        const totalCOGS = cogsBreakdown.totalCOGS;
+        const cogsDetails = cogsBreakdown.details.map(item => ({
+            item_name: item.description,
+            quantity: item.quantity,
+            unit_cost: item.unitCost,
+            total_cost: item.totalCost,
+            part_number: item.partNumber,
+            supplier: item.supplier
         }));
-
-        // Calculate total COGS from invoice parts_items
-        const totalCOGS = revenueData.reduce((acc, invoice) => {
-            if (!invoice.parts_items || !Array.isArray(invoice.parts_items)) {
-                return acc;
-            }
-            const invoiceCogs = invoice.parts_items.reduce((itemAcc, item) => {
-                const shopCost = Number(item.shop_cost) || 0;
-                const quantity = Number(item.quantity) || 1;
-                return itemAcc + (shopCost * quantity);
-            }, 0);
-            return acc + invoiceCogs;
-        }, 0);
-
-        const cogsDetails = revenueData.flatMap(invoice => 
-            (invoice.parts_items || []).map((item: any) => ({
-                item_name: item.description,
-                quantity: item.quantity,
-                total_cost: (Number(item.shop_cost) || 0) * (Number(item.quantity) || 1),
-            }))
-        );
         
-        // Gross Profit
+        // Gross Profit = Revenue - COGS
         const grossProfit = totalRevenue - totalCOGS;
 
         // Calculate total operating expenses
-        const totalOneTimeCosts = oneTimeCosts.reduce((acc, item) => acc + item.amount, 0);
-        // For now, sum the defined "amount" for each fixed cost. In a future enhancement, we can
-        // prorate based on frequency and date range similar to the efficiency endpoint.
-        const totalFixedCosts = fixedCosts.reduce((acc, item) => acc + (item.amount || 0), 0);
+        const totalOneTimeCosts = (oneTimeCosts || []).reduce((acc, item) => acc + (item.amount || 0), 0);
+        
+        // Prorate fixed costs based on frequency for the date range
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        const totalFixedCosts = (fixedCosts || []).reduce((acc, cost) => {
+            if (!cost.start_date) return acc;
+            
+            const costStartDate = new Date(cost.start_date);
+            if (costStartDate > endDateObj) return acc; // Cost hasn't started yet
+            
+            let occurrences = 0;
+            let currentDate = new Date(costStartDate);
+            
+            while (currentDate <= endDateObj) {
+                if (currentDate >= startDateObj) {
+                    occurrences++;
+                }
+                
+                // Advance based on frequency
+                switch (cost.frequency) {
+                    case 'daily': currentDate.setDate(currentDate.getDate() + 1); break;
+                    case 'weekly': currentDate.setDate(currentDate.getDate() + 7); break;
+                    case 'monthly': currentDate.setMonth(currentDate.getMonth() + 1); break;
+                    case 'quarterly': currentDate.setMonth(currentDate.getMonth() + 3); break;
+                    case 'yearly': currentDate.setFullYear(currentDate.getFullYear() + 1); break;
+                    default: currentDate = new Date(endDateObj.getTime() + 1); break;
+                }
+            }
+            
+            return acc + ((cost.amount || 0) * occurrences);
+        }, 0);
+        
         const totalOperatingExpenses = totalOneTimeCosts + totalFixedCosts;
 
         const operatingExpenseDetails = [
-            ...oneTimeCosts.map(item => ({ category: item.category || 'Expense', cost_name: item.cost_name, total_amount: item.amount })),
-            ...fixedCosts.map(item => ({ category: item.category || 'Fixed Cost', cost_name: item.cost_name, total_amount: item.amount }))
+            ...(oneTimeCosts || []).map(item => ({ 
+                category: item.category || 'Expense', 
+                cost_name: item.cost_name, 
+                total_amount: item.amount 
+            })),
+            ...(fixedCosts || []).map(item => ({ 
+                category: item.category || 'Fixed Cost', 
+                cost_name: item.cost_name, 
+                total_amount: item.amount 
+            }))
         ];
         
-        // Net Profit
+        // Net Profit = Gross Profit - Operating Expenses
         const netProfit = grossProfit - totalOperatingExpenses;
 
-        // Derive parts vs labor revenue (basic heuristic)
-        const totalPartsRevenue = revenueDetails
-            .filter((item) => /part/i.test(item.description))
-            .reduce((acc, item) => acc + item.total_amount, 0);
-
-        const totalLaborRevenue = revenueDetails
-            .filter((item) => /labor|service/i.test(item.description))
-            .reduce((acc, item) => acc + item.total_amount, 0);
+        // Use actual granular totals instead of regex guessing
+        const totalPartsRevenue = revenueBreakdown.partsRevenue;
+        const totalLaborRevenue = revenueBreakdown.laborRevenue;
+        const totalServicesRevenue = revenueBreakdown.servicesRevenue;
+        const totalFeesRevenue = revenueBreakdown.feesRevenue;
 
         // Persist a summary row in financial_statements for historical reporting
         try {
@@ -133,13 +185,23 @@ export async function GET(req: NextRequest) {
                 grossProfit,
                 totalOperatingExpenses,
                 netProfit,
+                // Granular revenue breakdown
                 totalPartsRevenue,
                 totalLaborRevenue,
+                totalServicesRevenue,
+                totalFeesRevenue,
+                // Tax and discount info
+                totalTaxAmount: revenueBreakdown.taxAmount,
+                totalDiscountAmount: revenueBreakdown.discountAmount,
+                totalSubtotal: revenueBreakdown.subtotal,
+                // Details
                 revenueDetails,
                 cogsDetails,
                 operatingExpenseDetails,
+                // Meta
                 startDate,
-                endDate
+                endDate,
+                invoiceCount: typedRevenueData.length
             });
 
         } catch (err) {
@@ -154,11 +216,17 @@ export async function GET(req: NextRequest) {
                 netProfit,
                 totalPartsRevenue,
                 totalLaborRevenue,
+                totalServicesRevenue,
+                totalFeesRevenue,
+                totalTaxAmount: revenueBreakdown.taxAmount,
+                totalDiscountAmount: revenueBreakdown.discountAmount,
+                totalSubtotal: revenueBreakdown.subtotal,
                 revenueDetails,
                 cogsDetails,
                 operatingExpenseDetails,
                 startDate,
-                endDate
+                endDate,
+                invoiceCount: typedRevenueData.length
             });
         }
 
@@ -166,4 +234,4 @@ export async function GET(req: NextRequest) {
         console.error('Error generating income statement:', error);
         return new NextResponse('Internal Server Error', { status: 500 });
     }
-} 
+}

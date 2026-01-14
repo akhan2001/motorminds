@@ -25,7 +25,9 @@ import {
 interface EditExpenseModalProps {
     expense: any;
     onExpenseUpdated: () => void;
-    children: React.ReactNode;
+    children?: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 const PAYMENT_METHODS = [
@@ -55,8 +57,17 @@ export default function EditExpenseModal({
     expense,
     onExpenseUpdated,
     children,
+    open: controlledOpen,
+    onOpenChange: controlledOnOpenChange,
 }: EditExpenseModalProps) {
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    
+    // Support both controlled and uncontrolled modes
+    const isControlled = controlledOpen !== undefined;
+    const isOpen = isControlled ? controlledOpen : internalOpen;
+    const setIsOpen = isControlled 
+        ? (open: boolean) => controlledOnOpenChange?.(open)
+        : setInternalOpen;
     const [expenseName, setExpenseName] = useState("");
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("");
@@ -119,7 +130,7 @@ export default function EditExpenseModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
             <DialogContent className="bg-slate-50 dark:bg-card border-border text-foreground max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="text-foreground">Edit Expense</DialogTitle>
