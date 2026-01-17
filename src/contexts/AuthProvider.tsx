@@ -38,6 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const hasRedirectedRef = useRef(false)
     // Track if we've completed the initial auth fetch
     const hasInitializedRef = useRef(false)
+    // Track if we've received the initial session event
+    const hasReceivedInitialSession = useRef(false)
 
     // Check if current route is public
     const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route))
@@ -50,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             setError(null)
 
-            // Use getSession first - it doesn't throw on missing session
+            // Use getSession - it reads from cookies synchronously after initialization
             const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
             if (sessionError) {
@@ -110,24 +112,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [supabase])
 
     useEffect(() => {
-        // Initial fetch on mount - single network call
-        fetchAuthData()
-
-        // Listen for auth state changes (sign in, sign out, token refresh)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN') {
+        // Set up auth state change listener FIRST
+        // According to GoTrueClient source, INITIAL_SESSION is emitted after:
+        // 1. initializePromise completes
+        // 2. Session is loaded from storage/cookies
+        // This ensures cookies are ready before we try to fetch auth data
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            // INITIAL_SESSION fires when the client has initialized and read cookies
+            // This is the key event we need to wait for after server-side login redirect
+            if (event === 'INITIAL_SESSION') {
+                hasReceivedInitialSession.current = true
+                // Now that cookies are ready and session is loaded, fetch auth data
+                if (session?.user) {
+                    await fetchAuthData()
+                } else {
+                    // No session in cookies
+                    setUser(null)
+                    setShopId(null)
+                    setUserRole(null)
+                    setIsLoading(false)
+                    hasInitializedRef.current = true
+                }
+            } else if (event === 'SIGNED_IN') {
                 // Reset redirect flag on sign in
                 hasRedirectedRef.current = false
-                fetchAuthData()
+                await fetchAuthData()
             } else if (event === 'SIGNED_OUT') {
-                fetchAuthData()
+                // Immediately clear all auth state on sign out
+                // Don't call fetchAuthData() as it might still read stale session from cookies
+                setUser(null)
+                setShopId(null)
+                setUserRole(null)
+                setIsLoading(false)
+                hasRedirectedRef.current = false
+                hasInitializedRef.current = true
             } else if (event === 'TOKEN_REFRESHED' && session) {
                 // On token refresh, just update user object without refetching everything
                 setUser(session.user)
             }
         })
 
-        return () => subscription.unsubscribe()
+        // Fallback: If INITIAL_SESSION doesn't fire within 500ms, fetch anyway
+        // This handles edge cases where the event might not fire (shouldn't happen, but safety net)
+        const fallbackTimeout = setTimeout(() => {
+            if (!hasReceivedInitialSession.current && !hasInitializedRef.current) {
+                console.warn('INITIAL_SESSION event did not fire within timeout, fetching auth data as fallback')
+                fetchAuthData()
+            }
+        }, 500)
+
+        return () => {
+            subscription.unsubscribe()
+            clearTimeout(fallbackTimeout)
+        }
     }, [fetchAuthData, supabase])
 
     // Redirect to login if no user and on protected route
