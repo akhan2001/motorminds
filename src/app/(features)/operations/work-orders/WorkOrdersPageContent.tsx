@@ -21,10 +21,16 @@ import { LoadingSpinner } from '@/components/common/feedback/loading-states'
  * Handles authentication, data fetching, and state management
  * Passes data to the presentational component
  */
+// Roles that can delete work orders and invoices
+const ADMIN_ROLES = ['admin', 'super', 'shop_admin']
+
 export function WorkOrdersPageContent() {
     // Authentication
-    const { user, shopId, isLoading: authLoading } = useAuth()
+    const { user, shopId, userRole, isLoading: authLoading } = useAuth()
     const router = useRouter()
+    
+    // Check if current user can delete (admin only)
+    const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
 
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
@@ -324,7 +330,7 @@ export function WorkOrdersPageContent() {
             onCardClick={pageState.handleCardClick}
             onModalClose={pageState.handleModalClose}
             onWorkOrderSave={operations.handleWorkOrderSave}
-            onWorkOrderDelete={operations.handleWorkOrderDelete}
+            onWorkOrderDelete={canDelete ? operations.handleWorkOrderDelete : undefined}
             onWorkOrderCreate={operations.handleWorkOrderCreate}
             onCreateModalClose={pageState.handleCreateModalClose}
             onCompletionModalClose={pageState.handleCompletionModalClose}

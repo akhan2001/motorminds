@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
     Select,
     SelectContent,
@@ -21,6 +22,8 @@ import {
     DialogTrigger,
     DialogDescription,
 } from "@/components/ui/dialog";
+import SupplierDropdownSelector from "@/app/(features)/suppliers/components/supplier-dropdown-selector";
+import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
 
 interface AddExpenseModalProps {
     shopId: string;
@@ -51,6 +54,8 @@ const EXPENSE_CATEGORIES = [
     "Other",
 ];
 
+const HST_RATE = 0.13; // 13% HST
+
 export default function AddExpenseModal({
     shopId,
     onExpenseAdded,
@@ -58,20 +63,43 @@ export default function AddExpenseModal({
 }: AddExpenseModalProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [expenseName, setExpenseName] = useState("");
-    const [amount, setAmount] = useState("");
+    const [subtotal, setSubtotal] = useState(""); // Pre-tax amount
+    const [includeTax, setIncludeTax] = useState(true); // Default tax included
+    const [taxAmount, setTaxAmount] = useState(""); // Auto-calculated tax
+    const [totalAmount, setTotalAmount] = useState(""); // Total with tax
     const [category, setCategory] = useState("Parts/Inventory");
     const [expenseDate, setExpenseDate] = useState(
         new Date().toISOString().split("T")[0]
     );
     const [paymentMethod, setPaymentMethod] = useState("credit_card"); // Default to credit card
-    const [vendor, setVendor] = useState("");
+    const [supplierId, setSupplierId] = useState(""); // Selected supplier ID
+    const [customVendor, setCustomVendor] = useState(""); // Custom vendor name if not from list
+    const [invoiceNumber, setInvoiceNumber] = useState(""); // Invoice # from vendor
+    
+    const { suppliers } = useSuppliers();
+    const [partsDescription, setPartsDescription] = useState(""); // Parts description
+    const [warranty, setWarranty] = useState(""); // Warranty info
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    // Auto-calculate tax and total when subtotal or tax toggle changes
+    useEffect(() => {
+        const sub = parseFloat(subtotal) || 0;
+        if (includeTax && sub > 0) {
+            const tax = sub * HST_RATE;
+            const total = sub + tax;
+            setTaxAmount(tax.toFixed(2));
+            setTotalAmount(total.toFixed(2));
+        } else {
+            setTaxAmount("0.00");
+            setTotalAmount(sub.toFixed(2));
+        }
+    }, [subtotal, includeTax]);
+
     const handleSubmit = async () => {
         setError("");
-        if (!expenseName || !amount || !category || !expenseDate) {
+        if (!expenseName || !subtotal || !category || !expenseDate) {
             setError("Please fill out all required fields.");
             return;
         }
@@ -84,11 +112,20 @@ export default function AddExpenseModal({
                 body: JSON.stringify({
                     shop_id: shopId,
                     cost_name: expenseName,
-                    amount: parseFloat(amount),
+                    amount: parseFloat(totalAmount), // Store total amount
+                    subtotal: parseFloat(subtotal),
+                    tax_amount: parseFloat(taxAmount) || 0,
+                    tax_included: includeTax,
                     category,
                     cost_date: expenseDate,
                     payment_method: paymentMethod,
-                    vendor: vendor.trim() || null,
+                    vendor: supplierId === 'custom' 
+                        ? customVendor.trim() || null 
+                        : suppliers.find(s => s.id === supplierId)?.name || null,
+                    supplier_id: supplierId !== 'custom' ? supplierId || null : null,
+                    invoice_number: invoiceNumber.trim() || null,
+                    parts_description: partsDescription.trim() || null,
+                    warranty: warranty.trim() || null,
                     notes: notes.trim() || null,
                 }),
             });
@@ -100,11 +137,18 @@ export default function AddExpenseModal({
 
             // Reset form
             setExpenseName("");
-            setAmount("");
+            setSubtotal("");
+            setTaxAmount("");
+            setTotalAmount("");
+            setIncludeTax(true);
             setCategory("Parts/Inventory");
             setExpenseDate(new Date().toISOString().split("T")[0]);
             setPaymentMethod("credit_card");
-            setVendor("");
+            setSupplierId("");
+            setCustomVendor("");
+            setInvoiceNumber("");
+            setPartsDescription("");
+            setWarranty("");
             setNotes("");
             onExpenseAdded();
             setIsOpen(false);
@@ -134,6 +178,53 @@ export default function AddExpenseModal({
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                    {/* Vendor/Supplier Selection */}
+                    <div className="space-y-3">
+                        <div>
+                            <Label className="text-foreground">
+                                1. Vendor / Supplier
+                            </Label>
+                            <SupplierDropdownSelector
+                                value={supplierId}
+                                onValueChange={setSupplierId}
+                                placeholder="Select a supplier..."
+                                showCustomOption={true}
+                                customOptionValue="custom"
+                                customOptionLabel="Enter Custom Vendor"
+                                className="bg-white dark:bg-background border-border text-foreground"
+                            />
+                        </div>
+                        
+                        {/* Custom vendor input when "custom" is selected */}
+                        {supplierId === 'custom' && (
+                            <div>
+                                <Label htmlFor="customVendor" className="text-foreground">
+                                    Custom Vendor Name
+                                </Label>
+                                <Input
+                                    id="customVendor"
+                                    placeholder="e.g., AutoZone, O'Reilly, NAPA"
+                                    value={customVendor}
+                                    onChange={(e) => setCustomVendor(e.target.value)}
+                                    className="bg-white dark:bg-background border-border text-foreground"
+                                />
+                            </div>
+                        )}
+                        
+                        <div>
+                            <Label htmlFor="invoiceNumber" className="text-foreground">
+                                2. Invoice #
+                            </Label>
+                            <Input
+                                id="invoiceNumber"
+                                placeholder="Vendor invoice number"
+                                value={invoiceNumber}
+                                onChange={(e) => setInvoiceNumber(e.target.value)}
+                                className="bg-white dark:bg-background border-border text-foreground"
+                            />
+                        </div>
+                    </div>
+
                     {/* Expense Name */}
                     <div>
                         <Label htmlFor="expenseName" className="text-foreground">
@@ -148,37 +239,68 @@ export default function AddExpenseModal({
                         />
                     </div>
 
-                    {/* Vendor */}
-                    <div>
-                        <Label htmlFor="vendor" className="text-foreground">
-                            Vendor
-                        </Label>
-                        <Input
-                            id="vendor"
-                            placeholder="e.g., AutoZone, O'Reilly, NAPA"
-                            value={vendor}
-                            onChange={(e) => setVendor(e.target.value)}
-                            className="bg-white dark:bg-background border-border text-foreground"
-                        />
+                    {/* Amount Section with Tax */}
+                    <div className="p-3 border border-border rounded-lg bg-muted/30 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-medium text-foreground">3. Amount & Tax</h4>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="includeTax" className="text-sm text-muted-foreground">
+                                    4. Include HST (13%)
+                                </Label>
+                                <Switch
+                                    id="includeTax"
+                                    checked={includeTax}
+                                    onCheckedChange={setIncludeTax}
+                                />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div>
+                                <Label htmlFor="subtotal" className="text-muted-foreground text-xs">
+                                    Subtotal <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    id="subtotal"
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={subtotal}
+                                    onChange={(e) => setSubtotal(e.target.value)}
+                                    className="bg-white dark:bg-background border-border text-foreground"
+                                    min="0"
+                                    step="0.01"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="taxAmount" className="text-muted-foreground text-xs">
+                                    HST (13%)
+                                </Label>
+                                <Input
+                                    id="taxAmount"
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={taxAmount}
+                                    readOnly
+                                    className="bg-muted/50 dark:bg-muted/20 border-border text-foreground cursor-not-allowed"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="totalAmount" className="text-muted-foreground text-xs">
+                                    Total
+                                </Label>
+                                <Input
+                                    id="totalAmount"
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={totalAmount}
+                                    readOnly
+                                    className="bg-muted/50 dark:bg-muted/20 border-border text-foreground font-semibold cursor-not-allowed"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Amount and Category */}
+                    {/* Category and Date */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="amount" className="text-foreground">
-                                Amount ($) <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="amount"
-                                type="number"
-                                placeholder="350.00"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="bg-white dark:bg-background border-border text-foreground"
-                                min="0"
-                                step="0.01"
-                            />
-                        </div>
                         <div>
                             <Label htmlFor="category" className="text-foreground">
                                 Category <span className="text-red-500">*</span>
@@ -196,10 +318,6 @@ export default function AddExpenseModal({
                                 </SelectContent>
                             </Select>
                         </div>
-                    </div>
-
-                    {/* Date and Payment Method */}
-                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="expenseDate" className="text-foreground">
                                 Date <span className="text-red-500">*</span>
@@ -212,23 +330,53 @@ export default function AddExpenseModal({
                                 className="bg-white dark:bg-background border-border text-foreground"
                             />
                         </div>
-                        <div>
-                            <Label htmlFor="paymentMethod" className="text-foreground">
-                                Payment Method
-                            </Label>
-                            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="bg-popover text-popover-foreground border-border">
-                                    {PAYMENT_METHODS.map((method) => (
-                                        <SelectItem key={method.value} value={method.value} className="hover:bg-muted">
-                                            {method.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    </div>
+
+                    {/* Warranty */}
+                    <div>
+                        <Label htmlFor="warranty" className="text-foreground">
+                            5. Warranty
+                        </Label>
+                        <Input
+                            id="warranty"
+                            placeholder="e.g., 1 year, Lifetime, 90 days"
+                            value={warranty}
+                            onChange={(e) => setWarranty(e.target.value)}
+                            className="bg-white dark:bg-background border-border text-foreground"
+                        />
+                    </div>
+
+                    {/* Parts Description */}
+                    <div>
+                        <Label htmlFor="partsDescription" className="text-foreground">
+                            6. Parts Description
+                        </Label>
+                        <Textarea
+                            id="partsDescription"
+                            placeholder="List of parts included in this expense..."
+                            value={partsDescription}
+                            onChange={(e) => setPartsDescription(e.target.value)}
+                            className="bg-white dark:bg-background border-border text-foreground min-h-[60px]"
+                        />
+                    </div>
+
+                    {/* Payment Method */}
+                    <div>
+                        <Label htmlFor="paymentMethod" className="text-foreground">
+                            7. Payment Method
+                        </Label>
+                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                            <SelectTrigger className="bg-white dark:bg-background border-border text-foreground">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-popover text-popover-foreground border-border">
+                                {PAYMENT_METHODS.map((method) => (
+                                    <SelectItem key={method.value} value={method.value} className="hover:bg-muted">
+                                        {method.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Notes */}
@@ -241,7 +389,7 @@ export default function AddExpenseModal({
                             placeholder="Additional details about this expense..."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="bg-white dark:bg-background border-border text-foreground min-h-[80px]"
+                            className="bg-white dark:bg-background border-border text-foreground min-h-[60px]"
                         />
                     </div>
 

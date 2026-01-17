@@ -42,10 +42,16 @@ export async function POST(req: NextRequest) {
             shop_id, 
             cost_name, 
             amount, 
+            subtotal,
+            tax_amount,
+            tax_included,
             category, 
             cost_date,
             payment_method = 'credit_card', // Default to credit card
             vendor,
+            invoice_number,
+            parts_description,
+            warranty,
             notes
         } = body;
 
@@ -53,18 +59,28 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        const insertData: Record<string, any> = { 
+            shop_id, 
+            cost_name, 
+            amount, 
+            category, 
+            cost_date,
+            payment_method,
+            vendor: vendor || null,
+            notes: notes || null
+        };
+
+        // Add new fields if provided
+        if (subtotal !== undefined) insertData.subtotal = subtotal;
+        if (tax_amount !== undefined) insertData.tax_amount = tax_amount;
+        if (tax_included !== undefined) insertData.tax_included = tax_included;
+        if (invoice_number) insertData.invoice_number = invoice_number;
+        if (parts_description) insertData.parts_description = parts_description;
+        if (warranty) insertData.warranty = warranty;
+
         const { data, error } = await supabase
             .from("one_time_costs")
-            .insert({ 
-                shop_id, 
-                cost_name, 
-                amount, 
-                category, 
-                cost_date,
-                payment_method,
-                vendor: vendor || null,
-                notes: notes || null
-            })
+            .insert(insertData)
             .select()
             .single();
 
@@ -101,7 +117,22 @@ export async function PUT(req: NextRequest) {
     try {
         const supabase = await createClient();
         const body = await req.json();
-        const { id, cost_name, amount, category, cost_date, payment_method, vendor, notes } = body;
+        const { 
+            id, 
+            cost_name, 
+            amount, 
+            subtotal,
+            tax_amount,
+            tax_included,
+            category, 
+            cost_date, 
+            payment_method, 
+            vendor, 
+            invoice_number,
+            parts_description,
+            warranty,
+            notes 
+        } = body;
 
         if (!id || !cost_name || !amount || !cost_date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -118,6 +149,12 @@ export async function PUT(req: NextRequest) {
         if (payment_method !== undefined) updateData.payment_method = payment_method;
         if (vendor !== undefined) updateData.vendor = vendor || null;
         if (notes !== undefined) updateData.notes = notes || null;
+        if (subtotal !== undefined) updateData.subtotal = subtotal;
+        if (tax_amount !== undefined) updateData.tax_amount = tax_amount;
+        if (tax_included !== undefined) updateData.tax_included = tax_included;
+        if (invoice_number !== undefined) updateData.invoice_number = invoice_number || null;
+        if (parts_description !== undefined) updateData.parts_description = parts_description || null;
+        if (warranty !== undefined) updateData.warranty = warranty || null;
 
         const { data, error } = await supabase
             .from("one_time_costs")

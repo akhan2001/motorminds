@@ -41,9 +41,12 @@ interface InvoiceViewOnlyProps {
     onClose: () => void
 }
 
+// Roles that can delete invoices
+const ADMIN_ROLES = ['admin', 'super', 'shop_admin']
+
 const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, onClose }) => {
     const router = useRouter()
-    const { shopId } = useAuth()
+    const { shopId, userRole } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
@@ -55,6 +58,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const pdfElementRef = useRef<HTMLDivElement>(null)
+    
+    // Check if user can delete (admin only)
+    const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -579,16 +585,18 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     <Send className="w-4 h-4 mr-2" />
                     Send
                 </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
-                    onClick={handleDelete}
-                    disabled={deleteMutation.isPending}
-                >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                </Button>
+                {canDelete && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
+                        onClick={handleDelete}
+                        disabled={deleteMutation.isPending}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                    </Button>
+                )}
             </div>
 
             {/* Invoice Send Choice Modal */}

@@ -65,7 +65,7 @@ interface WorkOrdersPageViewProps {
     onCardClick: (item: WorkOrderKanbanItem) => void
     onModalClose: () => void
     onWorkOrderSave: (updatedWorkOrder: WorkOrderKanbanItem, formData?: any) => Promise<void>
-    onWorkOrderDelete: (workOrderId: string) => Promise<void>
+    onWorkOrderDelete?: (workOrderId: string) => Promise<void>
     onWorkOrderCreate: (workOrderData: any) => Promise<void>
     onCreateModalClose: () => void
     onCompletionModalClose: () => void
