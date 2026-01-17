@@ -4,11 +4,11 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { UploadedMedia, MediaUploadResponse } from '../types/sms'
 
-// Media constraints
+// Media constraints (Twilio compatible types only)
 export const MEDIA_CONSTRAINTS = {
     MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
     MAX_ATTACHMENTS: 10,
-    ALLOWED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+    ALLOWED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'],
 } as const
 
 /**
@@ -25,7 +25,7 @@ export function validateMediaFile(file: File): { valid: boolean; error?: string 
     if (!MEDIA_CONSTRAINTS.ALLOWED_TYPES.includes(file.type as any)) {
         return {
             valid: false,
-            error: `${file.name} has unsupported format. Use JPG, PNG, GIF, or WebP`,
+            error: `${file.name} has unsupported format. Use JPG, PNG, or GIF`,
         }
     }
 

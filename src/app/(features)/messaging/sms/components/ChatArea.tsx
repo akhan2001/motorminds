@@ -93,17 +93,26 @@ export function ChatArea({
         if (!messageText.trim() && uploadedMedia.length === 0) return
 
         const mediaUrls = uploadedMedia.map((m) => m.url)
+        const hasText = messageText.trim().length > 0
+        const hasMedia = mediaUrls.length > 0
 
-        await sendMessageMutation.mutateAsync({
-            to: selectedPhone,
-            body: messageText,
-            customerName: selectedCustomer?.customer_name,
-            mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
-        })
+        console.log('💬 Sending message:', { hasText, hasMedia, textLength: messageText.length, mediaCount: mediaUrls.length })
 
-        // Clear form on success
-        setMessageText('')
-        setUploadedMedia([])
+        try {
+            await sendMessageMutation.mutateAsync({
+                to: selectedPhone,
+                body: hasText ? messageText : undefined,
+                customerName: selectedCustomer?.customer_name,
+                mediaUrls: hasMedia ? mediaUrls : undefined,
+            })
+
+            // Clear form on success
+            setMessageText('')
+            setUploadedMedia([])
+        } catch (error) {
+            // Error already handled by mutation's onError
+            console.error('Send message failed:', error)
+        }
     }
 
     // Empty state

@@ -15,18 +15,12 @@ const MEDIA_FOLDER = 'media'
 // Max file size: 5MB (Twilio MMS limit)
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 
-// Allowed MIME types for MMS
+// Allowed MIME types for MMS (Twilio compatible)
 const ALLOWED_TYPES = [
     'image/jpeg',
     'image/jpg',
     'image/png',
     'image/gif',
-    'image/webp',
-    'video/mp4',
-    'video/3gpp',
-    'audio/mpeg',
-    'audio/ogg',
-    'application/pdf'
 ]
 
 /**
@@ -59,7 +53,7 @@ export async function POST(request: NextRequest) {
         // Validate file type
         if (!ALLOWED_TYPES.includes(file.type)) {
             return NextResponse.json(
-                { error: `Invalid file type: ${file.type}. Allowed: JPG, PNG, GIF, WebP` },
+                { error: `Invalid file type: ${file.type}. Allowed: JPG, PNG, GIF` },
                 { status: 400 }
             )
         }

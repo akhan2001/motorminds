@@ -117,9 +117,9 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
             }
 
             // Validate file type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
             if (!allowedTypes.includes(file.type)) {
-                toast.error(`${file.name} has unsupported format. Use JPG, PNG, GIF, or WebP`);
+                toast.error(`${file.name} has unsupported format. Use JPG, PNG, or GIF`);
                 continue;
             }
 
@@ -290,7 +290,7 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                         type="file"
                         ref={fileInputRef}
                         onChange={handleFileUpload}
-                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                        accept="image/jpeg,image/jpg,image/png,image/gif"
                         multiple
                         className="hidden"
                     />
@@ -318,7 +318,7 @@ export default function SendNewMessage({ onMessageSent }: SendNewMessageProps) {
                         }
                     </Button>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Supported: JPG, PNG, GIF, WebP. Max 5MB each, up to 10 images.
+                        Supported: JPG, PNG, GIF. Max 5MB each, up to 10 images.
                     </p>
                 </div>
                 
