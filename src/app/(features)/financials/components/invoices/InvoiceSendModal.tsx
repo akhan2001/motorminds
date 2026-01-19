@@ -5,12 +5,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { FileText, User, Phone, Mail, Lock, Loader2, Car, DollarSign } from 'lucide-react'
+import { FileText, User, Phone, Mail, Lock, Loader2, Car, DollarSign, Paperclip } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import { formatCurrency } from '@/lib/utils/currency'
-import { useInvoiceSend } from '../../../financials/hooks/use-invoice-send'
-import { DEFAULT_INVOICE_MESSAGE, formatInvoiceMessage } from '../../../financials/lib/email/invoice-email-templates'
-import type { InvoiceWithDetails } from '../../../financials/types/invoice'
+import { useInvoiceSend } from '../../hooks/use-invoice-send'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { DEFAULT_INVOICE_MESSAGE, formatInvoiceMessage } from '../../lib/email/invoice-email-templates'
+import type { InvoiceWithDetails } from '../../types/invoice'
+import type { ShopBranding } from '../../types/invoice-pdf'
 
 interface InvoiceSendModalProps {
     invoice: InvoiceWithDetails
@@ -27,7 +29,8 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
 }) => {
     const [customMessage, setCustomMessage] = useState('')
     const [isEditing, setIsEditing] = useState(false)
-    const { sendInvoiceEmail, isLoading, emailAvailability } = useInvoiceSend()
+    const { sendInvoiceEmailWithPdf, isLoading, emailAvailability } = useInvoiceSend()
+    const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
 
     // Format the default message with actual invoice data
     useEffect(() => {
@@ -61,13 +64,39 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
             return
         }
 
-        await sendInvoiceEmail({
-            to: invoice.customer?.customer_email || '',
-            subject: `Invoice ${invoice.invoice_number} - ${invoice.customer?.customer_name || 'Customer'}`,
-            body: customMessage,
-            customerName: invoice.customer?.customer_name || 'Customer',
-            invoiceNumber: invoice.invoice_number
-        })
+        if (!shopInfo) {
+            onConfirm(false)
+            return
+        }
+
+        // Convert shop info to ShopBranding format
+        const shop: ShopBranding = {
+            id: shopInfo.id,
+            shop_name: shopInfo.shop_name,
+            shop_owner: shopInfo.shop_owner,
+            shop_email: shopInfo.shop_email,
+            shop_phone: shopInfo.shop_phone,
+            shop_address: shopInfo.shop_address,
+            shop_city: shopInfo.shop_city,
+            shop_province: shopInfo.shop_province,
+            logo_image_url: shopInfo.logo_image_url,
+            business_number: shopInfo.business_number,
+            hst_number: shopInfo.hst_number
+        }
+
+        // Send email with PDF attachment
+        await sendInvoiceEmailWithPdf(
+            {
+                to: invoice.customer?.customer_email || '',
+                subject: `Invoice ${invoice.invoice_number} - ${invoice.customer?.customer_name || 'Customer'}`,
+                body: customMessage,
+                customerName: invoice.customer?.customer_name || 'Customer',
+                invoiceNumber: invoice.invoice_number
+            },
+            invoice,
+            shop,
+            'professional' // Use professional template for PDF
+        )
 
         onConfirm(true, customMessage)
     }
@@ -80,6 +109,7 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
             'Vehicle information not available')
 
     const customerHasEmail = !isWalkIn && !!invoice.customer?.customer_email
+    const isReady = emailAvailability.isAvailable && !isLoadingShop && shopInfo
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -92,7 +122,7 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                     <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
                         {isWalkIn ? 
                             'Walk-in customers do not have email addresses on file. Email sending is not available.' : 
-                            'Send the invoice to the customer via email.'}
+                            'Send the invoice with PDF attachment to the customer via email.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -111,6 +141,10 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                                 <div className="flex items-center gap-1">
                                     <DollarSign className="h-3 w-3" />
                                     {formatCurrency(invoice.total_amount || 0)}
+                                </div>
+                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                    <Paperclip className="h-3 w-3" />
+                                    <span>PDF will be attached</span>
                                 </div>
                             </div>
                         </div>
@@ -172,9 +206,9 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <Mail className="h-4 w-4" />
-                                Send Invoice Email
+                                Email Message
                             </h3>
-                            {emailAvailability.isLoading && (
+                            {(emailAvailability.isLoading || isLoadingShop) && (
                                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground dark:text-gray-400" />
                             )}
                         </div>
@@ -232,6 +266,16 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                                         )}
                                     </div>
                                 </div>
+
+                                {/* PDF Attachment Notice */}
+                                <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Paperclip className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                        <p className="text-blue-600 dark:text-blue-400 text-sm">
+                                            The invoice PDF will be automatically attached to the email.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -253,7 +297,7 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                                 <div>
                                     <Button
                                         onClick={handleSendEmail}
-                                        disabled={!customerHasEmail || !emailAvailability.isAvailable || isLoading}
+                                        disabled={!customerHasEmail || !isReady || isLoading}
                                         className="bg-blue-600 hover:bg-blue-700 text-white"
                                     >
                                         {isLoading ? (
@@ -264,17 +308,21 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
                                         ) : (
                                             <>
                                                 <Mail className="h-4 w-4 mr-2" />
-                                                Send Invoice Email
+                                                Send with PDF
                                             </>
                                         )}
                                     </Button>
                                 </div>
                             </TooltipTrigger>
-                            {(!customerHasEmail || !emailAvailability.isAvailable) && (
+                            {(!customerHasEmail || !isReady) && (
                                 <TooltipContent className="bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#1f1f1f] text-popover-foreground dark:text-white">
                                     <p>
                                         {!customerHasEmail 
                                             ? "Customer email address required" 
+                                            : isLoadingShop
+                                            ? "Loading shop information..."
+                                            : !shopInfo
+                                            ? "Shop information not available"
                                             : "Contact admin to set up email service"
                                         }
                                     </p>
