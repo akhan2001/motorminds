@@ -64,7 +64,7 @@ export const sidebarNavSections: NavSection[] = [
 				icon: Phone,
 			},
 			{
-				name: "AI Parts Sourcing",
+				name: "Parts Sourcing",
 				href: "/parts-ordering",
 				icon: WrenchIcon,
 			},
@@ -99,7 +99,7 @@ export const sidebarNavSections: NavSection[] = [
 		title: "Customers",
 		items: [
 			{
-				name: "All Customers",
+				name: "Customers",
 				href: "/customers",
 				icon: UsersRound,
 			},
