@@ -103,7 +103,7 @@ export function MobileNav({
                 </SheetHeader>
                 <div className="flex-1 py-4">
                     {navItems.map((item) => (
-                        <div key={item.name}>
+                        <div key={item.href}>
                             {item.hasDropdown ? (
                                 <>
                                     <button
@@ -121,7 +121,7 @@ export function MobileNav({
                                         <div className="bg-[#181818]">
                                             {item.subItems.map(subItem => (
                                                 <a
-                                                    key={subItem.name}
+                                                    key={subItem.href}
                                                     href="#"
                                                     onClick={() => handleNavClick(item.name, subItem.href)}
                                                     className="flex items-center px-8 py-2 text-[#979797] hover:bg-[#222] hover:text-white"

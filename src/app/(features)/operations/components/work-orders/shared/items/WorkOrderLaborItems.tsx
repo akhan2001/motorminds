@@ -78,17 +78,17 @@ export function WorkOrderLaborItems({
             const itemData = convertToWorkOrderItem(item);
             const savedItem = await WorkOrderItemsService.createWorkOrderItem(itemData);
             onItemSaved?.(savedItem);
-            toast.success('Labor item saved successfully');
+            toast.success('Service saved successfully');
         } catch (error: any) {
-            console.error('Error saving labor item:', error);
-            toast.error(error.message || 'Failed to save labor item');
+            console.error('Error saving service:', error);
+            toast.error(error.message || 'Failed to save service');
         }
     };
 
     
     const addItem = () => {
         if (items.length >= 10) {
-            toast.error(`Maximum 10 labor items allowed`);
+            toast.error(`Maximum 10 services allowed`);
             return;
         }
         onItemsChange([...items, { 
@@ -116,7 +116,7 @@ export function WorkOrderLaborItems({
                 await WorkOrderItemsService.getWorkOrderItem(id);
                 // Item exists, delete it
                 await WorkOrderItemsService.deleteWorkOrderItem(id);
-                toast.success('Labor item deleted');
+                toast.success('Service deleted');
                 
                 // Notify parent component for optimistic updates
                 onItemDeleted?.(id);
@@ -169,12 +169,12 @@ export function WorkOrderLaborItems({
         <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-lg font-semibold text-foreground">Labor Items</h3>
+                <h3 className="text-lg font-semibold text-foreground">Labor / Services</h3>
             </div>
 
             {items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
-                    No labor items added yet. Click "Add Labor" to get started.
+                    No labor items added yet. Click "Add Labor Item" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -186,7 +186,7 @@ export function WorkOrderLaborItems({
                         }`}>
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Labor Item {index + 1}</h4>
+                                    <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Service {index + 1}</h4>
                                 </div>
                                 {isEditing && (
                                     <Button
@@ -243,16 +243,16 @@ export function WorkOrderLaborItems({
                                                     onItemsChange(finalItems);
                                                     onItemSaved?.(savedItem);
                                                     
-                                                    toast.success('Labor item created from template');
+                                                    toast.success('Service created from template');
                                                 } catch (error: any) {
                                                     console.error('Error saving labor item from template:', error);
-                                                    toast.error('Failed to save labor item');
+                                                    toast.error('Failed to save service');
                                                     // Revert to original state on error
                                                     onItemsChange(items);
                                                 }
                                             }
                                         }}
-                                        placeholder="Type here to search for a labor item template..."
+                                        placeholder="Type here to search for a service template..."
                                         disabled={!isEditing}
                                         className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
                                             isEditing 

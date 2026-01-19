@@ -1,19 +1,36 @@
 'use client'
 
 import React from 'react'
-import { SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/utils/text'
+import { Edit, X, Save, Loader2 } from 'lucide-react'
 import type { Customer } from './types'
 
 interface CustomerHeaderProps {
     customer: Customer
+    isEditing?: boolean
+    isSaving?: boolean
+    onEditClick?: () => void
+    onCancelClick?: () => void
+    onSaveClick?: () => void
 }
 
-export const CustomerHeader: React.FC<CustomerHeaderProps> = ({ customer }) => {
+export const CustomerHeader: React.FC<CustomerHeaderProps> = ({ 
+    customer,
+    isEditing = false,
+    isSaving = false,
+    onEditClick,
+    onCancelClick,
+    onSaveClick
+}) => {
     return (
         <SheetHeader className="pb-4 border-b border-border dark:border-[#222222]">
+            <SheetDescription className="sr-only">
+                Customer details and edit functionality for {customer.customer_name}
+            </SheetDescription>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
@@ -31,9 +48,53 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({ customer }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Badge className="bg-green-500/10 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 dark:border-green-500/20">
-                        Active
-                    </Badge>
+                    {isEditing ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onCancelClick}
+                                disabled={isSaving}
+                                className="border-border text-muted-foreground hover:bg-muted"
+                            >
+                                <X className="h-4 w-4 mr-1" />
+                                Cancel
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={onSaveClick}
+                                disabled={isSaving}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-1" />
+                                        Save
+                                    </>
+                                )}
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onEditClick}
+                                className="border-border text-muted-foreground hover:bg-muted"
+                            >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                            </Button>
+                            <Badge className="bg-green-500/10 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 dark:border-green-500/20">
+                                Active
+                            </Badge>
+                        </>
+                    )}
                 </div>
             </div>
         </SheetHeader>

@@ -165,7 +165,7 @@ export function Nav({ sidebarOpen, setSidebarOpen }: NavProps = {}) {
 				<div className="hidden lg:flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
 					{navItems.map((item) => (
 						item.hasDropdown ? (
-							<div key={item.name} className="relative">
+							<div key={item.href} className="relative">
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<button
@@ -200,7 +200,7 @@ export function Nav({ sidebarOpen, setSidebarOpen }: NavProps = {}) {
 							</div>
 						) : (
 							<button
-								key={item.name}
+								key={item.href}
 								onClick={() => handleNavClick(item.name, item.href)}
 								className={`px-6 py-2.5 rounded-full flex items-center gap-1.5 transition-all duration-200 group whitespace-nowrap text-sm font-medium ${
 									activeLink === item.name

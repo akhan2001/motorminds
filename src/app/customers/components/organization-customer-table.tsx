@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
 import { CustomerDetailSheet } from '@/app/(features)/admin/components/shared/CustomerDetailSheet';
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/pagination";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatPhoneNumber } from "@/utils/format-phone";
+import { capitalizeCustomerName } from "@/lib/utils/text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -65,6 +66,7 @@ interface OrganizationCustomerTableProps {
 }
 
 export function OrganizationCustomerTable({ shopId, user, refreshIndex }: OrganizationCustomerTableProps) {
+	const queryClient = useQueryClient();
 	const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -156,6 +158,15 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 		setIsSheetOpen(false);
 		setSelectedCustomer(null);
 	}, []);
+
+	const handleCustomerUpdated = useCallback(() => {
+		// Invalidate and refetch the customers list
+		queryClient.invalidateQueries({ queryKey: ['customers', 'organization-list'] });
+		// Also invalidate the customer history to refresh it
+		if (selectedCustomer) {
+			queryClient.invalidateQueries({ queryKey: ['customer-history', selectedCustomer.id] });
+		}
+	}, [queryClient, selectedCustomer]);
 
 	// Fetch customer history when a customer is selected
 	const { data: customerHistory, isLoading: historyLoading, error: historyError } = useQuery({
@@ -353,7 +364,7 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 								>
 									<TableCell className="font-medium">
 										<div className="flex items-center gap-2">
-											{customer.customer_name}
+											{capitalizeCustomerName(customer.customer_name)}
 											{!customer.isFromCurrentShop && customer.shopName && (
 												<Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
 													<Building2 className="h-3 w-3 mr-1" />
@@ -424,6 +435,7 @@ export function OrganizationCustomerTable({ shopId, user, refreshIndex }: Organi
 					onClose={handleSheetClose}
 					loading={historyLoading}
 					error={historyError?.message || null}
+					onCustomerUpdated={handleCustomerUpdated}
 				/>
 			)}
 		</div>

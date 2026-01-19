@@ -161,7 +161,16 @@ export async function findConversationsByPhone(
 }
 
 /**
+ * Get the canonical normalized phone number (E.164 format: +1XXXXXXXXXX)
+ */
+export function getCanonicalPhone(phoneNumber: string): string {
+	const variations = normalizePhoneNumber(phoneNumber);
+	return variations.withPlusOne;
+}
+
+/**
  * Merge duplicate conversations for the same phone number
+ * Ensures one conversation per customer phone number by normalizing and deduplicating
  */
 export async function mergeDuplicateConversations(
 	supabase: any,
@@ -169,10 +178,38 @@ export async function mergeDuplicateConversations(
 	phoneNumber: string,
 	customerId: string
 ): Promise<{ keptConversationId: string | null; deletedCount: number }> {
+	const phoneVariations = normalizePhoneNumber(phoneNumber);
+	const normalizedPhone = phoneVariations.withPlusOne;
+	
 	const conversations = await findConversationsByPhone(supabase, shopId, phoneNumber);
 
-	if (conversations.length <= 1) {
-		return { keptConversationId: conversations[0]?.id || null, deletedCount: 0 };
+	if (conversations.length === 0) {
+		return { keptConversationId: null, deletedCount: 0 };
+	}
+
+	if (conversations.length === 1) {
+		// Update the single conversation to use normalized phone
+		const conv = conversations[0];
+		if (conv.customer_phone !== normalizedPhone || conv.normalized_phone !== normalizedPhone) {
+			await supabase
+				.from('sms_conversations')
+				.update({
+					customer_phone: normalizedPhone,
+					normalized_phone: normalizedPhone,
+					customer_id: customerId,
+					last_message_at: new Date().toISOString()
+				})
+				.eq('id', conv.id);
+		} else {
+			await supabase
+				.from('sms_conversations')
+				.update({
+					customer_id: customerId,
+					last_message_at: new Date().toISOString()
+				})
+				.eq('id', conv.id);
+		}
+		return { keptConversationId: conv.id, deletedCount: 0 };
 	}
 
 	// Sort by last_message_at to keep the most recent
@@ -181,30 +218,33 @@ export async function mergeDuplicateConversations(
 	const keepConversation = conversations[0];
 	const deleteConversations = conversations.slice(1);
 
-	// Update all messages to point to the kept conversation
-	for (const conv of deleteConversations) {
-		await supabase
-			.from('sms_messages')
-			.update({
-				customer_id: customerId
-			})
-			.eq('shop_id', shopId)
-			.or(`from_number.eq.${phoneNumber},to_number.eq.${phoneNumber}`);
-	}
+	// Update all messages from duplicate conversations to point to the customer
+	// Build OR conditions for all phone variations
+	const phoneConditions = phoneVariations.variations
+		.map(phone => `from_number.eq.${phone},to_number.eq.${phone}`)
+		.join(',');
+
+	await supabase
+		.from('sms_messages')
+		.update({ customer_id: customerId })
+		.eq('shop_id', shopId)
+		.or(phoneConditions);
 
 	// Delete duplicate conversations
-	for (const conv of deleteConversations) {
+	const deleteIds = deleteConversations.map(c => c.id);
+	if (deleteIds.length > 0) {
 		await supabase
 			.from('sms_conversations')
 			.delete()
-			.eq('id', conv.id);
+			.in('id', deleteIds);
 	}
 
-	// Update the kept conversation
+	// Update the kept conversation with normalized phone
 	await supabase
 		.from('sms_conversations')
 		.update({
-			customer_phone: phoneNumber,
+			customer_phone: normalizedPhone,
+			normalized_phone: normalizedPhone,
 			customer_id: customerId,
 			last_message_at: new Date().toISOString()
 		})

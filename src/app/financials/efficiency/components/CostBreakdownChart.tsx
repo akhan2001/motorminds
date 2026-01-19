@@ -46,14 +46,14 @@ export default function CostBreakdownChart({ data }: { data: EfficiencyData }) {
             categoryTotals[cat] = (categoryTotals[cat] || 0) + (c.amount || 0);
         });
         data.breakdown.oneTimeCosts.forEach((c) => {
-            const cat = c.category || 'One-Time Cost';
+            const cat = c.category || 'Expense';
             categoryTotals[cat] = (categoryTotals[cat] || 0) + (c.amount || 0);
         });
         chartData = Object.entries(categoryTotals).map(([name, value], idx) => ({ name, value, color: COLORS[idx % COLORS.length] }));
     } else {
         chartData = [
             { name: 'Recurring Fixed Costs', value: data.costBreakdown.recurring, color: COLORS[0] },
-            { name: 'One-Time Costs', value: data.costBreakdown.oneTime, color: COLORS[1] },
+            { name: 'Expenses', value: data.costBreakdown.oneTime, color: COLORS[1] },
         ];
     }
 

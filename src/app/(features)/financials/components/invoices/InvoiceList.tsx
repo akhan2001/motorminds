@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -8,21 +8,33 @@ import { AlertCircle, FileText } from 'lucide-react'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useInvoices } from '../../hooks/use-invoices'
 import { InvoiceCard } from './InvoiceCard'
+import { InvoiceQuickView } from '@/components/shared/quick-view'
 import type { InvoiceWithDetails } from '../../types/invoice'
 
 interface InvoiceListProps {
     searchValue: string
     onInvoiceClick: (invoiceId: string) => void
     selectedInvoiceId: string | null
+    useQuickView?: boolean // If true, opens modal instead of calling onInvoiceClick
 }
 
 const InvoiceList: React.FC<InvoiceListProps> = ({
     searchValue,
     onInvoiceClick,
-    selectedInvoiceId
+    selectedInvoiceId,
+    useQuickView = false
 }) => {
     const { shopId, isLoading: isAuthLoading } = useAuth()
     const { data: invoices, isLoading, isFetching, error } = useInvoices(shopId || '')
+    const [quickViewInvoiceId, setQuickViewInvoiceId] = useState<string | null>(null)
+
+    const handleInvoiceClick = (invoiceNumber: string) => {
+        if (useQuickView) {
+            setQuickViewInvoiceId(invoiceNumber)
+        } else {
+            onInvoiceClick(invoiceNumber)
+        }
+    }
 
     // Filter invoices based on search
     const filteredInvoices = useMemo(() => {
@@ -104,29 +116,40 @@ const InvoiceList: React.FC<InvoiceListProps> = ({
     }
 
     return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            {/* <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">
-                    All Invoices
-                </h2>
-                <Badge variant="secondary" className="bg-[#2a2a2a] text-gray-300">
-                    {filteredInvoices.length} {filteredInvoices.length === 1 ? 'invoice' : 'invoices'}
-                </Badge>
-            </div> */}
+        <>
+            <div className="h-full flex flex-col">
+                {/* Header */}
+                {/* <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-white">
+                        All Invoices
+                    </h2>
+                    <Badge variant="secondary" className="bg-[#2a2a2a] text-gray-300">
+                        {filteredInvoices.length} {filteredInvoices.length === 1 ? 'invoice' : 'invoices'}
+                    </Badge>
+                </div> */}
 
-            {/* Invoice List */}
-            <div className="flex-1 overflow-y-auto space-y-3">
-                {filteredInvoices.map((invoice) => (
-                    <InvoiceCard
-                        key={invoice.id}
-                        invoice={invoice}
-                        isSelected={selectedInvoiceId === invoice.invoice_number}
-                        onClick={() => onInvoiceClick(invoice.invoice_number)}
-                    />
-                ))}
+                {/* Invoice List */}
+                <div className="flex-1 overflow-y-auto space-y-3">
+                    {filteredInvoices.map((invoice) => (
+                        <InvoiceCard
+                            key={invoice.id}
+                            invoice={invoice}
+                            isSelected={selectedInvoiceId === invoice.invoice_number}
+                            onClick={() => handleInvoiceClick(invoice.invoice_number)}
+                        />
+                    ))}
+                </div>
             </div>
-        </div>
+
+            {/* Quick View Modal */}
+            {quickViewInvoiceId && (
+                <InvoiceQuickView
+                    invoiceId={quickViewInvoiceId}
+                    isOpen={!!quickViewInvoiceId}
+                    onClose={() => setQuickViewInvoiceId(null)}
+                />
+            )}
+        </>
     )
 }
 

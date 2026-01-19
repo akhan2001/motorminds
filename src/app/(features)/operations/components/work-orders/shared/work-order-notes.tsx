@@ -22,7 +22,7 @@ export const WorkOrderNotes: React.FC<WorkOrderNotesProps> = ({
                     value={notes}
                     onChange={(e) => isEditing && onFieldChange('notes', e.target.value)}
                     className="w-full text-sm bg-background dark:bg-[#1a1a1a] text-foreground dark:text-white border border-border dark:border-[#2a2a2a] focus:ring-gray-500 rounded-md p-3 min-h-[120px]"
-                    placeholder="Enter notes about the work order..."
+                    placeholder="Enter your recommendation..."
                     readOnly={!isEditing}
                 />
             </div>

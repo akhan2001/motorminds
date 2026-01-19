@@ -558,10 +558,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 />
                                             </div>
 
-                                            {/* Notes */}
+                                            {/* Recommendation */}
                                             <div className="transition-opacity duration-200">
                                                 <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">
-                                                    Notes <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
+                                                    Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
                                                 </h3>
                                                 <WorkOrderNotes
                                                     notes={formData.notes}

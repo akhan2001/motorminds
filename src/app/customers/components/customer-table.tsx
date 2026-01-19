@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useQuery } from '@tanstack/react-query';
 import { Table, TableHead, TableHeader, TableRow, TableBody, TableCell } from "@/components/ui/table";
-import { CustomerDetailSheet } from '@/app/(features)/admin/components/shared/CustomerDetailSheet';
+import { CustomerSheet } from "./customer-sheet";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/pagination";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatPhoneNumber } from "@/utils/format-phone";
+import { capitalizeCustomerName } from "@/lib/utils/text";
 
 export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, user: any, refreshIndex: number }) {
 	const [customers, setCustomers] = useState<any[]>([]);
@@ -99,27 +99,6 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 		setSelectedCustomer(customer);
 		setIsSheetOpen(true);
 	};
-
-	// Fetch customer history when a customer is selected
-	const { data: customerHistory, isLoading: historyLoading, error: historyError } = useQuery({
-		queryKey: ['customer-history', selectedCustomer?.id],
-		queryFn: async () => {
-			if (!selectedCustomer) return null
-			
-			const res = await fetch(`/api/customers/${selectedCustomer.id}/history`)
-			
-			if (!res.ok) {
-				const errorText = await res.text()
-				console.error('Failed to fetch customer history:', res.status, errorText)
-				throw new Error(`Failed to fetch customer history: ${res.status}`)
-			}
-			
-			return res.json()
-		},
-		enabled: !!selectedCustomer,
-		staleTime: 60000, // 1 minute
-		retry: 1 // Only retry once on failure
-	});
 
 	// Calculate pagination values
 	const totalPages = Math.ceil(customers.length / ITEMS_PER_PAGE);
@@ -260,7 +239,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 										onClick={() => handleRowClick(customer)}
 									>
 										<TableCell className="text-foreground font-medium">
-											{customer.customer_name}
+											{capitalizeCustomerName(customer.customer_name)}
 										</TableCell>
 										<TableCell className="text-foreground hidden sm:table-cell">
 											{customer.customer_email}
@@ -349,17 +328,11 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 				)}
 
 				{selectedCustomer && (
-					<CustomerDetailSheet
+					<CustomerSheet
 						customer={selectedCustomer}
-						customerHistory={customerHistory || null}
 						isOpen={isSheetOpen}
-						onClose={() => {
-							setIsSheetOpen(false);
-							setSelectedCustomer(null);
-							fetchCustomers(); // Refresh customers list when sheet closes
-						}}
-						loading={historyLoading}
-						error={historyError?.message || null}
+						onOpenChange={setIsSheetOpen}
+						onCustomerUpdated={fetchCustomers}
 					/>
 				)}
 			</div>
