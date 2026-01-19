@@ -251,6 +251,7 @@ export function PartsExpensesTable({ items, isLoading, error, onExpenseUpdated }
                 <EditExpenseModal 
                     expense={transformToEditableExpense(selectedGeneralExpense)}
                     onExpenseUpdated={handleExpenseUpdated}
+                    onExpenseDeleted={handleExpenseUpdated}
                     open={isEditModalOpen}
                     onOpenChange={setIsEditModalOpen}
                 />

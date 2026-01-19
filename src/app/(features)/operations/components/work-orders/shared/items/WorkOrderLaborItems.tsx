@@ -169,12 +169,12 @@ export function WorkOrderLaborItems({
         <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-lg font-semibold text-foreground">Services</h3>
+                <h3 className="text-lg font-semibold text-foreground">Labor / Services</h3>
             </div>
 
             {items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
-                    No services added yet. Click "Add Service" to get started.
+                    No labor items added yet. Click "Add Labor Item" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">

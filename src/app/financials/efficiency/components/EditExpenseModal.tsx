@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,10 +22,21 @@ import {
     DialogTrigger,
     DialogDescription,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EditExpenseModalProps {
     expense: any;
     onExpenseUpdated: () => void;
+    onExpenseDeleted?: () => void;
     children?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -56,6 +68,7 @@ const EXPENSE_CATEGORIES = [
 export default function EditExpenseModal({
     expense,
     onExpenseUpdated,
+    onExpenseDeleted,
     children,
     open: controlledOpen,
     onOpenChange: controlledOnOpenChange,
@@ -76,6 +89,8 @@ export default function EditExpenseModal({
     const [vendor, setVendor] = useState("");
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -125,6 +140,34 @@ export default function EditExpenseModal({
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!expense?.id) return;
+        
+        setDeleting(true);
+        setError("");
+
+        try {
+            const response = await fetch("/api/financials/one-time", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: expense.id }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Failed to delete expense");
+            }
+
+            setShowDeleteConfirm(false);
+            setIsOpen(false);
+            onExpenseDeleted?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -250,23 +293,62 @@ export default function EditExpenseModal({
 
                     {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
                 </div>
-                <DialogFooter>
-                    <Button 
-                        variant="outline" 
-                        onClick={() => setIsOpen(false)} 
-                        className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                        Cancel
-                    </Button>
+                <DialogFooter className="flex justify-between sm:justify-between">
                     <Button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        type="button"
+                        variant="destructive"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={loading || deleting}
+                        className="bg-red-600 hover:bg-red-700"
                     >
-                        {loading ? "Saving..." : "Save Changes"}
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
                     </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsOpen(false)} 
+                            className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={loading || deleting}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                            {loading ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogContent className="bg-popover border-border">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-foreground">Delete Expense</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                            Are you sure you want to delete "{expenseName}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel 
+                            className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                            disabled={deleting}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            {deleting ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     );
 }

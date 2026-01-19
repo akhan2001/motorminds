@@ -73,7 +73,7 @@ const ExpenseActions = ({ expense, onExpenseUpdated, onExpenseDeleted }: { expen
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-popover text-popover-foreground border-border">
-                <EditExpenseModal expense={expense} onExpenseUpdated={onExpenseUpdated}>
+                <EditExpenseModal expense={expense} onExpenseUpdated={onExpenseUpdated} onExpenseDeleted={onExpenseDeleted}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         Edit
                     </DropdownMenuItem>
