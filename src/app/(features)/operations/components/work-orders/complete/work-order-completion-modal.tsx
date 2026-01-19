@@ -272,7 +272,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                         <p>
                                             No active templates found. Create templates in{' '}
                                             <a 
-                                                href="/messaging/templates" 
+                                                href="/messaging/automated" 
                                                 className="underline hover:text-amber-700 dark:hover:text-amber-300"
                                                 target="_blank"
                                             >

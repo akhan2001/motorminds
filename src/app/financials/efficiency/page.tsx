@@ -7,4 +7,4 @@ export default function EfficiencyPage() {
 			<EfficiencyClient />
 		</Suspense>
 	);
-} 
+}
