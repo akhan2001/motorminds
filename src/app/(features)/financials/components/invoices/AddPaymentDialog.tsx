@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Dialog,
     DialogContent,
@@ -47,15 +47,31 @@ export function AddPaymentDialog({
     
     const addPayment = useAddInvoicePayment()
 
+    // Auto-set amount to 0 for $0 invoices
+    useEffect(() => {
+        if (isOpen && totalAmount === 0) {
+            setAmount('0')
+        }
+    }, [isOpen, totalAmount])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
         const paymentAmount = parseFloat(amount)
-        if (isNaN(paymentAmount) || paymentAmount <= 0) {
+        
+        // Allow $0 payments for $0 invoices (for record-keeping purposes)
+        const isZeroInvoice = totalAmount === 0
+        if (isNaN(paymentAmount) || (paymentAmount < 0)) {
+            return
+        }
+        
+        // For non-zero invoices, payment must be > 0 and <= outstanding balance
+        if (!isZeroInvoice && (paymentAmount <= 0 || paymentAmount > outstandingBalance)) {
             return
         }
 
-        if (paymentAmount > outstandingBalance) {
+        // For zero invoices, only allow 0 or valid amounts
+        if (isZeroInvoice && paymentAmount !== 0) {
             return
         }
 
@@ -102,10 +118,15 @@ export function AddPaymentDialog({
     }
 
     const amountValue = parseFloat(amount) || 0
-    const isValid = amountValue > 0 && 
-                   amountValue <= outstandingBalance && 
-                   paymentMethod !== '' &&
-                   !addPayment.isPending
+    const isZeroInvoice = totalAmount === 0
+    
+    // For $0 invoices, allow recording a $0 payment
+    // For regular invoices, require amount > 0 and <= outstanding balance
+    const isValid = (
+        (isZeroInvoice ? amountValue === 0 : (amountValue > 0 && amountValue <= outstandingBalance)) &&
+        paymentMethod !== '' &&
+        !addPayment.isPending
+    )
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -126,13 +147,14 @@ export function AddPaymentDialog({
                                     id="amount"
                                     type="number"
                                     step="0.01"
-                                    min="0.01"
-                                    max={outstandingBalance}
+                                    min={isZeroInvoice ? "0" : "0.01"}
+                                    max={isZeroInvoice ? 0 : outstandingBalance}
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0.00"
+                                    placeholder={isZeroInvoice ? "0.00" : "0.00"}
                                     required
                                     className="flex-1"
+                                    disabled={isZeroInvoice}
                                 />
                                 <Button
                                     type="button"
@@ -143,7 +165,12 @@ export function AddPaymentDialog({
                                     Full
                                 </Button>
                             </div>
-                            {amountValue > outstandingBalance && (
+                            {isZeroInvoice && (
+                                <p className="text-sm text-muted-foreground">
+                                    This is a $0 invoice. Recording for tracking purposes.
+                                </p>
+                            )}
+                            {!isZeroInvoice && amountValue > outstandingBalance && (
                                 <p className="text-sm text-red-600 dark:text-red-400">
                                     Amount cannot exceed outstanding balance
                                 </p>

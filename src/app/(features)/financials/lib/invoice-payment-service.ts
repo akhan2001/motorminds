@@ -23,13 +23,15 @@ export class InvoicePaymentService {
             throw new Error(`Invoice not found: ${invoiceNumber}`)
         }
 
-        // Validate payment amount
+        // Get active payments (not deleted)
         const currentPayments = (invoice.payments as Payment[]) || []
-        const currentAmountPaid = invoice.amount_paid || 0
-        const outstandingBalance = invoice.outstanding_balance || invoice.total_amount
+        const activePayments = currentPayments.filter(p => !p.deleted)
+        const currentAmountPaid = activePayments.reduce((sum, p) => sum + p.amount, 0)
+        const outstandingBalance = invoice.total_amount - currentAmountPaid
         const newTotal = currentAmountPaid + payment.amount
 
-        if (payment.amount <= 0) {
+        // Allow $0 payments for $0 invoices
+        if (invoice.total_amount > 0 && payment.amount <= 0) {
             throw new Error('Payment amount must be greater than zero')
         }
 
@@ -41,7 +43,8 @@ export class InvoicePaymentService {
         const newPayment: Payment = {
             id: crypto.randomUUID(),
             ...payment,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            deleted: false
         }
 
         const updatedPayments = [...currentPayments, newPayment]
@@ -60,11 +63,13 @@ export class InvoicePaymentService {
     }
 
     /**
-     * Remove a payment from an invoice
+     * Remove (archive) a payment from an invoice
+     * Payment is marked as deleted but kept for audit/reporting purposes
      */
     static async removePayment(
         invoiceNumber: string,
-        paymentId: string
+        paymentId: string,
+        deletionReason?: string
     ): Promise<void> {
         const { data: invoice, error: fetchError } = await supabase
             .from('invoices_table')
@@ -77,18 +82,74 @@ export class InvoicePaymentService {
         }
 
         const currentPayments = (invoice.payments as Payment[]) || []
-        const updatedPayments = currentPayments.filter(p => p.id !== paymentId)
+        
+        // Mark payment as deleted instead of removing it (archive for reporting)
+        const updatedPayments = currentPayments.map(p => {
+            if (p.id === paymentId) {
+                return {
+                    ...p,
+                    deleted: true,
+                    deleted_at: new Date().toISOString(),
+                    deletion_reason: deletionReason || null
+                }
+            }
+            return p
+        })
 
-        // Update invoice - trigger will recalculate totals
+        // Update invoice - trigger will recalculate totals based on non-deleted payments
         const { error: updateError } = await supabase
             .from('invoices_table')
             .update({ payments: updatedPayments })
             .eq('invoice_number', invoiceNumber)
 
         if (updateError) {
-            console.error('Error removing payment:', updateError)
-            throw new Error(`Failed to remove payment: ${updateError.message}`)
+            console.error('Error archiving payment:', updateError)
+            throw new Error(`Failed to archive payment: ${updateError.message}`)
         }
+    }
+
+    /**
+     * Get all payments (including deleted/archived) for reporting
+     */
+    static async getAllPayments(
+        invoiceNumber: string,
+        includeDeleted: boolean = false
+    ): Promise<Payment[]> {
+        const { data: invoice, error: fetchError } = await supabase
+            .from('invoices_table')
+            .select('payments')
+            .eq('invoice_number', invoiceNumber)
+            .single()
+
+        if (fetchError || !invoice) {
+            throw new Error(`Invoice not found: ${invoiceNumber}`)
+        }
+
+        const payments = (invoice.payments as Payment[]) || []
+        
+        if (includeDeleted) {
+            return payments
+        }
+        
+        return payments.filter(p => !p.deleted)
+    }
+
+    /**
+     * Get archived/deleted payments for reporting
+     */
+    static async getArchivedPayments(invoiceNumber: string): Promise<Payment[]> {
+        const { data: invoice, error: fetchError } = await supabase
+            .from('invoices_table')
+            .select('payments')
+            .eq('invoice_number', invoiceNumber)
+            .single()
+
+        if (fetchError || !invoice) {
+            throw new Error(`Invoice not found: ${invoiceNumber}`)
+        }
+
+        const payments = (invoice.payments as Payment[]) || []
+        return payments.filter(p => p.deleted === true)
     }
 }
 

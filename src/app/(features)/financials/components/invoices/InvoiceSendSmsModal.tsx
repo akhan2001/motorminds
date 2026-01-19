@@ -5,14 +5,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { FileText, User, Phone, MessageSquare, Lock, Loader2, Car, DollarSign } from 'lucide-react'
+import { FileText, User, Phone, MessageSquare, Lock, Loader2, Car, DollarSign, Link } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import { formatCurrency } from '@/lib/utils/currency'
 import { useInvoiceSms } from '../../hooks/use-invoice-sms'
+import { useShopInfo } from '@/hooks/core/useShopInfo'
 import type { InvoiceWithDetails } from '../../types/invoice'
+import type { ShopBranding } from '../../types/invoice-pdf'
 
 // SMS template for invoices
-const DEFAULT_SMS_MESSAGE = "Hi [Customer Name], your invoice #[Invoice Number] for [Vehicle] is ready. Total: [Total Amount]. Please contact us if you have any questions. Thank you!"
+const DEFAULT_SMS_MESSAGE = "Hi [Customer Name], your invoice #[Invoice Number] for [Vehicle] is ready. Total: [Total Amount]. Thank you!"
 
 function formatSmsMessage(
     template: string, 
@@ -43,7 +45,8 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
 }) => {
     const [customMessage, setCustomMessage] = useState('')
     const [isEditing, setIsEditing] = useState(false)
-    const { sendInvoiceSms, isLoading, messagingAvailability } = useInvoiceSms()
+    const { sendInvoiceSmsWithPdf, isLoading, messagingAvailability } = useInvoiceSms()
+    const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
 
     // Format the default message with actual invoice data
     useEffect(() => {
@@ -77,11 +80,37 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
             return
         }
 
-        await sendInvoiceSms({
-            to: invoice.customer?.customer_phone || '',
-            body: customMessage,
-            customerName: invoice.customer?.customer_name || 'Customer'
-        })
+        if (!shopInfo) {
+            onConfirm(false)
+            return
+        }
+
+        // Convert shop info to ShopBranding format
+        const shop: ShopBranding = {
+            id: shopInfo.id,
+            shop_name: shopInfo.shop_name,
+            shop_owner: shopInfo.shop_owner,
+            shop_email: shopInfo.shop_email,
+            shop_phone: shopInfo.shop_phone,
+            shop_address: shopInfo.shop_address,
+            shop_city: shopInfo.shop_city,
+            shop_province: shopInfo.shop_province,
+            logo_image_url: shopInfo.logo_image_url,
+            business_number: shopInfo.business_number,
+            hst_number: shopInfo.hst_number
+        }
+
+        // Send SMS with PDF link
+        await sendInvoiceSmsWithPdf(
+            {
+                to: invoice.customer?.customer_phone || '',
+                body: customMessage,
+                customerName: invoice.customer?.customer_name || 'Customer'
+            },
+            invoice,
+            shop,
+            'professional'
+        )
 
         onConfirm(true, customMessage)
     }
@@ -94,6 +123,10 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
             'Vehicle information not available')
 
     const customerHasPhone = !isWalkIn && !!invoice.customer?.customer_phone
+    const isReady = messagingAvailability.isAvailable && !isLoadingShop && shopInfo
+
+    // Calculate message length (note: PDF link will add ~100 chars)
+    const estimatedTotalLength = customMessage.length + 100 // Approximate link length
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -106,7 +139,7 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                     <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
                         {isWalkIn ? 
                             'Walk-in customers do not have phone numbers on file. SMS sending is not available.' : 
-                            'Send the invoice details to the customer via SMS.'}
+                            'Send the invoice details with PDF link to the customer via SMS.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -125,6 +158,10 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                 <div className="flex items-center gap-1">
                                     <DollarSign className="h-3 w-3" />
                                     {formatCurrency(invoice.total_amount || 0)}
+                                </div>
+                                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                    <Link className="h-3 w-3" />
+                                    <span>PDF link will be included</span>
                                 </div>
                             </div>
                         </div>
@@ -179,9 +216,9 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
                                 <MessageSquare className="h-4 w-4" />
-                                Send Invoice SMS
+                                SMS Message
                             </h3>
-                            {messagingAvailability.isLoading && (
+                            {(messagingAvailability.isLoading || isLoadingShop) && (
                                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground dark:text-gray-400" />
                             )}
                         </div>
@@ -232,11 +269,10 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                                     className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white resize-none"
                                                     rows={3}
                                                     placeholder="Enter your SMS message..."
-                                                    maxLength={160}
                                                 />
                                                 <div className="flex justify-between text-xs text-muted-foreground dark:text-gray-400">
-                                                    <span>SMS messages are limited to 160 characters</span>
-                                                    <span>{customMessage.length}/160</span>
+                                                    <span>Message + PDF link (~{estimatedTotalLength} chars)</span>
+                                                    <span>{customMessage.length} chars (message only)</span>
                                                 </div>
                                             </div>
                                         ) : (
@@ -245,10 +281,20 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                                     {customMessage}
                                                 </p>
                                                 <div className="text-xs text-muted-foreground dark:text-gray-400">
-                                                    {customMessage.length}/160 characters
+                                                    {customMessage.length} chars (+ PDF link will be appended)
                                                 </div>
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+
+                                {/* PDF Link Notice */}
+                                <div className="bg-green-500/10 dark:bg-green-500/10 border border-green-500/20 dark:border-green-500/20 rounded-lg p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Link className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                        <p className="text-green-600 dark:text-green-400 text-sm">
+                                            A link to view/download the invoice PDF will be automatically added (valid for 72 hours).
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -272,7 +318,7 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                 <div>
                                     <Button
                                         onClick={handleSendSms}
-                                        disabled={!customerHasPhone || !messagingAvailability.isAvailable || isLoading}
+                                        disabled={!customerHasPhone || !isReady || isLoading}
                                         className="bg-green-600 hover:bg-green-700 text-white"
                                     >
                                         {isLoading ? (
@@ -283,17 +329,21 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
                                         ) : (
                                             <>
                                                 <MessageSquare className="h-4 w-4 mr-2" />
-                                                Send Invoice SMS
+                                                Send with PDF Link
                                             </>
                                         )}
                                     </Button>
                                 </div>
                             </TooltipTrigger>
-                            {(!customerHasPhone || !messagingAvailability.isAvailable) && (
+                            {(!customerHasPhone || !isReady) && (
                                 <TooltipContent className="bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#1f1f1f] text-popover-foreground dark:text-white">
                                     <p>
                                         {!customerHasPhone 
                                             ? "Customer phone number required" 
+                                            : isLoadingShop
+                                            ? "Loading shop information..."
+                                            : !shopInfo
+                                            ? "Shop information not available"
                                             : "Contact admin to set up SMS service"
                                         }
                                     </p>

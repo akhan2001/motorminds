@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { getShopIdForUser } from '@/utils/get-shop-id'
 import { getResendClient } from '@/app/(features)/financials/lib/email/resend-client'
+import { 
+    generateInvoiceEmailHTML, 
+    generateInvoiceEmailText 
+} from '@/app/(features)/financials/lib/email/invoice-email-template'
 
 // Types
 interface SendInvoiceEmailRequest {
@@ -10,9 +14,14 @@ interface SendInvoiceEmailRequest {
     body: string
     customerName?: string
     invoiceNumber?: string
+    totalAmount?: number
+    vehicleInfo?: string
+    // PDF attachment (base64 encoded)
+    pdfBase64?: string
+    pdfFilename?: string
 }
 
-// POST /api/email/send-invoice - Send invoice email
+// POST /api/email/send-invoice - Send invoice email with optional PDF attachment
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient()
@@ -23,7 +32,17 @@ export async function POST(request: NextRequest) {
         }
 
         const body: SendInvoiceEmailRequest = await request.json()
-        const { to, subject, body: emailBody, customerName, invoiceNumber } = body
+        const { 
+            to, 
+            subject, 
+            body: emailBody, 
+            customerName, 
+            invoiceNumber,
+            totalAmount,
+            vehicleInfo,
+            pdfBase64,
+            pdfFilename
+        } = body
 
         // Validate input
         if (!to || !subject || !emailBody) {
@@ -55,9 +74,30 @@ export async function POST(request: NextRequest) {
 
         // Always use verified domain for "from" address
         // Use shop email as reply-to if it exists
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@motorminds.ca' // Always use verified domain
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@motorminds.ca'
         const fromName = shop.shop_name || 'MotorMinds'
-        const replyToEmail = shop.shop_email // Shop's actual email for replies
+        const replyToEmail = shop.shop_email
+
+        // Generate HTML and text versions of the email
+        const emailTemplateData = {
+            shopName: fromName,
+            shopEmail: replyToEmail || undefined,
+            customerName: customerName || 'Customer',
+            invoiceNumber: invoiceNumber || 'N/A',
+            totalAmount: totalAmount || 0,
+            vehicleInfo: vehicleInfo,
+            messageBody: emailBody,
+            hasPdfAttachment: !!pdfBase64
+        }
+
+        const htmlContent = generateInvoiceEmailHTML(emailTemplateData)
+        const textContent = generateInvoiceEmailText(emailTemplateData)
+
+        // Prepare attachments if PDF is provided
+        const attachments = pdfBase64 ? [{
+            filename: pdfFilename || `Invoice_${invoiceNumber || 'document'}.pdf`,
+            content: Buffer.from(pdfBase64, 'base64')
+        }] : undefined
 
         // Send email via Resend
         const { data: emailData, error: emailError } = await resend.emails.send({
@@ -65,27 +105,9 @@ export async function POST(request: NextRequest) {
             to: [to],
             replyTo: replyToEmail ? [replyToEmail] : undefined,
             subject: subject,
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>${subject}</title>
-                </head>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
-                        <h2 style="color: #1a1a1a; margin-top: 0;">${fromName}</h2>
-                        <p style="white-space: pre-wrap; margin: 20px 0;">${emailBody}</p>
-                    </div>
-                    <div style="text-align: center; color: #6c757d; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
-                        <p>This email was sent from ${fromName}</p>
-                        ${replyToEmail ? `<p>Reply to: ${replyToEmail}</p>` : ''}
-                    </div>
-                </body>
-                </html>
-            `,
-            text: emailBody
+            html: htmlContent,
+            text: textContent,
+            attachments: attachments
         })
 
         if (emailError) {
@@ -107,7 +129,8 @@ export async function POST(request: NextRequest) {
                 body: emailBody,
                 status: 'sent',
                 email_provider_id: emailData?.id,
-                sent_at: new Date().toISOString()
+                sent_at: new Date().toISOString(),
+                has_pdf_attachment: !!pdfBase64
             })
             .select()
             .single()
@@ -120,7 +143,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             emailId: emailData?.id,
-            storedEmail
+            storedEmail,
+            hasPdfAttachment: !!pdfBase64
         })
 
     } catch (error: any) {
@@ -134,4 +158,3 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }
-

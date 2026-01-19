@@ -145,6 +145,11 @@ export interface Payment {
     notes?: string | null
     created_at: string
     created_by?: string  // user_id if available
+    // Archiving fields
+    deleted?: boolean  // true if payment was removed/archived
+    deleted_at?: string | null  // ISO date string when deleted
+    deleted_by?: string | null  // user_id who deleted
+    deletion_reason?: string | null  // Optional reason for deletion
 }
 
 export type ItemType = 

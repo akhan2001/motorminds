@@ -21,10 +21,16 @@ import { LoadingSpinner } from '@/components/common/feedback/loading-states'
  * Handles authentication, data fetching, and state management
  * Passes data to the presentational component
  */
+// Roles that can delete work orders and invoices
+const ADMIN_ROLES = ['admin', 'super', 'shop_admin']
+
 export function WorkOrdersPageContent() {
     // Authentication
-    const { user, shopId, isLoading: authLoading } = useAuth()
+    const { user, shopId, userRole, isLoading: authLoading } = useAuth()
     const router = useRouter()
+    
+    // Check if current user can delete (admin only)
+    const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
 
     // Data fetching - only fetch if we have a valid shopId
     const { data: workOrders, isLoading: workOrdersLoading, error: workOrdersError, refetch } = useWorkOrdersWithDetails(shopId || '')
@@ -112,7 +118,8 @@ export function WorkOrdersPageContent() {
     const handleCompletionConfirmWithSync = async (
         sendMessage: boolean,
         customMessage?: string,
-        enableAutomatedMessages: boolean = true
+        enableAutomatedMessages: boolean = true,
+        generateInvoice: boolean = true
     ) => {
         if (!pageState.completionWorkOrder || !shopId) return
 
@@ -142,6 +149,19 @@ export function WorkOrdersPageContent() {
                     shop_id: shopId
                 })
                 toast.success('Invoice synced with updated work order items')
+            } else if (generateInvoice) {
+                // No invoice exists and user wants to generate one
+                try {
+                    await createInvoiceMutation.mutateAsync({
+                        work_order_id: pageState.completionWorkOrder.id,
+                        shop_id: shopId
+                    })
+                    toast.success('Invoice generated successfully')
+                } catch (invoiceError: any) {
+                    console.error('Error generating invoice:', invoiceError)
+                    toast.error(invoiceError?.message || 'Failed to generate invoice')
+                    // Continue with completion even if invoice generation fails
+                }
             }
 
             // Proceed with completion
@@ -310,14 +330,12 @@ export function WorkOrdersPageContent() {
             onCardClick={pageState.handleCardClick}
             onModalClose={pageState.handleModalClose}
             onWorkOrderSave={operations.handleWorkOrderSave}
-            onWorkOrderDelete={operations.handleWorkOrderDelete}
+            onWorkOrderDelete={canDelete ? operations.handleWorkOrderDelete : undefined}
             onWorkOrderCreate={operations.handleWorkOrderCreate}
             onCreateModalClose={pageState.handleCreateModalClose}
             onCompletionModalClose={pageState.handleCompletionModalClose}
             onCompletionConfirm={handleCompletionConfirmWithSync}
             onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
-            onGenerateInvoice={pageState.selectedWorkOrder ? () => handleGenerateInvoice(pageState.selectedWorkOrder!.id) : undefined}
-            onGoToInvoice={pageState.selectedWorkOrder ? () => handleGoToInvoice(pageState.selectedWorkOrder!.id) : undefined}
             refetch={refetch}
         />
 

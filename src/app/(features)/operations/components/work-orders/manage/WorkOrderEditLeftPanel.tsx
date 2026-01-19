@@ -27,10 +27,7 @@ interface WorkOrderEditLeftPanelProps {
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     workOrderItems?: WorkOrderItem[]
     technicianOptions?: { id: string; name: string }[]
-    workOrderInvoice?: any
     onDelete?: (workOrderId: string) => void
-    onGenerateInvoice?: () => void
-    onGoToInvoice?: () => void
     onRevert?: () => void
 }
 
@@ -43,10 +40,7 @@ export function WorkOrderEditLeftPanel({
     onSave,
     workOrderItems = [],
     technicianOptions = [],
-    workOrderInvoice,
     onDelete,
-    onGenerateInvoice,
-    onGoToInvoice,
     onRevert,
 }: WorkOrderEditLeftPanelProps) {
     const canEditItems = canEditWorkOrderItems(workOrderDetails.status)
@@ -208,12 +202,17 @@ export function WorkOrderEditLeftPanel({
                         />
                     )}
 
-                    {/* Notes */}
-                    <WorkOrderNotes
-                        notes={form.formData.notes}
-                        isEditing={form.isEditing}
-                        onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
-                    />
+                    {/* Recommendation */}
+                    <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-foreground dark:text-white">
+                            Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
+                        </h3>
+                        <WorkOrderNotes
+                            notes={form.formData.notes}
+                            isEditing={form.isEditing}
+                            onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -222,16 +221,12 @@ export function WorkOrderEditLeftPanel({
                 isEditing={form.isEditing}
                 canEdit={form.canEdit}
                 canDelete={!!onDelete}
-                canGenerateInvoice={workOrderDetails.status === 'completed'}
                 workOrderStatus={workOrderDetails.status}
-                hasInvoice={!!workOrderInvoice}
                 onEdit={handleEdit}
                 onSave={handleSave}
                 onCancel={handleCancel}
                 onClose={onClose}
                 onDelete={() => setShowDeleteConfirmation(true)}
-                onGenerateInvoice={onGenerateInvoice}
-                onGoToInvoice={onGoToInvoice}
             />
 
             {/* Delete Confirmation Dialog */}

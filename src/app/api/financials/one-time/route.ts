@@ -33,20 +33,54 @@ export async function GET(req: NextRequest) {
     }
 }
 
-// POST create new one-time cost
+// POST create new expense
 export async function POST(req: NextRequest) {
     try {
         const supabase = await createClient();
         const body = await req.json();
-        const { shop_id, cost_name, amount, category, cost_date } = body;
+        const { 
+            shop_id, 
+            cost_name, 
+            amount, 
+            subtotal,
+            tax_amount,
+            tax_included,
+            category, 
+            cost_date,
+            payment_method = 'credit_card', // Default to credit card
+            vendor,
+            invoice_number,
+            parts_description,
+            warranty,
+            notes
+        } = body;
 
         if (!shop_id || !cost_name || !amount || !cost_date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        const insertData: Record<string, any> = { 
+            shop_id, 
+            cost_name, 
+            amount, 
+            category, 
+            cost_date,
+            payment_method,
+            vendor: vendor || null,
+            notes: notes || null
+        };
+
+        // Add new fields if provided
+        if (subtotal !== undefined) insertData.subtotal = subtotal;
+        if (tax_amount !== undefined) insertData.tax_amount = tax_amount;
+        if (tax_included !== undefined) insertData.tax_included = tax_included;
+        if (invoice_number) insertData.invoice_number = invoice_number;
+        if (parts_description) insertData.parts_description = parts_description;
+        if (warranty) insertData.warranty = warranty;
+
         const { data, error } = await supabase
             .from("one_time_costs")
-            .insert({ shop_id, cost_name, amount, category, cost_date })
+            .insert(insertData)
             .select()
             .single();
 
@@ -78,31 +112,64 @@ export async function DELETE(req: NextRequest) {
     }
 }
 
-// PUT update an existing one-time cost
+// PUT update an existing expense
 export async function PUT(req: NextRequest) {
     try {
         const supabase = await createClient();
         const body = await req.json();
-        const { id, cost_name, amount, category, cost_date } = body;
+        const { 
+            id, 
+            cost_name, 
+            amount, 
+            subtotal,
+            tax_amount,
+            tax_included,
+            category, 
+            cost_date, 
+            payment_method, 
+            vendor, 
+            invoice_number,
+            parts_description,
+            warranty,
+            notes 
+        } = body;
 
         if (!id || !cost_name || !amount || !cost_date) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        const updateData: Record<string, any> = { 
+            cost_name, 
+            amount, 
+            category, 
+            cost_date 
+        };
+
+        // Only include optional fields if provided
+        if (payment_method !== undefined) updateData.payment_method = payment_method;
+        if (vendor !== undefined) updateData.vendor = vendor || null;
+        if (notes !== undefined) updateData.notes = notes || null;
+        if (subtotal !== undefined) updateData.subtotal = subtotal;
+        if (tax_amount !== undefined) updateData.tax_amount = tax_amount;
+        if (tax_included !== undefined) updateData.tax_included = tax_included;
+        if (invoice_number !== undefined) updateData.invoice_number = invoice_number || null;
+        if (parts_description !== undefined) updateData.parts_description = parts_description || null;
+        if (warranty !== undefined) updateData.warranty = warranty || null;
+
         const { data, error } = await supabase
             .from("one_time_costs")
-            .update({ cost_name, amount, category, cost_date })
+            .update(updateData)
             .eq("id", id)
             .select()
             .single();
 
         if (error) {
-            console.error("Supabase error updating one-time cost:", error);
+            console.error("Supabase error updating expense:", error);
             return NextResponse.json({ error: `Supabase error: ${error.message}` }, { status: 500 });
         }
 
         if (!data) {
-            return NextResponse.json({ error: "Cost not found or no changes needed" }, { status: 404 });
+            return NextResponse.json({ error: "Expense not found or no changes needed" }, { status: 404 });
         }
 
         return NextResponse.json(data, { status: 200 });

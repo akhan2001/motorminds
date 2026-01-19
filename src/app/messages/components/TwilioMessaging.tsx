@@ -1,293 +1,93 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Phone, Send, Plus, MessageCircle, User, Clock, Car, Mail, ExternalLink, ChevronDown } from 'lucide-react';
-import { toast } from 'sonner';
-import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
-import SendNewMessage from './SendNewMessage';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MessageCircle, Plus, Phone } from 'lucide-react'
+import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 
-// Types
-interface PhoneNumber {
-    id: string;
-    phone_number: string;
-    friendly_name: string;
-    status: string;
-}
+// Feature hooks
+import { useSmsConversations, useSmsConversationsRealtime } from '@/app/(features)/messaging/hooks/use-sms-conversations'
+import { useTwilioPhoneNumbers } from '@/app/(features)/messaging/hooks/use-twilio-phone-numbers'
 
-interface Customer {
-    id: string;
-    customer_name: string;
-    customer_email?: string;
-    customer_phone: string;
-    customer_address?: string;
-    customer_vehicle?: any;
-    license_plate?: string;
-    notes?: string;
-    tags?: string[];
-}
+// Feature components
+import { ConversationList, ChatArea } from '@/app/(features)/messaging/sms/components'
+import type { SmsCustomer, SmsConversation } from '@/app/(features)/messaging/types/sms'
 
-interface Message {
-    id: string;
-    direction: 'inbound' | 'outbound';
-    message_body: string;
-    created_at: string;
-    from_number: string;
-    to_number: string;
-    customer_id?: string;
-    customer?: Customer;
-}
-
-interface Conversation {
-    id: string;
-    customer_phone: string;
-    customer_name?: string;
-    customer_id?: string;
-    last_message_at: string;
-    customer?: Customer;
-    recent_message?: {
-        message_body: string;
-        direction: 'inbound' | 'outbound';
-        created_at: string;
-    };
-}
+// Local component
+import SendNewMessage from './SendNewMessage'
 
 interface TwilioMessagingProps {
-    shopId: string;
+    shopId: string
 }
 
 export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
-    const router = useRouter();
-    const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [selectedPhone, setSelectedPhone] = useState<string>('');
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [isInitialLoading, setIsInitialLoading] = useState(true);
-    
-    // Refs for real-time subscriptions
-    const messagesChannelRef = useRef<any>(null);
-    const conversationsChannelRef = useRef<any>(null);
-    const supabase = createClient();
+    const router = useRouter()
+    const [selectedPhone, setSelectedPhone] = useState('')
+    const [selectedCustomer, setSelectedCustomer] = useState<SmsCustomer | null>(null)
 
-    // Load data and setup real-time subscriptions
-    useEffect(() => {
-        loadData();
-        setupRealtimeSubscriptions();
-        
-        // Cleanup on unmount
-        return () => {
-            if (messagesChannelRef.current) {
-                supabase.removeChannel(messagesChannelRef.current);
-            }
-            if (conversationsChannelRef.current) {
-                supabase.removeChannel(conversationsChannelRef.current);
-            }
-        };
-    }, [shopId]);
+    // Data fetching with React Query
+    const {
+        data: conversations = [],
+        isLoading: isLoadingConversations,
+        refetch: refetchConversations,
+    } = useSmsConversations(shopId)
 
-    // Load messages when phone is selected
+    const {
+        data: phoneNumbers = [],
+        isLoading: isLoadingPhoneNumbers,
+    } = useTwilioPhoneNumbers(shopId)
+
+    // Real-time subscriptions
+    useSmsConversationsRealtime(shopId)
+
+    // Update selected customer when phone or conversations change
     useEffect(() => {
         if (selectedPhone) {
-            loadMessages(selectedPhone);
-            // Find and set the selected customer
-            const conversation = conversations.find(c => c.customer_phone === selectedPhone);
-            setSelectedCustomer(conversation?.customer || null);
-        }
-    }, [selectedPhone, conversations]);
-
-    // Setup real-time subscriptions for instant updates
-    const setupRealtimeSubscriptions = () => {
-        // Subscribe to new messages
-        messagesChannelRef.current = supabase
-            .channel('sms_messages_changes')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'sms_messages',
-                    filter: `shop_id=eq.${shopId}`,
-                },
-                (payload) => {
-                    console.log('Real-time message update:', payload);
-                    
-                    if (payload.eventType === 'INSERT') {
-                        const newMessage = payload.new as Message;
-                        
-                        // Add to messages if it's for the currently selected phone
-                        if (selectedPhone && 
-                            (newMessage.from_number === selectedPhone || newMessage.to_number === selectedPhone)) {
-                            setMessages(prev => [...prev, newMessage]);
-                        }
-                        
-                        // Always refresh conversations when new message comes in
-                        loadConversations();
-                        
-                        // Show notification for incoming messages
-                        if (newMessage.direction === 'inbound') {
-                            toast.success(`New message from ${newMessage.from_number}`);
-                        }
-                    }
-                }
+            const conversation = conversations.find(
+                (c: SmsConversation) => c.customer_phone === selectedPhone
             )
-            .subscribe();
-
-        // Subscribe to conversation changes
-        conversationsChannelRef.current = supabase
-            .channel('sms_conversations_changes')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'sms_conversations',
-                    filter: `shop_id=eq.${shopId}`,
-                },
-                () => {
-                    console.log('Real-time conversation update');
-                    loadConversations();
-                }
-            )
-            .subscribe();
-    };
-
-    const loadData = async () => {
-        setIsInitialLoading(true);
-        try {
-            await Promise.all([
-                loadPhoneNumbers(),
-                loadConversations()
-            ]);
-        } finally {
-            setIsInitialLoading(false);
+            setSelectedCustomer(conversation?.customer || null)
+        } else {
+            setSelectedCustomer(null)
         }
-    };
+    }, [selectedPhone, conversations])
 
-    const loadPhoneNumbers = async () => {
-        try {
-            const response = await fetch('/api/twilio/phone-numbers');
-            if (response.ok) {
-                const data = await response.json();
-                setPhoneNumbers(data.phoneNumbers || []);
-            }
-        } catch (error) {
-            console.error('Failed to load phone numbers:', error);
-        }
-    };
+    // Navigation
+    const handleCustomerClick = (customerId: string) => {
+        router.push(`/customers/${customerId}`)
+    }
 
-    const loadConversations = async () => {
-        try {
-            console.log('Loading conversations...');
-            const response = await fetch('/api/twilio/conversations');
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Loaded conversations:', data.conversations?.length || 0);
-                setConversations(data.conversations || []);
-            } else {
-                console.error('Failed to load conversations:', response.status);
-            }
-        } catch (error) {
-            console.error('Failed to load conversations:', error);
-        }
-    };
+    const handleConversationSelect = (phone: string) => {
+        setSelectedPhone(phone)
+    }
 
-    const loadMessages = async (customerPhone: string) => {
-        try {
-            console.log('Loading messages for phone:', customerPhone);
-            const response = await fetch(`/api/twilio/messages?customerPhone=${encodeURIComponent(customerPhone)}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Loaded messages:', data.messages?.length || 0);
-                setMessages(data.messages || []);
-            } else {
-                console.error('Failed to load messages:', response.status);
-            }
-        } catch (error) {
-            console.error('Failed to load messages:', error);
-        }
-    };
+    const handleRefresh = () => {
+        refetchConversations()
+    }
 
-
-
-    const sendMessage = async (phoneNumber: string, customerName?: string) => {
-        if (!newMessage.trim()) return;
-
-        setIsLoading(true);
-        try {
-            const response = await fetch('/api/twilio/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: phoneNumber,
-                    body: newMessage,
-                    customerName: customerName,
-                }),
-            });
-
-            if (response.ok) {
-                setNewMessage('');
-                if (selectedPhone === phoneNumber) {
-                    // Message will be added via real-time subscription
-                }
-                // Conversations will be updated via real-time subscription
-                toast.success('Message sent successfully');
-            } else {
-                const error = await response.json();
-                toast.error(error.error || 'Failed to send message');
-            }
-        } catch (error) {
-            console.error('Failed to send message:', error);
-            toast.error('Failed to send message');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
-
-    const navigateToCustomer = (customerId: string) => {
-        router.push(`/customers/${customerId}`);
-    };
-
-
-
-    const formatTime = (timestamp: string) => {
-        const date = new Date(timestamp);
-        return date.toLocaleString([], { 
-            month: 'short', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-    };
-
-    if (isInitialLoading) {
+    // Loading state
+    if (isLoadingPhoneNumbers || isLoadingConversations) {
         return (
             <Card className="bg-slate-50 dark:bg-card border-border">
                 <CardContent className="p-6 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
+                    <LoadingSpinner size="md" className="mx-auto mb-4" />
                     <p className="text-muted-foreground">Loading messaging...</p>
                 </CardContent>
             </Card>
-        );
+        )
     }
 
+    // No phone numbers state
     if (phoneNumbers.length === 0) {
         return (
             <Card className="bg-slate-50 dark:bg-card border-border">
                 <CardContent className="p-6 text-center">
                     <Phone className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-medium mb-2 text-foreground">No SMS Phone Numbers</h3>
+                    <h3 className="text-lg font-medium mb-2 text-foreground">
+                        No SMS Phone Numbers
+                    </h3>
                     <p className="text-muted-foreground mb-4">
                         You need to have a Twilio phone number assigned to start SMS messaging.
                     </p>
@@ -296,244 +96,60 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                     </p>
                 </CardContent>
             </Card>
-        );
+        )
     }
 
     return (
         <div className="space-y-6">
             <Tabs defaultValue="conversations" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 bg-slate-50 dark:bg-muted">
-                    <TabsTrigger value="conversations" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
+                    <TabsTrigger
+                        value="conversations"
+                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted"
+                    >
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Conversations
                     </TabsTrigger>
-                    <TabsTrigger value="compose" className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted">
+                    <TabsTrigger
+                        value="compose"
+                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted"
+                    >
                         <Plus className="h-4 w-4 mr-2" />
                         New Message
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="conversations" className="space-y-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                <TabsContent value="conversations" className="mt-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-280px)] min-h-[400px] max-h-[700px]">
                         {/* Conversations List */}
-                        <div className="lg:col-span-1">
-                            <Card className="bg-slate-50 dark:bg-card border-border h-full">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-foreground flex items-center gap-2">
-                                            <MessageCircle className="h-5 w-5" />
-                                            Conversations
-                                        </CardTitle>
-                                        <Button
-                                            onClick={loadConversations}
-                                            size="sm"
-                                            variant="outline"
-                                            className="text-xs border-red-300 text-muted-foreground hover:bg-red-50 hover:text-red-600 hover:border-red-600 dark:hover:bg-red-950/20"
-                                        >
-                                            Refresh
-                                        </Button>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="p-0">
-                                    <ScrollArea className="h-[500px]">
-                                        <div className="space-y-1 p-4">
-                                            {conversations.map((conversation) => (
-                                                <div
-                                                    key={conversation.id}
-                                                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                                                        selectedPhone === conversation.customer_phone
-                                                            ? 'bg-muted border-l-4 border-l-red-600 border border-border'
-                                                            : 'hover:bg-muted/50 hover:border-l-4 hover:border-l-red-300'
-                                                    }`}
-                                                    onClick={() => setSelectedPhone(conversation.customer_phone)}
-                                                >
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                            <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                                            <div className="min-w-0 flex-1">
-                                                                {conversation.customer_id ? (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            navigateToCustomer(conversation.customer_id!);
-                                                                        }}
-                                                                        className="text-foreground font-medium truncate block hover:text-red-600 transition-colors text-left flex items-center gap-1"
-                                                                    >
-                                                                        {conversation.customer?.customer_name || conversation.customer_name || conversation.customer_phone}
-                                                                        <ExternalLink className="h-3 w-3 opacity-60" />
-                                                                    </button>
-                                                                ) : (
-                                                                    <span className="text-foreground font-medium truncate block">
-                                                                        {conversation.customer?.customer_name || conversation.customer_name || conversation.customer_phone}
-                                                                    </span>
-                                                                )}
-                                                                {conversation.customer?.customer_email && (
-                                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                        <Mail className="h-3 w-3" />
-                                                                        {conversation.customer.customer_email}
-                                                                    </span>
-                                                                )}
-                                                                {conversation.customer?.license_plate && (
-                                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                        <Car className="h-3 w-3" />
-                                                                        {conversation.customer.license_plate}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground truncate mb-1">
-                                                        {conversation.recent_message?.direction === 'outbound' && 'You: '}
-                                                        {conversation.recent_message?.message_body || 'No messages yet'}
-                                                    </p>
-                                                    <div className="flex items-center justify-between">
-                                                        <p className="text-xs text-muted-foreground">{conversation.customer_phone}</p>
-                                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" />
-                                                            {formatTime(conversation.last_message_at)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            {conversations.length === 0 && (
-                                                <div className="text-center py-8">
-                                                    <MessageCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                                                    <p className="text-muted-foreground text-sm">No conversations yet</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </ScrollArea>
-                                </CardContent>
-                            </Card>
+                        <div className="lg:col-span-1 h-full overflow-hidden">
+                            <ConversationList
+                                conversations={conversations}
+                                selectedPhone={selectedPhone}
+                                onSelectConversation={handleConversationSelect}
+                                onRefresh={handleRefresh}
+                                onCustomerClick={handleCustomerClick}
+                                isLoading={isLoadingConversations}
+                            />
                         </div>
 
                         {/* Chat Area */}
-                        <div className="lg:col-span-2">
-                            <Card className="bg-slate-50 dark:bg-card border-border h-full">
-                                {selectedPhone ? (
-                                    <>
-                                        <CardHeader>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        {selectedCustomer?.id ? (
-                                                            <button
-                                                                onClick={() => navigateToCustomer(selectedCustomer.id)}
-                                                                className="text-foreground font-bold text-lg hover:text-red-600 transition-colors flex items-center gap-2"
-                                                            >
-                                                                {selectedCustomer.customer_name || conversations.find(c => c.customer_phone === selectedPhone)?.customer_name || selectedPhone}
-                                                                <ExternalLink className="h-4 w-4 opacity-60" />
-                                                            </button>
-                                                        ) : (
-                                                            <CardTitle className="text-foreground">
-                                                                {selectedCustomer?.customer_name || conversations.find(c => c.customer_phone === selectedPhone)?.customer_name || selectedPhone}
-                                                            </CardTitle>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground">{selectedPhone}</p>
-                                                    {selectedCustomer && (
-                                                        <div className="mt-2 space-y-1">
-                                                            {selectedCustomer.customer_email && (
-                                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                    <Mail className="h-3 w-3" />
-                                                                    {selectedCustomer.customer_email}
-                                                                </p>
-                                                            )}
-                                                            {selectedCustomer.license_plate && (
-                                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                    <Car className="h-3 w-3" />
-                                                                    {selectedCustomer.license_plate}
-                                                                </p>
-                                                            )}
-                                                            {selectedCustomer.customer_address && (
-                                                                <p className="text-xs text-muted-foreground truncate">
-                                                                    {selectedCustomer.customer_address}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </CardHeader>
-                                        <Separator className="bg-border" />
-                                        <CardContent className="p-0 flex flex-col h-[450px]">
-                                            {/* Messages */}
-                                            <ScrollArea className="flex-1 p-4">
-                                                <div className="space-y-4">
-                                                    {messages.map((message) => (
-                                                        <div
-                                                            key={message.id}
-                                                            className={`flex ${message.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}
-                                                        >
-                                                            <div
-                                                                className={`max-w-[70%] p-3 rounded-lg ${
-                                                                    message.direction === 'outbound'
-                                                                        ? 'bg-red-600 text-white'
-                                                                        : 'bg-muted text-foreground border border-border'
-                                                                }`}
-                                                            >
-                                                                <p className="text-sm whitespace-pre-wrap">{message.message_body}</p>
-                                                                <div className="mt-2">
-                                                                    <span className={`text-xs ${
-                                                                        message.direction === 'outbound' ? 'text-red-100' : 'text-muted-foreground'
-                                                                    }`}>
-                                                                        {formatTime(message.created_at)}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </ScrollArea>
-
-                                            {/* Message Input */}
-                                            <div className="p-4 border-t border-border">
-                                                <div className="flex gap-2">
-                                                    <Textarea
-                                                        placeholder="Type your message..."
-                                                        value={newMessage}
-                                                        onChange={(e) => setNewMessage(e.target.value)}
-                                                        className="bg-white dark:bg-background border-border text-foreground resize-none"
-                                                        rows={2}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                                e.preventDefault();
-                                                                sendMessage(selectedPhone, selectedCustomer?.customer_name);
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Button
-                                                        onClick={() => sendMessage(selectedPhone, selectedCustomer?.customer_name)}
-                                                        disabled={isLoading || !newMessage.trim()}
-                                                        size="sm"
-                                                        className="self-end bg-red-600 hover:bg-red-700 text-white"
-                                                    >
-                                                        <Send className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </>
-                                ) : (
-                                    <CardContent className="flex-1 flex items-center justify-center">
-                                        <div className="text-center">
-                                            <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                                            <h3 className="text-lg font-medium text-foreground mb-2">Select a Conversation</h3>
-                                            <p className="text-muted-foreground">
-                                                Choose a conversation from the sidebar to start messaging
-                                            </p>
-                                        </div>
-                                    </CardContent>
-                                )}
-                            </Card>
+                        <div className="lg:col-span-2 h-full overflow-hidden">
+                            <ChatArea
+                                shopId={shopId}
+                                selectedPhone={selectedPhone}
+                                selectedCustomer={selectedCustomer}
+                                conversations={conversations}
+                                onCustomerClick={handleCustomerClick}
+                            />
                         </div>
                     </div>
                 </TabsContent>
 
                 <TabsContent value="compose" className="space-y-4">
-                    <SendNewMessage onMessageSent={loadConversations} />
+                    <SendNewMessage onMessageSent={handleRefresh} />
                 </TabsContent>
             </Tabs>
         </div>
-    );
+    )
 }

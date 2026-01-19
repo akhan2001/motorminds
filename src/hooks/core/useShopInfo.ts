@@ -13,6 +13,7 @@ interface ShopInfo {
     shop_city?: string
     shop_province?: string
     business_number?: string
+    hst_number?: string
 }
 
 /**
@@ -32,7 +33,7 @@ export function useShopInfo() {
                 // Get shop information directly using shopId from context
                 const { data: shopData, error: shopError } = await supabase
                     .from('shops')
-                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number')
+                    .select('id, shop_name, shop_owner, logo_image_url, shop_email, shop_phone, shop_address, shop_city, shop_province, business_number, hst_number')
                     .eq('id', shopId)
                     .single()
 

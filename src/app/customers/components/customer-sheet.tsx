@@ -423,7 +423,7 @@ export function CustomerSheet({ customer, isOpen, onOpenChange, onCustomerUpdate
                                                         </div>
                                                     )}
                                                     <div className="text-muted-foreground">
-                                                        <span className="text-muted-foreground">Added:</span> {new Date(vehicle.created_at).toLocaleDateString()}
+                                                        <span className="text-muted-foreground">Added:</span> {vehicle.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'N/A'}
                                                     </div>
                                                 </div>
                                             </div>

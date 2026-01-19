@@ -21,7 +21,9 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
     const addPayment = useAddInvoicePayment()
     const removePayment = useRemoveInvoicePayment()
 
-    const payments = (invoice.payments || []) as Payment[]
+    const allPayments = (invoice.payments || []) as Payment[]
+    // Filter out deleted/archived payments for display
+    const payments = allPayments.filter(p => !p.deleted)
     const amountPaid = invoice.amount_paid || 0
     
     // For draft invoices, outstanding balance should be total_amount if not calculated yet
@@ -35,9 +37,17 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
         ? (amountPaid / invoice.total_amount) * 100 
         : 0
 
-    const canAddPayment = outstanding > 0 && 
-                         invoice.status !== 'cancelled' && 
-                         invoice.status !== 'refunded'
+    // Allow adding payment for $0 invoices that aren't marked as paid
+    // For regular invoices, require outstanding balance > 0
+    const isZeroInvoice = invoice.total_amount === 0
+    const canAddPayment = (
+        (isZeroInvoice 
+            ? invoice.status !== 'paid' && payments.length === 0 // $0 invoices: can add payment if not already paid
+            : outstanding > 0 // Regular invoices: require outstanding balance
+        ) &&
+        invoice.status !== 'cancelled' && 
+        invoice.status !== 'refunded'
+    )
 
     const handleRemovePayment = async (paymentId: string) => {
         if (confirm('Are you sure you want to remove this payment?')) {

@@ -41,9 +41,12 @@ interface InvoiceViewOnlyProps {
     onClose: () => void
 }
 
+// Roles that can delete invoices
+const ADMIN_ROLES = ['admin', 'super', 'shop_admin']
+
 const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, onClose }) => {
     const router = useRouter()
-    const { shopId } = useAuth()
+    const { shopId, userRole } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
@@ -55,6 +58,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const pdfElementRef = useRef<HTMLDivElement>(null)
+    
+    // Check if user can delete (admin only)
+    const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -230,40 +236,60 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     return (
         <div className="h-full flex flex-col bg-background dark:bg-[#0d0d0d]">
             {/* Fixed Header */}
-            <div className="bg-slate-50 dark:bg-[#131313] p-4 border-b border-border dark:border-[#333333]">
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            <div className="bg-slate-50 dark:bg-[#131313] p-3 sm:p-4 border-b border-border dark:border-[#333333]">
+                {/* Top row: Invoice title and close button */}
+                <div className="flex items-start justify-between mb-2">
+                    <div>
+                        <h2 className="text-lg sm:text-xl font-semibold text-foreground dark:text-white">
                             Invoice #{invoice.display_id}
                         </h2>
-                        <p className="text-muted-foreground dark:text-gray-500 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-500 text-xs sm:text-sm">
                             {invoice.invoice_number}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <p className="text-muted-foreground dark:text-gray-400 text-sm">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClose}
+                        className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-transparent -mr-2"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                {/* Bottom row: Dates and actions */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    {/* Dates */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm">
+                        <p className="text-muted-foreground dark:text-gray-400">
+                            Created: {formatDateString(invoice.created_at)}
+                        </p>
+                        <span className="text-muted-foreground dark:text-gray-500">|</span>
+                        <p className="text-muted-foreground dark:text-gray-400">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
-                        {invoice.work_order_id && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleGoToWorkOrder}
-                                className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
-                            >
-                                <Wrench className="h-4 w-4 mr-2" />
-                                Go to Work Order
-                            </Button>
+                        {invoice.paid_date && (
+                            <>
+                                <span className="text-muted-foreground dark:text-gray-500">|</span>
+                                <p className="text-green-600 dark:text-green-400 font-medium">
+                                    Paid: {formatDateString(invoice.paid_date)}
+                                </p>
+                            </>
                         )}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClose}
-                            className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-transparent"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
                     </div>
+
+                    {/* Work Order Button */}
+                    {invoice.work_order_id && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGoToWorkOrder}
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white text-xs sm:text-sm"
+                        >
+                            <Wrench className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                            Go to Work Order
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -559,16 +585,18 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     <Send className="w-4 h-4 mr-2" />
                     Send
                 </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
-                    onClick={handleDelete}
-                    disabled={deleteMutation.isPending}
-                >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                </Button>
+                {canDelete && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
+                        onClick={handleDelete}
+                        disabled={deleteMutation.isPending}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                    </Button>
+                )}
             </div>
 
             {/* Invoice Send Choice Modal */}

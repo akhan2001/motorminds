@@ -193,7 +193,7 @@ export default function CustomerPage() {
                         </Avatar>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-foreground">{customer?.customer_name}</h1>
-                            <p className="text-muted-foreground">Customer since {new Date(customer?.created_at).toLocaleDateString()}</p>
+                            <p className="text-muted-foreground">Customer since {customer?.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}</p>
                         </div>
                     </div>  
                     {/* <div className="flex gap-2">

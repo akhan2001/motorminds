@@ -571,7 +571,36 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-muted-foreground dark:text-gray-400">Mileage</Label>
+                            <div className="flex items-center justify-between">
+                                <Label className="text-muted-foreground dark:text-gray-400">Mileage</Label>
+                                {isEditing && (
+                                    <div className="flex items-center gap-1 text-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => onFieldChange('mileageUnit', 'km')}
+                                            className={`px-2 py-0.5 rounded transition-colors ${
+                                                !vehicleMileage?.toString().includes('mi') 
+                                                    ? 'bg-blue-600 text-white' 
+                                                    : 'text-muted-foreground hover:text-foreground dark:hover:text-white'
+                                            }`}
+                                        >
+                                            KM
+                                        </button>
+                                        <span className="text-muted-foreground">/</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => onFieldChange('mileageUnit', 'miles')}
+                                            className={`px-2 py-0.5 rounded transition-colors ${
+                                                vehicleMileage?.toString().includes('mi') 
+                                                    ? 'bg-blue-600 text-white' 
+                                                    : 'text-muted-foreground hover:text-foreground dark:hover:text-white'
+                                            }`}
+                                        >
+                                            Miles
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                             <Input
                                 value={vehicleMileage}
                                 onChange={(e) => isEditing && onFieldChange('vehicleMileage', e.target.value)}
@@ -581,7 +610,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
                                 readOnly={!isEditing}
-                                placeholder="Current mileage"
+                                placeholder="Current mileage (KM)"
                                 type="number"
                             />
                         </div>

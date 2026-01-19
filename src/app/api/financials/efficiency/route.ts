@@ -1,7 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import {
+    calculateCOGS,
+    aggregateRevenueBreakdown,
+    type InvoiceTableRecord
+} from "../_utils/invoice-calculations";
 
-// GET all active fixed costs for a shop
+// GET all active fixed costs for a shop, or calculate efficiency metrics with date range
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
@@ -34,13 +39,36 @@ export async function GET(req: NextRequest) {
 
     // If date range is provided, calculate full efficiency metrics
     try {
-        // 1. Fetch all relevant data in parallel
+        // 1. Fetch all relevant data in parallel - using invoices_table now
         const [
             { data: revenueData, error: revenueError },
             { data: fixedCostsData, error: fixedCostsError },
             { data: oneTimeCostsData, error: oneTimeCostsError }
         ] = await Promise.all([
-            supabase.from('invoices').select('invoice_number, created_at, amount, paid_at, parts_items').eq('shop_id', shopId).eq('status', 'PAID').gte('paid_at', startDate.toISOString()).lte('paid_at', endDate.toISOString()),
+            // Use invoices_table with new field names
+            supabase
+                .from('invoices_table')
+                .select(`
+                    id,
+                    invoice_number,
+                    shop_id,
+                    status,
+                    total_amount,
+                    subtotal,
+                    tax_amount,
+                    discount_amount,
+                    labor_total,
+                    parts_total,
+                    services_total,
+                    fees_total,
+                    invoice_items,
+                    paid_date,
+                    created_at
+                `)
+                .eq('shop_id', shopId)
+                .eq('status', 'paid') // lowercase in new table
+                .gte('paid_date', startDate.toISOString())
+                .lte('paid_date', endDate.toISOString()),
             supabase.from('fixed_costs').select('*').eq('shop_id', shopId),
             supabase.from('one_time_costs').select('*').eq('shop_id', shopId)
         ]);
@@ -49,25 +77,22 @@ export async function GET(req: NextRequest) {
              throw new Error(revenueError?.message || fixedCostsError?.message || oneTimeCostsError?.message || "An error occured");
         }
 
-        // 2. Calculate totals
-        const totalRevenue = revenueData?.reduce((acc: number, inv: any) => acc + inv.amount, 0) ?? 0;
+        // Cast to typed records
+        const typedRevenueData = (revenueData || []) as InvoiceTableRecord[];
+
+        // 2. Calculate totals using new structure
+        const revenueBreakdown = aggregateRevenueBreakdown(typedRevenueData);
+        const totalRevenue = revenueBreakdown.totalRevenue;
         
-        // Calculate Cost of Goods Sold (COGS) from parts
-        const totalCogs = revenueData?.reduce((acc: number, invoice: any) => {
-            if (!invoice.parts_items || !Array.isArray(invoice.parts_items)) {
-                return acc;
-            }
-            const invoiceCogs = invoice.parts_items.reduce((itemAcc: number, item: any) => {
-                const shopCost = Number(item.shop_cost) || 0;
-                const quantity = Number(item.quantity) || 1;
-                return itemAcc + (shopCost * quantity);
-            }, 0);
-            return acc + invoiceCogs;
-        }, 0) ?? 0;
+        // Calculate Cost of Goods Sold (COGS) from invoice_items
+        const totalCogs = typedRevenueData.reduce((acc, invoice) => {
+            const cogsBreakdown = calculateCOGS(invoice.invoice_items);
+            return acc + cogsBreakdown.totalCOGS;
+        }, 0);
 
         // Generate recurring cost occurrences and calculate total in one go
         const recurringCostOccurrences = (fixedCostsData ?? []).flatMap(cost => {
-            const occurrences = [];
+            const occurrences: any[] = [];
             if (!cost.start_date) return [];
             const costStartDate = new Date(cost.start_date + 'T00:00:00Z');
             let currentDate = new Date(costStartDate);
@@ -103,22 +128,18 @@ export async function GET(req: NextRequest) {
         const netProfit = totalRevenue - totalOperatingExpenses;
 
         // Generate historical data for charts using actual cost occurrences
-        const historicalData = [];
-        const costsByDate = new Map();
-        const revenueByDate = new Map();
+        const historicalData: Array<{ date: string; Costs: number; Revenue: number }> = [];
+        const costsByDate = new Map<string, number>();
+        const revenueByDate = new Map<string, number>();
 
-        revenueData?.forEach((inv: any) => {
-            if (inv.paid_at) {
-                const date = new Date(inv.paid_at).toISOString().split('T')[0];
+        typedRevenueData.forEach((inv) => {
+            if (inv.paid_date) {
+                const date = new Date(inv.paid_date).toISOString().split('T')[0];
                 const existingRevenue = revenueByDate.get(date) || 0;
-                revenueByDate.set(date, existingRevenue + inv.amount);
+                revenueByDate.set(date, existingRevenue + Number(inv.total_amount || 0));
                 
                 // Add COGS to the daily costs
-                const invoiceCogs = inv.parts_items?.reduce((acc: number, item: any) => {
-                    const shopCost = Number(item.shop_cost) || 0;
-                    const quantity = Number(item.quantity) || 1;
-                    return acc + (shopCost * quantity);
-                }, 0) || 0;
+                const invoiceCogs = calculateCOGS(inv.invoice_items).totalCOGS;
 
                 if (invoiceCogs > 0) {
                     const existingCosts = costsByDate.get(date) || 0;
@@ -150,21 +171,50 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        // 5. Return comprehensive data object
+        // 5. Return comprehensive data object with granular revenue breakdown
         return new NextResponse(JSON.stringify({
             totalRevenue,
             totalOperatingExpenses,
             netProfit,
             historicalData,
+            // Cost breakdown
             costBreakdown: {
                 cogs: totalCogs,
                 recurring: totalRecurringCosts,
                 oneTime: totalOneTimeCosts,
             },
+            // Granular revenue breakdown from invoices_table
+            revenueBreakdown: {
+                labor: revenueBreakdown.laborRevenue,
+                parts: revenueBreakdown.partsRevenue,
+                services: revenueBreakdown.servicesRevenue,
+                fees: revenueBreakdown.feesRevenue,
+                subtotal: revenueBreakdown.subtotal,
+                tax: revenueBreakdown.taxAmount,
+                discount: revenueBreakdown.discountAmount,
+            },
+            // Detailed breakdown
             breakdown: {
-                revenue: revenueData,
+                revenue: typedRevenueData.map(inv => ({
+                    invoice_number: inv.invoice_number,
+                    total_amount: inv.total_amount,
+                    labor_total: inv.labor_total,
+                    parts_total: inv.parts_total,
+                    services_total: inv.services_total,
+                    fees_total: inv.fees_total,
+                    paid_date: inv.paid_date,
+                    created_at: inv.created_at,
+                    // Include invoice_items for COGS breakdown
+                    invoice_items: inv.invoice_items
+                })),
                 fixedCosts: recurringCostOccurrences,
                 oneTimeCosts: filteredOneTimeCosts,
+            },
+            // Meta
+            invoiceCount: typedRevenueData.length,
+            dateRange: {
+                start: startDate.toISOString(),
+                end: endDate.toISOString()
             }
         }), { status: 200 });
 
@@ -259,4 +309,4 @@ export async function DELETE(req: NextRequest) {
     } catch (err: any) {
          return NextResponse.json({ error: err.message }, { status: 500 });
     }
-} 
+}
