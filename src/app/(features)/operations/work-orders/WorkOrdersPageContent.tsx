@@ -67,6 +67,8 @@ export function WorkOrdersPageContent() {
             total_amount: number
         }
     } | null>(null)
+    // Track generated invoice number to show "Go to Invoice" button
+    const [generatedInvoiceNumber, setGeneratedInvoiceNumber] = useState<string | null>(null)
 
     const handleGenerateInvoice = async (workOrderId: string) => {
         if (!shopId) {
@@ -152,11 +154,18 @@ export function WorkOrdersPageContent() {
             } else if (generateInvoice) {
                 // No invoice exists and user wants to generate one
                 try {
-                    await createInvoiceMutation.mutateAsync({
+                    const invoice = await createInvoiceMutation.mutateAsync({
                         work_order_id: pageState.completionWorkOrder.id,
                         shop_id: shopId
                     })
                     toast.success('Invoice generated successfully')
+                    // Set the generated invoice number to show "Go to Invoice" button
+                    // Don't close modal yet - let user see the button
+                    setGeneratedInvoiceNumber(invoice.invoice_number)
+                    // Refetch to update work order with invoice_id
+                    refetch()
+                    // Don't proceed with completion yet - keep modal open
+                    return
                 } catch (invoiceError: any) {
                     console.error('Error generating invoice:', invoiceError)
                     toast.error(invoiceError?.message || 'Failed to generate invoice')
@@ -164,13 +173,19 @@ export function WorkOrdersPageContent() {
                 }
             }
 
-            // Proceed with completion
+            // Proceed with completion (only if no invoice was generated or invoice generation failed)
             await operations.handleCompletionConfirm(
                 pageState.completionWorkOrder,
                 sendMessage,
                 customMessage,
                 enableAutomatedMessages
             )
+            // Clear generated invoice number and close modal after completion
+            setGeneratedInvoiceNumber(null)
+            // Only close modal if not generating invoice (invoice generation keeps modal open)
+            if (!generateInvoice) {
+                pageState.handleCompletionModalClose()
+            }
         } catch (error: any) {
             console.error('Error during completion with sync:', error)
             toast.error(error?.message || 'Failed to complete work order')
@@ -351,8 +366,12 @@ export function WorkOrdersPageContent() {
             onWorkOrderDelete={canDelete ? operations.handleWorkOrderDelete : undefined}
             onWorkOrderCreate={operations.handleWorkOrderCreate}
             onCreateModalClose={pageState.handleCreateModalClose}
-            onCompletionModalClose={pageState.handleCompletionModalClose}
+            onCompletionModalClose={() => {
+                setGeneratedInvoiceNumber(null)
+                pageState.handleCompletionModalClose()
+            }}
             onCompletionConfirm={handleCompletionConfirmWithSync}
+            generatedInvoiceNumber={generatedInvoiceNumber}
             onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
             onReadyModalClose={pageState.handleReadyModalClose}
             onReadyConfirm={handleReadyConfirm}

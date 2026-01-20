@@ -369,8 +369,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                     />
                                                 </div>
 
-                                                {/* Service Items */}
-                                                <div className="mb-6">
+                                                {/* Service Items - Hidden from UI */}
+                                                {/* <div className="mb-6">
                                                     <WorkOrderGenericItems
                                                         items={formData.serviceItems}
                                                         onItemsChange={handleServiceItemsChange}
@@ -380,10 +380,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         itemType="service"
                                                         title="Services"
                                                     />
-                                                </div>
+                                                </div> */}
 
-                                                {/* Fee Items */}
-                                                <div className="mb-6">
+                                                {/* Fee Items - Hidden from UI */}
+                                                {/* <div className="mb-6">
                                                     <WorkOrderGenericItems
                                                         items={formData.feeItems}
                                                         onItemsChange={handleFeeItemsChange}
@@ -393,7 +393,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         itemType="fee"
                                                         title="Fees"
                                                     />
-                                                </div>
+                                                </div> */}
 
                                                 {/* Discount Items */}
                                                 <div className="mb-6">
@@ -408,8 +408,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                     />
                                                 </div>
 
-                                                {/* Package Items */}
-                                                <div>
+                                                {/* Package Items - Hidden from UI */}
+                                                {/* <div>
                                                     <WorkOrderGenericItems
                                                         items={formData.packageItems}
                                                         onItemsChange={handlePackageItemsChange}
@@ -419,7 +419,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         itemType="package"
                                                         title="Packages"
                                                     />
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
                                     )}
@@ -489,38 +489,40 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                             created_at: new Date().toISOString(),
                                                             updated_at: new Date().toISOString(),
                                                         })),
-                                                        ...formData.serviceItems.map(item => ({
-                                                            id: item.id,
-                                                            work_order_id: '',
-                                                            shop_id: shopId || '',
-                                                            item_type: 'service' as const,
-                                                            description: item.description,
-                                                            quantity: item.quantity,
-                                                            unit_price: item.unit_price,
-                                                            total_price: item.total_price,
-                                                            unit_cost: item.unit_cost,
-                                                            category: item.category,
-                                                            notes: item.notes,
-                                                            active: item.active !== false,
-                                                            created_at: new Date().toISOString(),
-                                                            updated_at: new Date().toISOString(),
-                                                        })),
-                                                        ...formData.feeItems.map(item => ({
-                                                            id: item.id,
-                                                            work_order_id: '',
-                                                            shop_id: shopId || '',
-                                                            item_type: 'fee' as const,
-                                                            description: item.description,
-                                                            quantity: item.quantity,
-                                                            unit_price: item.unit_price,
-                                                            total_price: item.total_price,
-                                                            unit_cost: item.unit_cost,
-                                                            category: item.category,
-                                                            notes: item.notes,
-                                                            active: item.active !== false,
-                                                            created_at: new Date().toISOString(),
-                                                            updated_at: new Date().toISOString(),
-                                                        })),
+                                                        // Service items - hidden from UI
+                                                        // ...formData.serviceItems.map(item => ({
+                                                        //     id: item.id,
+                                                        //     work_order_id: '',
+                                                        //     shop_id: shopId || '',
+                                                        //     item_type: 'service' as const,
+                                                        //     description: item.description,
+                                                        //     quantity: item.quantity,
+                                                        //     unit_price: item.unit_price,
+                                                        //     total_price: item.total_price,
+                                                        //     unit_cost: item.unit_cost,
+                                                        //     category: item.category,
+                                                        //     notes: item.notes,
+                                                        //     active: item.active !== false,
+                                                        //     created_at: new Date().toISOString(),
+                                                        //     updated_at: new Date().toISOString(),
+                                                        // })),
+                                                        // Fee items - hidden from UI
+                                                        // ...formData.feeItems.map(item => ({
+                                                        //     id: item.id,
+                                                        //     work_order_id: '',
+                                                        //     shop_id: shopId || '',
+                                                        //     item_type: 'fee' as const,
+                                                        //     description: item.description,
+                                                        //     quantity: item.quantity,
+                                                        //     unit_price: item.unit_price,
+                                                        //     total_price: item.total_price,
+                                                        //     unit_cost: item.unit_cost,
+                                                        //     category: item.category,
+                                                        //     notes: item.notes,
+                                                        //     active: item.active !== false,
+                                                        //     created_at: new Date().toISOString(),
+                                                        //     updated_at: new Date().toISOString(),
+                                                        // })),
                                                         ...formData.discountItems.map(item => ({
                                                             id: item.id,
                                                             work_order_id: '',
@@ -537,23 +539,24 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                             created_at: new Date().toISOString(),
                                                             updated_at: new Date().toISOString(),
                                                         })),
-                                                        ...formData.packageItems.map(item => ({
-                                                            id: item.id,
-                                                            work_order_id: '',
-                                                            shop_id: shopId || '',
-                                                            item_type: 'package' as const,
-                                                            description: item.description,
-                                                            quantity: item.quantity,
-                                                            unit_price: item.unit_price,
-                                                            total_price: item.total_price,
-                                                            unit_cost: item.unit_cost,
-                                                            category: item.category,
-                                                            labor_hours: item.labor_hours,
-                                                            notes: item.notes,
-                                                            active: item.active !== false,
-                                                            created_at: new Date().toISOString(),
-                                                            updated_at: new Date().toISOString(),
-                                                        })),
+                                                        // Package items - hidden from UI
+                                                        // ...formData.packageItems.map(item => ({
+                                                        //     id: item.id,
+                                                        //     work_order_id: '',
+                                                        //     shop_id: shopId || '',
+                                                        //     item_type: 'package' as const,
+                                                        //     description: item.description,
+                                                        //     quantity: item.quantity,
+                                                        //     unit_price: item.unit_price,
+                                                        //     total_price: item.total_price,
+                                                        //     unit_cost: item.unit_cost,
+                                                        //     category: item.category,
+                                                        //     labor_hours: item.labor_hours,
+                                                        //     notes: item.notes,
+                                                        //     active: item.active !== false,
+                                                        //     created_at: new Date().toISOString(),
+                                                        //     updated_at: new Date().toISOString(),
+                                                        // })),
                                                     ]}
                                                 />
                                             </div>

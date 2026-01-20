@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Car, User, Phone, FileText } from 'lucide-react'
+import { Car, User, Phone, FileText, ExternalLink } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
 
@@ -11,18 +12,31 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     workOrder,
     isOpen,
     onClose,
-    onConfirm
+    onConfirm,
+    generatedInvoiceNumber
 }) => {
+    const router = useRouter()
+    // Show button if work order has invoice_id OR if an invoice was just generated
+    const hasInvoice = !!workOrder.invoice_id || !!generatedInvoiceNumber
+    const invoiceNumber = workOrder.invoice_id || generatedInvoiceNumber
+
     const handleCompleteWithoutInvoice = () => {
         // No message sent, no invoice generated
         onConfirm(false, undefined, false, false)
-        onClose()
+        // Modal will be closed by parent after completion
     }
 
     const handleCompleteWithInvoice = () => {
         // No message sent, invoice generated
+        // Don't close modal here - parent will keep it open to show "Go to Invoice" button
         onConfirm(false, undefined, false, true)
-        onClose()
+    }
+
+    const handleGoToInvoice = () => {
+        if (invoiceNumber) {
+            router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
+            onClose()
+        }
     }
 
     const vehicleInfo = workOrder.vehicle ? 
@@ -167,21 +181,42 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                 </div>
 
                 <DialogFooter className="flex-shrink-0 flex gap-3 pt-4 border-t border-border dark:border-[#2a2a2a]">
-                    <Button
-                        variant="outline"
-                        onClick={handleCompleteWithoutInvoice}
-                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
-                    >
-                        Complete Without Invoice
-                    </Button>
-                    
-                    <Button
-                        onClick={handleCompleteWithInvoice}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Complete With Invoice
-                    </Button>
+                    {hasInvoice ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={onClose}
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
+                            >
+                                Close
+                            </Button>
+                            <Button
+                                onClick={handleGoToInvoice}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Go to Invoice
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={handleCompleteWithoutInvoice}
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
+                            >
+                                Complete Without Invoice
+                            </Button>
+                            
+                            <Button
+                                onClick={handleCompleteWithInvoice}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Complete With Invoice
+                            </Button>
+                        </>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

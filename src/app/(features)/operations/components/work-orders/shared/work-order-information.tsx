@@ -219,11 +219,6 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                             readOnly={!isEditing}
                             placeholder={isEditing ? "What does the customer want done?..." : ""}
                         />
-                        {isEditing && (
-                            <p className="text-xs text-muted-foreground dark:text-gray-500 mt-1">
-                                💡 Adding detailed customer requests helps the AI better understand and assist with this work order
-                            </p>
-                        )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
