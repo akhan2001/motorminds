@@ -19,6 +19,7 @@ export function useWorkOrderPageState(
     const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
     const [isStatusTrackersModalOpen, setIsStatusTrackersModalOpen] = useState(false)
     const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
+    const [isReadyModalOpen, setIsReadyModalOpen] = useState(false)
 
     // View state
     const [isCompactView, setIsCompactView] = useState(false)
@@ -26,6 +27,7 @@ export function useWorkOrderPageState(
     // Selected work order states
     const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrderKanbanItem | null>(null)
     const [completionWorkOrder, setCompletionWorkOrder] = useState<WorkOrderWithDetails | null>(null)
+    const [readyWorkOrder, setReadyWorkOrder] = useState<WorkOrderWithDetails | null>(null)
 
     // Handle URL parameter changes to open/close modal
     useEffect(() => {
@@ -104,6 +106,20 @@ export function useWorkOrderPageState(
         }
     }
 
+    const handleReadyModalClose = () => {
+        setIsReadyModalOpen(false)
+        setReadyWorkOrder(null)
+    }
+
+    const handleWorkOrderReadyAttempt = (item: WorkOrderKanbanItem) => {
+        // Find the full work order details from the workOrders array
+        const fullWorkOrder = workOrders?.find(wo => wo.id === item.id)
+        if (fullWorkOrder) {
+            setReadyWorkOrder(fullWorkOrder)
+            setIsReadyModalOpen(true)
+        }
+    }
+
     return {
         // Modal states
         isCreateModalOpen,
@@ -111,6 +127,7 @@ export function useWorkOrderPageState(
         isTemplatesModalOpen,
         isStatusTrackersModalOpen,
         isCompletionModalOpen,
+        isReadyModalOpen,
 
         // View state
         isCompactView,
@@ -118,6 +135,7 @@ export function useWorkOrderPageState(
         // Selected work orders
         selectedWorkOrder,
         completionWorkOrder,
+        readyWorkOrder,
 
         // Handlers
         handleCardClick,
@@ -131,6 +149,8 @@ export function useWorkOrderPageState(
         handleStatusTrackersModalClose,
         handleCompletionModalClose,
         handleWorkOrderCompletionAttempt,
+        handleReadyModalClose,
+        handleWorkOrderReadyAttempt,
     }
 }
 

@@ -222,6 +222,22 @@ export function WorkOrdersPageContent() {
         pageState.handleCompletionModalClose()
     }
 
+    // Handle ready confirmation
+    const handleReadyConfirm = async (sendMessage: boolean, customMessage?: string) => {
+        if (!pageState.readyWorkOrder) return
+
+        try {
+            await operations.handleReadyConfirm(
+                pageState.readyWorkOrder,
+                sendMessage,
+                customMessage
+            )
+        } catch (error: any) {
+            console.error('Error marking work order as ready:', error)
+            toast.error(error?.message || 'Failed to mark work order as ready')
+        }
+    }
+
     // Loading state - show while auth is loading
     if (authLoading) {
         return (
@@ -314,11 +330,13 @@ export function WorkOrdersPageContent() {
             kanbanData={kanbanData}
             selectedWorkOrder={pageState.selectedWorkOrder}
             completionWorkOrder={pageState.completionWorkOrder}
+            readyWorkOrder={pageState.readyWorkOrder}
             shopId={shopId}
             isCompactView={pageState.isCompactView}
             isModalOpen={pageState.isModalOpen}
             isCreateModalOpen={pageState.isCreateModalOpen}
             isCompletionModalOpen={pageState.isCompletionModalOpen}
+            isReadyModalOpen={pageState.isReadyModalOpen}
             isTemplatesModalOpen={pageState.isTemplatesModalOpen}
             isStatusTrackersModalOpen={pageState.isStatusTrackersModalOpen}
             onToggleView={pageState.handleToggleView}
@@ -336,6 +354,9 @@ export function WorkOrdersPageContent() {
             onCompletionModalClose={pageState.handleCompletionModalClose}
             onCompletionConfirm={handleCompletionConfirmWithSync}
             onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
+            onReadyModalClose={pageState.handleReadyModalClose}
+            onReadyConfirm={handleReadyConfirm}
+            onWorkOrderReadyAttempt={pageState.handleWorkOrderReadyAttempt}
             refetch={refetch}
         />
 
