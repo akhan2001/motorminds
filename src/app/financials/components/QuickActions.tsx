@@ -4,7 +4,7 @@ import {
 	FileText,
 	Droplet,
 	Gauge,
-	Timer,
+	Trash,
 } from "lucide-react";
 
 interface ActionCardProps {
@@ -88,9 +88,9 @@ export default function QuickActions() {
 					isActive={true}
 				/>
 				<ActionCard
-					title="Job Efficiency"
-					description="Measure estimated vs actual labor performance"
-					icon={Timer}
+					title="Deleted Records"
+					description="Track deleted work orders / invoices"
+					icon={Trash}
 					isActive={false}
 				/>
 			</div>

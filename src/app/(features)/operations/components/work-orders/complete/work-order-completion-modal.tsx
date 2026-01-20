@@ -12,26 +12,29 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     workOrder,
     isOpen,
     onClose,
-    onConfirm
+    onConfirm,
+    generatedInvoiceNumber
 }) => {
     const router = useRouter()
-    const hasInvoice = !!workOrder.invoice_id
+    // Show button if work order has invoice_id OR if an invoice was just generated
+    const hasInvoice = !!workOrder.invoice_id || !!generatedInvoiceNumber
+    const invoiceNumber = workOrder.invoice_id || generatedInvoiceNumber
 
     const handleCompleteWithoutInvoice = () => {
         // No message sent, no invoice generated
         onConfirm(false, undefined, false, false)
-        onClose()
+        // Modal will be closed by parent after completion
     }
 
     const handleCompleteWithInvoice = () => {
         // No message sent, invoice generated
+        // Don't close modal here - parent will keep it open to show "Go to Invoice" button
         onConfirm(false, undefined, false, true)
-        onClose()
     }
 
     const handleGoToInvoice = () => {
-        if (workOrder.invoice_id) {
-            router.push(`/financials/invoices?invoice_number=${workOrder.invoice_id}`)
+        if (invoiceNumber) {
+            router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
             onClose()
         }
     }

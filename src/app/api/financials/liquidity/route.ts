@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing shop_id parameter" }, { status: 400 })
     }
 
-    // Fetch all unpaid/partially paid invoices for the given shop using invoices_table
-    // Include invoices that have outstanding balance > 0
+    // Fetch all non-paid invoices for the given shop using invoices_table
+    // Include invoices that have outstanding balance > 0 and status != 'paid'
     const { data: unpaidInvoices, error: invoiceError } = await supabase
       .from("invoices_table")
       .select(`
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         walk_in_vehicle_info
       `)
       .eq("shop_id", shopId)
-      .in("status", ["unpaid", "partially_paid", "overdue", "sent"])
+      .neq("status", "paid") // Exclude only "paid" status - include all other statuses
       .or("archived.eq.false,archived.is.null")
       .gt("outstanding_balance", 0)
       .order("issue_date", { ascending: true })
