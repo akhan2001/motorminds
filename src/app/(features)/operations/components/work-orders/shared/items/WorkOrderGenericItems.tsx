@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, DollarSign, Tag, Package as PackageIcon } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ interface WorkOrderGenericItemsProps {
     itemType: 'service' | 'fee' | 'discount' | 'package';
     title: string;
     icon?: React.ComponentType<{ className?: string }>;
+    readOnly?: boolean; // If true, hide add button and make fields read-only, but allow deletion
 }
 
 export function WorkOrderGenericItems({ 
@@ -46,7 +48,8 @@ export function WorkOrderGenericItems({
     isEditing = true,
     itemType,
     title,
-    icon: Icon = DollarSign
+    icon: Icon = DollarSign,
+    readOnly = false
 }: WorkOrderGenericItemsProps) {
 
     const { shopId } = useAuth();
@@ -136,6 +139,7 @@ export function WorkOrderGenericItems({
     };
 
     const updateItem = (id: string, field: keyof GenericFormItem, value: any) => {
+        if (readOnly) return; // Don't allow updates in read-only mode
         onItemsChange(items.map(item => {
             if (item.id === id) {
                 const updated = { ...item, [field]: value };
@@ -159,8 +163,14 @@ export function WorkOrderGenericItems({
                     <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     <h4 className="text-base font-medium text-foreground">{title}</h4>
                     <span className="text-sm text-muted-foreground">({items.length})</span>
+                    {readOnly && (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                            Read-only
+                        </Badge>
+                    )}
                 </div>
-                {isEditing && (
+                {/* Only show Add button if editing and not read-only */}
+                {isEditing && !readOnly && (
                     <Button
                         type="button"
                         onClick={addItem}
@@ -213,8 +223,9 @@ export function WorkOrderGenericItems({
                                         shopId={shopId || ''}
                                         itemType={itemType}
                                         value={item.description}
-                                        onChange={(value) => updateItem(item.id, 'description', value)}
+                                        onChange={(value) => !readOnly && updateItem(item.id, 'description', value)}
                                         onTemplateSelect={async (template: WorkOrderItemTemplate) => {
+                                            if (readOnly) return; // Don't allow template selection in read-only mode
                                             // Create updated item with template data
                                             let unitPrice = template.unit_price;
                                             // For discounts, ensure the unit price is negative
@@ -261,9 +272,9 @@ export function WorkOrderGenericItems({
                                             }
                                         }}
                                         placeholder={`Type here to search for a ${itemType} template...`}
-                                        disabled={!isEditing}
+                                        disabled={!isEditing || readOnly}
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
-                                            isEditing 
+                                            isEditing && !readOnly
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
@@ -279,11 +290,11 @@ export function WorkOrderGenericItems({
                                         min="0"
                                         step="1"
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
-                                            isEditing 
+                                            isEditing && !readOnly
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
-                                        disabled={!isEditing}  
+                                        disabled={!isEditing || readOnly}  
                                     />
                                 </div>
 
@@ -299,11 +310,11 @@ export function WorkOrderGenericItems({
                                         min={itemType === 'discount' ? undefined : "0"}
                                         step="0.01"
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
-                                            isEditing 
+                                            isEditing && !readOnly
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
-                                        disabled={!isEditing}
+                                        disabled={!isEditing || readOnly}
                                     />
                                 </div>
 
@@ -316,11 +327,11 @@ export function WorkOrderGenericItems({
                                         min="0"
                                         step="0.01"
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
-                                            isEditing 
+                                            isEditing && !readOnly
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
-                                        disabled={!isEditing}
+                                        disabled={!isEditing || readOnly}
                                         placeholder="0.00"
                                     />
                                 </div>
@@ -332,11 +343,11 @@ export function WorkOrderGenericItems({
                                         value={item.category || ''}
                                         onChange={(e) => updateItem(item.id, 'category', e.target.value)}
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
-                                            isEditing 
+                                            isEditing && !readOnly
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
-                                        disabled={!isEditing}  
+                                        disabled={!isEditing || readOnly}  
                                         placeholder="e.g., engine, transmission"
                                     />
                                 </div>
@@ -352,11 +363,11 @@ export function WorkOrderGenericItems({
                                             min="0"
                                             step="0.25"
                                             className={`text-foreground dark:text-white border-border dark:border-[#333333] mt-1 ${
-                                            isEditing 
+                                            isEditing && !readOnly
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         }`}
-                                            disabled={!isEditing}
+                                            disabled={!isEditing || readOnly}
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -369,7 +380,7 @@ export function WorkOrderGenericItems({
                                         onChange={(e) => updateItem(item.id, 'notes', e.target.value)}
                                         placeholder="Additional notes..."
                                         className="bg-white dark:bg-background text-foreground border-border mt-1 min-h-[60px] max-h-[120px]"
-                                        disabled={!isEditing}
+                                        disabled={!isEditing || readOnly}
                                     />
                                 </div>
 
