@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
 	ArrowRight,
 	FileText,
-	Users,
 	Droplet,
 	Gauge,
 	Timer,
@@ -79,13 +78,6 @@ export default function QuickActions() {
 					description="Monitor unpaid invoices and aging accounts"
 					href="/financials/liquidity"
 					icon={Droplet}
-					isActive={true}
-				/>
-				<ActionCard
-					title="Payroll Analytics"
-					description="Analyze payroll costs and revenue per employee"
-					href="/financials/payroll"
-					icon={Users}
 					isActive={true}
 				/>
 				<ActionCard

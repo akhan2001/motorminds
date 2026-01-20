@@ -83,19 +83,48 @@ export default function AddExpenseModal({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // Auto-calculate tax and total when subtotal or tax toggle changes
+    // Track which field was last edited to determine calculation direction
+    const [lastEditedField, setLastEditedField] = useState<'subtotal' | 'total'>('subtotal');
+
+    // Calculate based on which field was last edited
     useEffect(() => {
-        const sub = parseFloat(subtotal) || 0;
-        if (includeTax && sub > 0) {
-            const tax = sub * HST_RATE;
-            const total = sub + tax;
-            setTaxAmount(tax.toFixed(2));
-            setTotalAmount(total.toFixed(2));
-        } else {
-            setTaxAmount("0.00");
-            setTotalAmount(sub.toFixed(2));
+        if (lastEditedField === 'subtotal') {
+            // Calculate total from subtotal
+            const sub = parseFloat(subtotal) || 0;
+            if (includeTax && sub > 0) {
+                const tax = sub * HST_RATE;
+                const total = sub + tax;
+                setTaxAmount(tax.toFixed(2));
+                setTotalAmount(total.toFixed(2));
+            } else {
+                setTaxAmount("0.00");
+                setTotalAmount(sub.toFixed(2));
+            }
         }
-    }, [subtotal, includeTax]);
+    }, [subtotal, includeTax, lastEditedField]);
+
+    // Handle total amount change - reverse calculate subtotal
+    const handleTotalChange = (value: string) => {
+        setLastEditedField('total');
+        setTotalAmount(value);
+        
+        const total = parseFloat(value) || 0;
+        if (includeTax && total > 0) {
+            const sub = total / (1 + HST_RATE);
+            const tax = sub * HST_RATE; // Always calculate HST as exactly 13% of subtotal
+            setSubtotal(sub.toFixed(2));
+            setTaxAmount(tax.toFixed(2));
+        } else {
+            setSubtotal(value);
+            setTaxAmount("0.00");
+        }
+    };
+
+    // Handle subtotal change
+    const handleSubtotalChange = (value: string) => {
+        setLastEditedField('subtotal');
+        setSubtotal(value);
+    };
 
     const handleSubmit = async () => {
         setError("");
@@ -141,6 +170,7 @@ export default function AddExpenseModal({
             setTaxAmount("");
             setTotalAmount("");
             setIncludeTax(true);
+            setLastEditedField('subtotal');
             setCategory("Parts/Inventory");
             setExpenseDate(new Date().toISOString().split("T")[0]);
             setPaymentMethod("credit_card");
@@ -264,7 +294,7 @@ export default function AddExpenseModal({
                                     type="number"
                                     placeholder="0.00"
                                     value={subtotal}
-                                    onChange={(e) => setSubtotal(e.target.value)}
+                                    onChange={(e) => handleSubtotalChange(e.target.value)}
                                     className="bg-white dark:bg-background border-border text-foreground"
                                     min="0"
                                     step="0.01"
@@ -285,15 +315,17 @@ export default function AddExpenseModal({
                             </div>
                             <div>
                                 <Label htmlFor="totalAmount" className="text-muted-foreground text-xs">
-                                    Total
+                                    Total <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
                                     id="totalAmount"
                                     type="number"
                                     placeholder="0.00"
                                     value={totalAmount}
-                                    readOnly
-                                    className="bg-muted/50 dark:bg-muted/20 border-border text-foreground font-semibold cursor-not-allowed"
+                                    onChange={(e) => handleTotalChange(e.target.value)}
+                                    className="bg-white dark:bg-background border-border text-foreground font-semibold"
+                                    min="0"
+                                    step="0.01"
                                 />
                             </div>
                         </div>

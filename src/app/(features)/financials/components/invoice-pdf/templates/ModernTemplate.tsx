@@ -58,11 +58,8 @@ export const ModernTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
                         style={styles.logo}
                         cache={false}
                     />
-                ) : (
-                    <View style={styles.logoBox}>
-                        <Text style={styles.logoText}>{shop.shop_name || 'SHOP NAME'}</Text>
-                    </View>
-                )}
+                ) : null}
+                <Text style={styles.companyName}>{shop.shop_name || 'SHOP NAME'}</Text>
                 <Text style={styles.businessInfo}>{shop.shop_address || ''}</Text>
                 <Text style={styles.businessInfo}>{shop.shop_city ? `${shop.shop_city}, ${shop.shop_province || ''}` : ''}</Text>
                 <Text style={styles.businessInfo}>{formatPhoneNumber(shop.shop_phone) || ''}</Text>

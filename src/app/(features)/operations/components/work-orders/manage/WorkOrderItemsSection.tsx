@@ -64,7 +64,8 @@ export function WorkOrderItemsSection({
                 onItemDeleted={onItemDeleted}
             />
 
-            <WorkOrderGenericItems
+            {/* Services, Fees, and Packages are hidden from UI but backend functionality remains intact */}
+            {/* <WorkOrderGenericItems
                 items={itemsByType.services}
                 onItemsChange={(items) => onItemsChange('service', items)}
                 workOrderId={workOrderId}
@@ -73,9 +74,9 @@ export function WorkOrderItemsSection({
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
                 onItemDeleted={onItemDeleted}
-            />
+            /> */}
 
-            <WorkOrderGenericItems
+            {/* <WorkOrderGenericItems
                 items={itemsByType.fees}
                 onItemsChange={(items) => onItemsChange('fee', items)}
                 workOrderId={workOrderId}
@@ -84,7 +85,7 @@ export function WorkOrderItemsSection({
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
                 onItemDeleted={onItemDeleted}
-            />
+            /> */}
 
             <WorkOrderGenericItems
                 items={itemsByType.discounts}
@@ -97,7 +98,7 @@ export function WorkOrderItemsSection({
                 onItemDeleted={onItemDeleted}
             />
 
-            <WorkOrderGenericItems
+            {/* <WorkOrderGenericItems
                 items={itemsByType.packages}
                 onItemsChange={(items) => onItemsChange('package', items)}
                 workOrderId={workOrderId}
@@ -106,7 +107,7 @@ export function WorkOrderItemsSection({
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
                 onItemDeleted={onItemDeleted}
-            />
+            /> */}
         </div>
     )
 }

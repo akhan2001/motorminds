@@ -289,7 +289,13 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                     {/* Header */}
                     <View style={styles.header}>
                         <View>
-                            <Text style={styles.shopName}>{shop.shop_name}</Text>
+                            {shop.logo_image_url && (
+                                <Image
+                                    src={shop.logo_image_url}
+                                    style={styles.logo}
+                                    cache={false}
+                                />
+                            )}
                         </View>
                         <View style={styles.shopInfo}>
                             <Text style={styles.shopName}>{shop.shop_name}</Text>

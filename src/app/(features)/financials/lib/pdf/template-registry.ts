@@ -16,11 +16,11 @@ export const TEMPLATE_METADATA: Record<string, TemplateMetadata> = {
         name: 'Good Guyz Garage',
         description: 'Classic automotive garage invoice with Canadian branding',
     },
-    modern: {
-        id: 'modern',
-        name: 'Modern',
-        description: 'Contemporary design with bold typography',
-    },
+    // modern: {
+    //     id: 'modern',
+    //     name: 'Modern',
+    //     description: 'Contemporary design with bold typography',
+    // },
     // Future templates can be added here:
     // modern: {
     //     id: 'modern',

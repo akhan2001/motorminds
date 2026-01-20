@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, DollarSign, Users } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { SparkLineChart } from '@tremor/react';
 
 // Simple sparkline component
@@ -70,31 +70,27 @@ interface TrendData {
 
 interface MainSummaryCardsProps {
 	cashflowData: any;
-	payrollData: any;
 	trendData: TrendData[];
 }
 
-export default function MainSummaryCards({ cashflowData, payrollData, trendData }: MainSummaryCardsProps) {
+export default function MainSummaryCards({ cashflowData, trendData }: MainSummaryCardsProps) {
 	// Calculate sparkline data from trend data
 	const revenueSparkline = trendData ? trendData.slice(-7).map(d => d.revenue || 0) : [];
-	const expenseSparkline = trendData ? trendData.slice(-7).map(d => d.cost_of_goods_sold || 0) : [];
-
-	// Calculate net cash flow
-	const netCashFlow = (cashflowData?.total_inflow || 0) - (cashflowData?.total_outflow || 0);
-	const isPositive = netCashFlow >= 0;
 
 	// Prepare daily metrics
 	const dailyRevenue = (cashflowData?.revenue || 0) / 30;
-	const dailyPayroll = (payrollData?.total_monthly_payroll || 0) / 30;
-	const dailyNetCash = netCashFlow / 30;
+
+	// Calculate net profit
+	const netProfit = (cashflowData?.revenue || 0) - (cashflowData?.total_costs || 0);
 
 	return (
-		<div className="flex md:grid md:grid-cols-4 gap-6 mb-8 overflow-x-auto snap-x">
+		<div className="flex md:grid md:grid-cols-3 gap-6 mb-8 overflow-x-auto snap-x">
 			<SummaryCard
 				title="Net Profit"
-				value={`$${(cashflowData?.revenue - cashflowData?.total_costs).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-				subtitle="Revenue - (Costs + COGS)"
+				value={`$${netProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+				subtitle="Revenue - Operating Costs"
 				icon={TrendingUp}
+				positive={netProfit >= 0}
 				className="min-w-[260px] snap-start"
 			/>
 
@@ -113,16 +109,6 @@ export default function MainSummaryCards({ cashflowData, payrollData, trendData 
 				value={`$${(cashflowData?.total_costs || 0).toLocaleString()}`}
 				subtitle={`COGS: $${(cashflowData?.cogs || 0).toLocaleString()}`}
 				icon={TrendingDown}
-				positive={false}
-				className="min-w-[260px] snap-start"
-			/>
-
-			<SummaryCard
-				title="Monthly Payroll"
-				value={`$${(payrollData?.total_monthly_payroll || 0).toLocaleString()}`}
-				subtitle={`Daily avg: $${Math.round(dailyPayroll).toLocaleString()} (${payrollData?.employee_count || 0} emp)`}
-				icon={Users}
-				sparklineData={expenseSparkline}
 				positive={false}
 				className="min-w-[260px] snap-start"
 			/>
