@@ -19,6 +19,10 @@ const WorkOrderCompletionModal = dynamic(
     () => import('../components/work-orders/complete').then(m => ({ default: m.WorkOrderCompletionModal })),
     { ssr: false }
 )
+const WorkOrderReadyModal = dynamic(
+    () => import('../components/work-orders/ready').then(m => ({ default: m.WorkOrderReadyModal })),
+    { ssr: false }
+)
 const WorkOrderItemTemplatesModal = dynamic(
     () => import('../components/work-order-items/templates/work-order-item-templates-modal').then(m => ({ default: m.WorkOrderItemTemplatesModal })),
     { ssr: false }
@@ -45,6 +49,7 @@ interface WorkOrdersPageViewProps {
     kanbanData: WorkOrderKanbanColumn[]
     selectedWorkOrder: WorkOrderKanbanItem | null
     completionWorkOrder: WorkOrderWithDetails | null
+    readyWorkOrder: WorkOrderWithDetails | null
     shopId: string
 
     // State
@@ -52,6 +57,7 @@ interface WorkOrdersPageViewProps {
     isModalOpen: boolean
     isCreateModalOpen: boolean
     isCompletionModalOpen: boolean
+    isReadyModalOpen: boolean
     isTemplatesModalOpen: boolean
     isStatusTrackersModalOpen: boolean
 
@@ -71,6 +77,9 @@ interface WorkOrdersPageViewProps {
     onCompletionModalClose: () => void
     onCompletionConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean, generateInvoice?: boolean) => Promise<void>
     onWorkOrderCompletionAttempt: (item: WorkOrderKanbanItem) => void
+    onReadyModalClose: () => void
+    onReadyConfirm: (sendMessage: boolean, customMessage?: string) => Promise<void>
+    onWorkOrderReadyAttempt: (item: WorkOrderKanbanItem) => void
     refetch: () => void
 }
 
@@ -83,11 +92,13 @@ export function WorkOrdersPageView({
     kanbanData,
     selectedWorkOrder,
     completionWorkOrder,
+    readyWorkOrder,
     shopId,
     isCompactView,
     isModalOpen,
     isCreateModalOpen,
     isCompletionModalOpen,
+    isReadyModalOpen,
     isTemplatesModalOpen,
     isStatusTrackersModalOpen,
     onToggleView,
@@ -105,6 +116,9 @@ export function WorkOrdersPageView({
     onCompletionModalClose,
     onCompletionConfirm,
     onWorkOrderCompletionAttempt,
+    onReadyModalClose,
+    onReadyConfirm,
+    onWorkOrderReadyAttempt,
     refetch,
 }: WorkOrdersPageViewProps) {
     return (
@@ -114,6 +128,7 @@ export function WorkOrdersPageView({
                 refetch()
             }}
             onWorkOrderCompletionAttempt={onWorkOrderCompletionAttempt}
+            onWorkOrderReadyAttempt={onWorkOrderReadyAttempt}
         >
             <div className="h-screen flex flex-col bg-background">
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -164,6 +179,18 @@ export function WorkOrdersPageView({
                             isOpen={isCompletionModalOpen}
                             onClose={onCompletionModalClose}
                             onConfirm={onCompletionConfirm}
+                        />
+                    </Suspense>
+                )}
+
+                {/* Work Order Ready Modal - Lazy loaded */}
+                {isReadyModalOpen && readyWorkOrder && (
+                    <Suspense fallback={<ModalSkeleton />}>
+                        <WorkOrderReadyModal
+                            workOrder={readyWorkOrder}
+                            isOpen={isReadyModalOpen}
+                            onClose={onReadyModalClose}
+                            onConfirm={onReadyConfirm}
                         />
                     </Suspense>
                 )}
