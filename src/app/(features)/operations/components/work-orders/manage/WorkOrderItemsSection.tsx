@@ -33,6 +33,11 @@ export function WorkOrderItemsSection({
     onItemSaved,
     onItemDeleted,
 }: WorkOrderItemsSectionProps) {
+    // Check if there are any legacy items that need to be shown for deletion
+    const hasLegacyServices = itemsByType.services.length > 0
+    const hasLegacyFees = itemsByType.fees.length > 0
+    const hasLegacyPackages = itemsByType.packages.length > 0
+
     return (
         <div className="bg-slate-50 dark:bg-[#131313] border border-border rounded-lg p-4 space-y-6">
             <h3 className="text-lg font-semibold text-foreground">Work Order Items</h3>
@@ -64,28 +69,35 @@ export function WorkOrderItemsSection({
                 onItemDeleted={onItemDeleted}
             />
 
-            {/* Services, Fees, and Packages are hidden from UI but backend functionality remains intact */}
-            {/* <WorkOrderGenericItems
-                items={itemsByType.services}
-                onItemsChange={(items) => onItemsChange('service', items)}
-                workOrderId={workOrderId}
-                itemType="service"
-                title="Services"
-                isEditing={isEditing}
-                onItemSaved={onItemSaved}
-                onItemDeleted={onItemDeleted}
-            /> */}
+            {/* Show legacy Services only if they exist - read-only with delete capability */}
+            {hasLegacyServices && (
+                <WorkOrderGenericItems
+                    items={itemsByType.services}
+                    onItemsChange={(items) => onItemsChange('service', items)}
+                    workOrderId={workOrderId}
+                    itemType="service"
+                    title="Services (Legacy)"
+                    isEditing={isEditing}
+                    onItemSaved={onItemSaved}
+                    onItemDeleted={onItemDeleted}
+                    readOnly={true}
+                />
+            )}
 
-            {/* <WorkOrderGenericItems
-                items={itemsByType.fees}
-                onItemsChange={(items) => onItemsChange('fee', items)}
-                workOrderId={workOrderId}
-                itemType="fee"
-                title="Fees"
-                isEditing={isEditing}
-                onItemSaved={onItemSaved}
-                onItemDeleted={onItemDeleted}
-            /> */}
+            {/* Show legacy Fees only if they exist - read-only with delete capability */}
+            {hasLegacyFees && (
+                <WorkOrderGenericItems
+                    items={itemsByType.fees}
+                    onItemsChange={(items) => onItemsChange('fee', items)}
+                    workOrderId={workOrderId}
+                    itemType="fee"
+                    title="Fees (Legacy)"
+                    isEditing={isEditing}
+                    onItemSaved={onItemSaved}
+                    onItemDeleted={onItemDeleted}
+                    readOnly={true}
+                />
+            )}
 
             <WorkOrderGenericItems
                 items={itemsByType.discounts}
@@ -98,16 +110,20 @@ export function WorkOrderItemsSection({
                 onItemDeleted={onItemDeleted}
             />
 
-            {/* <WorkOrderGenericItems
-                items={itemsByType.packages}
-                onItemsChange={(items) => onItemsChange('package', items)}
-                workOrderId={workOrderId}
-                itemType="package"
-                title="Packages"
-                isEditing={isEditing}
-                onItemSaved={onItemSaved}
-                onItemDeleted={onItemDeleted}
-            /> */}
+            {/* Show legacy Packages only if they exist - read-only with delete capability */}
+            {hasLegacyPackages && (
+                <WorkOrderGenericItems
+                    items={itemsByType.packages}
+                    onItemsChange={(items) => onItemsChange('package', items)}
+                    workOrderId={workOrderId}
+                    itemType="package"
+                    title="Packages (Legacy)"
+                    isEditing={isEditing}
+                    onItemSaved={onItemSaved}
+                    onItemDeleted={onItemDeleted}
+                    readOnly={true}
+                />
+            )}
         </div>
     )
 }
