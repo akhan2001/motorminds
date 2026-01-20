@@ -18,7 +18,6 @@ export default function Financials() {
 
     // State for holding fetched data
     const [cashflowData, setCashflowData] = useState({ revenue: 0, total_costs: 0, cogs: 0 });
-    const [payrollData, setPayrollData] = useState({ total_monthly_payroll: 0, employee_count: 0 });
     const [trendData, setTrendData] = useState([]);
 
     // Get shop_id on initial load
@@ -58,27 +57,16 @@ export default function Financials() {
             const end = endDate.toISOString().split('T')[0];
 
             try {
-                const [payrollRes, efficiencyRes] = await Promise.all([
-                    fetch(`/api/financials/payroll?shop_id=${shopId}`),
-                    fetch(`/api/financials/efficiency?shop_id=${shopId}&start_date=${start}&end_date=${end}`)
-                ]);
-
-                if (payrollRes.ok) {
-                    const data = await payrollRes.json();
-                    setPayrollData({
-                        total_monthly_payroll: data.totalMonthlyPayroll,
-                        employee_count: data.numberOfEmployees,
-                    });
-                }
+                const efficiencyRes = await fetch(`/api/financials/efficiency?shop_id=${shopId}&start_date=${start}&end_date=${end}`);
 
                 if (efficiencyRes.ok) {
                     const data = await efficiencyRes.json();
                     setCashflowData({
                         revenue: data.totalRevenue,
-                        total_costs: data.totalOperatingExpenses, // This now includes COGS from the API
-                        cogs: data.costBreakdown.cogs,
+                        total_costs: data.totalOperatingExpenses,
+                        cogs: data.costBreakdown?.cogs || 0,
                     });
-                    setTrendData(data.historicalData);
+                    setTrendData(data.historicalData || []);
                 }
 
             } catch (error) {
@@ -113,7 +101,6 @@ export default function Financials() {
 
                 <MainSummaryCards
                     cashflowData={cashflowData}
-                    payrollData={payrollData}
                     trendData={trendData}
                 />
 
