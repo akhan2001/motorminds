@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
 import { generateInvoicePDF, downloadPDF, getInvoiceFilename, generateInvoicePDFFromHTMLElement } from '../../lib/pdf/pdf-generator'
+import { prepareShopBrandingWithLogo } from '../../lib/pdf/logo-utils'
 import { TonyTemplatePreview } from '../invoice-preview/TonyTemplatePreview'
 
 interface InvoiceViewOnlyProps {
@@ -100,8 +101,10 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                 await generateInvoicePDFFromHTMLElement(pdfElementRef.current, invoice)
                 toast.success('Invoice PDF downloaded successfully')
             } else {
+                // Prepare shop branding with logo check from storage
+                const shop = await prepareShopBrandingWithLogo(shopInfo)
                 // For other templates, use React-PDF
-                const blob = await generateInvoicePDF(invoice, shopInfo, templateId)
+                const blob = await generateInvoicePDF(invoice, shop, templateId)
                 const filename = getInvoiceFilename(invoice)
                 downloadPDF(blob, filename)
                 toast.success('Invoice PDF downloaded successfully')

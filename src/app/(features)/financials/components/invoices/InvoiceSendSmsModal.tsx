@@ -10,6 +10,7 @@ import { formatPhoneNumber } from '@/utils/format-phone'
 import { formatCurrency } from '@/lib/utils/currency'
 import { useInvoiceSms } from '../../hooks/use-invoice-sms'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
+import { prepareShopBrandingWithLogo } from '../../lib/pdf/logo-utils'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import type { ShopBranding } from '../../types/invoice-pdf'
 
@@ -85,20 +86,8 @@ export const InvoiceSendSmsModal: React.FC<InvoiceSendSmsModalProps> = ({
             return
         }
 
-        // Convert shop info to ShopBranding format
-        const shop: ShopBranding = {
-            id: shopInfo.id,
-            shop_name: shopInfo.shop_name,
-            shop_owner: shopInfo.shop_owner,
-            shop_email: shopInfo.shop_email,
-            shop_phone: shopInfo.shop_phone,
-            shop_address: shopInfo.shop_address,
-            shop_city: shopInfo.shop_city,
-            shop_province: shopInfo.shop_province,
-            logo_image_url: shopInfo.logo_image_url,
-            business_number: shopInfo.business_number,
-            hst_number: shopInfo.hst_number
-        }
+        // Convert shop info to ShopBranding format with logo check from storage
+        const shop: ShopBranding = await prepareShopBrandingWithLogo(shopInfo)
 
         // Send SMS with PDF link
         await sendInvoiceSmsWithPdf(
