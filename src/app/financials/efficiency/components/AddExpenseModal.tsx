@@ -29,6 +29,22 @@ interface AddExpenseModalProps {
     shopId: string;
     onExpenseAdded: () => void;
     children: React.ReactNode;
+    /** Optional callback for work order context - receives expense data when saved */
+    onWorkOrderExpenseCreated?: (expenseData: {
+        cost_name: string;
+        amount: number;
+        subtotal: number;
+        category: string;
+        vendor: string | null;
+        invoice_number: string | null;
+        parts_description: string | null;
+        warranty: string | null;
+        notes: string | null;
+    }) => void;
+    /** Optional controlled open state */
+    open?: boolean;
+    /** Optional controlled onOpenChange handler */
+    onOpenChange?: (open: boolean) => void;
 }
 
 const PAYMENT_METHODS = [
@@ -60,8 +76,15 @@ export default function AddExpenseModal({
     shopId,
     onExpenseAdded,
     children,
+    onWorkOrderExpenseCreated,
+    open: controlledOpen,
+    onOpenChange: controlledOnOpenChange,
 }: AddExpenseModalProps) {
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    
+    // Use controlled state if provided, otherwise use internal state
+    const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+    const setIsOpen = controlledOnOpenChange || setInternalOpen;
     const [expenseName, setExpenseName] = useState("");
     const [subtotal, setSubtotal] = useState(""); // Pre-tax amount
     const [includeTax, setIncludeTax] = useState(true); // Default tax included
@@ -162,6 +185,26 @@ export default function AddExpenseModal({
             if (!response.ok) {
                 const errData = await response.json();
                 throw new Error(errData.error || "Failed to add expense");
+            }
+
+            // Prepare expense data for work order callback
+            const expenseData = {
+                cost_name: expenseName,
+                amount: parseFloat(totalAmount),
+                subtotal: parseFloat(subtotal),
+                category,
+                vendor: supplierId === 'custom' 
+                    ? customVendor.trim() || null 
+                    : suppliers.find(s => s.id === supplierId)?.name || null,
+                invoice_number: invoiceNumber.trim() || null,
+                parts_description: partsDescription.trim() || null,
+                warranty: warranty.trim() || null,
+                notes: notes.trim() || null,
+            };
+
+            // Call work order callback if provided (before resetting form)
+            if (onWorkOrderExpenseCreated) {
+                onWorkOrderExpenseCreated(expenseData);
             }
 
             // Reset form
