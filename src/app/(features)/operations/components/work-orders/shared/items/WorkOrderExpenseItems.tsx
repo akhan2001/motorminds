@@ -1,18 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
+import AddExpenseModal from "@/app/financials/efficiency/components/AddExpenseModal";
 
-import { Plus, Trash2, Receipt } from "lucide-react";
+import { Plus, Trash2, Receipt, ArrowUpRight } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
+import { WorkOrderItemCreateSchema } from "../../../../lib/validations/work-order-items";
 import { TemplateDropdown } from "../../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
 import { useAuth } from "../../../../hooks/use-auth";
@@ -42,21 +45,118 @@ export function WorkOrderExpenseItems({
     // Filter only active suppliers
     const activeSuppliers = suppliers.filter(supplier => supplier.status === 'active');
 
+    // Track which item's modal is open
+    const [expandingItemId, setExpandingItemId] = useState<string | null>(null);
+
+    // Helper function to validate and sanitize expense item data
+    const validateExpenseItem = (item: ExpenseFormItem): { valid: boolean; errors: string[]; sanitized?: ExpenseFormItem } => {
+        const errors: string[] = [];
+
+        // Validate description (required, 1-500 chars)
+        const description = item.description.trim();
+        if (!description) {
+            errors.push('Description is required');
+        } else if (description.length > 500) {
+            errors.push('Description must be 500 characters or less');
+        }
+
+        // Validate part_number (optional, max 100 chars)
+        if (item.part_number && item.part_number.length > 100) {
+            errors.push('Part number must be 100 characters or less');
+        }
+
+        // Validate quantity (must be positive)
+        if (item.quantity <= 0) {
+            errors.push('Quantity must be greater than 0');
+        }
+
+        // Validate unit_price (must be nonnegative)
+        if (item.unit_price < 0) {
+            errors.push('Unit price cannot be negative');
+        }
+
+        // Validate unit_cost (optional, must be nonnegative if provided)
+        if (item.unit_cost !== undefined && item.unit_cost !== null && item.unit_cost < 0) {
+            errors.push('Unit cost cannot be negative');
+        }
+
+        // Validate supplier (optional, max 200 chars)
+        if (item.supplier && item.supplier.length > 200) {
+            errors.push('Supplier must be 200 characters or less');
+        }
+
+        // Validate category (optional, max 100 chars)
+        if (item.category && item.category.length > 100) {
+            errors.push('Category must be 100 characters or less');
+        }
+
+        // Validate warranty_period (optional, max 50 chars)
+        if (item.warranty_period && item.warranty_period.length > 50) {
+            errors.push('Warranty period must be 50 characters or less');
+        }
+
+        // Validate notes (optional, max 1000 chars)
+        if (item.notes && item.notes.length > 1000) {
+            errors.push('Notes must be 1000 characters or less');
+        }
+
+        if (errors.length > 0) {
+            return { valid: false, errors };
+        }
+
+        // Return sanitized item with trimmed strings and proper defaults
+        const sanitized: ExpenseFormItem = {
+            ...item,
+            description: description,
+            part_number: item.part_number?.trim() || undefined,
+            quantity: item.quantity ?? 1,
+            unit_price: item.unit_price ?? 0,
+            unit_cost: item.unit_cost !== undefined && item.unit_cost !== null ? item.unit_cost : undefined,
+            supplier: item.supplier?.trim() || undefined,
+            category: item.category?.trim() || undefined,
+            warranty_period: item.warranty_period?.trim() || undefined,
+            notes: item.notes?.trim() || undefined,
+        };
+
+        return { valid: true, errors: [], sanitized };
+    };
+
     // Helper function to convert form item to service format
-    // Ensures ALL fields are included when saving
-    const convertToWorkOrderItem = (item: ExpenseFormItem): WorkOrderItemCreateData => ({
-        work_order_id: workOrderId!,
-        item_type: 'expense' as const,
-        description: item.description,
-        part_number: item.part_number || undefined,
-        quantity: item.quantity ?? 1, // Default to 1 if not set (matches DB default)
-        unit_price: item.unit_price ?? 0, // Default to 0 if not set (matches DB default, use ?? to preserve 0)
-        unit_cost: item.unit_cost !== undefined && item.unit_cost !== null ? item.unit_cost : undefined, // Preserve 0 values
-        supplier: item.supplier || undefined,
-        category: item.category || undefined,
-        warranty_period: item.warranty_period || undefined,
-        notes: item.notes || undefined,
-    });
+    // Ensures ALL fields are included when saving and validated
+    const convertToWorkOrderItem = (item: ExpenseFormItem): WorkOrderItemCreateData => {
+        // Validate and sanitize first
+        const validation = validateExpenseItem(item);
+        if (!validation.valid || !validation.sanitized) {
+            throw new Error(validation.errors.join(', '));
+        }
+
+        const sanitized = validation.sanitized;
+
+        // Convert to WorkOrderItemCreateData format
+        const itemData: WorkOrderItemCreateData = {
+            work_order_id: workOrderId!,
+            item_type: 'expense' as const,
+            description: sanitized.description,
+            part_number: sanitized.part_number || undefined,
+            quantity: sanitized.quantity,
+            unit_price: sanitized.unit_price,
+            unit_cost: sanitized.unit_cost !== undefined && sanitized.unit_cost !== null ? sanitized.unit_cost : undefined,
+            supplier: sanitized.supplier || undefined,
+            category: sanitized.category || undefined,
+            warranty_period: sanitized.warranty_period || undefined,
+            notes: sanitized.notes || undefined,
+        };
+
+        // Final validation using Zod schema
+        try {
+            return WorkOrderItemCreateSchema.parse(itemData);
+        } catch (validationError: any) {
+            const errorMessages = validationError.errors?.map((err: any) => 
+                `${err.path.join('.')}: ${err.message}`
+            ).join(', ') || validationError.message || 'Validation failed';
+            throw new Error(`Invalid expense item data: ${errorMessages}`);
+        }
+    };
 
     // Function to save item to database
     const saveItemToDatabase = async (item: ExpenseFormItem) => {
@@ -65,9 +165,10 @@ export function WorkOrderExpenseItems({
             return;
         }
 
-        // Only description is required for expense items
-        if (!item.description.trim()) {
-            toast.error('Description is required');
+        // Validate item before attempting to save
+        const validation = validateExpenseItem(item);
+        if (!validation.valid) {
+            toast.error(validation.errors.join(', '));
             return;
         }
 
@@ -139,7 +240,7 @@ export function WorkOrderExpenseItems({
             
             let updatedItem = { ...item };
             
-            // Convert string values to numbers for numeric fields
+            // Convert string values to numbers for numeric fields with validation
             if (field === 'quantity' || field === 'unit_price' || field === 'unit_cost') {
                 if (typeof value === 'string') {
                     // Handle empty string as undefined for optional fields
@@ -162,12 +263,76 @@ export function WorkOrderExpenseItems({
                                 updatedItem.unit_price = 0;
                             }
                         } else {
-                            (updatedItem as any)[field] = parsed;
+                            // Validate numeric constraints
+                            if (field === 'quantity' && parsed <= 0) {
+                                // Quantity must be positive
+                                updatedItem.quantity = 1;
+                                toast.error('Quantity must be greater than 0');
+                            } else if ((field === 'unit_price' || field === 'unit_cost') && parsed < 0) {
+                                // Prices must be nonnegative
+                                (updatedItem as any)[field] = 0;
+                                toast.error(`${field === 'unit_price' ? 'Unit price' : 'Unit cost'} cannot be negative`);
+                            } else {
+                                (updatedItem as any)[field] = parsed;
+                            }
                         }
                     }
                 } else {
-                    (updatedItem as any)[field] = value;
+                    // Validate numeric constraints for direct number values
+                    if (field === 'quantity' && value <= 0) {
+                        updatedItem.quantity = 1;
+                        toast.error('Quantity must be greater than 0');
+                    } else if ((field === 'unit_price' || field === 'unit_cost') && value < 0) {
+                        (updatedItem as any)[field] = 0;
+                        toast.error(`${field === 'unit_price' ? 'Unit price' : 'Unit cost'} cannot be negative`);
+                    } else {
+                        (updatedItem as any)[field] = value;
+                    }
                 }
+            } else if (typeof value === 'string') {
+                // Validate string field lengths according to schema
+                const stringValue = value;
+                let finalValue = stringValue;
+
+                if (field === 'description') {
+                    // Description: max 500 chars (required, but we allow empty during editing)
+                    if (stringValue.length > 500) {
+                        finalValue = stringValue.substring(0, 500);
+                        toast.error('Description limited to 500 characters');
+                    }
+                } else if (field === 'part_number') {
+                    // Part number: max 100 chars
+                    if (stringValue.length > 100) {
+                        finalValue = stringValue.substring(0, 100);
+                        toast.error('Part number limited to 100 characters');
+                    }
+                } else if (field === 'supplier') {
+                    // Supplier: max 200 chars
+                    if (stringValue.length > 200) {
+                        finalValue = stringValue.substring(0, 200);
+                        toast.error('Supplier limited to 200 characters');
+                    }
+                } else if (field === 'category') {
+                    // Category: max 100 chars
+                    if (stringValue.length > 100) {
+                        finalValue = stringValue.substring(0, 100);
+                        toast.error('Category limited to 100 characters');
+                    }
+                } else if (field === 'warranty_period') {
+                    // Warranty period: max 50 chars
+                    if (stringValue.length > 50) {
+                        finalValue = stringValue.substring(0, 50);
+                        toast.error('Warranty period limited to 50 characters');
+                    }
+                } else if (field === 'notes') {
+                    // Notes: max 1000 chars
+                    if (stringValue.length > 1000) {
+                        finalValue = stringValue.substring(0, 1000);
+                        toast.error('Notes limited to 1000 characters');
+                    }
+                }
+
+                (updatedItem as any)[field] = finalValue;
             } else {
                 (updatedItem as any)[field] = value;
             }
@@ -195,6 +360,74 @@ export function WorkOrderExpenseItems({
         onItemsChange(updatedItems);
     };
 
+    // Handler to convert modal expense data to ExpenseFormItem and update the item
+    const handleExpenseFromModal = (expenseData: {
+        cost_name: string;
+        amount: number;
+        subtotal: number;
+        category: string;
+        vendor: string | null;
+        invoice_number: string | null;
+        parts_description: string | null;
+        warranty: string | null;
+        notes: string | null;
+    }) => {
+        if (!expandingItemId) return;
+
+        // Find the item being expanded
+        const item = items.find(i => i.id === expandingItemId);
+        if (!item) return;
+
+        // Combine notes from parts_description and notes
+        const combinedNotes = [
+            expenseData.parts_description,
+            expenseData.notes
+        ].filter(Boolean).join('\n') || '';
+
+        // Convert modal data to ExpenseFormItem format with validation
+        const updatedItem: ExpenseFormItem = {
+            ...item,
+            description: expenseData.cost_name.trim().substring(0, 500), // Enforce max 500 chars
+            unit_price: Math.max(0, expenseData.amount), // Ensure nonnegative
+            total_price: Math.max(0, expenseData.amount),
+            unit_cost: expenseData.subtotal && expenseData.subtotal > 0 
+                ? Math.max(0, expenseData.subtotal) 
+                : undefined, // Ensure nonnegative if provided
+            total_cost: expenseData.subtotal && expenseData.subtotal > 0 
+                ? Math.max(0, expenseData.subtotal) 
+                : undefined,
+            category: expenseData.category?.trim().substring(0, 100) || undefined, // Enforce max 100 chars
+            supplier: expenseData.vendor?.trim().substring(0, 200) || undefined, // Enforce max 200 chars
+            warranty_period: expenseData.warranty?.trim().substring(0, 50) || undefined, // Enforce max 50 chars
+            part_number: expenseData.invoice_number?.trim().substring(0, 100) || undefined, // Enforce max 100 chars
+            notes: combinedNotes.trim().substring(0, 1000) || undefined, // Enforce max 1000 chars
+        };
+
+        // Validate the updated item
+        const validation = validateExpenseItem(updatedItem);
+        if (!validation.valid) {
+            toast.error(`Invalid expense data: ${validation.errors.join(', ')}`);
+            setExpandingItemId(null);
+            return;
+        }
+
+        // Use sanitized version if available
+        const finalItem = validation.sanitized || updatedItem;
+
+        // Update the item in the list
+        const updatedItems = items.map(i => 
+            i.id === expandingItemId ? finalItem : i
+        );
+        onItemsChange(updatedItems);
+
+        // Auto-save to database if workOrderId exists
+        if (workOrderId) {
+            saveItemToDatabase(finalItem);
+        }
+
+        setExpandingItemId(null);
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -219,16 +452,48 @@ export function WorkOrderExpenseItems({
                                     <h4 className="text-sm font-medium text-orange-600 dark:text-orange-400">Expense Item {index + 1}</h4>
                                 </div>
                                 {isEditing && (
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeItem(item.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center gap-1">
+                                        {/* Expand Button - Opens AddExpenseModal */}
+                                        <AddExpenseModal
+                                            shopId={shopId || ''}
+                                            onExpenseAdded={() => {}} // Empty callback since we use onWorkOrderExpenseCreated
+                                            onWorkOrderExpenseCreated={handleExpenseFromModal}
+                                            open={expandingItemId === item.id}
+                                            onOpenChange={(open) => {
+                                                if (!open) {
+                                                    setExpandingItemId(null);
+                                                } else {
+                                                    setExpandingItemId(item.id);
+                                                }
+                                            }}
+                                        >
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
+                                                title="Expand to detailed expense form"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setExpandingItemId(item.id);
+                                                }}
+                                            >
+                                                <ArrowUpRight className="h-4 w-4" />
+                                            </Button>
+                                        </AddExpenseModal>
+                                        
+                                        {/* Delete Button */}
+                                        <Button
+                                            type="button"
+                                            onClick={() => removeItem(item.id)}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
 
