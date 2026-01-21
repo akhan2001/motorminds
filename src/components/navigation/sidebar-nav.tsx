@@ -1,35 +1,51 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { 
-	ChevronRight,
-	PanelLeftDashed
-} from "lucide-react"
-import { sidebarNavSections, type NavSection } from "@/data/configs/sidebar-navigation"
+import { ChevronRight, PanelLeftDashed } from "lucide-react"
+import { sidebarNavSections } from "@/data/configs/sidebar-navigation"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip"
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useLocalStorage } from "@/hooks/use-local-storage"
 
-type SidebarBehavior = "expandable" | "open" | "closed"
+export type SidebarBehaviourType = "expandable" | "open" | "closed"
+export const DEFAULT_SIDEBAR_BEHAVIOR: SidebarBehaviourType = "expandable"
+export const SIDEBAR_BEHAVIOR_KEY = "SIDEBAR_BEHAVIOR"
 
 interface SidebarNavProps {
 	userRole?: string
 	isOpen: boolean
 	setOpen: (open: boolean) => void
-	behavior: SidebarBehavior
-	onBehaviorChange: () => void
 }
 
-export function SidebarNav({ userRole, isOpen, setOpen, behavior, onBehaviorChange }: SidebarNavProps) {
+export function SidebarNav({ isOpen, setOpen }: SidebarNavProps) {
 	const router = useRouter()
 	const pathname = usePathname()
+
+	const [sidebarBehaviour, setSidebarBehaviour] = useLocalStorage<SidebarBehaviourType>(
+		SIDEBAR_BEHAVIOR_KEY,
+		DEFAULT_SIDEBAR_BEHAVIOR
+	)
+
+	const sidebarBehaviourRef = useRef(sidebarBehaviour)
+	const dropdownOpenRef = useRef(false)
+	sidebarBehaviourRef.current = sidebarBehaviour
+
+	// Sync localStorage behavior with UI state (locked when 'open' or 'closed')
+	useEffect(() => {
+		if (sidebarBehaviour === "open") setOpen(true)
+		if (sidebarBehaviour === "closed") setOpen(false)
+	}, [sidebarBehaviour, setOpen])
 
 	const handleNavClick = (href: string) => {
 		router.push(href)
@@ -43,47 +59,34 @@ export function SidebarNav({ userRole, isOpen, setOpen, behavior, onBehaviorChan
 	}
 
 	const handleMouseEnter = () => {
-		if (behavior === "expandable") {
-			setOpen(true)
-		}
+		if (sidebarBehaviourRef.current === "expandable") setOpen(true)
 	}
 
 	const handleMouseLeave = () => {
-		if (behavior === "expandable") {
-			setOpen(false)
-		}
+		if (dropdownOpenRef.current) return
+		if (sidebarBehaviourRef.current === "expandable") setOpen(false)
 	}
 
-	const getBehaviorTooltip = () => {
-		if (behavior === "expandable") return "Click to lock open"
-		if (behavior === "open") return "Click to unlock (hover mode)"
-		return "Click to unlock (hover mode)"
-	}
-
-	return (
+		return (
 		<aside
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			className={cn(
-				"h-screen bg-card dark:bg-[#1a1a1a] border-r border-border dark:border-[#2a2a2a] transition-all duration-300 ease-in-out",
+				"group h-screen bg-card dark:bg-[#1a1a1a] border-r border-border dark:border-[#2a2a2a] transition-all duration-[400ms] ease-in-out",
 				isOpen ? "w-64" : "w-16"
 			)}
+			data-state={isOpen ? "expanded" : "collapsed"}
 		>
 			<div className="flex flex-col h-full">
-				{/* Spacer for nav height (py-6 = 24px top + 24px bottom = 48px + content ~33px = ~81px) */}
-				{/* <div className="h-[81px]" /> */}
-
 				{/* Navigation Items */}
 				<nav className="flex-1 overflow-y-auto">
 					<div className="p-2">
 						{sidebarNavSections.map((section, sectionIndex) => (
 							<React.Fragment key={section.title}>
-								{/* Separator before each section except the first */}
 								{sectionIndex > 0 && (
 									<Separator className="w-[calc(100%-1rem)] mx-auto my-2" />
 								)}
 
-								{/* Section Group */}
 								<div className="relative flex w-full min-w-0 flex-col gap-0.5">
 									<ul className="flex w-full min-w-0 flex-col gap-0.5">
 										{section.items.map((item) => {
@@ -94,25 +97,33 @@ export function SidebarNav({ userRole, isOpen, setOpen, behavior, onBehaviorChan
 												<li key={item.name} className="group/menu-item relative">
 													<button
 														onClick={() => handleNavClick(item.href)}
+														title={sidebarBehaviour === "closed" ? item.name : undefined}
 														className={cn(
-															"peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md text-left text-sm outline-none transition-colors duration-200 hover:bg-accent hover:text-foreground focus-visible:ring-2 active:bg-accent active:text-foreground disabled:pointer-events-none disabled:opacity-50 h-9",
-															isOpen ? "px-2" : "justify-center px-2",
+															"relative h-10 w-full overflow-hidden rounded-md text-left text-sm outline-none transition-colors duration-200 hover:bg-accent hover:text-foreground focus-visible:ring-2 active:bg-accent active:text-foreground disabled:pointer-events-none disabled:opacity-50",
+															isOpen && "pr-2",
 															active
 																? "bg-red-600 text-white shadow-sm hover:bg-red-600 hover:text-white"
 																: "text-muted-foreground dark:hover:bg-accent/50"
 														)}
-														title={!isOpen ? item.name : undefined}
 													>
-														<Icon className={cn(
-															"h-4 w-4 flex-shrink-0",
-															!isOpen && "mx-auto"
-														)} />
-														{isOpen && (
-															<>
-																<span className="flex-1 text-left text-sm font-medium truncate leading-5">{item.name}</span>
-																{active && <ChevronRight className="h-3 w-3 flex-shrink-0 ml-auto" />}
-															</>
-														)}
+														{/* Icon: fixed at left-0, never moves */}
+														<span className="absolute left-0 top-0 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded">
+															<Icon className="h-4 w-4 flex-shrink-0" />
+														</span>
+														{/* Text: fades in/out, positioned to the right of the icon */}
+														<span
+															className={cn(
+																"absolute left-10 right-2 top-0 flex h-10 items-center gap-1 transition-opacity duration-200",
+																isOpen ? "opacity-100" : "opacity-0"
+															)}
+														>
+															<span className="min-w-0 flex-1 truncate text-sm font-medium">
+																{item.name}
+															</span>
+															{active && (
+																<ChevronRight className="h-3 w-3 flex-shrink-0" />
+															)}
+														</span>
 													</button>
 												</li>
 											)
@@ -124,34 +135,44 @@ export function SidebarNav({ userRole, isOpen, setOpen, behavior, onBehaviorChan
 					</div>
 				</nav>
 
-				{/* Sidebar Behavior Toggle Button */}
-				<div className={cn("border-t border-border dark:border-[#2a2a2a]", isOpen ? "p-4" : "p-2")}>
+				{/* Sidebar control: Dropdown with Expanded / Collapsed / Expand on hover */}
+				<div
+					className={cn(
+						"border-t border-border dark:border-[#2a2a2a]",
+						isOpen ? "p-4" : "p-2"
+					)}
+				>
 					<div className={cn("flex", isOpen ? "justify-end px-2" : "justify-center")}>
-						<TooltipProvider>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={onBehaviorChange}
-										className={cn(
-											"h-8 w-8",
-											behavior === "expandable" && "text-muted-foreground",
-											behavior === "open" && "text-blue-600 dark:text-blue-400",
-											behavior === "closed" && "text-gray-600 dark:text-gray-400"
-										)}
-									>
-										<PanelLeftDashed className="h-4 w-4" />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent side="right" sideOffset={8}>
-									<p>{getBehaviorTooltip()}</p>
-									<p className="text-xs text-muted-foreground mt-1">
-										Current: {behavior}
-									</p>
-								</TooltipContent>
-							</Tooltip>
-						</TooltipProvider>
+						<DropdownMenu onOpenChange={(open) => { dropdownOpenRef.current = open }}>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									className={cn(
+										"h-8 w-8 w-min px-1.5 mx-0.5",
+										sidebarBehaviour === "open" && "!px-2"
+									)}
+								>
+									<PanelLeftDashed className="h-4 w-4" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent side="top" align="start" className="w-40">
+								<DropdownMenuRadioGroup
+									value={sidebarBehaviour}
+									onValueChange={(value) =>
+										setSidebarBehaviour(value as SidebarBehaviourType)
+									}
+								>
+									<DropdownMenuLabel>Sidebar control</DropdownMenuLabel>
+									<DropdownMenuSeparator />
+									<DropdownMenuRadioItem value="open">Expanded</DropdownMenuRadioItem>
+									<DropdownMenuRadioItem value="closed">Collapsed</DropdownMenuRadioItem>
+									<DropdownMenuRadioItem value="expandable">
+										Expand on hover
+									</DropdownMenuRadioItem>
+								</DropdownMenuRadioGroup>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</div>
 			</div>

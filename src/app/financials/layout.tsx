@@ -6,69 +6,31 @@ import { FinancialsPasswordModal } from '@/components/financials/FinancialsPassw
 import { FinancialsSetupPassword } from '@/components/financials/FinancialsSetupPassword';
 import { createClient } from '@/utils/supabase/client';
 import { Nav } from '@/components/navigation/nav';
-import { SidebarNav } from '@/components/navigation/sidebar-nav';
-
-const SIDEBAR_BEHAVIOR_KEY = "SIDEBAR_BEHAVIOR"
-type SidebarBehavior = "expandable" | "open" | "closed"
+import {
+    SidebarNav,
+    SIDEBAR_BEHAVIOR_KEY,
+    type SidebarBehaviourType,
+} from '@/components/navigation/sidebar-nav';
 
 interface FinancialsLayoutContentProps {
     children: React.ReactNode;
 }
 
 function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
-    const { isUnlocked, isLocked } = useFinancialsAuth();
+    const { isUnlocked } = useFinancialsAuth();
     const [needsPasswordSetup, setNeedsPasswordSetup] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Initialize sidebar behavior from localStorage
-    const [sidebarBehavior, setSidebarBehavior] = useState<SidebarBehavior>(() => {
-        if (typeof window !== "undefined") {
-            const stored = localStorage.getItem(SIDEBAR_BEHAVIOR_KEY) as SidebarBehavior
-            return stored || "expandable"
-        }
-        return "expandable"
-    })
-
-    // Initialize sidebar open state based on behavior
     const [sidebarOpen, setSidebarOpen] = useState(() => {
         if (typeof window !== "undefined") {
-            const stored = localStorage.getItem(SIDEBAR_BEHAVIOR_KEY) as SidebarBehavior
-            const behavior = stored || "expandable"
-            if (behavior === "open") return true
-            if (behavior === "closed") return false
-            return false // expandable starts collapsed
+            const stored = localStorage.getItem(SIDEBAR_BEHAVIOR_KEY) as SidebarBehaviourType | null;
+            const behavior = stored || "expandable";
+            if (behavior === "open") return true;
+            if (behavior === "closed") return false;
+            return false;
         }
-        return false
-    })
-
-    // Update sidebar open state when behavior changes
-    useEffect(() => {
-        if (sidebarBehavior === "open") {
-            setSidebarOpen(true)
-        } else if (sidebarBehavior === "closed") {
-            setSidebarOpen(false)
-        }
-        // For 'expandable', don't change the current state
-    }, [sidebarBehavior])
-
-    // Save behavior to localStorage when it changes
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            localStorage.setItem(SIDEBAR_BEHAVIOR_KEY, sidebarBehavior)
-        }
-    }, [sidebarBehavior])
-
-    const handleSidebarBehaviorChange = () => {
-        // Toggle between expandable (hovering) and open (locked)
-        if (sidebarBehavior === "expandable") {
-            setSidebarBehavior("open")
-        } else if (sidebarBehavior === "open") {
-            setSidebarBehavior("expandable")
-        } else {
-            // If somehow in "closed" mode, go to expandable
-            setSidebarBehavior("expandable")
-        }
-    }
+        return false;
+    });
 
     // Check if shop has financial password set up
     useEffect(() => {
@@ -136,12 +98,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
             <div className="flex flex-col h-screen overflow-hidden">
                 <Nav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
                 <div className="flex flex-1 overflow-hidden">
-                    <SidebarNav
-                        isOpen={sidebarOpen}
-                        setOpen={setSidebarOpen}
-                        behavior={sidebarBehavior}
-                        onBehaviorChange={handleSidebarBehaviorChange}
-                    />
+                    <SidebarNav isOpen={sidebarOpen} setOpen={setSidebarOpen} />
                     <main className="flex-1 overflow-auto bg-slate-50 dark:bg-background">
                         <div className="flex items-center justify-center h-full p-4">
                             <FinancialsSetupPassword
@@ -165,12 +122,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
                     <Nav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
                 </div>
                 <div className="flex flex-1 overflow-hidden">
-                    <SidebarNav
-                        isOpen={sidebarOpen}
-                        setOpen={setSidebarOpen}
-                        behavior={sidebarBehavior}
-                        onBehaviorChange={handleSidebarBehaviorChange}
-                    />
+                    <SidebarNav isOpen={sidebarOpen} setOpen={setSidebarOpen} />
                     <main className="flex-1 overflow-auto bg-slate-50 dark:bg-background relative">
                         {/* Blurred background content - completely separate from navbar */}
                         <div className="filter blur-[2px] pointer-events-none">
@@ -198,12 +150,7 @@ function FinancialsLayoutContent({ children }: FinancialsLayoutContentProps) {
         <div className="flex flex-col h-screen overflow-hidden">
             <Nav sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             <div className="flex flex-1 overflow-hidden">
-                <SidebarNav
-                    isOpen={sidebarOpen}
-                    setOpen={setSidebarOpen}
-                    behavior={sidebarBehavior}
-                    onBehaviorChange={handleSidebarBehaviorChange}
-                />
+                <SidebarNav isOpen={sidebarOpen} setOpen={setSidebarOpen} />
                 <main className="flex-1 overflow-auto bg-slate-50 dark:bg-background">
                     {/* Session indicator */}
                     <div className="bg-green-50 dark:bg-green-600/10 border-b border-green-300 dark:border-green-600/20 p-2">
