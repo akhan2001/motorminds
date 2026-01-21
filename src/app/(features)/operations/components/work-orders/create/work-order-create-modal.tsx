@@ -330,6 +330,18 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                         />
                                     </div>
 
+                                    {/* Recommendation/Notes - Under Work Order Information */}
+                                    <div className={`transition-opacity duration-200 ${currentStep >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">
+                                            Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
+                                        </h3>
+                                        <WorkOrderNotes
+                                            notes={formData.notes}
+                                            isEditing={currentStep >= 3}
+                                            onFieldChange={handleFieldChange}
+                                        />
+                                    </div>
+
                                     {/* Work Order Items Card - Only show after Step 3 is complete */}
                                     {isStep3Complete && (
                                         <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
@@ -561,17 +573,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 />
                                             </div>
 
-                                            {/* Recommendation */}
-                                            <div className="transition-opacity duration-200">
-                                                <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">
-                                                    Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
-                                                </h3>
-                                                <WorkOrderNotes
-                                                    notes={formData.notes}
-                                                    isEditing={true}
-                                                    onFieldChange={handleFieldChange}
-                                                />
-                                            </div>
                                         </>
                                     )}
                                 </div>

@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
     shopName: {
-        fontSize: 18,
+        fontSize: 14,
         fontWeight: 'bold',
         color: '#000000',
         marginBottom: 4,
