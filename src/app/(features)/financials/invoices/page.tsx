@@ -1,12 +1,9 @@
 'use client'
 
-import { useState, useMemo, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-// import { Nav } from "@/components/navigation/nav";
-import { Card, CardContent } from "@/components/ui/card";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Loader2, AlertCircle } from "lucide-react";
-import { LoadingSpinner } from "@/components/common/feedback/loading-states";
+import { PageLoading } from "@/components/common/feedback/page-states";
 import { useAuth } from "../../operations/hooks/use-auth";
 import { useInvoices } from "../hooks/use-invoices";
 import InvoiceHeader from "../components/invoices/InvoiceHeader";
@@ -73,28 +70,16 @@ function InvoicesContent() {
     // Show loading spinner while auth is loading or invoices are loading
     if (isAuthLoading || (shopId && isInvoicesLoading)) {
         return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <LoadingSpinner size="md" className="text-red-500" />
-                            <div>
-                                <p className="text-foreground dark:text-white font-medium">Loading Invoices</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm">
-                                    {isAuthLoading ? 'Authenticating...' : 'Loading invoice data...'}
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+            <PageLoading 
+                title="Loading Invoices" 
+                description={isAuthLoading ? 'Authenticating...' : 'Loading invoice data...'} 
+                spinnerColor="text-red-500"
+            />
         )
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background">
-            {/* <Nav /> */}
+        <div className="h-full flex flex-col bg-background">
             <div className="flex-1 flex flex-col overflow-hidden">
                 <InvoiceHeader 
                     searchValue={searchValue}
@@ -145,22 +130,7 @@ function InvoicesContent() {
 
 // Loading component for Suspense fallback
 function InvoicesLoading() {
-    return (
-        <div className="h-screen flex flex-col bg-background">
-            {/* <Nav /> */}
-            <div className="flex-1 flex items-center justify-center">
-                <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                    <CardContent className="flex items-center gap-4 p-6">
-                        <LoadingSpinner size="md" className="text-red-500" />
-                        <div>
-                            <p className="text-foreground dark:text-white font-medium">Loading Invoices</p>
-                            <p className="text-muted-foreground dark:text-gray-400 text-sm">Please wait...</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    )
+    return <PageLoading title="Loading Invoices" description="Please wait..." spinnerColor="text-red-500" />
 }
 
 // Main component with Suspense wrapper

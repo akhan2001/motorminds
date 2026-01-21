@@ -132,7 +132,7 @@ export function WorkOrdersPageView({
             onWorkOrderCompletionAttempt={onWorkOrderCompletionAttempt}
             onWorkOrderReadyAttempt={onWorkOrderReadyAttempt}
         >
-            <div className="h-screen flex flex-col bg-background">
+            <div className="h-full flex flex-col bg-background">
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <WorkOrderHeader
                         isCompactView={isCompactView}

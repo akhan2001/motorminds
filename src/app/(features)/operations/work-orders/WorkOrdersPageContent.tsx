@@ -12,9 +12,7 @@ import { useCreateInvoiceFromWorkOrder, useSyncInvoiceFromWorkOrder, getWorkOrde
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
 import { InvoiceSyncWarningDialog } from '../components/work-orders/invoice-sync-warning-dialog'
-import { Card, CardContent } from '@/components/ui/card'
-import { AlertCircle } from 'lucide-react'
-import { LoadingSpinner } from '@/components/common/feedback/loading-states'
+import { PageLoading, PageError, PageAuthRequired } from '@/components/common/feedback/page-states'
 
 /**
  * WorkOrdersPageContent - Container Component
@@ -255,87 +253,27 @@ export function WorkOrdersPageContent() {
 
     // Loading state - show while auth is loading
     if (authLoading) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <LoadingSpinner size="md" className="text-blue-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Loading...</p>
-                                <p className="text-muted-foreground text-sm">Checking authentication...</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        return <PageLoading title="Loading..." description="Checking authentication..." />
     }
 
     // Auth check - BEFORE error check! User will be redirected by AuthProvider
     if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <LoadingSpinner size="md" className="text-blue-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Redirecting to Login...</p>
-                                <p className="text-muted-foreground text-sm">
-                                    Please wait while we redirect you to the login page.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        return <PageLoading title="Redirecting to Login..." description="Please wait while we redirect you to the login page." />
     }
 
     // Data loading state - only show when authenticated and loading work orders
     if (workOrdersLoading) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <LoadingSpinner size="md" className="text-blue-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Loading Work Orders</p>
-                                <p className="text-muted-foreground text-sm">Fetching data from database...</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        return <PageLoading title="Loading Work Orders" description="Fetching data from database..." />
     }
 
     // Error state - only show when authenticated but data fetch failed
     if (workOrdersError) {
         return (
-            <div className="h-screen flex flex-col bg-background">
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-red-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Failed to Load Work Orders</p>
-                                <p className="text-muted-foreground text-sm mb-3">
-                                    {workOrdersError instanceof Error ? workOrdersError.message : 'Unknown error occurred'}
-                                </p>
-                                <button
-                                    onClick={() => refetch()}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-                                >
-                                    Try Again
-                                </button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+            <PageError 
+                title="Failed to Load Work Orders" 
+                error={workOrdersError instanceof Error ? workOrdersError : undefined}
+                onRetry={() => refetch()}
+            />
         )
     }
 

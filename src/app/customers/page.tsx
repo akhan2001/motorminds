@@ -1,62 +1,75 @@
 'use client'
 
+import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthProvider'
 import { CustomerDashboard } from './components/customer-dashboard'
-import { checkUser } from '@/utils/supabase/supabase-auth'
-import { getShopId } from '@/utils/supabase/supabase-shop'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { CustomersTableLoading } from './components/customers-table-loading'
+import { PageLoading, PageAuthRequired } from '@/components/common/feedback/page-states'
+import { ScaffoldContainer } from '@/components/layout'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { CustomerForm } from './components/customer-form'
 
 export default function CustomersPage() {
-    const [user, setUser] = useState<any>(null)
-    const [shopId, setShopId] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const router = useRouter()
+    const { user, shopId, isLoading } = useAuth()
+    const [isAdding, setIsAdding] = useState(false)
+    const [refreshKey, setRefreshKey] = useState(0)
 
-    useEffect(() => {
-        async function fetchUserData() {
-            setIsLoading(true)
-            try {
-                const userData = await checkUser()
-                if (userData) {
-                    setUser(userData)
-                    const shop = await getShopId(userData.id)
-                    setShopId(shop)
-                } else {
-                    router.push('/login')
-                }
-            } catch (error) {
-                console.error('Error:', error)
-                router.push('/login')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-        
-        fetchUserData()
-    }, [router])
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col h-full bg-background text-foreground">
-                {/* <CustomersTableLoading /> */}
-            </div>
-        )
+    const handleCustomerAdded = () => {
+        setIsAdding(false)
+        setRefreshKey(prev => prev + 1)
     }
 
-    if (!shopId) {
-        return (
-            <div className="flex flex-col h-full bg-background text-foreground">
-                <div className="flex justify-center items-center h-[80vh]">
-                    <p className="text-foreground">No shop found for this user.</p>
-                </div>
-            </div>
-        )
+    if (isLoading) {
+        return <PageLoading title="Loading Customers" description="Fetching customer data..." />
+    }
+
+    if (!shopId || !user) {
+        return <PageAuthRequired resource="customers" />
     }
 
     return (
-        <div className="flex flex-col h-full bg-background text-foreground">
-            <CustomerDashboard shopId={shopId} user={user} />
+        <div className="h-full flex flex-col bg-background">
+            {/* Fixed Header */}
+            <div className="bg-background border-b border-border flex-shrink-0">
+                <div className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-semibold text-foreground">Customers</h1>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Manage your customer base and track their activity
+                            </p>
+                        </div>
+                        <Button 
+                            className="bg-red-600 hover:bg-red-700 text-white" 
+                            onClick={() => setIsAdding(true)}
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Customer
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto">
+                <ScaffoldContainer size="large" className="py-6">
+                    <CustomerDashboard 
+                        shopId={shopId} 
+                        user={user} 
+                        refreshKey={refreshKey}
+                        hideHeader={true}
+                    />
+                </ScaffoldContainer>
+            </div>
+
+            {/* Add Customer Form */}
+            {isAdding && (
+                <CustomerForm 
+                    onClose={handleCustomerAdded} 
+                    shopId={shopId} 
+                    isOpen={isAdding} 
+                />
+            )}
         </div>
     )
 }
