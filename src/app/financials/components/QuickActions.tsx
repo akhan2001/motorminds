@@ -2,10 +2,9 @@ import Link from "next/link";
 import {
 	ArrowRight,
 	FileText,
-	Users,
 	Droplet,
 	Gauge,
-	Timer,
+	Trash,
 } from "lucide-react";
 
 interface ActionCardProps {
@@ -82,13 +81,6 @@ export default function QuickActions() {
 					isActive={true}
 				/>
 				<ActionCard
-					title="Payroll Analytics"
-					description="Analyze payroll costs and revenue per employee"
-					href="/financials/payroll"
-					icon={Users}
-					isActive={true}
-				/>
-				<ActionCard
 					title="Financial Reports"
 					description="Generate income statements and other financial reports"
 					href="/financials/reports"
@@ -96,9 +88,9 @@ export default function QuickActions() {
 					isActive={true}
 				/>
 				<ActionCard
-					title="Job Efficiency"
-					description="Measure estimated vs actual labor performance"
-					icon={Timer}
+					title="Deleted Records"
+					description="Track deleted work orders / invoices"
+					icon={Trash}
 					isActive={false}
 				/>
 			</div>

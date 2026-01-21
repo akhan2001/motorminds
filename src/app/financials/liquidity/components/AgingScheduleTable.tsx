@@ -8,6 +8,7 @@ interface Invoice {
 
 interface AgingScheduleTableProps {
     invoices: Invoice[];
+    onInvoiceClick?: (invoiceNumber: string) => void;
 }
 
 function getStatus(issueDate: string): { text: string; color: string; days: number } {
@@ -21,7 +22,7 @@ function getStatus(issueDate: string): { text: string; color: string; days: numb
     return { text: "90+ Days", color: "bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400", days: daysOverdue };
 }
 
-export default function AgingScheduleTable({ invoices }: AgingScheduleTableProps) {
+export default function AgingScheduleTable({ invoices, onInvoiceClick }: AgingScheduleTableProps) {
     if (invoices.length === 0) {
         return (
             <div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-10 text-center">
@@ -50,7 +51,13 @@ export default function AgingScheduleTable({ invoices }: AgingScheduleTableProps
                 {invoices.map((invoice) => {
                     const status = getStatus(invoice.issue_date);
                     return (
-                        <div key={invoice.invoice_number} className="grid grid-cols-5 gap-4 py-4 px-6 text-sm hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
+                        <div 
+                            key={invoice.invoice_number} 
+                            className={`grid grid-cols-5 gap-4 py-4 px-6 text-sm border-b border-border last:border-b-0 ${
+                                onInvoiceClick ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''
+                            }`}
+                            onClick={() => onInvoiceClick?.(invoice.invoice_number)}
+                        >
                             <div className="font-medium text-foreground">{invoice.display_id || invoice.invoice_number}</div>
                             <div className="text-muted-foreground">{invoice.client_name}</div>
                             <div className="text-right font-mono text-foreground">${invoice.amount.toFixed(2)}</div>

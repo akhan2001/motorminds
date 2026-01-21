@@ -260,10 +260,13 @@ export default function EfficiencyClient() {
 					</div>
 				)}
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-					<div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6">
-						<div className="flex items-center justify-between mb-4">
-							<h2 className="text-xl font-semibold text-foreground">Recurring Fixed Costs</h2>
+				<div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-8">
+					<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
+						<div className="flex items-center justify-between mb-6">
+							<div>
+								<h2 className="text-xl font-semibold text-foreground">Recurring Fixed Costs</h2>
+								<p className="text-sm text-muted-foreground mt-1">Monthly, weekly, or recurring expenses</p>
+							</div>
 							{shopId && (
 								<AddFixedCostModal shopId={shopId} onCostAdded={() => fetchData(timeRange)}>
 									<Button className="bg-red-600 hover:bg-red-700 text-white">
@@ -276,9 +279,12 @@ export default function EfficiencyClient() {
 						<FixedCostsTable costs={fixedCosts} onCostUpdated={() => fetchData(timeRange)} onCostDeleted={() => fetchData(timeRange)} />
 					</div>
 
-					<div className="bg-slate-50 dark:bg-card border border-border rounded-xl p-6">
-						<div className="flex items-center justify-between mb-4">
-							<h2 className="text-xl font-semibold text-foreground">Expenses</h2>
+					<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
+						<div className="flex items-center justify-between mb-6">
+							<div>
+								<h2 className="text-xl font-semibold text-foreground">One-Time Expenses</h2>
+								<p className="text-sm text-muted-foreground mt-1">Individual purchases and expenses</p>
+							</div>
 							{shopId && (
 								<AddExpenseModal shopId={shopId} onExpenseAdded={() => fetchData(timeRange)}>
 									<Button className="bg-red-600 hover:bg-red-700 text-white">

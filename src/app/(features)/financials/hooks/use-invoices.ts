@@ -370,7 +370,8 @@ export function useCreateInvoiceFromWorkOrder() {
                     labor_hours: laborHours,
                     technician_id: item.technician_id || undefined,
                     active: item.active, // Preserve the active field from work order
-                    is_declined: isDeclined
+                    is_declined: isDeclined,
+                    invoice_specific_notes: item.notes || undefined // Copy work order item notes to invoice-specific notes
                 }
             })
 
@@ -413,6 +414,7 @@ export function useCreateInvoiceFromWorkOrder() {
                     vehicle_id: workOrder.vehicle_id,
                     title: workOrder.title || 'Service Invoice',
                     description: workOrder.description,
+                    notes: workOrder.notes || null, // Copy work order recommendations/notes to invoice
                     status: 'draft',
                     priority: workOrder.priority || 'medium',
                     subtotal,
@@ -524,7 +526,8 @@ export function useSyncInvoiceFromWorkOrder() {
                     labor_hours: laborHours,
                     technician_id: item.technician_id || undefined,
                     active: item.active,
-                    is_declined: isDeclined
+                    is_declined: isDeclined,
+                    invoice_specific_notes: item.notes || undefined // Copy work order item notes to invoice-specific notes
                 }
             })
 
@@ -553,6 +556,13 @@ export function useSyncInvoiceFromWorkOrder() {
             const amount_paid = Number(existingInvoice.amount_paid) || 0
             const outstanding_balance = Math.max(0, total_amount - amount_paid)
 
+            // Fetch work order to get updated notes/recommendations
+            const { data: workOrder, error: workOrderError } = await supabase
+                .from('work_orders')
+                .select('notes, description, title')
+                .eq('id', work_order_id)
+                .single()
+
             // Update invoice - preserve status, payments, and other metadata
             const { data: updatedInvoice, error: updateError } = await supabase
                 .from('invoices_table')
@@ -566,6 +576,9 @@ export function useSyncInvoiceFromWorkOrder() {
                     services_total,
                     fees_total,
                     outstanding_balance,
+                    notes: workOrder?.notes || existingInvoice.notes, // Update notes from work order if available
+                    description: workOrder?.description || existingInvoice.description, // Update description from work order if available
+                    title: workOrder?.title || existingInvoice.title, // Update title from work order if available
                     updated_at: new Date().toISOString()
                     // Note: status is preserved (not updated)
                 })

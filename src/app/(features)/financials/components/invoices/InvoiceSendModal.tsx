@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/utils/currency'
 import { useInvoiceSend } from '../../hooks/use-invoice-send'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { DEFAULT_INVOICE_MESSAGE, formatInvoiceMessage } from '../../lib/email/invoice-email-templates'
+import { prepareShopBrandingWithLogo } from '../../lib/pdf/logo-utils'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import type { ShopBranding } from '../../types/invoice-pdf'
 
@@ -69,20 +70,8 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
             return
         }
 
-        // Convert shop info to ShopBranding format
-        const shop: ShopBranding = {
-            id: shopInfo.id,
-            shop_name: shopInfo.shop_name,
-            shop_owner: shopInfo.shop_owner,
-            shop_email: shopInfo.shop_email,
-            shop_phone: shopInfo.shop_phone,
-            shop_address: shopInfo.shop_address,
-            shop_city: shopInfo.shop_city,
-            shop_province: shopInfo.shop_province,
-            logo_image_url: shopInfo.logo_image_url,
-            business_number: shopInfo.business_number,
-            hst_number: shopInfo.hst_number
-        }
+        // Convert shop info to ShopBranding format with logo check from storage
+        const shop: ShopBranding = await prepareShopBrandingWithLogo(shopInfo)
 
         // Send email with PDF attachment
         await sendInvoiceEmailWithPdf(

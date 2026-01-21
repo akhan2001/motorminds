@@ -12,6 +12,7 @@ import AgingScheduleTable from "@/app/financials/liquidity/components/AgingSched
 import BreadcrumbNav from "@/app/financials/liquidity/components/BreadcrumbNav"
 import { generateArAgingReport, generateArAgingCsv } from "../utils/report-generator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { InvoiceQuickView } from "@/components/shared/quick-view"
 
 // Define the data structure from our API
 interface LiquidityData {
@@ -30,6 +31,8 @@ export default function LiquidityPage() {
 	const [isGeneratingReport, setIsGeneratingReport] = useState(false)
 	const [shopId, setShopId] = useState<string | null>(null)
 	const [shopName, setShopName] = useState<string>('Your Shop')
+	const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+	const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
 	const router = useRouter()
 
 	// Authenticate and get shop_id
@@ -155,7 +158,25 @@ export default function LiquidityPage() {
 				</div>
 
 				{/* Aging Schedule Table */}
-				<AgingScheduleTable invoices={allInvoices} />
+				<AgingScheduleTable 
+					invoices={allInvoices} 
+					onInvoiceClick={(invoiceNumber) => {
+						setSelectedInvoiceId(invoiceNumber)
+						setIsQuickViewOpen(true)
+					}}
+				/>
+
+				{/* Invoice Quick View Modal */}
+				{selectedInvoiceId && (
+					<InvoiceQuickView
+						invoiceId={selectedInvoiceId}
+						isOpen={isQuickViewOpen}
+						onClose={() => {
+							setIsQuickViewOpen(false)
+							setSelectedInvoiceId(null)
+						}}
+					/>
+				)}
 			</main>
 		</div>
 	)

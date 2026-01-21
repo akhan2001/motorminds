@@ -7,8 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils/currency'
 import { format } from 'date-fns'
 import { Package, Receipt, Wallet } from 'lucide-react'
-import { WorkOrderDetailSheet } from '../work-orders/shared/work-order-detail-sheet'
-import { useWorkOrderWithDetails } from '../../hooks/use-work-orders'
+import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView'
 import type { UnifiedExpenseItem } from '@/app/api/operations/expenses/route'
 import EditExpenseModal from '@/app/financials/efficiency/components/EditExpenseModal'
 
@@ -21,12 +20,9 @@ interface PartsExpensesTableProps {
 
 export function PartsExpensesTable({ items, isLoading, error, onExpenseUpdated }: PartsExpensesTableProps) {
     const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null)
-    const [isSheetOpen, setIsSheetOpen] = useState(false)
+    const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
     const [selectedGeneralExpense, setSelectedGeneralExpense] = useState<UnifiedExpenseItem | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-
-    // Fetch full work order details when sheet is open
-    const { data: selectedWorkOrder } = useWorkOrderWithDetails(selectedWorkOrderId || '')
 
     const handleRowClick = (item: UnifiedExpenseItem) => {
         if (item.source === 'general') {
@@ -34,14 +30,14 @@ export function PartsExpensesTable({ items, isLoading, error, onExpenseUpdated }
             setSelectedGeneralExpense(item)
             setIsEditModalOpen(true)
         } else if (item.work_order_id) {
-            // Open work order sheet for work order items
+            // Open work order quick view for work order items
             setSelectedWorkOrderId(item.work_order_id)
-            setIsSheetOpen(true)
+            setIsQuickViewOpen(true)
         }
     }
 
-    const handleCloseSheet = () => {
-        setIsSheetOpen(false)
+    const handleCloseQuickView = () => {
+        setIsQuickViewOpen(false)
         setSelectedWorkOrderId(null)
     }
 
@@ -239,12 +235,14 @@ export function PartsExpensesTable({ items, isLoading, error, onExpenseUpdated }
                 </Table>
             </div>
 
-            {/* Work Order Detail Sheet */}
-            <WorkOrderDetailSheet
-                workOrder={selectedWorkOrder || null}
-                isOpen={isSheetOpen}
-                onClose={handleCloseSheet}
-            />
+            {/* Work Order Quick View */}
+            {selectedWorkOrderId && (
+                <WorkOrderQuickView
+                    workOrderId={selectedWorkOrderId}
+                    isOpen={isQuickViewOpen}
+                    onClose={handleCloseQuickView}
+                />
+            )}
 
             {/* Edit General Expense Modal */}
             {selectedGeneralExpense && (

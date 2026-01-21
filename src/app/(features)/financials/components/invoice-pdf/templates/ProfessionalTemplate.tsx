@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 20,
         borderBottom: 2,
-        borderBottomColor: '#2563eb',
+        borderBottomColor: '#000000',
         paddingBottom: 10,
     },
     logo: {
@@ -41,13 +41,18 @@ const styles = StyleSheet.create({
         height: 80,
         objectFit: 'contain',
     },
+    shopNameAddress: {
+        flex: 1,
+        paddingHorizontal: 20,
+        textAlign: 'left',
+    },
     shopInfo: {
         textAlign: 'right',
     },
     shopName: {
-        fontSize: 18,
+        fontSize: 14,
         fontWeight: 'bold',
-        color: '#1e40af',
+        color: '#000000',
         marginBottom: 4,
     },
     shopDetail: {
@@ -58,7 +63,7 @@ const styles = StyleSheet.create({
     invoiceTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#1e3a8a',
+        color: '#000000',
         marginBottom: 8,
     },
     section: {
@@ -67,7 +72,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#1e40af',
+        color: '#000000',
         marginBottom: 8,
         textTransform: 'uppercase',
     },
@@ -98,7 +103,7 @@ const styles = StyleSheet.create({
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: '#1e40af',
+        backgroundColor: '#000000',
         padding: 6,
         color: '#ffffff',
         fontWeight: 'bold',
@@ -126,7 +131,7 @@ const styles = StyleSheet.create({
     totalsBox: {
         width: '40%',
         borderTop: 2,
-        borderTopColor: '#2563eb',
+        borderTopColor: '#000000',
         paddingTop: 8,
     },
     totalRow: {
@@ -154,12 +159,12 @@ const styles = StyleSheet.create({
     grandTotalLabel: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#1e40af',
+        color: '#000000',
     },
     grandTotalValue: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#1e40af',
+        color: '#000000',
     },
     notes: {
         marginTop: 15,
@@ -198,15 +203,15 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
     },
     statusPaid: {
-        backgroundColor: '#10b981',
+        backgroundColor: '#808080',
         color: '#ffffff',
     },
     statusPartiallyPaid: {
-        backgroundColor: '#f59e0b',
+        backgroundColor: '#a0a0a0',
         color: '#ffffff',
     },
     statusUnpaid: {
-        backgroundColor: '#ef4444',
+        backgroundColor: '#606060',
         color: '#ffffff',
     },
     paymentInfo: {
@@ -224,7 +229,7 @@ const styles = StyleSheet.create({
     workOrderTitle: {
         fontSize: 11,
         fontWeight: 'bold',
-        color: '#1e40af',
+        color: '#000000',
         marginBottom: 4,
     },
     workOrderDescription: {
@@ -288,15 +293,26 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                 <View style={styles.content}>
                     {/* Header */}
                     <View style={styles.header}>
+                        {/* Logo - Left */}
                         <View>
-                            <Text style={styles.shopName}>{shop.shop_name}</Text>
+                            {shop.logo_image_url && (
+                                <Image
+                                    src={shop.logo_image_url}
+                                    style={styles.logo}
+                                    cache={false}
+                                />
+                            )}
                         </View>
-                        <View style={styles.shopInfo}>
+                        {/* Shop Name & Address - Middle */}
+                        <View style={styles.shopNameAddress}>
                             <Text style={styles.shopName}>{shop.shop_name}</Text>
                             {shop.shop_address && <Text style={styles.shopDetail}>{shop.shop_address}</Text>}
                             {shop.shop_city && shop.shop_province && (
                                 <Text style={styles.shopDetail}>{shop.shop_city}, {shop.shop_province}</Text>
                             )}
+                        </View>
+                        {/* Phone, Email, HST - Right */}
+                        <View style={styles.shopInfo}>
                             {shop.shop_phone && <Text style={styles.shopDetail}>Phone: {shop.shop_phone}</Text>}
                             {shop.shop_email && <Text style={styles.shopDetail}>Email: {shop.shop_email}</Text>}
                             {shop.hst_number && <Text style={styles.shopDetail}>HST #: {shop.hst_number}</Text>}
@@ -433,15 +449,21 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             </View>
                             {activeItems.map((item, index) => {
                                 const isDiscount = (item as any).item_type === 'discount'
+                                const itemNotes = (item as any).invoice_specific_notes
                                 return (
                                     <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
-                                        <Text style={styles.col1}>{item.description}</Text>
+                                        <View style={styles.col1}>
+                                            <Text>{item.description}</Text>
+                                            {itemNotes && (
+                                                <Text style={{ fontSize: 8, color: '#6b7280', marginTop: 2 }}>{itemNotes}</Text>
+                                            )}
+                                        </View>
                                         <Text style={styles.col2}>{(item.item_type as string).charAt(0).toUpperCase() + (item.item_type as string).slice(1)}</Text>
                                         <Text style={styles.col3}>
                                             {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
                                         </Text>
                                         <Text style={styles.col4}>{formatCurrency(item.unit_price)}</Text>
-                                        <Text style={[styles.col5, isDiscount ? { color: '#dc2626' } : {}]}>
+                                        <Text style={styles.col5}>
                                             {isDiscount ? '-' : ''}{formatCurrency(item.total_price)}
                                         </Text>
                                     </View>
@@ -463,7 +485,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                 return totalDiscounts > 0 ? (
                                     <View style={styles.totalRow}>
                                         <Text style={styles.totalLabel}>Discount:</Text>
-                                        <Text style={[styles.totalValue, { color: '#dc2626' }]}>
+                                        <Text style={styles.totalValue}>
                                             -{formatCurrency(totalDiscounts)}
                                         </Text>
                                     </View>
@@ -487,14 +509,14 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                 <>
                                     <View style={[styles.totalRow, { marginTop: 8, paddingTop: 8, borderTop: 1, borderTopColor: '#d1d5db' }]}>
                                         <Text style={styles.totalLabel}>Amount Paid:</Text>
-                                        <Text style={[styles.totalValue, { color: '#10b981' }]}>
+                                        <Text style={styles.totalValue}>
                                             {formatCurrency(invoice.amount_paid)}
                                         </Text>
                                     </View>
                                     {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
                                         <View style={styles.totalRow}>
                                             <Text style={styles.totalLabel}>Outstanding Balance:</Text>
-                                            <Text style={[styles.totalValue, { color: '#f59e0b' }]}>
+                                            <Text style={styles.totalValue}>
                                                 {formatCurrency(invoice.outstanding_balance)}
                                             </Text>
                                         </View>
@@ -503,6 +525,14 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             )}
                         </View>
                     </View>
+
+                    {/* Recommendation/Notes */}
+                    {invoice.notes && (
+                        <View style={styles.notes}>
+                            <Text style={styles.notesTitle}>Recommendation:</Text>
+                            <Text style={styles.notesText}>{invoice.notes}</Text>
+                        </View>
+                    )}
 
                     {/* Payment Information */}
                     {(invoice.payment_method || invoice.paid_date || invoice.payment_reference) && (
@@ -526,14 +556,6 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                     <Text style={styles.value}>{invoice.payment_reference}</Text>
                                 </View>
                             )}
-                        </View>
-                    )}
-
-                    {/* Notes */}
-                    {invoice.notes && (
-                        <View style={styles.notes}>
-                            <Text style={styles.notesTitle}>Notes:</Text>
-                            <Text style={styles.notesText}>{invoice.notes}</Text>
                         </View>
                     )}
 

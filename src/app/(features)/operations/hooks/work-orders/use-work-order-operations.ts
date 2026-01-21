@@ -203,11 +203,37 @@ export function useWorkOrderOperations(
         }
     }
 
+    /**
+     * Handle work order ready confirmation
+     */
+    const handleReadyConfirm = async (
+        readyWorkOrder: WorkOrderWithDetails | null,
+        sendMessage: boolean,
+        customMessage?: string
+    ) => {
+        if (!readyWorkOrder) return
+
+        try {
+            // Update work order status to ready
+            await updateWorkOrderStatusMutation.mutateAsync({
+                id: readyWorkOrder.id,
+                status: 'ready',
+                enableAutomatedMessages: false // Don't trigger automated messages for ready status
+            })
+
+            // Refetch work orders
+            refetch()
+        } catch (error) {
+            console.error('Failed to mark work order as ready:', error)
+        }
+    }
+
     return {
         handleWorkOrderCreate,
         handleWorkOrderSave,
         handleWorkOrderDelete,
         handleCompletionConfirm,
+        handleReadyConfirm,
         isCreating: createWorkOrderMutation.isPending || createWalkInWorkOrderMutation.isPending,
         isUpdating: updateWorkOrderMutation.isPending || updateWorkOrderStatusMutation.isPending,
         isDeleting: deleteWorkOrderMutation.isPending,
