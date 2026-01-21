@@ -17,14 +17,14 @@ export function MessagingHeader({
     actionLabel 
 }: MessagingHeaderProps) {
     return (
-        <div className="border-b border-border dark:border-[#2a2a2a] bg-background dark:bg-[#0a0a0a]">
-            <div className="container mx-auto px-6 py-4">
+        <div className="bg-background border-b border-border flex-shrink-0">
+            <div className="px-6 py-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold text-foreground dark:text-white">
+                        <h1 className="text-2xl font-semibold text-foreground">
                             {title}
                         </h1>
-                        <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             {description}
                         </p>
                     </div>

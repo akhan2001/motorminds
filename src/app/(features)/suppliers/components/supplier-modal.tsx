@@ -22,7 +22,7 @@ export default function SupplierModal({
     supplier 
 }: SupplierModalProps) {
     const defaultTrigger = (
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button className="bg-red-600 hover:bg-red-700 text-white">
             <Plus className="h-4 w-4 mr-2" />
             Add Supplier
         </Button>

@@ -1,48 +1,29 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { checkUser } from "@/utils/supabase/supabase-auth";
-import { getShopId } from "@/utils/supabase/supabase-shop";
+import { useAuth } from "@/contexts/AuthProvider";
 import FinancialsHeader from "./components/FinancialsHeader";
 import MainSummaryCards from "./components/MainSummaryCards";
 import QuickActions from "./components/QuickActions";
 import LoadingSkeleton from "./components/LoadingSkeleton";
+import { ScaffoldContainer } from "@/components/layout";
+import { PageLoading, PageAuthRequired } from "@/components/common/feedback/page-states";
 
 export default function Financials() {
-    const [isLoading, setIsLoading] = useState(true);
-    const [shopId, setShopId] = useState<string | null>(null);
+    const { user, shopId, isLoading: authLoading } = useAuth();
+    const [dataLoading, setDataLoading] = useState(false);
     const [timeRange, setTimeRange] = useState("30d");
-    const router = useRouter();
 
     // State for holding fetched data
     const [cashflowData, setCashflowData] = useState({ revenue: 0, total_costs: 0, cogs: 0 });
     const [trendData, setTrendData] = useState([]);
-
-    // Get shop_id on initial load
-    useEffect(() => {
-        const fetchShopId = async () => {
-            const user = await checkUser();
-            if (!user) {
-                router.push("/login");
-                return;
-            }
-            const id = await getShopId(user.id);
-            if (id) {
-                setShopId(id);
-            } else {
-                router.push("/dashboard");
-            }
-        };
-        fetchShopId();
-    }, [router]);
 
     // Fetch all financial data when shopId or timeRange changes
     useEffect(() => {
         if (!shopId) return;
 
         const fetchFinancials = async () => {
-            setIsLoading(true);
+            setDataLoading(true);
 
             const endDate = new Date();
             const startDate = new Date();
@@ -71,39 +52,67 @@ export default function Financials() {
             } catch (error) {
                 console.error("Failed to fetch financial data:", error);
             } finally {
-                setIsLoading(false);
+                setDataLoading(false);
             }
         };
 
         fetchFinancials();
     }, [shopId, timeRange]);
 
-    if (isLoading) {
+    // Auth loading state
+    if (authLoading) {
+        return <PageLoading title="Loading Financials" description="Checking authentication..." />;
+    }
+
+    // Auth required state
+    if (!shopId || !user) {
+        return <PageAuthRequired resource="financials" />;
+    }
+
+    // Data loading state (after auth is confirmed)
+    if (dataLoading && cashflowData.revenue === 0) {
         return (
-            <div className="flex flex-col h-full bg-white dark:bg-background text-foreground">
-                <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-                    <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-                        <span className="font-semibold text-foreground">Financials Dashboard</span>
-                    </nav>
-                    <LoadingSkeleton />
-                </main>
+            <div className="h-full flex flex-col bg-background">
+                {/* Fixed Header */}
+                <div className="bg-background border-b border-border flex-shrink-0">
+                    <div className="px-6 py-4">
+                        <h1 className="text-2xl font-semibold text-foreground">Financials Dashboard</h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Track your shop's financial performance
+                        </p>
+                    </div>
+                </div>
+                <div className="flex-1 overflow-auto">
+                    <ScaffoldContainer size="large" className="py-6">
+                        <LoadingSkeleton />
+                    </ScaffoldContainer>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-background text-foreground">
-            <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-                <FinancialsHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+        <div className="h-full flex flex-col bg-background">
+            {/* Fixed Header */}
+            <div className="bg-background border-b border-border flex-shrink-0">
+                <div className="px-6 py-4">
+                    <h1 className="text-2xl font-semibold text-foreground">Financials Dashboard</h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Track your shop's financial performance
+                    </p>
+                </div>
+            </div>
 
-                <MainSummaryCards
-                    cashflowData={cashflowData}
-                    trendData={trendData}
-                />
-
-                <QuickActions />
-
-            </main>
+            <div className="flex-1 overflow-auto">
+                <ScaffoldContainer size="large" className="py-6">
+                    <FinancialsHeader timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+                    <MainSummaryCards
+                        cashflowData={cashflowData}
+                        trendData={trendData}
+                    />
+                    <QuickActions />
+                </ScaffoldContainer>
+            </div>
         </div>
     )
 }

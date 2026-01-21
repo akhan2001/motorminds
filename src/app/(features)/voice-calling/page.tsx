@@ -5,11 +5,10 @@ import { useAuth } from '../operations/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Phone, Clock, CheckCircle, AlertCircle, Plus, RefreshCw, Loader2 } from 'lucide-react'
-import { AlertTriangle, Info } from 'lucide-react'
-// import { Nav } from '@/app/components/nav'
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb"
+import { Clock, CheckCircle, AlertCircle, Plus, RefreshCw } from 'lucide-react'
 import { EmptyState } from '@/components/common/feedback/empty-states'
+import { PageLoading, PageError, PageAuthRequired } from '@/components/common/feedback/page-states'
+import { ScaffoldContainer } from '@/components/layout'
 import { PartsService } from '@/app/(features)/parts/lib/partsService'
 import { VoiceCallService } from './lib/voiceCallService'
 import CallForm from './components/CallForm'
@@ -305,121 +304,67 @@ export default function VoiceCallingPage() {
 
     // Loading state
     if (isLoading) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                        <CardContent className="flex items-center space-x-4 p-6">
-                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                            <div>
-                                <p className="text-foreground dark:text-white font-medium">Loading Voice Calling Dashboard</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm">Fetching parts requests and call data...</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        return <PageLoading title="Loading Voice Calling Dashboard" description="Fetching parts requests and call data..." />
     }
 
     // Error state
     if (error) {
         return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
-                        <CardContent className="flex items-center space-x-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-500" />
-                            <div>
-                                <p className="text-foreground dark:text-white font-medium">Failed to Load Voice Calling Dashboard</p>
-                                <p className="text-muted-foreground dark:text-gray-400 text-sm mb-3">
-                                    {typeof error === 'string' ? error : 'Unknown error occurred'}
-                                </p>
-                                <button
-                                    onClick={() => fetchPartsRequests()}
-                                    className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 text-sm underline"
-                                >
-                                    Try Again
-                                </button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+            <PageError 
+                title="Failed to Load Voice Calling Dashboard" 
+                error={typeof error === 'string' ? error : 'Unknown error occurred'}
+                onRetry={fetchPartsRequests}
+            />
         )
     }
 
     const statusCounts = getStatusCounts()
 
     return (
-        <div className="h-screen flex flex-col bg-background">
-            {/* <Nav /> */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1">
-                    <div className="p-6 max-w-6xl mx-auto w-full space-y-6">
-                        {/* Breadcrumb Navigation */}
-                        <Breadcrumb>
-                            <BreadcrumbList>
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage className="text-foreground dark:text-white">
-                                        Voice Calling Dashboard
-                                    </BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </BreadcrumbList>
-                        </Breadcrumb>
-
-                        {/* Work in Progress Banner */}
-                        {/* <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 text-yellow-500 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                                <div className="flex-1">
-                                    <h4 className="text-yellow-600 dark:text-yellow-400 font-semibold text-sm mb-1">Work in Progress</h4>
-                                    <p className="text-yellow-700 dark:text-yellow-200/80 text-xs">
-                                        The MIA AI voice calling feature is currently under active development.
-                                        Some functionality may be limited or unavailable. We're working hard to improve this feature.
-                                    </p>
-                                </div>
-                            </div>
-                        </div> */}
-
-                        {/* Header */}
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-foreground dark:text-white">Voice Calling Dashboard</h1>
-                                <p className="text-muted-foreground dark:text-gray-400 mt-1">Manage your AI-powered parts ordering calls</p>
-                            </div>
-                            <div className="flex gap-3">
-                                <Button
-                                    onClick={() => window.location.href = '/suppliers'}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
-                                >
-                                    Manage Suppliers
-                                </Button>
-                                <Button
-                                    onClick={fetchPartsRequests}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:text-foreground dark:hover:text-white hover:bg-accent dark:hover:bg-[#1a1a1a]"
-                                >
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Refresh
-                                </Button>
-                                <CallForm
-                                    ref={callFormRef}
-                                    trigger={
-                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            New Request
-                                        </Button>
-                                    }
-                                    onCallComplete={fetchPartsRequests}
-                                />
-                            </div>
+        <div className="h-full flex flex-col bg-background">
+            {/* Header */}
+            <div className="bg-background border-b border-border flex-shrink-0">
+                <div className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-semibold text-foreground">Voice Calling Dashboard</h1>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Manage your AI-powered parts ordering calls
+                            </p>
                         </div>
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={() => window.location.href = '/suppliers'}
+                                variant="outline"
+                                size="sm"
+                            >
+                                Manage Suppliers
+                            </Button>
+                            <Button
+                                onClick={fetchPartsRequests}
+                                variant="outline"
+                                size="sm"
+                            >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Refresh
+                            </Button>
+                            <CallForm
+                                ref={callFormRef}
+                                trigger={
+                                    <Button className="bg-red-600 hover:bg-red-700 text-white">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        New Request
+                                    </Button>
+                                }
+                                onCallComplete={fetchPartsRequests}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+                <ScaffoldContainer size="large" className="py-6 space-y-6">
 
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -505,8 +450,7 @@ export default function VoiceCallingPage() {
                                 )}
                             </div>
                         </div>
-                    </div>
-                </div>
+                </ScaffoldContainer>
             </div>
         </div>
     )

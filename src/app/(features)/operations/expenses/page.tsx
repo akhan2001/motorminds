@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '../hooks/use-auth'
 import { usePartsAndExpenses } from '../hooks/use-parts-expenses'
 import { PartsExpensesTable } from '../components/expenses/parts-expenses-table'
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Package, Receipt, ArrowLeft, Plus, Wallet } from 'lucide-react'
+import { Package, Receipt, Plus, Wallet } from 'lucide-react'
 import {
     Pagination,
     PaginationContent,
@@ -19,9 +18,10 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination'
 import AddExpenseModal from '@/app/financials/efficiency/components/AddExpenseModal'
+import { SecondaryPageHeader } from '@/components/common/feedback/SecondaryPageHeader'
+import { ScaffoldContainer } from '@/components/layout'
 
 export default function ExpensesPage() {
-    const router = useRouter()
     const { shopId } = useAuth()
     const [currentPage, setCurrentPage] = useState(1)
     const [includeGeneralExpenses, setIncludeGeneralExpenses] = useState(true)
@@ -41,48 +41,39 @@ export default function ExpensesPage() {
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Button variant="ghost" size="icon" onClick={() => router.push('/operations/work-orders')} className="-ml-2">
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <h1 className="text-3xl font-bold text-foreground dark:text-white">
-                            Parts & Expenses
-                        </h1>
+        <div className="h-full flex flex-col bg-background">
+            <SecondaryPageHeader
+                title="Parts & Expenses"
+                description={`View all parts and expenses across all work orders${includeGeneralExpenses ? ' and general business expenses' : ''}`}
+                backHref="/operations/work-orders"
+                actions={
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-muted/50 dark:bg-muted/20 px-4 py-2 rounded-lg">
+                            <Switch
+                                id="include-general"
+                                checked={includeGeneralExpenses}
+                                onCheckedChange={handleToggleGeneralExpenses}
+                            />
+                            <Label 
+                                htmlFor="include-general" 
+                                className="text-sm text-foreground cursor-pointer"
+                            >
+                                Include General Expenses
+                            </Label>
+                        </div>
+                        {shopId && (
+                            <AddExpenseModal shopId={shopId} onExpenseAdded={refetch}>
+                                <Button className="bg-red-600 hover:bg-red-700 text-white">
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Expense
+                                </Button>
+                            </AddExpenseModal>
+                        )}
                     </div>
-                    <p className="text-muted-foreground dark:text-gray-400 ml-11">
-                        View all parts and expenses across all work orders
-                        {includeGeneralExpenses && ' and general business expenses'}
-                    </p>
-                </div>
-                <div className="flex items-center gap-4">
-                    {/* Filter Toggle */}
-                    <div className="flex items-center gap-2 bg-muted/50 dark:bg-muted/20 px-4 py-2 rounded-lg">
-                        <Switch
-                            id="include-general"
-                            checked={includeGeneralExpenses}
-                            onCheckedChange={handleToggleGeneralExpenses}
-                        />
-                        <Label 
-                            htmlFor="include-general" 
-                            className="text-sm text-foreground dark:text-white cursor-pointer"
-                        >
-                            Include General Expenses
-                        </Label>
-                    </div>
-                    {shopId && (
-                        <AddExpenseModal shopId={shopId} onExpenseAdded={refetch}>
-                            <Button className="bg-red-600 hover:bg-red-700 text-white">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Expense
-                            </Button>
-                        </AddExpenseModal>
-                    )}
-                </div>
-            </div>
+                }
+            />
+            <div className="flex-1 overflow-auto">
+                <ScaffoldContainer size="large" className="py-6 space-y-6">
 
             {/* Stats Cards */}
             {data && (
@@ -207,6 +198,8 @@ export default function ExpensesPage() {
                     )}
                 </CardContent>
             </Card>
+                </ScaffoldContainer>
+            </div>
         </div>
     )
 }

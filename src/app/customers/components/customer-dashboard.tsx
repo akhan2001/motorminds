@@ -5,10 +5,22 @@ import { PlusIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CustomerForm } from "./customer-form";
 
-export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
+interface CustomerDashboardProps {
+    shopId: string;
+    user: any;
+    /** Hide the header when rendered inside a page with its own header */
+    hideHeader?: boolean;
+    /** External refresh key for triggering data refresh */
+    refreshKey?: number;
+}
+
+export function CustomerDashboard({ shopId, user, hideHeader = false, refreshKey: externalRefreshKey = 0 }: CustomerDashboardProps) {
     const [isAdding, setIsAdding] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [internalRefreshKey, setInternalRefreshKey] = useState(0);
     const [useOrganizationTable, setUseOrganizationTable] = useState(false);
+
+    // Combine external and internal refresh keys
+    const refreshKey = externalRefreshKey + internalRefreshKey;
 
     // Check if user has organization access (simple check)
     useEffect(() => {
@@ -33,9 +45,34 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
 
     const handleCustomerAdded = () => {
         setIsAdding(false);
-        setRefreshKey(prev => prev + 1);
+        setInternalRefreshKey(prev => prev + 1);
     };
 
+    // When hideHeader is true, render just the table content
+    if (hideHeader) {
+        return (
+            <>
+                {/* Use OrganizationCustomerTable for MSO shops, regular CustomerTable for individual shops */}
+                {useOrganizationTable ? (
+                    <OrganizationCustomerTable
+                        shopId={shopId}
+                        user={user}
+                        key={refreshKey}
+                        refreshIndex={refreshKey}
+                    />
+                ) : (
+                    <CustomerTable
+                        shopId={shopId}
+                        user={user}
+                        key={refreshKey}
+                        refreshIndex={refreshKey}
+                    />
+                )}
+            </>
+        );
+    }
+
+    // Original full layout with header (for backwards compatibility)
     return (
         <main className="flex flex-col items-center justify-center py-8">
             <div className="container mx-auto max-w-[1300px]">
