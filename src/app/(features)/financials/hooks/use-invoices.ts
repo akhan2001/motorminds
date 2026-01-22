@@ -14,7 +14,7 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: num
                 .select(`
                     id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes, payments, amount_paid, outstanding_balance,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate),
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('shop_id', shopId)
@@ -67,7 +67,7 @@ export function useInvoice(invoiceId: string) {
                 .select(`
                     *,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate),
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('invoice_number', invoiceId)
@@ -284,7 +284,7 @@ export function useCreateInvoiceFromWorkOrder() {
                 .select(`
                     *,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, color, mileage)
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color)
                 `)
                 .eq('id', work_order_id)
                 .single()
