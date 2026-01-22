@@ -287,6 +287,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 vehicleLicensePlate={formData.vehicleLicensePlate}
                                                 vehicleMileage={formData.vehicleMileage}
                                                 isEditing={currentStep >= 2}
+                                                isWorkOrderMode={true}
                                                 onFieldChange={handleFieldChange}
                                                 onVehicleSelect={(vehicleId, vehicleData) => {
                                                     handleFieldChange('vehicleId', vehicleId)
