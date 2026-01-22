@@ -1,243 +1,7 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { Document, Page, Text, View, Image } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
-
-const styles = StyleSheet.create({
-    page: {
-        padding: 30,
-        fontSize: 10,
-        fontFamily: 'Helvetica',
-        backgroundColor: '#ffffff',
-        position: 'relative',
-    },
-    watermark: {
-        position: 'absolute',
-        top: '35%',
-        left: '20%',
-        width: '60%',
-        textAlign: 'center',
-    },
-    watermarkText: {
-        fontSize: 90,
-        fontWeight: 'bold',
-        color: '#d1d5db',
-        opacity: 0.15,
-        letterSpacing: 10,
-    },
-    content: {
-        position: 'relative',
-        zIndex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-        borderBottom: 2,
-        borderBottomColor: '#000000',
-        paddingBottom: 10,
-    },
-    logo: {
-        width: 80,
-        height: 80,
-        objectFit: 'contain',
-    },
-    shopNameAddress: {
-        flex: 1,
-        paddingHorizontal: 20,
-        textAlign: 'left',
-    },
-    shopInfo: {
-        textAlign: 'right',
-    },
-    shopName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#000000',
-        marginBottom: 4,
-    },
-    shopDetail: {
-        fontSize: 9,
-        color: '#4b5563',
-        marginBottom: 2,
-    },
-    invoiceTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#000000',
-        marginBottom: 8,
-    },
-    section: {
-        marginBottom: 15,
-    },
-    sectionTitle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#000000',
-        marginBottom: 8,
-        textTransform: 'uppercase',
-    },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    column: {
-        width: '48%',
-    },
-    columnThree: {
-        width: '32%',
-    },
-    label: {
-        fontSize: 8,
-        color: '#6b7280',
-        marginBottom: 2,
-        textTransform: 'uppercase',
-    },
-    value: {
-        fontSize: 10,
-        color: '#111827',
-        fontWeight: 'bold',
-    },
-    table: {
-        marginTop: 10,
-    },
-    tableHeader: {
-        flexDirection: 'row',
-        backgroundColor: '#000000',
-        padding: 6,
-        color: '#ffffff',
-        fontWeight: 'bold',
-        fontSize: 9,
-    },
-    tableRow: {
-        flexDirection: 'row',
-        borderBottom: 1,
-        borderBottomColor: '#e5e7eb',
-        padding: 6,
-        fontSize: 9,
-    },
-    tableRowAlt: {
-        backgroundColor: '#f9fafb',
-    },
-    col1: { width: '40%' },
-    col2: { width: '15%', textAlign: 'center' },
-    col3: { width: '15%', textAlign: 'center' },
-    col4: { width: '15%', textAlign: 'right' },
-    col5: { width: '15%', textAlign: 'right' },
-    totalsSection: {
-        marginTop: 15,
-        alignItems: 'flex-end',
-    },
-    totalsBox: {
-        width: '40%',
-        borderTop: 2,
-        borderTopColor: '#000000',
-        paddingTop: 8,
-    },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 6,
-    },
-    totalLabel: {
-        fontSize: 10,
-        color: '#4b5563',
-    },
-    totalValue: {
-        fontSize: 10,
-        color: '#111827',
-        fontWeight: 'bold',
-    },
-    grandTotal: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 6,
-        paddingTop: 6,
-        borderTop: 1,
-        borderTopColor: '#d1d5db',
-    },
-    grandTotalLabel: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#000000',
-    },
-    grandTotalValue: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#000000',
-    },
-    notes: {
-        marginTop: 15,
-        padding: 10,
-        backgroundColor: '#f3f4f6',
-        borderRadius: 4,
-    },
-    notesTitle: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#374151',
-        marginBottom: 4,
-    },
-    notesText: {
-        fontSize: 9,
-        color: '#6b7280',
-        lineHeight: 1.4,
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 20,
-        left: 30,
-        right: 30,
-        textAlign: 'center',
-        fontSize: 8,
-        color: '#9ca3af',
-        borderTop: 1,
-        borderTopColor: '#e5e7eb',
-        paddingTop: 8,
-    },
-    statusBadge: {
-        padding: 4,
-        borderRadius: 4,
-        fontSize: 9,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-    },
-    statusPaid: {
-        backgroundColor: '#808080',
-        color: '#ffffff',
-    },
-    statusPartiallyPaid: {
-        backgroundColor: '#a0a0a0',
-        color: '#ffffff',
-    },
-    statusUnpaid: {
-        backgroundColor: '#606060',
-        color: '#ffffff',
-    },
-    paymentInfo: {
-        marginTop: 8,
-        padding: 8,
-        backgroundColor: '#f9fafb',
-        borderRadius: 4,
-    },
-    workOrderSection: {
-        marginBottom: 15,
-        padding: 10,
-        backgroundColor: '#f3f4f6',
-        borderRadius: 4,
-    },
-    workOrderTitle: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: '#000000',
-        marginBottom: 4,
-    },
-    workOrderDescription: {
-        fontSize: 9,
-        color: '#4b5563',
-        lineHeight: 1.4,
-    },
-})
+import { professionalTemplateStyles as styles } from './ProfessionalTemplate.styles'
 
 export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
     const formatCurrency = (amount: number) => {
@@ -249,6 +13,17 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
             year: 'numeric',
             month: 'long',
             day: 'numeric'
+        })
+    }
+
+    const formatDateTime = (dateString: string) => {
+        return new Date(dateString).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
         })
     }
 
@@ -346,7 +121,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             </View>
                             <View style={{ marginBottom: 4 }}>
                                 <Text style={styles.label}>Issue Date</Text>
-                                <Text style={styles.value}>{formatDate(invoice.issue_date)}</Text>
+                                <Text style={styles.value}>{formatDateTime(invoice.issue_date)}</Text>
                             </View>
                             {invoice.due_date && (
                                 <View style={{ marginBottom: 4 }}>
@@ -388,23 +163,65 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                             {invoice.vehicle || invoice.walk_in_vehicle_info ? (
                                 invoice.customer_type === 'walk_in' && invoice.walk_in_vehicle_info ? (
                                     <View>
-                                        <Text style={styles.value}>
-                                            {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
-                                            {invoice.walk_in_vehicle_info.license_plate
-                                                ? ` - ${invoice.walk_in_vehicle_info.license_plate}`
-                                                : ''
-                                            }
-                                        </Text>
+                                        {invoice.walk_in_vehicle_info.year && invoice.walk_in_vehicle_info.make && invoice.walk_in_vehicle_info.model && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.value}>
+                                                    {invoice.walk_in_vehicle_info.year} {invoice.walk_in_vehicle_info.make} {invoice.walk_in_vehicle_info.model}
+                                                </Text>
+                                            </View>
+                                        )}
+                                        {invoice.walk_in_vehicle_info.license_plate && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>License Plate</Text>
+                                                <Text style={styles.value}>{invoice.walk_in_vehicle_info.license_plate}</Text>
+                                            </View>
+                                        )}
+                                        {invoice.walk_in_vehicle_info.vin && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>VIN</Text>
+                                                <Text style={styles.value}>{invoice.walk_in_vehicle_info.vin}</Text>
+                                            </View>
+                                        )}
+                                        {invoice.walk_in_vehicle_info.mileage !== undefined && invoice.walk_in_vehicle_info.mileage !== null && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>Mileage</Text>
+                                                <Text style={styles.value}>{invoice.walk_in_vehicle_info.mileage.toLocaleString()} km</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 ) : invoice.vehicle ? (
                                     <View>
-                                        <Text style={styles.value}>
-                                            {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
-                                            {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL'
-                                                ? ` - ${invoice.vehicle.license_plate}`
-                                                : ''
-                                            }
-                                        </Text>
+                                        {invoice.vehicle.year && invoice.vehicle.make && invoice.vehicle.model && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.value}>
+                                                    {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model}
+                                                </Text>
+                                            </View>
+                                        )}
+                                        {invoice.vehicle.engine_type && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>Engine</Text>
+                                                <Text style={styles.value}>{invoice.vehicle.engine_type}</Text>
+                                            </View>
+                                        )}
+                                        {invoice.vehicle.vin && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>VIN</Text>
+                                                <Text style={styles.value}>{invoice.vehicle.vin}</Text>
+                                            </View>
+                                        )}
+                                        {invoice.vehicle.mileage !== undefined && invoice.vehicle.mileage !== null && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>Mileage</Text>
+                                                <Text style={styles.value}>{invoice.vehicle.mileage.toLocaleString()} km</Text>
+                                            </View>
+                                        )}
+                                        {invoice.vehicle.license_plate && invoice.vehicle.license_plate !== 'NULL' && (
+                                            <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>License Plate</Text>
+                                                <Text style={styles.value}>{invoice.vehicle.license_plate}</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 ) : null
                             ) : (
@@ -415,16 +232,9 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
 
                     {/* Items Table */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Items & Services</Text>
-
                         {/* Work Order Title & Description */}
                         {(invoice.title || invoice.description || invoice.work_order) && (
                             <View style={styles.workOrderSection}>
-                                {invoice.work_order && (
-                                    <View style={{ marginBottom: 4 }}>
-                                        <Text style={styles.label}>Customer Request</Text>
-                                    </View>
-                                )}
                                 {invoice.title && (
                                     <View style={{ marginBottom: 4 }}>
                                         <Text style={styles.workOrderTitle}>{invoice.title}</Text>
@@ -432,7 +242,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                 )}
                                 {invoice.description && (
                                     <View>
-                                        <Text style={styles.label}>Description</Text>
+                                        <Text style={styles.label}>Customer Request</Text>
                                         <Text style={styles.workOrderDescription}>{invoice.description}</Text>
                                     </View>
                                 )}
@@ -440,6 +250,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                         )}
 
                         <View style={styles.table}>
+                            <Text style={styles.sectionTitle}>Items & Services</Text>
                             <View style={styles.tableHeader}>
                                 <Text style={styles.col1}>Description</Text>
                                 <Text style={styles.col2}>Type</Text>
@@ -505,15 +316,17 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                 <Text style={styles.grandTotalLabel}>Total Amount:</Text>
                                 <Text style={styles.grandTotalValue}>{formatCurrency(total)}</Text>
                             </View>
-                            {(invoice.amount_paid !== undefined && invoice.amount_paid > 0) && (
+                            {/* Payment Information - Always show if status is paid/partially_paid or if amount_paid exists */}
+                            {(invoice.status === 'paid' || invoice.status === 'partially_paid' || 
+                              (invoice.amount_paid !== undefined && invoice.amount_paid > 0)) && (
                                 <>
                                     <View style={[styles.totalRow, { marginTop: 8, paddingTop: 8, borderTop: 1, borderTopColor: '#d1d5db' }]}>
                                         <Text style={styles.totalLabel}>Amount Paid:</Text>
                                         <Text style={styles.totalValue}>
-                                            {formatCurrency(invoice.amount_paid)}
+                                            {formatCurrency(invoice.amount_paid || 0)}
                                         </Text>
                                     </View>
-                                    {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
+                                    {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance >= 0) && (
                                         <View style={styles.totalRow}>
                                             <Text style={styles.totalLabel}>Outstanding Balance:</Text>
                                             <Text style={styles.totalValue}>
@@ -534,27 +347,75 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                         </View>
                     )}
 
-                    {/* Payment Information */}
-                    {(invoice.payment_method || invoice.paid_date || invoice.payment_reference) && (
+                    {/* Payments */}
+                    {(invoice.status === 'paid' || invoice.status === 'partially_paid' || 
+                      invoice.payment_method || invoice.paid_date || invoice.payment_reference ||
+                      (invoice.payments && invoice.payments.length > 0)) && (
                         <View style={styles.paymentInfo}>
-                            <Text style={styles.sectionTitle}>Payment Information</Text>
-                            {invoice.payment_method && (
-                                <View style={{ marginBottom: 4 }}>
-                                    <Text style={styles.label}>Payment Method</Text>
-                                    <Text style={styles.value}>{formatPaymentMethod(invoice.payment_method)}</Text>
+                            <Text style={styles.sectionTitle}>Payments</Text>
+                            
+                            {/* Payment History Table */}
+                            {invoice.payments && invoice.payments.length > 0 ? (
+                                <View style={styles.paymentHistory}>
+                                    <View style={styles.paymentHistoryHeader}>
+                                        <Text style={[styles.paymentHistoryHeaderText, { width: '25%' }]}>Date</Text>
+                                        <Text style={[styles.paymentHistoryHeaderText, { width: '25%' }]}>Method</Text>
+                                        <Text style={[styles.paymentHistoryHeaderText, { width: '25%', textAlign: 'right' }]}>Amount</Text>
+                                        <Text style={[styles.paymentHistoryHeaderText, { width: '25%', textAlign: 'right' }]}>Reference</Text>
+                                    </View>
+                                    {invoice.payments
+                                        .filter(payment => !payment.deleted)
+                                        .sort((a, b) => new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime())
+                                        .map((payment, index) => (
+                                            <View key={payment.id || index} style={styles.paymentHistoryRow}>
+                                                <Text style={{ fontSize: 9, width: '25%' }}>
+                                                    {formatDate(payment.payment_date)}
+                                                </Text>
+                                                <Text style={{ fontSize: 9, width: '25%' }}>
+                                                    {formatPaymentMethod(payment.payment_method)}
+                                                </Text>
+                                                <Text style={{ fontSize: 9, width: '25%', textAlign: 'right' }}>
+                                                    {formatCurrency(payment.amount)}
+                                                </Text>
+                                                <Text style={{ fontSize: 9, width: '25%', textAlign: 'right', color: '#6b7280' }}>
+                                                    {payment.payment_reference || '-'}
+                                                </Text>
+                                            </View>
+                                        ))}
                                 </View>
-                            )}
-                            {invoice.paid_date && (
-                                <View style={{ marginBottom: 4 }}>
-                                    <Text style={styles.label}>Paid Date</Text>
-                                    <Text style={styles.value}>{formatDate(invoice.paid_date)}</Text>
-                                </View>
-                            )}
-                            {invoice.payment_reference && (
-                                <View style={{ marginBottom: 4 }}>
-                                    <Text style={styles.label}>Payment Reference</Text>
-                                    <Text style={styles.value}>{invoice.payment_reference}</Text>
-                                </View>
+                            ) : (
+                                // Fallback: Show individual fields if no payment history array
+                                <>
+                                    {(() => {
+                                        const latestPayment = invoice.payments && invoice.payments.length > 0 
+                                            ? invoice.payments.filter(p => !p.deleted).sort((a, b) => 
+                                                new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+                                              )[0]
+                                            : null
+                                        const displayPaymentMethod = invoice.payment_method || latestPayment?.payment_method
+                                        
+                                        return displayPaymentMethod ? (
+                                            <View style={{ marginBottom: 4 }}>
+                                                <Text style={styles.label}>Payment Method</Text>
+                                                <Text style={styles.value}>{formatPaymentMethod(displayPaymentMethod)}</Text>
+                                            </View>
+                                        ) : null
+                                    })()}
+                                    
+                                    {invoice.paid_date && (
+                                        <View style={{ marginBottom: 4 }}>
+                                            <Text style={styles.label}>Paid Date</Text>
+                                            <Text style={styles.value}>{formatDate(invoice.paid_date)}</Text>
+                                        </View>
+                                    )}
+                                    
+                                    {invoice.payment_reference && (
+                                        <View style={{ marginBottom: 4 }}>
+                                            <Text style={styles.label}>Payment Reference</Text>
+                                            <Text style={styles.value}>{invoice.payment_reference}</Text>
+                                        </View>
+                                    )}
+                                </>
                             )}
                         </View>
                     )}

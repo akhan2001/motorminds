@@ -70,6 +70,10 @@ export interface InvoiceWithDetails extends Invoice {
         make: string
         model: string
         license_plate: string | null
+        vin?: string | null
+        engine_type?: string | null
+        mileage?: number | null
+        color?: string | null
     } | null
     work_order: {
         id: string
