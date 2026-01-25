@@ -139,13 +139,15 @@ export function useCreateInvoice() {
             // Generate invoice number
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
             
-            // Calculate totals - discounts subtract from subtotal
-            const subtotal = data.invoice_items.reduce((sum, item) => {
-                if (item.item_type === 'discount') {
-                    return sum - item.total_price
-                }
-                return sum + item.total_price
-            }, 0)
+            // Calculate totals - discounts subtract from subtotal, exclude expense items (tracking only)
+            const subtotal = data.invoice_items
+                .filter(item => (item as any).active !== false && item.item_type !== 'expense')
+                .reduce((sum, item) => {
+                    if (item.item_type === 'discount') {
+                        return sum - item.total_price
+                    }
+                    return sum + item.total_price
+                }, 0)
             const tax_amount = subtotal * data.tax_rate
             const total_amount = subtotal + tax_amount - data.discount_amount
 
@@ -193,13 +195,15 @@ export function useUpdateInvoice() {
             let updates: any = { ...data }
             
             if (data.invoice_items) {
-                // Calculate subtotal - discounts subtract, all other items add
-                const subtotal = data.invoice_items.reduce((sum, item) => {
-                    if (item.item_type === 'discount') {
-                        return sum - item.total_price
-                    }
-                    return sum + item.total_price
-                }, 0)
+                // Calculate subtotal - discounts subtract, all other items add, exclude expense items (tracking only)
+                const subtotal = data.invoice_items
+                    .filter(item => (item as any).active !== false && item.item_type !== 'expense')
+                    .reduce((sum, item) => {
+                        if (item.item_type === 'discount') {
+                            return sum - item.total_price
+                        }
+                        return sum + item.total_price
+                    }, 0)
                 const tax_rate = data.tax_rate ?? 0  // Use 0 if null/undefined (tax disabled)
                 const tax_amount = subtotal * tax_rate
                 const discount = data.discount_amount || 0
@@ -380,8 +384,9 @@ export function useCreateInvoiceFromWorkOrder() {
             })
 
             // Create invoice - only include approved items in subtotal, handle discounts correctly
+            // Exclude expense items (tracking only) and rejected items
             const subtotal = invoiceItems
-                .filter(item => item.active !== false)
+                .filter(item => item.active !== false && item.item_type !== 'expense')
                 .reduce((sum, item) => {
                     // Discounts subtract from subtotal, all other items add
                     if (item.item_type === 'discount') {
@@ -539,9 +544,9 @@ export function useSyncInvoiceFromWorkOrder() {
                 }
             })
 
-            // Recalculate totals - only include approved items
+            // Recalculate totals - only include approved items, exclude expense items (tracking only)
             const subtotal = invoiceItems
-                .filter(item => item.active !== false)
+                .filter(item => item.active !== false && item.item_type !== 'expense')
                 .reduce((sum, item) => {
                     if (item.item_type === 'discount') {
                         return sum - item.total_price
@@ -554,7 +559,7 @@ export function useSyncInvoiceFromWorkOrder() {
             const discount_amount = existingInvoice.discount_amount || 0
             const total_amount = subtotal + tax_amount - discount_amount
 
-            // Calculate category totals
+            // Calculate category totals - exclude expense items (tracking only)
             const labor_total = invoiceItems.filter(i => i.item_type === 'labor' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)
             const parts_total = invoiceItems.filter(i => i.item_type === 'part' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)
             const services_total = invoiceItems.filter(i => i.item_type === 'service' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)

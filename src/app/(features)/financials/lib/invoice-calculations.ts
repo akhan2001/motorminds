@@ -50,11 +50,8 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		return sum + total
 	}, 0)
 	
-	const expensesTotal = expensesItems.reduce((sum, item) => {
-		// For expenses: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
+	// Expenses are excluded from calculations (tracking only)
+	const expensesTotal = 0
 	
 	const servicesTotal = servicesItems.reduce((sum, item) => {
 		// For services: quantity * unit_price
@@ -81,7 +78,8 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	}, 0)
 	
 	// Subtract discounts from subtotal (discounts reduce the total)
-	const subtotal = labourTotal + partsTotal + expensesTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
+	// Expenses are excluded from subtotal calculation (tracking only)
+	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
 	
 	return {
 		subtotal,

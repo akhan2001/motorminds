@@ -64,6 +64,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
     const [availableModels, setAvailableModels] = useState<string[]>([])
     const [showCustomModel, setShowCustomModel] = useState(false)
+    const [mileageUnit, setMileageUnit] = useState<'km' | 'miles'>('km')
 
     // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
     useEffect(() => {
@@ -99,6 +100,18 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             setShowCustomModel(false)
         }
     }, [vehicleMake, vehicleModel])
+
+    // Initialize mileage unit based on current mileage value
+    useEffect(() => {
+        if (vehicleMileage && typeof vehicleMileage === 'string') {
+            const mileageStr = vehicleMileage.toLowerCase()
+            if (mileageStr.includes('mi') || mileageStr.includes('mile')) {
+                setMileageUnit('miles')
+            } else {
+                setMileageUnit('km')
+            }
+        }
+    }, [vehicleMileage])
 
     const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string): string | undefined => {
         switch (field) {
@@ -579,9 +592,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     <div className="flex items-center gap-1 text-xs">
                                         <button
                                             type="button"
-                                            onClick={() => onFieldChange('mileageUnit', 'km')}
+                                            onClick={() => {
+                                                setMileageUnit('km')
+                                                onFieldChange('mileageUnit', 'km')
+                                            }}
                                             className={`px-2 py-0.5 rounded transition-colors ${
-                                                !vehicleMileage?.toString().includes('mi') 
+                                                mileageUnit === 'km'
                                                     ? 'bg-blue-600 text-white' 
                                                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white'
                                             }`}
@@ -591,9 +607,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         <span className="text-muted-foreground">/</span>
                                         <button
                                             type="button"
-                                            onClick={() => onFieldChange('mileageUnit', 'miles')}
+                                            onClick={() => {
+                                                setMileageUnit('miles')
+                                                onFieldChange('mileageUnit', 'miles')
+                                            }}
                                             className={`px-2 py-0.5 rounded transition-colors ${
-                                                vehicleMileage?.toString().includes('mi') 
+                                                mileageUnit === 'miles'
                                                     ? 'bg-blue-600 text-white' 
                                                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white'
                                             }`}
@@ -612,7 +631,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
                                 readOnly={!isEditing}
-                                placeholder="Current mileage (KM)"
+                                placeholder={mileageUnit === 'miles' ? 'Current mileage (Miles)' : 'Current mileage (KM)'}
                                 type="number"
                             />
                         </div>

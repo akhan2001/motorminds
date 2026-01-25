@@ -219,12 +219,7 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                 <span className="text-foreground dark:text-white">{formatCurrency(calculations.partsTotal)}</span>
                             </div>
                         )}
-                        {calculations.expensesTotal > 0 && (
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground dark:text-gray-400">Expenses:</span>
-                                <span className="text-foreground dark:text-white">{formatCurrency(calculations.expensesTotal)}</span>
-                            </div>
-                        )}
+                        {/* Expenses are excluded from totals (tracking only) */}
                         {calculations.servicesTotal > 0 && (
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground dark:text-gray-400">Services:</span>

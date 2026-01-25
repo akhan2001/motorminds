@@ -42,8 +42,8 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
         ).join(' ')
     }
 
-    // Calculate totals - only active items, handle discounts correctly
-    const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false)
+    // Calculate totals - only active items, exclude expenses (tracking only), handle discounts correctly
+    const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false && (item as any).item_type !== 'expense')
     const subtotal = activeItems.reduce((sum, item) => {
         // Discounts subtract from subtotal, all other items add
         if ((item as any).item_type === 'discount') {

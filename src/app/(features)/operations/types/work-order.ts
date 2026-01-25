@@ -123,6 +123,7 @@ export interface WorkOrderKanbanItem {
     assignee?: string
     date: string
     customer?: string
+    customer_phone?: string
     vehicle?: string
     tags?: string[]
     shop_id?: string

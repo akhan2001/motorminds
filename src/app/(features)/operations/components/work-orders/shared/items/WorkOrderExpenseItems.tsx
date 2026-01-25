@@ -432,7 +432,8 @@ export function WorkOrderExpenseItems({
         <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                <h3 className="text-lg font-semibold text-foreground">Expenses Items</h3>
+                <h3 className="text-lg font-semibold text-foreground">Expense Items</h3>
+                <h4 className="text-sm text-muted-foreground dark:text-gray-400">Expenses are excluded from totals (tracking only)</h4>
             </div>
 
             {items.length === 0 ? (
