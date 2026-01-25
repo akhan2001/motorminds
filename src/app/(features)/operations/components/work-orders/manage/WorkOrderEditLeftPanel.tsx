@@ -57,8 +57,12 @@ export function WorkOrderEditLeftPanel({
         }
 
         const workOrderSaved = await form.handleSave(workOrder.id)
-        if (workOrderSaved && onSave) {
-            onSave(workOrder, form.formData)
+        if (workOrderSaved) {
+            if (onSave) {
+                onSave(workOrder, form.formData)
+            }
+            // Close the modal after successful save
+            onClose()
         }
     }
 

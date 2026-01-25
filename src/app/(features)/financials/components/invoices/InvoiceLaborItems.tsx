@@ -114,7 +114,7 @@ export const InvoiceLaborItems: React.FC<InvoiceLaborItemsProps> = ({ items, onI
                                     </div>
                                     <div>
                                         <Label htmlFor={`labor_rate_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">
-                                            Rate per Hour *
+                                            Unit Price (per hour) *
                                         </Label>
                                         <Input
                                             id={`labor_rate_${index}`}
