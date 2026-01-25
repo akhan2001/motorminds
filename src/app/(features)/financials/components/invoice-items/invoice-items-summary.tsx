@@ -129,7 +129,9 @@ export const InvoiceItemsSummary: React.FC<InvoiceItemsSummaryProps> = ({
 
                 {/* Tax */}
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Tax (13%)</span>
+                    <span className="text-gray-400">
+                        Tax {summary.taxRate > 0 ? `(${Math.round(summary.taxRate * 100)}%)` : '(0%)'}
+                    </span>
                     <span className="text-gray-300">{formatCurrency(summary.tax)}</span>
                 </div>
 

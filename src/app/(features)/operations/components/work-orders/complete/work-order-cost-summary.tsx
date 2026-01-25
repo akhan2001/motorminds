@@ -46,9 +46,9 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 				<div className="text-muted-foreground">
 					<span className="text-foreground font-medium">{workOrderItems.length}</span> total items
 				</div>
-				<div className="text-muted-foreground">
+				{/* <div className="text-muted-foreground">
 					<span className="text-foreground font-medium">{calculations.approvedItems.length}</span> approved
-				</div>
+				</div> */}
 				{calculations.rejectedItems.length > 0 && (
 					<div className="text-red-600 dark:text-red-400 col-span-2">
 						<span className="font-medium">{calculations.rejectedItems.length}</span> rejected items
@@ -64,26 +64,33 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 						className={`p-3 rounded-lg border ${
 							item.active === false 
 								? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' 
+								: item.item_type === 'expense'
+								? 'border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5'
 								: 'border-border dark:border-[#333333] bg-background dark:bg-[#1a1a1a]'
 						}`}
 					>
 						<div className="flex justify-between items-start mb-2">
 							<div className="flex-1">
-								<div className="flex items-center gap-2 mb-1">
+								<div className="flex items-center gap-2 mb-1 flex-wrap">
 									<span className={`text-xs font-medium px-2 py-1 rounded border ${
 										item.active === false 
 											? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20' 
+											: item.item_type === 'expense'
+											? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
 											: 'bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border-green-300 dark:border-green-500/20'
 									}`}>
 										{item.item_type.toUpperCase()}
 									</span>
-									<span className={`text-xs font-medium px-2 py-1 rounded border ${
-										item.active === false 
-											? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20' 
-											: 'bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border-green-300 dark:border-green-500/20'
-									}`}>
-										{getItemStatusText(item)}
-									</span>
+									{item.active === false && (
+										<span className="text-xs font-medium px-2 py-1 rounded border bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20">
+											{getItemStatusText(item)}
+										</span>
+									)}
+									{item.item_type === 'expense' && (
+										<span className="text-xs font-medium px-2 py-1 rounded border bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/20">
+											TRACKING ONLY
+										</span>
+									)}
 								</div>
 								<h4 className={`font-medium ${getItemStatusColor(item)}`}>
 									{item.description}
@@ -180,14 +187,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{(calculations.expensesTotal !== null && calculations.expensesTotal !== undefined && calculations.expensesTotal !== 0) && (
-						<div className="flex justify-between">
-							<span className="text-muted-foreground">Expenses</span>
-							<span className="text-foreground font-medium">
-								{formatCurrency(calculations.expensesTotal)}
-							</span>
-						</div>
-					)}
+					{/* Expenses are excluded from totals (tracking only) */}
 					{(calculations.servicesTotal !== null && calculations.servicesTotal !== undefined && calculations.servicesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Services</span>

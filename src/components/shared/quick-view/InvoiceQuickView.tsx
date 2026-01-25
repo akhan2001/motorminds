@@ -80,8 +80,8 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
         )
     }
 
-    // Calculate totals - only include active items, handle discounts correctly
-    const activeItems = (invoice.invoice_items || []).filter((item: any) => item.active !== false)
+    // Calculate totals - only include active items, exclude expense items (tracking only), handle discounts correctly
+    const activeItems = (invoice.invoice_items || []).filter((item: any) => item.active !== false && item.item_type !== 'expense')
     const subtotal = activeItems.reduce((sum: number, item: any) => {
         if (item.item_type === 'discount') return sum - item.total_price
         return sum + item.total_price
