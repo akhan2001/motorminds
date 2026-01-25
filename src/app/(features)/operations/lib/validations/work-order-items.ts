@@ -48,6 +48,7 @@ export const WorkOrderItemSchema = z.object({
         z.string().uuid().optional().nullable()
     ),
     active: z.boolean().optional().nullable(),
+    is_billable: z.boolean().optional().nullable(), // Whether item appears on customer invoices (expenses default false)
     
     created_at: z.string(),
     completed_at: z.string().optional().nullable(),
@@ -77,6 +78,7 @@ export const WorkOrderItemCreateSchema = z.object({
         (val) => val === '' || val === null || val === undefined ? undefined : val,
         z.string().uuid().optional().nullable()
     ),
+    is_billable: z.boolean().optional(), // Whether item appears on customer invoices (expenses default false)
 }).refine(
     (data) => {
         // For labor items, labor_hours should be provided
@@ -112,6 +114,7 @@ export const WorkOrderItemUpdateSchema = z.object({
         z.string().uuid().optional().nullable()
     ),
     active: z.boolean().optional().nullable(),
+    is_billable: z.boolean().optional().nullable(), // Whether item appears on customer invoices
 }).refine(
     (data) => {
         // If description is provided, it must not be empty
@@ -144,6 +147,7 @@ export const WorkOrderItemFormDataSchema = z.object({
     labor_hours: z.number().positive().optional(),
     technician_id: z.string().uuid().optional(),
     active: z.boolean().optional(),
+    is_billable: z.boolean().optional(), // Whether item appears on customer invoices
 })
 
 // Summary schema

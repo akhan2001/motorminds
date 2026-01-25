@@ -319,7 +319,11 @@ export function useCreateInvoiceFromWorkOrder() {
 
             // Allow empty invoices - they can be synced later when items are added
             // Transform work order items to invoice items (empty array is valid)
-            const invoiceItems = (items || []).map(item => {
+            // Filter to only billable items - is_billable determines if item appears on customer invoices
+            // Expenses default to is_billable=false (internal costs), other types default to true
+            const invoiceItems = (items || [])
+                .filter(item => item.is_billable !== false) // Include items where is_billable is true or undefined (for backwards compat)
+                .map(item => {
                 const isDeclined = item.active === false
                 
                 // Validate and ensure unit_price is set correctly
@@ -484,7 +488,11 @@ export function useSyncInvoiceFromWorkOrder() {
             }
 
             // Transform work order items to invoice items (allow empty arrays)
-            const invoiceItems = (items || []).map(item => {
+            // Filter to only billable items - is_billable determines if item appears on customer invoices
+            // Expenses default to is_billable=false (internal costs), other types default to true
+            const invoiceItems = (items || [])
+                .filter(item => item.is_billable !== false) // Include items where is_billable is true or undefined (for backwards compat)
+                .map(item => {
                 const isDeclined = item.active === false
                 
                 let unitPrice = Number(item.unit_price) || 0

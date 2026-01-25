@@ -106,6 +106,8 @@ export interface WorkOrderItem {
 
     labor_hours?: number
     technician_id?: string
+    
+    is_billable?: boolean // Whether item appears on customer invoices (expenses default false)
 
     created_at: string
     completed_at?: string

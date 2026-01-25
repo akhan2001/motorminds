@@ -42,6 +42,7 @@ export interface PartFormItem {
 
 /**
  * Expense item form data (duplicate of PartFormItem but stored as generic item type)
+ * Expenses default to is_billable=false (internal shop costs not shown on invoices)
  */
 export interface ExpenseFormItem {
     id: string
@@ -57,6 +58,7 @@ export interface ExpenseFormItem {
     warranty_period?: string
     notes?: string
     active?: boolean // For edit mode tracking
+    is_billable?: boolean // Whether to show on customer invoice (defaults to false for expenses)
 }
 
 /**

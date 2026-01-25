@@ -207,6 +207,11 @@ export class WorkOrderItemsService {
         }
 
         // Prepare payload (database trigger will calculate total_price and total_cost)
+        // Set is_billable based on item type: expenses default to false (internal costs), others default to true
+        const isBillable = validated.is_billable !== undefined 
+            ? validated.is_billable 
+            : validated.item_type !== 'expense' // Expenses default to non-billable
+        
         const itemPayload = {
             work_order_id: validated.work_order_id,
             shop_id: workOrder.shop_id,
@@ -222,6 +227,7 @@ export class WorkOrderItemsService {
             notes: validated.notes?.trim() || null,
             labor_hours: validated.labor_hours ?? null,
             technician_id: validated.technician_id ?? null,
+            is_billable: isBillable,
         }
 
         const { data, error } = await supabase
@@ -301,6 +307,7 @@ export class WorkOrderItemsService {
         if (validated.labor_hours !== undefined) updatePayload.labor_hours = validated.labor_hours ?? null
         if (validated.technician_id !== undefined) updatePayload.technician_id = validated.technician_id ?? null
         if (validated.active !== undefined) updatePayload.active = validated.active
+        if (validated.is_billable !== undefined) updatePayload.is_billable = validated.is_billable
 
         // If no fields to update, return current item
         if (Object.keys(updatePayload).length === 0) {
