@@ -5,21 +5,22 @@ import type { Invoice, InvoiceWithDetails, InvoiceFormData, InvoiceFilters, Invo
 const supabase = createClient()
 
 // Fetch all invoices for a shop
-export function useInvoices(shopId: string, filters?: InvoiceFilters) {
+export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: number = 100, offset: number = 0) {
     return useQuery({
-        queryKey: ['invoices', shopId, filters],
+        queryKey: ['invoices', shopId, filters, limit, offset],
         queryFn: async () => {
             let query = supabase
                 .from('invoices_table')
                 .select(`
-                    *,
+                    id, invoice_number, shop_id, customer_id, vehicle_id, work_order_id, title, description, status, priority, total_amount, subtotal, tax_amount, discount_amount, issue_date, due_date, paid_date, created_at, updated_at, archived, notes, payments, amount_paid, outstanding_balance,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate),
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('shop_id', shopId)
                 .or('archived.eq.false,archived.is.null')
                 .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1)
 
             // Apply filters
             if (filters?.status && filters.status.length > 0) {
@@ -66,7 +67,7 @@ export function useInvoice(invoiceId: string) {
                 .select(`
                     *,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate),
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('invoice_number', invoiceId)
@@ -83,11 +84,12 @@ export function useInvoice(invoiceId: string) {
     })
 }
 
-// Fetch invoice stats
+// Fetch invoice stats (optimized with aggregation)
 export function useInvoiceStats(shopId: string) {
     return useQuery({
         queryKey: ['invoice-stats', shopId],
         queryFn: async () => {
+            // Fetch only necessary fields for stats calculation
             const { data, error } = await supabase
                 .from('invoices_table')
                 .select('status, total_amount, paid_date')
@@ -96,20 +98,22 @@ export function useInvoiceStats(shopId: string) {
 
             if (error) throw error
 
+            // Calculate stats in memory (more efficient than multiple queries)
             const stats: InvoiceStats = {
                 total_count: data.length,
                 draft_count: data.filter(i => i.status === 'draft').length,
                 sent_count: data.filter(i => i.status === 'sent').length,
                 paid_count: data.filter(i => i.status === 'paid').length,
                 overdue_count: data.filter(i => i.status === 'overdue').length,
-                total_amount: data.reduce((sum, i) => sum + Number(i.total_amount), 0),
-                paid_amount: data.filter(i => i.paid_date).reduce((sum, i) => sum + Number(i.total_amount), 0),
-                outstanding_amount: data.filter(i => !i.paid_date).reduce((sum, i) => sum + Number(i.total_amount), 0)
+                total_amount: data.reduce((sum, i) => sum + Number(i.total_amount || 0), 0),
+                paid_amount: data.filter(i => i.paid_date).reduce((sum, i) => sum + Number(i.total_amount || 0), 0),
+                outstanding_amount: data.filter(i => !i.paid_date).reduce((sum, i) => sum + Number(i.total_amount || 0), 0)
             }
 
             return stats
         },
-        enabled: !!shopId
+        enabled: !!shopId,
+        staleTime: 5 * 60 * 1000 // Cache for 5 minutes
     })
 }
 
@@ -237,17 +241,33 @@ export function useDeleteInvoice() {
 
     return useMutation({
         mutationFn: async ({ id, shop_id }: { id: string; shop_id: string }) => {
+            // First, fetch the invoice to get work_order_id before deleting
+            const { data: invoice, error: fetchError } = await supabase
+                .from('invoices_table')
+                .select('work_order_id')
+                .eq('invoice_number', id)
+                .single()
+
+            if (fetchError && fetchError.code !== 'PGRST116') {
+                throw fetchError
+            }
+
+            // Delete the invoice
             const { error } = await supabase
                 .from('invoices_table')
                 .delete()
                 .eq('invoice_number', id)
 
             if (error) throw error
-            return { id, shop_id }
+            return { id, shop_id, work_order_id: invoice?.work_order_id }
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
+            // Invalidate work order invoice query to update the modal without refresh
+            if (data.work_order_id) {
+                queryClient.invalidateQueries({ queryKey: ['work-order-invoice', data.work_order_id] })
+            }
         }
     })
 }
@@ -264,7 +284,7 @@ export function useCreateInvoiceFromWorkOrder() {
                 .select(`
                     *,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, color, mileage)
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color)
                 `)
                 .eq('id', work_order_id)
                 .single()
@@ -297,12 +317,9 @@ export function useCreateInvoiceFromWorkOrder() {
                 throw itemsError
             }
 
-            if (!items || items.length === 0) {
-                throw new Error('No items found for this work order. Please add items before generating an invoice.')
-            }
-
-            // Transform work order items to invoice items
-            const invoiceItems = items.map(item => {
+            // Allow empty invoices - they can be synced later when items are added
+            // Transform work order items to invoice items (empty array is valid)
+            const invoiceItems = (items || []).map(item => {
                 const isDeclined = item.active === false
                 
                 // Validate and ensure unit_price is set correctly
@@ -353,7 +370,8 @@ export function useCreateInvoiceFromWorkOrder() {
                     labor_hours: laborHours,
                     technician_id: item.technician_id || undefined,
                     active: item.active, // Preserve the active field from work order
-                    is_declined: isDeclined
+                    is_declined: isDeclined,
+                    invoice_specific_notes: item.notes || undefined // Copy work order item notes to invoice-specific notes
                 }
             })
 
@@ -396,6 +414,7 @@ export function useCreateInvoiceFromWorkOrder() {
                     vehicle_id: workOrder.vehicle_id,
                     title: workOrder.title || 'Service Invoice',
                     description: workOrder.description,
+                    notes: workOrder.notes || null, // Copy work order recommendations/notes to invoice
                     status: 'draft',
                     priority: workOrder.priority || 'medium',
                     subtotal,
@@ -424,10 +443,193 @@ export function useCreateInvoiceFromWorkOrder() {
             // No need to update work order - relationship is maintained via invoices_table.work_order_id
             return invoice as Invoice
         },
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['work-orders'] })
+            // Invalidate work order invoice query to update the modal without refresh
+            queryClient.invalidateQueries({ queryKey: ['work-order-invoice', variables.work_order_id] })
         }
     })
+}
+
+// Sync existing invoice with current work order items
+export function useSyncInvoiceFromWorkOrder() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ work_order_id, shop_id }: { work_order_id: string; shop_id: string }) => {
+            // Fetch existing invoice for this work order
+            const { data: existingInvoice, error: invoiceFetchError } = await supabase
+                .from('invoices_table')
+                .select('*')
+                .eq('work_order_id', work_order_id)
+                .limit(1)
+                .single()
+
+            if (invoiceFetchError) {
+                console.error('Error fetching existing invoice:', invoiceFetchError)
+                throw new Error('No invoice found for this work order')
+            }
+
+            // Fetch current work order items
+            const { data: items, error: itemsError } = await supabase
+                .from('work_order_items')
+                .select('*')
+                .eq('work_order_id', work_order_id)
+
+            if (itemsError) {
+                console.error('Error fetching work order items:', itemsError)
+                throw itemsError
+            }
+
+            // Transform work order items to invoice items (allow empty arrays)
+            const invoiceItems = (items || []).map(item => {
+                const isDeclined = item.active === false
+                
+                let unitPrice = Number(item.unit_price) || 0
+                let quantity = Number(item.quantity) || 0
+                let laborHours = item.labor_hours ? Number(item.labor_hours) : undefined
+                
+                let calculatedTotalPrice = 0
+                if (item.item_type === 'labor') {
+                    calculatedTotalPrice = (laborHours || 0) * unitPrice
+                    if (unitPrice === 0 && item.total_price && laborHours && laborHours > 0) {
+                        unitPrice = item.total_price / laborHours
+                        calculatedTotalPrice = item.total_price
+                    }
+                } else {
+                    calculatedTotalPrice = quantity * unitPrice
+                    if (unitPrice === 0 && item.total_price && quantity && quantity > 0) {
+                        unitPrice = item.total_price / quantity
+                        calculatedTotalPrice = item.total_price
+                    }
+                }
+                
+                if (calculatedTotalPrice === 0 && item.total_price) {
+                    calculatedTotalPrice = Number(item.total_price)
+                }
+                
+                return {
+                    id: item.id,
+                    item_type: item.item_type,
+                    description: isDeclined ? `${item.description}` : item.description,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    total_price: calculatedTotalPrice,
+                    unit_cost: item.unit_cost ? Number(item.unit_cost) : undefined,
+                    total_cost: item.total_cost ? Number(item.total_cost) : undefined,
+                    part_number: item.part_number,
+                    supplier: item.supplier,
+                    category: item.category,
+                    warranty_period: item.warranty_period,
+                    labor_hours: laborHours,
+                    technician_id: item.technician_id || undefined,
+                    active: item.active,
+                    is_declined: isDeclined,
+                    invoice_specific_notes: item.notes || undefined // Copy work order item notes to invoice-specific notes
+                }
+            })
+
+            // Recalculate totals - only include approved items
+            const subtotal = invoiceItems
+                .filter(item => item.active !== false)
+                .reduce((sum, item) => {
+                    if (item.item_type === 'discount') {
+                        return sum - item.total_price
+                    }
+                    return sum + item.total_price
+                }, 0)
+            
+            const tax_rate = existingInvoice.tax_rate ?? 0.13
+            const tax_amount = subtotal * tax_rate
+            const discount_amount = existingInvoice.discount_amount || 0
+            const total_amount = subtotal + tax_amount - discount_amount
+
+            // Calculate category totals
+            const labor_total = invoiceItems.filter(i => i.item_type === 'labor' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)
+            const parts_total = invoiceItems.filter(i => i.item_type === 'part' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)
+            const services_total = invoiceItems.filter(i => i.item_type === 'service' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)
+            const fees_total = invoiceItems.filter(i => i.item_type === 'fee' && i.active !== false).reduce((sum, i) => sum + i.total_price, 0)
+
+            // Calculate new outstanding balance based on existing payments
+            const amount_paid = Number(existingInvoice.amount_paid) || 0
+            const outstanding_balance = Math.max(0, total_amount - amount_paid)
+
+            // Fetch work order to get updated notes/recommendations
+            const { data: workOrder, error: workOrderError } = await supabase
+                .from('work_orders')
+                .select('notes, description, title')
+                .eq('id', work_order_id)
+                .single()
+
+            // Update invoice - preserve status, payments, and other metadata
+            const { data: updatedInvoice, error: updateError } = await supabase
+                .from('invoices_table')
+                .update({
+                    invoice_items: invoiceItems,
+                    subtotal,
+                    tax_amount,
+                    total_amount,
+                    labor_total,
+                    parts_total,
+                    services_total,
+                    fees_total,
+                    outstanding_balance,
+                    notes: workOrder?.notes || existingInvoice.notes, // Update notes from work order if available
+                    description: workOrder?.description || existingInvoice.description, // Update description from work order if available
+                    title: workOrder?.title || existingInvoice.title, // Update title from work order if available
+                    updated_at: new Date().toISOString()
+                    // Note: status is preserved (not updated)
+                })
+                .eq('invoice_number', existingInvoice.invoice_number)
+                .select()
+                .single()
+
+            if (updateError) {
+                console.error('Error updating invoice:', updateError)
+                throw updateError
+            }
+
+            return updatedInvoice as Invoice
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
+            queryClient.invalidateQueries({ queryKey: ['invoice', data.invoice_number] })
+            queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
+            queryClient.invalidateQueries({ queryKey: ['work-order-invoice', variables.work_order_id] })
+        }
+    })
+}
+
+// Check if a work order has an existing invoice and get payment info
+export async function getWorkOrderInvoiceStatus(workOrderId: string): Promise<{
+    hasInvoice: boolean;
+    invoice?: {
+        invoice_number: string;
+        amount_paid: number;
+        total_amount: number;
+        status: string;
+    };
+}> {
+    const { data: invoice } = await supabase
+        .from('invoices_table')
+        .select('invoice_number, amount_paid, total_amount, status')
+        .eq('work_order_id', workOrderId)
+        .limit(1)
+        .single()
+
+    if (!invoice) {
+        return { hasInvoice: false }
+    }
+
+    return {
+        hasInvoice: true,
+        invoice: {
+            invoice_number: invoice.invoice_number,
+            amount_paid: Number(invoice.amount_paid) || 0,
+            total_amount: Number(invoice.total_amount) || 0,
+            status: invoice.status
+        }
+    }
 }

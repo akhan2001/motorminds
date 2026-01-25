@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette, Archive, PaintBucket } from 'lucide-react'
+import { Plus, Search, MessageSquare, Filter, Maximize2, Minimize2, Lock, Loader2, Layers, Palette, Archive, PaintBucket, Package, Building2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { InfoDialogButton, workOrdersInfo } from '@/components/shared/info-dialogs'
 
 interface WorkOrderHeaderProps {
     className?: string
@@ -43,7 +44,15 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     {/* Left Section - Title */}
                     <div className="flex items-center gap-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">Work Orders</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-bold text-foreground">Work Orders</h1>
+                                <InfoDialogButton
+                                    title="How Work Orders Work"
+                                    description="Learn about managing work orders in Motorminds"
+                                    content={workOrdersInfo}
+                                    tooltip="Learn about Work Orders"
+                                />
+                            </div>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Manage and track all work orders
                             </p>
@@ -151,6 +160,28 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     >
                         <Archive className="h-4 w-4 mr-2" />
                         Archived Work Orders
+                    </Button>
+
+                    {/* Archived Work Orders Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push('/suppliers')}
+                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                        <Building2 className="h-4 w-4 mr-2" />
+                        Suppliers
+                    </Button>
+
+                    {/* Parts & Expenses Button */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push('/operations/expenses')}
+                        className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                        <Package className="h-4 w-4 mr-2" />
+                        Parts & Expenses
                     </Button>
                 </div>
             </div>

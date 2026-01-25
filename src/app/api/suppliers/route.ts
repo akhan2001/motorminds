@@ -13,8 +13,19 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Get shop ID from user metadata or headers
-        const shopId = request.headers.get('x-shop-id') || user.user_metadata?.shop_id
+        // Get shop ID from user metadata or users table
+        let shopId = request.headers.get('x-shop-id') || user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
+
         if (!shopId) {
             return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
         }
@@ -50,7 +61,19 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const shopId = request.headers.get('x-shop-id') || user.user_metadata?.shop_id
+        // Get shop ID from user metadata or users table
+        let shopId = request.headers.get('x-shop-id') || user.user_metadata?.shop_id
+        
+        if (!shopId) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('shop_id')
+                .eq('id', user.id)
+                .single()
+            
+            shopId = userData?.shop_id
+        }
+
         if (!shopId) {
             return NextResponse.json({ error: 'Shop ID required' }, { status: 400 })
         }

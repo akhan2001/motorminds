@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/pagination";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatPhoneNumber } from "@/utils/format-phone";
+import { capitalizeCustomerName } from "@/lib/utils/text";
 
 export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, user: any, refreshIndex: number }) {
 	const [customers, setCustomers] = useState<any[]>([]);
@@ -238,7 +239,7 @@ export function CustomerTable({ shopId, user, refreshIndex }: { shopId: string, 
 										onClick={() => handleRowClick(customer)}
 									>
 										<TableCell className="text-foreground font-medium">
-											{customer.customer_name}
+											{capitalizeCustomerName(customer.customer_name)}
 										</TableCell>
 										<TableCell className="text-foreground hidden sm:table-cell">
 											{customer.customer_email}

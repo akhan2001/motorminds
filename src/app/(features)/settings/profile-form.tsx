@@ -645,7 +645,7 @@ export function ProfileForm({ shopId }: { shopId: string }) {
                             
                             {/* Basic Information Tab */}
                             <TabsContent value="basic">
-                                <BasicInfoTab form={form} />
+                                <BasicInfoTab form={form} shopId={shopId} />
                             </TabsContent>
                             
                             {/* Location Tab */}

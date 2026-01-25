@@ -39,10 +39,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
         discount_amount: 0,
         issue_date: new Date().toISOString().split('T')[0],
         due_date: null,
+        paid_date: null,
         payment_method: null,
         payment_reference: null,
         notes: null,
-        invoice_items: []
+        invoice_items: [],
+        customer_type: 'registered',
+        walk_in_vehicle_info: undefined
     })
 
     // Additional form state for customer and vehicle information
@@ -75,10 +78,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
                 discount_amount: Number(invoice.discount_amount),
                 issue_date: invoice.issue_date.split('T')[0],
                 due_date: invoice.due_date ? invoice.due_date.split('T')[0] : null,
+                paid_date: invoice.paid_date,
                 payment_method: invoice.payment_method,
                 payment_reference: invoice.payment_reference,
                 notes: invoice.notes,
-                invoice_items: invoice.invoice_items
+                invoice_items: invoice.invoice_items,
+                customer_type: invoice.customer_type,
+                walk_in_vehicle_info: invoice.walk_in_vehicle_info
             })
 
             // Set customer info from invoice
@@ -235,7 +241,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
                                     <Label htmlFor="title" className="text-gray-400 text-xs">Title</Label>
                                     <Input
                                         id="title"
-                                        value={formData.title}
+                                        value={formData.title ?? ''}
                                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                                         className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
                                         placeholder="Invoice title"
@@ -307,7 +313,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
                             </div>
                             
                             <CustomerInformation
-                                customerId={formData.customer_id}
+                                customerId={formData.customer_id || ''}
                                 customerName={customerInfo.name}
                                 customerEmail={customerInfo.email}
                                 customerPhone={customerInfo.phone}
@@ -334,7 +340,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
                             </div>
                             
                             <VehicleInformation
-                                customerId={formData.customer_id}
+                                customerId={formData.customer_id || ''}
                                 selectedVehicleId={formData.vehicle_id || ""}
                                 vehicleId={formData.vehicle_id || ""}
                                 vehicleYear={vehicleInfo.year}
@@ -485,14 +491,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoiceId, onClose }) => {
                                 </div>
                                 <div className="flex justify-between text-gray-400">
                                     <span>Discount:</span>
-                                    <Input
-                                        type="number"
-                                        value={formData.discount_amount}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, discount_amount: Number(e.target.value) }))}
-                                        className="w-24 h-6 bg-[#1a1a1a] border-[#2a2a2a] text-white text-right"
-                                        min="0"
-                                        step="0.01"
-                                    />
+                                        <Input
+                                            type="number"
+                                            value={formData.discount_amount ?? 0}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, discount_amount: Number(e.target.value) }))}
+                                            className="w-24 h-6 bg-[#1a1a1a] border-[#2a2a2a] text-white text-right"
+                                            min="0"
+                                            step="0.01"
+                                        />
                                 </div>
                                 <Separator className="bg-gray-700" />
                                 <div className="flex justify-between text-white font-bold text-lg pt-2">

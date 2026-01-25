@@ -1,125 +1,47 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { Car, User, Phone, MessageSquare, Lock, Loader2, Clock, Link, CheckCircle2 } from 'lucide-react'
+import { Car, User, Phone, FileText, ExternalLink } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
-import { useWorkOrderMessaging } from '../../../hooks/use-work-order-messaging'
-import { MESSAGE_TEMPLATES, formatMessage } from '../Messages/MessagePrompts'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
-import type { MessageTemplate } from '@/app/(features)/messaging/types/message-template'
 
 export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> = ({
     workOrder,
     isOpen,
     onClose,
-    onConfirm
+    onConfirm,
+    generatedInvoiceNumber
 }) => {
-    const [customMessage, setCustomMessage] = useState('')
-    const [selectedTemplate, setSelectedTemplate] = useState<string>('ready_for_pickup')
-    const [isEditing, setIsEditing] = useState(false)
-    const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
-    const [automatedTemplates, setAutomatedTemplates] = useState<MessageTemplate[]>([])
-    const [loadingTemplates, setLoadingTemplates] = useState(false)
-    const { sendCompletionMessage, isLoading, messagingAvailability} = useWorkOrderMessaging()
+    const router = useRouter()
+    // Show button if work order has invoice_id OR if an invoice was just generated
+    const hasInvoice = !!workOrder.invoice_id || !!generatedInvoiceNumber
+    const invoiceNumber = workOrder.invoice_id || generatedInvoiceNumber
 
-    // Format the selected template with actual work order data
-    useEffect(() => {
-        if (workOrder && isOpen) {
-            const customerName = workOrder.customer?.customer_name || 'Customer'
-            const vehicleInfo = workOrder.vehicle ? 
-                `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}` : 
-                undefined
-            const serviceDescription = workOrder.title
-
-            const template = MESSAGE_TEMPLATES.find(t => t.id === selectedTemplate)?.template || MESSAGE_TEMPLATES[0].template
-            const formattedMessage = formatMessage(
-                template,
-                customerName,
-                vehicleInfo,
-                serviceDescription
-            )
-
-            setCustomMessage(formattedMessage)
-        }
-    }, [workOrder, isOpen, selectedTemplate])
-
-    // Fetch automated templates that will be triggered
-    useEffect(() => {
-        const fetchAutomatedTemplates = async () => {
-            if (!isOpen || !enableAutomatedMessage) {
-                setAutomatedTemplates([])
-                return
-            }
-
-            setLoadingTemplates(true)
-            try {
-                const response = await fetch('/api/messaging/templates?trigger_type=work_order_complete')
-                if (response.ok) {
-                    const templates = await response.json()
-                    // Filter active templates
-                    const activeTemplates = templates.filter((t: MessageTemplate) => t.is_active)
-                    setAutomatedTemplates(activeTemplates)
-                }
-            } catch (error) {
-                console.error('Error fetching automated templates:', error)
-            } finally {
-                setLoadingTemplates(false)
-            }
-        }
-
-        fetchAutomatedTemplates()
-    }, [isOpen, enableAutomatedMessage])
-
-    const handleSendMessage = async () => {
-        if (!workOrder.customer?.customer_phone) {
-            // Pass enableAutomatedMessage flag to control automated messaging
-            onConfirm(false, undefined, enableAutomatedMessage)
-            return
-        }
-
-        await sendCompletionMessage({
-            to: workOrder.customer.customer_phone,
-            body: customMessage,
-            customerName: workOrder.customer.customer_name
-        })
-
-        // Pass enableAutomatedMessage flag to control automated messaging
-        onConfirm(true, customMessage, enableAutomatedMessage)
+    const handleCompleteWithoutInvoice = () => {
+        // No message sent, no invoice generated
+        onConfirm(false, undefined, false, false)
+        // Modal will be closed by parent after completion
     }
 
-    const handleSkipMessage = async () => {
-        // Pass enableAutomatedMessage flag to control automated messaging
-        onConfirm(false, undefined, enableAutomatedMessage)
+    const handleCompleteWithInvoice = () => {
+        // No message sent, invoice generated
+        // Don't close modal here - parent will keep it open to show "Go to Invoice" button
+        onConfirm(false, undefined, false, true)
     }
 
-
-    // Helper to format delay hours into human-readable string
-    const formatDelayHours = (hours: number): string => {
-        if (hours === 0) return 'immediately'
-        if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''}`
-        
-        const days = Math.floor(hours / 24)
-        if (days < 7) return `${days} day${days !== 1 ? 's' : ''}`
-        
-        const weeks = Math.floor(days / 7)
-        if (weeks < 4) return `${weeks} week${weeks !== 1 ? 's' : ''}`
-        
-        const months = Math.floor(days / 30)
-        return `${months} month${months !== 1 ? 's' : ''}`
+    const handleGoToInvoice = () => {
+        if (invoiceNumber) {
+            router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
+            onClose()
+        }
     }
 
     const vehicleInfo = workOrder.vehicle ? 
         `${workOrder.vehicle.year} ${workOrder.vehicle.make} ${workOrder.vehicle.model}` : 
         'Vehicle information not available'
-
-    const customerHasPhone = workOrder.customer?.customer_phone
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -130,7 +52,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         Work Order Completed
                     </DialogTitle>
                     <DialogDescription className="text-md text-muted-foreground dark:text-gray-400">
-                        Complete the work order and send a completion message to the customer.
+                        Complete the work order and optionally generate an invoice.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -185,10 +107,8 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         </div>
                     </div>
 
-                    <Separator className="bg-border dark:bg-[#2a2a2a]" />
-
-                    {/* Automated Follow-Up Toggle */}
-                    <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
+                    {/* Automated Follow-Up Toggle - Commented out for now */}
+                    {/* <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
                                 <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400" />
@@ -209,7 +129,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         </div>
 
                         {/* Show which templates will be triggered */}
-                        {enableAutomatedMessage && (
+                        {/* {enableAutomatedMessage && (
                             <div className="mt-3 pt-3 border-t border-blue-500/20">
                                 {loadingTemplates ? (
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -257,145 +177,46 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    <Separator className="bg-border dark:bg-[#2a2a2a]" />
-
-                    {/* Messaging Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-foreground dark:text-gray-300 flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4" />
-                                Send Completion Message
-                            </h3>
-                            {messagingAvailability.isLoading && (
-                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground dark:text-gray-400" />
-                            )}
-                        </div>
-
-                        {!customerHasPhone ? (
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                                <p className="text-yellow-500 dark:text-yellow-400 text-sm">
-                                    No phone number available for this customer.
-                                </p>
-                            </div>
-                        ) : !messagingAvailability.isAvailable ? (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                <div className="flex items-center gap-2">
-                                    <Lock className="h-4 w-4 text-red-500 dark:text-red-400" />
-                                    <p className="text-red-500 dark:text-red-400 text-sm">
-                                        Messaging is not available. Contact admin to set up Twilio.
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {/* Template Selection */}
-                                <div className="space-y-2">
-                                    <span className="text-sm text-foreground dark:text-gray-300">Choose a message template:</span>
-                                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                                        <SelectTrigger className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
-                                            <SelectValue placeholder="Select a message template" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a]">
-                                            {MESSAGE_TEMPLATES.map((template) => (
-                                                <SelectItem 
-                                                    key={template.id} 
-                                                    value={template.id}
-                                                    className="text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#1a1a1a] focus:bg-accent dark:focus:bg-[#1a1a1a]"
-                                                >
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium">{template.name}</span>
-                                                        <span className="text-xs text-muted-foreground dark:text-gray-400">
-                                                            {template.description}
-                                                        </span>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="bg-card dark:bg-[#1a1a1a] rounded-lg border border-border dark:border-[#2a2a2a]">
-                                    <div className="p-3 border-b border-border dark:border-[#2a2a2a]">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-foreground dark:text-gray-300">Message to send:</span>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setIsEditing(!isEditing)}
-                                                className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300"
-                                            >
-                                                {isEditing ? 'Done' : 'Edit'}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className="p-3">
-                                        {isEditing ? (
-                                            <Textarea
-                                                value={customMessage}
-                                                onChange={(e) => setCustomMessage(e.target.value)}
-                                                className="bg-background dark:bg-[#0a0a0a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white resize-none"
-                                                rows={3}
-                                                placeholder="Enter your completion message..."
-                                            />
-                                        ) : (
-                                            <p className="text-foreground dark:text-white text-sm leading-relaxed">
-                                                {customMessage}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    </div> */}
                 </div>
 
                 <DialogFooter className="flex-shrink-0 flex gap-3 pt-4 border-t border-border dark:border-[#2a2a2a]">
-                    <Button
-                        variant="outline"
-                        onClick={handleSkipMessage}
-                        disabled={isLoading}
-                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
-                    >
-                        Complete Without Message
-                    </Button>
-                    
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div>
-                                    <Button
-                                        onClick={handleSendMessage}
-                                        disabled={!customerHasPhone || !messagingAvailability.isAvailable || isLoading}
-                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Sending...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <MessageSquare className="h-4 w-4 mr-2" />
-                                                Send Message & Complete
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </TooltipTrigger>
-                            {(!customerHasPhone || !messagingAvailability.isAvailable) && (
-                                <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                    <p>
-                                        {!customerHasPhone 
-                                            ? "Customer phone number required" 
-                                            : "Contact admin to set up messaging"
-                                        }
-                                    </p>
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
-                    </TooltipProvider>
+                    {hasInvoice ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={onClose}
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
+                            >
+                                Close
+                            </Button>
+                            <Button
+                                onClick={handleGoToInvoice}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Go to Invoice
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={handleCompleteWithoutInvoice}
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
+                            >
+                                Complete Without Invoice
+                            </Button>
+                            
+                            <Button
+                                onClick={handleCompleteWithInvoice}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Complete With Invoice
+                            </Button>
+                        </>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

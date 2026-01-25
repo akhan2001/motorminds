@@ -1,16 +1,62 @@
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Copy, Check } from "lucide-react"
 import { UseFormReturn } from "react-hook-form"
+import { useState } from "react"
+import { toast } from "sonner"
 
 interface BasicInfoTabProps {
     form: UseFormReturn<any>
+    shopId: string
 }
 
-export function BasicInfoTab({ form }: BasicInfoTabProps) {
+export function BasicInfoTab({ form, shopId }: BasicInfoTabProps) {
+    const [copied, setCopied] = useState(false)
+
+    const handleCopyShopId = async () => {
+        try {
+            await navigator.clipboard.writeText(shopId)
+            setCopied(true)
+            toast.success("Shop ID copied to clipboard")
+            setTimeout(() => setCopied(false), 2000)
+        } catch (error) {
+            toast.error("Failed to copy Shop ID")
+        }
+    }
+
     return (
         <div className="space-y-6">
             <h3 className="text-xl font-medium text-foreground">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormItem>
+                    <FormLabel>Shop ID</FormLabel>
+                    <FormControl>
+                        <div className="flex gap-2">
+                            <Input 
+                                value={shopId}
+                                readOnly
+                                className="bg-muted dark:bg-muted border-border text-foreground font-mono text-sm"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={handleCopyShopId}
+                                className="shrink-0"
+                            >
+                                {copied ? (
+                                    <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <Copy className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </div>
+                    </FormControl>
+                    <FormDescription>
+                        Your unique shop identifier. Click the copy button to copy it.
+                    </FormDescription>
+                </FormItem>
                 <FormField
                     control={form.control}
                     name="shop_name"

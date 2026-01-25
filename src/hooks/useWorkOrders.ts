@@ -39,22 +39,23 @@ export type WorkOrder = {
 	}
 }
 
-export function useWorkOrders(shopId: string) {
+export function useWorkOrders(shopId: string, limit: number = 100) {
 	return useQuery({
-		queryKey: ['workOrders', shopId],
+		queryKey: ['workOrders', shopId, limit],
 		queryFn: async () => {
 			const { data, error } = await supabase
 				.from('repair_orders')
 				.select(`
-          *,
-          repair_order_details(*),
-          customers(
-            *,
-            customer_vehicles(*)
-          )
-        `)
+					id, shop_id, customer_id, vehicle_id, status, created_at, updated_at,
+					repair_order_details(id, description, cost, completed_at, labour, parts, notes, mileage, task_priority, Assigned_to, parts_cost, labour_cost),
+					customers(
+						id, customer_name, customer_phone, customer_email,
+						customer_vehicles(id, year, make, model, vin)
+						)
+					`)
 				.eq('shop_id', shopId)
 				.order('created_at', { ascending: false })
+				.limit(limit)
 
 			if (error) throw error
 			return data as WorkOrder[]

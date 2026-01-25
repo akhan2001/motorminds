@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Building2, Search, Edit, Filter } from 'lucide-react'
-import { Nav } from '@/components/navigation/nav'
+//import { Nav } from '@/components/navigation/nav'
 import Link from 'next/link'
 import AdminNav from '../../../components/AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'
@@ -42,7 +42,7 @@ export default function SuperAdminShopsPage() {
             setLoading(true)
             const response = await fetch('/api/admin/shops?super_admin=true')
             const data = await response.json()
-            
+
             if (response.ok) {
                 setShops(data.shops || [])
             } else {
@@ -56,20 +56,20 @@ export default function SuperAdminShopsPage() {
     }
 
     const filteredShops = shops.filter(shop => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             shop.shop_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             shop.shop_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             shop.shop_city?.toLowerCase().includes(searchTerm.toLowerCase())
-        
+
         const matchesStatus = statusFilter === 'all' || shop.status === statusFilter
         const matchesOrg = organizationFilter === 'all' || shop.organization_id === organizationFilter
-        
+
         return matchesSearch && matchesStatus && matchesOrg
     })
 
     return (
         <div className="h-screen flex flex-col bg-background">
-            <Nav />
+            {/* <Nav /> */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 max-w-7xl mx-auto w-full">

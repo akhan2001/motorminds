@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
                 // Use the phone number utility to find messages with different phone formats
                 const { data: recentMessage } = await supabase
                     .from('sms_messages')
-                    .select('message_body, created_at, direction')
+                    .select('message_body, created_at, direction, media_count, message_type')
                     .eq('shop_id', shopId)
                     .or(`from_number.eq.${conversation.customer_phone},to_number.eq.${conversation.customer_phone}`)
                     .order('created_at', { ascending: false })

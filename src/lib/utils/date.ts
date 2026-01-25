@@ -1,28 +1,79 @@
 // Date and time utility functions
 
+// Default timezone - can be overridden by shop settings
+const DEFAULT_TIMEZONE = 'America/Toronto'
+
 /**
- * Format date string to readable US format
+ * Get the user's local timezone or fall back to default
  */
-export function formatDate(dateString: string): string {
+export function getLocalTimezone(): string {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || DEFAULT_TIMEZONE
+    } catch {
+        return DEFAULT_TIMEZONE
+    }
+}
+
+/**
+ * Format date string to readable US format with local timezone
+ */
+export function formatDate(dateString: string, timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        timeZone: tz
     })
 }
 
 /**
- * Format date string to include time
+ * Format date string to include time with local timezone
  */
-export function formatDateTime(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
+export function formatDateTime(dateString: string, timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
+    return new Date(dateString).toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
+        timeZone: tz
     })
+}
+
+/**
+ * Format time only with local timezone
+ */
+export function formatTime(dateString: string, timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
+    return new Date(dateString).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: tz
+    })
+}
+
+/**
+ * Get current date/time in local timezone as ISO string
+ */
+export function getLocalNow(timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
+    const now = new Date()
+    return now.toLocaleString('en-CA', { timeZone: tz }).replace(', ', 'T') + '.000Z'
+}
+
+/**
+ * Convert UTC date to local timezone date object
+ */
+export function toLocalDate(dateString: string, timezone?: string): Date {
+    const tz = timezone || getLocalTimezone()
+    const date = new Date(dateString)
+    // Create a new date in the local timezone
+    const localString = date.toLocaleString('en-US', { timeZone: tz })
+    return new Date(localString)
 }
 
 /**

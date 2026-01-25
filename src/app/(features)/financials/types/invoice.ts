@@ -31,6 +31,11 @@ export interface Invoice {
     created_at: string
     updated_at: string
     
+    // Payment tracking (new fields)
+    payments: Payment[]
+    amount_paid: number
+    outstanding_balance: number
+    
     // Walk-in customer support
     customer_type: 'registered' | 'walk_in'
     walk_in_vehicle_info?: WalkInVehicleInfo
@@ -65,6 +70,10 @@ export interface InvoiceWithDetails extends Invoice {
         make: string
         model: string
         license_plate: string | null
+        vin?: string | null
+        engine_type?: string | null
+        mileage?: number | null
+        color?: string | null
     } | null
     work_order: {
         id: string
@@ -93,6 +102,8 @@ export interface InvoiceFormData {
     discount_amount: number
     issue_date: string
     due_date: string | null
+    // Optional: when the invoice was marked as paid
+    paid_date?: string | null
     payment_method: PaymentMethod | null
     payment_reference: string | null
     notes: string | null
@@ -107,6 +118,7 @@ export type InvoiceStatus =
     | 'draft'
     | 'sent'
     | 'viewed'
+    | 'partially_paid'
     | 'paid'
     | 'unpaid'
     | 'overdue'
@@ -127,9 +139,27 @@ export type PaymentMethod =
     | 'check'
     | 'other'
 
+// Payment record stored in payments JSONB array
+export interface Payment {
+    id: string  // UUID generated on client
+    amount: number
+    payment_method: PaymentMethod
+    payment_date: string  // ISO date string
+    payment_reference?: string | null
+    notes?: string | null
+    created_at: string
+    created_by?: string  // user_id if available
+    // Archiving fields
+    deleted?: boolean  // true if payment was removed/archived
+    deleted_at?: string | null  // ISO date string when deleted
+    deleted_by?: string | null  // user_id who deleted
+    deletion_reason?: string | null  // Optional reason for deletion
+}
+
 export type ItemType = 
     | 'labor'
     | 'part'
+    | 'expense'
     | 'service'
     | 'fee'
     | 'discount'

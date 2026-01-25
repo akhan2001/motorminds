@@ -6,21 +6,34 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
-    Edit, Download, Send, Trash2,
-    User, Car, LayoutIcon, X, Check, XCircle, Wrench
+    Edit,
+    Download,
+    Send,
+    Trash2,
+    User,
+    Car,
+    LayoutIcon,
+    X,
+    Check,
+    XCircle,
+    Wrench,
+    DollarSign,
 } from 'lucide-react'
-import { useInvoice, useDeleteInvoice } from '../../hooks/use-invoices'
+import { useInvoice, useDeleteInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
+import { InvoicePaymentsSection } from './InvoicePaymentsSection'
 import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
 import { generateInvoicePDF, downloadPDF, getInvoiceFilename, generateInvoicePDFFromHTMLElement } from '../../lib/pdf/pdf-generator'
+import { prepareShopBrandingWithLogo } from '../../lib/pdf/logo-utils'
 import { TonyTemplatePreview } from '../invoice-preview/TonyTemplatePreview'
 
 interface InvoiceViewOnlyProps {
@@ -29,12 +42,16 @@ interface InvoiceViewOnlyProps {
     onClose: () => void
 }
 
+// Roles that can delete invoices
+const ADMIN_ROLES = ['admin', 'super', 'shop_admin']
+
 const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, onClose }) => {
     const router = useRouter()
-    const { shopId } = useAuth()
+    const { shopId, userRole } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     const deleteMutation = useDeleteInvoice()
+    const updateMutation = useUpdateInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
     const [isLandscape, setIsLandscape] = useState(false)
     const [isSendChoiceModalOpen, setIsSendChoiceModalOpen] = useState(false)
@@ -42,6 +59,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const pdfElementRef = useRef<HTMLDivElement>(null)
+    
+    // Check if user can delete (admin only)
+    const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
@@ -81,8 +101,10 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                 await generateInvoicePDFFromHTMLElement(pdfElementRef.current, invoice)
                 toast.success('Invoice PDF downloaded successfully')
             } else {
+                // Prepare shop branding with logo check from storage
+                const shop = await prepareShopBrandingWithLogo(shopInfo)
                 // For other templates, use React-PDF
-                const blob = await generateInvoicePDF(invoice, shopInfo, templateId)
+                const blob = await generateInvoicePDF(invoice, shop, templateId)
                 const filename = getInvoiceFilename(invoice)
                 downloadPDF(blob, filename)
                 toast.success('Invoice PDF downloaded successfully')
@@ -153,6 +175,27 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     }
 
+    const handleMarkAsPaid = async () => {
+        if (!invoice) return
+
+        const confirmed = confirm('Mark this invoice as paid?')
+        if (!confirmed) return
+
+        try {
+            await updateMutation.mutateAsync({
+                id: invoice.invoice_number,
+                data: {
+                    status: 'paid',
+                    paid_date: new Date().toISOString(),
+                },
+            })
+            toast.success('Invoice marked as paid')
+        } catch (err) {
+            console.error('Failed to mark invoice as paid:', err)
+            toast.error('Failed to mark invoice as paid')
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="h-full flex flex-col space-y-4 p-4">
@@ -196,40 +239,60 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     return (
         <div className="h-full flex flex-col bg-background dark:bg-[#0d0d0d]">
             {/* Fixed Header */}
-            <div className="bg-slate-50 dark:bg-[#131313] p-4 border-b border-border dark:border-[#333333]">
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            <div className="bg-slate-50 dark:bg-[#131313] p-3 sm:p-4 border-b border-border dark:border-[#333333]">
+                {/* Top row: Invoice title and close button */}
+                <div className="flex items-start justify-between mb-2">
+                    <div>
+                        <h2 className="text-lg sm:text-xl font-semibold text-foreground dark:text-white">
                             Invoice #{invoice.display_id}
                         </h2>
-                        <p className="text-muted-foreground dark:text-gray-500 text-sm">
+                        <p className="text-muted-foreground dark:text-gray-500 text-xs sm:text-sm">
                             {invoice.invoice_number}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <p className="text-muted-foreground dark:text-gray-400 text-sm">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClose}
+                        className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-transparent -mr-2"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                {/* Bottom row: Dates and actions */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    {/* Dates */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm">
+                        <p className="text-muted-foreground dark:text-gray-400">
+                            Created: {formatDateString(invoice.created_at)}
+                        </p>
+                        <span className="text-muted-foreground dark:text-gray-500">|</span>
+                        <p className="text-muted-foreground dark:text-gray-400">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
-                        {invoice.work_order_id && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleGoToWorkOrder}
-                                className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white"
-                            >
-                                <Wrench className="h-4 w-4 mr-2" />
-                                Go to Work Order
-                            </Button>
+                        {invoice.paid_date && (
+                            <>
+                                <span className="text-muted-foreground dark:text-gray-500">|</span>
+                                <p className="text-green-600 dark:text-green-400 font-medium">
+                                    Paid: {formatDateString(invoice.paid_date)}
+                                </p>
+                            </>
                         )}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClose}
-                            className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white hover:bg-transparent"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
                     </div>
+
+                    {/* Work Order Button */}
+                    {invoice.work_order_id && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGoToWorkOrder}
+                            className="bg-transparent border-border dark:border-[#3a3a3a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#2a2a2a] hover:text-foreground dark:hover:text-white text-xs sm:text-sm"
+                        >
+                            <Wrench className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                            Go to Work Order
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -394,6 +457,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         </div>
                     </Card>
 
+                    {/* Payments Section */}
+                    <InvoicePaymentsSection invoice={invoice} />
+
                     {/* Amount and Status Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
@@ -419,23 +485,75 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 <Separator className="bg-border dark:bg-gray-700" />
                                 <div className="flex justify-between items-center pt-2">
                                     <div>
-                                        <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Due:</p>
+                                        <p className="text-muted-foreground dark:text-gray-400 font-medium">Total Amount:</p>
                                     </div>
                                     <div>
                                         <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                     </div>
                                 </div>
-                                <Badge
-                                    variant="outline"
-                                    className={cn(
-                                        "text-sm px-3 py-1",
-                                        invoice.status === 'paid'
-                                            ? 'bg-green-600 text-white border-green-600'
-                                            : 'bg-red-600 text-white border-red-600'
+                                {(invoice.amount_paid !== undefined && invoice.amount_paid > 0) && (
+                                    <>
+                                        <Separator className="bg-border dark:bg-gray-700" />
+                                        <div className="flex justify-between items-center pt-2">
+                                            <div>
+                                                <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Paid:</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xl font-semibold text-green-600 dark:text-green-400">
+                                                    {formatCurrency(invoice.amount_paid)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-muted-foreground dark:text-gray-400 font-medium">Outstanding:</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                                                        {formatCurrency(invoice.outstanding_balance)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                                <div className="flex items-center justify-between gap-2 pt-2">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "text-sm px-3 py-1",
+                                                        invoice.status === 'paid'
+                                                            ? 'bg-green-600 text-white border-green-600 cursor-default'
+                                                            : invoice.status === 'partially_paid'
+                                                            ? 'bg-yellow-600 text-white border-yellow-600 cursor-default'
+                                                            : 'bg-red-600 text-white border-red-600 cursor-default'
+                                                    )}
+                                                >
+                                                    <DollarSign className="w-3 h-3 mr-1" />
+                                                    {invoice.status === 'partially_paid' ? 'PARTIALLY PAID' : invoice.status.toUpperCase()}
+                                                </Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="left">
+                                                <p>
+                                                    {invoice.status === 'paid'
+                                                        ? 'This invoice is fully paid.'
+                                                        : invoice.status === 'partially_paid'
+                                                        ? 'This invoice has partial payments.'
+                                                        : 'This invoice is unpaid.'}
+                                                </p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {invoice.paid_date && (
+                                        <span className="text-xs text-muted-foreground dark:text-gray-400">
+                                            Paid on {formatDateString(invoice.paid_date)}
+                                        </span>
                                     )}
-                                >
-                                    {invoice.status.toUpperCase()}
-                                </Badge>
+                                </div>
                             </div>
                         </div>
                     </Card>
@@ -470,16 +588,18 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     <Send className="w-4 h-4 mr-2" />
                     Send
                 </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
-                    onClick={handleDelete}
-                    disabled={deleteMutation.isPending}
-                >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                </Button>
+                {canDelete && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
+                        onClick={handleDelete}
+                        disabled={deleteMutation.isPending}
+                    >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                    </Button>
+                )}
             </div>
 
             {/* Invoice Send Choice Modal */}

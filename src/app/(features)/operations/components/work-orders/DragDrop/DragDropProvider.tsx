@@ -12,12 +12,14 @@ interface DragDropProviderProps {
     children: React.ReactNode
     onWorkOrderUpdate?: (workOrderId: string, newStatus: string) => void
     onWorkOrderCompletionAttempt?: (item: WorkOrderKanbanItem) => void
+    onWorkOrderReadyAttempt?: (item: WorkOrderKanbanItem) => void
 }
 
 export const DragDropProvider: React.FC<DragDropProviderProps> = ({ 
     children, 
     onWorkOrderUpdate,
-    onWorkOrderCompletionAttempt
+    onWorkOrderCompletionAttempt,
+    onWorkOrderReadyAttempt
 }) => {
     const [draggedItem, setDraggedItem] = useState<WorkOrderKanbanItem | null>(null)
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
@@ -98,6 +100,12 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
             return
         }
 
+        // If dropping into ready column from pending or in_progress, trigger ready modal
+        if (newStatus === 'ready' && (item.status === 'pending' || item.status === 'in_progress')) {
+            onWorkOrderReadyAttempt?.(item)
+            return
+        }
+
         try {
             // Prepare update data with timestamps
             const updateData: Partial<WorkOrder> = { 
@@ -135,7 +143,7 @@ export const DragDropProvider: React.FC<DragDropProviderProps> = ({
             console.error('Failed to update work order status:', error)
             toast.error('Failed to update work order status')
         }
-    }, [updateWorkOrderMutation, onWorkOrderUpdate, onWorkOrderCompletionAttempt])
+    }, [updateWorkOrderMutation, onWorkOrderUpdate, onWorkOrderCompletionAttempt, onWorkOrderReadyAttempt])
 
     const handleRevertConfirm = useCallback(async () => {
         if (!pendingRevertItem) return

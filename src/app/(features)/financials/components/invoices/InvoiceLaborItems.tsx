@@ -56,19 +56,19 @@ export const InvoiceLaborItems: React.FC<InvoiceLaborItemsProps> = ({ items, onI
         <div className="space-y-4">
             <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                <h3 className="text-lg font-semibold text-foreground dark:text-white">Labor Items</h3>
+                <h3 className="text-lg font-semibold text-foreground dark:text-white">Services</h3>
             </div>
 
             {laborItems.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground dark:text-gray-500 border border-dashed border-border dark:border-[#2a2a2a] rounded-lg">
-                    No labor items added yet. Click "Add Labor" to get started.
+                    No services added yet. Click "Add Service" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
                     {laborItems.map((item, index) => (
                         <div key={item.id} className="bg-white dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-4">
                             <div className="flex items-start justify-between mb-3">
-                                <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Labor Item {index + 1}</h4>
+                                <h4 className="text-sm font-medium text-blue-600 dark:text-blue-400">Service {index + 1}</h4>
                                 <Button
                                     type="button"
                                     onClick={() => removeLaborItem(index)}
@@ -187,7 +187,7 @@ export const InvoiceLaborItems: React.FC<InvoiceLaborItemsProps> = ({ items, onI
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Labor
+                    Add Service
                 </Button>
             </div>
         </div>

@@ -1,4 +1,4 @@
-export type InvoiceItemType = 'labor' | 'part' | 'service' | 'fee' | 'discount' | 'package'
+export type InvoiceItemType = 'labor' | 'part' | 'expense' | 'service' | 'fee' | 'discount' | 'package'
 
 export interface InvoiceItem {
   id: string
@@ -59,6 +59,7 @@ export interface InvoiceItemUpdateData extends Partial<InvoiceItemFormData> {
 export interface InvoiceItemSummary {
   subtotal: number
   partsTotal: number
+  expensesTotal: number
   laborTotal: number
   servicesTotal: number
   feesTotal: number

@@ -9,13 +9,14 @@ export class WorkOrderService {
     private supabase = createClient()
 
     // READ operations
-    async getWorkOrders(shopId: string): Promise<WorkOrder[]> {
+    async getWorkOrders(shopId: string, limit: number = 100, offset: number = 0): Promise<WorkOrder[]> {
         const { data, error } = await this.supabase
             .from('work_orders')
-            .select('*')
+            .select('id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived')
             .eq('shop_id', shopId)
             .eq('archived', false) // Only non-archived work orders
             .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1)
 
         if (error) {
             console.error('Error fetching work orders:', error)
@@ -26,11 +27,11 @@ export class WorkOrderService {
     }
 
     // GET work orders with customer and vehicle details for display
-    async getWorkOrdersWithDetails(shopId: string): Promise<WorkOrderWithDetails[]> {
+    async getWorkOrdersWithDetails(shopId: string, limit: number = 100, offset: number = 0): Promise<WorkOrderWithDetails[]> {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
-                *,
+                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
                 technician:employees(id, first_name, last_name)
@@ -38,6 +39,7 @@ export class WorkOrderService {
             .eq('shop_id', shopId)
             .eq('archived', false) // Only get non-archived work orders
             .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1)
 
         if (error) {
             console.error('Error fetching work orders with details:', error)
@@ -80,6 +82,25 @@ export class WorkOrderService {
             return null
         }
 
+        // Fetch archived_by_user separately if archived_by is set
+        if (data?.archived_by) {
+            try {
+                const { data: userData } = await this.supabase
+                    .from('users')
+                    .select('id, email')
+                    .eq('id', data.archived_by)
+                    .single()
+                
+                return {
+                    ...data,
+                    archived_by_user: userData || undefined
+                }
+            } catch (err) {
+                // If user lookup fails, just return without archived_by_user
+                return data
+            }
+        }
+
         return data
     }
 
@@ -101,11 +122,11 @@ export class WorkOrderService {
     }
 
     // GET active work orders (pending, in_progress, waiting_parts, waiting_customer) with details
-    async getActiveWorkOrders(shopId: string): Promise<WorkOrderWithDetails[]> {
+    async getActiveWorkOrders(shopId: string, limit: number = 100, offset: number = 0): Promise<WorkOrderWithDetails[]> {
         const { data, error } = await this.supabase
             .from('work_orders')
             .select(`
-                *,
+                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
                 customer:customers(id, customer_name, customer_phone, customer_email),
                 vehicle:customer_vehicles(id, year, make, model, license_plate, color),
                 technician:employees(id, first_name, last_name)
@@ -114,6 +135,7 @@ export class WorkOrderService {
             .eq('archived', false) // Only non-archived work orders
             .in('status', ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer'])
             .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1)
 
         if (error) {
             console.error('Error fetching active work orders:', error)
@@ -122,7 +144,7 @@ export class WorkOrderService {
 
         return data || []
     }
-    
+
     // CREATE operations  
     async createWorkOrder(data: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'>): Promise<WorkOrder> {
         const { data: newWorkOrder, error } = await this.supabase
@@ -153,7 +175,7 @@ export class WorkOrderService {
 
         return newItem
     }
-    
+
     // UPDATE operations
     async updateWorkOrder(id: string, data: Partial<WorkOrder>): Promise<WorkOrder> {
         const { data: updatedWorkOrder, error } = await this.supabase
@@ -175,7 +197,7 @@ export class WorkOrderService {
         // Get current work order to check if we're reverting from completed
         const currentWorkOrder = await this.getWorkOrderById(id)
         const isRevertingFromCompleted = currentWorkOrder?.status === 'completed' && status !== 'completed'
-        
+
         // Prepare update data
         const updateData: any = {
             status,
@@ -195,7 +217,7 @@ export class WorkOrderService {
         // If reverting from completed, clear completed_at
         if (isRevertingFromCompleted) {
             updateData.completed_at = null
-            
+
             // Cancel any pending automated messages for this work order
             await this.cancelPendingMessagesForWorkOrder(id)
         }
@@ -229,7 +251,7 @@ export class WorkOrderService {
                     const extractServiceType = (title: string): string | null => {
                         if (!title) return null
                         const lowerTitle = title.toLowerCase()
-                        
+
                         if (lowerTitle.includes('oil change')) return 'oil_change'
                         if (lowerTitle.includes('brake')) return 'brake_service'
                         if (lowerTitle.includes('tire')) return 'tire_service'
@@ -240,12 +262,12 @@ export class WorkOrderService {
                         if (lowerTitle.includes('engine')) return 'engine_service'
                         if (lowerTitle.includes('diagnostic')) return 'diagnostic'
                         if (lowerTitle.includes('ac') || lowerTitle.includes('air conditioning')) return 'ac_service'
-                        
+
                         return null
                     }
-                    
+
                     const serviceType = extractServiceType(workOrder.title)
-                    
+
                     // Trigger automated messaging (fire and forget - don't block completion)
                     fetch('/api/messaging/queue-automated', {
                         method: 'POST',
@@ -293,7 +315,7 @@ export class WorkOrderService {
             }
 
             // Filter messages that match this work order ID
-            const pendingMessages = allPendingMessages.filter((msg: any) => 
+            const pendingMessages = allPendingMessages.filter((msg: any) =>
                 msg.trigger_data?.work_order_id === workOrderId
             )
 
@@ -326,7 +348,7 @@ export class WorkOrderService {
      */
     async canRevertFromCompleted(workOrderId: string): Promise<{ canRevert: boolean, reason?: string }> {
         const workOrder = await this.getWorkOrderById(workOrderId)
-        
+
         if (!workOrder) {
             return { canRevert: false, reason: 'Work order not found' }
         }
@@ -338,15 +360,15 @@ export class WorkOrderService {
 
         // Warn if invoice_id exists (but allow revert)
         if (workOrder.invoice_id) {
-            return { 
-                canRevert: true, 
-                reason: 'This work order has an invoice. Reverting may require invoice adjustments.' 
+            return {
+                canRevert: true,
+                reason: 'This work order has an invoice. Reverting may require invoice adjustments.'
             }
         }
 
         return { canRevert: true }
     }
-    
+
     // DELETE operations
     /**
      * Archive (soft delete) a work order
@@ -461,12 +483,12 @@ export class WorkOrderService {
         // 1. Create customer if needed
         if (!customerId || customerId === 'new') {
             console.log('Creating new customer:', data.customer.name)
-            
+
             // Validate required customer fields
             if (!data.customer.name?.trim()) {
                 throw new Error('Customer name is required')
             }
-            
+
             const { data: newCustomer, error: customerError } = await this.supabase
                 .from('customers')
                 .insert([{
@@ -490,12 +512,12 @@ export class WorkOrderService {
         // 2. Create vehicle if needed
         if (!vehicleId || vehicleId === 'new') {
             console.log('Creating new vehicle for customer:', customerId)
-            
+
             // Validate required vehicle fields
             if (!data.vehicle.year || !data.vehicle.make?.trim() || !data.vehicle.model?.trim()) {
                 throw new Error('Vehicle year, make, and model are required')
             }
-            
+
             const { data: newVehicle, error: vehicleError } = await this.supabase
                 .from('customer_vehicles')
                 .insert([{

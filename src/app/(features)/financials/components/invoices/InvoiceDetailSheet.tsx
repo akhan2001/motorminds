@@ -21,7 +21,10 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
 }) => {
     if (!invoice) return null
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: string | null | undefined) => {
+        if (!status) {
+            return <Badge className="bg-gray-500/10 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20 dark:border-gray-500/20">N/A</Badge>
+        }
         const statusLower = status.toLowerCase()
         if (statusLower === 'paid') {
             return <Badge className="bg-green-500/10 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 dark:border-green-500/20">Paid</Badge>
@@ -35,7 +38,10 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
         return <Badge className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20">{status}</Badge>
     }
 
-    const getPriorityBadge = (priority: string) => {
+    const getPriorityBadge = (priority: string | null | undefined) => {
+        if (!priority) {
+            return <Badge className="bg-gray-500/10 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20 dark:border-gray-500/20">Medium</Badge>
+        }
         const priorityLower = priority.toLowerCase()
         if (priorityLower === 'urgent') {
             return <Badge className="bg-red-500/10 dark:bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/20">Urgent</Badge>
@@ -216,9 +222,30 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex-1">
                                                 <div className="text-foreground dark:text-white text-sm font-medium">{item.description}</div>
-                                                <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
-                                                    Type: {item.item_type} • Qty: {item.quantity}
-                                                    {item.part_number && ` • Part #: ${item.part_number}`}
+                                                <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1 space-y-0.5">
+                                                    <div>
+                                                        <span className="font-medium">Type:</span> {item.item_type} • <span className="font-medium">Qty:</span> {item.quantity} × {formatCurrency(item.unit_price || 0)} = {formatCurrency(item.total_price || 0)}
+                                                    </div>
+                                                    {item.part_number && (
+                                                        <div>
+                                                            <span className="font-medium">Part #:</span> {item.part_number}
+                                                        </div>
+                                                    )}
+                                                    {item.supplier && (
+                                                        <div>
+                                                            <span className="font-medium">Supplier:</span> {item.supplier}
+                                                        </div>
+                                                    )}
+                                                    {item.category && (
+                                                        <div>
+                                                            <span className="font-medium">Category:</span> {item.category}
+                                                        </div>
+                                                    )}
+                                                    {item.warranty_period && (
+                                                        <div>
+                                                            <span className="font-medium">Warranty:</span> {item.warranty_period}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className={`text-sm font-medium ${
@@ -233,9 +260,9 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                                                 )}
                                             </div>
                                         </div>
-                                        {item.unit_price && (
-                                            <div className="text-muted-foreground dark:text-gray-400 text-xs">
-                                                Unit Price: {formatCurrency(item.unit_price)}
+                                        {item.notes && (
+                                            <div className="text-muted-foreground dark:text-gray-400 text-xs mt-1">
+                                                <span className="font-medium">Notes:</span> {item.notes}
                                             </div>
                                         )}
                                     </div>
@@ -319,11 +346,11 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                     )}
 
                     {/* Migration Metadata (if exists) */}
-                    {invoice.migration_metadata && (
+                    {(invoice as any).migration_metadata && (
                         <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
                             <h3 className="text-foreground dark:text-white font-medium mb-2">Migration Data</h3>
                             <div className="text-xs text-muted-foreground dark:text-gray-400 font-mono bg-background dark:bg-[#0f0f0f] p-2 rounded border border-border dark:border-[#2a2a2a] overflow-x-auto">
-                                <pre>{JSON.stringify(invoice.migration_metadata, null, 2)}</pre>
+                                <pre>{JSON.stringify((invoice as any).migration_metadata, null, 2)}</pre>
                             </div>
                         </div>
                     )}

@@ -43,7 +43,77 @@ export function titleCase(text: string): string {
  * Capitalize only the first letter of the string
  */
 export function capitalize(text: string): string {
+    if (!text) return ''
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+}
+
+/**
+ * Smart capitalize - capitalizes first letter of each word while preserving 
+ * common abbreviations and special cases (e.g., "BMW", "VIN", "LLC", "A/C")
+ */
+const PRESERVE_CASE_WORDS = new Set([
+    // Vehicle makes/brands
+    'BMW', 'GMC', 'RAM', 'MINI', 'VW', 'MB', 'AMG', 'GT', 'RS', 'SS', 'SRT', 'TRD',
+    // Business suffixes
+    'LLC', 'INC', 'CO', 'LTD', 'LP', 'LLP', 'PC', 'PA', 'PLLC',
+    // Vehicle terms
+    'VIN', 'OEM', 'OE', 'A/C', 'AC', 'ABS', 'AWD', 'FWD', 'RWD', '4WD', 'SUV', 'EV', 'PHEV', 'HEV',
+    // Common abbreviations
+    'USA', 'US', 'UK', 'CA', 'TX', 'NY', 'FL', 'IL', 'OH', 'PA', 'NJ', 'NC', 'GA', 'MI', 'VA', 'AZ', 'WA', 'CO', 'TN', 'MO', 'SC',
+    'ID', 'PO', 'APT', 'STE',
+])
+
+const LOWERCASE_WORDS = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'of', 'in', 'on', 'at', 'to', 'for', 'by', 'with'
+])
+
+export function smartCapitalize(text: string | null | undefined): string {
+    if (!text) return ''
+    
+    return text
+        .split(' ')
+        .map((word, index) => {
+            const upperWord = word.toUpperCase()
+            
+            // Preserve all-caps abbreviations
+            if (PRESERVE_CASE_WORDS.has(upperWord)) {
+                return upperWord
+            }
+            
+            // Handle words with slashes (e.g., "a/c" -> "A/C")
+            if (word.includes('/')) {
+                return word.split('/').map(part => 
+                    PRESERVE_CASE_WORDS.has(part.toUpperCase()) 
+                        ? part.toUpperCase() 
+                        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+                ).join('/')
+            }
+            
+            // Keep lowercase words lowercase (unless first word)
+            if (index > 0 && LOWERCASE_WORDS.has(word.toLowerCase())) {
+                return word.toLowerCase()
+            }
+            
+            // Standard title case
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        })
+        .join(' ')
+}
+
+/**
+ * Capitalize customer name (handles first/last name scenarios)
+ */
+export function capitalizeCustomerName(name: string | null | undefined): string {
+    if (!name) return ''
+    return smartCapitalize(name.trim())
+}
+
+/**
+ * Capitalize vehicle info (year, make, model)
+ */
+export function capitalizeVehicleInfo(info: string | null | undefined): string {
+    if (!info) return ''
+    return smartCapitalize(info.trim())
 }
 
 /**

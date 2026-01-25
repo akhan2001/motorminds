@@ -95,16 +95,17 @@ export default function CustomerPage() {
                 
                 setWorkOrders(workOrderData || [])
                 
-                // Get invoices (including those from archived work orders)
+                // Get invoices (including those from archived work orders) - limit to recent 50
                 const { data: invoiceData } = await supabase
                     .from('invoices')
                     .select(`
-                        *,
+                        id, invoice_number, customer_id, shop_id, amount, status, issue_date, created_at, archived,
                         customers(customer_name),
                         work_orders!left(id, archived)
                     `)
                     .eq('customer_id', params?.customerId || '')
                     .order('created_at', { ascending: false })
+                    .limit(50)
                 
                 setInvoices(invoiceData || [])
                 
@@ -192,7 +193,7 @@ export default function CustomerPage() {
                         </Avatar>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-foreground">{customer?.customer_name}</h1>
-                            <p className="text-muted-foreground">Customer since {new Date(customer?.created_at).toLocaleDateString()}</p>
+                            <p className="text-muted-foreground">Customer since {customer?.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}</p>
                         </div>
                     </div>  
                     {/* <div className="flex gap-2">
