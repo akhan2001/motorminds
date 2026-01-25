@@ -29,6 +29,7 @@ import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { InvoicePaymentsSection } from './InvoicePaymentsSection'
+import { InvoicePreviewModal } from './InvoicePreviewModal'
 import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
@@ -57,6 +58,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendChoiceModalOpen, setIsSendChoiceModalOpen] = useState(false)
     const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false)
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const pdfElementRef = useRef<HTMLDivElement>(null)
     
@@ -75,7 +77,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         }
     }
 
-    const handleDownload = async () => {
+    const handleDownload = () => {
         if (!invoice) {
             toast.error('Invoice information not available')
             return
@@ -94,27 +96,8 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
             return
         }
 
-        setIsDownloading(true)
-        try {
-            // For tony template, use HTML-to-PDF conversion
-            if (templateId === 'tony' && pdfElementRef.current) {
-                await generateInvoicePDFFromHTMLElement(pdfElementRef.current, invoice)
-                toast.success('Invoice PDF downloaded successfully')
-            } else {
-                // Prepare shop branding with logo check from storage
-                const shop = await prepareShopBrandingWithLogo(shopInfo)
-                // For other templates, use React-PDF
-                const blob = await generateInvoicePDF(invoice, shop, templateId)
-                const filename = getInvoiceFilename(invoice)
-                downloadPDF(blob, filename)
-                toast.success('Invoice PDF downloaded successfully')
-            }
-        } catch (error) {
-            console.error('PDF generation error:', error)
-            toast.error('Failed to generate PDF')
-        } finally {
-            setIsDownloading(false)
-        }
+        // Open preview modal instead of directly downloading
+        setIsPreviewModalOpen(true)
     }
 
     const handleSend = () => {
@@ -663,6 +646,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     isOpen={isSendSmsModalOpen}
                     onClose={() => setIsSendSmsModalOpen(false)}
                     onConfirm={handleSendSmsConfirm}
+                />
+            )}
+
+            {/* Invoice PDF Preview Modal */}
+            {invoice && shopInfo && (
+                <InvoicePreviewModal
+                    invoice={invoice}
+                    shopInfo={shopInfo}
+                    templateId={templateId}
+                    isOpen={isPreviewModalOpen}
+                    onClose={() => setIsPreviewModalOpen(false)}
                 />
             )}
 
