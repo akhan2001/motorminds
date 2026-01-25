@@ -56,6 +56,7 @@ export function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails):
         assignee: technicianDisplay,
         date: workOrder.created_at.split('T')[0],
         customer: customerDisplay,
+        customer_phone: workOrder.customer?.customer_phone,
         vehicle: vehicleDisplay,
         tags: workOrder.tags || [],
         shop_id: workOrder.shop_id,

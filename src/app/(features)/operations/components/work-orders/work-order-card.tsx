@@ -23,6 +23,7 @@ import { useUpdateWorkOrder } from '../../hooks/use-work-orders'
 import type { StatusTracker } from '../../types/status-tracker'
 import { MAX_WORK_ORDER_STATUS_TRACKERS } from '../../lib/status-tracker-constants'
 import { toast } from 'sonner'
+import { formatPhoneNumber } from '@/lib/utils/formatters'
 
 export interface WorkOrderCardProps {
     item: WorkOrderKanbanItem
@@ -271,7 +272,14 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                 {/* Customer & Vehicle Info */}
                 {(item.customer || item.vehicle) && (
                     <div className="text-xs text-foreground dark:text-gray-300 mb-2">
-                        {item.customer && <div className="font-medium">{item.customer}</div>}
+                        {item.customer && (
+                            <div className="font-medium">
+                                {item.customer}
+                                {item.customer_phone && (
+                                    <span className="text-muted-foreground dark:text-gray-400"> {formatPhoneNumber(item.customer_phone)}</span>
+                                )}
+                            </div>
+                        )}
                         {item.vehicle && <div className="text-muted-foreground dark:text-gray-400">{item.vehicle}</div>}
                     </div>
                 )}
