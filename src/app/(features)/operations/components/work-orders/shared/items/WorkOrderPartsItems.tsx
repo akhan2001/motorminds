@@ -548,7 +548,7 @@ export function WorkOrderPartsItems({
                         type="button"
                         onClick={addItem}
                         size="sm"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Part

@@ -174,7 +174,7 @@ export function WorkOrderLaborItems({
 
             {items.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
-                    No labor items added yet. Click "Add Labor Item" to get started.
+                    No labor items added yet. Click "Add Labor / Services" to get started.
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -286,7 +286,7 @@ export function WorkOrderLaborItems({
                                     </div>
                                     <div>
                                         <Label htmlFor={`labor_rate_${index}`} className="text-muted-foreground text-xs">
-                                            Rate per Hour *
+                                            Unit Price *
                                         </Label>
                                         <Input
                                             id={`labor_rate_${index}`}
@@ -408,10 +408,10 @@ export function WorkOrderLaborItems({
                         type="button"
                         onClick={addItem}
                         size="sm"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
-                        Add Labor
+                        Add Labor / Services
                     </Button>
                 </div>
             )}

@@ -286,14 +286,14 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">
                     <div className="flex items-center gap-3">
-                        {item.assignee && (
+                        {/* {item.assignee && (
                             <div className="flex items-center gap-1">
                                 <div className="w-4 h-4 bg-secondary dark:bg-[#444] rounded-full flex items-center justify-center text-xs text-secondary-foreground dark:text-white">
                                     {getInitials(item.assignee)}
                                 </div>
                                 <span>{truncateText(item.assignee, 12)}</span>
                             </div>
-                        )}
+                        )} */}
                         <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>{item.date}</span>
