@@ -239,11 +239,8 @@ export function WorkOrderGenericItems({
                                         onTemplateSelect={async (template: WorkOrderItemTemplate) => {
                                             if (readOnly) return; // Don't allow template selection in read-only mode
                                             // Create updated item with template data
-                                            let unitPrice = template.unit_price;
-                                            // For discounts, ensure the unit price is negative
-                                            if (itemType === 'discount' && unitPrice > 0) {
-                                                unitPrice = -unitPrice;
-                                            }
+                                            // For discounts, store as positive values (will be subtracted in calculations)
+                                            let unitPrice = Math.abs(template.unit_price || 0);
 
                                             const updatedItem = {
                                                 ...item,
@@ -316,7 +313,11 @@ export function WorkOrderGenericItems({
                                         type="number"
                                         value={item.unit_price === 0 ? '0' : item.unit_price || ''}
                                         onChange={(e) => {
-                                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                            let value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                            // For discounts, store as positive values (will be subtracted in calculations)
+                                            if (itemType === 'discount') {
+                                                value = Math.abs(value);
+                                            }
                                             updateItem(item.id, 'unit_price', value);
                                         }}
                                         min={itemType === 'discount' ? undefined : "0"}

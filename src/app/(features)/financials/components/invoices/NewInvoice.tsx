@@ -195,9 +195,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
 
     const calculateSubtotal = () => {
         return formData.invoice_items.reduce((sum, item) => {
-            // Discounts subtract from subtotal, all other items add
+            // Discounts subtract from subtotal (always use positive value), all other items add
             if ((item as any).item_type === 'discount') {
-                return sum - item.total_price
+                return sum - Math.abs(item.total_price || 0)
             }
             return sum + item.total_price
         }, 0)

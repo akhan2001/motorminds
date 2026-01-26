@@ -535,9 +535,6 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         </div>
                     </Card>
 
-                    {/* Payments Section */}
-                    <InvoicePaymentsSection invoice={invoice} />
-
                     {/* Amount and Status Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
@@ -635,6 +632,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             </div>
                         </div>
                     </Card>
+
+                    {/* Payments Section */}
+                    <InvoicePaymentsSection invoice={invoice} />
                 </div>
             </div>
 
