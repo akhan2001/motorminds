@@ -1,5 +1,5 @@
 // Custom hook for work order form state management
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { useUpdateWorkOrder, useUpdateWorkOrderStatus } from '../../../../hooks/use-work-orders'
 import { canEditWorkOrder } from '../../../../lib/constants/work-orders'
@@ -116,16 +116,58 @@ export function useWorkOrderEditForm(
     const [formData, setFormData] = useState<WorkOrderFormData>(() =>
         initializeFormData(workOrderDetails, initialWorkOrder)
     )
+    
+    // Use a ref to always have access to the latest formData in callbacks
+    const formDataRef = useRef<WorkOrderFormData>(formData)
+    
+    // Keep ref in sync with state
+    useEffect(() => {
+        formDataRef.current = formData
+    }, [formData, isEditing])
 
     const updateWorkOrderMutation = useUpdateWorkOrder()
     const updateWorkOrderStatusMutation = useUpdateWorkOrderStatus()
 
-    // Update form when work order details change
+    // Track the work order ID to detect when switching between different work orders
+    const [currentWorkOrderId, setCurrentWorkOrderId] = useState<string | null>(
+        workOrderDetails?.id || null
+    )
+    
+    // Track the last saved values to prevent resetting to stale data after save
+    const lastSavedValuesRef = useRef<{ title: string; description: string } | null>(null)
+
+    // Update form when work order details change - but only if NOT editing
+    // This prevents overwriting user's unsaved changes while they're editing
     useEffect(() => {
         if (workOrderDetails) {
-            setFormData(initializeFormData(workOrderDetails, initialWorkOrder))
+            const workOrderId = workOrderDetails.id
+            
+            // Reset form data if:
+            // 1. We're switching to a different work order, OR
+            // 2. We're not currently editing AND workOrderDetails matches what we last saved (server has updated)
+            const isSwitchingWorkOrder = workOrderId !== currentWorkOrderId
+            
+            // Check if workOrderDetails matches what we last saved (meaning server has updated)
+            const matchesLastSaved = lastSavedValuesRef.current && 
+                workOrderDetails.title === lastSavedValuesRef.current.title &&
+                workOrderDetails.description === lastSavedValuesRef.current.description
+            
+            // Only reset if:
+            // - Switching work orders, OR
+            // - Not editing AND (workOrderDetails matches last saved OR we haven't saved anything yet)
+            const shouldReset = isSwitchingWorkOrder || (!isEditing && (matchesLastSaved || !lastSavedValuesRef.current))
+            
+            if (shouldReset) {
+                const newFormData = initializeFormData(workOrderDetails, initialWorkOrder)
+                setFormData(newFormData)
+                setCurrentWorkOrderId(workOrderId)
+                // Clear last saved values when switching work orders
+                if (isSwitchingWorkOrder) {
+                    lastSavedValuesRef.current = null
+                }
+            }
         }
-    }, [workOrderDetails, initialWorkOrder])
+    }, [workOrderDetails?.id, workOrderDetails?.title, workOrderDetails?.description, isEditing, currentWorkOrderId]) // Include title/description to detect actual changes
 
     const canEdit = useCallback(() => {
         if (!workOrderDetails) return false
@@ -139,17 +181,28 @@ export function useWorkOrderEditForm(
         }
 
         try {
+            // Use ref to get the absolute latest formData (avoids stale closure issues)
+            const latestFormData = formDataRef.current
+            
+            const saveData = {
+                title: latestFormData.title,
+                description: latestFormData.description,
+                priority: latestFormData.priority,
+                notes: latestFormData.notes,
+                tags: latestFormData.tags,
+                status_tracker: latestFormData.statusTracker,
+            }
+            
             await updateWorkOrderMutation.mutateAsync({
                 id: workOrderId,
-                data: {
-                    title: formData.title,
-                    description: formData.description,
-                    priority: formData.priority,
-                    notes: formData.notes,
-                    tags: formData.tags,
-                    status_tracker: formData.statusTracker,
-                },
+                data: saveData,
             })
+
+            // Store the values we just saved to prevent resetting to stale data
+            lastSavedValuesRef.current = {
+                title: saveData.title,
+                description: saveData.description
+            }
 
             toast.success('Work order updated successfully')
             setIsEditing(false)
@@ -159,7 +212,7 @@ export function useWorkOrderEditForm(
             toast.error(error.message || 'Failed to update work order')
             return false
         }
-    }, [formData, canEdit, updateWorkOrderMutation])
+    }, [canEdit, updateWorkOrderMutation])
 
     const handleFieldChange = useCallback((field: keyof WorkOrderFormData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }))

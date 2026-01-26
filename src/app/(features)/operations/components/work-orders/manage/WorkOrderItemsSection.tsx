@@ -1,10 +1,12 @@
 // Unified items section component
 'use client'
 
+import { useCallback } from 'react'
+
 // Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
 import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
 import { WorkOrderPartsItems } from '../shared/items/WorkOrderPartsItems'
-import { WorkOrderExpenseItems } from '../shared/items/WorkOrderExpenseItems'
+import { WorkOrderExpenseItems } from '../shared/items/expense-items'
 import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'
 import type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
 
@@ -38,13 +40,42 @@ export function WorkOrderItemsSection({
     const hasLegacyFees = itemsByType.fees.length > 0
     const hasLegacyPackages = itemsByType.packages.length > 0
 
+    // Memoized callbacks to prevent unnecessary re-renders of child components
+    const handleLaborChange = useCallback((items: LaborFormItem[]) => {
+        onItemsChange('labor', items)
+    }, [onItemsChange])
+
+    const handlePartsChange = useCallback((items: PartFormItem[]) => {
+        onItemsChange('part', items)
+    }, [onItemsChange])
+
+    const handleExpensesChange = useCallback((items: ExpenseFormItem[]) => {
+        onItemsChange('expense', items)
+    }, [onItemsChange])
+
+    const handleServicesChange = useCallback((items: GenericFormItem[]) => {
+        onItemsChange('service', items)
+    }, [onItemsChange])
+
+    const handleFeesChange = useCallback((items: GenericFormItem[]) => {
+        onItemsChange('fee', items)
+    }, [onItemsChange])
+
+    const handleDiscountsChange = useCallback((items: GenericFormItem[]) => {
+        onItemsChange('discount', items)
+    }, [onItemsChange])
+
+    const handlePackagesChange = useCallback((items: GenericFormItem[]) => {
+        onItemsChange('package', items)
+    }, [onItemsChange])
+
     return (
         <div className="bg-slate-50 dark:bg-[#131313] border border-border rounded-lg p-4 space-y-6">
             <h3 className="text-lg font-semibold text-foreground">Work Order Items</h3>
 
             <WorkOrderLaborItems
                 items={itemsByType.labor}
-                onItemsChange={(items) => onItemsChange('labor', items)}
+                onItemsChange={handleLaborChange}
                 workOrderId={workOrderId}
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
@@ -53,7 +84,7 @@ export function WorkOrderItemsSection({
 
             <WorkOrderPartsItems
                 items={itemsByType.parts}
-                onItemsChange={(items) => onItemsChange('part', items)}
+                onItemsChange={handlePartsChange}
                 workOrderId={workOrderId}
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
@@ -62,7 +93,7 @@ export function WorkOrderItemsSection({
 
             <WorkOrderExpenseItems
                 items={itemsByType.expenses}
-                onItemsChange={(items) => onItemsChange('expense', items)}
+                onItemsChange={handleExpensesChange}
                 workOrderId={workOrderId}
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
@@ -73,7 +104,7 @@ export function WorkOrderItemsSection({
             {hasLegacyServices && (
                 <WorkOrderGenericItems
                     items={itemsByType.services}
-                    onItemsChange={(items) => onItemsChange('service', items)}
+                    onItemsChange={handleServicesChange}
                     workOrderId={workOrderId}
                     itemType="service"
                     title="Services (Legacy)"
@@ -88,7 +119,7 @@ export function WorkOrderItemsSection({
             {hasLegacyFees && (
                 <WorkOrderGenericItems
                     items={itemsByType.fees}
-                    onItemsChange={(items) => onItemsChange('fee', items)}
+                    onItemsChange={handleFeesChange}
                     workOrderId={workOrderId}
                     itemType="fee"
                     title="Fees (Legacy)"
@@ -101,7 +132,7 @@ export function WorkOrderItemsSection({
 
             <WorkOrderGenericItems
                 items={itemsByType.discounts}
-                onItemsChange={(items) => onItemsChange('discount', items)}
+                onItemsChange={handleDiscountsChange}
                 workOrderId={workOrderId}
                 itemType="discount"
                 title="Discounts"
@@ -114,7 +145,7 @@ export function WorkOrderItemsSection({
             {hasLegacyPackages && (
                 <WorkOrderGenericItems
                     items={itemsByType.packages}
-                    onItemsChange={(items) => onItemsChange('package', items)}
+                    onItemsChange={handlePackagesChange}
                     workOrderId={workOrderId}
                     itemType="package"
                     title="Packages (Legacy)"

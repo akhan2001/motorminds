@@ -207,7 +207,13 @@ export class WorkOrderItemsService {
         }
 
         // Prepare payload (database trigger will calculate total_price and total_cost)
-        const itemPayload = {
+        // Set is_billable based on item type: expenses default to false (internal costs), others default to true
+        // Expenses are NEVER billable (tracking only)
+        const isBillable = validated.item_type === 'expense' 
+            ? false 
+            : (validated.is_billable !== undefined ? validated.is_billable : true)
+        
+        const itemPayload: Record<string, any> = {
             work_order_id: validated.work_order_id,
             shop_id: workOrder.shop_id,
             item_type: validated.item_type,
@@ -222,6 +228,19 @@ export class WorkOrderItemsService {
             notes: validated.notes?.trim() || null,
             labor_hours: validated.labor_hours ?? null,
             technician_id: validated.technician_id ?? null,
+            is_billable: isBillable,
+        }
+
+        // Add expense-specific fields only for expense items
+        if (validated.item_type === 'expense') {
+            itemPayload.expense_subtotal = validated.expense_subtotal ?? null
+            itemPayload.expense_tax_amount = validated.expense_tax_amount ?? null
+            itemPayload.expense_tax_included = validated.expense_tax_included ?? false
+            itemPayload.expense_payment_method = validated.expense_payment_method ?? null
+            itemPayload.expense_vendor = validated.expense_vendor?.trim() || null
+            itemPayload.expense_invoice_number = validated.expense_invoice_number?.trim() || null
+            itemPayload.expense_parts_description = validated.expense_parts_description?.trim() || null
+            itemPayload.expense_cost_date = validated.expense_cost_date || null
         }
 
         const { data, error } = await supabase
@@ -272,7 +291,7 @@ export class WorkOrderItemsService {
      * Update an existing work order item
      * Note: total_price and total_cost are recalculated by database trigger
      */
-    static async updateWorkOrderItem(itemId: string, itemData: Partial<WorkOrderItemFormData>): Promise<WorkOrderItem> {
+    static async updateWorkOrderItem(itemId: string, itemData: WorkOrderItemUpdateData): Promise<WorkOrderItem> {
         if (!itemId) {
             throw new Error('Item ID is required')
         }
@@ -301,6 +320,24 @@ export class WorkOrderItemsService {
         if (validated.labor_hours !== undefined) updatePayload.labor_hours = validated.labor_hours ?? null
         if (validated.technician_id !== undefined) updatePayload.technician_id = validated.technician_id ?? null
         if (validated.active !== undefined) updatePayload.active = validated.active
+        if (validated.is_billable !== undefined) {
+            // Ensure expenses cannot be marked as billable
+            if (validated.item_type === 'expense' || (updatePayload.item_type === 'expense')) {
+                updatePayload.is_billable = false
+            } else {
+                updatePayload.is_billable = validated.is_billable
+            }
+        }
+
+        // Expense-specific fields (only update if provided)
+        if (validated.expense_subtotal !== undefined) updatePayload.expense_subtotal = validated.expense_subtotal ?? null
+        if (validated.expense_tax_amount !== undefined) updatePayload.expense_tax_amount = validated.expense_tax_amount ?? null
+        if (validated.expense_tax_included !== undefined) updatePayload.expense_tax_included = validated.expense_tax_included ?? false
+        if (validated.expense_payment_method !== undefined) updatePayload.expense_payment_method = validated.expense_payment_method ?? null
+        if (validated.expense_vendor !== undefined) updatePayload.expense_vendor = validated.expense_vendor?.trim() || null
+        if (validated.expense_invoice_number !== undefined) updatePayload.expense_invoice_number = validated.expense_invoice_number?.trim() || null
+        if (validated.expense_parts_description !== undefined) updatePayload.expense_parts_description = validated.expense_parts_description?.trim() || null
+        if (validated.expense_cost_date !== undefined) updatePayload.expense_cost_date = validated.expense_cost_date || null
 
         // If no fields to update, return current item
         if (Object.keys(updatePayload).length === 0) {
@@ -579,7 +616,13 @@ export class WorkOrderItemsService {
                         work_order_id: workOrderId
                     })
 
-                    const payload = {
+                    // Set is_billable based on item type: expenses default to false (internal costs), others default to true
+                    // Expenses are NEVER billable (tracking only)
+                    const isBillable = validated.item_type === 'expense' 
+                        ? false 
+                        : (validated.is_billable !== undefined ? validated.is_billable : true)
+
+                    const payload: Record<string, any> = {
                         work_order_id: workOrderId,
                         shop_id: workOrder.shop_id,
                         item_type: validated.item_type,
@@ -594,6 +637,19 @@ export class WorkOrderItemsService {
                         notes: validated.notes?.trim() || null,
                         labor_hours: validated.labor_hours ?? null,
                         technician_id: validated.technician_id ?? null,
+                        is_billable: isBillable,
+                    }
+
+                    // Add expense-specific fields only for expense items
+                    if (validated.item_type === 'expense') {
+                        payload.expense_subtotal = validated.expense_subtotal ?? null
+                        payload.expense_tax_amount = validated.expense_tax_amount ?? null
+                        payload.expense_tax_included = validated.expense_tax_included ?? false
+                        payload.expense_payment_method = validated.expense_payment_method ?? null
+                        payload.expense_vendor = validated.expense_vendor?.trim() || null
+                        payload.expense_invoice_number = validated.expense_invoice_number?.trim() || null
+                        payload.expense_parts_description = validated.expense_parts_description?.trim() || null
+                        payload.expense_cost_date = validated.expense_cost_date || null
                     }
                     
                     return payload
@@ -657,6 +713,28 @@ export class WorkOrderItemsService {
                         technician_id: validated.technician_id,
                         active: validated.active,
                     }
+
+                    // Handle is_billable: ensure expenses cannot be marked as billable
+                    if (validated.is_billable !== undefined) {
+                        if (validated.item_type === 'expense' || item.data?.item_type === 'expense') {
+                            updatePayload.is_billable = false
+                        } else {
+                            updatePayload.is_billable = validated.is_billable
+                        }
+                    } else if (validated.item_type === 'expense' || item.data?.item_type === 'expense') {
+                        // If item_type is expense but is_billable not provided, ensure it's false
+                        updatePayload.is_billable = false
+                    }
+
+                    // Add expense-specific fields if provided
+                    if (validated.expense_subtotal !== undefined) updatePayload.expense_subtotal = validated.expense_subtotal ?? null
+                    if (validated.expense_tax_amount !== undefined) updatePayload.expense_tax_amount = validated.expense_tax_amount ?? null
+                    if (validated.expense_tax_included !== undefined) updatePayload.expense_tax_included = validated.expense_tax_included ?? false
+                    if (validated.expense_payment_method !== undefined) updatePayload.expense_payment_method = validated.expense_payment_method ?? null
+                    if (validated.expense_vendor !== undefined) updatePayload.expense_vendor = validated.expense_vendor?.trim() || null
+                    if (validated.expense_invoice_number !== undefined) updatePayload.expense_invoice_number = validated.expense_invoice_number?.trim() || null
+                    if (validated.expense_parts_description !== undefined) updatePayload.expense_parts_description = validated.expense_parts_description?.trim() || null
+                    if (validated.expense_cost_date !== undefined) updatePayload.expense_cost_date = validated.expense_cost_date || null
                     
                     return updatePayload
                 } catch (validationError: any) {
@@ -706,6 +784,28 @@ export class WorkOrderItemsService {
                                     technician_id: validated.technician_id ?? undefined,
                                     active: validated.active ?? undefined,
                                 }
+
+                                // Handle is_billable: ensure expenses cannot be marked as billable
+                                if (validated.is_billable !== undefined) {
+                                    if (validated.item_type === 'expense' || item.data?.item_type === 'expense') {
+                                        updateData.is_billable = false
+                                    } else {
+                                        updateData.is_billable = validated.is_billable
+                                    }
+                                } else if (validated.item_type === 'expense' || item.data?.item_type === 'expense') {
+                                    // If item_type is expense but is_billable not provided, ensure it's false
+                                    updateData.is_billable = false
+                                }
+
+                                // Add expense-specific fields if provided
+                                if (validated.expense_subtotal !== undefined) updateData.expense_subtotal = validated.expense_subtotal ?? undefined
+                                if (validated.expense_tax_amount !== undefined) updateData.expense_tax_amount = validated.expense_tax_amount ?? undefined
+                                if (validated.expense_tax_included !== undefined) updateData.expense_tax_included = validated.expense_tax_included ?? false
+                                if (validated.expense_payment_method !== undefined) updateData.expense_payment_method = validated.expense_payment_method ?? undefined
+                                if (validated.expense_vendor !== undefined) updateData.expense_vendor = validated.expense_vendor ?? undefined
+                                if (validated.expense_invoice_number !== undefined) updateData.expense_invoice_number = validated.expense_invoice_number ?? undefined
+                                if (validated.expense_parts_description !== undefined) updateData.expense_parts_description = validated.expense_parts_description ?? undefined
+                                if (validated.expense_cost_date !== undefined) updateData.expense_cost_date = validated.expense_cost_date ?? undefined
                                 const updated = await this.updateWorkOrderItem(item.id!, updateData)
                                 results.push(updated)
                             } catch (err) {

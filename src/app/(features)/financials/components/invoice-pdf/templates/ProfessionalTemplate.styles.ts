@@ -104,7 +104,7 @@ export const professionalTemplateStyles = StyleSheet.create({
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: '#000000',
+        backgroundColor: '#6b7280',
         padding: 6,
         color: '#ffffff',
         fontWeight: 'bold',

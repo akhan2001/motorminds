@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
 
     try {
         // Fetch work order items (parts and expenses)
+        // Include new expense fields for expense items
         const workOrderItemsPromise = supabase
             .from('work_order_items')
             .select(`
@@ -63,6 +64,14 @@ export async function GET(req: NextRequest) {
                 notes,
                 created_at,
                 work_order_id,
+                expense_subtotal,
+                expense_tax_amount,
+                expense_tax_included,
+                expense_payment_method,
+                expense_vendor,
+                expense_invoice_number,
+                expense_parts_description,
+                expense_cost_date,
                 work_order:work_orders(id, work_order_number, title)
             `, { count: 'exact' })
             .eq('shop_id', shopId)
@@ -87,6 +96,7 @@ export async function GET(req: NextRequest) {
         if (woiError) throw woiError;
 
         // Transform work order items to unified format
+        // For expense items, use expense fields that mirror one_time_costs
         const transformedWOItems: UnifiedExpenseItem[] = (workOrderItems || []).map((item: any) => ({
             id: item.id,
             source: 'work_order' as const,
@@ -96,13 +106,25 @@ export async function GET(req: NextRequest) {
             unit_price: item.unit_price || 0,
             total_cost: item.total_cost,
             total_price: item.total_price,
-            supplier: item.supplier,
-            vendor: null,
-            payment_method: null,
+            // For expense items, prefer expense_vendor over supplier; for parts, use supplier
+            supplier: item.item_type === 'expense' 
+                ? (item.expense_vendor || item.supplier) 
+                : item.supplier,
+            vendor: item.item_type === 'expense' 
+                ? (item.expense_vendor || item.supplier) 
+                : null,
+            payment_method: item.item_type === 'expense' 
+                ? item.expense_payment_method 
+                : null,
             notes: item.notes,
             category: item.category,
-            part_number: item.part_number,
-            created_at: item.created_at,
+            // For expense items, prefer expense_invoice_number over part_number
+            part_number: item.item_type === 'expense' 
+                ? (item.expense_invoice_number || item.part_number) 
+                : item.part_number,
+            created_at: item.item_type === 'expense' && item.expense_cost_date 
+                ? item.expense_cost_date 
+                : item.created_at,
             work_order_id: item.work_order_id,
             work_order: item.work_order
         }));

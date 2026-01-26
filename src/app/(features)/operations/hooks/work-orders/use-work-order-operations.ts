@@ -129,12 +129,12 @@ export function useWorkOrderOperations(
             // Use the work order ID from the updated work order
             const workOrderId = updatedWorkOrder.id
 
-            // Prepare the update data
+            // Prepare the update data - use formData if available, otherwise fall back to updatedWorkOrder
             const updateData: Partial<WorkOrder> = {
-                title: updatedWorkOrder.title,
-                description: updatedWorkOrder.description,
-                priority: updatedWorkOrder.priority,
-                tags: updatedWorkOrder.tags,
+                title: formData?.title ?? updatedWorkOrder.title,
+                description: formData?.description ?? updatedWorkOrder.description,
+                priority: formData?.priority ?? updatedWorkOrder.priority,
+                tags: formData?.tags ?? updatedWorkOrder.tags,
             }
 
             // Include notes if provided in formData

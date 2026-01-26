@@ -23,12 +23,14 @@ import {
 } from 'lucide-react'
 import { useInvoice, useDeleteInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
+import { useWorkOrderItems } from '../../../operations/hooks/use-work-order-items'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { InvoicePaymentsSection } from './InvoicePaymentsSection'
+import { InvoicePreviewModal } from './InvoicePreviewModal'
 import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
@@ -50,6 +52,12 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const { shopId, userRole } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
+    
+    // Fetch work order items to get expense items (tracking only)
+    const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
+    
+    // Filter expense items from work order (these are tracking only, not on invoice)
+    const expenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
     const deleteMutation = useDeleteInvoice()
     const updateMutation = useUpdateInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
@@ -57,6 +65,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendChoiceModalOpen, setIsSendChoiceModalOpen] = useState(false)
     const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false)
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const pdfElementRef = useRef<HTMLDivElement>(null)
     
@@ -75,7 +84,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         }
     }
 
-    const handleDownload = async () => {
+    const handleDownload = () => {
         if (!invoice) {
             toast.error('Invoice information not available')
             return
@@ -94,27 +103,8 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
             return
         }
 
-        setIsDownloading(true)
-        try {
-            // For tony template, use HTML-to-PDF conversion
-            if (templateId === 'tony' && pdfElementRef.current) {
-                await generateInvoicePDFFromHTMLElement(pdfElementRef.current, invoice)
-                toast.success('Invoice PDF downloaded successfully')
-            } else {
-                // Prepare shop branding with logo check from storage
-                const shop = await prepareShopBrandingWithLogo(shopInfo)
-                // For other templates, use React-PDF
-                const blob = await generateInvoicePDF(invoice, shop, templateId)
-                const filename = getInvoiceFilename(invoice)
-                downloadPDF(blob, filename)
-                toast.success('Invoice PDF downloaded successfully')
-            }
-        } catch (error) {
-            console.error('PDF generation error:', error)
-            toast.error('Failed to generate PDF')
-        } finally {
-            setIsDownloading(false)
-        }
+        // Open preview modal instead of directly downloading
+        setIsPreviewModalOpen(true)
     }
 
     const handleSend = () => {
@@ -223,9 +213,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         )
     }
 
-    // Calculate totals - only include active items, handle discounts correctly
+    // Calculate totals - only include active items, exclude expense items (tracking only), handle discounts correctly
     const subtotal = invoice.invoice_items
-        .filter(item => (item as any).active !== false)
+        .filter(item => (item as any).active !== false && item.item_type !== 'expense')
         .reduce((sum, item) => {
             // Discounts subtract from subtotal, all other items add
             if (item.item_type === 'discount') {
@@ -400,52 +390,140 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 {/* Invoice Items */}
                                 {invoice.invoice_items.map((item, index) => {
                                     const isActive = (item as any).active !== false // Use the 'active' field from JSONB
+                                    const isExpense = item.item_type === 'expense'
                                     return (
-                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-border dark:border-gray-800">
+                                        <div 
+                                            key={index} 
+                                            className={`grid grid-cols-12 gap-2 items-center text-sm py-2 border-b ${
+                                                !isActive
+                                                    ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
+                                                    : isExpense
+                                                    ? 'border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5'
+                                                    : 'border-border dark:border-gray-800'
+                                            }`}
+                                        >
                                             <div className="col-span-5 text-foreground dark:text-white">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     {isActive ? (
                                                         <Check className="h-3 w-3 text-green-500" />
                                                     ) : (
                                                         <XCircle className="h-3 w-3 text-red-500" />
                                                     )}
                                                     <span>{item.description}</span>
+                                                    {isExpense && isActive && (
+                                                        <div className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">
+                                                            Tracking only - not in calculations
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="col-span-2 text-center">
-                                                <Badge variant="outline" className="text-xs capitalize text-foreground dark:text-white">
-                                                    {item.item_type}
-                                                </Badge>
+                                                <div className="flex items-center justify-center gap-1 flex-wrap">
+                                                    <Badge 
+                                                        variant="outline" 
+                                                        className={`text-xs capitalize ${
+                                                            !isActive
+                                                                ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20'
+                                                                : isExpense
+                                                                ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
+                                                                : 'text-foreground dark:text-white'
+                                                        }`}
+                                                    >
+                                                        {item.item_type}
+                                                    </Badge>
+                                                </div>
                                             </div>
                                             <div className="col-span-2 text-center text-foreground dark:text-white">
                                                 {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
                                             </div>
-                                            <div className="col-span-3 text-right text-foreground dark:text-white">
-                                                {item.item_type === 'discount' ? (
-                                                    <span className="text-red-600 dark:text-red-400 font-semibold">
-                                                        -{formatCurrency(Math.abs(item.total_price))}
-                                                    </span>
-                                                ) : item.item_type === 'labor' ? (
-                                                    <span>
-                                                        {formatCurrency(item.total_price)}
-                                                        <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">
-                                                            ({formatCurrency(item.unit_price)}/hr)
+                                            <div className="col-span-3 text-right">
+                                                <div className="text-foreground dark:text-white">
+                                                    {item.item_type === 'discount' ? (
+                                                        <span className="text-red-600 dark:text-red-400 font-semibold">
+                                                            -{formatCurrency(Math.abs(item.total_price))}
                                                         </span>
-                                                    </span>
-                                                ) : item.quantity > 1 ? (
-                                                    <span>
-                                                        {formatCurrency(item.total_price)}
-                                                        <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">
-                                                            ({formatCurrency(item.unit_price)}/ea)
+                                                    ) : item.item_type === 'labor' ? (
+                                                        <span>
+                                                            {formatCurrency(item.total_price)}
+                                                            <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">
+                                                                ({formatCurrency(item.unit_price)}/hr)
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                ) : (
-                                                    formatCurrency(item.total_price)
+                                                    ) : item.quantity > 1 ? (
+                                                        <span>
+                                                            {formatCurrency(item.total_price)}
+                                                            <span className="text-muted-foreground dark:text-gray-400 text-xs ml-1">
+                                                                ({formatCurrency(item.unit_price)}/ea)
+                                                            </span>
+                                                        </span>
+                                                    ) : (
+                                                        formatCurrency(item.total_price)
+                                                    )}
+                                                </div>
+                                                {!isActive && (
+                                                    <div className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                                                        Not included in total
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
                                     )
                                 })}
+
+                                {/* Expense Items (Tracking Only - Not Billed) */}
+                                {expenseItems.length > 0 && (
+                                    <>
+                                        <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-500/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30 text-xs">
+                                                    Shop Expenses (Tracking Only)
+                                                </Badge>
+                                                <span className="text-xs text-orange-600/70 dark:text-orange-400/70">
+                                                    Not included in invoice totals
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {expenseItems.map((item: any, index: number) => (
+                                            <div 
+                                                key={`expense-${index}`} 
+                                                className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
+                                            >
+                                                <div className="col-span-5 text-foreground dark:text-white">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Check className="h-3 w-3 text-orange-500" />
+                                                        <span>{item.description}</span>
+                                                    </div>
+                                                    {item.expense_vendor && (
+                                                        <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5 mt-0.5">
+                                                            Vendor: {item.expense_vendor}
+                                                            {item.expense_invoice_number && ` - Invoice #${item.expense_invoice_number}`}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="col-span-2 text-center">
+                                                    <Badge 
+                                                        variant="outline" 
+                                                        className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
+                                                    >
+                                                        {item.item_type}
+                                                    </Badge>
+                                                </div>
+                                                <div className="col-span-2 text-center text-foreground dark:text-white">
+                                                    {item.quantity || 1}
+                                                </div>
+                                                <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
+                                                    {formatCurrency(item.total_price || 0)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
+                                            <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
+                                            <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                                {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {invoice.notes && (
@@ -630,6 +708,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                     isOpen={isSendSmsModalOpen}
                     onClose={() => setIsSendSmsModalOpen(false)}
                     onConfirm={handleSendSmsConfirm}
+                />
+            )}
+
+            {/* Invoice PDF Preview Modal */}
+            {invoice && shopInfo && (
+                <InvoicePreviewModal
+                    invoice={invoice}
+                    shopInfo={shopInfo}
+                    templateId={templateId}
+                    isOpen={isPreviewModalOpen}
+                    onClose={() => setIsPreviewModalOpen(false)}
                 />
             )}
 

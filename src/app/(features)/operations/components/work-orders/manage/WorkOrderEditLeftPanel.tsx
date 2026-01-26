@@ -57,8 +57,12 @@ export function WorkOrderEditLeftPanel({
         }
 
         const workOrderSaved = await form.handleSave(workOrder.id)
-        if (workOrderSaved && onSave) {
-            onSave(workOrder, form.formData)
+        if (workOrderSaved) {
+            if (onSave) {
+                onSave(workOrder, form.formData)
+            }
+            // Close the modal after successful save
+            onClose()
         }
     }
 
@@ -162,6 +166,7 @@ export function WorkOrderEditLeftPanel({
                         vehicleLicensePlate={form.formData.vehicleLicensePlate}
                         vehicleMileage={form.formData.vehicleMileage}
                         isEditing={form.isEditing}
+                        isWorkOrderMode={true}
                         onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
                     />
 

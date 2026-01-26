@@ -15,7 +15,7 @@ import { WorkOrderNotes } from "../shared/work-order-notes"
 import { WorkOrderModalFooter } from "../shared/work-order-modal-footer"
 import { WorkOrderLaborItems } from "../shared/items/WorkOrderLaborItems"
 import { WorkOrderPartsItems } from "../shared/items/WorkOrderPartsItems"
-import { WorkOrderExpenseItems } from "../shared/items/WorkOrderExpenseItems"
+import { WorkOrderExpenseItems } from "../shared/items/expense-items"
 import { WorkOrderGenericItems } from "../shared/items/WorkOrderGenericItems"
 import { WorkOrderCostSummary } from "../complete/work-order-cost-summary"
 import { InvoiceHistoryPanel } from "../shared/invoice-history-panel"
@@ -287,6 +287,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 vehicleLicensePlate={formData.vehicleLicensePlate}
                                                 vehicleMileage={formData.vehicleMileage}
                                                 isEditing={currentStep >= 2}
+                                                isWorkOrderMode={true}
                                                 onFieldChange={handleFieldChange}
                                                 onVehicleSelect={(vehicleId, vehicleData) => {
                                                     handleFieldChange('vehicleId', vehicleId)
@@ -327,18 +328,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                             }}
                                             onAddTag={handleAddTag}
                                             onRemoveTag={handleRemoveTag}
-                                        />
-                                    </div>
-
-                                    {/* Recommendation/Notes - Under Work Order Information */}
-                                    <div className={`transition-opacity duration-200 ${currentStep >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                                        <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">
-                                            Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
-                                        </h3>
-                                        <WorkOrderNotes
-                                            notes={formData.notes}
-                                            isEditing={currentStep >= 3}
-                                            onFieldChange={handleFieldChange}
                                         />
                                     </div>
 
@@ -573,6 +562,17 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 />
                                             </div>
 
+                                            {/* Recommendation/Notes - Under Work Order Information */}
+                                            <div className={`transition-opacity duration-200 ${currentStep >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                                <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">
+                                                    Recommendation <span className="text-xs text-muted-foreground dark:text-gray-400 font-normal">(Optional)</span>
+                                                </h3>
+                                                <WorkOrderNotes
+                                                    notes={formData.notes}
+                                                    isEditing={currentStep >= 3}
+                                                    onFieldChange={handleFieldChange}
+                                                />
+                                            </div>
                                         </>
                                     )}
                                 </div>

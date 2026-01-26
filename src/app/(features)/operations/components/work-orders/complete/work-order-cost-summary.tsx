@@ -46,9 +46,9 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 				<div className="text-muted-foreground">
 					<span className="text-foreground font-medium">{workOrderItems.length}</span> total items
 				</div>
-				<div className="text-muted-foreground">
+				{/* <div className="text-muted-foreground">
 					<span className="text-foreground font-medium">{calculations.approvedItems.length}</span> approved
-				</div>
+				</div> */}
 				{calculations.rejectedItems.length > 0 && (
 					<div className="text-red-600 dark:text-red-400 col-span-2">
 						<span className="font-medium">{calculations.rejectedItems.length}</span> rejected items
@@ -64,32 +64,46 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 						className={`p-3 rounded-lg border ${
 							item.active === false 
 								? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5' 
+								: item.item_type === 'expense'
+								? 'border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5'
 								: 'border-border dark:border-[#333333] bg-background dark:bg-[#1a1a1a]'
 						}`}
 					>
 						<div className="flex justify-between items-start mb-2">
 							<div className="flex-1">
-								<div className="flex items-center gap-2 mb-1">
+								<div className="flex items-center gap-2 mb-1 flex-wrap">
 									<span className={`text-xs font-medium px-2 py-1 rounded border ${
 										item.active === false 
 											? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20' 
+											: item.item_type === 'expense'
+											? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
 											: 'bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border-green-300 dark:border-green-500/20'
 									}`}>
 										{item.item_type.toUpperCase()}
 									</span>
-									<span className={`text-xs font-medium px-2 py-1 rounded border ${
-										item.active === false 
-											? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20' 
-											: 'bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border-green-300 dark:border-green-500/20'
-									}`}>
-										{getItemStatusText(item)}
-									</span>
+									{item.active === false && (
+										<span className="text-xs font-medium px-2 py-1 rounded border bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20">
+											{getItemStatusText(item)}
+										</span>
+									)}
+									{item.item_type === 'expense' && (
+										<span className="text-xs font-medium px-2 py-1 rounded border bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/20">
+											TRACKING ONLY
+										</span>
+									)}
 								</div>
 								<h4 className={`font-medium ${getItemStatusColor(item)}`}>
 									{item.description}
 								</h4>
-								{item.part_number && (
-									<p className="text-xs text-muted-foreground">Part #: {item.part_number}</p>
+								{/* For expense items, show expense_invoice_number; for others, show part_number */}
+								{item.item_type === 'expense' ? (
+									item.expense_invoice_number && (
+										<p className="text-xs text-muted-foreground">Invoice #: {item.expense_invoice_number}</p>
+									)
+								) : (
+									item.part_number && (
+										<p className="text-xs text-muted-foreground">Part #: {item.part_number}</p>
+									)
 								)}
 							</div>
 							<div className={`text-right ${getItemStatusColor(item)}`}>
@@ -121,11 +135,67 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 										<span className="text-foreground">{formatCurrency(item.unit_cost)}</span>
 									</div>
 								)}
-								{(item.item_type === 'part' || item.item_type === 'expense') && item.supplier && (
-									<div>
-										<span className="text-muted-foreground">Supplier: </span>
-										<span className="text-foreground">{item.supplier}</span>
-									</div>
+								{/* For expense items, show expense-specific fields */}
+								{item.item_type === 'expense' ? (
+									<>
+										{item.expense_vendor && (
+											<div>
+												<span className="text-muted-foreground">Vendor: </span>
+												<span className="text-foreground">{item.expense_vendor}</span>
+											</div>
+										)}
+										{item.expense_invoice_number && (
+											<div>
+												<span className="text-muted-foreground">Invoice #: </span>
+												<span className="text-foreground">{item.expense_invoice_number}</span>
+											</div>
+										)}
+										{item.expense_subtotal && (
+											<div>
+												<span className="text-muted-foreground">Subtotal: </span>
+												<span className="text-foreground">{formatCurrency(item.expense_subtotal)}</span>
+											</div>
+										)}
+										{item.expense_tax_amount && item.expense_tax_amount > 0 && (
+											<div>
+												<span className="text-muted-foreground">Tax: </span>
+												<span className="text-foreground">
+													{formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(incl.)' : ''}
+												</span>
+											</div>
+										)}
+										{item.expense_payment_method && (
+											<div>
+												<span className="text-muted-foreground">Payment: </span>
+												<span className="text-foreground">
+													{item.expense_payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+												</span>
+											</div>
+										)}
+										{item.expense_cost_date && (
+											<div>
+												<span className="text-muted-foreground">Date: </span>
+												<span className="text-foreground">
+													{new Date(item.expense_cost_date).toLocaleDateString()}
+												</span>
+											</div>
+										)}
+									</>
+								) : (
+									<>
+										{item.item_type === 'part' && item.supplier && (
+											<div>
+												<span className="text-muted-foreground">Supplier: </span>
+												<span className="text-foreground">{item.supplier}</span>
+											</div>
+										)}
+										{item.item_type === 'part' && item.part_number && (
+											<div>
+												<span className="text-muted-foreground">Part #: </span>
+												<span className="text-foreground">{item.part_number}</span>
+											</div>
+										)}
+									</>
 								)}
 								{item.category && (
 									<div>
@@ -148,6 +218,14 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 									</div>
 								)}
 							</div>
+							
+							{/* Show expense parts description if available */}
+							{item.item_type === 'expense' && item.expense_parts_description && (
+								<div className="text-xs text-muted-foreground pt-1 border-t border-border">
+									<span className="font-medium">Parts Description: </span>
+									<span>{item.expense_parts_description}</span>
+								</div>
+							)}
 							
 							{item.notes && (
 								<div className="text-xs text-muted-foreground pt-1 border-t border-border">
@@ -180,14 +258,20 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{(calculations.expensesTotal !== null && calculations.expensesTotal !== undefined && calculations.expensesTotal !== 0) && (
-						<div className="flex justify-between">
-							<span className="text-muted-foreground">Expenses</span>
-							<span className="text-foreground font-medium">
-								{formatCurrency(calculations.expensesTotal)}
-							</span>
-						</div>
-					)}
+					{/* Calculate and show expense total separately (tracking only, not included in billable totals) */}
+					{calculations.expensesItems && calculations.expensesItems.length > 0 && (() => {
+						const expenseTotal = calculations.expensesItems.reduce((sum: number, item: WorkOrderItem) => {
+							return sum + (item.total_price || 0)
+						}, 0)
+						return expenseTotal > 0 ? (
+							<div className="flex justify-between">
+								<span className="text-muted-foreground">Expenses (Tracking Only):</span>
+								<span className="text-orange-600 dark:text-orange-400 font-medium">
+									{formatCurrency(expenseTotal)}
+								</span>
+							</div>
+						) : null
+					})()}
 					{(calculations.servicesTotal !== null && calculations.servicesTotal !== undefined && calculations.servicesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Services</span>

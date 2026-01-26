@@ -221,6 +221,21 @@ class InvoiceItemsService {
 	async calculateInvoiceSummary(invoiceId: string): Promise<InvoiceItemSummary> {
 		const items = await this.getInvoiceItems(invoiceId)
 
+		// Fetch invoice to get tax_rate and discount_amount
+		const { data: invoice, error: invoiceError } = await this.supabase
+			.from('invoices_table')
+			.select('tax_rate, discount_amount')
+			.eq('invoice_number', invoiceId)
+			.single()
+
+		if (invoiceError) {
+			console.error('Failed to fetch invoice for summary:', invoiceError)
+			// Continue with default values if invoice fetch fails
+		}
+
+		const taxRate = invoice?.tax_rate ?? 0.13
+		const invoiceDiscountAmount = invoice?.discount_amount ?? 0
+
 		const summary: InvoiceItemSummary = {
 			subtotal: 0,
 			partsTotal: 0,
@@ -230,6 +245,7 @@ class InvoiceItemsService {
 			feesTotal: 0,
 			totalDiscount: 0,
 			tax: 0,
+			taxRate: taxRate,
 			grandTotal: 0,
 			itemCount: items.length,
 			laborHoursTotal: 0,
@@ -244,8 +260,8 @@ class InvoiceItemsService {
 					summary.subtotal += itemTotal
 					break
 				case 'expense':
-					summary.expensesTotal += itemTotal
-					summary.subtotal += itemTotal
+					// Expenses are excluded from calculations (tracking only)
+					// Don't add to expensesTotal or subtotal
 					break
 				case 'labor':
 					summary.laborTotal += itemTotal
@@ -275,9 +291,14 @@ class InvoiceItemsService {
 			summary.totalDiscount += item.invoice_specific_discount || 0
 		})
 
-		// Calculate tax (assuming 13% - can be configurable)
-		summary.tax = summary.subtotal * 0.13
-		summary.grandTotal = summary.subtotal + summary.tax
+		// Add invoice-level discount to total discount
+		summary.totalDiscount += invoiceDiscountAmount
+
+		// Calculate tax using invoice's tax_rate
+		summary.tax = taxRate > 0 ? summary.subtotal * taxRate : 0
+		
+		// Calculate grand total: subtotal + tax - invoice-level discount
+		summary.grandTotal = summary.subtotal + summary.tax - invoiceDiscountAmount
 
 		return summary
 	}
