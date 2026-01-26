@@ -58,11 +58,11 @@ export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: num
 }
 
 // Fetch single invoice by ID (using invoice_number as primary key)
-export function useInvoice(invoiceId: string) {
+export function useInvoice(invoiceId: string, options?: { includeArchived?: boolean }) {
     return useQuery({
-        queryKey: ['invoice', invoiceId],
+        queryKey: ['invoice', invoiceId, options?.includeArchived],
         queryFn: async () => {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('invoices_table')
                 .select(`
                     *,
@@ -71,8 +71,13 @@ export function useInvoice(invoiceId: string) {
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('invoice_number', invoiceId)
-                .or('archived.eq.false,archived.is.null')
-                .single()
+            
+            // Only filter out archived if not explicitly including them
+            if (!options?.includeArchived) {
+                query = query.or('archived.eq.false,archived.is.null')
+            }
+            
+            const { data, error } = await query.single()
 
             if (error) {
                 console.error('Error fetching invoice:', error)

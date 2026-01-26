@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Nav } from '@/components/navigation/nav';
 import BreadcrumbNav from './components/BreadcrumbNav';
-import { generateIncomeStatementPDF } from './components/IncomeStatementPDF';
+import { generateIncomeStatementPDF, generateIncomeStatementCSV } from './components/IncomeStatementPDF';
 import { checkUser } from '@/utils/supabase/supabase-auth';
 import { getShopId } from '@/utils/supabase/supabase-shop';
 import { DateRangePicker, dateRangePresets } from '@/components/ui/date-range-picker';
@@ -23,9 +23,13 @@ interface IncomeStatementPreview {
 	totalLaborRevenue?: number;
 	totalServicesRevenue?: number;
 	totalFeesRevenue?: number;
+	totalSubtotal?: number;
+	totalTaxAmount?: number;
+	totalDiscountAmount?: number;
 	invoiceCount?: number;
 	statementId?: string | null;
 }
+
 
 const formatCurrency = (value: number): string => {
 	return new Intl.NumberFormat('en-US', {
@@ -355,6 +359,44 @@ const ReportsPage = () => {
 										</div>
 									)}
 
+									{/* Tax Breakdown - Pre-tax and Tax Amount */}
+									{(previewData.totalSubtotal || previewData.totalTaxAmount) && (
+										<div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+											<h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+												<Receipt className="h-4 w-4" />
+												Tax Breakdown (for Reports)
+											</h3>
+											<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+												<div>
+													<p className="text-xs text-blue-600 dark:text-blue-400">Pre-Tax Amount (Subtotal)</p>
+													<p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+														{formatCurrency(previewData.totalSubtotal || 0)}
+													</p>
+												</div>
+												<div>
+													<p className="text-xs text-blue-600 dark:text-blue-400">Total Tax Collected (HST 13%)</p>
+													<p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+														{formatCurrency(previewData.totalTaxAmount || 0)}
+													</p>
+												</div>
+												<div>
+													<p className="text-xs text-blue-600 dark:text-blue-400">Total with Tax</p>
+													<p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+														{formatCurrency(previewData.totalRevenue)}
+													</p>
+												</div>
+											</div>
+											{previewData.totalDiscountAmount && previewData.totalDiscountAmount > 0 && (
+												<div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+													<p className="text-xs text-blue-600 dark:text-blue-400">Total Discounts Applied</p>
+													<p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+														-{formatCurrency(previewData.totalDiscountAmount)}
+													</p>
+												</div>
+											)}
+										</div>
+									)}
+
 									{/* Cost Breakdown */}
 									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 										<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4">
@@ -396,30 +438,40 @@ const ReportsPage = () => {
 										</div>
 									)}
 
-									{/* Download Button */}
+									{/* Download Buttons */}
 									<div className="flex items-center justify-between pt-4 border-t border-border">
 										<p className="text-sm text-muted-foreground">
 											{previewData.statementId 
 												? `Statement #${previewData.statementId}` 
 												: 'Draft statement - will be saved on download'}
 										</p>
-										<Button 
-											className="bg-red-600 hover:bg-red-700 text-white" 
-											onClick={handleGenerateReport}
-											disabled={isGenerating}
-										>
-											{isGenerating ? (
-												<>
-													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-													Generating...
-												</>
-											) : (
-												<>
-													<Download className="h-4 w-4 mr-2" />
-													Download Income Statement PDF
-												</>
-											)}
-										</Button>
+										<div className="flex items-center gap-2">
+											<Button 
+												variant="outline"
+												onClick={() => fullData && generateIncomeStatementCSV(fullData, fullData.statementId)}
+												disabled={isGenerating || !fullData}
+											>
+												<Download className="h-4 w-4 mr-2" />
+												CSV
+											</Button>
+											<Button 
+												className="bg-red-600 hover:bg-red-700 text-white" 
+												onClick={handleGenerateReport}
+												disabled={isGenerating}
+											>
+												{isGenerating ? (
+													<>
+														<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+														Generating...
+													</>
+												) : (
+													<>
+														<Download className="h-4 w-4 mr-2" />
+														Download PDF
+													</>
+												)}
+											</Button>
+										</div>
 									</div>
 								</div>
 							) : (
@@ -441,6 +493,7 @@ const ReportsPage = () => {
 							<li><strong>Net Profit:</strong> Gross Profit minus Operating Expenses</li>
 						</ul>
 					</div>
+
 				</div>
 			</main>
 		</div>
