@@ -66,6 +66,10 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [showCustomModel, setShowCustomModel] = useState(false)
     const [mileageUnit, setMileageUnit] = useState<'km' | 'miles'>('km')
 
+    // When creating a new vehicle, allow full editing even in work order mode
+    const isCreatingNewVehicle = isCreating && (!selectedVehicleId || selectedVehicleId === "new")
+    const shouldRestrictEditing = isWorkOrderMode && !isCreatingNewVehicle
+
     // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
     useEffect(() => {
         if (vehicleMake && vehicleMake.trim()) {
@@ -367,17 +371,17 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 type="number"
                                 value={vehicleYear}
                                 onChange={(e) => {
-                                    if (!isEditing || isWorkOrderMode) return
+                                    if (!isEditing || shouldRestrictEditing) return
                                     onFieldChange('vehicleYear', e.target.value)
                                     if (errors.vehicleYear) setErrors(prev => ({ ...prev, vehicleYear: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleYear', vehicleYear)}
                                 className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                    isEditing && !isWorkOrderMode
+                                    isEditing && !shouldRestrictEditing
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 } ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || isWorkOrderMode || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="2020"
                                 min="1970"
@@ -395,16 +399,16 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Select
                                 value={vehicleMake}
                                 onValueChange={(value) => {
-                                    if (!isEditing || isWorkOrderMode) return
+                                    if (!isEditing || shouldRestrictEditing) return
                                     onFieldChange('vehicleMake', value)
                                     if (errors.vehicleMake) setErrors(prev => ({ ...prev, vehicleMake: undefined }))
                                 }}
-                                disabled={!isEditing || isWorkOrderMode || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                disabled={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                             >
                                 <SelectTrigger 
                                     id="vehicle_make"
                                     className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                        isEditing && !isWorkOrderMode
+                                        isEditing && !shouldRestrictEditing
                                             ? 'bg-background dark:bg-[#1a1a1a]' 
                                             : 'bg-card dark:bg-[#131313]'
                                     } ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
@@ -439,7 +443,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                             : ''
                                     }
                                     onValueChange={(value) => {
-                                        if (!isEditing || isWorkOrderMode) return
+                                        if (!isEditing || shouldRestrictEditing) return
                                         if (value === '__other') {
                                             setShowCustomModel(true)
                                             onFieldChange('vehicleModel', '')
@@ -448,7 +452,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                             if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
                                         }
                                     }}
-                                    disabled={!isEditing || isWorkOrderMode || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                    disabled={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 >
                                     <SelectTrigger
                                         id="vehicle_model"
@@ -481,17 +485,17 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 id="vehicle_model"
                                 value={vehicleModel}
                                 onChange={(e) => {
-                                    if (!isEditing || isWorkOrderMode) return
+                                    if (!isEditing || shouldRestrictEditing) return
                                     onFieldChange('vehicleModel', e.target.value)
                                     if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleModel', vehicleModel)}
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                            isEditing && !isWorkOrderMode
+                                            isEditing && !shouldRestrictEditing
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         } ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || isWorkOrderMode || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Civic"
                             />
@@ -505,7 +509,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                                 onFieldChange('vehicleModel', '')
                                             }}
                                             className="mt-1 text-xs text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
-                                            disabled={!isEditing || isWorkOrderMode || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                            disabled={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                         >
                                             Select from list
                                         </Button>
@@ -529,7 +533,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
-                                readOnly={!isEditing || (!isWorkOrderMode && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing || (shouldRestrictEditing && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="e.g. Blue"
                             />
                         </div>
@@ -542,18 +546,18 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <div className="relative">
                                 <Input
                                     value={vehicleVin}
-                                    onChange={(e) => isEditing && !isWorkOrderMode && onFieldChange('vehicleVin', e.target.value.toUpperCase())}
+                                    onChange={(e) => isEditing && !shouldRestrictEditing && onFieldChange('vehicleVin', e.target.value.toUpperCase())}
                                     className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 pr-20 ${
-                                        isEditing && !isWorkOrderMode
+                                        isEditing && !shouldRestrictEditing
                                             ? 'bg-background dark:bg-[#1a1a1a]' 
                                             : 'bg-card dark:bg-[#131313]'
                                     }`}
-                                    readOnly={!isEditing || isWorkOrderMode || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                    readOnly={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                     placeholder="17-character VIN"
                                     maxLength={17}
                                 />
                                 {/* VIN Decoder - Only show when creating new vehicle and not in work order mode */}
-                                {isEditing && !isWorkOrderMode && isCreating && (!selectedVehicleId || selectedVehicleId === "new") && vehicleVin && vehicleVin.length === 17 && (
+                                {isEditing && !shouldRestrictEditing && isCreating && (!selectedVehicleId || selectedVehicleId === "new") && vehicleVin && vehicleVin.length === 17 && (
                                     <Button
                                         type="button"
                                         size="sm"
@@ -581,7 +585,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
-                                readOnly={!isEditing || (!isWorkOrderMode && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing || (shouldRestrictEditing && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="ABC123"
                             />
                         </div>

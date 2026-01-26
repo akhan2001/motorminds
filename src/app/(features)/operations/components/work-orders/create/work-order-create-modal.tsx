@@ -299,6 +299,22 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                         handleFieldChange('vehicle', '')
                                                     }
                                                 }}
+                                                onVehicleSaved={(vehicleId, vehicleData) => {
+                                                    // Update form with the newly created vehicle
+                                                    handleFieldChange('vehicleId', vehicleId)
+                                                    if (vehicleData) {
+                                                        handleFieldChange('vehicleYear', vehicleData.year?.toString() || '')
+                                                        handleFieldChange('vehicleMake', vehicleData.make || '')
+                                                        handleFieldChange('vehicleModel', vehicleData.model || '')
+                                                        handleFieldChange('vehicleColor', vehicleData.color || '')
+                                                        handleFieldChange('vehicleVin', vehicleData.vin || '')
+                                                        handleFieldChange('vehicleLicensePlate', vehicleData.licensePlate || '')
+                                                        handleFieldChange('vehicleMileage', vehicleData.mileage || '')
+                                                        // Format vehicle display name
+                                                        const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`
+                                                        handleFieldChange('vehicle', vehicleDisplay)
+                                                    }
+                                                }}
                                                 isCreating={true}
                                             />
                                         </div>
