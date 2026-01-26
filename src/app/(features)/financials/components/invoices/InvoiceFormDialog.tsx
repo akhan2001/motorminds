@@ -18,6 +18,11 @@ import { CustomerInformation } from '../../../operations/components/work-orders/
 import { VehicleInformation } from '../../../operations/components/work-orders/shared/vehicle-information'
 import { WorkOrderItemsService } from '../../../operations/lib/work-order-items-service'
 import type { WorkOrderItem } from '../../../operations/types/work-order-items'
+import { InvoiceLaborItemsAdapter } from './items/InvoiceLaborItemsAdapter'
+import { InvoicePartsItemsAdapter } from './items/InvoicePartsItemsAdapter'
+import { InvoiceGenericItemsAdapter } from './items/InvoiceGenericItemsAdapter'
+import { InvoiceExpenseItemsAdapter } from './items/InvoiceExpenseItemsAdapter'
+import { Tag } from 'lucide-react'
 
 interface InvoiceFormDialogProps {
     isOpen: boolean
@@ -459,135 +464,55 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                             {/* Invoice Items Card */}
                             <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                 <div className="p-4">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-4 w-4 bg-yellow-500 dark:bg-yellow-400 rounded-full"></div>
-                                            <h3 className="text-lg font-semibold text-foreground dark:text-white">
-                                                Invoice Items
-                                                {invoice?.work_order_id && (
-                                                    <span className="text-sm text-muted-foreground dark:text-gray-400 ml-2">(from work order)</span>
-                                                )}
-                                            </h3>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="h-4 w-4 bg-yellow-500 dark:bg-yellow-400 rounded-full"></div>
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white">
+                                            Invoice Items
+                                            {invoice?.work_order_id && (
+                                                <span className="text-sm text-muted-foreground dark:text-gray-400 ml-2">(from work order)</span>
+                                            )}
+                                        </h3>
+                                    </div>
+
+                                    {isLoadingWorkOrderItems ? (
+                                        <div className="text-center py-8 text-muted-foreground dark:text-gray-500">
+                                            <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                                            Loading work order items...
                                         </div>
-                                        <Button
-                                            type="button"
-                                            onClick={addItem}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                                            size="sm"
-                                        >
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Add Item
-                                        </Button>
-                                    </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            {/* Labor / Services Items */}
+                                            <InvoiceLaborItemsAdapter
+                                                items={formData.invoice_items}
+                                                onItemsChange={(items) => setFormData(prev => ({ ...prev, invoice_items: items }))}
+                                                isEditing={true}
+                                            />
 
-                                    <div className="space-y-3">
-                                        {isLoadingWorkOrderItems ? (
-                                            <div className="text-center py-8 text-muted-foreground dark:text-gray-500">
-                                                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                                                Loading work order items...
-                                            </div>
-                                        ) : formData.invoice_items.length === 0 ? (
-                                            <div className="text-center py-8 text-muted-foreground dark:text-gray-500">
-                                                No items found. {invoice?.work_order_id ? 'This invoice is not linked to a work order.' : 'Click "Add Item" to get started.'}
-                                            </div>
-                                        ) : (
-                                            formData.invoice_items.map((item, index) => (
-                                            <div key={item.id || `item-${index}`} className="bg-white dark:bg-[#1a1a1a] border border-border dark:border-[#2a2a2a] rounded-lg p-4">
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div>
-                                                        <h4 className="text-sm font-medium text-foreground dark:text-gray-300">
-                                                            {item.description || `Item ${index + 1}`}
-                                                        </h4>
-                                                        {item.item_type && (
-                                                            <span className="text-xs text-muted-foreground dark:text-gray-500 capitalize">
-                                                                {item.item_type}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => removeItem(index)}
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                            {/* Parts Items */}
+                                            <InvoicePartsItemsAdapter
+                                                items={formData.invoice_items}
+                                                onItemsChange={(items) => setFormData(prev => ({ ...prev, invoice_items: items }))}
+                                                isEditing={true}
+                                            />
 
-                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <Label htmlFor={`item_type_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Type</Label>
-                                                        <Select
-                                                            value={item.item_type}
-                                                            onValueChange={(value: any) => updateItem(index, 'item_type', value)}
-                                                        >
-                                                            <SelectTrigger className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                            <SelectContent className="bg-popover dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
-                                                                <SelectItem value="part" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Part</SelectItem>
-                                                                <SelectItem value="labor" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Labor</SelectItem>
-                                                                <SelectItem value="service" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Service</SelectItem>
-                                                                <SelectItem value="fee" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Fee</SelectItem>
-                                                                <SelectItem value="discount" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Discount</SelectItem>
-                                                                <SelectItem value="package" className="hover:bg-accent dark:hover:bg-[#2a2a2a]">Package</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
+                                            {/* Expense Items */}
+                                            <InvoiceExpenseItemsAdapter
+                                                items={formData.invoice_items}
+                                                onItemsChange={(items) => setFormData(prev => ({ ...prev, invoice_items: items }))}
+                                                isEditing={true}
+                                            />
 
-                                                    <div>
-                                                        <Label htmlFor={`item_description_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Description</Label>
-                                                        <Input
-                                                            id={`item_description_${index}`}
-                                                            value={item.description}
-                                                            onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
-                                                            placeholder="Item description"
-                                                        />
-                                                    </div>
-
-                                                    <div>
-                                                        <Label htmlFor={`item_quantity_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Quantity</Label>
-                                                        <Input
-                                                            id={`item_quantity_${index}`}
-                                                            type="number"
-                                                            value={item.quantity}
-                                                            onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
-                                                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
-                                                            min="0"
-                                                            step="0.01"
-                                                        />
-                                                    </div>
-
-                                                    <div>
-                                                        <Label htmlFor={`item_unit_price_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Unit Price</Label>
-                                                        <Input
-                                                            id={`item_unit_price_${index}`}
-                                                            type="number"
-                                                            value={item.unit_price}
-                                                            onChange={(e) => updateItem(index, 'unit_price', Number(e.target.value))}
-                                                            className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
-                                                            min="0"
-                                                            step="0.01"
-                                                        />
-                                                    </div>
-
-                                                    <div className="lg:col-span-2">
-                                                        <Label htmlFor={`item_total_${index}`} className="text-muted-foreground dark:text-gray-400 text-xs">Total Price</Label>
-                                                        <Input
-                                                            id={`item_total_${index}`}
-                                                            type="number"
-                                                            value={item.total_price}
-                                                            disabled
-                                                            className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                        )}
-                                    </div>
+                                            {/* Discount Items */}
+                                            <InvoiceGenericItemsAdapter
+                                                items={formData.invoice_items}
+                                                onItemsChange={(items) => setFormData(prev => ({ ...prev, invoice_items: items }))}
+                                                isEditing={true}
+                                                itemType="discount"
+                                                title="Discounts"
+                                                icon={Tag}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

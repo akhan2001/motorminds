@@ -14,6 +14,7 @@ import { useAuth } from '../../../operations/hooks/use-auth'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { InvoiceSendModal } from './InvoiceSendModal'
+import { formatInvoiceDisplayId } from '../../lib/invoice-calculations'
 
 interface InvoiceDetailsProps {
     invoiceId: string
@@ -139,7 +140,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <h3 className="text-2xl font-bold text-white">
-                            {invoice.display_id || invoice.invoice_number}
+                            {formatInvoiceDisplayId(invoice.display_id, invoice.invoice_number)}
                         </h3>
                         <p className="text-gray-400 mt-1">{invoice.title}</p>
                     </div>

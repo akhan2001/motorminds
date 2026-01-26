@@ -7,6 +7,7 @@ import { FileText, DollarSign, Calendar, User, Car } from 'lucide-react'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { formatInvoiceDisplayId } from '../../lib/invoice-calculations'
 
 interface InvoiceCardProps {
     invoice: InvoiceWithDetails
@@ -52,7 +53,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                         <h3 className="text-sm font-medium text-foreground dark:text-white">
                             {invoice.title || invoice.work_order?.title || 'Invoice'}
                         </h3>
-                        <p className="text-xs text-muted-foreground dark:text-gray-400">#{invoice.display_id || invoice.invoice_number}</p>
+                        <p className="text-xs text-muted-foreground dark:text-gray-400">#{formatInvoiceDisplayId(invoice.display_id, invoice.invoice_number)}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -117,8 +118,13 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                         {invoice.status === "paid" ? "AMOUNT PAID" : "AMOUNT DUE"}
                     </p>
                     <p className={`text-base font-bold ${invoice.status === "paid" ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"}`}>
-                        ${Number((!invoice.tax_rate || invoice.tax_rate === 0) ? invoice.subtotal : invoice.total_amount).toFixed(2)}
+                        ${Number(invoice.total_amount || 0).toFixed(2)}
                     </p>
+                    {invoice.tax_amount > 0 && (
+                        <p className="text-xs text-muted-foreground dark:text-gray-400">
+                            (Tax: ${Number(invoice.tax_amount).toFixed(2)})
+                        </p>
+                    )}
                     <p className="text-xs text-muted-foreground dark:text-gray-400 mt-0.5">Issued: {format(new Date(invoice.issue_date), 'MMM dd')}</p>
                 </div>
             </div>

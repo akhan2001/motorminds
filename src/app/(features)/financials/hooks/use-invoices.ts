@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
-import type { Invoice, InvoiceWithDetails, InvoiceFormData, InvoiceFilters, InvoiceStats } from '../types/invoice'
+import type { Invoice, InvoiceWithDetails, InvoiceFormData, InvoiceFilters, InvoiceStats, InvoiceItem } from '../types/invoice'
 
 const supabase = createClient()
 
@@ -230,14 +230,122 @@ export function useUpdateInvoice() {
                 .single()
 
             if (error) throw error
+            
+            // Sync invoice items back to work order items if this invoice is linked to a work order
+            if (invoice.work_order_id && data.invoice_items) {
+                try {
+                    await syncInvoiceItemsToWorkOrder(invoice.work_order_id, data.invoice_items, invoice.shop_id)
+                } catch (syncError) {
+                    console.error('Error syncing invoice items to work order:', syncError)
+                    // Don't fail the invoice update if sync fails
+                }
+            }
+            
             return invoice as Invoice
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['invoice', data.invoice_number] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
+            // Also invalidate work order items to reflect changes
+            if (data.work_order_id) {
+                queryClient.invalidateQueries({ queryKey: ['work-order-items', data.work_order_id] })
+                queryClient.invalidateQueries({ queryKey: ['work-orders'] })
+            }
         }
     })
+}
+
+// Helper function to sync invoice items back to work order items
+async function syncInvoiceItemsToWorkOrder(
+    workOrderId: string,
+    invoiceItems: InvoiceItem[],
+    shopId: string
+): Promise<void> {
+    // Get existing work order items
+    const { data: existingItems, error: fetchError } = await supabase
+        .from('work_order_items')
+        .select('id')
+        .eq('work_order_id', workOrderId)
+
+    if (fetchError) {
+        console.error('Error fetching existing work order items:', fetchError)
+        throw fetchError
+    }
+
+    const existingItemIds = new Set((existingItems || []).map(item => item.id))
+    const invoiceItemIds = new Set(invoiceItems.map(item => item.id))
+
+    // Items to update (exist in both)
+    const itemsToUpdate = invoiceItems.filter(item => existingItemIds.has(item.id))
+    
+    // Items to insert (new items in invoice)
+    const itemsToInsert = invoiceItems.filter(item => !existingItemIds.has(item.id))
+    
+    // Items to delete (removed from invoice)
+    const itemIdsToDelete = [...existingItemIds].filter(id => !invoiceItemIds.has(id))
+
+    // Update existing items
+    for (const item of itemsToUpdate) {
+        const { error: updateError } = await supabase
+            .from('work_order_items')
+            .update({
+                item_type: item.item_type,
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total_price: item.total_price,
+                part_number: item.part_number || null,
+                supplier: item.supplier || null,
+                category: item.category || null,
+                warranty_period: item.warranty_period || null,
+                labor_hours: item.labor_hours || null,
+                technician_id: item.technician_id || null,
+            })
+            .eq('id', item.id)
+
+        if (updateError) {
+            console.error('Error updating work order item:', updateError)
+        }
+    }
+
+    // Insert new items
+    if (itemsToInsert.length > 0) {
+        const newItems = itemsToInsert.map(item => ({
+            work_order_id: workOrderId,
+            shop_id: shopId,
+            item_type: item.item_type,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            part_number: item.part_number || null,
+            supplier: item.supplier || null,
+            category: item.category || null,
+            warranty_period: item.warranty_period || null,
+            labor_hours: item.labor_hours || null,
+            technician_id: item.technician_id || null,
+        }))
+
+        const { error: insertError } = await supabase
+            .from('work_order_items')
+            .insert(newItems)
+
+        if (insertError) {
+            console.error('Error inserting work order items:', insertError)
+        }
+    }
+
+    // Delete removed items
+    if (itemIdsToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+            .from('work_order_items')
+            .delete()
+            .in('id', itemIdsToDelete)
+
+        if (deleteError) {
+            console.error('Error deleting work order items:', deleteError)
+        }
+    }
 }
 
 // Delete invoice

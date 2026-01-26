@@ -122,3 +122,34 @@ export function getInvoiceItems(workOrderItems: WorkOrderItem[]): {
 		feesItems: approvedItems.filter(item => item.item_type === 'fee')
 	}
 }
+
+/**
+ * Format invoice display ID with proper fallback handling.
+ * Handles cases where display_id might be "0", null, undefined, or empty string.
+ * 
+ * @param displayId - The invoice display_id (e.g., "INV-001")
+ * @param invoiceNumber - The fallback invoice_number (e.g., "INV-20240126-ABC12345")
+ * @returns The formatted display ID for UI display
+ */
+export function formatInvoiceDisplayId(
+	displayId: string | null | undefined,
+	invoiceNumber: string | null | undefined
+): string {
+	// Check if display_id is valid (not null, undefined, empty string, or "0")
+	const isValidDisplayId = displayId && 
+		displayId.trim() !== '' && 
+		displayId !== '0' &&
+		!displayId.startsWith('0') // Exclude display_ids that start with "0" (like "0123")
+	
+	if (isValidDisplayId) {
+		return displayId
+	}
+	
+	// Fall back to invoice_number
+	if (invoiceNumber && invoiceNumber.trim() !== '') {
+		return invoiceNumber
+	}
+	
+	// Final fallback
+	return 'N/A'
+}
