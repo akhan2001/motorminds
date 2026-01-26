@@ -348,14 +348,14 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         <div className={`space-y-4 ${className}`}>
         <h3 className="text-lg font-medium text-foreground dark:text-white">Vehicle Information</h3>
             <div className="bg-card dark:bg-[#131313] rounded-xl p-6 border border-border dark:border-[#333333]">
-                {/* Vehicle Selection Dropdown (only for creation mode) */}
-                {isCreating && isEditing && customerId && customerId !== "new" && (
+                {/* Vehicle Selection Dropdown - Show in creation mode or work order edit mode when customer exists */}
+                {isEditing && customerId && customerId !== "new" && (isCreating || isWorkOrderMode) && (
                     <div className="mb-4">
                         <VehicleDropdown
                             customerId={customerId}
-                            selectedVehicleId={selectedVehicleId || ""}
+                            selectedVehicleId={selectedVehicleId || vehicleId || ""}
                             onVehicleSelect={handleVehicleSelect}
-                            placeholder="Select Vehicle"
+                            placeholder="Select Vehicle or Add New"
                             className="w-full"
                             isLoading={!customerId}
                         />
