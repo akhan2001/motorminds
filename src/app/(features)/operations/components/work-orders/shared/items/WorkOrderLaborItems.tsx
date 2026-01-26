@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "../../../../hooks/use-auth";
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
+import { TEMPLATE_CATEGORIES } from "../../../work-order-items/templates/Categories/template-categories";
 
 interface LaborFormItem {
     id: string;
@@ -173,9 +175,21 @@ export function WorkOrderLaborItems({
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
-                    No labor items added yet. Click "Add Labor / Services" to get started.
-                </div>
+                isEditing ? (
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        variant="outline"
+                        className="group w-full py-8 border border-dashed border-border dark:border-[#333333] rounded-lg bg-transparent hover:bg-transparent hover:border-solid hover:border-blue-500/50 dark:hover:border-blue-500/50 text-muted-foreground dark:text-gray-400 transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                    >
+                        <Plus className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                        Add Labor / Services
+                    </Button>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
+                        No labor items added yet.
+                    </div>
+                )
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
@@ -401,8 +415,8 @@ export function WorkOrderLaborItems({
                 </div>
             )}
 
-            {/* Add Labor Button at Bottom - Only show when editing */}
-            {isEditing && (
+            {/* Add Labor Button at Bottom - Only show when editing and items exist */}
+            {isEditing && items.length > 0 && (
                 <div className="pt-3 border-t border-border">
                     <Button
                         type="button"

@@ -216,9 +216,21 @@ export function WorkOrderExpenseItems({
 
             {/* Empty State */}
             {fields.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg bg-card">
-                    No expense items added yet. Click "Add Expense" to get started.
-                </div>
+                isEditing ? (
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        variant="outline"
+                        className="group w-full py-8 border border-dashed border-border rounded-lg bg-transparent hover:bg-transparent hover:border-solid hover:border-orange-500/50 text-muted-foreground transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                    >
+                        <Plus className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                        Add Expense
+                    </Button>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">
+                        No expense items added yet.
+                    </div>
+                )
             ) : (
                 <div className="space-y-3">
                     {fields.map((field, index) => (
@@ -240,7 +252,7 @@ export function WorkOrderExpenseItems({
             )}
 
             {/* Add Button */}
-            {isEditing && (
+            {isEditing && fields.length > 0 && (
                 <div className="pt-3 border-t border-border">
                     <Button
                         type="button"

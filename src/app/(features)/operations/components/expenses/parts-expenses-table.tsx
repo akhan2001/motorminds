@@ -90,15 +90,62 @@ export function PartsExpensesTable({ items, isLoading, error, onExpenseUpdated }
 
     if (isLoading) {
         return (
-            <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex gap-4">
-                        <Skeleton className="h-12 flex-1" />
-                        <Skeleton className="h-12 w-32" />
-                        <Skeleton className="h-12 w-32" />
-                        <Skeleton className="h-12 w-32" />
-                    </div>
-                ))}
+            <div className="rounded-md border border-border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[100px]">Type</TableHead>
+                            <TableHead>Source</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead className="w-[120px]">Part # / Vendor</TableHead>
+                            <TableHead className="w-[100px] text-right">Quantity</TableHead>
+                            <TableHead className="w-[120px] text-right">Unit Price</TableHead>
+                            <TableHead className="w-[120px] text-right">Cost</TableHead>
+                            <TableHead className="w-[120px] text-right">Total</TableHead>
+                            <TableHead className="w-[150px]">Supplier</TableHead>
+                            <TableHead className="w-[150px]">Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <Skeleton className="h-4 w-4 rounded" />
+                                        <Skeleton className="h-5 w-16 rounded-full" />
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-5 w-24" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-5 w-48" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-4 w-20" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Skeleton className="h-5 w-12 ml-auto" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Skeleton className="h-5 w-16 ml-auto" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Skeleton className="h-4 w-14 ml-auto" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Skeleton className="h-5 w-16 ml-auto" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-4 w-20" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-4 w-24" />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </div>
         )
     }

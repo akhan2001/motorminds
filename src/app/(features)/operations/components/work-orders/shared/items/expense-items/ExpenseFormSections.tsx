@@ -9,9 +9,9 @@ import { Switch } from '@/components/ui/switch'
 
 import SupplierDropdownSelector from '@/app/(features)/suppliers/components/supplier-dropdown-selector'
 import {
-    EXPENSE_CATEGORIES,
     EXPENSE_PAYMENT_METHODS,
 } from '../../../../../lib/validations/work-order-expense-items'
+import { TEMPLATE_CATEGORIES } from '../../../../work-order-items/templates/Categories/template-categories'
 
 interface FormSectionProps {
     index: number
@@ -251,15 +251,15 @@ export function CategoryDateSection({ index, form, isEditing }: FormSectionProps
                     render={({ field, fieldState }) => (
                         <>
                             <Select
-                                value={field.value || 'Parts/Inventory'}
+                                value={field.value || ''}
                                 onValueChange={field.onChange}
                                 disabled={!isEditing}
                             >
                                 <SelectTrigger className="bg-white dark:bg-background border-border">
-                                    <SelectValue />
+                                    <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {EXPENSE_CATEGORIES.map((cat) => (
+                                    {TEMPLATE_CATEGORIES.map((cat) => (
                                         <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                                     ))}
                                 </SelectContent>
