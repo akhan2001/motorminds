@@ -70,7 +70,7 @@ export const WorkOrderCompleteInvoiceModal: React.FC<WorkOrderCompleteInvoiceMod
                             <ExternalLink className="h-5 w-5" />
                             <div className="flex-1 text-left">
                                 <div className="font-semibold">Generate Invoice and Go to Invoice</div>
-                                <div className="text-xs opacity-90">Create invoice and navigate to view it</div>
+                                <div className="text-xs opacity-90">Create invoice, complete work order, and navigate to view it</div>
                             </div>
                         </Button>
 

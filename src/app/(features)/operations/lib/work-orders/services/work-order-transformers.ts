@@ -75,9 +75,30 @@ export function transformWorkOrdersToKanbanColumns(
 
     return KANBAN_COLUMNS_CONFIG.map((columnConfig) => {
         // Filter work orders that match this column's statuses
-        const filteredWorkOrders = workOrders.filter((wo) =>
-            columnConfig.statuses.includes(wo.status as any)
+        const statusesArray = columnConfig.statuses as readonly string[]
+        let filteredWorkOrders = workOrders.filter((wo) =>
+            statusesArray.includes(wo.status)
         )
+
+        // Sort completed column by completed_at (most recent first), others by created_at
+        if (columnConfig.id === 'completed') {
+            filteredWorkOrders = filteredWorkOrders.sort((a, b) => {
+                // If both have completed_at, sort by completed_at descending (most recent first)
+                if (a.completed_at && b.completed_at) {
+                    return new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+                }
+                // If only one has completed_at, prioritize it
+                if (a.completed_at && !b.completed_at) return -1
+                if (!a.completed_at && b.completed_at) return 1
+                // If neither has completed_at, fall back to created_at descending
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            })
+        } else {
+            // For other columns, sort by created_at descending (most recent first)
+            filteredWorkOrders = filteredWorkOrders.sort((a, b) => {
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            })
+        }
 
         return {
             id: columnConfig.id,

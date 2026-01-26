@@ -81,6 +81,13 @@ export function WorkOrdersPageContent() {
         }
 
         try {
+            // Find the work order object
+            const workOrder = workOrders?.find(wo => wo.id === workOrderId)
+            if (!workOrder) {
+                toast.error('Work order not found')
+                return
+            }
+
             const invoice = await createInvoiceMutation.mutateAsync({
                 work_order_id: workOrderId,
                 shop_id: shopId
@@ -89,6 +96,16 @@ export function WorkOrdersPageContent() {
             if (invoice) {
                 toast.success('Invoice generated successfully')
                 refetch() // Refresh work orders to show invoice status
+                
+                // Mark work order as complete
+                await operations.handleCompletionConfirm(
+                    workOrder,
+                    false, // sendMessage
+                    undefined, // customMessage
+                    false // enableAutomatedMessages
+                )
+                toast.success('Work order completed successfully')
+                
                 // Navigate to invoice page using query parameter
                 if (invoice.invoice_number) {
                     router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
@@ -269,7 +286,7 @@ export function WorkOrdersPageContent() {
         }
     }
 
-    // Handle "Generate Invoice and Go to Invoice" - generates invoice and navigates, but doesn't complete
+    // Handle "Generate Invoice and Go to Invoice" - generates invoice, navigates, and completes work order
     const handleGenerateAndGoToInvoice = async () => {
         if (!dragToCompleteWorkOrder || !shopId) return
 
@@ -278,13 +295,30 @@ export function WorkOrdersPageContent() {
             const invoiceStatus = await getWorkOrderInvoiceStatus(dragToCompleteWorkOrder.id)
             
             if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
-                // Invoice exists, just navigate to it
+                // Invoice exists, sync if needed and complete work order
+                if (invoiceStatus.invoice.amount_paid === 0) {
+                    await syncInvoiceMutation.mutateAsync({
+                        work_order_id: dragToCompleteWorkOrder.id,
+                        shop_id: shopId
+                    })
+                    toast.success('Invoice synced with updated work order items')
+                }
+                
+                // Mark work order as complete
+                await operations.handleCompletionConfirm(
+                    dragToCompleteWorkOrder,
+                    false, // sendMessage
+                    undefined, // customMessage
+                    false // enableAutomatedMessages
+                )
+                toast.success('Work order completed successfully')
+                
+                // Navigate to invoice
                 if (invoiceStatus.invoice.invoice_number) {
                     router.push(`/financials/invoices?invoice_number=${invoiceStatus.invoice.invoice_number}`)
                 } else {
                     router.push('/financials/invoices')
                 }
-                toast.success('Navigated to invoice')
                 return
             }
 
@@ -297,6 +331,16 @@ export function WorkOrdersPageContent() {
             if (invoice) {
                 toast.success('Invoice generated successfully')
                 refetch()
+                
+                // Mark work order as complete
+                await operations.handleCompletionConfirm(
+                    dragToCompleteWorkOrder,
+                    false, // sendMessage
+                    undefined, // customMessage
+                    false // enableAutomatedMessages
+                )
+                toast.success('Work order completed successfully')
+                
                 // Navigate to invoice
                 if (invoice.invoice_number) {
                     router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
