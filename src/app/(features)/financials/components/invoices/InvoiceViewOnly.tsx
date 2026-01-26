@@ -226,6 +226,26 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const tax = subtotal * invoice.tax_rate
     const total = subtotal + tax - invoice.discount_amount
 
+    // Calculate amount_paid from active (non-deleted) payments
+    const allPayments = (invoice.payments || []) as any[]
+    const activePayments = allPayments.filter(p => !p.deleted)
+    const calculatedAmountPaid = activePayments.reduce((sum, p) => sum + (p.amount || 0), 0)
+    const hasActivePayments = activePayments.length > 0
+    
+    // Calculate outstanding balance
+    const calculatedOutstanding = Math.max(0, total - calculatedAmountPaid)
+    
+    // Use a small epsilon for floating point comparison (0.01 cents tolerance)
+    // Consider fully paid if:
+    // 1. There are active payments AND
+    // 2. Outstanding balance is 0 (or within 1 cent) OR amount paid equals/exceeds total
+    const isFullyPaid = hasActivePayments && total > 0 && (
+        calculatedOutstanding < 0.01 || 
+        Math.abs(calculatedAmountPaid - total) < 0.01 || 
+        calculatedAmountPaid >= total
+    )
+    const isPartiallyPaid = hasActivePayments && calculatedAmountPaid > 0 && !isFullyPaid
+
     return (
         <div className="h-full flex flex-col bg-background dark:bg-[#0d0d0d]">
             {/* Fixed Header */}
@@ -261,7 +281,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         <p className="text-muted-foreground dark:text-gray-400">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
-                        {invoice.paid_date && (
+                        {invoice.paid_date && isFullyPaid && hasActivePayments && (
                             <>
                                 <span className="text-muted-foreground dark:text-gray-500">|</span>
                                 <p className="text-green-600 dark:text-green-400 font-medium">
@@ -535,9 +555,6 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         </div>
                     </Card>
 
-                    {/* Payments Section */}
-                    <InvoicePaymentsSection invoice={invoice} />
-
                     {/* Amount and Status Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
@@ -569,33 +586,21 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                         <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                     </div>
                                 </div>
-                                {(invoice.amount_paid !== undefined && invoice.amount_paid > 0) && (
+                                {/* {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
                                     <>
                                         <Separator className="bg-border dark:bg-gray-700" />
                                         <div className="flex justify-between items-center pt-2">
                                             <div>
-                                                <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Paid:</p>
+                                                <p className="text-muted-foreground dark:text-gray-400 font-medium">Outstanding:</p>
                                             </div>
                                             <div>
-                                                <p className="text-xl font-semibold text-green-600 dark:text-green-400">
-                                                    {formatCurrency(invoice.amount_paid)}
+                                                <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                                                    {formatCurrency(invoice.outstanding_balance)}
                                                 </p>
                                             </div>
                                         </div>
-                                        {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <p className="text-muted-foreground dark:text-gray-400 font-medium">Outstanding:</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
-                                                        {formatCurrency(invoice.outstanding_balance)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
                                     </>
-                                )}
+                                )} */}
                                 <div className="flex items-center justify-between gap-2 pt-2">
                                     <TooltipProvider>
                                         <Tooltip>
@@ -604,29 +609,33 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                                     variant="outline"
                                                     className={cn(
                                                         "text-sm px-3 py-1",
-                                                        invoice.status === 'paid'
+                                                        isFullyPaid
                                                             ? 'bg-green-600 text-white border-green-600 cursor-default'
-                                                            : invoice.status === 'partially_paid'
+                                                            : isPartiallyPaid
                                                             ? 'bg-yellow-600 text-white border-yellow-600 cursor-default'
                                                             : 'bg-red-600 text-white border-red-600 cursor-default'
                                                     )}
                                                 >
                                                     <DollarSign className="w-3 h-3 mr-1" />
-                                                    {invoice.status === 'partially_paid' ? 'PARTIALLY PAID' : invoice.status.toUpperCase()}
+                                                    {isFullyPaid
+                                                        ? 'PAID'
+                                                        : isPartiallyPaid
+                                                        ? 'PARTIALLY PAID'
+                                                        : 'UNPAID'}
                                                 </Badge>
                                             </TooltipTrigger>
                                             <TooltipContent side="left">
                                                 <p>
-                                                    {invoice.status === 'paid'
+                                                    {isFullyPaid
                                                         ? 'This invoice is fully paid.'
-                                                        : invoice.status === 'partially_paid'
+                                                        : isPartiallyPaid
                                                         ? 'This invoice has partial payments.'
                                                         : 'This invoice is unpaid.'}
                                                 </p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
-                                    {invoice.paid_date && (
+                                    {invoice.paid_date && isFullyPaid && (
                                         <span className="text-xs text-muted-foreground dark:text-gray-400">
                                             Paid on {formatDateString(invoice.paid_date)}
                                         </span>
@@ -635,6 +644,9 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                             </div>
                         </div>
                     </Card>
+
+                    {/* Payments Section */}
+                    <InvoicePaymentsSection invoice={invoice} />
                 </div>
             </div>
 

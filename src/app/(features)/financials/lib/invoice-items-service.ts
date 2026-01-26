@@ -277,9 +277,10 @@ class InvoiceItemsService {
 					summary.subtotal += itemTotal
 					break
 				case 'discount':
-					// Discounts reduce subtotal (itemTotal is positive, subtract it)
-					summary.subtotal -= itemTotal
-					summary.totalDiscount += itemTotal
+					// Discounts reduce subtotal (always use positive value, subtract it)
+					const discountAmount = Math.abs(itemTotal || 0)
+					summary.subtotal -= discountAmount
+					summary.totalDiscount += discountAmount
 					break
 				case 'package':
 					// Packages are additive (like services)

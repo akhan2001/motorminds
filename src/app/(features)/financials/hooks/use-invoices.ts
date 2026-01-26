@@ -143,8 +143,9 @@ export function useCreateInvoice() {
             const subtotal = data.invoice_items
                 .filter(item => (item as any).active !== false && item.item_type !== 'expense')
                 .reduce((sum, item) => {
+                    // Discounts subtract from subtotal (always use positive value), all other items add
                     if (item.item_type === 'discount') {
-                        return sum - item.total_price
+                        return sum - Math.abs(item.total_price || 0)
                     }
                     return sum + item.total_price
                 }, 0)
@@ -347,13 +348,17 @@ export function useCreateInvoiceFromWorkOrder() {
                         calculatedTotalPrice = item.total_price
                     }
                 } else {
-                    // For parts, services, fees: quantity * unit_price
+                    // For parts, services, fees, discounts: quantity * unit_price
+                    // For discounts, ensure unit_price is positive (stored as positive, subtracted in calculations)
+                    if (item.item_type === 'discount') {
+                        unitPrice = Math.abs(unitPrice)
+                    }
                     calculatedTotalPrice = quantity * unitPrice
                     
                     // If total_price exists but unit_price is 0, reverse-calculate unit_price
                     if (unitPrice === 0 && item.total_price && quantity && quantity > 0) {
-                        unitPrice = item.total_price / quantity
-                        calculatedTotalPrice = item.total_price
+                        unitPrice = Math.abs(item.total_price / quantity)
+                        calculatedTotalPrice = Math.abs(item.total_price)
                     }
                 }
                 
@@ -388,9 +393,9 @@ export function useCreateInvoiceFromWorkOrder() {
             const subtotal = invoiceItems
                 .filter(item => item.active !== false && item.item_type !== 'expense')
                 .reduce((sum, item) => {
-                    // Discounts subtract from subtotal, all other items add
+                    // Discounts subtract from subtotal (always use positive value), all other items add
                     if (item.item_type === 'discount') {
-                        return sum - item.total_price
+                        return sum - Math.abs(item.total_price || 0)
                     }
                     return sum + item.total_price
                 }, 0)

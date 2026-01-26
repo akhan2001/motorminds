@@ -66,8 +66,10 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	}, 0)
 	
 	const discountsTotal = discountsItems.reduce((sum, item) => {
-		// For discounts: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
+		// For discounts: quantity * unit_price (always use positive values)
+		// Discounts are stored as positive values and subtracted in calculations
+		const unitPrice = Math.abs(item.unit_price || 0)
+		const total = (item.quantity || 0) * unitPrice
 		return sum + total
 	}, 0)
 	

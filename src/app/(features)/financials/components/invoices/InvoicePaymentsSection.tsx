@@ -24,15 +24,24 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
     const allPayments = (invoice.payments || []) as Payment[]
     // Filter out deleted/archived payments for display
     const payments = allPayments.filter(p => !p.deleted)
-    const amountPaid = invoice.amount_paid || 0
     
+    // Calculate amount_paid from active payments as fallback if database value is incorrect
+    // This ensures UI shows correct value even if database trigger didn't filter deleted payments
+    const calculatedAmountPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0)
+    const databaseAmountPaid = invoice.amount_paid || 0
+    
+    // Use calculated value if it differs significantly from database (indicates trigger issue)
+    // Otherwise use database value (more efficient)
+    const amountPaid = Math.abs(calculatedAmountPaid - databaseAmountPaid) > 0.01 
+        ? calculatedAmountPaid 
+        : databaseAmountPaid
+    
+    // Calculate outstanding balance using the corrected amountPaid
     // For draft invoices, outstanding balance should be total_amount if not calculated yet
-    // For other invoices, use calculated outstanding_balance or calculate it
+    // For other invoices, calculate from total_amount - amountPaid (using corrected amountPaid)
     const outstanding = invoice.status === 'draft' && (invoice.outstanding_balance === undefined || invoice.outstanding_balance === 0)
         ? invoice.total_amount
-        : invoice.outstanding_balance !== undefined 
-            ? invoice.outstanding_balance 
-            : invoice.total_amount - amountPaid
+        : Math.max(0, invoice.total_amount - amountPaid)
     const paymentProgress = invoice.total_amount > 0 
         ? (amountPaid / invoice.total_amount) * 100 
         : 0
