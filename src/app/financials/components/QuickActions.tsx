@@ -81,8 +81,8 @@ export default function QuickActions() {
 					isActive={true}
 				/>
 				<ActionCard
-					title="Financial Reports"
-					description="Generate income statements and other reports"
+					title="Expense Reports"
+					description="Track general, parts, and work order expenses"
 					href="/financials/reports"
 					icon={FileText}
 					isActive={true}
