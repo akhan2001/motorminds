@@ -100,7 +100,7 @@ export const ArchivedInvoiceCard: React.FC<ArchivedInvoiceCardProps> = ({ invoic
                     <div className="flex items-center gap-1">
                         {invoice.work_order && (
                             <Badge variant="secondary" className="bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-300 text-xs px-1 py-0.5">
-                                WO: {invoice.work_order.work_order_number}
+                                Work Order: {invoice.work_order.work_order_number}
                             </Badge>
                         )}
                         <Badge variant="secondary" className="bg-gray-700/50 dark:bg-gray-700/50 text-muted-foreground dark:text-gray-400 text-xs px-1 py-0.5">

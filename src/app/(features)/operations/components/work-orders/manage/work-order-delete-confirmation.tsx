@@ -136,8 +136,8 @@ export const WorkOrderDeleteConfirmation: React.FC<WorkOrderDeleteConfirmationPr
                     </DialogTitle>
                     <DialogDescription className="text-muted-foreground">
                         {isPasswordVerified 
-                            ? 'Password verified. Confirm to archive this work order.'
-                            : 'Admin password required to archive work orders.'}
+                            ? 'Password verified. Confirm to archive this Work Order.'
+                            : 'Admin password required to archive Work Orders.'}
                     </DialogDescription>
                 </DialogHeader>
 

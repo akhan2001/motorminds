@@ -109,7 +109,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
             }))
         } catch (error) {
             console.error('Error fetching work order items:', error)
-            toast.error('Failed to load work order items')
+            toast.error('Failed to load Work Order items')
         } finally {
             setIsLoadingWorkOrderItems(false)
         }
@@ -469,7 +469,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                         <h3 className="text-lg font-semibold text-foreground dark:text-white">
                                             Invoice Items
                                             {invoice?.work_order_id && (
-                                                <span className="text-sm text-muted-foreground dark:text-gray-400 ml-2">(from work order)</span>
+                                                <span className="text-sm text-muted-foreground dark:text-gray-400 ml-2">(from Work Order)</span>
                                             )}
                                         </h3>
                                     </div>

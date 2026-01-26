@@ -71,7 +71,7 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
                 <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                     <div className="p-4 text-center">
                         <p className="text-sm text-muted-foreground dark:text-gray-400">
-                            No customer associated with this work order.
+                            No customer associated with this Work Order.
                         </p>
                     </div>
                 </Card>
@@ -246,7 +246,7 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
                                 <div className="flex items-center gap-1">
                                     {invoice.work_order && (
                                         <Badge variant="secondary" className="bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-300 text-xs px-1 py-0.5">
-                                            WO: {invoice.work_order.work_order_number || invoice.work_order.title}
+                                            Work Order: {invoice.work_order.work_order_number || invoice.work_order.title}
                                         </Badge>
                                     )}
                                 </div>
