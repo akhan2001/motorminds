@@ -72,17 +72,27 @@ export function useWorkOrderItemManagement({
                 expenses.push({
                     id: item.id,
                     description: item.description,
-                    part_number: item.part_number || '',
+                    // Legacy fields
+                    part_number: item.expense_invoice_number || item.part_number || null,
                     quantity: item.quantity || 1,
                     unit_price: item.unit_price || 0,
-                    total_price: (item.quantity || 1) * (item.unit_price || 0),
-                    unit_cost: item.unit_cost ?? undefined,
-                    total_cost: item.total_cost ?? undefined,
-                    supplier: item.supplier || '',
-                    category: item.category || '',
-                    warranty_period: item.warranty_period || '',
-                    notes: item.notes || '',
+                    total_price: item.total_price || (item.quantity || 1) * (item.unit_price || 0),
+                    unit_cost: item.unit_cost ?? null,
+                    total_cost: item.total_cost ?? null,
+                    supplier: item.expense_vendor || item.supplier || null,
+                    category: item.category || 'Parts/Inventory',
+                    warranty_period: item.warranty_period || null,
+                    notes: item.notes || null,
                     active: item.active ?? undefined,
+                    is_billable: false,
+                    // Expense-specific fields
+                    expense_subtotal: item.expense_subtotal ?? null,
+                    expense_tax_amount: item.expense_tax_amount ?? null,
+                    expense_tax_included: item.expense_tax_included ?? true,
+                    expense_payment_method: item.expense_payment_method || 'credit_card',
+                    expense_vendor: item.expense_vendor || item.supplier || null,
+                    expense_invoice_number: item.expense_invoice_number || item.part_number || null,
+                    expense_cost_date: item.expense_cost_date || null,
                 })
             } else if (item.item_type === 'service') {
                 services.push({
@@ -234,16 +244,28 @@ export function useWorkOrderItemManagement({
             }
         }
 
-        if (itemType === 'expense' && 'part_number' in item) {
+        if (itemType === 'expense') {
             const expenseItem = item as ExpenseFormItem
             return {
                 ...base,
-                // Explicitly include all fields, converting empty strings to null for database
-                part_number: expenseItem.part_number?.trim() || null,
-                unit_cost: expenseItem.unit_cost !== undefined && expenseItem.unit_cost !== null ? expenseItem.unit_cost : null,
-                supplier: expenseItem.supplier?.trim() || null,
+                // Legacy fields (for backward compatibility)
+                part_number: expenseItem.expense_invoice_number?.trim() || expenseItem.part_number?.trim() || null,
+                unit_cost: expenseItem.unit_cost ?? null,
+                total_cost: expenseItem.total_cost ?? null,
+                supplier: expenseItem.expense_vendor?.trim() || expenseItem.supplier?.trim() || null,
                 category: expenseItem.category?.trim() || null,
                 warranty_period: expenseItem.warranty_period?.trim() || null,
+                total_price: expenseItem.total_price ?? 0,
+                is_billable: false, // Expenses are never billable
+                
+                // Expense-specific fields
+                expense_subtotal: expenseItem.expense_subtotal ?? null,
+                expense_tax_amount: expenseItem.expense_tax_amount ?? null,
+                expense_tax_included: expenseItem.expense_tax_included ?? true,
+                expense_payment_method: expenseItem.expense_payment_method || null,
+                expense_vendor: expenseItem.expense_vendor?.trim() || null,
+                expense_invoice_number: expenseItem.expense_invoice_number?.trim() || null,
+                expense_cost_date: expenseItem.expense_cost_date || null,
             }
         }
 

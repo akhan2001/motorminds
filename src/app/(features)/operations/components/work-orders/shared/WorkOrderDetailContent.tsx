@@ -219,7 +219,18 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                 <span className="text-foreground dark:text-white">{formatCurrency(calculations.partsTotal)}</span>
                             </div>
                         )}
-                        {/* Expenses are excluded from totals (tracking only) */}
+                        {/* Calculate and show expense total separately (tracking only, not included in billable totals) */}
+                        {calculations.expensesItems && calculations.expensesItems.length > 0 && (() => {
+                            const expenseTotal = calculations.expensesItems.reduce((sum: number, item: any) => {
+                                return sum + (item.total_price || 0)
+                            }, 0)
+                            return expenseTotal > 0 ? (
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground dark:text-gray-400">Expenses (Tracking Only):</span>
+                                    <span className="text-orange-600 dark:text-orange-400">{formatCurrency(expenseTotal)}</span>
+                                </div>
+                            ) : null
+                        })()}
                         {calculations.servicesTotal > 0 && (
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground dark:text-gray-400">Services:</span>
@@ -307,15 +318,58 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                                                 <span className="font-medium">Cost:</span> {formatCurrency(item.total_cost)}
                                                             </div>
                                                         )}
-                                                        {item.part_number && (
-                                                            <div>
-                                                                <span className="font-medium">Part #:</span> {item.part_number}
-                                                            </div>
-                                                        )}
-                                                        {item.supplier && (
-                                                            <div>
-                                                                <span className="font-medium">Supplier:</span> {item.supplier}
-                                                            </div>
+                                                        {/* For expense items, show expense-specific fields */}
+                                                        {item.item_type === 'expense' ? (
+                                                            <>
+                                                                {item.expense_invoice_number && (
+                                                                    <div>
+                                                                        <span className="font-medium">Invoice #:</span> {item.expense_invoice_number}
+                                                                    </div>
+                                                                )}
+                                                                {item.expense_vendor && (
+                                                                    <div>
+                                                                        <span className="font-medium">Vendor:</span> {item.expense_vendor}
+                                                                    </div>
+                                                                )}
+                                                                {item.expense_subtotal && (
+                                                                    <div>
+                                                                        <span className="font-medium">Subtotal:</span> {formatCurrency(item.expense_subtotal)}
+                                                                    </div>
+                                                                )}
+                                                                {item.expense_tax_amount && item.expense_tax_amount > 0 && (
+                                                                    <div>
+                                                                        <span className="font-medium">Tax:</span> {formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(included)' : ''}
+                                                                    </div>
+                                                                )}
+                                                                {item.expense_payment_method && (
+                                                                    <div>
+                                                                        <span className="font-medium">Payment:</span> {item.expense_payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                    </div>
+                                                                )}
+                                                                {item.expense_cost_date && (
+                                                                    <div>
+                                                                        <span className="font-medium">Date:</span> {formatDate(item.expense_cost_date)}
+                                                                    </div>
+                                                                )}
+                                                                {item.expense_parts_description && (
+                                                                    <div className="mt-1">
+                                                                        <span className="font-medium">Parts:</span> {item.expense_parts_description}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                {item.part_number && (
+                                                                    <div>
+                                                                        <span className="font-medium">Part #:</span> {item.part_number}
+                                                                    </div>
+                                                                )}
+                                                                {item.supplier && (
+                                                                    <div>
+                                                                        <span className="font-medium">Supplier:</span> {item.supplier}
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </>
                                                 )}

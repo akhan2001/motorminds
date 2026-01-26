@@ -1,13 +1,14 @@
 'use client'
 
 import React from 'react'
-import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X } from 'lucide-react'
+import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, Receipt } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useInvoice } from '@/app/(features)/financials/hooks/use-invoices'
+import { useWorkOrderItems } from '@/app/(features)/operations/hooks/use-work-order-items'
 import { formatCurrency } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { formatPhoneNumber } from '@/lib/utils/formatters'
@@ -20,6 +21,12 @@ interface InvoiceQuickViewProps {
 
 export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickViewProps) {
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
+    
+    // Fetch work order items to get expense items (tracking only)
+    const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
+    
+    // Filter expense items from work order (these are tracking only, not on invoice)
+    const expenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
 
     const formatDateString = (dateString: string | null | undefined) => {
         if (!dateString) return 'N/A'
@@ -273,6 +280,66 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                             )}
                         </div>
                     </Card>
+
+                    {/* Expense Items Card (Tracking Only - Not Billed) */}
+                    {expenseItems.length > 0 && (
+                        <Card className="bg-orange-50/50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/20">
+                            <div className="p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                    <h3 className="text-lg font-semibold text-orange-600 dark:text-orange-400">Shop Expenses</h3>
+                                    <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30 text-xs">
+                                        Tracking Only
+                                    </Badge>
+                                </div>
+                                <p className="text-xs text-orange-600/70 dark:text-orange-400/70 mb-3">
+                                    These expenses are for internal cost tracking and are not included in the customer invoice.
+                                </p>
+                                
+                                {/* Expense Items Table */}
+                                <div className="space-y-2">
+                                    <div className="grid grid-cols-12 gap-2 text-xs font-bold text-orange-600/80 dark:text-orange-400/80 border-b border-orange-200 dark:border-orange-500/20 pb-2">
+                                        <div className="col-span-5">DESCRIPTION</div>
+                                        <div className="col-span-4 text-center">VENDOR / INVOICE</div>
+                                        <div className="col-span-3 text-right">COST</div>
+                                    </div>
+
+                                    {expenseItems.map((item: any, index: number) => (
+                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-200/50 dark:border-orange-500/10">
+                                            <div className="col-span-5 text-foreground dark:text-white">
+                                                <div className="flex items-center gap-2">
+                                                    <Receipt className="h-3 w-3 text-orange-500" />
+                                                    <span>{item.description}</span>
+                                                </div>
+                                                {item.expense_cost_date && (
+                                                    <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5">
+                                                        {formatDate(item.expense_cost_date)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="col-span-4 text-center text-muted-foreground dark:text-gray-400 text-xs">
+                                                {item.expense_vendor || item.supplier || '-'}
+                                                {(item.expense_invoice_number || item.part_number) && (
+                                                    <div>#{item.expense_invoice_number || item.part_number}</div>
+                                                )}
+                                            </div>
+                                            <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
+                                                {formatCurrency(item.total_price || 0)}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Expense Total */}
+                                    <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
+                                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
+                                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                            {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
 
                     {/* Invoice Summary Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">

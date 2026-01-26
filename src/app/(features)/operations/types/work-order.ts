@@ -109,6 +109,17 @@ export interface WorkOrderItem {
     
     is_billable?: boolean // Whether item appears on customer invoices (expenses default false)
 
+    // Expense-specific fields (only populated when item_type = 'expense')
+    // These mirror one_time_costs fields for consistency
+    expense_subtotal?: number | null
+    expense_tax_amount?: number | null
+    expense_tax_included?: boolean | null
+    expense_payment_method?: 'credit_card' | 'debit_card' | 'cash' | 'check' | 'bank_transfer' | 'other' | null
+    expense_vendor?: string | null // Maps to one_time_costs.vendor (replaces supplier for expenses)
+    expense_invoice_number?: string | null // Maps to one_time_costs.invoice_number
+    expense_parts_description?: string | null // Maps to one_time_costs.parts_description
+    expense_cost_date?: string | null // Maps to one_time_costs.cost_date (ISO date string)
+
     created_at: string
     completed_at?: string
 }

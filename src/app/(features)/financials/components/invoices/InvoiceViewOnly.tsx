@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useInvoice, useDeleteInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
+import { useWorkOrderItems } from '../../../operations/hooks/use-work-order-items'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
@@ -51,6 +52,12 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const { shopId, userRole } = useAuth()
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
+    
+    // Fetch work order items to get expense items (tracking only)
+    const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
+    
+    // Filter expense items from work order (these are tracking only, not on invoice)
+    const expenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
     const deleteMutation = useDeleteInvoice()
     const updateMutation = useUpdateInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
@@ -462,6 +469,61 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                         </div>
                                     )
                                 })}
+
+                                {/* Expense Items (Tracking Only - Not Billed) */}
+                                {expenseItems.length > 0 && (
+                                    <>
+                                        <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-500/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30 text-xs">
+                                                    Shop Expenses (Tracking Only)
+                                                </Badge>
+                                                <span className="text-xs text-orange-600/70 dark:text-orange-400/70">
+                                                    Not included in invoice totals
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {expenseItems.map((item: any, index: number) => (
+                                            <div 
+                                                key={`expense-${index}`} 
+                                                className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
+                                            >
+                                                <div className="col-span-5 text-foreground dark:text-white">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <Check className="h-3 w-3 text-orange-500" />
+                                                        <span>{item.description}</span>
+                                                    </div>
+                                                    {item.expense_vendor && (
+                                                        <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5 mt-0.5">
+                                                            Vendor: {item.expense_vendor}
+                                                            {item.expense_invoice_number && ` - Invoice #${item.expense_invoice_number}`}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="col-span-2 text-center">
+                                                    <Badge 
+                                                        variant="outline" 
+                                                        className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
+                                                    >
+                                                        {item.item_type}
+                                                    </Badge>
+                                                </div>
+                                                <div className="col-span-2 text-center text-foreground dark:text-white">
+                                                    {item.quantity || 1}
+                                                </div>
+                                                <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
+                                                    {formatCurrency(item.total_price || 0)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
+                                            <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
+                                            <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                                {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {invoice.notes && (

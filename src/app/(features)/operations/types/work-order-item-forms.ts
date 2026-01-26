@@ -41,24 +41,35 @@ export interface PartFormItem {
 }
 
 /**
- * Expense item form data (duplicate of PartFormItem but stored as generic item type)
+ * Expense item form data - mirrors one_time_costs fields for consistency
  * Expenses default to is_billable=false (internal shop costs not shown on invoices)
+ * These fields align with one_time_costs schema for unified expense tracking
  */
 export interface ExpenseFormItem {
     id: string
     description: string
-    part_number?: string
+    part_number?: string // Legacy field, use expense_invoice_number for new expenses
     quantity: number
     unit_price: number
     total_price: number
     unit_cost?: number // Optional cost tracking
     total_cost?: number // Optional cost tracking
-    supplier?: string
+    supplier?: string // Legacy field, use expense_vendor for new expenses
     category?: string
-    warranty_period?: string
+    warranty_period?: string // Maps to one_time_costs.warranty
     notes?: string
     active?: boolean // For edit mode tracking
-    is_billable?: boolean // Whether to show on customer invoice (defaults to false for expenses)
+    is_billable?: boolean // Always false for expenses (tracking only)
+    
+    // Expense-specific fields (mirror one_time_costs)
+    expense_subtotal?: number // Pre-tax amount (maps to one_time_costs.subtotal)
+    expense_tax_amount?: number // Tax amount (maps to one_time_costs.tax_amount)
+    expense_tax_included?: boolean // Whether tax is included (maps to one_time_costs.tax_included)
+    expense_payment_method?: 'credit_card' | 'debit_card' | 'cash' | 'check' | 'bank_transfer' | 'other' // Maps to one_time_costs.payment_method
+    expense_vendor?: string // Vendor name (maps to one_time_costs.vendor, replaces supplier)
+    expense_invoice_number?: string // Vendor invoice number (maps to one_time_costs.invoice_number)
+    expense_parts_description?: string // Parts description (maps to one_time_costs.parts_description)
+    expense_cost_date?: string // Date expense was incurred (maps to one_time_costs.cost_date, ISO date string)
 }
 
 /**

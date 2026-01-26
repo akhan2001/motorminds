@@ -34,12 +34,16 @@ interface AddExpenseModalProps {
         cost_name: string;
         amount: number;
         subtotal: number;
+        tax_amount?: number;
+        tax_included?: boolean;
+        payment_method?: string;
         category: string;
         vendor: string | null;
         invoice_number: string | null;
         parts_description: string | null;
         warranty: string | null;
         notes: string | null;
+        cost_date?: string;
     }) => void;
     /** Optional controlled open state */
     open?: boolean;
@@ -188,10 +192,14 @@ export default function AddExpenseModal({
             }
 
             // Prepare expense data for work order callback
+            // Include all fields that mirror one_time_costs schema
             const expenseData = {
                 cost_name: expenseName,
                 amount: parseFloat(totalAmount),
                 subtotal: parseFloat(subtotal),
+                tax_amount: parseFloat(taxAmount) || 0,
+                tax_included: includeTax,
+                payment_method: paymentMethod,
                 category,
                 vendor: supplierId === 'custom' 
                     ? customVendor.trim() || null 
@@ -200,6 +208,7 @@ export default function AddExpenseModal({
                 parts_description: partsDescription.trim() || null,
                 warranty: warranty.trim() || null,
                 notes: notes.trim() || null,
+                cost_date: expenseDate, // Date expense was incurred
             };
 
             // Call work order callback if provided (before resetting form)

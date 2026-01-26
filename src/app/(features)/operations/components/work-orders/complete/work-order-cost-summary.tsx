@@ -95,8 +95,15 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 								<h4 className={`font-medium ${getItemStatusColor(item)}`}>
 									{item.description}
 								</h4>
-								{item.part_number && (
-									<p className="text-xs text-muted-foreground">Part #: {item.part_number}</p>
+								{/* For expense items, show expense_invoice_number; for others, show part_number */}
+								{item.item_type === 'expense' ? (
+									item.expense_invoice_number && (
+										<p className="text-xs text-muted-foreground">Invoice #: {item.expense_invoice_number}</p>
+									)
+								) : (
+									item.part_number && (
+										<p className="text-xs text-muted-foreground">Part #: {item.part_number}</p>
+									)
 								)}
 							</div>
 							<div className={`text-right ${getItemStatusColor(item)}`}>
@@ -128,11 +135,67 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 										<span className="text-foreground">{formatCurrency(item.unit_cost)}</span>
 									</div>
 								)}
-								{(item.item_type === 'part' || item.item_type === 'expense') && item.supplier && (
-									<div>
-										<span className="text-muted-foreground">Supplier: </span>
-										<span className="text-foreground">{item.supplier}</span>
-									</div>
+								{/* For expense items, show expense-specific fields */}
+								{item.item_type === 'expense' ? (
+									<>
+										{item.expense_vendor && (
+											<div>
+												<span className="text-muted-foreground">Vendor: </span>
+												<span className="text-foreground">{item.expense_vendor}</span>
+											</div>
+										)}
+										{item.expense_invoice_number && (
+											<div>
+												<span className="text-muted-foreground">Invoice #: </span>
+												<span className="text-foreground">{item.expense_invoice_number}</span>
+											</div>
+										)}
+										{item.expense_subtotal && (
+											<div>
+												<span className="text-muted-foreground">Subtotal: </span>
+												<span className="text-foreground">{formatCurrency(item.expense_subtotal)}</span>
+											</div>
+										)}
+										{item.expense_tax_amount && item.expense_tax_amount > 0 && (
+											<div>
+												<span className="text-muted-foreground">Tax: </span>
+												<span className="text-foreground">
+													{formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(incl.)' : ''}
+												</span>
+											</div>
+										)}
+										{item.expense_payment_method && (
+											<div>
+												<span className="text-muted-foreground">Payment: </span>
+												<span className="text-foreground">
+													{item.expense_payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+												</span>
+											</div>
+										)}
+										{item.expense_cost_date && (
+											<div>
+												<span className="text-muted-foreground">Date: </span>
+												<span className="text-foreground">
+													{new Date(item.expense_cost_date).toLocaleDateString()}
+												</span>
+											</div>
+										)}
+									</>
+								) : (
+									<>
+										{item.item_type === 'part' && item.supplier && (
+											<div>
+												<span className="text-muted-foreground">Supplier: </span>
+												<span className="text-foreground">{item.supplier}</span>
+											</div>
+										)}
+										{item.item_type === 'part' && item.part_number && (
+											<div>
+												<span className="text-muted-foreground">Part #: </span>
+												<span className="text-foreground">{item.part_number}</span>
+											</div>
+										)}
+									</>
 								)}
 								{item.category && (
 									<div>
@@ -155,6 +218,14 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 									</div>
 								)}
 							</div>
+							
+							{/* Show expense parts description if available */}
+							{item.item_type === 'expense' && item.expense_parts_description && (
+								<div className="text-xs text-muted-foreground pt-1 border-t border-border">
+									<span className="font-medium">Parts Description: </span>
+									<span>{item.expense_parts_description}</span>
+								</div>
+							)}
 							
 							{item.notes && (
 								<div className="text-xs text-muted-foreground pt-1 border-t border-border">
@@ -187,7 +258,20 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{/* Expenses are excluded from totals (tracking only) */}
+					{/* Calculate and show expense total separately (tracking only, not included in billable totals) */}
+					{calculations.expensesItems && calculations.expensesItems.length > 0 && (() => {
+						const expenseTotal = calculations.expensesItems.reduce((sum: number, item: WorkOrderItem) => {
+							return sum + (item.total_price || 0)
+						}, 0)
+						return expenseTotal > 0 ? (
+							<div className="flex justify-between">
+								<span className="text-muted-foreground">Expenses (Tracking Only):</span>
+								<span className="text-orange-600 dark:text-orange-400 font-medium">
+									{formatCurrency(expenseTotal)}
+								</span>
+							</div>
+						) : null
+					})()}
 					{(calculations.servicesTotal !== null && calculations.servicesTotal !== undefined && calculations.servicesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Services</span>
