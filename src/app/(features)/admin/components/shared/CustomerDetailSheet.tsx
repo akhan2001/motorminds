@@ -13,6 +13,7 @@ import {
     type CustomerDetailSheetProps,
     type Customer
 } from './customer-detail'
+import { CustomerVehiclesSection } from '@/app/customers/components/customer-vehicles-section'
 
 
 /**
@@ -23,9 +24,11 @@ import {
 export const CustomerDetailSheet = memo<CustomerDetailSheetProps & { onCustomerUpdated?: () => void }>(({
     customer,
     customerHistory,
+    vehicles = [],
     isOpen,
     onClose,
     loading = false,
+    vehiclesLoading = false,
     onCustomerUpdated
 }) => {
     const [isEditing, setIsEditing] = useState(false)
@@ -141,6 +144,14 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps & { onCustomerU
                     {/* Only show other sections when not editing */}
                     {!isEditing && (
                         <>
+                            {/* Customer Vehicles Section */}
+                            <CustomerVehiclesSection 
+                                vehicles={vehicles}
+                                loading={vehiclesLoading}
+                                customerId={customer?.id}
+                                onVehiclesUpdated={onCustomerUpdated}
+                            />
+
                             {customerHistory && (
                                 <CustomerStats customerHistory={customerHistory} />
                             )}

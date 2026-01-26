@@ -207,6 +207,8 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                             <CustomerVehiclesSection 
                                 vehicles={vehicles}
                                 loading={vehiclesLoading}
+                                customerId={customer.id}
+                                onVehiclesUpdated={onCustomerUpdated}
                             />
 
                             {customerHistory && (
