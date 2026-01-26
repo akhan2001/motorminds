@@ -295,14 +295,12 @@ export function WorkOrdersPageContent() {
             const invoiceStatus = await getWorkOrderInvoiceStatus(dragToCompleteWorkOrder.id)
             
             if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
-                // Invoice exists, sync if needed and complete work order
-                if (invoiceStatus.invoice.amount_paid === 0) {
-                    await syncInvoiceMutation.mutateAsync({
-                        work_order_id: dragToCompleteWorkOrder.id,
-                        shop_id: shopId
-                    })
-                    toast.success('Invoice synced with updated work order items')
-                }
+                // Invoice exists - always sync to update items (even if there are payments)
+                await syncInvoiceMutation.mutateAsync({
+                    work_order_id: dragToCompleteWorkOrder.id,
+                    shop_id: shopId
+                })
+                toast.success('Invoice synced with updated work order items')
                 
                 // Mark work order as complete
                 await operations.handleCompletionConfirm(
@@ -363,14 +361,12 @@ export function WorkOrdersPageContent() {
             const invoiceStatus = await getWorkOrderInvoiceStatus(dragToCompleteWorkOrder.id)
             
             if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
-                // Invoice exists - sync if needed
-                if (invoiceStatus.invoice.amount_paid === 0) {
-                    await syncInvoiceMutation.mutateAsync({
-                        work_order_id: dragToCompleteWorkOrder.id,
-                        shop_id: shopId
-                    })
-                    toast.success('Invoice synced with updated work order items')
-                }
+                // Invoice exists - always sync to update items (even if there are payments)
+                await syncInvoiceMutation.mutateAsync({
+                    work_order_id: dragToCompleteWorkOrder.id,
+                    shop_id: shopId
+                })
+                toast.success('Invoice synced with updated work order items')
             } else {
                 // Generate new invoice
                 const invoice = await createInvoiceMutation.mutateAsync({

@@ -28,7 +28,7 @@ interface WorkOrderEditLeftPanelProps {
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     workOrderItems?: WorkOrderItem[]
     technicianOptions?: { id: string; name: string }[]
-    onDelete?: (workOrderId: string) => void
+    onDelete?: (workOrderId: string, options?: { deleteInvoice?: boolean }) => void
     onRevert?: () => void
 }
 
@@ -286,8 +286,8 @@ export function WorkOrderEditLeftPanel({
                     workOrder={workOrder}
                     isOpen={showDeleteConfirmation}
                     onClose={() => setShowDeleteConfirmation(false)}
-                    onConfirm={() => {
-                        onDelete(workOrder.id)
+                    onConfirm={(options) => {
+                        onDelete(workOrder.id, options)
                         setShowDeleteConfirmation(false)
                     }}
                 />

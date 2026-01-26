@@ -365,6 +365,19 @@ export function useDeleteInvoice() {
                 throw fetchError
             }
 
+            // If linked to a work order, clear the work order's invoice_id reference
+            if (invoice?.work_order_id) {
+                const { error: workOrderUpdateError } = await supabase
+                    .from('work_orders')
+                    .update({ invoice_id: null })
+                    .eq('id', invoice.work_order_id)
+
+                if (workOrderUpdateError) {
+                    console.error('Error clearing work order invoice reference:', workOrderUpdateError)
+                    // Don't throw - continue with invoice deletion
+                }
+            }
+
             // Delete the invoice
             const { error } = await supabase
                 .from('invoices_table')
@@ -377,10 +390,14 @@ export function useDeleteInvoice() {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
-            // Invalidate work order invoice query to update the modal without refresh
+            // Invalidate work order queries to reflect invoice removal
             if (data.work_order_id) {
                 queryClient.invalidateQueries({ queryKey: ['work-order-invoice', data.work_order_id] })
+                queryClient.invalidateQueries({ queryKey: ['work-orders'] })
             }
+            // Invalidate financials queries
+            queryClient.invalidateQueries({ queryKey: ['financial-stats'] })
+            queryClient.invalidateQueries({ queryKey: ['financials'] })
         }
     })
 }

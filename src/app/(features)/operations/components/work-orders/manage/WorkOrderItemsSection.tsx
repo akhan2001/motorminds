@@ -1,13 +1,14 @@
 // Unified items section component
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
 // Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
 import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
 import { WorkOrderPartsItems } from '../shared/items/WorkOrderPartsItems'
 import { WorkOrderExpenseItems } from '../shared/items/expense-items'
 import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'
+import { formatCurrency } from '@/lib/utils/currency'
 import type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
 
 interface WorkOrderItemsSectionProps {
@@ -39,6 +40,37 @@ export function WorkOrderItemsSection({
     const hasLegacyServices = itemsByType.services.length > 0
     const hasLegacyFees = itemsByType.fees.length > 0
     const hasLegacyPackages = itemsByType.packages.length > 0
+
+    // Calculate live totals from local state
+    const liveTotals = useMemo(() => {
+        const laborTotal = itemsByType.labor.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const partsTotal = itemsByType.parts.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const expensesTotal = itemsByType.expenses.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const servicesTotal = itemsByType.services.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const feesTotal = itemsByType.fees.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const discountsTotal = itemsByType.discounts.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const packagesTotal = itemsByType.packages.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        
+        // Subtotal excludes expenses (tracking only) and subtracts discounts
+        const subtotal = laborTotal + partsTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
+        const taxRate = 0.13
+        const taxAmount = subtotal * taxRate
+        const total = subtotal + taxAmount
+        
+        return {
+            laborTotal,
+            partsTotal,
+            expensesTotal,
+            servicesTotal,
+            feesTotal,
+            discountsTotal,
+            packagesTotal,
+            subtotal,
+            taxAmount,
+            total,
+            hasItems: laborTotal > 0 || partsTotal > 0 || servicesTotal > 0 || feesTotal > 0 || packagesTotal > 0
+        }
+    }, [itemsByType])
 
     // Memoized callbacks to prevent unnecessary re-renders of child components
     const handleLaborChange = useCallback((items: LaborFormItem[]) => {
@@ -154,6 +186,63 @@ export function WorkOrderItemsSection({
                     onItemDeleted={onItemDeleted}
                     readOnly={true}
                 />
+            )}
+
+            {/* Live Running Total - Updates in real-time as user edits */}
+            {liveTotals.hasItems && (
+                <div className="mt-4 pt-4 border-t border-border">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-3">Running Total</h4>
+                    <div className="space-y-1 text-sm">
+                        {liveTotals.laborTotal > 0 && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Labor/Services</span>
+                                <span className="text-foreground">{formatCurrency(liveTotals.laborTotal)}</span>
+                            </div>
+                        )}
+                        {liveTotals.partsTotal > 0 && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Parts</span>
+                                <span className="text-foreground">{formatCurrency(liveTotals.partsTotal)}</span>
+                            </div>
+                        )}
+                        {liveTotals.expensesTotal > 0 && (
+                            <div className="flex justify-between">
+                                <span className="text-orange-500">Expenses (Tracking Only)</span>
+                                <span className="text-orange-500">{formatCurrency(liveTotals.expensesTotal)}</span>
+                            </div>
+                        )}
+                        {liveTotals.servicesTotal > 0 && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Services (Legacy)</span>
+                                <span className="text-foreground">{formatCurrency(liveTotals.servicesTotal)}</span>
+                            </div>
+                        )}
+                        {liveTotals.feesTotal > 0 && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Fees</span>
+                                <span className="text-foreground">{formatCurrency(liveTotals.feesTotal)}</span>
+                            </div>
+                        )}
+                        {liveTotals.discountsTotal > 0 && (
+                            <div className="flex justify-between">
+                                <span className="text-red-500">Discounts</span>
+                                <span className="text-red-500">-{formatCurrency(liveTotals.discountsTotal)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between pt-2 border-t border-border">
+                            <span className="text-foreground font-medium">Subtotal</span>
+                            <span className="text-foreground font-medium">{formatCurrency(liveTotals.subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Tax (13%)</span>
+                            <span className="text-foreground">{formatCurrency(liveTotals.taxAmount)}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-border font-semibold">
+                            <span className="text-foreground">Total</span>
+                            <span className="text-green-600 dark:text-green-400">{formatCurrency(liveTotals.total)}</span>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )

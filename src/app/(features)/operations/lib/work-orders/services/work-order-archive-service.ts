@@ -8,8 +8,9 @@ export class WorkOrderArchiveService {
     /**
      * Archive a work order (soft delete)
      * Sets archived = true, archived_at, and archived_by
+     * Optionally archives the associated invoice if deleteInvoice is true
      */
-    async archiveWorkOrder(workOrderId: string, userId: string): Promise<void> {
+    async archiveWorkOrder(workOrderId: string, userId: string, options?: { deleteInvoice?: boolean }): Promise<void> {
         try {
             // First, get the work order to check if it has an appointment_id
             const { data: workOrder, error: fetchError } = await this.supabase
@@ -40,6 +41,47 @@ export class WorkOrderArchiveService {
             if (archiveError) {
                 console.error('Error archiving work order:', archiveError)
                 throw new Error(`Failed to archive work order: ${archiveError.message}`)
+            }
+
+            // Archive the associated invoice ONLY if user opted to delete it
+            if (options?.deleteInvoice) {
+                console.log('User opted to delete invoice, looking for invoice with work_order_id:', workOrderId)
+                
+                // Use .maybeSingle() to handle case where no invoice exists (won't throw error)
+                const { data: linkedInvoice, error: invoiceFetchError } = await this.supabase
+                    .from('invoices_table')
+                    .select('invoice_number, status, archived')
+                    .eq('work_order_id', workOrderId)
+                    .maybeSingle()
+
+                console.log('Invoice fetch result:', { linkedInvoice, invoiceFetchError })
+
+                if (invoiceFetchError) {
+                    console.error('Error fetching invoice for archiving:', invoiceFetchError)
+                } else if (linkedInvoice) {
+                    if (!linkedInvoice.archived) {
+                        console.log('Archiving invoice:', linkedInvoice.invoice_number)
+                        const { error: invoiceArchiveError } = await this.supabase
+                            .from('invoices_table')
+                            .update({
+                                archived: true,
+                                status: 'cancelled',
+                                notes: `Invoice archived - Work order archived on ${new Date().toLocaleDateString()}`
+                            })
+                            .eq('invoice_number', linkedInvoice.invoice_number)
+
+                        if (invoiceArchiveError) {
+                            console.error('Error archiving invoice when archiving work order:', invoiceArchiveError)
+                            // Don't throw - work order archiving succeeded, invoice archive is secondary
+                        } else {
+                            console.log('Invoice archived successfully')
+                        }
+                    } else {
+                        console.log('Invoice is already archived, skipping')
+                    }
+                } else {
+                    console.log('No invoice found for this work order')
+                }
             }
 
             // If the work order was linked to an appointment, reset the appointment status to 'scheduled'

@@ -165,10 +165,11 @@ export function useWorkOrderOperations(
 
     /**
      * Handle work order deletion
+     * @param options.deleteInvoice - If true, also cancels the associated invoice
      */
-    const handleWorkOrderDelete = async (workOrderId: string) => {
+    const handleWorkOrderDelete = async (workOrderId: string, options?: { deleteInvoice?: boolean }) => {
         try {
-            await deleteWorkOrderMutation.mutateAsync(workOrderId)
+            await deleteWorkOrderMutation.mutateAsync({ id: workOrderId, options })
             refetch() // Refetch work orders to update the list
         } catch (error) {
             console.error('Failed to delete work order:', error)
