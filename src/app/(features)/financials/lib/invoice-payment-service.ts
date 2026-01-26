@@ -35,7 +35,9 @@ export class InvoicePaymentService {
             throw new Error('Payment amount must be greater than zero')
         }
 
-        if (newTotal > invoice.total_amount) {
+        // Use tolerance for floating-point comparison (allow up to 0.01 cents over for rounding)
+        const exceedsTotal = (newTotal - invoice.total_amount) > 0.01
+        if (exceedsTotal) {
             throw new Error(`Payment amount exceeds outstanding balance of ${outstandingBalance.toFixed(2)}`)
         }
 
