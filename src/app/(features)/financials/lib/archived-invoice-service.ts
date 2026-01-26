@@ -32,7 +32,7 @@ export class ArchivedInvoiceService {
             .select(`
                 *,
                 customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                vehicle:customer_vehicles(id, year, make, model, license_plate),
+                vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                 work_order:work_orders(id, work_order_number, title, status)
             `)
             .eq('shop_id', shopId)
@@ -105,7 +105,7 @@ export class ArchivedInvoiceService {
                 .select(`
                     *,
                     customer:customers(id, customer_name, customer_email, customer_phone, customer_address),
-                    vehicle:customer_vehicles(id, year, make, model, license_plate),
+                    vehicle:customer_vehicles(id, year, make, model, license_plate, vin, engine_type, mileage, color),
                     work_order:work_orders(id, work_order_number, title, status)
                 `)
                 .eq('invoice_number', invoiceId)
