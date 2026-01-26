@@ -16,6 +16,7 @@ import { WorkOrderItemsService } from "../../../../lib/work-order-items-service"
 import { TemplateDropdown } from "../../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
 import { useAuth } from "../../../../hooks/use-auth";
+import { TEMPLATE_CATEGORIES } from "../../../work-order-items/templates/Categories/template-categories";
 
 interface PartFormItem {
     id: string;
@@ -217,9 +218,21 @@ export function WorkOrderPartsItems({
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
-                    No parts items added yet. Click "Add Part" to get started.
-                </div>
+                isEditing ? (
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        variant="outline"
+                        className="group w-full py-8 border border-dashed border-border dark:border-[#333333] rounded-lg bg-transparent hover:bg-transparent hover:border-solid hover:border-green-500/50 dark:hover:border-green-500/50 text-muted-foreground dark:text-gray-400 transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                    >
+                        <Plus className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                        Add Part
+                    </Button>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
+                        No parts items added yet.
+                    </div>
+                )
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
@@ -486,18 +499,26 @@ export function WorkOrderPartsItems({
                                         <Label htmlFor={`part_category_${index}`} className="text-muted-foreground text-xs">
                                             Category
                                         </Label>
-                                        <Input
-                                            id={`part_category_${index}`}
+                                        <Select
                                             value={item.category || ''}
-                                            onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                                            className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            onValueChange={(value) => updateItem(item.id, 'category', value)}
+                                            disabled={!isEditing}
+                                        >
+                                            <SelectTrigger className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
                                                 isEditing 
                                                     ? 'bg-background dark:bg-[#1a1a1a]' 
                                                     : 'bg-card dark:bg-[#131313]'
-                                            }`}
-                                            disabled={!isEditing}
-                                            placeholder="Category"
-                                        />
+                                            }`}>
+                                                <SelectValue placeholder="Select category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {TEMPLATE_CATEGORIES.map((category) => (
+                                                    <SelectItem key={category} value={category}>
+                                                        {category}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div>
                                         <Label htmlFor={`part_warranty_${index}`} className="text-muted-foreground text-xs">
@@ -541,14 +562,14 @@ export function WorkOrderPartsItems({
                 </div>
             )}
 
-            {/* Add Part Button at Bottom - Only show when editing */}
-            {isEditing && (
+            {/* Add Part Button at Bottom - Only show when editing and items exist */}
+            {isEditing && items.length > 0 && (
                 <div className="pt-3 border-t border-border">
                     <Button
                         type="button"
                         onClick={addItem}
                         size="sm"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Part

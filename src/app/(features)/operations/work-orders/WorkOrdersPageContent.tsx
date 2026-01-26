@@ -12,7 +12,11 @@ import { useCreateInvoiceFromWorkOrder, useSyncInvoiceFromWorkOrder, getWorkOrde
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
 import { InvoiceSyncWarningDialog } from '../components/work-orders/invoice-sync-warning-dialog'
-import { PageLoading, PageError, PageAuthRequired } from '@/components/common/feedback/page-states'
+import { WorkOrderCompleteInvoiceModal } from '../components/work-orders/complete/work-order-complete-invoice-modal'
+import { Card, CardContent } from '@/components/ui/card'
+import { AlertCircle } from 'lucide-react'
+import { LoadingSpinner } from '@/components/common/feedback/loading-states'
+import { PageLoading, PageError } from '@/components/common/feedback/page-states'
 
 /**
  * WorkOrdersPageContent - Container Component
@@ -67,6 +71,9 @@ export function WorkOrdersPageContent() {
     } | null>(null)
     // Track generated invoice number to show "Go to Invoice" button
     const [generatedInvoiceNumber, setGeneratedInvoiceNumber] = useState<string | null>(null)
+    // State for drag-to-complete invoice modal
+    const [isCompleteInvoiceModalOpen, setIsCompleteInvoiceModalOpen] = useState(false)
+    const [dragToCompleteWorkOrder, setDragToCompleteWorkOrder] = useState<typeof pageState.completionWorkOrder | null>(null)
 
     const handleGenerateInvoice = async (workOrderId: string) => {
         if (!shopId) {
@@ -75,6 +82,13 @@ export function WorkOrdersPageContent() {
         }
 
         try {
+            // Find the work order object
+            const workOrder = workOrders?.find(wo => wo.id === workOrderId)
+            if (!workOrder) {
+                toast.error('Work order not found')
+                return
+            }
+
             const invoice = await createInvoiceMutation.mutateAsync({
                 work_order_id: workOrderId,
                 shop_id: shopId
@@ -83,6 +97,16 @@ export function WorkOrdersPageContent() {
             if (invoice) {
                 toast.success('Invoice generated successfully')
                 refetch() // Refresh work orders to show invoice status
+                
+                // Mark work order as complete
+                await operations.handleCompletionConfirm(
+                    workOrder,
+                    false, // sendMessage
+                    undefined, // customMessage
+                    false // enableAutomatedMessages
+                )
+                toast.success('Work order completed successfully')
+                
                 // Navigate to invoice page using query parameter
                 if (invoice.invoice_number) {
                     router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
@@ -251,6 +275,127 @@ export function WorkOrdersPageContent() {
         }
     }
 
+    // Handle drag-to-complete: open invoice modal instead of completion modal
+    const handleDragToCompleteAttempt = (item: any) => {
+        // Find the full work order details from the workOrders array
+        const fullWorkOrder = workOrders?.find(wo => wo.id === item.id)
+        if (fullWorkOrder) {
+            setDragToCompleteWorkOrder(fullWorkOrder)
+            setIsCompleteInvoiceModalOpen(true)
+        } else {
+            toast.error('Work order not found')
+        }
+    }
+
+    // Handle "Generate Invoice and Go to Invoice" - generates invoice, navigates, and completes work order
+    const handleGenerateAndGoToInvoice = async () => {
+        if (!dragToCompleteWorkOrder || !shopId) return
+
+        try {
+            // Check if invoice already exists
+            const invoiceStatus = await getWorkOrderInvoiceStatus(dragToCompleteWorkOrder.id)
+            
+            if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
+                // Invoice exists, sync if needed and complete work order
+                if (invoiceStatus.invoice.amount_paid === 0) {
+                    await syncInvoiceMutation.mutateAsync({
+                        work_order_id: dragToCompleteWorkOrder.id,
+                        shop_id: shopId
+                    })
+                    toast.success('Invoice synced with updated work order items')
+                }
+                
+                // Mark work order as complete
+                await operations.handleCompletionConfirm(
+                    dragToCompleteWorkOrder,
+                    false, // sendMessage
+                    undefined, // customMessage
+                    false // enableAutomatedMessages
+                )
+                toast.success('Work order completed successfully')
+                
+                // Navigate to invoice
+                if (invoiceStatus.invoice.invoice_number) {
+                    router.push(`/financials/invoices?invoice_number=${invoiceStatus.invoice.invoice_number}`)
+                } else {
+                    router.push('/financials/invoices')
+                }
+                return
+            }
+
+            // Generate new invoice
+            const invoice = await createInvoiceMutation.mutateAsync({
+                work_order_id: dragToCompleteWorkOrder.id,
+                shop_id: shopId
+            })
+
+            if (invoice) {
+                toast.success('Invoice generated successfully')
+                refetch()
+                
+                // Mark work order as complete
+                await operations.handleCompletionConfirm(
+                    dragToCompleteWorkOrder,
+                    false, // sendMessage
+                    undefined, // customMessage
+                    false // enableAutomatedMessages
+                )
+                toast.success('Work order completed successfully')
+                
+                // Navigate to invoice
+                if (invoice.invoice_number) {
+                    router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
+                } else {
+                    router.push('/financials/invoices')
+                }
+            }
+        } catch (error: any) {
+            console.error('Error generating invoice:', error)
+            toast.error(error?.message || 'Failed to generate invoice')
+        }
+    }
+
+    // Handle "Generate Invoice and Mark Complete" - generates invoice and completes work order
+    const handleGenerateAndComplete = async () => {
+        if (!dragToCompleteWorkOrder || !shopId) return
+
+        try {
+            // Check if invoice already exists
+            const invoiceStatus = await getWorkOrderInvoiceStatus(dragToCompleteWorkOrder.id)
+            
+            if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
+                // Invoice exists - sync if needed
+                if (invoiceStatus.invoice.amount_paid === 0) {
+                    await syncInvoiceMutation.mutateAsync({
+                        work_order_id: dragToCompleteWorkOrder.id,
+                        shop_id: shopId
+                    })
+                    toast.success('Invoice synced with updated work order items')
+                }
+            } else {
+                // Generate new invoice
+                const invoice = await createInvoiceMutation.mutateAsync({
+                    work_order_id: dragToCompleteWorkOrder.id,
+                    shop_id: shopId
+                })
+                toast.success('Invoice generated successfully')
+                refetch()
+            }
+
+            // Complete the work order
+            await operations.handleCompletionConfirm(
+                dragToCompleteWorkOrder,
+                false, // sendMessage
+                undefined, // customMessage
+                false // enableAutomatedMessages
+            )
+            toast.success('Work order completed successfully')
+        } catch (error: any) {
+            console.error('Error completing work order:', error)
+            toast.error(error?.message || 'Failed to complete work order')
+        }
+    }
+
     // Loading state - show while auth is loading
     if (authLoading) {
         return <PageLoading title="Loading..." description="Checking authentication..." />
@@ -310,7 +455,7 @@ export function WorkOrdersPageContent() {
             }}
             onCompletionConfirm={handleCompletionConfirmWithSync}
             generatedInvoiceNumber={generatedInvoiceNumber}
-            onWorkOrderCompletionAttempt={pageState.handleWorkOrderCompletionAttempt}
+            onWorkOrderCompletionAttempt={handleDragToCompleteAttempt}
             onReadyModalClose={pageState.handleReadyModalClose}
             onReadyConfirm={handleReadyConfirm}
             onWorkOrderReadyAttempt={pageState.handleWorkOrderReadyAttempt}
@@ -326,6 +471,21 @@ export function WorkOrdersPageContent() {
             totalAmount={pendingCompletionData?.invoiceInfo?.total_amount || 0}
             isSyncing={syncInvoiceMutation.isPending}
         />
+
+        {/* Drag-to-Complete Invoice Modal */}
+        {dragToCompleteWorkOrder && (
+            <WorkOrderCompleteInvoiceModal
+                workOrder={dragToCompleteWorkOrder}
+                isOpen={isCompleteInvoiceModalOpen}
+                onClose={() => {
+                    setIsCompleteInvoiceModalOpen(false)
+                    setDragToCompleteWorkOrder(null)
+                }}
+                onGenerateAndGoToInvoice={handleGenerateAndGoToInvoice}
+                onGenerateAndComplete={handleGenerateAndComplete}
+                isGenerating={createInvoiceMutation.isPending || syncInvoiceMutation.isPending}
+            />
+        )}
     </>
     )
 }

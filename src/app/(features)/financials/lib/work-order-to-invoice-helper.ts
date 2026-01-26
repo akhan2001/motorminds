@@ -12,8 +12,10 @@ export async function getWorkOrderItemsForInvoice(
         // Fetch work order items
         const workOrderItems = await WorkOrderItemsService.getWorkOrderItems(workOrderId)
 
-        // Convert to invoice import format
-        const invoiceImports: WorkOrderItemImport[] = workOrderItems.map((item: WorkOrderItem) => ({
+        // Convert to invoice import format (exclude expenses - tracking only)
+        const invoiceImports: WorkOrderItemImport[] = workOrderItems
+            .filter((item: WorkOrderItem) => item.item_type !== 'expense')
+            .map((item: WorkOrderItem) => ({
             work_order_item_id: item.id,
             description: item.description,
             item_type: item.item_type,
@@ -48,8 +50,8 @@ export function calculateWorkOrderItemsTotals(items: WorkOrderItem[]) {
                     acc.subtotal += item.total_price
                     break
                 case 'expense':
-                    acc.expensesTotal += item.total_price
-                    acc.subtotal += item.total_price
+                    // Expenses are excluded from calculations (tracking only)
+                    // Don't add to expensesTotal or subtotal
                     break
                 case 'labor':
                     acc.laborTotal += item.total_price

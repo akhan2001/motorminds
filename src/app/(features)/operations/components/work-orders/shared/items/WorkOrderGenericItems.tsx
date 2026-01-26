@@ -185,9 +185,21 @@ export function WorkOrderGenericItems({
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border rounded-lg bg-slate-50 dark:bg-card">
-                    No {itemType} items added yet
-                </div>
+                isEditing && !readOnly ? (
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        variant="outline"
+                        className="group w-full py-6 border border-dashed border-border rounded-lg bg-transparent hover:bg-transparent hover:border-solid hover:border-blue-500/50 text-muted-foreground text-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                    >
+                        <Plus className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                        Add {title}
+                    </Button>
+                ) : (
+                    <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border rounded-lg">
+                        No {itemType} items added yet
+                    </div>
+                )
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (

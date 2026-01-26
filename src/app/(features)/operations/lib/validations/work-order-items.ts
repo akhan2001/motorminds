@@ -48,6 +48,17 @@ export const WorkOrderItemSchema = z.object({
         z.string().uuid().optional().nullable()
     ),
     active: z.boolean().optional().nullable(),
+    is_billable: z.boolean().optional().nullable(), // Whether item appears on customer invoices (expenses default false)
+    
+    // Expense-specific fields (only populated when item_type = 'expense')
+    expense_subtotal: z.number().nonnegative().optional().nullable(),
+    expense_tax_amount: z.number().nonnegative().optional().nullable(),
+    expense_tax_included: z.boolean().optional().nullable(),
+    expense_payment_method: z.enum(['credit_card', 'debit_card', 'cash', 'check', 'bank_transfer', 'other']).optional().nullable(),
+    expense_vendor: z.string().max(200).optional().nullable(),
+    expense_invoice_number: z.string().max(100).optional().nullable(),
+    expense_parts_description: z.string().max(1000).optional().nullable(),
+    expense_cost_date: z.string().optional().nullable(), // ISO date string
     
     created_at: z.string(),
     completed_at: z.string().optional().nullable(),
@@ -77,16 +88,31 @@ export const WorkOrderItemCreateSchema = z.object({
         (val) => val === '' || val === null || val === undefined ? undefined : val,
         z.string().uuid().optional().nullable()
     ),
+    is_billable: z.boolean().optional(), // Whether item appears on customer invoices (expenses default false)
+    
+    // Expense-specific fields (optional, only for expense items)
+    expense_subtotal: z.number().nonnegative().optional().nullable(),
+    expense_tax_amount: z.number().nonnegative().optional().nullable(),
+    expense_tax_included: z.boolean().optional().nullable(),
+    expense_payment_method: z.enum(['credit_card', 'debit_card', 'cash', 'check', 'bank_transfer', 'other']).optional().nullable(),
+    expense_vendor: z.string().max(200).optional().nullable(),
+    expense_invoice_number: z.string().max(100).optional().nullable(),
+    expense_parts_description: z.string().max(1000).optional().nullable(),
+    expense_cost_date: z.string().optional().nullable(), // ISO date string
 }).refine(
     (data) => {
         // For labor items, labor_hours should be provided
         if (data.item_type === 'labor' && !data.labor_hours) {
             return false
         }
+        // Expenses cannot be billable
+        if (data.item_type === 'expense' && data.is_billable === true) {
+            return false
+        }
         return true
     },
     {
-        message: 'Labor hours are required for labor items',
+        message: 'Labor hours are required for labor items, and expenses cannot be billable',
         path: ['labor_hours'],
     }
 )
@@ -112,16 +138,31 @@ export const WorkOrderItemUpdateSchema = z.object({
         z.string().uuid().optional().nullable()
     ),
     active: z.boolean().optional().nullable(),
+    is_billable: z.boolean().optional().nullable(), // Whether item appears on customer invoices
+    
+    // Expense-specific fields (optional, only for expense items)
+    expense_subtotal: z.number().nonnegative().optional().nullable(),
+    expense_tax_amount: z.number().nonnegative().optional().nullable(),
+    expense_tax_included: z.boolean().optional().nullable(),
+    expense_payment_method: z.enum(['credit_card', 'debit_card', 'cash', 'check', 'bank_transfer', 'other']).optional().nullable(),
+    expense_vendor: z.string().max(200).optional().nullable(),
+    expense_invoice_number: z.string().max(100).optional().nullable(),
+    expense_parts_description: z.string().max(1000).optional().nullable(),
+    expense_cost_date: z.string().optional().nullable(), // ISO date string
 }).refine(
     (data) => {
         // If description is provided, it must not be empty
         if (data.description !== undefined && data.description.trim().length === 0) {
             return false
         }
+        // Expenses cannot be billable
+        if (data.item_type === 'expense' && data.is_billable === true) {
+            return false
+        }
         return true
     },
     {
-        message: 'Description cannot be empty',
+        message: 'Description cannot be empty, and expenses cannot be billable',
         path: ['description'],
     }
 )
@@ -144,6 +185,7 @@ export const WorkOrderItemFormDataSchema = z.object({
     labor_hours: z.number().positive().optional(),
     technician_id: z.string().uuid().optional(),
     active: z.boolean().optional(),
+    is_billable: z.boolean().optional(), // Whether item appears on customer invoices
 })
 
 // Summary schema
