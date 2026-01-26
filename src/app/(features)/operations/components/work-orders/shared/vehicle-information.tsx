@@ -68,7 +68,8 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
 
     // When creating a new vehicle, allow full editing even in work order mode
     const isCreatingNewVehicle = isCreating && (!selectedVehicleId || selectedVehicleId === "new")
-    const shouldRestrictEditing = isWorkOrderMode && !isCreatingNewVehicle
+    // Allow full editing in work order mode - vehicles can be edited
+    const shouldRestrictEditing = false
 
     // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
     useEffect(() => {
@@ -188,6 +189,10 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         setIsSaving(true)
         try {
             await VehicleService.updateVehicle(vehicleId, {
+                year: vehicleYear,
+                make: vehicleMake,
+                model: vehicleModel,
+                vin: vehicleVin,
                 color: vehicleColor,
                 licensePlate: vehicleLicensePlate,
                 mileage: vehicleMileage
@@ -348,14 +353,14 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         <div className={`space-y-4 ${className}`}>
         <h3 className="text-lg font-medium text-foreground dark:text-white">Vehicle Information</h3>
             <div className="bg-card dark:bg-[#131313] rounded-xl p-6 border border-border dark:border-[#333333]">
-                {/* Vehicle Selection Dropdown (only for creation mode) */}
-                {isCreating && isEditing && customerId && customerId !== "new" && (
+                {/* Vehicle Selection Dropdown - Show in creation mode or work order edit mode when customer exists */}
+                {isEditing && customerId && customerId !== "new" && (isCreating || isWorkOrderMode) && (
                     <div className="mb-4">
                         <VehicleDropdown
                             customerId={customerId}
-                            selectedVehicleId={selectedVehicleId || ""}
+                            selectedVehicleId={selectedVehicleId || vehicleId || ""}
                             onVehicleSelect={handleVehicleSelect}
-                            placeholder="Select Vehicle"
+                            placeholder="Select Vehicle or Add New"
                             className="w-full"
                             isLoading={!customerId}
                         />
@@ -371,17 +376,17 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 type="number"
                                 value={vehicleYear}
                                 onChange={(e) => {
-                                    if (!isEditing || shouldRestrictEditing) return
+                                    if (!isEditing) return
                                     onFieldChange('vehicleYear', e.target.value)
                                     if (errors.vehicleYear) setErrors(prev => ({ ...prev, vehicleYear: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleYear', vehicleYear)}
                                 className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                    isEditing && !shouldRestrictEditing
+                                    isEditing
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 } ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="2020"
                                 min="1970"
@@ -399,16 +404,16 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <Select
                                 value={vehicleMake}
                                 onValueChange={(value) => {
-                                    if (!isEditing || shouldRestrictEditing) return
+                                    if (!isEditing) return
                                     onFieldChange('vehicleMake', value)
                                     if (errors.vehicleMake) setErrors(prev => ({ ...prev, vehicleMake: undefined }))
                                 }}
-                                disabled={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                disabled={!isEditing}
                             >
                                 <SelectTrigger 
                                     id="vehicle_make"
                                     className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                        isEditing && !shouldRestrictEditing
+                                        isEditing
                                             ? 'bg-background dark:bg-[#1a1a1a]' 
                                             : 'bg-card dark:bg-[#131313]'
                                     } ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
@@ -443,7 +448,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                             : ''
                                     }
                                     onValueChange={(value) => {
-                                        if (!isEditing || shouldRestrictEditing) return
+                                        if (!isEditing) return
                                         if (value === '__other') {
                                             setShowCustomModel(true)
                                             onFieldChange('vehicleModel', '')
@@ -452,7 +457,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                             if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
                                         }
                                     }}
-                                    disabled={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                    disabled={!isEditing}
                                 >
                                     <SelectTrigger
                                         id="vehicle_model"
@@ -485,17 +490,17 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 id="vehicle_model"
                                 value={vehicleModel}
                                 onChange={(e) => {
-                                    if (!isEditing || shouldRestrictEditing) return
+                                    if (!isEditing) return
                                     onFieldChange('vehicleModel', e.target.value)
                                     if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
                                 }}
                                 onBlur={() => handleBlur('vehicleModel', vehicleModel)}
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                            isEditing && !shouldRestrictEditing
+                                            isEditing
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         } ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Civic"
                             />
@@ -509,7 +514,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                                 onFieldChange('vehicleModel', '')
                                             }}
                                             className="mt-1 text-xs text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
-                                            disabled={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                            disabled={!isEditing}
                                         >
                                             Select from list
                                         </Button>
@@ -533,7 +538,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
-                                readOnly={!isEditing || (shouldRestrictEditing && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing}
                                 placeholder="e.g. Blue"
                             />
                         </div>
@@ -546,13 +551,16 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <div className="relative">
                                 <Input
                                     value={vehicleVin}
-                                    onChange={(e) => isEditing && !shouldRestrictEditing && onFieldChange('vehicleVin', e.target.value.toUpperCase())}
+                                    onChange={(e) => {
+                                        if (!isEditing) return
+                                        onFieldChange('vehicleVin', e.target.value.toUpperCase())
+                                    }}
                                     className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 pr-20 ${
-                                        isEditing && !shouldRestrictEditing
+                                        isEditing
                                             ? 'bg-background dark:bg-[#1a1a1a]' 
                                             : 'bg-card dark:bg-[#131313]'
                                     }`}
-                                    readOnly={!isEditing || shouldRestrictEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                    readOnly={!isEditing}
                                     placeholder="17-character VIN"
                                     maxLength={17}
                                 />
@@ -666,7 +674,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     )}
                 </div>
 
-                {/* Save Button - Only show in edit mode when not creating */}
+                {/* Save Button - Show in edit mode when not creating and vehicle exists */}
                 {isEditing && !isCreating && vehicleId && (
                     <div className="mt-4 flex justify-end">
                         <Button

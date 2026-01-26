@@ -15,6 +15,7 @@ import { WorkOrderItemsSection } from './WorkOrderItemsSection'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
 import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
+import { workOrderService } from '../../../lib/work-order-service'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
 
@@ -48,12 +49,30 @@ export function WorkOrderEditLeftPanel({
 
     // Delete confirmation state
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+    
+    // Track selected vehicle ID for updates
+    const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(
+        workOrderDetails.vehicle_id || undefined
+    )
 
     const handleSave = async () => {
         // Save items first, then work order
         const itemsSaved = await itemManagement.handleSaveAll()
         if (!itemsSaved) {
             return
+        }
+
+        // Update work order with vehicle_id if changed
+        if (selectedVehicleId !== workOrderDetails.vehicle_id) {
+            try {
+                await workOrderService.updateWorkOrder(workOrder.id, {
+                    vehicle_id: selectedVehicleId || null
+                })
+            } catch (error) {
+                console.error('Error updating vehicle:', error)
+                toast.error('Failed to update vehicle')
+                return
+            }
         }
 
         const workOrderSaved = await form.handleSave(workOrder.id)
@@ -157,6 +176,8 @@ export function WorkOrderEditLeftPanel({
 
                     {/* Vehicle Information */}
                     <VehicleInformation
+                        customerId={workOrderDetails.customer_id || undefined}
+                        selectedVehicleId={selectedVehicleId}
                         vehicleId={workOrderDetails.vehicle_id || ""}
                         vehicleYear={form.formData.vehicleYear}
                         vehicleMake={form.formData.vehicleMake}
@@ -168,6 +189,31 @@ export function WorkOrderEditLeftPanel({
                         isEditing={form.isEditing}
                         isWorkOrderMode={true}
                         onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
+                        onVehicleSelect={(vehicleId, vehicleData) => {
+                            // Track selected vehicle ID
+                            setSelectedVehicleId(vehicleId === "new" ? undefined : vehicleId)
+                            
+                            // Update form when vehicle is selected
+                            if (vehicleData && vehicleId !== "new") {
+                                // Update vehicle display name
+                                const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}${vehicleData.licensePlate ? ` (${vehicleData.licensePlate})` : ''}`
+                                form.handleFieldChange('vehicle', vehicleDisplay)
+                            } else if (vehicleId === "new") {
+                                // Clear vehicle display when adding new
+                                setSelectedVehicleId(undefined)
+                                form.handleFieldChange('vehicle', '')
+                            }
+                        }}
+                        onVehicleSaved={(vehicleId, vehicleData) => {
+                            // Update selected vehicle ID when a new vehicle is saved
+                            setSelectedVehicleId(vehicleId)
+                            
+                            // Update form with the newly created vehicle
+                            if (vehicleData) {
+                                const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}${vehicleData.licensePlate ? ` (${vehicleData.licensePlate})` : ''}`
+                                form.handleFieldChange('vehicle', vehicleDisplay)
+                            }
+                        }}
                     />
 
                     {/* Work Order Information */}
