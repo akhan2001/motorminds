@@ -160,7 +160,8 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                     </Avatar>
                     <div className="flex-1 space-y-4">
                         {/* Customer Selection - Tabs for Search by Customer or Vehicle */}
-                        {isCreating && isEditing && shopId && (
+                        {/* Show in creation mode OR in edit mode when editing is enabled */}
+                        {isEditing && shopId && (
                             <Tabs defaultValue="customer" className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="customer">Search by Customer</TabsTrigger>

@@ -54,6 +54,11 @@ export function WorkOrderEditLeftPanel({
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(
         workOrderDetails.vehicle_id || undefined
     )
+    
+    // Track selected customer ID for updates
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(
+        workOrderDetails.customer_id || undefined
+    )
 
     const handleSave = async () => {
         // Save items first, then work order
@@ -62,15 +67,23 @@ export function WorkOrderEditLeftPanel({
             return
         }
 
-        // Update work order with vehicle_id if changed
+        // Update work order with vehicle_id and/or customer_id if changed
+        const updatePayload: Record<string, any> = {}
+        
         if (selectedVehicleId !== workOrderDetails.vehicle_id) {
+            updatePayload.vehicle_id = selectedVehicleId || null
+        }
+        
+        if (selectedCustomerId !== workOrderDetails.customer_id) {
+            updatePayload.customer_id = selectedCustomerId || null
+        }
+        
+        if (Object.keys(updatePayload).length > 0) {
             try {
-                await workOrderService.updateWorkOrder(workOrder.id, {
-                    vehicle_id: selectedVehicleId || null
-                })
+                await workOrderService.updateWorkOrder(workOrder.id, updatePayload)
             } catch (error) {
-                console.error('Error updating vehicle:', error)
-                toast.error('Failed to update vehicle')
+                console.error('Error updating work order:', error)
+                toast.error('Failed to update work order')
                 return
             }
         }
@@ -165,18 +178,34 @@ export function WorkOrderEditLeftPanel({
                 >
                     {/* Customer Information */}
                     <CustomerInformation
-                        customerId=""
+                        customerId={selectedCustomerId || ""}
                         customerName={form.formData.customer}
                         customerEmail={form.formData.customerEmail}
                         customerPhone={form.formData.customerPhone}
                         customerAddress={form.formData.customerAddress}
                         isEditing={form.isEditing}
                         onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
+                        onCustomerChange={(customerId) => {
+                            // Update selected customer ID and reset vehicle selection
+                            setSelectedCustomerId(customerId === "new" ? undefined : customerId)
+                            if (customerId !== selectedCustomerId) {
+                                // Reset vehicle selection when customer changes
+                                setSelectedVehicleId(undefined)
+                                form.handleFieldChange('vehicle', '')
+                                form.handleFieldChange('vehicleYear', '')
+                                form.handleFieldChange('vehicleMake', '')
+                                form.handleFieldChange('vehicleModel', '')
+                                form.handleFieldChange('vehicleColor', '')
+                                form.handleFieldChange('vehicleVin', '')
+                                form.handleFieldChange('vehicleLicensePlate', '')
+                                form.handleFieldChange('vehicleMileage', '')
+                            }
+                        }}
                     />
 
                     {/* Vehicle Information */}
                     <VehicleInformation
-                        customerId={workOrderDetails.customer_id || undefined}
+                        customerId={selectedCustomerId || undefined}
                         selectedVehicleId={selectedVehicleId}
                         vehicleId={workOrderDetails.vehicle_id || ""}
                         vehicleYear={form.formData.vehicleYear}

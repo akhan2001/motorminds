@@ -35,8 +35,7 @@ import { useAvailableSlots } from '../../hooks/appointments/useAvailbility'
 import { useCreateAppointment, useCreateWalkInAppointment } from '../../hooks/appointments/useAppointments'
 import { CustomerSearchBar } from '@/components/common/customers/customer-search-bar'
 import { CustomerForm } from '../../../customers/components/Selection/CustomerForm'
-import { VehicleDropdown } from '../../../customers/components/Selection/VehicleDropdown'
-import { NewVehicleForm } from '../../../customers/components/Selection/NewVehicleForm'
+import { VehicleInformation } from '../work-orders/shared/vehicle-information'
 import { WalkInVehicleForm } from '../work-orders/create/WalkInVehicleForm'
 import type { AppointmentCreateData } from '../../types/appointment'
 import type { WalkInVehicleInfo } from '../../../customers/types/vehicle'
@@ -149,6 +148,17 @@ export function AppointmentForm({
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
     const [selectedVehicleId, setSelectedVehicleId] = useState<string>('')
     const [selectedVehicle, setSelectedVehicle] = useState<VehicleOption | null>(null)
+    
+    // Vehicle form field state (for VehicleInformation component)
+    const [vehicleFormData, setVehicleFormData] = useState({
+        vehicleYear: '',
+        vehicleMake: '',
+        vehicleModel: '',
+        vehicleColor: '',
+        vehicleVin: '',
+        vehicleLicensePlate: '',
+        vehicleMileage: ''
+    })
 
     // Walk-in vehicle state
     const [walkInVehicleInfo, setWalkInVehicleInfo] = useState<WalkInVehicleInfo>({
@@ -260,8 +270,38 @@ export function AppointmentForm({
         setSelectedVehicle(vehicle || null)
         setShowNewVehicleForm(vehicleId === 'new')
 
+        // If selecting an existing vehicle, populate the form fields
+        if (vehicle && vehicleId !== 'new') {
+            setVehicleFormData({
+                vehicleYear: vehicle.year?.toString() || '',
+                vehicleMake: vehicle.make || '',
+                vehicleModel: vehicle.model || '',
+                vehicleColor: vehicle.color || '',
+                vehicleVin: vehicle.vin || '',
+                vehicleLicensePlate: vehicle.license_plate || '',
+                vehicleMileage: vehicle.mileage?.toString() || ''
+            })
+        } else if (vehicleId === 'new') {
+            // Clear fields for new vehicle
+            setVehicleFormData({
+                vehicleYear: '',
+                vehicleMake: '',
+                vehicleModel: '',
+                vehicleColor: '',
+                vehicleVin: '',
+                vehicleLicensePlate: '',
+                vehicleMileage: ''
+            })
+        }
+
         // Clear vehicle-related errors
         setErrors(prev => ({ ...prev, vehicle: '' }))
+    }
+
+    // Handle vehicle field changes
+    const handleVehicleFieldChange = (field: string, value: string) => {
+        setVehicleFormData(prev => ({ ...prev, [field]: value }))
+        setHasUnsavedChanges(true)
     }
 
     // Handle new customer creation
@@ -384,6 +424,15 @@ export function AppointmentForm({
             setSelectedCustomerId('')
             setSelectedVehicleId('')
             setSelectedVehicle(null)
+            setVehicleFormData({
+                vehicleYear: '',
+                vehicleMake: '',
+                vehicleModel: '',
+                vehicleColor: '',
+                vehicleVin: '',
+                vehicleLicensePlate: '',
+                vehicleMileage: ''
+            })
             setWalkInVehicleInfo({
                 year: new Date().getFullYear(),
                 make: '',
@@ -444,6 +493,15 @@ export function AppointmentForm({
         setSelectedCustomerId('')
         setSelectedVehicleId('')
         setSelectedVehicle(null)
+        setVehicleFormData({
+            vehicleYear: '',
+            vehicleMake: '',
+            vehicleModel: '',
+            vehicleColor: '',
+            vehicleVin: '',
+            vehicleLicensePlate: '',
+            vehicleMileage: ''
+        })
         setWalkInVehicleInfo({
             year: new Date().getFullYear(),
             make: '',
@@ -736,6 +794,15 @@ export function AppointmentForm({
                                         setSelectedCustomer(null)
                                         setSelectedVehicleId('')
                                         setSelectedVehicle(null)
+                                        setVehicleFormData({
+                                            vehicleYear: '',
+                                            vehicleMake: '',
+                                            vehicleModel: '',
+                                            vehicleColor: '',
+                                            vehicleVin: '',
+                                            vehicleLicensePlate: '',
+                                            vehicleMileage: ''
+                                        })
                                         setShowNewCustomerForm(false)
                                         setShowNewVehicleForm(false)
                                         setErrors(prev => ({ ...prev, customer: '', vehicle: '' }))
@@ -773,8 +840,18 @@ export function AppointmentForm({
                                                 setSelectedVehicleId('') // Reset vehicle selection
                                                 setSelectedVehicle(null)
                                                 setShowNewVehicleForm(false)
+                                                // Reset vehicle form data when customer changes
+                                                setVehicleFormData({
+                                                    vehicleYear: '',
+                                                    vehicleMake: '',
+                                                    vehicleModel: '',
+                                                    vehicleColor: '',
+                                                    vehicleVin: '',
+                                                    vehicleLicensePlate: '',
+                                                    vehicleMileage: ''
+                                                })
                                                 // Clear customer-related errors
-                                                setErrors(prev => ({ ...prev, customer: '' }))
+                                                setErrors(prev => ({ ...prev, customer: '', vehicle: '' }))
                                             }}
                                             onCreateNew={() => {
                                                 setShowNewCustomerForm(true)
@@ -783,8 +860,18 @@ export function AppointmentForm({
                                                 setSelectedVehicleId('')
                                                 setSelectedVehicle(null)
                                                 setShowNewVehicleForm(false)
+                                                // Reset vehicle form data
+                                                setVehicleFormData({
+                                                    vehicleYear: '',
+                                                    vehicleMake: '',
+                                                    vehicleModel: '',
+                                                    vehicleColor: '',
+                                                    vehicleVin: '',
+                                                    vehicleLicensePlate: '',
+                                                    vehicleMileage: ''
+                                                })
                                                 // Clear customer-related errors
-                                                setErrors(prev => ({ ...prev, customer: '' }))
+                                                setErrors(prev => ({ ...prev, customer: '', vehicle: '' }))
                                             }}
                                             placeholder="Search customers (organization-wide)..."
                                             organizationWide={true}
@@ -819,48 +906,67 @@ export function AppointmentForm({
                                 </div>
 
                                 {/* Vehicle Details - Registered Customers Only */}
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-medium text-foreground flex items-center gap-2 border-t border-border pt-4">
-                                        <Car className="h-4 w-4" />
-                                        Vehicle Information
-                                    </h3>
-
-                                    {/* Vehicle Selection */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="vehicle-select" className="text-muted-foreground text-xs">Vehicle *</Label>
-                                        <VehicleDropdown
-                                            customerId={selectedCustomerId || (showNewCustomerForm ? 'new' : '')}
-                                            selectedVehicleId={selectedVehicleId}
-                                            onVehicleSelect={handleVehicleSelect}
-                                            placeholder="Select or add vehicle"
-                                            disabled={!selectedCustomerId && !showNewCustomerForm}
-                                            refreshTrigger={vehicleRefreshTrigger}
-                                        />
-                                        {errors.vehicle && (
-                                            <p className="text-red-400 text-xs mt-1">{errors.vehicle}</p>
-                                        )}
-                                    </div>
-
-                                    {/* New Vehicle Form */}
-                                    {showNewVehicleForm && (
-                                        <NewVehicleForm
-                                            customerId={selectedCustomerId}
-                                            onVehicleCreated={async (vehicle) => {
-                                                // Trigger vehicle list refresh first
-                                                setVehicleRefreshTrigger(prev => prev + 1)
-                                                // Small delay to ensure dropdown has refreshed
-                                                await new Promise(resolve => setTimeout(resolve, 100))
-                                                // Auto-select the newly created vehicle
-                                                setSelectedVehicle(vehicle)
-                                                setSelectedVehicleId(vehicle.id)
-                                                setShowNewVehicleForm(false)
-                                                // Clear any vehicle errors
-                                                setErrors(prev => ({ ...prev, vehicle: '' }))
-                                                // Mark as having unsaved changes
-                                                setHasUnsavedChanges(true)
-                                            }}
-                                            onCancel={() => setShowNewVehicleForm(false)}
-                                        />
+                                <div className="space-y-4 border-t border-border pt-4">
+                                    <VehicleInformation
+                                        customerId={selectedCustomerId || (showNewCustomerForm ? 'new' : '')}
+                                        selectedVehicleId={selectedVehicleId}
+                                        vehicleId={selectedVehicleId}
+                                        vehicleYear={vehicleFormData.vehicleYear}
+                                        vehicleMake={vehicleFormData.vehicleMake}
+                                        vehicleModel={vehicleFormData.vehicleModel}
+                                        vehicleColor={vehicleFormData.vehicleColor}
+                                        vehicleVin={vehicleFormData.vehicleVin}
+                                        vehicleLicensePlate={vehicleFormData.vehicleLicensePlate}
+                                        vehicleMileage={vehicleFormData.vehicleMileage}
+                                        isEditing={true}
+                                        isCreating={true}
+                                        isWorkOrderMode={false}
+                                        onFieldChange={handleVehicleFieldChange}
+                                        onVehicleSelect={(vehicleId, vehicleData) => {
+                                            handleVehicleSelect(vehicleId, vehicleData ? {
+                                                id: vehicleId,
+                                                displayName: `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`,
+                                                year: vehicleData.year,
+                                                make: vehicleData.make,
+                                                model: vehicleData.model,
+                                                color: vehicleData.color,
+                                                vin: vehicleData.vin,
+                                                license_plate: vehicleData.licensePlate,
+                                                mileage: vehicleData.mileage ? parseInt(vehicleData.mileage) : undefined
+                                            } : undefined)
+                                        }}
+                                        onVehicleSaved={(vehicleId, vehicleData) => {
+                                            // Auto-select the newly created vehicle
+                                            setSelectedVehicleId(vehicleId)
+                                            setSelectedVehicle({
+                                                id: vehicleId,
+                                                displayName: `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`,
+                                                year: vehicleData.year,
+                                                make: vehicleData.make,
+                                                model: vehicleData.model,
+                                                color: vehicleData.color,
+                                                vin: vehicleData.vin,
+                                                license_plate: vehicleData.licensePlate,
+                                                mileage: vehicleData.mileage ? parseInt(vehicleData.mileage) : undefined
+                                            })
+                                            // Update form data with saved vehicle
+                                            setVehicleFormData({
+                                                vehicleYear: vehicleData.year || '',
+                                                vehicleMake: vehicleData.make || '',
+                                                vehicleModel: vehicleData.model || '',
+                                                vehicleColor: vehicleData.color || '',
+                                                vehicleVin: vehicleData.vin || '',
+                                                vehicleLicensePlate: vehicleData.licensePlate || '',
+                                                vehicleMileage: vehicleData.mileage || ''
+                                            })
+                                            setShowNewVehicleForm(false)
+                                            // Clear any vehicle errors
+                                            setErrors(prev => ({ ...prev, vehicle: '' }))
+                                            setHasUnsavedChanges(true)
+                                        }}
+                                    />
+                                    {errors.vehicle && (
+                                        <p className="text-red-400 text-xs mt-1">{errors.vehicle}</p>
                                     )}
                                 </div>
                             </>
