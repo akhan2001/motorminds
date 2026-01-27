@@ -239,12 +239,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     
     // Use a small epsilon for floating point comparison (0.01 cents tolerance)
     // Consider fully paid if:
-    // 1. There are active payments AND
-    // 2. Outstanding balance is 0 (or within 1 cent) OR amount paid equals/exceeds total
-    const isFullyPaid = hasActivePayments && total > 0 && (
-        calculatedOutstanding < 0.01 || 
-        Math.abs(calculatedAmountPaid - total) < 0.01 || 
-        calculatedAmountPaid >= total
+    // 1. $0 invoice with $0 payment is fully paid, OR
+    // 2. There are active payments AND outstanding balance is 0 (or within 1 cent) OR amount paid equals/exceeds total
+    const isFullyPaid = (
+        // $0 invoice with $0 payment is fully paid
+        (total === 0 && hasActivePayments && calculatedAmountPaid === 0) ||
+        // Regular invoice fully paid
+        (hasActivePayments && total > 0 && (
+            calculatedOutstanding < 0.01 || 
+            Math.abs(calculatedAmountPaid - total) < 0.01 || 
+            calculatedAmountPaid >= total
+        ))
     )
     const isPartiallyPaid = hasActivePayments && calculatedAmountPaid > 0 && !isFullyPaid
 

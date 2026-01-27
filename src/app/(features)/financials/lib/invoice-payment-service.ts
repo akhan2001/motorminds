@@ -15,7 +15,7 @@ export class InvoicePaymentService {
         // Fetch current invoice
         const { data: invoice, error: fetchError } = await supabase
             .from('invoices_table')
-            .select('payments, total_amount, amount_paid, outstanding_balance')
+            .select('payments, total_amount, amount_paid, outstanding_balance, status')
             .eq('invoice_number', invoiceNumber)
             .single()
 
@@ -50,12 +50,43 @@ export class InvoicePaymentService {
         }
 
         const updatedPayments = [...currentPayments, newPayment]
+        
+        // Calculate new totals after adding payment
+        const newActivePayments = updatedPayments.filter(p => !p.deleted)
+        const newAmountPaid = newActivePayments.reduce((sum, p) => sum + (p.amount || 0), 0)
+        const totalAmount = Number(invoice.total_amount) || 0
+        const newOutstandingBalance = Math.max(0, totalAmount - newAmountPaid)
 
-        // Update invoice with new payments array
-        // The database trigger will automatically calculate amount_paid, outstanding_balance, and update status
+        // Determine new status based on payment amounts (PAID, UNPAID, or PARTIALLY PAID)
+        let newStatus: string
+        if (totalAmount === 0 && newActivePayments.length > 0) {
+            // $0 invoice with any payment (even $0) should be marked as paid
+            newStatus = 'paid'
+        } else if (newAmountPaid === 0) {
+            newStatus = 'unpaid'
+        } else if (newAmountPaid >= totalAmount) {
+            newStatus = 'paid'
+        } else {
+            newStatus = 'partially_paid'
+        }
+
+        // Build update data - explicitly set all fields to override database trigger
+        const updateData: any = {
+            payments: updatedPayments,
+            amount_paid: newAmountPaid,
+            outstanding_balance: newOutstandingBalance,
+            status: newStatus,
+            updated_at: new Date().toISOString()
+        }
+
+        // Set paid_date if fully paid
+        if (newStatus === 'paid') {
+            updateData.paid_date = new Date().toISOString()
+        }
+
         const { error: updateError } = await supabase
             .from('invoices_table')
-            .update({ payments: updatedPayments })
+            .update(updateData)
             .eq('invoice_number', invoiceNumber)
 
         if (updateError) {
@@ -104,17 +135,17 @@ export class InvoicePaymentService {
         const totalAmount = Number(invoice.total_amount) || 0
         const newOutstandingBalance = Math.max(0, totalAmount - newAmountPaid)
 
-        // Determine new status based on payment amounts
-        // Preserve cancelled/refunded status, otherwise update based on payments
-        let newStatus = invoice.status
-        if (invoice.status !== 'cancelled' && invoice.status !== 'refunded') {
-            if (newAmountPaid === 0) {
-                newStatus = 'unpaid'
-            } else if (newAmountPaid >= totalAmount) {
-                newStatus = 'paid'
-            } else {
-                newStatus = 'partially_paid'
-            }
+        // Determine new status based on payment amounts (PAID, UNPAID, or PARTIALLY PAID)
+        let newStatus: string
+        if (totalAmount === 0 && activePayments.length > 0) {
+            // $0 invoice with any payment (even $0) should be marked as paid
+            newStatus = 'paid'
+        } else if (newAmountPaid === 0) {
+            newStatus = 'unpaid'
+        } else if (newAmountPaid >= totalAmount) {
+            newStatus = 'paid'
+        } else {
+            newStatus = 'partially_paid'
         }
 
         // Update invoice with payments array and recalculated amounts
