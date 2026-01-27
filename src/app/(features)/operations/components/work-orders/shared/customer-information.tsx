@@ -146,6 +146,47 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
         }
     }
 
+    // Handle updating existing customer info
+    const handleUpdateCustomer = async () => {
+        if (!customerId || customerId === "new") {
+            toast.error('No customer selected to update')
+            return
+        }
+
+        const nameErr = validateField('customer', customerName)
+        const phoneErr = validateField('customerPhone', customerPhone)
+        const emailErr = validateField('customerEmail', customerEmail)
+        setErrors(prev => ({ ...prev, customer: nameErr, customerPhone: phoneErr, customerEmail: emailErr }))
+        if (nameErr || phoneErr || emailErr) return
+
+        setIsSaving(true)
+        try {
+            const updatedCustomer = await CustomerService.updateCustomer(customerId, {
+                name: customerName.trim(),
+                email: customerEmail.trim() || undefined,
+                phone: customerPhone.trim(),
+                address: customerAddress.trim() || undefined,
+            })
+
+            toast.success('Customer information updated successfully')
+
+            // Notify parent component with the updated customer data
+            onCustomerSaved?.(customerId, {
+                id: customerId,
+                name: updatedCustomer.customer_name,
+                email: updatedCustomer.customer_email,
+                phone: updatedCustomer.customer_phone,
+                address: updatedCustomer.customer_address
+            })
+
+        } catch (error: any) {
+            console.error('Error updating customer:', error)
+            toast.error(error.message || 'Failed to update customer')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
 
     return (
         <div className={`space-y-4 ${className}`}>
@@ -332,6 +373,30 @@ export const CustomerInformation: React.FC<CustomerInformationProps> = ({
                                             <>
                                                 <Save className="h-4 w-4 mr-2" />
                                                 Save Customer
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* Save Customer Info Button - Show in edit mode when editing existing customer */}
+                            {isEditing && !isCreating && customerId && customerId !== "new" && (
+                                <div className="mt-4 flex justify-end">
+                                    <Button
+                                        onClick={handleUpdateCustomer}
+                                        disabled={isSaving || !isFormValid()}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        size="sm"
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" />
+                                                Save Customer Info
                                             </>
                                         )}
                                     </Button>
