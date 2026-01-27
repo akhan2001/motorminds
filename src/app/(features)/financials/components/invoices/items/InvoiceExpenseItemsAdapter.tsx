@@ -45,6 +45,8 @@ export function InvoiceExpenseItemsAdapter({
             .map(item => {
                 // Get cached expense-specific data if available
                 const cached = expenseDataCacheRef.current.get(item.id)
+                // Cast to access expense-specific fields stored on invoice item
+                const itemAny = item as any;
                 
                 return {
                     id: item.id,
@@ -53,22 +55,23 @@ export function InvoiceExpenseItemsAdapter({
                     quantity: item.quantity || 1,
                     unit_price: item.unit_price,
                     total_price: item.total_price,
-                    unit_cost: cached?.unit_cost ?? null,
-                    total_cost: cached?.total_cost ?? null,
+                    unit_cost: cached?.unit_cost ?? itemAny.unit_cost ?? null,
+                    total_cost: cached?.total_cost ?? itemAny.total_cost ?? null,
                     part_number: item.part_number || null,
                     supplier: item.supplier || null,
                     category: item.category || 'Parts/Inventory',
                     warranty_period: item.warranty_period || null,
-                    notes: cached?.notes ?? null,
-                    expense_subtotal: cached?.expense_subtotal ?? null,
-                    expense_tax_amount: cached?.expense_tax_amount ?? null,
-                    expense_tax_included: cached?.expense_tax_included ?? true,
-                    // Use cached value or default to 'credit_card' to match createDefaultExpenseItem
-                    expense_payment_method: cached?.expense_payment_method ?? 'credit_card',
-                    expense_vendor: cached?.expense_vendor ?? item.supplier ?? null,
-                    expense_invoice_number: cached?.expense_invoice_number ?? null,
-                    expense_parts_description: cached?.expense_parts_description ?? null,
-                    expense_cost_date: cached?.expense_cost_date ?? today,
+                    // Read from cache first, then from item (expense fields now stored on invoice item)
+                    notes: cached?.notes ?? itemAny.notes ?? null,
+                    expense_subtotal: cached?.expense_subtotal ?? itemAny.expense_subtotal ?? null,
+                    expense_tax_amount: cached?.expense_tax_amount ?? itemAny.expense_tax_amount ?? null,
+                    expense_tax_included: cached?.expense_tax_included ?? itemAny.expense_tax_included ?? true,
+                    // Use cached value, item value, or default to 'credit_card' to match createDefaultExpenseItem
+                    expense_payment_method: cached?.expense_payment_method ?? itemAny.expense_payment_method ?? 'credit_card',
+                    expense_vendor: cached?.expense_vendor ?? itemAny.expense_vendor ?? item.supplier ?? null,
+                    expense_invoice_number: cached?.expense_invoice_number ?? itemAny.expense_invoice_number ?? null,
+                    expense_parts_description: cached?.expense_parts_description ?? itemAny.expense_parts_description ?? null,
+                    expense_cost_date: cached?.expense_cost_date ?? itemAny.expense_cost_date ?? today,
                     is_billable: false as const,
                 }
             })
@@ -108,18 +111,30 @@ export function InvoiceExpenseItemsAdapter({
         // Get all non-expense items from the current items (via ref)
         const nonExpenseItems = itemsRef.current.filter(item => item.item_type !== 'expense')
 
-        // Convert expense form items back to invoice items
-        const updatedExpenseItems: InvoiceItem[] = expenseItems.map(item => ({
+        // Convert expense form items back to invoice items (include expense-specific fields for persistence)
+        const updatedExpenseItems = expenseItems.map(item => ({
             id: item.id,
             item_type: 'expense' as const,
             description: item.description,
             quantity: item.quantity || 1,
             unit_price: item.unit_price,
             total_price: item.total_price,
+            unit_cost: item.unit_cost ?? undefined,
+            total_cost: item.total_cost ?? undefined,
             part_number: item.part_number || undefined,
             supplier: item.supplier || item.expense_vendor || undefined,
             category: item.category || undefined,
-            warranty_period: item.warranty_period || undefined
+            warranty_period: item.warranty_period || undefined,
+            // Expense-specific fields - MUST be included for persistence
+            notes: item.notes || undefined,
+            expense_subtotal: item.expense_subtotal ?? undefined,
+            expense_tax_amount: item.expense_tax_amount ?? undefined,
+            expense_tax_included: item.expense_tax_included,
+            expense_payment_method: item.expense_payment_method || undefined,
+            expense_vendor: item.expense_vendor || undefined,
+            expense_invoice_number: item.expense_invoice_number || undefined,
+            expense_parts_description: item.expense_parts_description || undefined,
+            expense_cost_date: item.expense_cost_date || undefined,
         }))
 
         // Merge back: non-expense items + updated expense items
