@@ -294,6 +294,8 @@ export function WorkOrdersPageContent() {
             // Check if invoice already exists
             const invoiceStatus = await getWorkOrderInvoiceStatus(dragToCompleteWorkOrder.id)
             
+            let invoiceNumber: string | undefined
+            
             if (invoiceStatus.hasInvoice && invoiceStatus.invoice) {
                 // Invoice exists - always sync to update items (even if there are payments)
                 await syncInvoiceMutation.mutateAsync({
@@ -301,50 +303,35 @@ export function WorkOrdersPageContent() {
                     shop_id: shopId
                 })
                 toast.success('Invoice synced with updated work order items')
-                
-                // Mark work order as complete
-                await operations.handleCompletionConfirm(
-                    dragToCompleteWorkOrder,
-                    false, // sendMessage
-                    undefined, // customMessage
-                    false // enableAutomatedMessages
-                )
-                toast.success('Work order completed successfully')
-                
-                // Navigate to invoice
-                if (invoiceStatus.invoice.invoice_number) {
-                    router.push(`/financials/invoices?invoice_number=${invoiceStatus.invoice.invoice_number}`)
-                } else {
-                    router.push('/financials/invoices')
-                }
-                return
+                invoiceNumber = invoiceStatus.invoice.invoice_number
+            } else {
+                // Generate new invoice
+                const invoice = await createInvoiceMutation.mutateAsync({
+                    work_order_id: dragToCompleteWorkOrder.id,
+                    shop_id: shopId
+                })
+                toast.success('Invoice generated successfully')
+                invoiceNumber = invoice.invoice_number
             }
 
-            // Generate new invoice
-            const invoice = await createInvoiceMutation.mutateAsync({
-                work_order_id: dragToCompleteWorkOrder.id,
-                shop_id: shopId
-            })
-
-            if (invoice) {
-                toast.success('Invoice generated successfully')
-                refetch()
-                
-                // Mark work order as complete
-                await operations.handleCompletionConfirm(
-                    dragToCompleteWorkOrder,
-                    false, // sendMessage
-                    undefined, // customMessage
-                    false // enableAutomatedMessages
-                )
-                toast.success('Work order completed successfully')
-                
-                // Navigate to invoice
-                if (invoice.invoice_number) {
-                    router.push(`/financials/invoices?invoice_number=${invoice.invoice_number}`)
-                } else {
-                    router.push('/financials/invoices')
-                }
+            // Mark work order as complete
+            await operations.handleCompletionConfirm(
+                dragToCompleteWorkOrder,
+                false, // sendMessage
+                undefined, // customMessage
+                false // enableAutomatedMessages
+            )
+            toast.success('Work order completed successfully')
+            
+            // Close modal
+            setIsCompleteInvoiceModalOpen(false)
+            setDragToCompleteWorkOrder(null)
+            
+            // Navigate to invoice
+            if (invoiceNumber) {
+                router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
+            } else {
+                router.push('/financials/invoices')
             }
         } catch (error: any) {
             console.error('Error generating invoice:', error)
@@ -369,12 +356,11 @@ export function WorkOrdersPageContent() {
                 toast.success('Invoice synced with updated work order items')
             } else {
                 // Generate new invoice
-                const invoice = await createInvoiceMutation.mutateAsync({
+                await createInvoiceMutation.mutateAsync({
                     work_order_id: dragToCompleteWorkOrder.id,
                     shop_id: shopId
                 })
                 toast.success('Invoice generated successfully')
-                refetch()
             }
 
             // Complete the work order
@@ -385,6 +371,11 @@ export function WorkOrdersPageContent() {
                 false // enableAutomatedMessages
             )
             toast.success('Work order completed successfully')
+            
+            // Close modal and refresh data
+            setIsCompleteInvoiceModalOpen(false)
+            setDragToCompleteWorkOrder(null)
+            refetch()
         } catch (error: any) {
             console.error('Error completing work order:', error)
             toast.error(error?.message || 'Failed to complete work order')

@@ -17,7 +17,40 @@ export async function GET(req: NextRequest) {
     const endOfDay = `${targetDate}T23:59:59.999Z`;
 
     try {
-        // Fetch paid invoices for the day
+        // Fetch work orders completed on this day (based on completed_at timestamp)
+        const { data: completedWorkOrders, error: workOrdersError } = await supabase
+            .from("work_orders")
+            .select(`
+                id,
+                title,
+                status,
+                completed_at,
+                vehicle_id,
+                customer_id,
+                vehicle:customer_vehicles(id, year, make, model, license_plate),
+                customer:customers(id, customer_name)
+            `)
+            .eq("shop_id", shopId)
+            .eq("status", "completed")
+            .gte("completed_at", startOfDay)
+            .lte("completed_at", endOfDay);
+
+        if (workOrdersError) {
+            console.error("Error fetching work orders for daily report:", workOrdersError);
+            // Don't throw - continue without work orders data
+        }
+
+        // Count unique vehicles from completed work orders (Cars Serviced)
+        const uniqueVehicleIds = new Set<string>();
+        (completedWorkOrders || []).forEach(wo => {
+            if (wo.vehicle_id) {
+                uniqueVehicleIds.add(wo.vehicle_id);
+            }
+        });
+        const carsCount = uniqueVehicleIds.size;
+        const workOrdersCompletedCount = (completedWorkOrders || []).length;
+
+        // Fetch paid invoices for the day (for revenue calculations)
         const { data: invoices, error: invoicesError } = await supabase
             .from("invoices_table")
             .select(`
@@ -42,15 +75,6 @@ export async function GET(req: NextRequest) {
             console.error("Error fetching invoices for daily report:", invoicesError);
             throw invoicesError;
         }
-
-        // Count unique vehicles serviced
-        const uniqueVehicleIds = new Set<string>();
-        (invoices || []).forEach(inv => {
-            if (inv.vehicle_id) {
-                uniqueVehicleIds.add(inv.vehicle_id);
-            }
-        });
-        const carsCount = uniqueVehicleIds.size;
 
         // Calculate payment method breakdown
         const paymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
@@ -93,20 +117,17 @@ export async function GET(req: NextRequest) {
             0
         );
 
-        // Get vehicle details for the report
-        const vehiclesServiced = (invoices || [])
-            .filter(inv => inv.vehicle)
-            .map(inv => ({
-                id: inv.vehicle?.id,
-                description: inv.vehicle ? `${inv.vehicle.year} ${inv.vehicle.make} ${inv.vehicle.model}` : 'Unknown',
-                license_plate: inv.vehicle?.license_plate,
-                invoice_number: inv.invoice_number,
-                amount: inv.total_amount
-            }))
-            .filter((v, i, self) => 
-                // Remove duplicates by vehicle id
-                self.findIndex(x => x.id === v.id) === i
-            );
+        // Get vehicle details from completed work orders for the report
+        const vehiclesServiced = (completedWorkOrders || [])
+            .filter(wo => wo.vehicle)
+            .map(wo => ({
+                id: wo.vehicle?.id,
+                work_order_id: wo.id,
+                description: wo.vehicle ? `${wo.vehicle.year} ${wo.vehicle.make} ${wo.vehicle.model}` : 'Unknown',
+                license_plate: wo.vehicle?.license_plate,
+                work_order_title: wo.title,
+                customer_name: wo.customer?.customer_name || 'Unknown'
+            }));
 
         // Format payment method breakdown for response
         const paymentMethods = Object.entries(paymentMethodBreakdown).map(([method, data]) => ({
@@ -121,6 +142,7 @@ export async function GET(req: NextRequest) {
             date: targetDate,
             summary: {
                 carsCount,
+                workOrdersCompletedCount,
                 invoicesCount: (invoices || []).length,
                 totalRevenue,
                 totalSubtotal,

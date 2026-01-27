@@ -9,11 +9,13 @@ import { getShopId } from '@/utils/supabase/supabase-shop';
 import { Calendar, DollarSign, Loader2, Receipt, Car, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceQuickView } from '@/components/shared/quick-view/InvoiceQuickView';
+import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
 
 interface DailyReportData {
 	date: string;
 	summary: {
 		carsCount: number;
+		workOrdersCompletedCount: number;
 		invoicesCount: number;
 		totalRevenue: number;
 		totalSubtotal: number;
@@ -28,10 +30,11 @@ interface DailyReportData {
 	}>;
 	vehiclesServiced: Array<{
 		id: string;
+		work_order_id: string;
 		description: string;
 		license_plate: string;
-		invoice_number: string;
-		amount: number;
+		work_order_title: string;
+		customer_name: string;
 	}>;
 }
 
@@ -60,6 +63,7 @@ export default function DailyReportsPage() {
 	
 	// Quick view state
 	const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+	const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
 
 	useEffect(() => {
 		async function fetchUserData() {
@@ -246,7 +250,7 @@ export default function DailyReportsPage() {
 									{dailyReportData.summary.carsCount}
 								</p>
 								<p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
-									{dailyReportData.summary.invoicesCount} invoice{dailyReportData.summary.invoicesCount !== 1 ? 's' : ''} paid
+									{dailyReportData.summary.workOrdersCompletedCount} work order{dailyReportData.summary.workOrdersCompletedCount !== 1 ? 's' : ''} completed
 								</p>
 							</div>
 							<div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
@@ -335,7 +339,7 @@ export default function DailyReportsPage() {
 							<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
 								<h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
 									<Car className="h-5 w-5 text-green-500" />
-									Vehicles Serviced
+									Vehicles Serviced (Completed Work Orders)
 								</h3>
 								<div className="overflow-x-auto">
 									<table className="w-full">
@@ -343,8 +347,8 @@ export default function DailyReportsPage() {
 											<tr>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vehicle</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">License Plate</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoice #</th>
-												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Work Order</th>
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-border">
@@ -352,7 +356,7 @@ export default function DailyReportsPage() {
 												<tr 
 													key={`${vehicle.id}-${idx}`} 
 													className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-													onClick={() => setSelectedInvoiceId(vehicle.invoice_number)}
+													onClick={() => setSelectedWorkOrderId(vehicle.work_order_id)}
 												>
 													<td className="px-4 py-3 text-sm font-medium text-foreground">
 														{vehicle.description}
@@ -361,10 +365,10 @@ export default function DailyReportsPage() {
 														{vehicle.license_plate || '-'}
 													</td>
 													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{vehicle.invoice_number}
+														{vehicle.customer_name}
 													</td>
-													<td className="px-4 py-3 text-sm text-right font-medium text-foreground">
-														{formatCurrency(vehicle.amount || 0)}
+													<td className="px-4 py-3 text-sm text-muted-foreground">
+														{vehicle.work_order_title || 'Untitled'}
 													</td>
 												</tr>
 											))}
@@ -380,7 +384,7 @@ export default function DailyReportsPage() {
 								<Car className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
 								<h3 className="text-lg font-semibold text-foreground mb-2">No cars serviced</h3>
 								<p className="text-muted-foreground">
-									There are no paid invoices for {formatDateDisplay(selectedDate)}.
+									There are no completed work orders for {formatDateDisplay(selectedDate)}.
 								</p>
 							</div>
 						)}
@@ -397,6 +401,15 @@ export default function DailyReportsPage() {
 						invoiceId={selectedInvoiceId}
 						isOpen={!!selectedInvoiceId}
 						onClose={() => setSelectedInvoiceId(null)}
+					/>
+				)}
+
+				{/* Work Order Quick View Modal */}
+				{selectedWorkOrderId && (
+					<WorkOrderQuickView
+						workOrderId={selectedWorkOrderId}
+						isOpen={!!selectedWorkOrderId}
+						onClose={() => setSelectedWorkOrderId(null)}
 					/>
 				)}
 			</main>

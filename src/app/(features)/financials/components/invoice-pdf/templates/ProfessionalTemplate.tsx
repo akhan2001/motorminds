@@ -179,6 +179,7 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                     <View>
                                         {invoice.vehicle.year && invoice.vehicle.make && invoice.vehicle.model && (
                                             <View style={styles.vehicleInfoRow}>
+                                                <Text style={styles.label}>Vehicle</Text>
                                                 <Text style={styles.value}>
                                                     {invoice.vehicle.year} {invoice.vehicle.make} {invoice.vehicle.model} {invoice.vehicle.engine_type ? `(${invoice.vehicle.engine_type})` : ''}
                                                 </Text>
@@ -296,26 +297,6 @@ export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }
                                 <Text style={styles.grandTotalLabel}>Total Amount:</Text>
                                 <Text style={styles.grandTotalValue}>{formatCurrency(total)}</Text>
                             </View>
-                            {/* Payment Information - Always show if status is paid/partially_paid or if amount_paid exists */}
-                            {(invoice.status === 'paid' || invoice.status === 'partially_paid' ||
-                                (invoice.amount_paid !== undefined && invoice.amount_paid > 0)) && (
-                                    <>
-                                        <View style={[styles.totalRow, { marginTop: 8, paddingTop: 8, borderTop: 1, borderTopColor: '#d1d5db' }]}>
-                                            <Text style={styles.totalLabel}>Amount Paid:</Text>
-                                            <Text style={styles.totalValue}>
-                                                {formatCurrency(invoice.amount_paid || 0)}
-                                            </Text>
-                                        </View>
-                                        {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance >= 0) && (
-                                            <View style={styles.totalRow}>
-                                                <Text style={styles.totalLabel}>Outstanding Balance:</Text>
-                                                <Text style={styles.totalValue}>
-                                                    {formatCurrency(invoice.outstanding_balance)}
-                                                </Text>
-                                            </View>
-                                        )}
-                                    </>
-                                )}
                         </View>
                     </View>
 
