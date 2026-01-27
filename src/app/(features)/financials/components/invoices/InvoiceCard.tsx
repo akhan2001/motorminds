@@ -16,17 +16,27 @@ interface InvoiceCardProps {
 }
 
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, onClick }) => {
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'paid': return 'bg-green-500/10 text-green-400 border-green-500/20'
-            case 'sent': return 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-            case 'viewed': return 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-            case 'overdue': return 'bg-red-500/10 text-red-400 border-red-500/20'
-            case 'cancelled': return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-            case 'refunded': return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-            default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-        }
+    // Calculate payment status based on amounts (only PAID, UNPAID, or PARTIALLY PAID)
+    const totalAmount = Number(invoice.total_amount) || 0
+    const amountPaid = Number(invoice.amount_paid) || 0
+    const payments = (invoice.payments as any[]) || []
+    const activePayments = payments.filter(p => !p?.deleted)
+    const hasActivePayments = activePayments.length > 0
+    
+    // Determine display status
+    let displayStatus: 'PAID' | 'UNPAID' | 'PARTIALLY PAID'
+    if (totalAmount === 0 && hasActivePayments) {
+        // $0 invoice with any payment is paid
+        displayStatus = 'PAID'
+    } else if (amountPaid === 0 || !hasActivePayments) {
+        displayStatus = 'UNPAID'
+    } else if (amountPaid >= totalAmount) {
+        displayStatus = 'PAID'
+    } else {
+        displayStatus = 'PARTIALLY PAID'
     }
+    
+    const isPaid = displayStatus === 'PAID'
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -57,8 +67,8 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
-                    <span className={`${invoice.status === 'paid' ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'} text-xs px-1.5 py-0.5 rounded-full border ${invoice.status === 'paid' ? 'border-green-800 dark:border-green-800' : 'border-red-800 dark:border-red-800'}`}>
-                        {invoice.status.toUpperCase()}
+                    <span className={`${isPaid ? 'text-green-600 dark:text-green-500' : displayStatus === 'PARTIALLY PAID' ? 'text-yellow-600 dark:text-yellow-500' : 'text-red-600 dark:text-red-500'} text-xs px-1.5 py-0.5 rounded-full border ${isPaid ? 'border-green-800 dark:border-green-800' : displayStatus === 'PARTIALLY PAID' ? 'border-yellow-800 dark:border-yellow-800' : 'border-red-800 dark:border-red-800'}`}>
+                        {displayStatus}
                     </span>
                 </div>
             </div>
@@ -115,9 +125,9 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, isSelected, o
                 {/* Amount */}
                 <div className="text-right">
                     <p className="text-xs text-muted-foreground dark:text-gray-400 uppercase mb-0.5">
-                        {invoice.status === "paid" ? "AMOUNT PAID" : "AMOUNT DUE"}
+                        {isPaid ? "AMOUNT PAID" : "AMOUNT DUE"}
                     </p>
-                    <p className={`text-base font-bold ${invoice.status === "paid" ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"}`}>
+                    <p className={`text-base font-bold ${isPaid ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"}`}>
                         ${Number(invoice.total_amount || 0).toFixed(2)}
                     </p>
                     {invoice.tax_amount > 0 && (
