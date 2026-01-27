@@ -299,7 +299,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                     return (
                                         <div 
                                             key={index} 
-                                            className={`grid grid-cols-12 gap-2 items-center text-sm py-2 border-b ${
+                                            className={`text-sm py-2 border-b ${
                                                 !isActive
                                                     ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
                                                     : isExpense
@@ -307,42 +307,104 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                                     : 'border-border dark:border-gray-800'
                                             }`}
                                         >
-                                            <div className="col-span-5 text-foreground dark:text-white">
-                                                <div className="flex items-center gap-2">
-                                                    {isActive ? (
-                                                        <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                            <div className="grid grid-cols-12 gap-2 items-center">
+                                                <div className="col-span-5 text-foreground dark:text-white">
+                                                    <div className="flex items-center gap-2">
+                                                        {isActive ? (
+                                                            <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                                        ) : (
+                                                            <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                                                        )}
+                                                        <span className="truncate">{item.description}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2 text-center">
+                                                    <Badge 
+                                                        variant="outline" 
+                                                        className={`text-xs capitalize ${
+                                                            !isActive
+                                                                ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20'
+                                                                : isExpense
+                                                                ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
+                                                                : 'text-foreground dark:text-white'
+                                                        }`}
+                                                    >
+                                                        {item.item_type}
+                                                    </Badge>
+                                                </div>
+                                                <div className="col-span-2 text-center text-foreground dark:text-white">
+                                                    {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
+                                                </div>
+                                                <div className="col-span-3 text-right text-foreground dark:text-white">
+                                                    {item.item_type === 'discount' ? (
+                                                        <span className="text-red-600 dark:text-red-400 font-semibold">
+                                                            -{formatCurrency(Math.abs(item.total_price))}
+                                                        </span>
                                                     ) : (
-                                                        <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+                                                        formatCurrency(item.total_price)
                                                     )}
-                                                    <span className="truncate">{item.description}</span>
                                                 </div>
                                             </div>
-                                            <div className="col-span-2 text-center">
-                                                <Badge 
-                                                    variant="outline" 
-                                                    className={`text-xs capitalize ${
-                                                        !isActive
-                                                            ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20'
-                                                            : isExpense
-                                                            ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
-                                                            : 'text-foreground dark:text-white'
-                                                    }`}
-                                                >
-                                                    {item.item_type}
-                                                </Badge>
-                                            </div>
-                                            <div className="col-span-2 text-center text-foreground dark:text-white">
-                                                {item.item_type === 'labor' ? item.labor_hours || item.quantity : item.quantity}
-                                            </div>
-                                            <div className="col-span-3 text-right text-foreground dark:text-white">
-                                                {item.item_type === 'discount' ? (
-                                                    <span className="text-red-600 dark:text-red-400 font-semibold">
-                                                        -{formatCurrency(Math.abs(item.total_price))}
-                                                    </span>
-                                                ) : (
-                                                    formatCurrency(item.total_price)
-                                                )}
-                                            </div>
+                                            {/* Expense-specific details */}
+                                            {isExpense && (
+                                                <div className="mt-2 ml-5 text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
+                                                    {item.category && (
+                                                        <div>
+                                                            <span className="font-medium">Category:</span> {item.category}
+                                                        </div>
+                                                    )}
+                                                    {item.warranty_period && (
+                                                        <div>
+                                                            <span className="font-medium">Warranty:</span> {item.warranty_period}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_invoice_number && (
+                                                        <div>
+                                                            <span className="font-medium">Invoice #:</span> {item.expense_invoice_number}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_vendor && (
+                                                        <div>
+                                                            <span className="font-medium">Vendor:</span> {item.expense_vendor}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_subtotal && (
+                                                        <div>
+                                                            <span className="font-medium">Subtotal:</span> {formatCurrency(item.expense_subtotal)}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_tax_amount && item.expense_tax_amount > 0 && (
+                                                        <div>
+                                                            <span className="font-medium">Tax:</span> {formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(included)' : ''}
+                                                        </div>
+                                                    )}
+                                                    {item.total_cost && item.total_cost > 0 && (
+                                                        <div>
+                                                            <span className="font-medium">Total Cost:</span> {formatCurrency(item.total_cost)}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_payment_method && (
+                                                        <div>
+                                                            <span className="font-medium">Payment:</span> {item.expense_payment_method.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_cost_date && (
+                                                        <div>
+                                                            <span className="font-medium">Date:</span> {formatDateString(item.expense_cost_date)}
+                                                        </div>
+                                                    )}
+                                                    {item.expense_parts_description && (
+                                                        <div>
+                                                            <span className="font-medium">Parts:</span> {item.expense_parts_description}
+                                                        </div>
+                                                    )}
+                                                    {item.notes && (
+                                                        <div>
+                                                            <span className="font-medium">Notes:</span> {item.notes}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )
                                 })}
@@ -364,27 +426,87 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                     {expenseItems.map((item: any, index: number) => (
                                         <div 
                                             key={`expense-${index}`} 
-                                            className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
+                                            className="text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
                                         >
-                                            <div className="col-span-5 text-foreground dark:text-white">
-                                                <div className="flex items-center gap-2">
-                                                    <Check className="h-3 w-3 text-orange-500 flex-shrink-0" />
-                                                    <span className="truncate">{item.description}</span>
+                                            <div className="grid grid-cols-12 gap-2 items-center">
+                                                <div className="col-span-5 text-foreground dark:text-white">
+                                                    <div className="flex items-center gap-2">
+                                                        <Check className="h-3 w-3 text-orange-500 flex-shrink-0" />
+                                                        <span className="truncate">{item.description}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2 text-center">
+                                                    <Badge 
+                                                        variant="outline" 
+                                                        className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
+                                                    >
+                                                        expense
+                                                    </Badge>
+                                                </div>
+                                                <div className="col-span-2 text-center text-foreground dark:text-white">
+                                                    {item.quantity || 1}
+                                                </div>
+                                                <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
+                                                    {formatCurrency(item.total_price || 0)}
                                                 </div>
                                             </div>
-                                            <div className="col-span-2 text-center">
-                                                <Badge 
-                                                    variant="outline" 
-                                                    className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
-                                                >
-                                                    expense
-                                                </Badge>
-                                            </div>
-                                            <div className="col-span-2 text-center text-foreground dark:text-white">
-                                                {item.quantity || 1}
-                                            </div>
-                                            <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
-                                                {formatCurrency(item.total_price || 0)}
+                                            {/* Expense-specific details */}
+                                            <div className="mt-2 ml-5 text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
+                                                {item.category && (
+                                                    <div>
+                                                        <span className="font-medium">Category:</span> {item.category}
+                                                    </div>
+                                                )}
+                                                {item.warranty_period && (
+                                                    <div>
+                                                        <span className="font-medium">Warranty:</span> {item.warranty_period}
+                                                    </div>
+                                                )}
+                                                {item.expense_invoice_number && (
+                                                    <div>
+                                                        <span className="font-medium">Invoice #:</span> {item.expense_invoice_number}
+                                                    </div>
+                                                )}
+                                                {item.expense_vendor && (
+                                                    <div>
+                                                        <span className="font-medium">Vendor:</span> {item.expense_vendor}
+                                                    </div>
+                                                )}
+                                                {item.expense_subtotal && (
+                                                    <div>
+                                                        <span className="font-medium">Subtotal:</span> {formatCurrency(item.expense_subtotal)}
+                                                    </div>
+                                                )}
+                                                {item.expense_tax_amount && item.expense_tax_amount > 0 && (
+                                                    <div>
+                                                        <span className="font-medium">Tax:</span> {formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(included)' : ''}
+                                                    </div>
+                                                )}
+                                                {item.total_cost && item.total_cost > 0 && (
+                                                    <div>
+                                                        <span className="font-medium">Total Cost:</span> {formatCurrency(item.total_cost)}
+                                                    </div>
+                                                )}
+                                                {item.expense_payment_method && (
+                                                    <div>
+                                                        <span className="font-medium">Payment:</span> {item.expense_payment_method.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                                                    </div>
+                                                )}
+                                                {item.expense_cost_date && (
+                                                    <div>
+                                                        <span className="font-medium">Date:</span> {formatDateString(item.expense_cost_date)}
+                                                    </div>
+                                                )}
+                                                {item.expense_parts_description && (
+                                                    <div>
+                                                        <span className="font-medium">Parts:</span> {item.expense_parts_description}
+                                                    </div>
+                                                )}
+                                                {item.notes && (
+                                                    <div>
+                                                        <span className="font-medium">Notes:</span> {item.notes}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

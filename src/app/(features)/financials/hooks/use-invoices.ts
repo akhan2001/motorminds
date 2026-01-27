@@ -469,9 +469,9 @@ export function useCreateInvoiceFromWorkOrder() {
             // Allow empty invoices - they can be synced later when items are added
             // Transform work order items to invoice items (empty array is valid)
             // Filter to only billable items - is_billable determines if item appears on customer invoices
-            // Expenses default to is_billable=false (internal costs), other types default to true
+            // Expenses are INCLUDED even with is_billable=false (for tracking purposes - excluded from totals)
             const invoiceItems = (items || [])
-                .filter(item => item.is_billable !== false) // Include items where is_billable is true or undefined (for backwards compat)
+                .filter(item => item.is_billable !== false || item.item_type === 'expense') // Include billable items AND expenses (for tracking)
                 .map(item => {
                 const isDeclined = item.active === false
                 
@@ -528,7 +528,17 @@ export function useCreateInvoiceFromWorkOrder() {
                     technician_id: item.technician_id || undefined,
                     active: item.active, // Preserve the active field from work order
                     is_declined: isDeclined,
-                    invoice_specific_notes: item.notes || undefined // Copy work order item notes to invoice-specific notes
+                    invoice_specific_notes: item.notes || undefined, // Copy work order item notes to invoice-specific notes
+                    // Expense-specific fields (preserved for expense tracking on invoices)
+                    notes: item.notes || undefined,
+                    expense_subtotal: item.expense_subtotal ? Number(item.expense_subtotal) : undefined,
+                    expense_tax_amount: item.expense_tax_amount ? Number(item.expense_tax_amount) : undefined,
+                    expense_tax_included: item.expense_tax_included,
+                    expense_payment_method: item.expense_payment_method || undefined,
+                    expense_vendor: item.expense_vendor || undefined,
+                    expense_invoice_number: item.expense_invoice_number || undefined,
+                    expense_parts_description: item.expense_parts_description || undefined,
+                    expense_cost_date: item.expense_cost_date || undefined,
                 }
             })
 
@@ -627,12 +637,12 @@ export function useSyncInvoiceFromWorkOrder() {
 
             // Transform work order items to invoice items (allow empty arrays)
             // Filter to only billable items - is_billable determines if item appears on customer invoices
-            // Expenses default to is_billable=false (internal costs), other types default to true
+            // Expenses are INCLUDED even with is_billable=false (for tracking purposes - excluded from totals)
             const invoiceItems = (items || [])
-                .filter(item => item.is_billable !== false) // Include items where is_billable is true or undefined (for backwards compat)
+                .filter(item => item.is_billable !== false || item.item_type === 'expense') // Include billable items AND expenses (for tracking)
                 .map(item => {
                 const isDeclined = item.active === false
-                
+
                 let unitPrice = Number(item.unit_price) || 0
                 let quantity = Number(item.quantity) || 0
                 let laborHours = item.labor_hours ? Number(item.labor_hours) : undefined
@@ -673,7 +683,17 @@ export function useSyncInvoiceFromWorkOrder() {
                     technician_id: item.technician_id || undefined,
                     active: item.active,
                     is_declined: isDeclined,
-                    invoice_specific_notes: item.notes || undefined // Copy work order item notes to invoice-specific notes
+                    invoice_specific_notes: item.notes || undefined, // Copy work order item notes to invoice-specific notes
+                    // Expense-specific fields (preserved for expense tracking on invoices)
+                    notes: item.notes || undefined,
+                    expense_subtotal: item.expense_subtotal ? Number(item.expense_subtotal) : undefined,
+                    expense_tax_amount: item.expense_tax_amount ? Number(item.expense_tax_amount) : undefined,
+                    expense_tax_included: item.expense_tax_included,
+                    expense_payment_method: item.expense_payment_method || undefined,
+                    expense_vendor: item.expense_vendor || undefined,
+                    expense_invoice_number: item.expense_invoice_number || undefined,
+                    expense_parts_description: item.expense_parts_description || undefined,
+                    expense_cost_date: item.expense_cost_date || undefined,
                 }
             })
 
