@@ -6,9 +6,9 @@ import { Nav } from '@/components/navigation/nav';
 import BreadcrumbNav from './components/BreadcrumbNav';
 import { checkUser } from '@/utils/supabase/supabase-auth';
 import { getShopId } from '@/utils/supabase/supabase-shop';
-import { Archive, Car, FileWarning, Receipt, Loader2 } from 'lucide-react';
-import { InvoiceQuickView } from '@/components/shared/quick-view/InvoiceQuickView';
+import { Archive, Car, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
+import { Button } from '@/components/ui/button';
 
 interface ArchivedItem {
 	id: string;
@@ -16,27 +16,18 @@ interface ArchivedItem {
 }
 
 interface ArchivedData {
-	invoices: ArchivedItem[];
 	workOrders: ArchivedItem[];
-	expenses: ArchivedItem[];
 	summary: {
-		invoicesCount: number;
-		invoicesTotalAmount: number;
 		workOrdersCount: number;
-		workOrdersTotalAmount: number;
-		expensesCount: number;
-		expensesTotalAmount: number;
+		workOrdersTotalCount: number;
+	};
+	pagination: {
+		page: number;
+		limit: number;
+		totalPages: number;
+		hasMore: boolean;
 	};
 }
-
-const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0
-	}).format(value);
-};
 
 export default function ArchivedRecordsPage() {
 	const [shopId, setShopId] = useState<string | null>(null);
@@ -45,8 +36,11 @@ export default function ArchivedRecordsPage() {
 	const [isFetchingData, setIsFetchingData] = useState(false);
 	const router = useRouter();
 	
+	// Pagination state
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage] = useState(20);
+	
 	// Quick view state
-	const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 	const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -76,7 +70,11 @@ export default function ArchivedRecordsPage() {
 
 		setIsFetchingData(true);
 		try {
-			const params = new URLSearchParams({ shop_id: shopId });
+			const params = new URLSearchParams({ 
+				shop_id: shopId,
+				page: currentPage.toString(),
+				limit: itemsPerPage.toString()
+			});
 			
 			const response = await fetch(`/api/financials/reports/archived?${params.toString()}`);
 			if (!response.ok) {
@@ -90,13 +88,29 @@ export default function ArchivedRecordsPage() {
 		} finally {
 			setIsFetchingData(false);
 		}
-	}, [shopId]);
+	}, [shopId, currentPage, itemsPerPage]);
 
 	useEffect(() => {
 		if (shopId) {
 			fetchArchivedData();
 		}
 	}, [shopId, fetchArchivedData]);
+
+	// Pagination handlers
+	const handlePreviousPage = () => {
+		if (currentPage > 1) {
+			setCurrentPage(prev => prev - 1);
+		}
+	};
+
+	const handleNextPage = () => {
+		const totalPages = archivedData?.pagination?.totalPages || 1;
+		if (currentPage < totalPages) {
+			setCurrentPage(prev => prev + 1);
+		}
+	};
+
+	const totalPages = archivedData?.pagination?.totalPages || 1;
 
 	if (isLoading) {
 		return (
@@ -132,113 +146,57 @@ export default function ArchivedRecordsPage() {
 					</div>
 				) : archivedData ? (
 					<div className="space-y-6">
-						{/* Summary Cards */}
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-							<div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800">
-								<div className="flex items-center gap-3 mb-3">
-									<div className="p-2 rounded-lg bg-red-100 dark:bg-red-800">
-										<FileWarning className="h-5 w-5 text-red-600 dark:text-red-400" />
-									</div>
-									<h3 className="text-sm font-medium text-red-800 dark:text-red-200">Archived Invoices</h3>
+						{/* Summary Card */}
+						<div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+							<div className="flex items-center gap-3 mb-3">
+								<div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-800">
+									<Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
 								</div>
-								<p className="text-4xl font-bold text-red-900 dark:text-red-100">
-									{archivedData.summary.invoicesCount}
-								</p>
-								<p className="text-sm text-red-600 dark:text-red-400 mt-2">
-									Total: {formatCurrency(archivedData.summary.invoicesTotalAmount)}
-								</p>
+								<h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Deleted Work Orders</h3>
 							</div>
-							<div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-								<div className="flex items-center gap-3 mb-3">
-									<div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-800">
-										<Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-									</div>
-									<h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Archived Work Orders</h3>
-								</div>
-								<p className="text-4xl font-bold text-blue-900 dark:text-blue-100">
-									{archivedData.summary.workOrdersCount}
-								</p>
-								<p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
-									Records archived
-								</p>
-							</div>
-							<div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
-								<div className="flex items-center gap-3 mb-3">
-									<div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-800">
-										<Receipt className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-									</div>
-									<h3 className="text-sm font-medium text-purple-800 dark:text-purple-200">Archived Expenses</h3>
-								</div>
-								<p className="text-4xl font-bold text-purple-900 dark:text-purple-100">
-									{archivedData.summary.expensesCount}
-								</p>
-								<p className="text-sm text-purple-600 dark:text-purple-400 mt-2">
-									Total: {formatCurrency(archivedData.summary.expensesTotalAmount)}
-								</p>
-							</div>
+							<p className="text-4xl font-bold text-blue-900 dark:text-blue-100">
+								{archivedData.summary.workOrdersTotalCount || archivedData.summary.workOrdersCount}
+							</p>
+							<p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+								Total records deleted
+							</p>
 						</div>
 
-						{/* Archived Invoices List */}
-						{archivedData.invoices.length > 0 && (
+						{/* Deleted Work Orders List */}
+						{archivedData.workOrders.length > 0 ? (
 							<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
-								<h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-									<FileWarning className="h-5 w-5 text-red-500" />
-									Archived Invoices
-								</h3>
-								<div className="overflow-x-auto">
-									<table className="w-full">
-										<thead className="bg-slate-50 dark:bg-slate-900/50">
-											<tr>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoice #</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vehicle</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</th>
-												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tax</th>
-											</tr>
-										</thead>
-										<tbody className="divide-y divide-border">
-											{archivedData.invoices.map((invoice) => (
-												<tr 
-													key={invoice.id} 
-													className="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
-													onClick={() => setSelectedInvoiceId(invoice.invoice_number || invoice.id)}
+								<div className="flex items-center justify-between mb-4">
+									<h3 className="font-semibold text-foreground flex items-center gap-2">
+										<Car className="h-5 w-5 text-blue-500" />
+										Deleted Work Orders
+									</h3>
+									{/* Pagination Controls */}
+									{totalPages > 1 && (
+										<div className="flex items-center gap-4">
+											<span className="text-sm text-muted-foreground">
+												Page {currentPage} of {totalPages}
+											</span>
+											<div className="flex items-center gap-2">
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={handlePreviousPage}
+													disabled={currentPage <= 1 || isFetchingData}
 												>
-													<td className="px-4 py-3 text-sm font-medium text-foreground">
-														{invoice.display_id || invoice.invoice_number}
-													</td>
-													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{invoice.customer?.customer_name || 'Unknown'}
-													</td>
-													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{invoice.vehicle ? `${invoice.vehicle.year} ${invoice.vehicle.make} ${invoice.vehicle.model}` : '-'}
-													</td>
-													<td className="px-4 py-3">
-														<span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 capitalize">
-															{invoice.status}
-														</span>
-													</td>
-													<td className="px-4 py-3 text-sm text-right font-medium text-foreground">
-														{formatCurrency(invoice.calculated_total || invoice.total_amount || 0)}
-													</td>
-													<td className="px-4 py-3 text-sm text-right text-muted-foreground">
-														{formatCurrency(invoice.calculated_tax || invoice.tax_amount || 0)}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
+													<ChevronLeft className="h-4 w-4" />
+												</Button>
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={handleNextPage}
+													disabled={currentPage >= totalPages || isFetchingData}
+												>
+													<ChevronRight className="h-4 w-4" />
+												</Button>
+											</div>
+										</div>
+									)}
 								</div>
-							</div>
-						)}
-
-						{/* Archived Work Orders List */}
-						{archivedData.workOrders.length > 0 && (
-							<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
-								<h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-									<Car className="h-5 w-5 text-blue-500" />
-									Archived Work Orders
-								</h3>
 								<div className="overflow-x-auto">
 									<table className="w-full">
 										<thead className="bg-slate-50 dark:bg-slate-900/50">
@@ -247,7 +205,7 @@ export default function ArchivedRecordsPage() {
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vehicle</th>
 												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Archived Date</th>
+												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Deleted On</th>
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-border">
@@ -272,7 +230,7 @@ export default function ArchivedRecordsPage() {
 														</span>
 													</td>
 													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{wo.archived_at ? new Date(wo.archived_at).toLocaleDateString() : '-'}
+														{wo.updated_at ? new Date(wo.updated_at).toLocaleDateString() : '-'}
 													</td>
 												</tr>
 											))}
@@ -280,61 +238,12 @@ export default function ArchivedRecordsPage() {
 									</table>
 								</div>
 							</div>
-						)}
-
-						{/* Archived Expenses List */}
-						{archivedData.expenses.length > 0 && (
-							<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
-								<h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-									<Receipt className="h-5 w-5 text-purple-500" />
-									Archived Expenses
-								</h3>
-								<div className="overflow-x-auto">
-									<table className="w-full">
-										<thead className="bg-slate-50 dark:bg-slate-900/50">
-											<tr>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Vendor</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
-												<th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</th>
-												<th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tax</th>
-											</tr>
-										</thead>
-										<tbody className="divide-y divide-border">
-											{archivedData.expenses.map((exp) => (
-												<tr key={exp.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-													<td className="px-4 py-3 text-sm font-medium text-foreground">
-														{exp.vendor || '-'}
-													</td>
-													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{exp.cost_name}
-													</td>
-													<td className="px-4 py-3 text-sm text-muted-foreground">
-														{exp.cost_date ? new Date(exp.cost_date).toLocaleDateString() : '-'}
-													</td>
-													<td className="px-4 py-3 text-sm text-right font-medium text-foreground">
-														{formatCurrency(exp.amount || 0)}
-													</td>
-													<td className="px-4 py-3 text-sm text-right text-muted-foreground">
-														{formatCurrency(exp.tax_amount || 0)}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
-								</div>
-							</div>
-						)}
-
-						{/* No archived items message */}
-						{archivedData.invoices.length === 0 && 
-						 archivedData.workOrders.length === 0 && 
-						 archivedData.expenses.length === 0 && (
+						) : (
 							<div className="bg-white dark:bg-card border border-border rounded-xl p-12 text-center">
 								<Archive className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-								<h3 className="text-lg font-semibold text-foreground mb-2">No archived items</h3>
+								<h3 className="text-lg font-semibold text-foreground mb-2">No deleted work orders</h3>
 								<p className="text-muted-foreground">
-									Items you archive will appear here for record-keeping.
+									Work orders you delete will appear here for record-keeping.
 								</p>
 							</div>
 						)}
@@ -345,14 +254,7 @@ export default function ArchivedRecordsPage() {
 					</div>
 				)}
 
-				{/* Quick View Modals */}
-				{selectedInvoiceId && (
-					<InvoiceQuickView
-						invoiceId={selectedInvoiceId}
-						isOpen={!!selectedInvoiceId}
-						onClose={() => setSelectedInvoiceId(null)}
-					/>
-				)}
+				{/* Quick View Modal */}
 				{selectedWorkOrderId && (
 					<WorkOrderQuickView
 						workOrderId={selectedWorkOrderId}

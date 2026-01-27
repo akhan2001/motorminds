@@ -7,160 +7,87 @@ export async function GET(req: NextRequest) {
     const shopId = searchParams.get("shop_id");
     const startDateStr = searchParams.get("start_date");
     const endDateStr = searchParams.get("end_date");
+    
+    // Pagination parameters
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const offset = (page - 1) * limit;
 
     if (!shopId) {
         return NextResponse.json({ error: "shop_id is required" }, { status: 400 });
     }
 
     try {
-        // Fetch archived invoices with invoice_items for accurate totals
-        let invoicesQuery = supabase
-            .from("invoices_table")
-            .select(`
-                id,
-                invoice_number,
-                display_id,
-                status,
-                total_amount,
-                subtotal,
-                tax_amount,
-                tax_rate,
-                discount_amount,
-                amount_paid,
-                outstanding_balance,
-                created_at,
-                updated_at,
-                issue_date,
-                invoice_items,
-                customer:customers(id, customer_name),
-                vehicle:customer_vehicles(id, year, make, model, license_plate)
-            `)
-            .eq("shop_id", shopId)
-            .eq("archived", true)
-            .order("updated_at", { ascending: false });
-
-        if (startDateStr && endDateStr) {
-            invoicesQuery = invoicesQuery
-                .gte("updated_at", startDateStr)
-                .lte("updated_at", endDateStr);
-        }
-
-        const { data: archivedInvoices, error: invoicesError } = await invoicesQuery;
-
-        if (invoicesError) {
-            console.error("Error fetching archived invoices:", invoicesError);
-            throw invoicesError;
-        }
-
-        // Calculate correct totals from invoice items
-        const invoicesWithCalculatedTotals = (archivedInvoices || []).map((invoice) => {
-            const items = invoice.invoice_items || [];
-            // Only include active items, exclude expense items (tracking only)
-            const activeItems = items.filter((item: any) => item.active !== false && item.item_type !== 'expense');
-            
-            // Calculate subtotal: add regular items, subtract discounts
-            const subtotal = activeItems.reduce((sum: number, item: any) => {
-                if (item.item_type === 'discount') return sum - (item.total_price || 0);
-                return sum + (item.total_price || 0);
-            }, 0);
-            
-            const taxRate = invoice.tax_rate || 0.13;
-            const tax = subtotal * taxRate;
-            const total = subtotal + tax - (invoice.discount_amount || 0);
-            
-            return {
-                ...invoice,
-                calculated_subtotal: subtotal,
-                calculated_tax: tax,
-                calculated_total: total,
-                // Remove invoice_items from response to reduce payload
-                invoice_items: undefined
-            };
-        });
-
-        // Fetch archived work orders
-        // Note: work_orders doesn't have a total_price column - totals are calculated from items
-        let workOrdersQuery = supabase
-            .from("work_orders")
-            .select(`
-                id,
-                title,
-                status,
-                archived_at,
-                archived_by,
-                created_at,
-                updated_at,
-                customer:customers(id, customer_name),
-                vehicle:customer_vehicles(id, year, make, model, license_plate)
-            `)
-            .eq("shop_id", shopId)
-            .eq("archived", true)
-            .order("archived_at", { ascending: false });
-
-        if (startDateStr && endDateStr) {
-            workOrdersQuery = workOrdersQuery
-                .gte("archived_at", startDateStr)
-                .lte("archived_at", endDateStr);
-        }
-
-        const { data: archivedWorkOrders, error: workOrdersError } = await workOrdersQuery;
-
-        if (workOrdersError) {
-            console.error("Error fetching archived work orders:", workOrdersError);
-            throw workOrdersError;
-        }
-
-        // Fetch archived expenses (one-time costs)
-        // Note: archived_at might not exist, so we order by cost_date as fallback
-        let archivedExpenses: any[] = [];
+        // Fetch archived work orders only
+        let archivedWorkOrders: any[] = [];
+        let workOrdersTotalCount = 0;
         try {
-            let expensesQuery = supabase
-                .from("one_time_costs")
-                .select("*")
+            // First, get total count for pagination
+            let woCountQuery = supabase
+                .from("work_orders")
+                .select("id", { count: "exact", head: true })
+                .eq("shop_id", shopId)
+                .eq("archived", true);
+
+            if (startDateStr && endDateStr) {
+                woCountQuery = woCountQuery
+                    .gte("updated_at", startDateStr)
+                    .lte("updated_at", endDateStr);
+            }
+
+            const { count: woCount } = await woCountQuery;
+            workOrdersTotalCount = woCount || 0;
+
+            // Then fetch paginated data
+            let workOrdersQuery = supabase
+                .from("work_orders")
+                .select(`
+                    id,
+                    title,
+                    status,
+                    created_at,
+                    updated_at,
+                    customer:customers(id, customer_name),
+                    vehicle:customer_vehicles(id, year, make, model, license_plate)
+                `)
                 .eq("shop_id", shopId)
                 .eq("archived", true)
-                .order("cost_date", { ascending: false });
+                .order("updated_at", { ascending: false })
+                .range(offset, offset + limit - 1);
 
-            // Don't filter by archived_at date since it might not exist
-            // Just get all archived expenses
-
-            const { data, error: expensesError } = await expensesQuery;
-
-            if (expensesError) {
-                console.error("Error fetching archived expenses:", expensesError);
-                // Don't throw - expenses might not have archived column yet
-            } else {
-                archivedExpenses = data || [];
+            if (startDateStr && endDateStr) {
+                workOrdersQuery = workOrdersQuery
+                    .gte("updated_at", startDateStr)
+                    .lte("updated_at", endDateStr);
             }
-        } catch (expenseErr) {
-            console.error("Error in expenses query:", expenseErr);
-            // Continue without expenses data
+
+            const { data, error: workOrdersError } = await workOrdersQuery;
+
+            if (workOrdersError) {
+                console.error("Error fetching archived work orders:", workOrdersError);
+                // Don't throw - continue without work orders data
+            } else {
+                archivedWorkOrders = data || [];
+            }
+        } catch (woErr) {
+            console.error("Error in work orders query:", woErr);
+            // Continue without work orders data
         }
 
-        // Calculate totals using calculated values
-        const invoicesTotalAmount = invoicesWithCalculatedTotals.reduce(
-            (sum, inv) => sum + (inv.calculated_total || 0), 
-            0
-        );
-        // Work orders don't store total_price - totals are calculated from items
-        // We don't have an efficient way to calculate this here, so just report count
-        const workOrdersTotalAmount = 0;
-        const expensesTotalAmount = archivedExpenses.reduce(
-            (sum, exp) => sum + (Number(exp.amount) || 0), 
-            0
-        );
+        // Calculate total pages
+        const workOrdersTotalPages = Math.ceil(workOrdersTotalCount / limit);
 
         return NextResponse.json({
-            invoices: invoicesWithCalculatedTotals,
-            workOrders: archivedWorkOrders || [],
-            expenses: archivedExpenses,
+            workOrders: archivedWorkOrders,
             summary: {
-                invoicesCount: invoicesWithCalculatedTotals.length,
-                invoicesTotalAmount,
-                workOrdersCount: (archivedWorkOrders || []).length,
-                workOrdersTotalAmount,
-                expensesCount: archivedExpenses.length,
-                expensesTotalAmount,
+                workOrdersCount: archivedWorkOrders.length,
+                workOrdersTotalCount,
+            },
+            pagination: {
+                page,
+                limit,
+                totalPages: workOrdersTotalPages,
+                hasMore: page < workOrdersTotalPages,
             }
         }, { status: 200 });
 
