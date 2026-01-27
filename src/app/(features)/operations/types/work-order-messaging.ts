@@ -16,6 +16,10 @@ export interface WorkOrderCompletionModalProps {
     onClose: () => void
     onConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean, generateInvoice?: boolean) => void
     generatedInvoiceNumber?: string | null // Invoice number if one was just generated
+    // For drag-to-complete flow
+    onGenerateAndGoToInvoice?: () => Promise<void>
+    onGenerateAndComplete?: () => Promise<void>
+    isGenerating?: boolean
 }
 
 // Messaging availability types

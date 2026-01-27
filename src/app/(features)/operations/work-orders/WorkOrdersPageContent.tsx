@@ -12,7 +12,7 @@ import { useCreateInvoiceFromWorkOrder, useSyncInvoiceFromWorkOrder, getWorkOrde
 import { transformWorkOrdersToKanbanColumns } from '../lib/work-order-transformers'
 import { WorkOrdersPageView } from './WorkOrdersPageView'
 import { InvoiceSyncWarningDialog } from '../components/work-orders/invoice-sync-warning-dialog'
-import { WorkOrderCompleteInvoiceModal } from '../components/work-orders/complete/work-order-complete-invoice-modal'
+import { WorkOrderCompletionModal } from '../components/work-orders/complete/work-order-completion-modal'
 import { Card, CardContent } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
@@ -529,13 +529,14 @@ export function WorkOrdersPageContent() {
 
         {/* Drag-to-Complete Invoice Modal */}
         {dragToCompleteWorkOrder && (
-            <WorkOrderCompleteInvoiceModal
+            <WorkOrderCompletionModal
                 workOrder={dragToCompleteWorkOrder}
                 isOpen={isCompleteInvoiceModalOpen}
                 onClose={() => {
                     setIsCompleteInvoiceModalOpen(false)
                     setDragToCompleteWorkOrder(null)
                 }}
+                onConfirm={() => {}} // Not used in drag-to-complete flow
                 onGenerateAndGoToInvoice={handleGenerateAndGoToInvoice}
                 onGenerateAndComplete={handleGenerateAndComplete}
                 isGenerating={createInvoiceMutation.isPending || syncInvoiceMutation.isPending}
