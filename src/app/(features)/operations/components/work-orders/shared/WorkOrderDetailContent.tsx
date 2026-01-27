@@ -321,6 +321,16 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                                         {/* For expense items, show expense-specific fields */}
                                                         {item.item_type === 'expense' ? (
                                                             <>
+                                                                {item.category && (
+                                                                    <div>
+                                                                        <span className="font-medium">Category:</span> {item.category}
+                                                                    </div>
+                                                                )}
+                                                                {item.warranty_period && (
+                                                                    <div>
+                                                                        <span className="font-medium">Warranty:</span> {item.warranty_period}
+                                                                    </div>
+                                                                )}
                                                                 {item.expense_invoice_number && (
                                                                     <div>
                                                                         <span className="font-medium">Invoice #:</span> {item.expense_invoice_number}
@@ -343,7 +353,7 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                                                 )}
                                                                 {item.expense_payment_method && (
                                                                     <div>
-                                                                        <span className="font-medium">Payment:</span> {item.expense_payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                        <span className="font-medium">Payment:</span> {item.expense_payment_method.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                                                                     </div>
                                                                 )}
                                                                 {item.expense_cost_date && (
@@ -354,6 +364,11 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                                                 {item.expense_parts_description && (
                                                                     <div className="mt-1">
                                                                         <span className="font-medium">Parts:</span> {item.expense_parts_description}
+                                                                    </div>
+                                                                )}
+                                                                {item.notes && (
+                                                                    <div className="mt-1">
+                                                                        <span className="font-medium">Notes:</span> {item.notes}
                                                                     </div>
                                                                 )}
                                                             </>
