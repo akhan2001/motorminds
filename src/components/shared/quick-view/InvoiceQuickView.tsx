@@ -89,8 +89,30 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
         )
     }
 
+    // Normalize invoice_items to always be an array
+    // Handle cases where it might be a string (JSON), object, null, or already an array
+    const normalizeInvoiceItems = (items: any): any[] => {
+        if (!items) return []
+        if (Array.isArray(items)) return items
+        if (typeof items === 'string') {
+            try {
+                const parsed = JSON.parse(items)
+                return Array.isArray(parsed) ? parsed : []
+            } catch {
+                return []
+            }
+        }
+        if (typeof items === 'object') {
+            // If it's a single object, wrap it in an array
+            return [items]
+        }
+        return []
+    }
+
+    const invoiceItems = normalizeInvoiceItems(invoice.invoice_items)
+
     // Calculate totals - only include active items, exclude expense items (tracking only), handle discounts correctly
-    const activeItems = (invoice.invoice_items || []).filter((item: any) => item.active !== false && item.item_type !== 'expense')
+    const activeItems = invoiceItems.filter((item: any) => item.active !== false && item.item_type !== 'expense')
     const subtotal = activeItems.reduce((sum: number, item: any) => {
         if (item.item_type === 'discount') return sum - item.total_price
         return sum + item.total_price
@@ -271,7 +293,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                 </div>
 
                                 {/* Invoice Items */}
-                                {invoice.invoice_items.map((item: any, index: number) => {
+                                {invoiceItems.map((item: any, index: number) => {
                                     const isActive = item.active !== false
                                     const isExpense = item.item_type === 'expense'
                                     return (
