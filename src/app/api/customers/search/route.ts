@@ -58,7 +58,11 @@ export async function GET(request: NextRequest) {
 		// Filter logic based on organization status and request
 		if (orgOnly && organizationId) {
 			// Organization-wide search (only for MSO shops)
-			dbQuery = dbQuery.eq('organization_id', organizationId)
+			// Use OR logic to include:
+			// 1. Customers with matching organization_id (from any shop in the org)
+			// 2. Customers from the current shop (even if they don't have organization_id set)
+			// This ensures customers created before org setup or without org_id are still visible
+			dbQuery = dbQuery.or(`organization_id.eq.${organizationId},shop_id.eq.${shopId}`)
 		} else if (orgOnly && !organizationId) {
 			// Non-MSO shop requesting org search - fall back to shop-only
 			dbQuery = dbQuery.eq('shop_id', shopId)
