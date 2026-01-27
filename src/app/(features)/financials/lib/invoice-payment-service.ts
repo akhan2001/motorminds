@@ -123,15 +123,26 @@ export class InvoicePaymentService {
             payments: updatedPayments,
             amount_paid: newAmountPaid,
             outstanding_balance: newOutstandingBalance,
-            status: newStatus
+            status: newStatus,
+            updated_at: new Date().toISOString()
         }
 
         // Update paid_date: set if fully paid, clear if not fully paid
         if (newStatus === 'paid') {
             updateData.paid_date = new Date().toISOString()
-        } else if (newStatus === 'unpaid' || newStatus === 'partially_paid') {
+        } else if (newStatus === 'unpaid' || newStatus === 'partially_paid' || newStatus === 'sent') {
             updateData.paid_date = null
         }
+
+        console.log('Updating invoice payment status:', {
+            invoiceNumber,
+            paymentId,
+            previousStatus: invoice.status,
+            newStatus,
+            previousAmountPaid: invoice.total_amount,
+            newAmountPaid,
+            activePaymentsCount: activePayments.length
+        })
 
         const { error: updateError, data: updatedInvoice } = await supabase
             .from('invoices_table')
@@ -145,20 +156,35 @@ export class InvoicePaymentService {
             throw new Error(`Failed to archive payment: ${updateError.message}`)
         }
 
+        console.log('Invoice updated successfully:', updatedInvoice)
+
         // Verify the update worked correctly
         if (updatedInvoice) {
             const actualAmountPaid = Number(updatedInvoice.amount_paid) || 0
-            if (Math.abs(actualAmountPaid - newAmountPaid) > 0.01) {
-                console.warn(`Payment deletion: Expected amount_paid ${newAmountPaid}, but got ${actualAmountPaid}. Database trigger may have overridden the value.`)
-                // Try one more time with explicit values
-                await supabase
+            const actualStatus = updatedInvoice.status
+            
+            // Check if status or amount wasn't updated correctly (possible database trigger interference)
+            if (Math.abs(actualAmountPaid - newAmountPaid) > 0.01 || actualStatus !== newStatus) {
+                console.warn(`Payment deletion: Values may not have updated correctly.
+                    Expected amount_paid: ${newAmountPaid}, got: ${actualAmountPaid}
+                    Expected status: ${newStatus}, got: ${actualStatus}`)
+                
+                // Force update with explicit values
+                const { error: forceUpdateError } = await supabase
                     .from('invoices_table')
                     .update({ 
                         amount_paid: newAmountPaid,
                         outstanding_balance: newOutstandingBalance,
-                        status: newStatus
+                        status: newStatus,
+                        updated_at: new Date().toISOString()
                     })
                     .eq('invoice_number', invoiceNumber)
+                
+                if (forceUpdateError) {
+                    console.error('Force update also failed:', forceUpdateError)
+                } else {
+                    console.log('Force update succeeded')
+                }
             }
         }
     }

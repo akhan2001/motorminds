@@ -80,6 +80,10 @@ export function useInvoice(invoiceId: string, options?: { includeArchived?: bool
             const { data, error } = await query.single()
 
             if (error) {
+                // PGRST116 means "no rows returned" - this is expected if invoice was archived
+                if (error.code === 'PGRST116') {
+                    return null
+                }
                 console.error('Error fetching invoice:', error)
                 throw error
             }
@@ -353,13 +357,13 @@ async function syncInvoiceItemsToWorkOrder(
     }
 }
 
-// Delete invoice
+// Archive invoice (soft delete)
 export function useDeleteInvoice() {
     const queryClient = useQueryClient()
 
     return useMutation({
         mutationFn: async ({ id, shop_id }: { id: string; shop_id: string }) => {
-            // First, fetch the invoice to get work_order_id before deleting
+            // First, fetch the invoice to get work_order_id for cache invalidation
             const { data: invoice, error: fetchError } = await supabase
                 .from('invoices_table')
                 .select('work_order_id')
@@ -367,35 +371,41 @@ export function useDeleteInvoice() {
                 .single()
 
             if (fetchError && fetchError.code !== 'PGRST116') {
-                throw fetchError
+                console.error('Error fetching invoice for archive:', fetchError)
+                // Continue anyway - we'll try to archive
             }
 
-            // If linked to a work order, clear the work order's invoice_id reference
-            if (invoice?.work_order_id) {
-                const { error: workOrderUpdateError } = await supabase
-                    .from('work_orders')
-                    .update({ invoice_id: null })
-                    .eq('id', invoice.work_order_id)
-
-                if (workOrderUpdateError) {
-                    console.error('Error clearing work order invoice reference:', workOrderUpdateError)
-                    // Don't throw - continue with invoice deletion
-                }
-            }
-
-            // Delete the invoice
-            const { error } = await supabase
+            // Archive the invoice (soft delete)
+            // The relationship is stored in invoices_table.work_order_id, so archiving the invoice
+            // is sufficient - no need to update the work_orders table
+            const { data: archivedInvoice, error } = await supabase
                 .from('invoices_table')
-                .delete()
+                .update({ 
+                    archived: true, 
+                    status: 'cancelled',
+                    updated_at: new Date().toISOString()
+                })
                 .eq('invoice_number', id)
+                .select('invoice_number, archived, status')
+                .single()
 
-            if (error) throw error
+            if (error) {
+                console.error('Error archiving invoice:', error)
+                throw new Error(`Failed to archive invoice: ${error.message}`)
+            }
+
+            if (!archivedInvoice) {
+                throw new Error('Invoice not found or already archived')
+            }
+
+            console.log('Invoice archived successfully:', archivedInvoice)
             return { id, shop_id, work_order_id: invoice?.work_order_id }
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['invoices', data.shop_id] })
+            queryClient.invalidateQueries({ queryKey: ['invoice', data.id] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
-            // Invalidate work order queries to reflect invoice removal
+            // Invalidate work order queries to reflect invoice change
             if (data.work_order_id) {
                 queryClient.invalidateQueries({ queryKey: ['work-order-invoice', data.work_order_id] })
                 queryClient.invalidateQueries({ queryKey: ['work-orders'] })
@@ -403,6 +413,9 @@ export function useDeleteInvoice() {
             // Invalidate financials queries
             queryClient.invalidateQueries({ queryKey: ['financial-stats'] })
             queryClient.invalidateQueries({ queryKey: ['financials'] })
+        },
+        onError: (error: Error) => {
+            console.error('useDeleteInvoice error:', error)
         }
     })
 }
@@ -746,6 +759,9 @@ export function useSyncInvoiceFromWorkOrder() {
             queryClient.invalidateQueries({ queryKey: ['invoice', data.invoice_number] })
             queryClient.invalidateQueries({ queryKey: ['invoice-stats', data.shop_id] })
             queryClient.invalidateQueries({ queryKey: ['work-order-invoice', variables.work_order_id] })
+            // Also invalidate work orders to refresh totals displayed in the kanban
+            queryClient.invalidateQueries({ queryKey: ['work-orders'] })
+            queryClient.invalidateQueries({ queryKey: ['work-order-items', variables.work_order_id] })
         }
     })
 }

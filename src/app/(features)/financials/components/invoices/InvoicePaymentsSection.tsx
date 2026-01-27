@@ -5,7 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Plus, Trash2, DollarSign, CreditCard } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Plus, Trash2, DollarSign, CreditCard, AlertTriangle, Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/currency'
 import { format } from 'date-fns'
 import type { InvoiceWithDetails, Payment } from '../../types/invoice'
@@ -18,6 +28,8 @@ interface InvoicePaymentsSectionProps {
 
 export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps) {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+    const [paymentToRemove, setPaymentToRemove] = useState<Payment | null>(null)
+    const [deletionReason, setDeletionReason] = useState('')
     const addPayment = useAddInvoicePayment()
     const removePayment = useRemoveInvoicePayment()
 
@@ -58,13 +70,26 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
         invoice.status !== 'refunded'
     )
 
-    const handleRemovePayment = async (paymentId: string) => {
-        if (confirm('Are you sure you want to remove this payment?')) {
-            await removePayment.mutateAsync({
-                invoiceNumber: invoice.invoice_number,
-                paymentId
-            })
-        }
+    const handleRemovePayment = (payment: Payment) => {
+        setPaymentToRemove(payment)
+        setDeletionReason('')
+    }
+
+    const confirmRemovePayment = async () => {
+        if (!paymentToRemove) return
+        
+        await removePayment.mutateAsync({
+            invoiceNumber: invoice.invoice_number,
+            paymentId: paymentToRemove.id,
+            deletionReason: deletionReason.trim() || undefined
+        })
+        setPaymentToRemove(null)
+        setDeletionReason('')
+    }
+
+    const cancelRemovePayment = () => {
+        setPaymentToRemove(null)
+        setDeletionReason('')
     }
 
     const getPaymentMethodLabel = (method: string) => {
@@ -182,7 +207,7 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleRemovePayment(payment.id)}
+                                            onClick={() => handleRemovePayment(payment)}
                                             disabled={removePayment.isPending}
                                             className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
                                         >
@@ -208,6 +233,93 @@ export function InvoicePaymentsSection({ invoice }: InvoicePaymentsSectionProps)
                 outstandingBalance={outstanding}
                 totalAmount={invoice.total_amount}
             />
+
+            {/* Remove Payment Confirmation Dialog */}
+            <Dialog open={!!paymentToRemove} onOpenChange={(open) => !open && cancelRemovePayment()}>
+                <DialogContent className="max-w-md bg-slate-50 dark:bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3 text-foreground">
+                            <div className="flex items-center justify-center w-10 h-10 bg-red-50 dark:bg-red-500/10 rounded-full">
+                                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                            </div>
+                            Archive Payment
+                        </DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                            This payment will be archived and removed from the invoice balance.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {paymentToRemove && (
+                        <div className="space-y-4">
+                            {/* Payment Details */}
+                            <div className="bg-white dark:bg-background rounded-lg p-4 border border-border">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                    <span className="font-semibold text-foreground">
+                                        {formatCurrency(paymentToRemove.amount)}
+                                    </span>
+                                    <Badge variant="outline" className="text-xs">
+                                        {getPaymentMethodLabel(paymentToRemove.payment_method)}
+                                    </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                    {format(new Date(paymentToRemove.payment_date), 'MMM d, yyyy')}
+                                </div>
+                            </div>
+
+                            {/* Reason Input */}
+                            <div className="space-y-2">
+                                <Label htmlFor="deletion-reason" className="text-foreground">
+                                    Reason for removal (optional)
+                                </Label>
+                                <Input
+                                    id="deletion-reason"
+                                    value={deletionReason}
+                                    onChange={(e) => setDeletionReason(e.target.value)}
+                                    placeholder="e.g., Customer refund, incorrect entry..."
+                                    className="bg-white dark:bg-background border-border text-foreground"
+                                />
+                            </div>
+
+                            {/* Info Box */}
+                            <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-300 dark:border-blue-500/20 rounded-lg p-3">
+                                <p className="text-blue-600 dark:text-blue-300 text-sm">
+                                    The payment record will be kept for audit purposes but removed from the active balance.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={cancelRemovePayment}
+                            disabled={removePayment.isPending}
+                            className="border-border"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmRemovePayment}
+                            disabled={removePayment.isPending}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {removePayment.isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Archiving...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Archive Payment
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }

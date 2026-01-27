@@ -31,6 +31,7 @@ import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
 import { InvoicePaymentsSection } from './InvoicePaymentsSection'
 import { InvoicePreviewModal } from './InvoicePreviewModal'
+import { InvoiceDeleteConfirmation } from './InvoiceDeleteConfirmation'
 import { useRouter } from 'next/navigation'
 import { useShopInfo } from '@/hooks/core/useShopInfo'
 import { useTemplatePreference } from '../../hooks/use-template-preference'
@@ -66,6 +67,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false)
     const [isSendSmsModalOpen, setIsSendSmsModalOpen] = useState(false)
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const pdfElementRef = useRef<HTMLDivElement>(null)
     
@@ -73,14 +75,14 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const canDelete = userRole ? ADMIN_ROLES.includes(userRole) : false
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
-
         try {
             await deleteMutation.mutateAsync({ id: invoiceId, shop_id: shopId || '' })
-            toast.success('Invoice deleted successfully')
+            toast.success('Invoice archived successfully')
+            setIsDeleteModalOpen(false)
             onClose()
-        } catch (error) {
-            toast.error('Failed to delete invoice')
+        } catch (error: any) {
+            console.error('Failed to archive invoice:', error)
+            toast.error(error?.message || 'Failed to archive invoice')
         }
     }
 
@@ -683,11 +685,11 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                         size="sm"
                         variant="outline"
                         className="ml-auto bg-red-600 text-white hover:bg-red-700 border-red-600"
-                        onClick={handleDelete}
+                        onClick={() => setIsDeleteModalOpen(true)}
                         disabled={deleteMutation.isPending}
                     >
                         <Trash2 className="w-4 h-4 mr-2" />
-                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                        Delete
                     </Button>
                 )}
             </div>
@@ -749,6 +751,26 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                 >
                     <TonyTemplatePreview invoice={invoice} shop={shopInfo} />
                 </div>
+            )}
+
+            {/* Invoice Delete Confirmation Modal */}
+            {invoice && (
+                <InvoiceDeleteConfirmation
+                    invoice={{
+                        id: invoice.id,
+                        invoice_number: invoice.invoice_number,
+                        display_id: invoice.display_id ? Number(invoice.display_id) : undefined,
+                        title: invoice.title ?? undefined,
+                        status: invoice.status,
+                        total_amount: invoice.total_amount,
+                        customer: invoice.customer ?? undefined,
+                        vehicle: invoice.vehicle ?? undefined
+                    }}
+                    isOpen={isDeleteModalOpen}
+                    isDeleting={deleteMutation.isPending}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={handleDelete}
+                />
             )}
         </div>
     )
