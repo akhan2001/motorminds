@@ -47,10 +47,16 @@ export function AddPaymentDialog({
     
     const addPayment = useAddInvoicePayment()
 
-    // Auto-set amount to 0 for $0 invoices
+    // Reset form when dialog opens - ensure payment date is always today
     useEffect(() => {
-        if (isOpen && totalAmount === 0) {
-            setAmount('0')
+        if (isOpen) {
+            // Always reset payment date to current date when dialog opens
+            setPaymentDate(new Date().toISOString().split('T')[0])
+            
+            // Auto-set amount to 0 for $0 invoices
+            if (totalAmount === 0) {
+                setAmount('0')
+            }
         }
     }, [isOpen, totalAmount])
 
@@ -99,8 +105,11 @@ export function AddPaymentDialog({
             setPaymentDate(new Date().toISOString().split('T')[0])
             setPaymentReference('')
             setNotes('')
+            
+            // Close dialog immediately after successful payment
+            onClose()
         } catch (error) {
-            // Error is handled by the mutation
+            // Error is handled by the mutation - don't close dialog on error
         }
     }
 

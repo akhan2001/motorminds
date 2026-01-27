@@ -1,10 +1,11 @@
 'use client'
 
 import React from 'react'
-import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, Receipt } from 'lucide-react'
+import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useInvoice } from '@/app/(features)/financials/hooks/use-invoices'
@@ -12,6 +13,7 @@ import { useWorkOrderItems } from '@/app/(features)/operations/hooks/use-work-or
 import { formatCurrency } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { formatPhoneNumber } from '@/lib/utils/formatters'
+import { format } from 'date-fns'
 
 interface InvoiceQuickViewProps {
     invoiceId: string // invoice_number
@@ -20,7 +22,7 @@ interface InvoiceQuickViewProps {
 }
 
 export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickViewProps) {
-    const { data: invoice, isLoading, error } = useInvoice(invoiceId)
+    const { data: invoice, isLoading, error } = useInvoice(invoiceId, { includeArchived: true })
     
     // Fetch work order items to get expense items (tracking only)
     const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
@@ -96,6 +98,36 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
     const tax = subtotal * (invoice.tax_rate || 0)
     const total = subtotal + tax - (invoice.discount_amount || 0)
 
+    // Calculate amount_paid from active (non-deleted) payments
+    const allPayments = (invoice.payments || []) as any[]
+    const activePayments = allPayments.filter(p => !p.deleted)
+    const calculatedAmountPaid = activePayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
+    const hasActivePayments = activePayments.length > 0
+    
+    // Calculate outstanding balance
+    const calculatedOutstanding = Math.max(0, total - calculatedAmountPaid)
+    const paymentProgress = total > 0 ? (calculatedAmountPaid / total) * 100 : 0
+    
+    // Determine payment status
+    const isFullyPaid = hasActivePayments && total > 0 && (
+        calculatedOutstanding < 0.01 || 
+        Math.abs(calculatedAmountPaid - total) < 0.01 || 
+        calculatedAmountPaid >= total
+    )
+    const isPartiallyPaid = hasActivePayments && calculatedAmountPaid > 0 && !isFullyPaid
+
+    const getPaymentMethodLabel = (method: string) => {
+        const labels: Record<string, string> = {
+            cash: 'Cash',
+            credit_card: 'Credit Card',
+            debit: 'Debit',
+            bank_transfer: 'Bank Transfer',
+            check: 'Check',
+            other: 'Other'
+        }
+        return labels[method] || method
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col bg-popover dark:bg-[#0d0d0d] border-border dark:border-[#2a2a2a] [&>button:last-child]:hidden">
@@ -117,14 +149,14 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                         <div className="flex items-center gap-2">
                             <Badge
                                 className={
-                                    invoice.status === 'paid'
+                                    isFullyPaid
                                         ? 'bg-green-600 text-white border-green-600'
-                                        : invoice.status === 'partially_paid'
+                                        : isPartiallyPaid
                                         ? 'bg-yellow-600 text-white border-yellow-600'
                                         : 'bg-red-600 text-white border-red-600'
                                 }
                             >
-                                {invoice.status.replace('_', ' ').toUpperCase()}
+                                {isFullyPaid ? 'PAID' : isPartiallyPaid ? 'PARTIAL' : invoice.status?.toUpperCase() || 'UNPAID'}
                             </Badge>
                             <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 ml-2">
                                 <X className="h-4 w-4" />
@@ -140,7 +172,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                         <p className="text-muted-foreground dark:text-gray-400">
                             Issued: {formatDateString(invoice.issue_date)}
                         </p>
-                        {invoice.paid_date && (
+                        {invoice.paid_date && isFullyPaid && (
                             <>
                                 <span className="text-muted-foreground dark:text-gray-500">|</span>
                                 <p className="text-green-600 dark:text-green-400 font-medium">
@@ -177,7 +209,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                     </div>
                                     <div>
                                         <p className="text-xs text-muted-foreground dark:text-gray-500">Phone</p>
-                                        <p className="text-foreground dark:text-gray-300">{formatPhoneNumber(invoice.customer?.customer_phone || null)}</p>
+                                        <p className="text-foreground dark:text-gray-300">{invoice.customer?.customer_phone ? formatPhoneNumber(invoice.customer.customer_phone) : 'N/A'}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-muted-foreground dark:text-gray-500">Email</p>
@@ -224,7 +256,10 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                     {/* Line Items Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
                         <div className="p-4">
-                            <h3 className="text-lg font-semibold text-foreground dark:text-white mb-4">Items</h3>
+                            <div className="flex items-center gap-2 mb-4">
+                                <LayoutIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                <h3 className="text-lg font-semibold text-foreground dark:text-white">Items</h3>
+                            </div>
                             
                             {/* Line Items Table */}
                             <div className="space-y-2">
@@ -238,20 +273,39 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                 {/* Invoice Items */}
                                 {invoice.invoice_items.map((item: any, index: number) => {
                                     const isActive = item.active !== false
+                                    const isExpense = item.item_type === 'expense'
                                     return (
-                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-border dark:border-gray-800">
+                                        <div 
+                                            key={index} 
+                                            className={`grid grid-cols-12 gap-2 items-center text-sm py-2 border-b ${
+                                                !isActive
+                                                    ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
+                                                    : isExpense
+                                                    ? 'border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5'
+                                                    : 'border-border dark:border-gray-800'
+                                            }`}
+                                        >
                                             <div className="col-span-5 text-foreground dark:text-white">
                                                 <div className="flex items-center gap-2">
                                                     {isActive ? (
-                                                        <Check className="h-3 w-3 text-green-500" />
+                                                        <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
                                                     ) : (
-                                                        <XCircle className="h-3 w-3 text-red-500" />
+                                                        <XCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
                                                     )}
-                                                    <span>{item.description}</span>
+                                                    <span className="truncate">{item.description}</span>
                                                 </div>
                                             </div>
                                             <div className="col-span-2 text-center">
-                                                <Badge variant="outline" className="text-xs capitalize text-foreground dark:text-white">
+                                                <Badge 
+                                                    variant="outline" 
+                                                    className={`text-xs capitalize ${
+                                                        !isActive
+                                                            ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20'
+                                                            : isExpense
+                                                            ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
+                                                            : 'text-foreground dark:text-white'
+                                                    }`}
+                                                >
                                                     {item.item_type}
                                                 </Badge>
                                             </div>
@@ -272,6 +326,55 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                 })}
                             </div>
 
+                            {/* Expense Items (Tracking Only) */}
+                            {expenseItems.length > 0 && (
+                                <>
+                                    <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-500/20">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30 text-xs">
+                                                Shop Expenses (Tracking Only)
+                                            </Badge>
+                                            <span className="text-xs text-orange-600/70 dark:text-orange-400/70">
+                                                Not included in totals
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {expenseItems.map((item: any, index: number) => (
+                                        <div 
+                                            key={`expense-${index}`} 
+                                            className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
+                                        >
+                                            <div className="col-span-5 text-foreground dark:text-white">
+                                                <div className="flex items-center gap-2">
+                                                    <Check className="h-3 w-3 text-orange-500 flex-shrink-0" />
+                                                    <span className="truncate">{item.description}</span>
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2 text-center">
+                                                <Badge 
+                                                    variant="outline" 
+                                                    className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
+                                                >
+                                                    expense
+                                                </Badge>
+                                            </div>
+                                            <div className="col-span-2 text-center text-foreground dark:text-white">
+                                                {item.quantity || 1}
+                                            </div>
+                                            <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
+                                                {formatCurrency(item.total_price || 0)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
+                                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
+                                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                            {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+
                             {invoice.notes && (
                                 <div className="mt-4 pt-4 border-t border-border dark:border-gray-700">
                                     <p className="text-foreground dark:text-white font-medium">Notes:</p>
@@ -280,66 +383,6 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                             )}
                         </div>
                     </Card>
-
-                    {/* Expense Items Card (Tracking Only - Not Billed) */}
-                    {expenseItems.length > 0 && (
-                        <Card className="bg-orange-50/50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/20">
-                            <div className="p-4">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                                    <h3 className="text-lg font-semibold text-orange-600 dark:text-orange-400">Shop Expenses</h3>
-                                    <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30 text-xs">
-                                        Tracking Only
-                                    </Badge>
-                                </div>
-                                <p className="text-xs text-orange-600/70 dark:text-orange-400/70 mb-3">
-                                    These expenses are for internal cost tracking and are not included in the customer invoice.
-                                </p>
-                                
-                                {/* Expense Items Table */}
-                                <div className="space-y-2">
-                                    <div className="grid grid-cols-12 gap-2 text-xs font-bold text-orange-600/80 dark:text-orange-400/80 border-b border-orange-200 dark:border-orange-500/20 pb-2">
-                                        <div className="col-span-5">DESCRIPTION</div>
-                                        <div className="col-span-4 text-center">VENDOR / INVOICE</div>
-                                        <div className="col-span-3 text-right">COST</div>
-                                    </div>
-
-                                    {expenseItems.map((item: any, index: number) => (
-                                        <div key={index} className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-200/50 dark:border-orange-500/10">
-                                            <div className="col-span-5 text-foreground dark:text-white">
-                                                <div className="flex items-center gap-2">
-                                                    <Receipt className="h-3 w-3 text-orange-500" />
-                                                    <span>{item.description}</span>
-                                                </div>
-                                                {item.expense_cost_date && (
-                                                    <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5">
-                                                        {formatDate(item.expense_cost_date)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="col-span-4 text-center text-muted-foreground dark:text-gray-400 text-xs">
-                                                {item.expense_vendor || item.supplier || '-'}
-                                                {(item.expense_invoice_number || item.part_number) && (
-                                                    <div>#{item.expense_invoice_number || item.part_number}</div>
-                                                )}
-                                            </div>
-                                            <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
-                                                {formatCurrency(item.total_price || 0)}
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {/* Expense Total */}
-                                    <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
-                                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
-                                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                            {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                    )}
 
                     {/* Invoice Summary Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
@@ -370,24 +413,89 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                     <p className="text-muted-foreground dark:text-gray-400 font-medium">Total Amount:</p>
                                     <p className="text-2xl font-bold text-foreground dark:text-white">{formatCurrency(total)}</p>
                                 </div>
-                                {(invoice.amount_paid !== undefined && invoice.amount_paid > 0) && (
-                                    <>
-                                        <Separator className="bg-border dark:bg-gray-700" />
-                                        <div className="flex justify-between items-center pt-2">
-                                            <p className="text-muted-foreground dark:text-gray-400 font-medium">Amount Paid:</p>
-                                            <p className="text-xl font-semibold text-green-600 dark:text-green-400">
-                                                {formatCurrency(invoice.amount_paid)}
-                                            </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Payments Summary Card */}
+                    <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
+                        <div className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <CreditCard className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                <h3 className="text-lg font-semibold text-foreground dark:text-white">Payments</h3>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground dark:text-gray-400">Total Amount:</span>
+                                    <span className="text-sm font-medium text-foreground dark:text-white">
+                                        {formatCurrency(total)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground dark:text-gray-400">Amount Paid:</span>
+                                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                                        {formatCurrency(calculatedAmountPaid)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground dark:text-gray-400">Outstanding:</span>
+                                    <span className={`text-sm font-semibold ${
+                                        calculatedOutstanding > 0 
+                                            ? 'text-orange-600 dark:text-orange-400' 
+                                            : 'text-green-600 dark:text-green-400'
+                                    }`}>
+                                        {formatCurrency(calculatedOutstanding)}
+                                    </span>
+                                </div>
+                                
+                                {/* Progress Bar */}
+                                {total > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-xs text-muted-foreground dark:text-gray-400">
+                                            <span>Payment Progress</span>
+                                            <span>{paymentProgress.toFixed(0)}%</span>
                                         </div>
-                                        {(invoice.outstanding_balance !== undefined && invoice.outstanding_balance > 0) && (
-                                            <div className="flex justify-between items-center">
-                                                <p className="text-muted-foreground dark:text-gray-400 font-medium">Outstanding:</p>
-                                                <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
-                                                    {formatCurrency(invoice.outstanding_balance)}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </>
+                                        <Progress 
+                                            value={Math.min(paymentProgress, 100)} 
+                                            className="h-2"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Payment History */}
+                                {activePayments.length > 0 ? (
+                                    <div className="space-y-2 pt-2">
+                                        <h4 className="text-sm font-medium text-foreground dark:text-white">
+                                            Payment History
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {activePayments.map((payment: any) => (
+                                                <div
+                                                    key={payment.id}
+                                                    className="flex items-center justify-between p-3 bg-background dark:bg-[#0f0f0f] rounded-lg border border-border dark:border-[#2a2a2a]"
+                                                >
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <CreditCard className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
+                                                            <span className="font-medium text-foreground dark:text-white">
+                                                                {formatCurrency(payment.amount)}
+                                                            </span>
+                                                            <Badge variant="outline" className="text-xs">
+                                                                {getPaymentMethodLabel(payment.payment_method)}
+                                                            </Badge>
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground dark:text-gray-400">
+                                                            {format(new Date(payment.payment_date), 'MMM d, yyyy')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4 text-sm text-muted-foreground dark:text-gray-400">
+                                        No payments recorded yet
+                                    </div>
                                 )}
                             </div>
                         </div>

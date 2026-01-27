@@ -12,11 +12,13 @@ import type { CustomerHistory } from './types'
 interface CustomerHistoryTabsProps {
     customerHistory?: CustomerHistory | null
     loading?: boolean
+    error?: string | null
 }
 
 export const CustomerHistoryTabs: React.FC<CustomerHistoryTabsProps> = ({
     customerHistory,
-    loading = false
+    loading = false,
+    error = null
 }) => {
     return (
         <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
@@ -30,6 +32,12 @@ export const CustomerHistoryTabs: React.FC<CustomerHistoryTabsProps> = ({
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                ) : error ? (
+                    <div className="flex items-center justify-center py-8">
+                        <p className="text-red-500 dark:text-red-400 text-sm">
+                            Failed to load history: {error}
+                        </p>
                     </div>
                 ) : (
                     <Tabs defaultValue="work-orders" className="w-full">

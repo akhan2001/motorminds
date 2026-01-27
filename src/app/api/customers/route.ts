@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { getShopIdForUser } from '@/utils/get-shop-id';
+import { getUserAccessContextFromRequest, canAccessScope, type AccessScope } from '@/lib/auth/access-context';
+import { 
+    queryCustomersForUser, 
+    createCustomer as createCustomerService,
+    type CustomerQueryOptions 
+} from '@/lib/services/customer-query-service';
 
 // Types
 interface CreateCustomerRequest {
@@ -14,65 +20,57 @@ interface CreateCustomerRequest {
     tags?: string[];
 }
 
-// GET /api/customers - Search customers
+/**
+ * GET /api/customers - Query customers with scope-aware filtering
+ * 
+ * Query Parameters:
+ * - search: Search term for name, email, phone, license plate, address
+ * - phone: Exact phone number filter
+ * - scope: Access scope ('shop' | 'organization' | 'platform') - defaults to user's scope
+ * - shop_id: Filter to specific shop (must be within user's accessible shops)
+ * - page: Page number (1-indexed)
+ * - limit: Items per page (max 100)
+ */
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createClient();
-        const shopId = await getShopIdForUser();
+        const context = await getUserAccessContextFromRequest();
         
-        if (!shopId) {
-            return NextResponse.json({ error: 'Shop not found' }, { status: 403 });
+        if (!context) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
-        const search = searchParams.get('search');
-        const phone = searchParams.get('phone');
+        
+        // Parse query parameters
+        const search = searchParams.get('search') || undefined;
+        const phone = searchParams.get('phone') || undefined;
+        const shopFilter = searchParams.get('shop_id') || undefined;
+        const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '20');
-
-        // Get user's organization info for organization-aware search
-        const { data: shopData } = await supabase
-            .from('shops')
-            .select('organization_id')
-            .eq('id', shopId)
-            .single()
-
-        // Search customers with organization support
-        let query = supabase
-            .from('customers')
-            .select(`
-                *,
-                shops:shop_id (
-                    shop_name
-                )
-            `)
-            .order('updated_at', { ascending: false })
-            .limit(limit)
-
-        // Apply organization-aware filter
-        if (shopData?.organization_id) {
-            // MSO shop: include customers from same organization
-            query = query.or(`organization_id.eq.${shopData.organization_id},shop_id.eq.${shopId}`)
-        } else {
-            // Non-MSO shop: only same shop
-            query = query.eq('shop_id', shopId)
+        
+        // Optional scope override (must be equal or lower than user's scope)
+        const requestedScope = searchParams.get('scope') as AccessScope | null;
+        if (requestedScope && !canAccessScope(context.accessScope, requestedScope)) {
+            return NextResponse.json({ 
+                error: 'Forbidden: insufficient access scope' 
+            }, { status: 403 });
         }
 
-        if (phone) {
-            // Search by exact phone number
-            query = query.eq('customer_phone', phone);
-        } else if (search) {
-            // Use ILIKE search for name, email, and phone (works without special indexes)
-            query = query.or(`customer_name.ilike.%${search}%,customer_email.ilike.%${search}%,customer_phone.ilike.%${search}%`);
-        }
+        // Build query options
+        const options: CustomerQueryOptions = {
+            search,
+            phone,
+            shopFilter,
+            page,
+            limit,
+            sortBy: 'updated_at',
+            sortDirection: 'desc'
+        };
 
-        const { data: customers, error } = await query;
+        // Query customers using the unified service
+        const result = await queryCustomersForUser(context, options);
 
-        if (error) {
-            console.error('Database error:', error);
-            return NextResponse.json({ error: 'Failed to fetch customers' }, { status: 500 });
-        }
-
-        return NextResponse.json({ customers: customers || [] });
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error('GET /api/customers error:', error);
@@ -80,14 +78,17 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST /api/customers - Create new customer
+/**
+ * POST /api/customers - Create new customer
+ * 
+ * Automatically populates organization_id for MSO shops
+ */
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
-        const shopId = await getShopIdForUser();
+        const context = await getUserAccessContextFromRequest();
         
-        if (!shopId) {
-            return NextResponse.json({ error: 'Shop not found' }, { status: 403 });
+        if (!context || !context.shopId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body: CreateCustomerRequest = await request.json();
@@ -109,49 +110,26 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Check if customer with same phone number already exists
-        if (customer_phone) {
-            const { data: existingCustomer } = await supabase
-                .from('customers')
-                .select('id')
-                .eq('shop_id', shopId)
-                .eq('customer_phone', customer_phone)
-                .maybeSingle();
+        // Create customer using the unified service
+        const result = await createCustomerService(context, {
+            customer_name,
+            customer_email: customer_email || null,
+            customer_phone: customer_phone || null,
+            customer_address: customer_address || null,
+            customer_vehicle: customer_vehicle || null,
+            license_plate: license_plate || null,
+            notes: notes || null,
+            tags: tags || []
+        });
 
-            if (existingCustomer) {
-                return NextResponse.json({ 
-                    error: 'Customer with this phone number already exists' 
-                }, { status: 409 });
-            }
-        }
-
-        // Create customer
-        const { data: customer, error } = await supabase
-            .from('customers')
-            .insert({
-                shop_id: shopId,
-                customer_name,
-                customer_email: customer_email || null,
-                customer_phone: customer_phone || null,
-                customer_address: customer_address || null,
-                customer_vehicle: customer_vehicle || null,
-                license_plate: license_plate || null,
-                notes: notes || null,
-                tags: tags || [],
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Failed to create customer:', error);
-            return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
+        if (!result.success) {
+            const status = result.error?.includes('already exists') ? 409 : 500;
+            return NextResponse.json({ error: result.error }, { status });
         }
 
         return NextResponse.json({ 
             success: true, 
-            customer 
+            customer: result.customer 
         });
 
     } catch (error) {
@@ -160,14 +138,17 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// PUT /api/customers/:id - Update customer (for future use)
+/**
+ * PUT /api/customers?id=<customer_id> - Update customer with access control
+ * 
+ * For organization scope: can only edit customers from own shop
+ */
 export async function PUT(request: NextRequest) {
     try {
-        const supabase = await createClient();
-        const shopId = await getShopIdForUser();
+        const context = await getUserAccessContextFromRequest();
         
-        if (!shopId) {
-            return NextResponse.json({ error: 'Shop not found' }, { status: 403 });
+        if (!context) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await request.json();
@@ -178,25 +159,20 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Customer ID required' }, { status: 400 });
         }
 
-        const { data: customer, error } = await supabase
-            .from('customers')
-            .update({
-                ...body,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', customerId)
-            .eq('shop_id', shopId)
-            .select()
-            .single();
+        // Import the update function from the service
+        const { updateCustomer } = await import('@/lib/services/customer-query-service');
+        
+        const result = await updateCustomer(context, customerId, body);
 
-        if (error) {
-            console.error('Failed to update customer:', error);
-            return NextResponse.json({ error: 'Failed to update customer' }, { status: 500 });
+        if (!result.success) {
+            const status = result.error?.includes('not found') ? 404 : 
+                          result.error?.includes('access denied') ? 403 : 500;
+            return NextResponse.json({ error: result.error }, { status });
         }
 
         return NextResponse.json({ 
             success: true, 
-            customer 
+            customer: result.customer 
         });
 
     } catch (error) {

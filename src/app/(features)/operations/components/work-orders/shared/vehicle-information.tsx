@@ -65,6 +65,8 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [availableModels, setAvailableModels] = useState<string[]>([])
     const [showCustomModel, setShowCustomModel] = useState(false)
     const [mileageUnit, setMileageUnit] = useState<'km' | 'miles'>('km')
+    // Trigger to refresh the vehicle dropdown when a new vehicle is saved
+    const [vehicleRefreshTrigger, setVehicleRefreshTrigger] = useState(0)
 
     // When creating a new vehicle, allow full editing even in work order mode
     const isCreatingNewVehicle = isCreating && (!selectedVehicleId || selectedVehicleId === "new")
@@ -278,6 +280,9 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             
             toast.success(`Vehicle "${savedVehicle.year} ${savedVehicle.make} ${savedVehicle.model}" created successfully`)
             
+            // Refresh the vehicle dropdown to include the new vehicle
+            setVehicleRefreshTrigger(prev => prev + 1)
+            
             // Notify parent component with the new vehicle data
             onVehicleSaved?.(savedVehicle.id, {
                 id: savedVehicle.id,
@@ -290,7 +295,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                 mileage: savedVehicle.mileage
             })
             
-            // Update the vehicle ID to the newly created vehicle
+            // Update the vehicle ID to the newly created vehicle (auto-select)
             onVehicleSelect?.(savedVehicle.id, VehicleService.toVehicleOption(savedVehicle))
             
         } catch (error: any) {
@@ -363,6 +368,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             placeholder="Select Vehicle or Add New"
                             className="w-full"
                             isLoading={!customerId}
+                            refreshTrigger={vehicleRefreshTrigger}
                         />
                     </div>
                 )}

@@ -1,37 +1,77 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
-import { getShopIdForUser } from '@/utils/get-shop-id'
+import { 
+    getUserAccessContextFromRequest, 
+    hasOrganizationAccess,
+    getAvailableShopsForUser,
+    type UserAccessContext 
+} from '@/lib/auth/access-context'
+
+export interface OrganizationCheckResponse {
+    /** Whether user can access organization-wide data */
+    hasOrganizationAccess: boolean
+    /** The user's organization ID (if any) */
+    organizationId: string | null
+    /** The user's access scope */
+    accessScope: UserAccessContext['accessScope']
+    /** The user's current shop ID */
+    shopId: string | null
+    /** All shops the user can access */
+    availableShops: Array<{ id: string; shop_name: string }>
+    /** The user's role */
+    role: string
+    /** Whether user can edit customers */
+    canEdit: boolean
+    /** Whether user can delete customers */
+    canDelete: boolean
+}
 
 export async function GET(request: NextRequest) {
     try {
-        const shopId = await getShopIdForUser()
-        if (!shopId) {
-            return NextResponse.json({ hasOrganizationAccess: false })
+        const context = await getUserAccessContextFromRequest()
+        
+        if (!context) {
+            return NextResponse.json<OrganizationCheckResponse>({ 
+                hasOrganizationAccess: false,
+                organizationId: null,
+                accessScope: 'shop',
+                shopId: null,
+                availableShops: [],
+                role: 'user',
+                canEdit: false,
+                canDelete: false
+            })
         }
 
-        const supabase = await createClient()
+        // Get available shops for filtering
+        const shops = await getAvailableShopsForUser(context)
+        const availableShops = shops.map(s => ({ 
+            id: s.id, 
+            shop_name: s.shop_name 
+        }))
 
-        // Get user's shop and check if it has an organization
-        const { data: shopData, error: shopError } = await supabase
-            .from('shops')
-            .select('organization_id')
-            .eq('id', shopId)
-            .single()
-
-        if (shopError || !shopData) {
-            return NextResponse.json({ hasOrganizationAccess: false })
-        }
-
-        // If shop has organization_id, user can access organization features
-        const hasOrganizationAccess = !!shopData.organization_id
-
-        return NextResponse.json({ 
-            hasOrganizationAccess,
-            organizationId: shopData.organization_id 
+        return NextResponse.json<OrganizationCheckResponse>({ 
+            hasOrganizationAccess: hasOrganizationAccess(context),
+            organizationId: context.organizationId,
+            accessScope: context.accessScope,
+            shopId: context.shopId,
+            availableShops,
+            role: context.role,
+            canEdit: context.canEdit,
+            canDelete: context.canDelete
         })
 
     } catch (error) {
+        console.error('Error in organization-check:', error)
         // Safe fallback - if anything fails, default to no organization access
-        return NextResponse.json({ hasOrganizationAccess: false })
+        return NextResponse.json<OrganizationCheckResponse>({ 
+            hasOrganizationAccess: false,
+            organizationId: null,
+            accessScope: 'shop',
+            shopId: null,
+            availableShops: [],
+            role: 'user',
+            canEdit: false,
+            canDelete: false
+        })
     }
 }

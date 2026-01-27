@@ -14,6 +14,8 @@ import { useAuth } from '../../../operations/hooks/use-auth'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { InvoiceSendModal } from './InvoiceSendModal'
+import { InvoiceDeleteConfirmation } from './InvoiceDeleteConfirmation'
+import { formatInvoiceDisplayId } from '../../lib/invoice-calculations'
 
 interface InvoiceDetailsProps {
     invoiceId: string
@@ -25,16 +27,17 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const deleteMutation = useDeleteInvoice()
     const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this invoice?')) return
-        
         try {
             await deleteMutation.mutateAsync({ id: invoiceId, shop_id: shopId || '' })
-            toast.success('Invoice deleted successfully')
+            toast.success('Invoice archived successfully')
+            setIsDeleteModalOpen(false)
             onClose()
-        } catch (error) {
-            toast.error('Failed to delete invoice')
+        } catch (error: any) {
+            console.error('Failed to archive invoice:', error)
+            toast.error(error?.message || 'Failed to archive invoice')
         }
     }
 
@@ -126,7 +129,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
                     size="sm"
                     variant="outline"
                     className="ml-auto bg-transparent border-red-500/20 text-red-400 hover:bg-red-500/10"
-                    onClick={handleDelete}
+                    onClick={() => setIsDeleteModalOpen(true)}
                     disabled={deleteMutation.isPending}
                 >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -139,7 +142,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
                 <div className="flex items-start justify-between mb-4">
                     <div>
                         <h3 className="text-2xl font-bold text-white">
-                            {invoice.display_id || invoice.invoice_number}
+                            {formatInvoiceDisplayId(invoice.display_id, invoice.invoice_number)}
                         </h3>
                         <p className="text-gray-400 mt-1">{invoice.title}</p>
                     </div>
@@ -258,6 +261,26 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({ invoiceId, onClose }) =
                     isOpen={isSendModalOpen}
                     onClose={() => setIsSendModalOpen(false)}
                     onConfirm={handleSendConfirm}
+                />
+            )}
+
+            {/* Invoice Delete Confirmation Modal */}
+            {invoice && (
+                <InvoiceDeleteConfirmation
+                    invoice={{
+                        id: invoice.id,
+                        invoice_number: invoice.invoice_number,
+                        display_id: invoice.display_id ? Number(invoice.display_id) : undefined,
+                        title: invoice.title ?? undefined,
+                        status: invoice.status,
+                        total_amount: invoice.total_amount,
+                        customer: invoice.customer ?? undefined,
+                        vehicle: invoice.vehicle ?? undefined
+                    }}
+                    isOpen={isDeleteModalOpen}
+                    isDeleting={deleteMutation.isPending}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={handleDelete}
                 />
             )}
         </div>

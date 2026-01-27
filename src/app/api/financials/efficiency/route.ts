@@ -116,12 +116,15 @@ export async function GET(req: NextRequest) {
         });
         const totalRecurringCosts = recurringCostOccurrences.reduce((acc, c) => acc + c.amount, 0);
 
-        // Filter one-time costs and calculate total
+        // Filter one-time costs (excluding archived) and calculate total with tax breakdown
         const filteredOneTimeCosts = (oneTimeCostsData ?? []).filter(c => {
+            if (c.archived) return false; // Skip archived expenses
             const d = new Date(c.cost_date + 'T00:00:00Z');
             return d >= startDate && d <= endDate;
         });
         const totalOneTimeCosts = filteredOneTimeCosts.reduce((acc, c) => acc + c.amount, 0);
+        const totalOneTimeCostsSubtotal = filteredOneTimeCosts.reduce((acc, c) => acc + (c.subtotal || c.amount), 0);
+        const totalOneTimeCostsTax = filteredOneTimeCosts.reduce((acc, c) => acc + (c.tax_amount || 0), 0);
         
         const totalOperatingExpenses = totalRecurringCosts + totalOneTimeCosts + totalCogs;
         
@@ -182,6 +185,12 @@ export async function GET(req: NextRequest) {
                 cogs: totalCogs,
                 recurring: totalRecurringCosts,
                 oneTime: totalOneTimeCosts,
+            },
+            // Expense tax breakdown (for reports)
+            expenseTaxBreakdown: {
+                oneTimeSubtotal: totalOneTimeCostsSubtotal,
+                oneTimeTax: totalOneTimeCostsTax,
+                oneTimeTotal: totalOneTimeCosts,
             },
             // Granular revenue breakdown from invoices_table
             revenueBreakdown: {

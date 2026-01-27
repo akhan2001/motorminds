@@ -8,12 +8,12 @@ import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/w
 interface WorkOrderEditModalsProps {
     workOrder: WorkOrderKanbanItem
     workOrderDetails: WorkOrderWithDetails
-    onDelete?: (workOrderId: string) => void
+    onDelete?: (workOrderId: string, options?: { deleteInvoice?: boolean }) => void
     onClose: () => void
     isDeleteConfirmationOpen?: boolean
     isRevertDialogOpen?: boolean
     onDeleteCancel?: () => void
-    onDeleteConfirm?: () => void
+    onDeleteConfirm?: (options: { deleteInvoice: boolean }) => void
     onRevertCancel?: () => void
     onRevertConfirm?: () => void
     revertWarning?: string
@@ -42,7 +42,7 @@ export function WorkOrderEditModals({
                     workOrder={workOrder}
                     isOpen={isDeleteConfirmationOpen}
                     onClose={onDeleteCancel || onClose}
-                    onConfirm={onDeleteConfirm || (() => onDelete(workOrder.id))}
+                    onConfirm={onDeleteConfirm || ((options) => onDelete(workOrder.id, options))}
                 />
             )}
 

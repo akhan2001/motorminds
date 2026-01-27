@@ -108,3 +108,46 @@ export function useCustomerVehicles({
         error: error as Error | null
     }
 }
+
+// Hook for fetching recent customers (based on recent work orders/invoices)
+interface UseRecentCustomersProps {
+    enabled?: boolean
+    limit?: number
+}
+
+interface UseRecentCustomersReturn {
+    customers: (Customer & { lastActivity?: string })[]
+    isLoading: boolean
+    error: Error | null
+    refetch: () => void
+}
+
+export function useRecentCustomers({
+    enabled = true,
+    limit = 10
+}: UseRecentCustomersProps = {}): UseRecentCustomersReturn {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['customers', 'recent', limit],
+        queryFn: async () => {
+            const params = new URLSearchParams({
+                limit: limit.toString()
+            })
+            
+            const response = await fetch(`/api/customers/recent?${params}`)
+            if (!response.ok) {
+                throw new Error('Failed to fetch recent customers')
+            }
+            return response.json()
+        },
+        enabled,
+        staleTime: 2 * 60 * 1000, // 2 minutes - recent data changes more frequently
+        retry: 1
+    })
+
+    return {
+        customers: data?.customers || [],
+        isLoading,
+        error: error as Error | null,
+        refetch
+    }
+}

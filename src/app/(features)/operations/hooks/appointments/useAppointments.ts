@@ -307,12 +307,17 @@ export const useCreateWorkOrderFromAppointment = () => {
     return useMutation({
         mutationFn: AppointmentService.createWorkOrderFromAppointment,
         onSuccess: (workOrderId, appointmentId) => {
-            // Invalidate appointments to refresh status
+            // Invalidate all appointment queries to refresh status and work_order relationship
             queryClient.invalidateQueries({
-                queryKey: appointmentKeys.lists()
+                queryKey: appointmentKeys.all
             })
             queryClient.invalidateQueries({
                 queryKey: appointmentKeys.detail(appointmentId)
+            })
+            
+            // Also invalidate work orders to include the new work order
+            queryClient.invalidateQueries({
+                queryKey: ['work-orders']
             })
             
             // Show success message with navigation action

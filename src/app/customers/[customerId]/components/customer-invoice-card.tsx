@@ -137,7 +137,9 @@ export function CustomerInvoiceCard({ invoices }: CustomerInvoiceCardProps) {
                                     variant="outline" 
                                     className="flex-1 border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                     onClick={() => {
-                                        router.push(`/invoices/${invoice.id}`)
+                                        // Navigate to financials invoices page with invoice number to auto-select
+                                        const invoiceNumber = invoice.invoice_number || invoice.number
+                                        router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
                                     }}
                                 >
                                     View Invoice
@@ -147,8 +149,9 @@ export function CustomerInvoiceCard({ invoices }: CustomerInvoiceCardProps) {
                                         variant="outline" 
                                         className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                         onClick={() => {
-                                            // Handle payment or edit action
-                                            console.log('Handle payment for invoice:', invoice.id)
+                                            // Navigate to invoice page to add payment
+                                            const invoiceNumber = invoice.invoice_number || invoice.number
+                                            router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
                                         }}
                                     >
                                         <DollarSign className="h-4 w-4 mr-1" />
@@ -168,7 +171,7 @@ export function CustomerInvoiceCard({ invoices }: CustomerInvoiceCardProps) {
                     <Button 
                         className="border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                         onClick={() => {
-                            router.push(`/invoices`)
+                            router.push(`/financials/invoices`)
                         }}
                     >
                         <Plus className="h-4 w-4 mr-2" />

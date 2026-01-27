@@ -373,8 +373,9 @@ export class WorkOrderService {
     /**
      * Archive (soft delete) a work order
      * Requires admin/shop owner permission
+     * @param options.deleteInvoice - If true, also cancels the associated invoice
      */
-    async deleteWorkOrder(id: string): Promise<void> {
+    async deleteWorkOrder(id: string, options?: { deleteInvoice?: boolean }): Promise<void> {
         // Get current user ID
         const { data: { user } } = await this.supabase.auth.getUser()
         if (!user) {
@@ -403,7 +404,7 @@ export class WorkOrderService {
         }
 
         // Archive the work order instead of deleting
-        await workOrderArchiveService.archiveWorkOrder(id, user.id)
+        await workOrderArchiveService.archiveWorkOrder(id, user.id, options)
     }
 
     async deleteWorkOrderItem(id: string): Promise<void> {

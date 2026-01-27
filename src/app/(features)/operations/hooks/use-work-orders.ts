@@ -219,8 +219,9 @@ export function useDeleteWorkOrder() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (id: string) => workOrderService.deleteWorkOrder(id),
-        onSuccess: (_, deletedId) => {
+        mutationFn: ({ id, options }: { id: string; options?: { deleteInvoice?: boolean } }) => 
+            workOrderService.deleteWorkOrder(id, options),
+        onSuccess: (_, { id: deletedId, options }) => {
             // Remove from cache
             queryClient.removeQueries({ queryKey: workOrderKeys.detail(deletedId) })
 
@@ -230,7 +231,16 @@ export function useDeleteWorkOrder() {
             // Invalidate appointments since archiving a work order may reset appointment status
             queryClient.invalidateQueries({ queryKey: ['appointments'] })
 
-            toast.success('Work order archived successfully')
+            // If invoice was also deleted, invalidate invoice queries
+            if (options?.deleteInvoice) {
+                queryClient.invalidateQueries({ queryKey: ['invoices'] })
+                queryClient.invalidateQueries({ queryKey: ['invoice-stats'] })
+            }
+
+            const message = options?.deleteInvoice 
+                ? 'Work order and invoice archived successfully'
+                : 'Work order archived successfully'
+            toast.success(message)
         },
         onError: (error: any) => {
             console.error('Failed to archive work order:', error)
