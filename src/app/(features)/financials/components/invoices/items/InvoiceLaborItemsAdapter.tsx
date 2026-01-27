@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useRef, useEffect } from 'react'
 import { WorkOrderLaborItems } from '@/app/(features)/operations/components/work-orders/shared/items/WorkOrderLaborItems'
 import type { InvoiceItem } from '../../../types/invoice'
 
@@ -32,6 +32,14 @@ export function InvoiceLaborItemsAdapter({
     onItemsChange,
     isEditing = true
 }: InvoiceLaborItemsAdapterProps) {
+    // Use a ref to track the latest items without causing callback recreation
+    const itemsRef = useRef(items)
+    
+    // Update ref whenever items change
+    useEffect(() => {
+        itemsRef.current = items
+    }, [items])
+
     // Filter and convert invoice items to labor form items
     const laborFormItems = useMemo(() => {
         return items
@@ -50,9 +58,10 @@ export function InvoiceLaborItemsAdapter({
     }, [items])
 
     // Handle changes from WorkOrderLaborItems component
+    // Use ref to avoid dependency on items, preventing infinite loops
     const handleLaborItemsChange = useCallback((laborItems: LaborFormItem[]) => {
-        // Get all non-labor items from the original array
-        const nonLaborItems = items.filter(item => item.item_type !== 'labor')
+        // Get all non-labor items from the current items (via ref)
+        const nonLaborItems = itemsRef.current.filter(item => item.item_type !== 'labor')
 
         // Convert labor form items back to invoice items
         const updatedLaborItems: InvoiceItem[] = laborItems.map(item => ({
@@ -69,7 +78,7 @@ export function InvoiceLaborItemsAdapter({
 
         // Merge back: non-labor items + updated labor items
         onItemsChange([...nonLaborItems, ...updatedLaborItems])
-    }, [items, onItemsChange])
+    }, [onItemsChange])
 
     return (
         <WorkOrderLaborItems

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useRef, useEffect } from 'react'
 import { WorkOrderGenericItems } from '@/app/(features)/operations/components/work-orders/shared/items/WorkOrderGenericItems'
 import type { InvoiceItem, ItemType } from '../../../types/invoice'
 
@@ -38,6 +38,14 @@ export function InvoiceGenericItemsAdapter({
     title,
     icon
 }: InvoiceGenericItemsAdapterProps) {
+    // Use a ref to track the latest items without causing callback recreation
+    const itemsRef = useRef(items)
+    
+    // Update ref whenever items change
+    useEffect(() => {
+        itemsRef.current = items
+    }, [items])
+
     // Filter and convert invoice items to generic form items
     const genericFormItems = useMemo(() => {
         return items
@@ -56,9 +64,10 @@ export function InvoiceGenericItemsAdapter({
     }, [items, itemType])
 
     // Handle changes from WorkOrderGenericItems component
+    // Use ref to avoid dependency on items, preventing infinite loops
     const handleGenericItemsChange = useCallback((genericItems: GenericFormItem[]) => {
-        // Get all items that are NOT of this type from the original array
-        const otherItems = items.filter(item => item.item_type !== itemType)
+        // Get all items that are NOT of this type from the current items (via ref)
+        const otherItems = itemsRef.current.filter(item => item.item_type !== itemType)
 
         // Convert generic form items back to invoice items
         const updatedItems: InvoiceItem[] = genericItems.map(item => ({
@@ -74,7 +83,7 @@ export function InvoiceGenericItemsAdapter({
 
         // Merge back: other items + updated items of this type
         onItemsChange([...otherItems, ...updatedItems])
-    }, [items, itemType, onItemsChange])
+    }, [itemType, onItemsChange])
 
     return (
         <WorkOrderGenericItems

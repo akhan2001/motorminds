@@ -95,16 +95,17 @@ export function WorkOrderExpenseItems({
         if (!watchedItems) return
         
         const watchedJson = JSON.stringify(watchedItems)
-        const itemsJson = JSON.stringify(items)
         
-        // Only propagate if actually different
-        if (watchedJson !== itemsJson) {
+        // Only propagate if actually different from what we last sent
+        // DO NOT compare against 'items' prop - field ordering differs between form and adapter
+        // which would cause infinite loops
+        if (watchedJson !== lastSyncedItemsRef.current) {
             // Mark as internal update to prevent sync effect from resetting form
             isInternalUpdateRef.current = true
             lastSyncedItemsRef.current = watchedJson
             onItemsChange(watchedItems)
         }
-    }, [watchedItems, onItemsChange, items])
+    }, [watchedItems, onItemsChange]) // Removed 'items' - comparing against lastSyncedItemsRef instead
     
     // Trigger validation for all items to show errors
     const triggerValidation = useCallback(async () => {
