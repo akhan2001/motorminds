@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
     );
     const { data: shop, error: shopError } = await supabase
         .from("shops")
-        .select("shop_name, shop_address, shop_phone, shop_about, services_offered, operating_hours")
+        .select("shop_name, shop_address, shop_phone, shop_about, services_offered, operating_hours, organization_id")
         .eq("id", shopId)
         .single();
 
@@ -334,6 +334,7 @@ async function processAppointmentBooking(aiResponse: string, shopId: string, sup
             // Create new customer with proper data validation
             const customerData: any = {
                 shop_id: shopId,
+                organization_id: shop.organization_id || null, // Denormalize org ID for MSO access
                 customer_name: customerName,
                 customer_phone: phone || null
             };

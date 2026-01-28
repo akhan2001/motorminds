@@ -199,8 +199,9 @@ function applyAccessScopeFilter(
                 return query.eq('shop_id', shopFilter)
             }
             // Filter to all shops in organization
+            // Use OR logic to include customers from current shop even without organization_id
             if (context.organizationId) {
-                return query.eq('organization_id', context.organizationId)
+                return query.or(`organization_id.eq.${context.organizationId},shop_id.eq.${context.shopId}`)
             }
             // Fallback to accessible shop IDs
             if (context.accessibleShopIds.length > 0) {
@@ -279,7 +280,8 @@ export async function getCustomerById(
     if (context.accessScope === 'shop') {
         query = query.eq('shop_id', context.shopId)
     } else if (context.accessScope === 'organization' && context.organizationId) {
-        query = query.eq('organization_id', context.organizationId)
+        // Use OR logic to include customers from current shop even without organization_id
+        query = query.or(`organization_id.eq.${context.organizationId},shop_id.eq.${context.shopId}`)
     }
     // Platform scope has no additional filter
 
