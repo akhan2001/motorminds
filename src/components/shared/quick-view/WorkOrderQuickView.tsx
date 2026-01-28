@@ -70,7 +70,7 @@ export function WorkOrderQuickView({ workOrderId, isOpen, onClose }: WorkOrderQu
                         </div>
                     </DialogHeader>
                     <div className="text-center py-12 text-muted-foreground">
-                        Unable to load work order details.
+                        Unable to load Work Order details.
                     </div>
                 </DialogContent>
             </Dialog>
@@ -88,7 +88,7 @@ export function WorkOrderQuickView({ workOrderId, isOpen, onClose }: WorkOrderQu
                             </div>
                             <div>
                                 <DialogTitle className="text-lg font-semibold text-foreground dark:text-white">
-                                    WO #{workOrder.work_order_number}
+                                    Work Order #{workOrder.work_order_number}
                                 </DialogTitle>
                                 {workOrder.title && (
                                     <p className="text-sm text-muted-foreground dark:text-gray-400 mt-0.5">

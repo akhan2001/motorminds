@@ -4,131 +4,167 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import BreadcrumbNav from './components/BreadcrumbNav';
-import { generateIncomeStatementPDF } from './components/IncomeStatementPDF';
 import { checkUser } from '@/utils/supabase/supabase-auth';
 import { getShopId } from '@/utils/supabase/supabase-shop';
-import { DateRangePicker, dateRangePresets } from '@/components/ui/date-range-picker';
+import { dateRangePresets } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
-import { FileText, Download, Calendar, TrendingUp, TrendingDown, DollarSign, Loader2, Receipt, Wrench, Package, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+	FileText, 
+	Download, 
+	Calendar, 
+	DollarSign, 
+	Loader2, 
+	Receipt, 
+	Wrench, 
+	Package, 
+	CheckCircle2, 
+	Clock,
+	Car
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface IncomeStatementPreview {
-	totalRevenue: number;
-	totalCOGS: number;
-	grossProfit: number;
-	totalOperatingExpenses: number;
-	netProfit: number;
-	totalPartsRevenue?: number;
-	totalLaborRevenue?: number;
-	totalServicesRevenue?: number;
-	totalFeesRevenue?: number;
-	invoiceCount?: number;
-	statementId?: string | null;
+interface ExpenseReportData {
+	generalExpenses: GeneralExpense[];
+	workOrderExpenses: WorkOrderExpense[];
+	partsExpenses: PartsExpense[];
+	summary: {
+		generalExpenses: {
+			count: number;
+			total: number;
+			tax: number;
+		};
+		workOrderExpenses: {
+			count: number;
+			total: number;
+			tax: number;
+			paidCount: number;
+			paidTotal: number;
+		};
+		partsExpenses: {
+			count: number;
+			totalCost: number;
+			paidCount: number;
+			paidTotalCost: number;
+			totalProfit: number;
+		};
+		grandTotal: number;
+	};
+	startDate: string;
+	endDate: string;
+}
+
+interface GeneralExpense {
+	id: string;
+	type: 'general_expense';
+	description: string;
+	vendor: string;
+	invoice_number: string;
+	date: string;
+	amount: number;
+	tax: number;
+	category: string;
+	payment_method: string;
+	notes: string;
+	is_paid: boolean;
+}
+
+interface WorkOrderExpense {
+	id: string;
+	type: 'work_order_expense';
+	description: string;
+	vendor: string;
+	invoice_number: string;
+	date: string;
+	amount: number;
+	tax: number;
+	payment_method: string;
+	work_order_id: string;
+	work_order_title: string;
+	work_order_status: string;
+	vehicle: string | null;
+	license_plate: string | null;
+	has_invoice: boolean;
+	is_paid: boolean;
+}
+
+interface PartsExpense {
+	id: string;
+	type: 'parts_cost';
+	description: string;
+	part_number: string;
+	supplier: string;
+	date: string;
+	quantity: number;
+	unit_cost: number;
+	total_cost: number;
+	sale_price: number;
+	profit: number;
+	work_order_id: string;
+	work_order_title: string;
+	work_order_status: string;
+	vehicle: string | null;
+	license_plate: string | null;
+	has_invoice: boolean;
+	is_paid: boolean;
 }
 
 const formatCurrency = (value: number): string => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
 	}).format(value);
 };
 
-const formatPercent = (value: number): string => {
-	return `${value.toFixed(1)}%`;
+const formatDate = (dateString: string): string => {
+	return new Date(dateString).toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric'
+	});
 };
 
-const MetricCard = ({ 
-	label, 
-	value, 
-	subValue, 
+const SummaryCard = ({ 
+	title, 
+	count, 
+	total, 
 	icon: Icon, 
-	trend,
+	subtext,
 	className 
 }: { 
-	label: string; 
-	value: string; 
-	subValue?: string; 
+	title: string; 
+	count: number;
+	total: number;
 	icon: React.ElementType;
-	trend?: 'up' | 'down' | 'neutral';
+	subtext?: string;
 	className?: string;
 }) => (
-	<div className={cn(
-		"bg-white dark:bg-card border border-border rounded-xl p-4 flex items-start gap-3",
-		className
-	)}>
-		<div className={cn(
-			"p-2 rounded-lg",
-			trend === 'up' ? 'bg-green-100 dark:bg-green-900/30' :
-			trend === 'down' ? 'bg-red-100 dark:bg-red-900/30' :
-			'bg-slate-100 dark:bg-slate-800'
-		)}>
-			<Icon className={cn(
-				"h-5 w-5",
-				trend === 'up' ? 'text-green-600' :
-				trend === 'down' ? 'text-red-600' :
-				'text-slate-600 dark:text-slate-400'
-			)} />
-		</div>
-		<div className="flex-1 min-w-0">
-			<p className="text-sm text-muted-foreground truncate">{label}</p>
-			<p className={cn(
-				"text-xl font-bold",
-				trend === 'up' ? 'text-green-600' :
-				trend === 'down' ? 'text-red-600' :
-				'text-foreground'
-			)}>{value}</p>
-			{subValue && (
-				<p className="text-xs text-muted-foreground">{subValue}</p>
-			)}
-		</div>
-	</div>
+	<Card className={cn("bg-white dark:bg-card border-border", className)}>
+		<CardContent className="p-4">
+			<div className="flex items-start gap-3">
+				<div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
+					<Icon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+				</div>
+				<div className="flex-1 min-w-0">
+					<p className="text-sm text-muted-foreground truncate">{title}</p>
+					<p className="text-xl font-bold text-foreground">{formatCurrency(total)}</p>
+					<p className="text-xs text-muted-foreground">{count} expense{count !== 1 ? 's' : ''}{subtext ? ` • ${subtext}` : ''}</p>
+				</div>
+			</div>
+		</CardContent>
+	</Card>
 );
-
-const RevenueBreakdownBar = ({ data }: { data: IncomeStatementPreview }) => {
-	const total = data.totalRevenue || 1;
-	const segments = [
-		{ label: 'Labor', value: data.totalLaborRevenue || 0, color: 'bg-blue-500' },
-		{ label: 'Parts', value: data.totalPartsRevenue || 0, color: 'bg-green-500' },
-		{ label: 'Services', value: data.totalServicesRevenue || 0, color: 'bg-purple-500' },
-		{ label: 'Fees', value: data.totalFeesRevenue || 0, color: 'bg-orange-500' },
-	].filter(s => s.value > 0);
-
-	if (segments.length === 0) return null;
-
-	return (
-		<div className="space-y-2">
-			<div className="h-3 rounded-full overflow-hidden flex bg-slate-200 dark:bg-slate-700">
-				{segments.map((segment, i) => (
-					<div
-						key={segment.label}
-						className={cn(segment.color, "transition-all")}
-						style={{ width: `${(segment.value / total) * 100}%` }}
-					/>
-				))}
-			</div>
-			<div className="flex flex-wrap gap-x-4 gap-y-1">
-				{segments.map(segment => (
-					<div key={segment.label} className="flex items-center gap-1.5 text-xs">
-						<div className={cn("w-2.5 h-2.5 rounded-full", segment.color)} />
-						<span className="text-muted-foreground">{segment.label}:</span>
-						<span className="font-medium">{formatCurrency(segment.value)}</span>
-						<span className="text-muted-foreground">({formatPercent((segment.value / total) * 100)})</span>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-};
 
 const ReportsPage = () => {
 	const [shopId, setShopId] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
-	const [isGenerating, setIsGenerating] = useState(false);
-	const [isFetchingPreview, setIsFetchingPreview] = useState(false);
-	const [previewData, setPreviewData] = useState<IncomeStatementPreview | null>(null);
-	const [fullData, setFullData] = useState<any>(null);
+	const [isFetchingData, setIsFetchingData] = useState(false);
+	const [reportData, setReportData] = useState<ExpenseReportData | null>(null);
+	const [activeTab, setActiveTab] = useState<'general' | 'work_order' | 'parts'>('general');
 	const router = useRouter();
 
 	// Default to current month
@@ -160,55 +196,36 @@ const ReportsPage = () => {
 		fetchUserData();
 	}, [router]);
 
-	const fetchPreviewData = useCallback(async () => {
+	const fetchExpenseData = useCallback(async () => {
 		if (!shopId || !dateRange?.from || !dateRange?.to) {
-			setPreviewData(null);
+			setReportData(null);
 			return;
 		}
 
-		setIsFetchingPreview(true);
+		setIsFetchingData(true);
 		try {
 			const response = await fetch(
-				`/api/financials/reports/income-statement?startDate=${dateRange.from.toISOString()}&endDate=${dateRange.to.toISOString()}&shopId=${shopId}`
+				`/api/financials/reports/expenses?startDate=${dateRange.from.toISOString()}&endDate=${dateRange.to.toISOString()}&shopId=${shopId}`
 			);
 			if (!response.ok) {
-				throw new Error('Failed to fetch income statement data');
+				throw new Error('Failed to fetch expense data');
 			}
 			const data = await response.json();
-			setPreviewData(data);
-			setFullData(data);
+			setReportData(data);
 		} catch (error) {
-			console.error('Error fetching preview:', error);
-			setPreviewData(null);
-			setFullData(null);
+			console.error('Error fetching expense data:', error);
+			setReportData(null);
 		} finally {
-			setIsFetchingPreview(false);
+			setIsFetchingData(false);
 		}
 	}, [shopId, dateRange]);
 
-	// Fetch preview when date range or shop changes
+	// Fetch data when date range or shop changes
 	useEffect(() => {
 		if (shopId && dateRange?.from && dateRange?.to) {
-			fetchPreviewData();
+			fetchExpenseData();
 		}
-	}, [shopId, dateRange, fetchPreviewData]);
-
-	const handleGenerateReport = async () => {
-		if (!shopId || !fullData) {
-			alert('Please wait for the preview to load.');
-			return;
-		}
-
-		setIsGenerating(true);
-		try {
-			generateIncomeStatementPDF(fullData, shopId, fullData.statementId);
-		} catch (error) {
-			console.error('Error generating report:', error);
-			alert('Failed to generate report. See console for details.');
-		} finally {
-			setIsGenerating(false);
-		}
-	};
+	}, [shopId, dateRange, fetchExpenseData]);
 
 	const handlePresetClick = (preset: typeof dateRangePresets[0]) => {
 		setDateRange(preset.getValue());
@@ -216,6 +233,85 @@ const ReportsPage = () => {
 
 	const handleDateRangeChange = (range: DateRange | undefined) => {
 		setDateRange(range);
+	};
+
+	const handleExportCSV = () => {
+		if (!reportData) return;
+
+		const rows: string[][] = [];
+		rows.push(['EXPENSE REPORT']);
+		rows.push([`Period: ${formatDate(reportData.startDate)} to ${formatDate(reportData.endDate)}`]);
+		rows.push([]);
+
+		// General Expenses
+		rows.push(['GENERAL EXPENSES']);
+		rows.push(['Date', 'Vendor', 'Description', 'Invoice #', 'Amount', 'Tax', 'Category']);
+		reportData.generalExpenses.forEach(e => {
+			rows.push([
+				formatDate(e.date),
+				e.vendor,
+				e.description,
+				e.invoice_number,
+				e.amount.toFixed(2),
+				e.tax.toFixed(2),
+				e.category
+			]);
+		});
+		rows.push(['', '', '', 'TOTAL', reportData.summary.generalExpenses.total.toFixed(2), reportData.summary.generalExpenses.tax.toFixed(2), '']);
+		rows.push([]);
+
+		// Work Order Expenses
+		rows.push(['WORK ORDER EXPENSES']);
+		rows.push(['Date', 'Vendor', 'Description', 'Invoice #', 'Amount', 'Tax', 'Work Order', 'Vehicle', 'Paid']);
+		reportData.workOrderExpenses.forEach(e => {
+			rows.push([
+				formatDate(e.date),
+				e.vendor,
+				e.description,
+				e.invoice_number,
+				e.amount.toFixed(2),
+				e.tax.toFixed(2),
+				e.work_order_title,
+				e.vehicle || '',
+				e.is_paid ? 'Yes' : 'No'
+			]);
+		});
+		rows.push(['', '', '', 'TOTAL', reportData.summary.workOrderExpenses.total.toFixed(2), reportData.summary.workOrderExpenses.tax.toFixed(2), '', '', '']);
+		rows.push([]);
+
+		// Parts Expenses
+		rows.push(['PARTS COSTS (COGS)']);
+		rows.push(['Date', 'Part', 'Part #', 'Supplier', 'Qty', 'Unit Cost', 'Total Cost', 'Sale Price', 'Profit', 'Paid']);
+		reportData.partsExpenses.forEach(e => {
+			rows.push([
+				formatDate(e.date),
+				e.description,
+				e.part_number,
+				e.supplier,
+				e.quantity.toString(),
+				e.unit_cost.toFixed(2),
+				e.total_cost.toFixed(2),
+				e.sale_price.toFixed(2),
+				e.profit.toFixed(2),
+				e.is_paid ? 'Yes' : 'No'
+			]);
+		});
+		rows.push(['', '', '', '', '', 'TOTAL', reportData.summary.partsExpenses.totalCost.toFixed(2), '', reportData.summary.partsExpenses.totalProfit.toFixed(2), '']);
+		rows.push([]);
+
+		// Summary
+		rows.push(['SUMMARY']);
+		rows.push(['General Expenses', reportData.summary.generalExpenses.total.toFixed(2)]);
+		rows.push(['Work Order Expenses', reportData.summary.workOrderExpenses.total.toFixed(2)]);
+		rows.push(['Parts Costs', reportData.summary.partsExpenses.totalCost.toFixed(2)]);
+		rows.push(['GRAND TOTAL', reportData.summary.grandTotal.toFixed(2)]);
+
+		const csvContent = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(blob);
+		link.download = `Expense_Report_${dateRange?.from?.toLocaleDateString('en-CA')}_to_${dateRange?.to?.toLocaleDateString('en-CA')}.csv`;
+		link.click();
 	};
 
 	if (isLoading) {
@@ -231,13 +327,6 @@ const ReportsPage = () => {
 		);
 	}
 
-	const grossMargin = previewData && previewData.totalRevenue > 0 
-		? (previewData.grossProfit / previewData.totalRevenue) * 100 
-		: 0;
-	const netMargin = previewData && previewData.totalRevenue > 0 
-		? (previewData.netProfit / previewData.totalRevenue) * 100 
-		: 0;
-
 	return (
 		<div className="flex flex-col h-full bg-background text-foreground">
 			<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
@@ -245,27 +334,58 @@ const ReportsPage = () => {
 				
 				<div className="flex items-center justify-between my-8">
 					<div>
-						<h1 className="text-3xl font-bold text-foreground mb-2">Financial Reports</h1>
-						<p className="text-muted-foreground">Generate and review your shop's financial statements.</p>
+						<h1 className="text-3xl font-bold text-foreground mb-2">Expense Reports</h1>
+						<p className="text-muted-foreground">Track and review all your shop expenses.</p>
 					</div>
+					{reportData && (
+						<Button onClick={handleExportCSV} variant="outline">
+							<Download className="h-4 w-4 mr-2" />
+							Export CSV
+						</Button>
+					)}
 				</div>
 				
 				<div className="grid gap-6">
 					{/* Date Range Selection Card */}
-					<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
-						<div className="flex items-center gap-2 mb-4">
-							<Calendar className="h-5 w-5 text-blue-500" />
-							<h2 className="text-xl font-semibold text-foreground">Select Report Period</h2>
-						</div>
-						
-						<div className="space-y-4">
-							<div className="flex flex-col sm:flex-row gap-4">
-								<div className="flex-1">
-									<label className="text-sm text-muted-foreground mb-2 block">Date Range</label>
-									<DateRangePicker
-										dateRange={dateRange}
-										onDateRangeChange={handleDateRangeChange}
-										placeholder="Select start and end dates"
+					<Card className="bg-white dark:bg-card border-border">
+						<CardHeader className="pb-4">
+							<CardTitle className="flex items-center gap-2 text-lg">
+								<Calendar className="h-5 w-5 text-blue-500" />
+								Select Report Period
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							{/* Date Range Inputs */}
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+								<div>
+									<label className="text-sm text-muted-foreground mb-2 block">From Date</label>
+									<Input
+										type="date"
+										value={dateRange?.from ? dateRange.from.toISOString().split('T')[0] : ''}
+										onChange={(e) => {
+											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+											handleDateRangeChange({
+												from: date,
+												to: dateRange?.to
+											});
+										}}
+										className="bg-white dark:bg-background border-border text-foreground"
+									/>
+								</div>
+								<div>
+									<label className="text-sm text-muted-foreground mb-2 block">To Date</label>
+									<Input
+										type="date"
+										value={dateRange?.to ? dateRange.to.toISOString().split('T')[0] : ''}
+										onChange={(e) => {
+											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+											handleDateRangeChange({
+												from: dateRange?.from,
+												to: date
+											});
+										}}
+										min={dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined}
+										className="bg-white dark:bg-background border-border text-foreground"
 									/>
 								</div>
 							</div>
@@ -287,157 +407,322 @@ const ReportsPage = () => {
 									))}
 								</div>
 							</div>
-						</div>
-					</div>
+						</CardContent>
+					</Card>
 
-					{/* Preview Section */}
+					{/* Report Content */}
 					{dateRange?.from && dateRange?.to && (
-						<div className="bg-white dark:bg-card border border-border rounded-xl p-6">
-							<div className="flex items-center justify-between mb-4">
-								<div className="flex items-center gap-2">
-									<FileText className="h-5 w-5 text-green-500" />
-									<h2 className="text-xl font-semibold text-foreground">Income Statement Preview</h2>
-								</div>
-								<div className="bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5">
-									<p className="text-sm text-muted-foreground">
-										{dateRange.from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {dateRange.to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-									</p>
-								</div>
-							</div>
-							
-							{isFetchingPreview ? (
+						<>
+							{isFetchingData ? (
 								<div className="flex items-center justify-center py-12">
 									<Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
-									<span className="text-muted-foreground">Loading financial data...</span>
+									<span className="text-muted-foreground">Loading expense data...</span>
 								</div>
-							) : previewData ? (
-								<div className="space-y-6">
-									{/* Key Metrics Grid */}
-									<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-										<MetricCard
-											label="Total Revenue"
-											value={formatCurrency(previewData.totalRevenue)}
-											subValue={`${previewData.invoiceCount || 0} invoices`}
-											icon={DollarSign}
-											trend="neutral"
-										/>
-										<MetricCard
-											label="Gross Profit"
-											value={formatCurrency(previewData.grossProfit)}
-											subValue={`${formatPercent(grossMargin)} margin`}
-											icon={TrendingUp}
-											trend={previewData.grossProfit >= 0 ? 'up' : 'down'}
-										/>
-										<MetricCard
-											label="Operating Expenses"
-											value={formatCurrency(previewData.totalOperatingExpenses)}
-											subValue="Fixed + One-time costs"
+							) : reportData ? (
+								<>
+									{/* Summary Cards */}
+									<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+										<SummaryCard
+											title="General Expenses"
+											count={reportData.summary.generalExpenses.count}
+											total={reportData.summary.generalExpenses.total}
 											icon={Receipt}
-											trend="neutral"
+											subtext={`+${formatCurrency(reportData.summary.generalExpenses.tax)} tax`}
 										/>
-										<MetricCard
-											label="Net Profit"
-											value={formatCurrency(previewData.netProfit)}
-											subValue={`${formatPercent(netMargin)} margin`}
-											icon={previewData.netProfit >= 0 ? TrendingUp : TrendingDown}
-											trend={previewData.netProfit >= 0 ? 'up' : 'down'}
+										<SummaryCard
+											title="Work Order Expenses"
+											count={reportData.summary.workOrderExpenses.count}
+											total={reportData.summary.workOrderExpenses.total}
+											icon={Wrench}
+											subtext={`${reportData.summary.workOrderExpenses.paidCount} paid`}
+										/>
+										<SummaryCard
+											title="Parts Costs (COGS)"
+											count={reportData.summary.partsExpenses.count}
+											total={reportData.summary.partsExpenses.totalCost}
+											icon={Package}
+											subtext={`${formatCurrency(reportData.summary.partsExpenses.totalProfit)} profit`}
+										/>
+										<SummaryCard
+											title="Total Expenses"
+											count={
+												reportData.summary.generalExpenses.count +
+												reportData.summary.workOrderExpenses.count +
+												reportData.summary.partsExpenses.count
+											}
+											total={reportData.summary.grandTotal}
+											icon={DollarSign}
+											className="bg-slate-100 dark:bg-slate-800"
 										/>
 									</div>
 
-									{/* Revenue Breakdown */}
-									{previewData.totalRevenue > 0 && (
-										<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4">
-											<h3 className="text-sm font-medium text-muted-foreground mb-3">Revenue Breakdown</h3>
-											<RevenueBreakdownBar data={previewData} />
-										</div>
-									)}
-
-									{/* Cost Breakdown */}
-									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-										<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4">
-											<div className="flex items-center gap-2 mb-2">
-												<Package className="h-4 w-4 text-red-500" />
-												<h3 className="text-sm font-medium text-muted-foreground">Cost of Goods Sold</h3>
+									{/* Expense Tables */}
+									<Card className="bg-white dark:bg-card border-border">
+										<CardHeader className="pb-2">
+											{/* Tabs */}
+											<div className="flex gap-1 border-b border-border">
+												<button
+													onClick={() => setActiveTab('general')}
+													className={cn(
+														"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+														activeTab === 'general'
+															? "border-blue-500 text-blue-600"
+															: "border-transparent text-muted-foreground hover:text-foreground"
+													)}
+												>
+													General Expenses ({reportData.generalExpenses.length})
+												</button>
+												<button
+													onClick={() => setActiveTab('work_order')}
+													className={cn(
+														"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+														activeTab === 'work_order'
+															? "border-blue-500 text-blue-600"
+															: "border-transparent text-muted-foreground hover:text-foreground"
+													)}
+												>
+													Work Order Expenses ({reportData.workOrderExpenses.length})
+												</button>
+												<button
+													onClick={() => setActiveTab('parts')}
+													className={cn(
+														"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+														activeTab === 'parts'
+															? "border-blue-500 text-blue-600"
+															: "border-transparent text-muted-foreground hover:text-foreground"
+													)}
+												>
+													Parts Costs ({reportData.partsExpenses.length})
+												</button>
 											</div>
-											<p className="text-2xl font-bold text-foreground">{formatCurrency(previewData.totalCOGS)}</p>
-											<p className="text-xs text-muted-foreground">Parts costs from invoices</p>
-										</div>
-										<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4">
-											<div className="flex items-center gap-2 mb-2">
-												<Wrench className="h-4 w-4 text-blue-500" />
-												<h3 className="text-sm font-medium text-muted-foreground">Operating Expenses</h3>
-											</div>
-											<p className="text-2xl font-bold text-foreground">{formatCurrency(previewData.totalOperatingExpenses)}</p>
-											<p className="text-xs text-muted-foreground">Recurring + one-time costs</p>
-										</div>
-										<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4">
-											<div className="flex items-center gap-2 mb-2">
-												<TrendingUp className="h-4 w-4 text-green-500" />
-												<h3 className="text-sm font-medium text-muted-foreground">Gross Margin</h3>
-											</div>
-											<p className="text-2xl font-bold text-foreground">{formatPercent(grossMargin)}</p>
-											<p className="text-xs text-muted-foreground">Revenue after COGS</p>
-										</div>
-									</div>
-
-									{/* No data warning */}
-									{previewData.totalRevenue === 0 && (
-										<div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-											<AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-											<div>
-												<p className="font-medium text-amber-800 dark:text-amber-200">No revenue data found</p>
-												<p className="text-sm text-amber-700 dark:text-amber-300">
-													There are no paid invoices in this date range. Try selecting a different period.
-												</p>
-											</div>
-										</div>
-									)}
-
-									{/* Download Button */}
-									<div className="flex items-center justify-between pt-4 border-t border-border">
-										<p className="text-sm text-muted-foreground">
-											{previewData.statementId 
-												? `Statement #${previewData.statementId}` 
-												: 'Draft statement - will be saved on download'}
-										</p>
-										<Button 
-											className="bg-red-600 hover:bg-red-700 text-white" 
-											onClick={handleGenerateReport}
-											disabled={isGenerating}
-										>
-											{isGenerating ? (
-												<>
-													<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-													Generating...
-												</>
-											) : (
-												<>
-													<Download className="h-4 w-4 mr-2" />
-													Download Income Statement PDF
-												</>
+										</CardHeader>
+										<CardContent className="pt-4">
+											{/* General Expenses Table */}
+											{activeTab === 'general' && (
+												<div className="overflow-x-auto">
+													{reportData.generalExpenses.length > 0 ? (
+														<table className="w-full text-sm">
+															<thead>
+																<tr className="border-b border-border text-left">
+																	<th className="pb-2 font-medium text-muted-foreground">Date</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Vendor</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Invoice #</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Description</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Amount</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Tax</th>
+																</tr>
+															</thead>
+															<tbody>
+																{reportData.generalExpenses.map((expense) => (
+																	<tr key={expense.id} className="border-b border-border/50">
+																		<td className="py-3">{formatDate(expense.date)}</td>
+																		<td className="py-3">{expense.vendor}</td>
+																		<td className="py-3 text-muted-foreground">{expense.invoice_number || '-'}</td>
+																		<td className="py-3">{expense.description}</td>
+																		<td className="py-3 text-right font-medium">{formatCurrency(expense.amount)}</td>
+																		<td className="py-3 text-right text-muted-foreground">{formatCurrency(expense.tax)}</td>
+																	</tr>
+																))}
+															</tbody>
+															<tfoot>
+																<tr className="font-medium">
+																	<td colSpan={4} className="pt-3 text-right">Total:</td>
+																	<td className="pt-3 text-right">{formatCurrency(reportData.summary.generalExpenses.total)}</td>
+																	<td className="pt-3 text-right text-muted-foreground">{formatCurrency(reportData.summary.generalExpenses.tax)}</td>
+																</tr>
+															</tfoot>
+														</table>
+													) : (
+														<p className="text-center py-8 text-muted-foreground">No general expenses in this period.</p>
+													)}
+												</div>
 											)}
-										</Button>
+
+											{/* Work Order Expenses Table */}
+											{activeTab === 'work_order' && (
+												<div className="overflow-x-auto">
+													{reportData.workOrderExpenses.length > 0 ? (
+														<table className="w-full text-sm">
+															<thead>
+																<tr className="border-b border-border text-left">
+																	<th className="pb-2 font-medium text-muted-foreground">Date</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Vendor</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Description</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Work Order</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Vehicle</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Amount</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-center">Status</th>
+																</tr>
+															</thead>
+															<tbody>
+																{reportData.workOrderExpenses.map((expense) => (
+																	<tr key={expense.id} className="border-b border-border/50">
+																		<td className="py-3">{formatDate(expense.date)}</td>
+																		<td className="py-3">{expense.vendor}</td>
+																		<td className="py-3">{expense.description}</td>
+																		<td className="py-3 text-muted-foreground">{expense.work_order_title}</td>
+																		<td className="py-3">
+																			{expense.vehicle && (
+																				<div className="flex items-center gap-1">
+																					<Car className="h-3 w-3 text-muted-foreground" />
+																					<span className="text-xs">{expense.vehicle}</span>
+																				</div>
+																			)}
+																		</td>
+																		<td className="py-3 text-right font-medium">{formatCurrency(expense.amount)}</td>
+																		<td className="py-3 text-center">
+																			{expense.is_paid ? (
+																				<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+																					<CheckCircle2 className="h-3 w-3 mr-1" />
+																					Paid
+																				</Badge>
+																			) : expense.has_invoice ? (
+																				<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+																					<Clock className="h-3 w-3 mr-1" />
+																					Invoiced
+																				</Badge>
+																			) : (
+																				<Badge variant="outline" className="text-muted-foreground">
+																					<Clock className="h-3 w-3 mr-1" />
+																					Pending
+																				</Badge>
+																			)}
+																		</td>
+																	</tr>
+																))}
+															</tbody>
+															<tfoot>
+																<tr className="font-medium">
+																	<td colSpan={5} className="pt-3 text-right">Total:</td>
+																	<td className="pt-3 text-right">{formatCurrency(reportData.summary.workOrderExpenses.total)}</td>
+																	<td></td>
+																</tr>
+															</tfoot>
+														</table>
+													) : (
+														<p className="text-center py-8 text-muted-foreground">No work order expenses in this period.</p>
+													)}
+												</div>
+											)}
+
+											{/* Parts Costs Table */}
+											{activeTab === 'parts' && (
+												<div className="overflow-x-auto">
+													{reportData.partsExpenses.length > 0 ? (
+														<table className="w-full text-sm">
+															<thead>
+																<tr className="border-b border-border text-left">
+																	<th className="pb-2 font-medium text-muted-foreground">Date</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Part</th>
+																	<th className="pb-2 font-medium text-muted-foreground">Supplier</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-center">Qty</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Unit Cost</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Total Cost</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Sale Price</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-right">Profit</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-center">Status</th>
+																</tr>
+															</thead>
+															<tbody>
+																{reportData.partsExpenses.map((part) => (
+																	<tr key={part.id} className="border-b border-border/50">
+																		<td className="py-3">{formatDate(part.date)}</td>
+																		<td className="py-3">
+																			<div>{part.description}</div>
+																			{part.part_number && (
+																				<div className="text-xs text-muted-foreground">#{part.part_number}</div>
+																			)}
+																		</td>
+																		<td className="py-3">{part.supplier}</td>
+																		<td className="py-3 text-center">{part.quantity}</td>
+																		<td className="py-3 text-right">{formatCurrency(part.unit_cost)}</td>
+																		<td className="py-3 text-right font-medium">{formatCurrency(part.total_cost)}</td>
+																		<td className="py-3 text-right">{formatCurrency(part.sale_price)}</td>
+																		<td className={cn(
+																			"py-3 text-right font-medium",
+																			part.profit >= 0 ? "text-green-600" : "text-red-600"
+																		)}>
+																			{formatCurrency(part.profit)}
+																		</td>
+																		<td className="py-3 text-center">
+																			{part.is_paid ? (
+																				<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+																					<CheckCircle2 className="h-3 w-3 mr-1" />
+																					Paid
+																				</Badge>
+																			) : part.has_invoice ? (
+																				<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+																					<Clock className="h-3 w-3 mr-1" />
+																					Invoiced
+																				</Badge>
+																			) : (
+																				<Badge variant="outline" className="text-muted-foreground">
+																					<Clock className="h-3 w-3 mr-1" />
+																					Pending
+																				</Badge>
+																			)}
+																		</td>
+																	</tr>
+																))}
+															</tbody>
+															<tfoot>
+																<tr className="font-medium">
+																	<td colSpan={5} className="pt-3 text-right">Total:</td>
+																	<td className="pt-3 text-right">{formatCurrency(reportData.summary.partsExpenses.totalCost)}</td>
+																	<td></td>
+																	<td className={cn(
+																		"pt-3 text-right",
+																		reportData.summary.partsExpenses.totalProfit >= 0 ? "text-green-600" : "text-red-600"
+																	)}>
+																		{formatCurrency(reportData.summary.partsExpenses.totalProfit)}
+																	</td>
+																	<td></td>
+																</tr>
+															</tfoot>
+														</table>
+													) : (
+														<p className="text-center py-8 text-muted-foreground">No parts costs in this period.</p>
+													)}
+												</div>
+											)}
+										</CardContent>
+									</Card>
+
+									{/* Legend */}
+									<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 text-sm text-muted-foreground">
+										<h3 className="font-medium text-foreground mb-2">Understanding the Status</h3>
+										<div className="flex flex-wrap gap-4">
+											<div className="flex items-center gap-2">
+												<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+													<CheckCircle2 className="h-3 w-3 mr-1" />
+													Paid
+												</Badge>
+												<span>Invoice has been paid by customer</span>
+											</div>
+											<div className="flex items-center gap-2">
+												<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+													<Clock className="h-3 w-3 mr-1" />
+													Invoiced
+												</Badge>
+												<span>Invoice generated but not yet paid</span>
+											</div>
+											<div className="flex items-center gap-2">
+												<Badge variant="outline" className="text-muted-foreground">
+													<Clock className="h-3 w-3 mr-1" />
+													Pending
+												</Badge>
+												<span>No invoice generated yet</span>
+											</div>
+										</div>
 									</div>
-								</div>
+								</>
 							) : (
 								<div className="flex items-center justify-center py-12">
-									<p className="text-muted-foreground">Unable to load financial data. Please try again.</p>
+									<p className="text-muted-foreground">Unable to load expense data. Please try again.</p>
 								</div>
 							)}
-						</div>
+						</>
 					)}
-
-					{/* Help Text */}
-					<div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 text-sm text-muted-foreground">
-						<h3 className="font-medium text-foreground mb-2">What's included in the Income Statement?</h3>
-						<ul className="space-y-1 list-disc list-inside">
-							<li><strong>Revenue:</strong> Total from paid invoices (labor, parts, services, fees)</li>
-							<li><strong>Cost of Goods Sold (COGS):</strong> Parts costs based on unit cost from invoice items</li>
-							<li><strong>Operating Expenses:</strong> Both recurring fixed costs (rent, utilities) and one-time expenses</li>
-							<li><strong>Gross Profit:</strong> Revenue minus COGS</li>
-							<li><strong>Net Profit:</strong> Gross Profit minus Operating Expenses</li>
-						</ul>
-					</div>
 				</div>
 			</main>
 		</div>

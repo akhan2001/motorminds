@@ -17,7 +17,7 @@ interface WorkOrderEditModalContentProps {
     summary: WorkOrderItemSummary | undefined
     onClose: () => void
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
-    onDelete?: (workOrderId: string) => void
+    onDelete?: (workOrderId: string, options?: { deleteInvoice?: boolean }) => void
     className?: string
 }
 

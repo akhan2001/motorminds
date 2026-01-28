@@ -7,6 +7,7 @@ import { Archive } from 'lucide-react'
 import type { InvoiceWithDetails } from '../../../types/invoice'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { formatInvoiceDisplayId } from '../../../lib/invoice-calculations'
 
 interface ArchivedInvoiceCardProps {
     invoice: InvoiceWithDetails
@@ -44,7 +45,7 @@ export const ArchivedInvoiceCard: React.FC<ArchivedInvoiceCardProps> = ({ invoic
                         <h3 className="text-sm font-medium text-foreground dark:text-white">
                             {invoice.title || 'Untitled Invoice'}
                         </h3>
-                        <p className="text-xs text-muted-foreground dark:text-gray-400">#{invoice.display_id || invoice.invoice_number}</p>
+                        <p className="text-xs text-muted-foreground dark:text-gray-400">#{formatInvoiceDisplayId(invoice.display_id, invoice.invoice_number)}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -99,7 +100,7 @@ export const ArchivedInvoiceCard: React.FC<ArchivedInvoiceCardProps> = ({ invoic
                     <div className="flex items-center gap-1">
                         {invoice.work_order && (
                             <Badge variant="secondary" className="bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-300 text-xs px-1 py-0.5">
-                                WO: {invoice.work_order.work_order_number}
+                                Work Order: {invoice.work_order.work_order_number}
                             </Badge>
                         )}
                         <Badge variant="secondary" className="bg-gray-700/50 dark:bg-gray-700/50 text-muted-foreground dark:text-gray-400 text-xs px-1 py-0.5">

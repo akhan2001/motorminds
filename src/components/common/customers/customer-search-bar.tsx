@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Search, ChevronDown } from 'lucide-react'
+import { Search, ChevronDown, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useCustomerSearch } from '@/hooks/use-customer-search'
+import { useCustomerSearch, useRecentCustomers } from '@/hooks/use-customer-search'
 import { Customer } from '@/app/(features)/customers/types'
 import { getInitials } from '@/lib/utils/text'
 import { formatPhoneNumber } from '@/utils/format-phone'
@@ -46,6 +46,15 @@ export function CustomerSearchBar({
         enabled: open && searchQuery.trim().length > 0,
         organizationWide
     })
+
+    // Fetch recent customers for empty search state
+    const { customers: recentCustomers, isLoading: recentLoading } = useRecentCustomers({
+        enabled: open,
+        limit: 8
+    })
+
+    // Show recent customers when no search query
+    const showRecentCustomers = open && searchQuery.trim().length === 0 && recentCustomers.length > 0
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -122,7 +131,47 @@ export function CustomerSearchBar({
 
                         {/* Customer List */}
                         <div className="py-1">
-                            {customersLoading && (
+                            {/* Recent Customers Section - Show when no search query */}
+                            {showRecentCustomers && (
+                                <div className="space-y-1">
+                                    <div className="px-3 py-2 flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                        <Clock className="h-3 w-3" />
+                                        Recent Customers
+                                    </div>
+                                    {recentLoading ? (
+                                        <div className="p-4 text-center text-sm text-muted-foreground">
+                                            Loading recent customers...
+                                        </div>
+                                    ) : (
+                                        recentCustomers.map((customer) => (
+                                            <div
+                                                key={customer.id}
+                                                onClick={() => handleCustomerSelect(customer)}
+                                                className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50 text-foreground transition-colors"
+                                            >
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src="" />
+                                                    <AvatarFallback className="bg-red-600 text-white text-xs">
+                                                        {getInitials(customer.customer_name)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-foreground truncate">
+                                                        {customer.customer_name}
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground truncate">
+                                                        {customer.customer_phone && formatPhoneNumber(customer.customer_phone)}
+                                                        {customer.customer_email && customer.customer_email !== 'NULL' ? ` • ${customer.customer_email}` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Search Results Section */}
+                            {customersLoading && searchQuery.trim() && (
                                 <div className="p-4 text-center text-sm text-muted-foreground">
                                     Searching...
                                 </div>

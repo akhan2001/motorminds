@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React from 'react'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -30,9 +30,6 @@ export function InvoiceSyncWarningDialog({
     totalAmount,
     isSyncing
 }: InvoiceSyncWarningDialogProps) {
-    // Track if confirm was clicked to prevent onClose from being called
-    const isConfirmingRef = useRef(false)
-
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -41,17 +38,14 @@ export function InvoiceSyncWarningDialog({
     }
 
     const handleConfirmClick = () => {
-        isConfirmingRef.current = true
         onConfirm()
     }
 
     const handleOpenChange = (open: boolean) => {
-        if (!open && !isConfirmingRef.current) {
-            onClose()
-        }
-        // Reset the ref when dialog closes
+        // Always allow closing the modal
+        // The parent component controls the isOpen state via onClose
         if (!open) {
-            isConfirmingRef.current = false
+            onClose()
         }
     }
 
@@ -90,9 +84,14 @@ export function InvoiceSyncWarningDialog({
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onClose} disabled={isSyncing}>
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isSyncing}
+                        className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a]"
+                    >
                         Cancel
-                    </AlertDialogCancel>
+                    </Button>
                     <Button
                         onClick={handleConfirmClick}
                         disabled={isSyncing}

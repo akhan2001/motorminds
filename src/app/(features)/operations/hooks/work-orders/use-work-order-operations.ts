@@ -129,12 +129,12 @@ export function useWorkOrderOperations(
             // Use the work order ID from the updated work order
             const workOrderId = updatedWorkOrder.id
 
-            // Prepare the update data
+            // Prepare the update data - use formData if available, otherwise fall back to updatedWorkOrder
             const updateData: Partial<WorkOrder> = {
-                title: updatedWorkOrder.title,
-                description: updatedWorkOrder.description,
-                priority: updatedWorkOrder.priority,
-                tags: updatedWorkOrder.tags,
+                title: formData?.title ?? updatedWorkOrder.title,
+                description: formData?.description ?? updatedWorkOrder.description,
+                priority: formData?.priority ?? updatedWorkOrder.priority,
+                tags: formData?.tags ?? updatedWorkOrder.tags,
             }
 
             // Include notes if provided in formData
@@ -165,10 +165,11 @@ export function useWorkOrderOperations(
 
     /**
      * Handle work order deletion
+     * @param options.deleteInvoice - If true, also cancels the associated invoice
      */
-    const handleWorkOrderDelete = async (workOrderId: string) => {
+    const handleWorkOrderDelete = async (workOrderId: string, options?: { deleteInvoice?: boolean }) => {
         try {
-            await deleteWorkOrderMutation.mutateAsync(workOrderId)
+            await deleteWorkOrderMutation.mutateAsync({ id: workOrderId, options })
             refetch() // Refetch work orders to update the list
         } catch (error) {
             console.error('Failed to delete work order:', error)

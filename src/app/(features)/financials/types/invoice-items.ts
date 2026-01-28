@@ -65,6 +65,7 @@ export interface InvoiceItemSummary {
   feesTotal: number
   totalDiscount: number
   tax: number
+  taxRate: number
   grandTotal: number
   itemCount: number
   laborHoursTotal: number

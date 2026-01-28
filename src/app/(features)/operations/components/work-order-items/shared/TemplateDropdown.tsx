@@ -24,6 +24,7 @@ interface TemplateDropdownProps {
     itemType: 'labor' | 'part' | 'expense' | 'service' | 'fee' | 'discount' | 'package'
     value: string
     onChange: (value: string) => void
+    onBlur?: () => void
     onTemplateSelect: (template: WorkOrderItemTemplate) => void
     placeholder?: string
     disabled?: boolean
@@ -75,6 +76,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
     itemType,
     value,
     onChange,
+    onBlur,
     onTemplateSelect,
     placeholder = "Enter description or search templates...",
     disabled = false,
@@ -144,6 +146,11 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
         setIsOpen(true)
     }
 
+    const handleInputBlur = () => {
+        // Call the external onBlur handler for form validation
+        onBlur?.()
+    }
+
     const showDropdown = isOpen && !disabled && (templates.length > 0 || isLoading)
 
     return (
@@ -155,6 +162,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
                     value={value}
                     onChange={handleInputChange}
                     onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
                     placeholder={placeholder}
                     disabled={disabled}
                     className="pr-8"

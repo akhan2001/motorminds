@@ -61,16 +61,19 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
     )
 
     // Update selected category when title prop changes externally
+    // But only if NOT editing - prevents overwriting user's unsaved changes
     useEffect(() => {
-        const isCategory = WORK_ORDER_TITLE_CATEGORIES.includes(title as any)
-        if (isCategory) {
-            setSelectedCategory(title)
-            setCustomTitle('')
-        } else if (title) {
-            setSelectedCategory(OTHER_CATEGORY)
-            setCustomTitle(title)
+        if (!isEditing) {
+            const isCategory = WORK_ORDER_TITLE_CATEGORIES.includes(title as any)
+            if (isCategory) {
+                setSelectedCategory(title)
+                setCustomTitle('')
+            } else if (title) {
+                setSelectedCategory(OTHER_CATEGORY)
+                setCustomTitle(title)
+            }
         }
-    }, [title])
+    }, [title, isEditing])
 
     // Handle category selection
     const handleCategoryChange = (value: string) => {
@@ -210,7 +213,11 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                         <Label className="text-muted-foreground dark:text-gray-400">Customer Requests</Label>
                         <textarea
                             value={description}
-                            onChange={(e) => isEditing && onFieldChange('description', e.target.value)}
+                            onChange={(e) => {
+                                if (isEditing) {
+                                    onFieldChange('description', e.target.value)
+                                }
+                            }}
                             className={`w-full text-foreground dark:text-white text-sm border border-border dark:border-[#333333] focus:ring-gray-500 rounded-md p-2 min-h-[80px] max-h-[200px] overflow-y-auto ${
                                 isEditing 
                                     ? 'bg-background dark:bg-[#1a1a1a]' 

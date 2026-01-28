@@ -1,4 +1,5 @@
 import { WorkOrderItem } from '../../operations/types/work-order-items'
+import type { InvoiceItem } from '../types/invoice'
 
 export interface InvoiceCalculations {
 	subtotal: number
@@ -50,11 +51,8 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 		return sum + total
 	}, 0)
 	
-	const expensesTotal = expensesItems.reduce((sum, item) => {
-		// For expenses: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
-		return sum + total
-	}, 0)
+	// Expenses are excluded from calculations (tracking only)
+	const expensesTotal = 0
 	
 	const servicesTotal = servicesItems.reduce((sum, item) => {
 		// For services: quantity * unit_price
@@ -69,8 +67,10 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	}, 0)
 	
 	const discountsTotal = discountsItems.reduce((sum, item) => {
-		// For discounts: quantity * unit_price
-		const total = (item.quantity || 0) * (item.unit_price || 0)
+		// For discounts: quantity * unit_price (always use positive values)
+		// Discounts are stored as positive values and subtracted in calculations
+		const unitPrice = Math.abs(item.unit_price || 0)
+		const total = (item.quantity || 0) * unitPrice
 		return sum + total
 	}, 0)
 	
@@ -81,7 +81,8 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 	}, 0)
 	
 	// Subtract discounts from subtotal (discounts reduce the total)
-	const subtotal = labourTotal + partsTotal + expensesTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
+	// Expenses are excluded from subtotal calculation (tracking only)
+	const subtotal = labourTotal + partsTotal + servicesTotal + feesTotal + packagesTotal - discountsTotal
 	
 	return {
 		subtotal,
@@ -105,20 +106,66 @@ export function calculateInvoiceTotals(workOrderItems: WorkOrderItem[]): Invoice
 }
 
 /**
- * Get items for invoice display (approved items only)
+ * Convert InvoiceItem[] to WorkOrderItem[] format for use with calculateInvoiceTotals
+ * This allows us to use the centralized calculation logic for manual invoice creation
  */
-export function getInvoiceItems(workOrderItems: WorkOrderItem[]): {
-	labourItems: WorkOrderItem[]
-	partsItems: WorkOrderItem[]
-	servicesItems: WorkOrderItem[]
-	feesItems: WorkOrderItem[]
-} {
-	const approvedItems = workOrderItems.filter(item => item.active !== false)
+export function convertInvoiceItemsToWorkOrderItems(
+	invoiceItems: InvoiceItem[],
+	workOrderId?: string,
+	shopId?: string
+): WorkOrderItem[] {
+	return invoiceItems.map((item) => ({
+		id: item.id,
+		work_order_id: workOrderId || item.id, // Use item.id as fallback if no work_order_id
+		shop_id: shopId || '', // Empty string fallback
+		item_type: item.item_type,
+		description: item.description,
+		quantity: item.quantity,
+		unit_price: item.unit_price,
+		total_price: item.total_price,
+		part_number: item.part_number,
+		supplier: item.supplier,
+		category: item.category,
+		warranty_period: item.warranty_period,
+		labor_hours: item.labor_hours,
+		technician_id: item.technician_id,
+		active: (item as any).active !== false ? true : false, // Default to true if not explicitly false
+		created_at: new Date().toISOString(),
+		// Include optional fields that might exist
+		unit_cost: (item as any).unit_cost,
+		total_cost: (item as any).total_cost,
+		notes: (item as any).notes,
+		is_billable: (item as any).is_billable !== false ? true : undefined, // Default to true if not explicitly false
+	} as WorkOrderItem))
+}
+
+/**
+ * Format invoice display ID with proper fallback handling.
+ * Handles cases where display_id might be "0", null, undefined, or empty string.
+ * 
+ * @param displayId - The invoice display_id (e.g., "INV-001")
+ * @param invoiceNumber - The fallback invoice_number (e.g., "INV-20240126-ABC12345")
+ * @returns The formatted display ID for UI display
+ */
+export function formatInvoiceDisplayId(
+	displayId: string | null | undefined,
+	invoiceNumber: string | null | undefined
+): string {
+	// Check if display_id is valid (not null, undefined, empty string, or "0")
+	const isValidDisplayId = displayId && 
+		displayId.trim() !== '' && 
+		displayId !== '0' &&
+		!displayId.startsWith('0') // Exclude display_ids that start with "0" (like "0123")
 	
-	return {
-		labourItems: approvedItems.filter(item => item.item_type === 'labor'),
-		partsItems: approvedItems.filter(item => item.item_type === 'part'),
-		servicesItems: approvedItems.filter(item => item.item_type === 'service'),
-		feesItems: approvedItems.filter(item => item.item_type === 'fee')
+	if (isValidDisplayId) {
+		return displayId
 	}
+	
+	// Fall back to invoice_number
+	if (invoiceNumber && invoiceNumber.trim() !== '') {
+		return invoiceNumber
+	}
+	
+	// Final fallback
+	return 'N/A'
 }

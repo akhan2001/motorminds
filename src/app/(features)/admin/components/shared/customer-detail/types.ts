@@ -100,11 +100,26 @@ export interface CustomerHistory {
     }
 }
 
+export interface Vehicle {
+    id: string
+    year?: number
+    make?: string
+    model?: string
+    license_plate?: string
+    vin?: string
+    color?: string
+    engine?: string
+    mileage?: string
+    created_at?: string
+}
+
 export interface CustomerDetailSheetProps {
     customer: Customer | null
     customerHistory?: CustomerHistory | null
+    vehicles?: Vehicle[]
     isOpen: boolean
     onClose: () => void
     loading?: boolean
+    vehiclesLoading?: boolean
     error?: string | null
 }

@@ -3,7 +3,7 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Package, Wrench, Star, DollarSign, Calculator, Receipt } from 'lucide-react'
+import { Package, Wrench, Star, DollarSign, Calculator } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/currency'
 import { useWorkOrderItemsSummary, useWorkOrderItems } from '../../hooks/use-work-order-items'
 
@@ -47,10 +47,7 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
         )
     }
 
-    // Calculate expenses total from items since summary schema doesn't include it
-    const expensesTotal = allItems?.filter(item => item.item_type === 'expense' && item.active !== false)
-        .reduce((sum, item) => sum + (item.quantity || 0) * (item.unit_price || 0), 0) || 0
-
+    // Expenses are excluded from calculations (tracking only)
     const summaryItems = [
         {
             type: 'Labor',
@@ -63,12 +60,6 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
             value: summary.totalParts,
             icon: Package,
             color: 'text-green-600 dark:text-green-400'
-        },
-        {
-            type: 'Expenses',
-            value: expensesTotal,
-            icon: Receipt,
-            color: 'text-orange-600 dark:text-orange-400'
         },
         {
             type: 'Services',
@@ -84,8 +75,8 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
         }
     ]
 
-    // Calculate grand total including expenses (database summary might not include expenses in grandTotal)
-    const grandTotalWithExpenses = summary.grandTotal + expensesTotal
+    // Expenses are excluded from grand total (tracking only)
+    const grandTotal = summary.grandTotal
 
     return (
         <Card className={`bg-slate-50 dark:bg-card border-border ${className}`}>
@@ -134,7 +125,7 @@ export const WorkOrderItemsSummary: React.FC<WorkOrderItemsSummaryProps> = ({
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-foreground">Total (Approved Items Only)</span>
                         <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                            {formatCurrency(grandTotalWithExpenses)}
+                            {formatCurrency(grandTotal)}
                         </span>
                     </div>
                     
