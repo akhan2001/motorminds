@@ -14,6 +14,7 @@ import { WorkOrderModalFooter } from '../shared/work-order-modal-footer'
 import { WorkOrderItemsSection } from './WorkOrderItemsSection'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
+import { WorkOrderAdvancePaymentsSection } from '../shared/WorkOrderAdvancePaymentsSection'
 import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
 import { workOrderService } from '../../../lib/work-order-service'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
@@ -279,6 +280,15 @@ export function WorkOrderEditLeftPanel({
                     {showFinancialSummary && workOrderItems.length > 0 && (
                         <WorkOrderCostSummary
                             workOrderItems={workOrderItems}
+                        />
+                    )}
+
+                    {/* Advance Payments - Show if work order hasn't been invoiced */}
+                    {!workOrderDetails.invoice_id && (
+                        <WorkOrderAdvancePaymentsSection
+                            workOrder={workOrderDetails}
+                            workOrderItems={workOrderItems}
+                            isEditing={form.isEditing}
                         />
                     )}
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import type { Invoice, InvoiceWithDetails, InvoiceFormData, InvoiceFilters, InvoiceStats, InvoiceItem } from '../types/invoice'
 import { calculateInvoiceTotals, convertInvoiceItemsToWorkOrderItems } from '../lib/invoice-calculations'
+import { mergeAdvancePaymentsIntoInvoice, calculateInvoicePaymentTotals } from '../lib/invoice-advance-payment-helper'
 
 const supabase = createClient()
 
@@ -555,6 +556,15 @@ export function useCreateInvoiceFromWorkOrder() {
             // Generate invoice number
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
 
+            // Get advance payments from work order (if any)
+            const advancePayments = (workOrder.advance_payments as any[]) || []
+            
+            // Merge advance payments into invoice payments (start with empty array for new invoice)
+            const mergedPayments = mergeAdvancePaymentsIntoInvoice([], advancePayments)
+            
+            // Calculate payment totals based on merged payments
+            const paymentTotals = calculateInvoicePaymentTotals(mergedPayments, total_amount)
+
             const { data: invoice, error: invoiceError } = await supabase
                 .from('invoices_table')
                 .insert({
@@ -567,7 +577,7 @@ export function useCreateInvoiceFromWorkOrder() {
                     title: workOrder.title || 'Service Invoice',
                     description: workOrder.description,
                     notes: workOrder.notes || null, // Copy work order recommendations/notes to invoice
-                    status: 'draft',
+                    status: paymentTotals.status, // Set status based on advance payments
                     priority: workOrder.priority || 'medium',
                     subtotal: calculations.subtotal,
                     tax_rate,
@@ -583,6 +593,12 @@ export function useCreateInvoiceFromWorkOrder() {
                     // Preserve walk-in customer information from work order
                     customer_type: workOrder.customer_type || 'registered',
                     walk_in_vehicle_info: workOrder.walk_in_vehicle_info,
+                    // Carry forward advance payments to invoice
+                    payments: mergedPayments,
+                    amount_paid: paymentTotals.amount_paid,
+                    outstanding_balance: paymentTotals.outstanding_balance,
+                    // Set paid_date if fully paid by advance payments
+                    paid_date: paymentTotals.status === 'paid' ? new Date().toISOString() : null,
                 })
                 .select()
                 .single()
@@ -712,14 +728,30 @@ export function useSyncInvoiceFromWorkOrder() {
             const amount_paid = Number(existingInvoice.amount_paid) || 0
             const outstanding_balance = Math.max(0, total_amount - amount_paid)
 
-            // Fetch work order to get updated notes/recommendations
+            // Fetch work order to get updated notes/recommendations and advance payments
             const { data: workOrder, error: workOrderError } = await supabase
                 .from('work_orders')
-                .select('notes, description, title')
+                .select('notes, description, title, advance_payments')
                 .eq('id', work_order_id)
                 .single()
 
-            // Update invoice - preserve status, payments, and other metadata
+            // Get existing invoice payments and advance payments from work order
+            const existingPayments = (existingInvoice.payments as any[]) || []
+            const advancePayments = (workOrder?.advance_payments as any[]) || []
+            
+            // Merge advance payments into invoice payments (idempotent - won't create duplicates)
+            const mergedPayments = mergeAdvancePaymentsIntoInvoice(existingPayments, advancePayments)
+            
+            // Recalculate payment totals based on merged payments and new total_amount
+            const paymentTotals = calculateInvoicePaymentTotals(mergedPayments, total_amount)
+            
+            // Determine status: use payment totals if there are payments, otherwise preserve existing status
+            let invoiceStatus = existingInvoice.status
+            if (mergedPayments.length > 0) {
+                invoiceStatus = paymentTotals.status
+            }
+
+            // Update invoice - preserve existing payments, merge with advance payments, recalculate totals
             const { data: updatedInvoice, error: updateError } = await supabase
                 .from('invoices_table')
                 .update({
@@ -731,12 +763,17 @@ export function useSyncInvoiceFromWorkOrder() {
                     parts_total: calculations.partsTotal,
                     services_total: calculations.servicesTotal,
                     fees_total: calculations.feesTotal,
-                    outstanding_balance,
+                    // Update payments with merged advance payments
+                    payments: mergedPayments,
+                    amount_paid: paymentTotals.amount_paid,
+                    outstanding_balance: paymentTotals.outstanding_balance,
+                    status: invoiceStatus,
+                    // Set paid_date if fully paid, clear if not
+                    paid_date: paymentTotals.status === 'paid' ? new Date().toISOString() : (paymentTotals.status === 'unpaid' ? null : existingInvoice.paid_date),
                     notes: workOrder?.notes || existingInvoice.notes, // Update notes from work order if available
                     description: workOrder?.description || existingInvoice.description, // Update description from work order if available
                     title: workOrder?.title || existingInvoice.title, // Update title from work order if available
                     updated_at: new Date().toISOString()
-                    // Note: status is preserved (not updated)
                 })
                 .eq('invoice_number', existingInvoice.invoice_number)
                 .select()
