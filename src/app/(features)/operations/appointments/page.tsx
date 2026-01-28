@@ -3,13 +3,8 @@
 import { useState, useMemo } from 'react'
 
 type CalendarViewType = 'day' | 'week' | 'month'
-// import { Nav } from '@/components/navigation/nav'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { AlertCircle } from 'lucide-react'
-import { LoadingSpinner } from '@/components/common/feedback/loading-states'
+import { PageLoading, PageError, PageAuthRequired } from '@/components/common/feedback/page-states'
 import { useAuth } from '../hooks/use-auth'
-// import { useOperationsDashboard } from '../hooks/appointments/useOperationsDashboard' // Disabled for now
 import { useAppointments, useCreateWorkOrderFromAppointment, useCancelAppointment } from '../hooks/appointments/useAppointments'
 import { CalendarView } from '../components/appointments/Calendar/CalendarView'
 import { AppointmentForm } from '../components/appointments/AppointmentForm'
@@ -184,73 +179,24 @@ export default function AppointmentsPage() {
 
     // Loading state
     if (isLoading) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <LoadingSpinner size="md" className="text-blue-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Loading Appointments</p>
-                                <p className="text-muted-foreground text-sm">Fetching calendar data...</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        return <PageLoading title="Loading Appointments" description="Fetching calendar data..." />
     }
 
     // Error state
     if (error) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-red-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Failed to Load Appointments</p>
-                                <p className="text-muted-foreground text-sm mb-3">
-                                    {error && typeof error === 'object' && 'message' in error ? (error as Error).message : 'Unknown error occurred'}
-                                </p>
-                                <Button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
-                                    Try Again
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        const errorMessage = error && typeof error === 'object' && 'message' in error 
+            ? (error as Error).message 
+            : String(error)
+        return <PageError title="Failed to Load Appointments" error={errorMessage} />
     }
 
-    // Don't render main content if we don't have authentication data
+    // Auth required state
     if (!shopId || !user) {
-        return (
-            <div className="h-screen flex flex-col bg-background">
-                {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Card className="bg-card border-border">
-                        <CardContent className="flex items-center gap-4 p-6">
-                            <AlertCircle className="h-6 w-6 text-yellow-500" />
-                            <div>
-                                <p className="text-foreground font-medium">Authentication Required</p>
-                                <p className="text-muted-foreground text-sm">
-                                    Unable to access appointments. Please ensure you are logged in.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        )
+        return <PageAuthRequired resource="appointments" />
     }
 
     return (
-        <div className="h-screen flex flex-col bg-background">
+        <div className="h-full flex flex-col bg-background">
             {/* Header */}
             <AppointmentHeader
                 onNewAppointment={handleShowNewAppointmentForm}
@@ -259,7 +205,7 @@ export default function AppointmentsPage() {
                 onViewChange={setCurrentView}
             />
 
-            {/* Main Content - Calendar with Large Horizontal Padding */}
+            {/* Main Content - Calendar */}
             <div className="flex-1 overflow-hidden">
                 <CalendarView
                     selectedDate={selectedDate}

@@ -333,7 +333,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 					<Button
 						type="submit"
 						disabled={isLoading}
-						className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+						className="flex-1 bg-red-600 hover:bg-red-700 text-white"
 					>
 						{isLoading ? (supplier ? 'Updating Supplier...' : 'Adding Supplier...') : (supplier ? 'Update Supplier' : 'Add Supplier')}
 					</Button>
@@ -539,7 +539,7 @@ export default function SupplierIntakeForm({ onSuccess, onCancel, isModal = fals
 						<Button
 							type="submit"
 							disabled={isLoading}
-							className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+							className="flex-1 bg-red-600 hover:bg-red-700 text-white"
 						>
 							{isLoading ? (supplier ? 'Updating Supplier...' : 'Adding Supplier...') : (supplier ? 'Update Supplier' : 'Add Supplier')}
 						</Button>

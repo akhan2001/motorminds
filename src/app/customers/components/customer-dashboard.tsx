@@ -30,7 +30,7 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                         </Button>
                     </div>
                 </div>
-                
+
                 {/* Single unified CustomerTable - adapts based on user's access scope */}
                 <CustomerTable
                     shopId={shopId}
@@ -41,10 +41,10 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
 
                 {/* Add Customer Form */}
                 {isAdding && (
-                    <CustomerForm 
-                        onClose={handleCustomerAdded} 
-                        shopId={shopId} 
-                        isOpen={isAdding} 
+                    <CustomerForm
+                        onClose={handleCustomerAdded}
+                        shopId={shopId}
+                        isOpen={isAdding}
                     />
                 )}
             </div>

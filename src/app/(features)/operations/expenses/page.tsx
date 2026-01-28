@@ -29,9 +29,10 @@ import {
 import { useDebouncedSearch } from '@/app/(features)/admin/hooks/use-debounced-search'
 import { useSuppliers } from '@/app/(features)/suppliers/hooks/use-suppliers'
 import AddExpenseModal from '@/app/financials/efficiency/components/AddExpenseModal'
+import { SecondaryPageHeader } from '@/components/common/feedback/SecondaryPageHeader'
+import { ScaffoldContainer } from '@/components/layout'
 
 export default function ExpensesPage() {
-    const router = useRouter()
     const { shopId } = useAuth()
     const [currentPage, setCurrentPage] = useState(1)
     const pageSize = 50
@@ -106,33 +107,23 @@ export default function ExpensesPage() {
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Button variant="ghost" size="icon" onClick={() => router.push('/operations/work-orders')} className="-ml-2">
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                        <h1 className="text-3xl font-bold text-foreground dark:text-white">
-                            Parts & Expenses
-                        </h1>
-                    </div>
-                    <p className="text-muted-foreground dark:text-gray-400 ml-11">
-                        View all parts and expenses across all work orders and general business expenses
-                    </p>
-                </div>
-                <div className="flex items-center gap-4">
-                    {shopId && (
-                        <AddExpenseModal shopId={shopId} onExpenseAdded={refetch}>
-                            <Button className="bg-red-600 hover:bg-red-700 text-white">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Expense
-                            </Button>
-                        </AddExpenseModal>
-                    )}
-                </div>
-            </div>
+        <div className="h-full flex flex-col bg-background">
+            <ScaffoldContainer>
+                <SecondaryPageHeader
+                    title="Parts & Expenses"
+                    description="View all parts and expenses across all work orders and general business expenses"
+                    backHref="/operations/work-orders"
+                    actions={
+                        shopId && (
+                            <AddExpenseModal shopId={shopId} onExpenseAdded={refetch}>
+                                <Button className="bg-red-600 hover:bg-red-700 text-white">
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Expense
+                                </Button>
+                            </AddExpenseModal>
+                        )
+                    }
+                />
 
             {/* Search and Filters */}
             <Card>
@@ -415,6 +406,7 @@ export default function ExpensesPage() {
                     )}
                 </CardContent>
             </Card>
+            </ScaffoldContainer>
         </div>
     )
 }

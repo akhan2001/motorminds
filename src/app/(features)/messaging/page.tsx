@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-// import { Nav } from '@/app/components/nav'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Zap, Send, Users, MessageSquare, ArrowRight, Loader2 } from 'lucide-react'
+import { Zap, Send, Users, MessageSquare, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/hooks/core/useAuth'
 import { MessagingHeader } from './components/MessagingHeader'
+import { PageLoading } from '@/components/common/feedback/page-states'
+import { ScaffoldContainer } from '@/components/layout'
 
 export default function MessagingDashboard() {
     const router = useRouter()
@@ -68,27 +69,18 @@ export default function MessagingDashboard() {
     }
 
     if (authLoading) {
-    return (
-        <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
-            {/* <Nav /> */}
-                <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-            </div>
-        )
+        return <PageLoading title="Loading Messaging Hub" description="Initializing..." />
     }
 
     return (
-        <div className="h-screen flex flex-col bg-slate-50 dark:bg-background">
-            {/* <Nav /> */}
-            
+        <div className="h-full flex flex-col bg-background">
             <MessagingHeader 
                 title="Customer Messaging Hub"
                 description="Manage automated messages and mass campaigns to keep customers engaged"
             />
 
             <div className="flex-1 overflow-auto">
-                <div className="container mx-auto p-6 space-y-6">
+                <ScaffoldContainer size="large" className="py-6 space-y-6">
                     {/* Quick Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Card className="border-border dark:border-[#2a2a2a] bg-card dark:bg-[#0f0f0f]">
@@ -190,7 +182,7 @@ export default function MessagingDashboard() {
                                 ) : (
                                     <Button 
                                         onClick={() => router.push('/messaging/automated')}
-                                        className="w-full bg-red-500 hover:bg-red-600 text-white"
+                                        className="w-full bg-red-600 hover:bg-red-700 text-white"
                                     >
                                         Manage Automated Messages
                                         <ArrowRight className="h-4 w-4 ml-2" />
@@ -241,7 +233,7 @@ export default function MessagingDashboard() {
                                 ) : (
                                     <Button 
                                         onClick={() => router.push('/messaging/campaigns')}
-                                        className="w-full bg-red-500 hover:bg-red-600 text-white"
+                                        className="w-full bg-red-600 hover:bg-red-700 text-white"
                                     >
                                         Manage Campaigns
                                         <ArrowRight className="h-4 w-4 ml-2" />
@@ -309,7 +301,7 @@ export default function MessagingDashboard() {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </ScaffoldContainer>
             </div>
         </div>
     )

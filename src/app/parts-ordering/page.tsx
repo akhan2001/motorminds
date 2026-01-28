@@ -635,14 +635,24 @@ export default function PartsOrdering() {
 
     return (
         <div className="h-full flex flex-col bg-background">
+            {/* Fixed Header */}
+            <div className="bg-background border-b border-border flex-shrink-0">
+                <div className="px-6 py-4">
+                    <h1 className="text-2xl font-semibold text-foreground">Parts Sourcing</h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Find and order parts for your vehicles with AI assistance
+                    </p>
+                </div>
+            </div>
+
             <div className="flex-1 overflow-hidden">
                 <ResizablePanelGroup direction="horizontal" className="h-full">
                     <ResizablePanel defaultSize={60} minSize={55} maxSize={65}>
                         <div className="h-full bg-slate-50 dark:bg-card border-r border-border overflow-y-auto">
                             <div className="p-6">
-                                {/* Header */}
+                                {/* Catalog Header */}
                                 <div className="text-center mb-8">
-                                    <h1 className="text-3xl font-bold text-red-600 mb-2">Auto Parts Catalog</h1>
+                                    <h2 className="text-2xl font-bold text-red-600 mb-2">Auto Parts Catalog</h2>
                                     <p className="text-muted-foreground">Find the right parts for your vehicle</p>
                             </div>
 
