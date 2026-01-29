@@ -13,12 +13,32 @@ export async function GET(req: NextRequest) {
 
     // Default to today if no date provided
     const targetDate = dateStr || new Date().toISOString().split('T')[0];
-    const startOfDay = `${targetDate}T00:00:00.000Z`;
-    const endOfDay = `${targetDate}T23:59:59.999Z`;
+    
+    // Query a wider UTC range (±1 day) to ensure we capture all records regardless of timezone
+    // Then filter in memory to match the exact date
+    const targetDateObj = new Date(targetDate + 'T00:00:00.000Z');
+    const dayBefore = new Date(targetDateObj);
+    dayBefore.setUTCDate(dayBefore.getUTCDate() - 1);
+    const dayAfter = new Date(targetDateObj);
+    dayAfter.setUTCDate(dayAfter.getUTCDate() + 1);
+    
+    const queryStart = dayBefore.toISOString();
+    const queryEnd = dayAfter.toISOString();
+
+    /**
+     * Helper function to check if a timestamp's UTC date matches the target date
+     */
+    const matchesTargetDate = (timestamp: string | null | undefined): boolean => {
+        if (!timestamp) return false;
+        const date = new Date(timestamp);
+        const utcDateStr = date.toISOString().split('T')[0];
+        return utcDateStr === targetDate;
+    };
 
     try {
         // Fetch work orders completed on this day (based on completed_at timestamp)
-        const { data: completedWorkOrders, error: workOrdersError } = await supabase
+        // Query wider range, then filter by exact date match
+        const { data: allCompletedWorkOrders, error: workOrdersError } = await supabase
             .from("work_orders")
             .select(`
                 id,
@@ -32,8 +52,13 @@ export async function GET(req: NextRequest) {
             `)
             .eq("shop_id", shopId)
             .eq("status", "completed")
-            .gte("completed_at", startOfDay)
-            .lte("completed_at", endOfDay);
+            .gte("completed_at", queryStart)
+            .lte("completed_at", queryEnd);
+        
+        // Filter to only include records where the UTC date matches targetDate
+        const completedWorkOrders = (allCompletedWorkOrders || []).filter(wo => 
+            matchesTargetDate(wo.completed_at)
+        );
 
         if (workOrdersError) {
             console.error("Error fetching work orders for daily report:", workOrdersError);
@@ -51,7 +76,8 @@ export async function GET(req: NextRequest) {
         const workOrdersCompletedCount = (completedWorkOrders || []).length;
 
         // Fetch paid invoices for the day (for revenue calculations)
-        const { data: invoices, error: invoicesError } = await supabase
+        // Query wider range, then filter by exact date match
+        const { data: allInvoices, error: invoicesError } = await supabase
             .from("invoices_table")
             .select(`
                 id,
@@ -68,8 +94,13 @@ export async function GET(req: NextRequest) {
             `)
             .eq("shop_id", shopId)
             .eq("status", "paid")
-            .gte("paid_date", startOfDay)
-            .lte("paid_date", endOfDay);
+            .gte("paid_date", queryStart)
+            .lte("paid_date", queryEnd);
+        
+        // Filter to only include records where the UTC date matches targetDate
+        const invoices = (allInvoices || []).filter(inv => 
+            matchesTargetDate(inv.paid_date)
+        );
 
         if (invoicesError) {
             console.error("Error fetching invoices for daily report:", invoicesError);
@@ -119,15 +150,19 @@ export async function GET(req: NextRequest) {
 
         // Get vehicle details from completed work orders for the report
         const vehiclesServiced = (completedWorkOrders || [])
-            .filter(wo => wo.vehicle)
-            .map(wo => ({
-                id: wo.vehicle?.id,
-                work_order_id: wo.id,
-                description: wo.vehicle ? `${wo.vehicle.year} ${wo.vehicle.make} ${wo.vehicle.model}` : 'Unknown',
-                license_plate: wo.vehicle?.license_plate,
-                work_order_title: wo.title,
-                customer_name: wo.customer?.customer_name || 'Unknown'
-            }));
+            .filter(wo => wo.vehicle && !Array.isArray(wo.vehicle))
+            .map(wo => {
+                const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle;
+                const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
+                return {
+                    id: vehicle?.id,
+                    work_order_id: wo.id,
+                    description: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
+                    license_plate: vehicle?.license_plate,
+                    work_order_title: wo.title,
+                    customer_name: customer?.customer_name || 'Unknown'
+                };
+            });
 
         // Format payment method breakdown for response
         const paymentMethods = Object.entries(paymentMethodBreakdown).map(([method, data]) => ({

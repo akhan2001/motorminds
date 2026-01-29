@@ -26,6 +26,7 @@ import {
 	Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getLocalDateString, parseLocalDate } from '@/lib/utils/date';
 
 interface ExpenseReportData {
 	generalExpenses: GeneralExpense[];
@@ -121,8 +122,28 @@ const formatCurrency = (value: number): string => {
 	}).format(value);
 };
 
+/**
+ * Format date for display - extracts date part and formats without timezone conversion
+ * This ensures dates show as stored in the database, not converted to local time
+ */
 const formatDate = (dateString: string): string => {
-	return new Date(dateString).toLocaleDateString('en-US', {
+	if (!dateString) return '';
+	
+	// Extract date part (YYYY-MM-DD) from any format (ISO timestamp or date string)
+	let datePart: string;
+	if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+		// Already in YYYY-MM-DD format
+		datePart = dateString;
+	} else {
+		// Extract date part from ISO timestamp (e.g., "2026-01-28T00:00:00.000Z" -> "2026-01-28")
+		datePart = dateString.split('T')[0];
+	}
+	
+	// Parse the date part directly without timezone conversion
+	const [year, month, day] = datePart.split('-').map(Number);
+	const date = new Date(year, month - 1, day);
+	
+	return date.toLocaleDateString('en-US', {
 		month: 'short',
 		day: 'numeric',
 		year: 'numeric'
@@ -205,8 +226,11 @@ const ReportsPage = () => {
 
 		setIsFetchingData(true);
 		try {
+			// Send date strings in YYYY-MM-DD format to avoid timezone issues
+			const startDateStr = getLocalDateString(dateRange.from);
+			const endDateStr = getLocalDateString(dateRange.to);
 			const response = await fetch(
-				`/api/financials/reports/expenses?startDate=${dateRange.from.toISOString()}&endDate=${dateRange.to.toISOString()}&shopId=${shopId}`
+				`/api/financials/reports/expenses?startDate=${startDateStr}&endDate=${endDateStr}&shopId=${shopId}`
 			);
 			if (!response.ok) {
 				throw new Error('Failed to fetch expense data');
@@ -311,7 +335,9 @@ const ReportsPage = () => {
 		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 		const link = document.createElement('a');
 		link.href = URL.createObjectURL(blob);
-		link.download = `Expense_Report_${dateRange?.from?.toLocaleDateString('en-CA')}_to_${dateRange?.to?.toLocaleDateString('en-CA')}.csv`;
+		const fromDateStr = dateRange?.from ? getLocalDateString(dateRange.from) : 'unknown';
+		const toDateStr = dateRange?.to ? getLocalDateString(dateRange.to) : 'unknown';
+		link.download = `Expense_Report_${fromDateStr}_to_${toDateStr}.csv`;
 		link.click();
 	};
 
@@ -364,9 +390,9 @@ const ReportsPage = () => {
 									<label className="text-sm text-muted-foreground mb-2 block">From Date</label>
 									<Input
 										type="date"
-										value={dateRange?.from ? dateRange.from.toISOString().split('T')[0] : ''}
+										value={dateRange?.from ? getLocalDateString(dateRange.from) : ''}
 										onChange={(e) => {
-											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+											const date = e.target.value ? parseLocalDate(e.target.value) : undefined;
 											handleDateRangeChange({
 												from: date,
 												to: dateRange?.to
@@ -379,15 +405,15 @@ const ReportsPage = () => {
 									<label className="text-sm text-muted-foreground mb-2 block">To Date</label>
 									<Input
 										type="date"
-										value={dateRange?.to ? dateRange.to.toISOString().split('T')[0] : ''}
+										value={dateRange?.to ? getLocalDateString(dateRange.to) : ''}
 										onChange={(e) => {
-											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+											const date = e.target.value ? parseLocalDate(e.target.value) : undefined;
 											handleDateRangeChange({
 												from: dateRange?.from,
 												to: date
 											});
 										}}
-										min={dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined}
+										min={dateRange?.from ? getLocalDateString(dateRange.from) : undefined}
 										className="bg-white dark:bg-background border-border text-foreground"
 									/>
 								</div>

@@ -5,23 +5,51 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     
     const { searchParams } = new URL(req.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const startDateStr = searchParams.get('startDate'); // YYYY-MM-DD format
+    const endDateStr = searchParams.get('endDate'); // YYYY-MM-DD format
     const shopId = searchParams.get('shopId');
 
-    if (!startDate || !endDate || !shopId) {
+    if (!startDateStr || !endDateStr || !shopId) {
         return new NextResponse('Missing required query parameters: startDate, endDate, shopId', { status: 400 });
     }
 
+    /**
+     * Helper function to check if a date string's date part matches the target date
+     */
+    const matchesDateRange = (dateString: string | null | undefined): boolean => {
+        if (!dateString) return false;
+        // Extract date part (YYYY-MM-DD) from timestamp or date string
+        const date = new Date(dateString);
+        const utcDateStr = date.toISOString().split('T')[0];
+        return utcDateStr >= startDateStr && utcDateStr <= endDateStr;
+    };
+
     try {
+        // Query a wider range for general expenses to ensure we capture all records
+        // Then filter in memory to match exact dates
+        const startDateObj = new Date(startDateStr + 'T00:00:00.000Z');
+        const endDateObj = new Date(endDateStr + 'T00:00:00.000Z');
+        const dayBefore = new Date(startDateObj);
+        dayBefore.setUTCDate(dayBefore.getUTCDate() - 1);
+        const dayAfter = new Date(endDateObj);
+        dayAfter.setUTCDate(dayAfter.getUTCDate() + 1);
+        
+        const queryStart = dayBefore.toISOString().split('T')[0];
+        const queryEnd = dayAfter.toISOString().split('T')[0];
+
         // 1. Fetch general expenses (one_time_costs)
-        const { data: generalExpenses, error: generalExpensesError } = await supabase
+        const { data: allGeneralExpenses, error: generalExpensesError } = await supabase
             .from('one_time_costs')
             .select('*')
             .eq('shop_id', shopId)
-            .gte('cost_date', startDate)
-            .lte('cost_date', endDate)
+            .gte('cost_date', queryStart)
+            .lte('cost_date', queryEnd)
             .order('cost_date', { ascending: false });
+        
+        // Filter to only include records where the date matches the target range
+        const generalExpenses = (allGeneralExpenses || []).filter((item: any) => 
+            matchesDateRange(item.cost_date)
+        );
 
         if (generalExpensesError) throw generalExpensesError;
 
@@ -72,14 +100,10 @@ export async function GET(req: NextRequest) {
         }
 
         // Filter work order expenses by date range (using expense_cost_date or created_at)
-        const startDateObj = new Date(startDate);
-        const endDateObj = new Date(endDate);
-        // Set end date to end of day
-        endDateObj.setHours(23, 59, 59, 999);
-        
+        // Use date-only comparison to avoid timezone issues
         const filteredWorkOrderExpenses = (workOrderExpenses || []).filter((item: any) => {
-            const itemDate = new Date(item.expense_cost_date || item.created_at);
-            return itemDate >= startDateObj && itemDate <= endDateObj;
+            const itemDate = item.expense_cost_date || item.created_at;
+            return matchesDateRange(itemDate);
         });
 
         // 3. Fetch parts expenses (item_type = 'part' with unit_cost) - COGS
@@ -126,10 +150,10 @@ export async function GET(req: NextRequest) {
             throw partsExpensesError;
         }
 
-        // Filter parts by date range (using item created_at or work order created_at)
+        // Filter parts by date range (using item created_at)
+        // Use date-only comparison to avoid timezone issues
         const filteredPartsExpenses = (partsExpenses || []).filter((item: any) => {
-            const itemDate = new Date(item.created_at);
-            return itemDate >= startDateObj && itemDate <= endDateObj;
+            return matchesDateRange(item.created_at);
         });
 
         // 4. Get all work order IDs to check invoice status
@@ -279,8 +303,8 @@ export async function GET(req: NextRequest) {
                 },
                 grandTotal,
             },
-            startDate,
-            endDate,
+            startDate: startDateStr,
+            endDate: endDateStr,
         });
 
     } catch (error) {

@@ -10,6 +10,7 @@ import { Calendar, DollarSign, Loader2, Receipt, Car, ChevronLeft, ChevronRight 
 import { Button } from '@/components/ui/button';
 import { InvoiceQuickView } from '@/components/shared/quick-view/InvoiceQuickView';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
+import { getLocalDateString, parseLocalDate } from '@/lib/utils/date';
 
 interface DailyReportData {
 	date: string;
@@ -57,7 +58,7 @@ export default function DailyReportsPage() {
 	const [dailyReportData, setDailyReportData] = useState<DailyReportData | null>(null);
 	const [isFetchingReport, setIsFetchingReport] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<string>(() => 
-		new Date().toISOString().split('T')[0]
+		getLocalDateString()
 	);
 	const router = useRouter();
 	
@@ -118,26 +119,27 @@ export default function DailyReportsPage() {
 	}, [shopId, selectedDate, fetchDailyReport]);
 
 	const goToPreviousDay = () => {
-		const date = new Date(selectedDate);
+		const date = parseLocalDate(selectedDate);
 		date.setDate(date.getDate() - 1);
-		setSelectedDate(date.toISOString().split('T')[0]);
+		setSelectedDate(getLocalDateString(date));
 	};
 
 	const goToNextDay = () => {
-		const date = new Date(selectedDate);
+		const date = parseLocalDate(selectedDate);
 		date.setDate(date.getDate() + 1);
-		const today = new Date().toISOString().split('T')[0];
-		if (date.toISOString().split('T')[0] <= today) {
-			setSelectedDate(date.toISOString().split('T')[0]);
+		const today = getLocalDateString();
+		const nextDateStr = getLocalDateString(date);
+		if (nextDateStr <= today) {
+			setSelectedDate(nextDateStr);
 		}
 	};
 
 	const goToToday = () => {
-		setSelectedDate(new Date().toISOString().split('T')[0]);
+		setSelectedDate(getLocalDateString());
 	};
 
 	const formatDateDisplay = (dateStr: string) => {
-		const date = new Date(dateStr + 'T00:00:00');
+		const date = parseLocalDate(dateStr);
 		return date.toLocaleDateString('en-US', { 
 			weekday: 'long', 
 			year: 'numeric', 
@@ -146,7 +148,7 @@ export default function DailyReportsPage() {
 		});
 	};
 
-	const isToday = selectedDate === new Date().toISOString().split('T')[0];
+	const isToday = selectedDate === getLocalDateString();
 
 	if (isLoading) {
 		return (
@@ -213,7 +215,7 @@ export default function DailyReportsPage() {
 								type="date"
 								value={selectedDate}
 								onChange={(e) => setSelectedDate(e.target.value)}
-								max={new Date().toISOString().split('T')[0]}
+								max={getLocalDateString()}
 								className="px-3 py-2 border border-border rounded-lg bg-white dark:bg-background text-foreground text-sm"
 							/>
 							{!isToday && (
