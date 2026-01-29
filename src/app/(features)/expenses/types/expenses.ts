@@ -72,3 +72,15 @@ export interface ExpensesResponse {
     page: number;
     limit: number;
 }
+
+export interface ExpensesStatsCardsProps {
+    isLoading: boolean
+    stats?: {
+        totalExpenses: number
+        workOrderExpenses: number
+        invoiceExpenses: number
+        generalExpenses: number
+    }
+    totalCount?: number
+    currentPageCount?: number
+}

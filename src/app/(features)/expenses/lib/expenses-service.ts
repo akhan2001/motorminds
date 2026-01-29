@@ -11,13 +11,11 @@ export class ExpensesService {
     private static supabase = createClient()
 
     /**
-     * Get all expenses for a shop with optional filtering and pagination
+     * Get all expenses for a shop with optional filtering (no pagination)
      */
     static async getExpenses(
         shopId: string,
-        filters: ExpenseFilters = {},
-        page: number = 1,
-        limit: number = 50
+        filters: ExpenseFilters = {}
     ): Promise<ExpensesResponse> {
         try {
             let query = this.supabase
@@ -46,12 +44,19 @@ export class ExpensesService {
                 query = query.ilike('vendor', `%${filters.vendor}%`)
             }
 
+            // Date filtering - ensure dates are compared as date-only (no time)
+            // The expense_date field is a DATE type, so comparisons are already date-only
+            // But we ensure the filter values are properly formatted as YYYY-MM-DD
             if (filters.date_from) {
-                query = query.gte('expense_date', filters.date_from)
+                // Ensure date_from is in YYYY-MM-DD format (date only, no time)
+                const dateFrom = filters.date_from.split('T')[0] // Remove time if present
+                query = query.gte('expense_date', dateFrom)
             }
 
             if (filters.date_to) {
-                query = query.lte('expense_date', filters.date_to)
+                // Ensure date_to is in YYYY-MM-DD format (date only, no time)
+                const dateTo = filters.date_to.split('T')[0] // Remove time if present
+                query = query.lte('expense_date', dateTo)
             }
 
             // Text search across multiple fields
@@ -76,12 +81,10 @@ export class ExpensesService {
                 query = query.or('archived.eq.false,archived.is.null')
             }
 
-            // Pagination
-            const offset = (page - 1) * limit
+            // Order by date (no pagination)
             query = query
                 .order('expense_date', { ascending: false })
                 .order('created_at', { ascending: false })
-                .range(offset, offset + limit - 1)
 
             const { data, error, count } = await query
 
@@ -93,8 +96,8 @@ export class ExpensesService {
             return {
                 expenses: data || [],
                 total: count || 0,
-                page,
-                limit,
+                page: 1,
+                limit: count || 0,
             }
         } catch (error) {
             console.error('ExpensesService.getExpenses error:', error)
@@ -501,6 +504,34 @@ export class ExpensesService {
             }
         } catch (error) {
             console.error('ExpensesService.getExpenseSummary error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get unique categories for a shop (for dropdowns)
+     */
+    static async getUniqueCategories(shopId: string): Promise<string[]> {
+        try {
+            const { data, error } = await this.supabase
+                .from('expenses')
+                .select('category')
+                .eq('shop_id', shopId)
+                .or('archived.eq.false,archived.is.null')
+
+            if (error) {
+                console.error('Error fetching unique categories:', error)
+                throw new Error(`Failed to fetch categories: ${error.message}`)
+            }
+
+            // Get unique categories
+            const uniqueCategories = Array.from(
+                new Set((data || []).map((item) => item.category).filter(Boolean))
+            ).sort()
+
+            return uniqueCategories
+        } catch (error) {
+            console.error('ExpensesService.getUniqueCategories error:', error)
             throw error
         }
     }
