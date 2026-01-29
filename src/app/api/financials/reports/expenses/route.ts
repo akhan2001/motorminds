@@ -16,12 +16,27 @@ export async function GET(req: NextRequest) {
     }
 
     /**
+     * Check if a string is a date-only format (YYYY-MM-DD) without time
+     */
+    const isDateOnly = (dateString: string): boolean => {
+        return /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+    };
+
+    /**
      * Convert UTC timestamp to local date (YYYY-MM-DD) using timezone offset
-     * getTimezoneOffset() returns positive minutes for west of UTC
-     * So EST (UTC-5) returns 300, we subtract to go from UTC to local
+     * For date-only strings (YYYY-MM-DD), return as-is since they're already local dates
+     * For full timestamps, apply timezone conversion
      */
     const toLocalDate = (dateString: string | null | undefined): string | null => {
         if (!dateString) return null;
+        
+        // If it's already a date-only string (YYYY-MM-DD), return it directly
+        // These are local dates and should NOT be timezone-converted
+        if (isDateOnly(dateString)) {
+            return dateString;
+        }
+        
+        // For full timestamps, apply timezone conversion
         const utc = new Date(dateString);
         const local = new Date(utc.getTime() - (tzOffset * 60 * 1000));
         const y = local.getUTCFullYear();

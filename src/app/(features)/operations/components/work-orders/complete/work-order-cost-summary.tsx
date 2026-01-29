@@ -2,6 +2,7 @@ import React from 'react'
 import { WorkOrderItem } from '../../../types/work-order-items'
 import { calculateInvoiceTotals } from '../../../../financials/lib/invoice-calculations'
 import { formatCurrency } from '@/lib/utils/currency'
+import { formatDateOnly } from '@/lib/utils/date'
 
 interface WorkOrderCostSummaryProps {
 	workOrderItems: WorkOrderItem[]
@@ -176,7 +177,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 											<div>
 												<span className="text-muted-foreground">Date: </span>
 												<span className="text-foreground">
-													{new Date(item.expense_cost_date).toLocaleDateString()}
+													{formatDateOnly(item.expense_cost_date)}
 												</span>
 											</div>
 										)}

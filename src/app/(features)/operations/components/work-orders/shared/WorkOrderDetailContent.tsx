@@ -8,6 +8,7 @@ import { format } from 'date-fns'
 import type { WorkOrderWithDetails, WorkOrderItem } from '../../../types/work-order'
 import { calculateInvoiceTotals } from '../../../../financials/lib/invoice-calculations'
 import { formatCurrency } from '@/lib/utils/currency'
+import { formatDateOnly } from '@/lib/utils/date'
 
 interface WorkOrderDetailContentProps {
     workOrder: WorkOrderWithDetails
@@ -358,7 +359,7 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                                                                 )}
                                                                 {item.expense_cost_date && (
                                                                     <div>
-                                                                        <span className="font-medium">Date:</span> {formatDate(item.expense_cost_date)}
+                                                                        <span className="font-medium">Date:</span> {formatDateOnly(item.expense_cost_date)}
                                                                     </div>
                                                                 )}
                                                                 {item.expense_parts_description && (

@@ -24,10 +24,26 @@ export async function GET(req: NextRequest) {
     const dayAfter = new Date(new Date(endOfDay).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
     /**
+     * Check if a string is a date-only format (YYYY-MM-DD) without time
+     */
+    const isDateOnly = (dateString: string): boolean => {
+        return /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+    };
+
+    /**
      * Convert UTC timestamp to local date (YYYY-MM-DD) using timezone offset
+     * For date-only strings (YYYY-MM-DD), return as-is since they're already local dates
+     * For full timestamps, apply timezone conversion
      */
     const toLocalDate = (dateString: string | null | undefined): string | null => {
         if (!dateString) return null;
+        
+        // If it's already a date-only string (YYYY-MM-DD), return it directly
+        if (isDateOnly(dateString)) {
+            return dateString;
+        }
+        
+        // For full timestamps, apply timezone conversion
         const utc = new Date(dateString);
         const local = new Date(utc.getTime() - (tzOffset * 60 * 1000));
         const y = local.getUTCFullYear();

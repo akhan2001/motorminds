@@ -152,3 +152,20 @@ export function parseLocalDate(dateString: string): Date {
     // Adding T00:00:00 makes it parse as local time instead of UTC
     return new Date(dateString + 'T00:00:00')
 }
+
+/**
+ * Format a date-only string (YYYY-MM-DD) for display without timezone conversion
+ * Use this for dates that don't have a time component (like expense_cost_date)
+ */
+export function formatDateOnly(dateString: string | null | undefined): string {
+    if (!dateString) return 'N/A'
+    // Extract just the date part if it's a full timestamp
+    const datePart = dateString.substring(0, 10)
+    // Parse as local date to avoid UTC conversion
+    const date = new Date(datePart + 'T00:00:00')
+    return date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric'
+    })
+}

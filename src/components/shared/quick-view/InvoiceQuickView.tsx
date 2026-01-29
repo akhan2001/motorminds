@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { useInvoice } from '@/app/(features)/financials/hooks/use-invoices'
 import { useWorkOrderItems } from '@/app/(features)/operations/hooks/use-work-order-items'
 import { formatCurrency } from '@/lib/utils/currency'
-import { formatDate } from '@/lib/utils/date'
+import { formatDate, formatDateOnly } from '@/lib/utils/date'
 import { formatPhoneNumber } from '@/lib/utils/formatters'
 import { format } from 'date-fns'
 
@@ -398,7 +398,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                                     )}
                                                     {item.expense_cost_date && (
                                                         <div>
-                                                            <span className="font-medium">Date:</span> {formatDateString(item.expense_cost_date)}
+                                                            <span className="font-medium">Date:</span> {formatDateOnly(item.expense_cost_date)}
                                                         </div>
                                                     )}
                                                     {item.expense_parts_description && (
@@ -502,7 +502,7 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                                 )}
                                                 {item.expense_cost_date && (
                                                     <div>
-                                                        <span className="font-medium">Date:</span> {formatDateString(item.expense_cost_date)}
+                                                        <span className="font-medium">Date:</span> {formatDateOnly(item.expense_cost_date)}
                                                     </div>
                                                 )}
                                                 {item.expense_parts_description && (
