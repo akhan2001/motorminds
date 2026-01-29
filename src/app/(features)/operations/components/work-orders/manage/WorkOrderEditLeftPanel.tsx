@@ -286,9 +286,10 @@ export function WorkOrderEditLeftPanel({
                     )}
 
                     {/* Cost Summary - Show for completed work orders, before Notes */}
-                    {showFinancialSummary && workOrderItems.length > 0 && (
+                    {showFinancialSummary && (workOrderItems.length > 0 || workOrder.id) && (
                         <WorkOrderCostSummary
                             workOrderItems={workOrderItems}
+                            workOrderId={workOrder.id}
                         />
                     )}
 

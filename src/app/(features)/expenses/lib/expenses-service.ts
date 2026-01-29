@@ -134,9 +134,12 @@ export class ExpensesService {
      * Get expenses for a specific work order
      */
     static async getExpensesByWorkOrder(
-        workOrderId: string,
+        workOrderId: string | null,
         shopId: string
     ): Promise<ExpenseItem[]> {
+        if (!workOrderId) {
+            return []
+        }
         try {
             const { data, error } = await this.supabase
                 .from('expenses')
@@ -162,9 +165,12 @@ export class ExpensesService {
      * Get expenses for a specific invoice
      */
     static async getExpensesByInvoice(
-        invoiceId: string,
+        invoiceId: string | null,
         shopId: string
     ): Promise<ExpenseItem[]> {
+        if (!invoiceId) {
+            return []
+        }
         try {
             const { data, error } = await this.supabase
                 .from('expenses')
@@ -315,6 +321,56 @@ export class ExpensesService {
             return expense
         } catch (error) {
             console.error('ExpensesService.linkExpenseToInvoice error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Link all expenses from a work order to an invoice (when work order is converted to invoice)
+     */
+    static async linkWorkOrderExpensesToInvoice(
+        workOrderId: string,
+        shopId: string,
+        invoiceId: string
+    ): Promise<number> {
+        try {
+            // Find all expenses linked to this work order that don't already have an invoice_id
+            const { data: expenses, error: fetchError } = await this.supabase
+                .from('expenses')
+                .select('id')
+                .eq('work_order_id', workOrderId)
+                .eq('shop_id', shopId)
+                .is('invoice_id', null)
+                .or('archived.eq.false,archived.is.null')
+
+            if (fetchError) {
+                console.error('Error fetching work order expenses:', fetchError)
+                throw new Error(`Failed to fetch work order expenses: ${fetchError.message}`)
+            }
+
+            if (!expenses || expenses.length === 0) {
+                return 0
+            }
+
+            // Update all expenses to link them to the invoice
+            const expenseIds = expenses.map(e => e.id)
+            const { error: updateError } = await this.supabase
+                .from('expenses')
+                .update({
+                    invoice_id: invoiceId,
+                    updated_at: new Date().toISOString(),
+                })
+                .in('id', expenseIds)
+                .eq('shop_id', shopId)
+
+            if (updateError) {
+                console.error('Error linking expenses to invoice:', updateError)
+                throw new Error(`Failed to link expenses to invoice: ${updateError.message}`)
+            }
+
+            return expenses.length
+        } catch (error) {
+            console.error('ExpensesService.linkWorkOrderExpensesToInvoice error:', error)
             throw error
         }
     }

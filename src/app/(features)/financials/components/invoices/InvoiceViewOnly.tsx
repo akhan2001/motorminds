@@ -24,6 +24,8 @@ import {
 import { useInvoice, useDeleteInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useWorkOrderItems } from '../../../operations/hooks/use-work-order-items'
+import { useExpensesByInvoice } from '@/app/(features)/expenses/hooks/use-expenses'
+import { ExpenseRow } from '@/app/(features)/expenses/components/ExpenseRow'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { InvoiceSendModal } from './InvoiceSendModal'
@@ -54,11 +56,17 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
     const { data: invoice, isLoading, error } = useInvoice(invoiceId)
     const { data: shopInfo, isLoading: isLoadingShopInfo, error: shopInfoError } = useShopInfo()
     
-    // Fetch work order items to get expense items (tracking only)
+    // Fetch work order items (for legacy expense items if any)
     const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
     
-    // Filter expense items from work order (these are tracking only, not on invoice)
-    const expenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
+    // Fetch expenses from unified expenses table - use invoice.id (UUID) not invoiceId (which might be invoice_number)
+    const { data: expenses = [] } = useExpensesByInvoice(invoice?.id ?? null)
+    
+    // Filter legacy expense items from work order (for backward compatibility)
+    const legacyExpenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
+    
+    // Use unified expenses table expenses, fallback to legacy if no unified expenses
+    const expenseItems = expenses.length > 0 ? expenses : legacyExpenseItems
     const deleteMutation = useDeleteInvoice()
     const updateMutation = useUpdateInvoice()
     const { templateId, setTemplateId } = useTemplatePreference()
@@ -510,43 +518,60 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                                 </span>
                                             </div>
                                         </div>
-                                        {expenseItems.map((item: any, index: number) => (
-                                            <div 
-                                                key={`expense-${index}`} 
-                                                className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
-                                            >
-                                                <div className="col-span-5 text-foreground dark:text-white">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <Check className="h-3 w-3 text-orange-500" />
-                                                        <span>{item.description}</span>
-                                                    </div>
-                                                    {item.expense_vendor && (
-                                                        <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5 mt-0.5">
-                                                            Vendor: {item.expense_vendor}
-                                                            {item.expense_invoice_number && ` - Invoice #${item.expense_invoice_number}`}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="col-span-2 text-center">
-                                                    <Badge 
-                                                        variant="outline" 
-                                                        className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
+                                        {expenseItems.map((item: any, index: number) => {
+                                            // Check if it's from unified table (has ExpenseItem structure) or legacy (has item_type)
+                                            const isUnifiedExpense = 'id' in item && 'description' in item && !('item_type' in item)
+                                            
+                                            if (isUnifiedExpense) {
+                                                // Use ExpenseRow for unified expenses
+                                                return <ExpenseRow key={item.id || `expense-${index}`} expense={item} index={index} />
+                                            } else {
+                                                // Legacy expense item from work_order_items
+                                                return (
+                                                    <div 
+                                                        key={`expense-${index}`} 
+                                                        className="grid grid-cols-12 gap-2 items-center text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
                                                     >
-                                                        {item.item_type}
-                                                    </Badge>
-                                                </div>
-                                                <div className="col-span-2 text-center text-foreground dark:text-white">
-                                                    {item.quantity || 1}
-                                                </div>
-                                                <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
-                                                    {formatCurrency(item.total_price || 0)}
-                                                </div>
-                                            </div>
-                                        ))}
+                                                        <div className="col-span-5 text-foreground dark:text-white">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <Check className="h-3 w-3 text-orange-500" />
+                                                                <span>{item.description}</span>
+                                                            </div>
+                                                            {item.expense_vendor && (
+                                                                <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5 mt-0.5">
+                                                                    Vendor: {item.expense_vendor}
+                                                                    {item.expense_invoice_number && ` - Invoice #${item.expense_invoice_number}`}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="col-span-2 text-center">
+                                                            <Badge 
+                                                                variant="outline" 
+                                                                className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
+                                                            >
+                                                                {item.item_type}
+                                                            </Badge>
+                                                        </div>
+                                                        <div className="col-span-2 text-center text-foreground dark:text-white">
+                                                            {item.quantity || 1}
+                                                        </div>
+                                                        <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
+                                                            {formatCurrency(item.total_price || 0)}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
+                                        })}
                                         <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
                                             <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
                                             <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                                {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
+                                                {formatCurrency(
+                                                    expenseItems.reduce((sum: number, item: any) => {
+                                                        // Handle both unified expenses (has 'total') and legacy (has 'total_price')
+                                                        const total = 'total' in item ? Number(item.total ?? 0) : (item.total_price || 0)
+                                                        return sum + total
+                                                    }, 0)
+                                                )}
                                             </span>
                                         </div>
                                     </>

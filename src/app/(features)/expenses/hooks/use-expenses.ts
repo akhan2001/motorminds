@@ -58,7 +58,7 @@ export function useExpensesByWorkOrder(workOrderId: string | null) {
     return useQuery({
         queryKey: expenseKeys.byWorkOrder(shopId || '', workOrderId ?? ''),
         queryFn: () =>
-            ExpensesService.getExpensesByWorkOrder(workOrderId!, shopId!),
+            ExpensesService.getExpensesByWorkOrder(workOrderId, shopId!),
         enabled: !!shopId && !!workOrderId,
     })
 }
@@ -69,7 +69,7 @@ export function useExpensesByInvoice(invoiceId: string | null) {
     return useQuery({
         queryKey: expenseKeys.byInvoice(shopId || '', invoiceId ?? ''),
         queryFn: () =>
-            ExpensesService.getExpensesByInvoice(invoiceId!, shopId!),
+            ExpensesService.getExpensesByInvoice(invoiceId, shopId!),
         enabled: !!shopId && !!invoiceId,
     })
 }

@@ -47,6 +47,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     shopId
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
 
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [

@@ -173,9 +173,10 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
 
                 {activeTab === 'summary' && (
                     <div className="h-full p-4">
-                        {workOrderItems.length > 0 ? (
+                        {workOrderItems.length > 0 || workOrderId ? (
                             <WorkOrderCostSummary
                                 workOrderItems={workOrderItems}
+                                workOrderId={workOrderId}
                             />
                         ) : (
                             <div className="bg-card dark:bg-[#131313] rounded-lg p-4 border border-border dark:border-[#333333]">

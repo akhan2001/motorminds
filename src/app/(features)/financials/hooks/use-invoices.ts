@@ -592,6 +592,19 @@ export function useCreateInvoiceFromWorkOrder() {
                 throw invoiceError
             }
 
+            // Link all expenses from the work order to the newly created invoice
+            try {
+                const { ExpensesService } = await import('@/app/(features)/expenses/lib/expenses-service')
+                await ExpensesService.linkWorkOrderExpensesToInvoice(
+                    work_order_id,
+                    shop_id,
+                    invoice.id
+                )
+            } catch (expenseLinkError) {
+                // Log error but don't fail invoice creation if expense linking fails
+                console.error('Error linking expenses to invoice:', expenseLinkError)
+            }
+
             // No need to update work order - relationship is maintained via invoices_table.work_order_id
             return invoice as Invoice
         },
@@ -745,6 +758,19 @@ export function useSyncInvoiceFromWorkOrder() {
             if (updateError) {
                 console.error('Error updating invoice:', updateError)
                 throw updateError
+            }
+
+            // Link all expenses from the work order to the invoice (if not already linked)
+            try {
+                const { ExpensesService } = await import('@/app/(features)/expenses/lib/expenses-service')
+                await ExpensesService.linkWorkOrderExpensesToInvoice(
+                    work_order_id,
+                    shop_id,
+                    updatedInvoice.id
+                )
+            } catch (expenseLinkError) {
+                // Log error but don't fail invoice sync if expense linking fails
+                console.error('Error linking expenses to invoice:', expenseLinkError)
             }
 
             return updatedInvoice as Invoice
