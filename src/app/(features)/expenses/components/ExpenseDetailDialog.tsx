@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatCurrency } from '@/lib/utils/currency'
-import { formatDate } from '@/lib/utils/date'
+import { formatDate, formatDateOnly } from '@/lib/utils/date'
 import { ExpensesService } from '../lib/expenses-service'
 import { expenseKeys } from '../data/keys'
 import type { ExpenseItem } from '../types/expenses'
@@ -216,7 +216,7 @@ export function ExpenseDetailDialog({
                             <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
                                 <p className="text-xs text-muted-foreground">Date</p>
-                                <p className="text-foreground">{formatDate(expense.expense_date)}</p>
+                                <p className="text-foreground">{formatDateOnly(expense.expense_date)}</p>
                             </div>
                         </div>
 

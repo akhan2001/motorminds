@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils/currency'
-import { formatDate } from '@/lib/utils/date'
+import { formatDateOnly } from '@/lib/utils/date'
 import { Receipt, Wallet, FileText } from 'lucide-react'
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView'
 import type { ExpenseItem } from '../types/expenses'
@@ -234,7 +234,7 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated, shopI
                                     </TableCell>
                                     <TableCell>
                                         <div className="text-muted-foreground text-sm">
-                                            {formatDate(item.expense_date)}
+                                            {formatDateOnly(item.expense_date)}
                                         </div>
                                     </TableCell>
                                 </TableRow>
