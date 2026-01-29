@@ -26,6 +26,9 @@ import {
 	Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExpenseDetailDialog } from '@/app/(features)/expenses/components/ExpenseDetailDialog';
+import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses';
+import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
 
 interface ExpenseReportData {
 	generalExpenses: GeneralExpense[];
@@ -115,13 +118,25 @@ interface PartsExpense {
 const formatCurrency = (value: number): string => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
-		currency: 'USD',
+		currency: 'CAD',
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2
 	}).format(value);
 };
 
 const formatDate = (dateString: string): string => {
+	// Handle date-only strings (YYYY-MM-DD) to avoid timezone issues
+	// Date-only strings are treated as UTC by JavaScript, which causes off-by-one day issues in EST
+	if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+		// Parse as local date by appending time
+		const [year, month, day] = dateString.split('-').map(Number);
+		return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+	// For full datetime strings, display in local timezone
 	return new Date(dateString).toLocaleDateString('en-US', {
 		month: 'short',
 		day: 'numeric',
@@ -166,7 +181,49 @@ const ReportsPage = () => {
 	const [isFetchingData, setIsFetchingData] = useState(false);
 	const [reportData, setReportData] = useState<ExpenseReportData | null>(null);
 	const [activeTab, setActiveTab] = useState<'general' | 'work_order' | 'parts'>('general');
+	const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
+	const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+	const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+	const [isWorkOrderQuickViewOpen, setIsWorkOrderQuickViewOpen] = useState(false);
 	const router = useRouter();
+
+	// Convert report expense to ExpenseItem format for the dialog
+	const openExpenseDetail = (expense: GeneralExpense | WorkOrderExpense) => {
+		const expenseItem: ExpenseItem = {
+			id: expense.id,
+			shop_id: shopId || '',
+			work_order_id: 'work_order_id' in expense ? expense.work_order_id : null,
+			invoice_id: null,
+			source_type: expense.type === 'general_expense' ? 'general' : 'work_order',
+			description: expense.description,
+			category: 'category' in expense ? expense.category : '',
+			subtotal: expense.amount - expense.tax,
+			tax_amount: expense.tax,
+			tax_rate: 0.13,
+			tax_included: true,
+			total: expense.amount,
+			vendor: expense.vendor,
+			invoice_number: expense.invoice_number,
+			payment_method: expense.payment_method,
+			parts_description: null,
+			expense_date: expense.date,
+			warranty_period: null,
+			notes: 'notes' in expense ? expense.notes : null,
+			receipt_url: null,
+			is_billable: false,
+			created_at: expense.date,
+			updated_at: expense.date,
+			archived: false,
+			archived_at: null,
+			resolution_type: null,
+			resolution_note: null,
+			resolved_at: null,
+			original_work_order_id: null,
+			refund_amount: null,
+		};
+		setSelectedExpense(expenseItem);
+		setIsDetailDialogOpen(true);
+	};
 
 	// Default to current month
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
@@ -517,7 +574,11 @@ const ReportsPage = () => {
 															</thead>
 															<tbody>
 																{reportData.generalExpenses.map((expense) => (
-																	<tr key={expense.id} className="border-b border-border/50">
+																	<tr 
+																		key={expense.id} 
+																		className="border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
+																		onClick={() => openExpenseDetail(expense)}
+																	>
 																		<td className="py-3">{formatDate(expense.date)}</td>
 																		<td className="py-3">{expense.vendor}</td>
 																		<td className="py-3 text-muted-foreground">{expense.invoice_number || '-'}</td>
@@ -559,7 +620,11 @@ const ReportsPage = () => {
 															</thead>
 															<tbody>
 																{reportData.workOrderExpenses.map((expense) => (
-																	<tr key={expense.id} className="border-b border-border/50">
+																	<tr 
+																		key={expense.id} 
+																		className="border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors"
+																		onClick={() => openExpenseDetail(expense)}
+																	>
 																		<td className="py-3">{formatDate(expense.date)}</td>
 																		<td className="py-3">{expense.vendor}</td>
 																		<td className="py-3">{expense.description}</td>
@@ -728,6 +793,33 @@ const ReportsPage = () => {
 					)}
 				</div>
 			</main>
+
+			{/* Expense Detail Dialog */}
+			<ExpenseDetailDialog
+				expense={selectedExpense}
+				isOpen={isDetailDialogOpen}
+				onClose={() => {
+					setIsDetailDialogOpen(false);
+					setSelectedExpense(null);
+				}}
+				shopId={shopId || ''}
+				onViewWorkOrder={(workOrderId) => {
+					setSelectedWorkOrderId(workOrderId);
+					setIsWorkOrderQuickViewOpen(true);
+				}}
+			/>
+
+			{/* Work Order Quick View */}
+			{selectedWorkOrderId && (
+				<WorkOrderQuickView
+					workOrderId={selectedWorkOrderId}
+					isOpen={isWorkOrderQuickViewOpen}
+					onClose={() => {
+						setIsWorkOrderQuickViewOpen(false);
+						setSelectedWorkOrderId(null);
+					}}
+				/>
+			)}
 		</div>
 	);
 };
