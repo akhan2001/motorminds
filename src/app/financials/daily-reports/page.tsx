@@ -10,7 +10,7 @@ import { Calendar, DollarSign, Loader2, Receipt, Car, ChevronLeft, ChevronRight 
 import { Button } from '@/components/ui/button';
 import { InvoiceQuickView } from '@/components/shared/quick-view/InvoiceQuickView';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
-import { formatDateForFilter } from '@/lib/utils/date';
+import { formatDateForFilter, formatDateOnly, getLocalDateString } from '@/lib/utils/date';
 
 interface DailyReportData {
 	date: string;
@@ -138,17 +138,7 @@ export default function DailyReportsPage() {
 		setSelectedDate(formatDateForFilter(new Date()));
 	};
 
-	const formatDateDisplay = (dateStr: string) => {
-		const date = new Date(dateStr + 'T00:00:00');
-		return date.toLocaleDateString('en-US', { 
-			weekday: 'long', 
-			year: 'numeric', 
-			month: 'long', 
-			day: 'numeric' 
-		});
-	};
-
-	const isToday = selectedDate === new Date().toISOString().split('T')[0];
+	const isToday = selectedDate === getLocalDateString();
 
 	if (isLoading) {
 		return (
@@ -193,7 +183,7 @@ export default function DailyReportsPage() {
 								<Calendar className="h-5 w-5 text-blue-500" />
 								<div>
 									<p className="text-lg font-semibold text-foreground">
-										{formatDateDisplay(selectedDate)}
+										{formatDateOnly(selectedDate)}
 									</p>
 									{isToday && (
 										<span className="text-xs text-blue-600 dark:text-blue-400 font-medium">Today</span>
@@ -386,7 +376,7 @@ export default function DailyReportsPage() {
 								<Car className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
 								<h3 className="text-lg font-semibold text-foreground mb-2">No cars serviced</h3>
 								<p className="text-muted-foreground">
-									There are no completed work orders for {formatDateDisplay(selectedDate)}.
+									There are no completed work orders for {formatDateOnly(selectedDate)}.
 								</p>
 							</div>
 						)}

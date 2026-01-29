@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { formatCurrency } from '@/lib/utils/currency'
-import { formatDateLocal } from '@/lib/utils/date'
+import { formatDateOnly } from '@/lib/utils/date'
 import type { ExpenseItem } from '../types/expenses'
 
 interface ExpenseSummaryCardProps {
@@ -83,7 +83,7 @@ export function ExpenseSummaryCard({ expense }: ExpenseSummaryCardProps) {
                         <div>
                             <span className="text-muted-foreground">Date: </span>
                             <span className="text-foreground">
-                                {formatDateLocal(expense.expense_date)}
+                                {formatDateOnly(expense.expense_date)}
                             </span>
                         </div>
                     )}

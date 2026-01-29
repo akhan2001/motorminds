@@ -1,3 +1,4 @@
+export { default as AddExpenseModal } from './AddExpenseModal'
 export { ExpenseItemForm } from './ExpenseItemForm'
 export { ExpenseItemsList, type ExpenseItemsListRef } from './ExpenseItemsList'
 export { ExpenseItemCard } from './ExpenseItemCard'

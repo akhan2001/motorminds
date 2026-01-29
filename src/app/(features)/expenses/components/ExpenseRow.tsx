@@ -4,6 +4,7 @@ import React from 'react'
 import { Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils/currency'
+import { formatDateOnly } from '@/lib/utils/date'
 import type { ExpenseItem } from '../types/expenses'
 
 interface ExpenseRowProps {
@@ -49,7 +50,7 @@ export function ExpenseRow({ expense, index }: ExpenseRowProps) {
                 )}
                 {expense.expense_date && (
                     <div className="text-xs text-muted-foreground dark:text-gray-500 ml-5 mt-0.5">
-                        Date: {new Date(expense.expense_date).toLocaleDateString()}
+                        Date: {formatDateOnly(expense.expense_date)}
                     </div>
                 )}
                 {expense.notes && (

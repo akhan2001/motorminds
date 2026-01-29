@@ -192,3 +192,34 @@ export function getEndOfDayLocal(dateString: string, timezone?: string): string 
     const localDateString = date.toLocaleDateString('en-CA', { timeZone: tz })
     return localDateString
 }
+
+/**
+ * Get current date as YYYY-MM-DD string in local timezone
+ * Used for default date inputs and filters
+ */
+export function getLocalDateString(date: Date = new Date()): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+/**
+ * Parse a YYYY-MM-DD string into a Date object in local timezone
+ * Prevents timezone shifts when working with date-only strings
+ */
+export function parseLocalDate(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number)
+    return new Date(year, month - 1, day)
+}
+
+/**
+ * Format a date-only string (YYYY-MM-DD) for display without timezone conversion
+ * Parses as local date to prevent day shift issues
+ */
+export function formatDateOnly(dateString: string | null | undefined): string {
+    if (!dateString) return 'N/A'
+    const datePart = dateString.substring(0, 10)
+    const date = new Date(datePart + 'T00:00:00') // Parse as local date
+    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })
+}
