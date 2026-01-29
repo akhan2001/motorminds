@@ -28,6 +28,27 @@ export function formatDate(dateString: string, timezone?: string): string {
 }
 
 /**
+ * Format date string handling date-only strings (YYYY-MM-DD) as local dates
+ * Prevents timezone issues when displaying dates without time components
+ */
+export function formatDateLocal(dateString: string | null | undefined): string {
+    if (!dateString) return ''
+    
+    // Handle date-only strings (YYYY-MM-DD) as local dates
+    if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateString.split('-').map(Number)
+        return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        })
+    }
+    
+    // For dates with time components, use the standard formatDate function
+    return formatDate(dateString)
+}
+
+/**
  * Format date string to include time with local timezone
  */
 export function formatDateTime(dateString: string, timezone?: string): string {
@@ -131,4 +152,43 @@ export function getCurrentMonthRange(): { start: Date; end: Date } {
     const start = new Date(now.getFullYear(), now.getMonth(), 1)
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
     return { start, end }
+}
+
+/**
+ * Format date to YYYY-MM-DD string in local timezone (date only, no time)
+ * Used for filtering expenses by date
+ */
+export function formatDateForFilter(date: Date | string, timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    
+    // Format to local date string (YYYY-MM-DD)
+    const localDateString = dateObj.toLocaleDateString('en-CA', { timeZone: tz })
+    return localDateString
+}
+
+/**
+ * Get start of day in local timezone as YYYY-MM-DD
+ * Used for date filtering (ensures we filter by date only, not time)
+ */
+export function getStartOfDayLocal(dateString: string, timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
+    const date = new Date(dateString)
+    
+    // Get date components in local timezone
+    const localDateString = date.toLocaleDateString('en-CA', { timeZone: tz })
+    return localDateString
+}
+
+/**
+ * Get end of day in local timezone as YYYY-MM-DD
+ * Used for date filtering (ensures we filter by date only, not time)
+ */
+export function getEndOfDayLocal(dateString: string, timezone?: string): string {
+    const tz = timezone || getLocalTimezone()
+    const date = new Date(dateString)
+    
+    // Get date components in local timezone (same as start since we're filtering by date only)
+    const localDateString = date.toLocaleDateString('en-CA', { timeZone: tz })
+    return localDateString
 }

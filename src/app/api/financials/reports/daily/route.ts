@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { formatDateForFilter } from "@/lib/utils/date";
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
@@ -11,10 +12,23 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "shop_id is required" }, { status: 400 });
     }
 
-    // Default to today if no date provided
-    const targetDate = dateStr || new Date().toISOString().split('T')[0];
-    const startOfDay = `${targetDate}T00:00:00.000Z`;
-    const endOfDay = `${targetDate}T23:59:59.999Z`;
+    // Default to today if no date provided (use local timezone)
+    const targetDate = dateStr || formatDateForFilter(new Date());
+    
+    // Parse the date string as a local date (EST/America/Toronto)
+    // When we create a Date from YYYY-MM-DD, JavaScript interprets it as UTC midnight
+    // We need to create it as local midnight instead
+    const [year, month, day] = targetDate.split('-').map(Number);
+    
+    // Create date boundaries in local timezone (EST)
+    // Using Date constructor with local time components creates a date in local timezone
+    const startOfDayLocal = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDayLocal = new Date(year, month - 1, day, 23, 59, 59, 999);
+    
+    // Convert to UTC ISO strings for database queries
+    // The database stores timestamps in UTC, so we convert local time boundaries to UTC
+    const startOfDay = startOfDayLocal.toISOString();
+    const endOfDay = endOfDayLocal.toISOString();
 
     try {
         // Fetch work orders completed on this day (based on completed_at timestamp)

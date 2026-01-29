@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useRef } from "react"
 import { toast } from "sonner"
 import { Package, FileText } from "lucide-react"
 
@@ -15,7 +15,7 @@ import { WorkOrderNotes } from "../shared/work-order-notes"
 import { WorkOrderModalFooter } from "../shared/work-order-modal-footer"
 import { WorkOrderLaborItems } from "../shared/items/WorkOrderLaborItems"
 import { WorkOrderPartsItems } from "../shared/items/WorkOrderPartsItems"
-import { WorkOrderExpenseItems } from "../shared/items/expense-items"
+import { ExpenseItemsList, type ExpenseItemsListRef } from "@/app/(features)/expenses/components/ExpenseItemsList"
 import { WorkOrderGenericItems } from "../shared/items/WorkOrderGenericItems"
 import { WorkOrderCostSummary } from "../complete/work-order-cost-summary"
 import { InvoiceHistoryPanel } from "../shared/invoice-history-panel"
@@ -36,7 +36,7 @@ import { useCreateTemplateManagement } from "./hooks/use-create-template-managem
 
 export interface WorkOrderCreateModalProps {
     onClose: () => void
-    onSave?: (workOrderData: any) => void
+    onSave?: (workOrderData: any) => Promise<{ id: string } | void>
     className?: string
     shopId?: string
 }
@@ -47,6 +47,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     shopId
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
 
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -158,14 +159,24 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 // Don't pass selectedTemplates - items are already in laborItems/partsItems
                 laborItems: formData.laborItems, // Include labor items
                 partsItems: formData.partsItems, // Include parts items
-                expenseItems: formData.expenseItems, // Include expense items
+                expenseItems: formData.expenseItems, // Include expense items (legacy, will be replaced by ExpenseItemsList)
                 serviceItems: formData.serviceItems, // Include service items
                 feeItems: formData.feeItems, // Include fee items
                 discountItems: formData.discountItems, // Include discount items
                 packageItems: formData.packageItems, // Include package items
             }
 
-            await onSave?.(workOrderData)
+            // Save work order first
+            const result = await onSave?.(workOrderData)
+            
+            // If work order was created successfully and we have a work order ID, persist expenses
+            if (result && typeof result === 'object' && 'id' in result) {
+                const createdWorkOrderId = result.id
+                if (createdWorkOrderId) {
+                    await expensesListRef.current?.persistAll({ workOrderId: createdWorkOrderId })
+                }
+            }
+            
             toast.success("Work order created successfully")
             onClose()
         } catch (error) {
@@ -382,10 +393,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                                                 {/* Expense Items */}
                                                 <div className="mb-6">
-                                                    <WorkOrderExpenseItems
-                                                        items={formData.expenseItems}
-                                                        onItemsChange={handleExpenseItemsChange}
-                                                        workOrderId={undefined} // No workOrderId for creation
+                                                    <ExpenseItemsList
+                                                        ref={expensesListRef}
+                                                        workOrderId={null}
+                                                        sourceType="work_order"
+                                                        isEditing={true}
                                                         onItemSaved={handleExpenseItemSaved}
                                                     />
                                                 </div>

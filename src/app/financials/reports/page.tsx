@@ -23,9 +23,13 @@ import {
 	Package, 
 	CheckCircle2, 
 	Clock,
-	Car
+	Car,
+	Undo2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExpenseDetailDialog } from '@/app/(features)/expenses/components/ExpenseDetailDialog';
+import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses';
+import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
 
 interface ExpenseReportData {
 	generalExpenses: GeneralExpense[];
@@ -70,6 +74,8 @@ interface GeneralExpense {
 	payment_method: string;
 	notes: string;
 	is_paid: boolean;
+	refund_amount: number | null;
+	resolution_type: string | null;
 }
 
 interface WorkOrderExpense {
@@ -89,6 +95,8 @@ interface WorkOrderExpense {
 	license_plate: string | null;
 	has_invoice: boolean;
 	is_paid: boolean;
+	refund_amount: number | null;
+	resolution_type: string | null;
 }
 
 interface PartsExpense {
@@ -113,16 +121,28 @@ interface PartsExpense {
 }
 
 const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-US', {
+	return new Intl.NumberFormat('en-CA', {
 		style: 'currency',
-		currency: 'USD',
+		currency: 'CAD',
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2
 	}).format(value);
 };
 
 const formatDate = (dateString: string): string => {
-	return new Date(dateString).toLocaleDateString('en-US', {
+	// Handle date-only strings (YYYY-MM-DD) to avoid timezone issues
+	// Date-only strings are treated as UTC by JavaScript, which causes off-by-one day issues in EST
+	if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+		// Parse as local date by appending time
+		const [year, month, day] = dateString.split('-').map(Number);
+		return new Date(year, month - 1, day).toLocaleDateString('en-CA', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+	// For full datetime strings, display in local timezone
+	return new Date(dateString).toLocaleDateString('en-CA', {
 		month: 'short',
 		day: 'numeric',
 		year: 'numeric'
@@ -166,7 +186,49 @@ const ReportsPage = () => {
 	const [isFetchingData, setIsFetchingData] = useState(false);
 	const [reportData, setReportData] = useState<ExpenseReportData | null>(null);
 	const [activeTab, setActiveTab] = useState<'general' | 'work_order' | 'parts'>('general');
+	const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null);
+	const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+	const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+	const [isWorkOrderQuickViewOpen, setIsWorkOrderQuickViewOpen] = useState(false);
 	const router = useRouter();
+
+	// Convert report expense to ExpenseItem format for the dialog
+	const openExpenseDetail = (expense: GeneralExpense | WorkOrderExpense) => {
+		const expenseItem: ExpenseItem = {
+			id: expense.id,
+			shop_id: shopId || '',
+			work_order_id: 'work_order_id' in expense ? expense.work_order_id : null,
+			invoice_id: null,
+			source_type: expense.type === 'general_expense' ? 'general' : 'work_order',
+			description: expense.description,
+			category: 'category' in expense ? expense.category : '',
+			subtotal: expense.amount - expense.tax,
+			tax_amount: expense.tax,
+			tax_rate: 0.13,
+			tax_included: true,
+			total: expense.amount,
+			vendor: expense.vendor,
+			invoice_number: expense.invoice_number,
+			payment_method: expense.payment_method,
+			parts_description: null,
+			expense_date: expense.date,
+			warranty_period: null,
+			notes: 'notes' in expense ? expense.notes : null,
+			receipt_url: null,
+			is_billable: false,
+			created_at: expense.date,
+			updated_at: expense.date,
+			archived: false,
+			archived_at: null,
+			resolution_type: (expense.resolution_type || null) as ExpenseItem['resolution_type'],
+			resolution_note: null,
+			resolved_at: null,
+			original_work_order_id: null,
+			refund_amount: expense.refund_amount || null,
+		};
+		setSelectedExpense(expenseItem);
+		setIsDetailDialogOpen(true);
+	};
 
 	// Default to current month
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
@@ -246,8 +308,10 @@ const ReportsPage = () => {
 
 		// General Expenses
 		rows.push(['GENERAL EXPENSES']);
-		rows.push(['Date', 'Vendor', 'Description', 'Invoice #', 'Amount', 'Tax', 'Category']);
+		rows.push(['Date', 'Vendor', 'Description', 'Invoice #', 'Amount', 'Tax', 'Category', 'Refund Amount', 'Net Amount']);
 		reportData.generalExpenses.forEach(e => {
+			const refund = e.refund_amount || 0;
+			const netAmount = Math.max(0, e.amount - refund);
 			rows.push([
 				formatDate(e.date),
 				e.vendor,
@@ -255,7 +319,9 @@ const ReportsPage = () => {
 				e.invoice_number,
 				e.amount.toFixed(2),
 				e.tax.toFixed(2),
-				e.category
+				e.category,
+				refund > 0 ? refund.toFixed(2) : '',
+				refund > 0 ? netAmount.toFixed(2) : e.amount.toFixed(2)
 			]);
 		});
 		rows.push(['', '', '', 'TOTAL', reportData.summary.generalExpenses.total.toFixed(2), reportData.summary.generalExpenses.tax.toFixed(2), '']);
@@ -263,8 +329,10 @@ const ReportsPage = () => {
 
 		// Work Order Expenses
 		rows.push(['WORK ORDER EXPENSES']);
-		rows.push(['Date', 'Vendor', 'Description', 'Invoice #', 'Amount', 'Tax', 'Work Order', 'Vehicle', 'Paid']);
+		rows.push(['Date', 'Vendor', 'Description', 'Invoice #', 'Amount', 'Tax', 'Work Order', 'Vehicle', 'Paid', 'Refund Amount', 'Net Amount']);
 		reportData.workOrderExpenses.forEach(e => {
+			const refund = e.refund_amount || 0;
+			const netAmount = Math.max(0, e.amount - refund);
 			rows.push([
 				formatDate(e.date),
 				e.vendor,
@@ -274,7 +342,9 @@ const ReportsPage = () => {
 				e.tax.toFixed(2),
 				e.work_order_title,
 				e.vehicle || '',
-				e.is_paid ? 'Yes' : 'No'
+				e.is_paid ? 'Yes' : 'No',
+				refund > 0 ? refund.toFixed(2) : '',
+				refund > 0 ? netAmount.toFixed(2) : e.amount.toFixed(2)
 			]);
 		});
 		rows.push(['', '', '', 'TOTAL', reportData.summary.workOrderExpenses.total.toFixed(2), reportData.summary.workOrderExpenses.tax.toFixed(2), '', '', '']);
@@ -513,25 +583,72 @@ const ReportsPage = () => {
 																	<th className="pb-2 font-medium text-muted-foreground">Description</th>
 																	<th className="pb-2 font-medium text-muted-foreground text-right">Amount</th>
 																	<th className="pb-2 font-medium text-muted-foreground text-right">Tax</th>
+																	<th className="pb-2 font-medium text-muted-foreground text-center">Status</th>
 																</tr>
 															</thead>
 															<tbody>
-																{reportData.generalExpenses.map((expense) => (
-																	<tr key={expense.id} className="border-b border-border/50">
-																		<td className="py-3">{formatDate(expense.date)}</td>
-																		<td className="py-3">{expense.vendor}</td>
-																		<td className="py-3 text-muted-foreground">{expense.invoice_number || '-'}</td>
-																		<td className="py-3">{expense.description}</td>
-																		<td className="py-3 text-right font-medium">{formatCurrency(expense.amount)}</td>
-																		<td className="py-3 text-right text-muted-foreground">{formatCurrency(expense.tax)}</td>
-																	</tr>
-																))}
+																{reportData.generalExpenses.map((expense) => {
+																	const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned';
+																	const netAmount = expense.amount - (expense.refund_amount || 0);
+																	return (
+																		<tr 
+																			key={expense.id} 
+																			className={cn(
+																				"border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors",
+																				isRefunded && "bg-red-50/30 dark:bg-red-500/5"
+																			)}
+																			onClick={() => openExpenseDetail(expense)}
+																		>
+																			<td className="py-3">{formatDate(expense.date)}</td>
+																			<td className="py-3">
+																				<div className="flex items-center gap-2">
+																					{expense.vendor}
+																					{isRefunded && (
+																						<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+																							<Undo2 className="h-3 w-3" />
+																							Refunded
+																						</Badge>
+																					)}
+																				</div>
+																			</td>
+																			<td className="py-3 text-muted-foreground">{expense.invoice_number || '-'}</td>
+																			<td className="py-3">{expense.description}</td>
+																			<td className="py-3 text-right">
+																				<div className="flex flex-col items-end">
+																					<span className={cn("font-medium", isRefunded && "line-through text-muted-foreground")}>
+																						{formatCurrency(expense.amount)}
+																					</span>
+																					{isRefunded && expense.refund_amount && expense.refund_amount > 0 && (
+																						<span className="text-xs text-green-600 dark:text-green-400">
+																							Net: {formatCurrency(Math.max(0, netAmount))}
+																						</span>
+																					)}
+																				</div>
+																			</td>
+																			<td className="py-3 text-right text-muted-foreground">{formatCurrency(expense.tax)}</td>
+																			<td className="py-3 text-center">
+																				{isRefunded ? (
+																					<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+																						<Undo2 className="h-3 w-3" />
+																						Refunded
+																					</Badge>
+																				) : (
+																					<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+																						<CheckCircle2 className="h-3 w-3 mr-1" />
+																						Paid
+																					</Badge>
+																				)}
+																			</td>
+																		</tr>
+																	);
+																})}
 															</tbody>
 															<tfoot>
 																<tr className="font-medium">
 																	<td colSpan={4} className="pt-3 text-right">Total:</td>
 																	<td className="pt-3 text-right">{formatCurrency(reportData.summary.generalExpenses.total)}</td>
 																	<td className="pt-3 text-right text-muted-foreground">{formatCurrency(reportData.summary.generalExpenses.tax)}</td>
+																	<td></td>
 																</tr>
 															</tfoot>
 														</table>
@@ -558,10 +675,24 @@ const ReportsPage = () => {
 																</tr>
 															</thead>
 															<tbody>
-																{reportData.workOrderExpenses.map((expense) => (
-																	<tr key={expense.id} className="border-b border-border/50">
+																{reportData.workOrderExpenses.map((expense) => {
+																	const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned';
+																	const netAmount = expense.amount - (expense.refund_amount || 0);
+																	return (
+																		<tr 
+																			key={expense.id} 
+																			className={cn(
+																				"border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors",
+																				isRefunded && "bg-red-50/30 dark:bg-red-500/5"
+																			)}
+																			onClick={() => openExpenseDetail(expense)}
+																		>
 																		<td className="py-3">{formatDate(expense.date)}</td>
-																		<td className="py-3">{expense.vendor}</td>
+																		<td className="py-3">
+																			<div className="flex items-center gap-2">
+																				{expense.vendor}
+																			</div>
+																		</td>
 																		<td className="py-3">{expense.description}</td>
 																		<td className="py-3 text-muted-foreground">{expense.work_order_title}</td>
 																		<td className="py-3">
@@ -572,9 +703,25 @@ const ReportsPage = () => {
 																				</div>
 																			)}
 																		</td>
-																		<td className="py-3 text-right font-medium">{formatCurrency(expense.amount)}</td>
+																		<td className="py-3 text-right">
+																			<div className="flex flex-col items-end">
+																				<span className={cn("font-medium", isRefunded && "line-through text-muted-foreground")}>
+																					{formatCurrency(expense.amount)}
+																				</span>
+																				{isRefunded && expense.refund_amount && expense.refund_amount > 0 && (
+																					<span className="text-xs text-green-600 dark:text-green-400">
+																						Net: {formatCurrency(Math.max(0, netAmount))}
+																					</span>
+																				)}
+																			</div>
+																		</td>
 																		<td className="py-3 text-center">
-																			{expense.is_paid ? (
+																			{isRefunded ? (
+																				<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+																					<Undo2 className="h-3 w-3" />
+																					Refunded
+																				</Badge>
+																			) : expense.is_paid ? (
 																				<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
 																					<CheckCircle2 className="h-3 w-3 mr-1" />
 																					Paid
@@ -592,7 +739,8 @@ const ReportsPage = () => {
 																			)}
 																		</td>
 																	</tr>
-																))}
+																	);
+																})}
 															</tbody>
 															<tfoot>
 																<tr className="font-medium">
@@ -696,6 +844,13 @@ const ReportsPage = () => {
 										<h3 className="font-medium text-foreground mb-2">Understanding the Status</h3>
 										<div className="flex flex-wrap gap-4">
 											<div className="flex items-center gap-2">
+												<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+													<Undo2 className="h-3 w-3" />
+													Refunded
+												</Badge>
+												<span>Expense has been refunded</span>
+											</div>
+											<div className="flex items-center gap-2">
 												<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
 													<CheckCircle2 className="h-3 w-3 mr-1" />
 													Paid
@@ -728,6 +883,33 @@ const ReportsPage = () => {
 					)}
 				</div>
 			</main>
+
+			{/* Expense Detail Dialog */}
+			<ExpenseDetailDialog
+				expense={selectedExpense}
+				isOpen={isDetailDialogOpen}
+				onClose={() => {
+					setIsDetailDialogOpen(false);
+					setSelectedExpense(null);
+				}}
+				shopId={shopId || ''}
+				onViewWorkOrder={(workOrderId) => {
+					setSelectedWorkOrderId(workOrderId);
+					setIsWorkOrderQuickViewOpen(true);
+				}}
+			/>
+
+			{/* Work Order Quick View */}
+			{selectedWorkOrderId && (
+				<WorkOrderQuickView
+					workOrderId={selectedWorkOrderId}
+					isOpen={isWorkOrderQuickViewOpen}
+					onClose={() => {
+						setIsWorkOrderQuickViewOpen(false);
+						setSelectedWorkOrderId(null);
+					}}
+				/>
+			)}
 		</div>
 	);
 };

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon } from 'lucide-react'
+import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon, Receipt, Undo2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -9,11 +9,12 @@ import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useInvoice } from '@/app/(features)/financials/hooks/use-invoices'
-import { useWorkOrderItems } from '@/app/(features)/operations/hooks/use-work-order-items'
+import { useExpensesByInvoice } from '@/app/(features)/expenses/hooks/use-expenses'
 import { formatCurrency } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { formatPhoneNumber } from '@/lib/utils/formatters'
 import { format } from 'date-fns'
+import { ExpenseSummaryCard } from '@/app/(features)/expenses/components/ExpenseSummaryCard'
 
 interface InvoiceQuickViewProps {
     invoiceId: string // invoice_number
@@ -24,11 +25,8 @@ interface InvoiceQuickViewProps {
 export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickViewProps) {
     const { data: invoice, isLoading, error } = useInvoice(invoiceId, { includeArchived: true })
     
-    // Fetch work order items to get expense items (tracking only)
-    const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
-    
-    // Filter expense items from work order (these are tracking only, not on invoice)
-    const expenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
+    // Fetch expenses from the expenses table linked to this invoice
+    const { data: invoiceExpenses = [], isLoading: expensesLoading } = useExpensesByInvoice(invoice?.id || null)
 
     const formatDateString = (dateString: string | null | undefined) => {
         if (!dateString) return 'N/A'
@@ -300,18 +298,17 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                     <div className="col-span-3 text-right">TOTAL</div>
                                 </div>
 
-                                {/* Invoice Items */}
-                                {invoiceItems.map((item: any, index: number) => {
+                                {/* Invoice Items - exclude expense items (they're shown in Expenses Card below) */}
+                                {invoiceItems
+                                    .filter((item: any) => item.item_type !== 'expense')
+                                    .map((item: any, index: number) => {
                                     const isActive = item.active !== false
-                                    const isExpense = item.item_type === 'expense'
                                     return (
                                         <div 
                                             key={index} 
                                             className={`text-sm py-2 border-b ${
                                                 !isActive
                                                     ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5'
-                                                    : isExpense
-                                                    ? 'border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5'
                                                     : 'border-border dark:border-gray-800'
                                             }`}
                                         >
@@ -332,8 +329,6 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                                         className={`text-xs capitalize ${
                                                             !isActive
                                                                 ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20'
-                                                                : isExpense
-                                                                ? 'bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20'
                                                                 : 'text-foreground dark:text-white'
                                                         }`}
                                                     >
@@ -353,179 +348,11 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                                                     )}
                                                 </div>
                                             </div>
-                                            {/* Expense-specific details */}
-                                            {isExpense && (
-                                                <div className="mt-2 ml-5 text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
-                                                    {item.category && (
-                                                        <div>
-                                                            <span className="font-medium">Category:</span> {item.category}
-                                                        </div>
-                                                    )}
-                                                    {item.warranty_period && (
-                                                        <div>
-                                                            <span className="font-medium">Warranty:</span> {item.warranty_period}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_invoice_number && (
-                                                        <div>
-                                                            <span className="font-medium">Invoice #:</span> {item.expense_invoice_number}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_vendor && (
-                                                        <div>
-                                                            <span className="font-medium">Vendor:</span> {item.expense_vendor}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_subtotal && (
-                                                        <div>
-                                                            <span className="font-medium">Subtotal:</span> {formatCurrency(item.expense_subtotal)}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_tax_amount && item.expense_tax_amount > 0 && (
-                                                        <div>
-                                                            <span className="font-medium">Tax:</span> {formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(included)' : ''}
-                                                        </div>
-                                                    )}
-                                                    {item.total_cost && item.total_cost > 0 && (
-                                                        <div>
-                                                            <span className="font-medium">Total Cost:</span> {formatCurrency(item.total_cost)}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_payment_method && (
-                                                        <div>
-                                                            <span className="font-medium">Payment:</span> {item.expense_payment_method.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_cost_date && (
-                                                        <div>
-                                                            <span className="font-medium">Date:</span> {formatDateString(item.expense_cost_date)}
-                                                        </div>
-                                                    )}
-                                                    {item.expense_parts_description && (
-                                                        <div>
-                                                            <span className="font-medium">Parts:</span> {item.expense_parts_description}
-                                                        </div>
-                                                    )}
-                                                    {item.notes && (
-                                                        <div>
-                                                            <span className="font-medium">Notes:</span> {item.notes}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
                                     )
                                 })}
                             </div>
 
-                            {/* Expense Items (Tracking Only) */}
-                            {expenseItems.length > 0 && (
-                                <>
-                                    <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-500/20">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <Badge className="bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/30 text-xs">
-                                                Shop Expenses (Tracking Only)
-                                            </Badge>
-                                            <span className="text-xs text-orange-600/70 dark:text-orange-400/70">
-                                                Not included in totals
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {expenseItems.map((item: any, index: number) => (
-                                        <div 
-                                            key={`expense-${index}`} 
-                                            className="text-sm py-2 border-b border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/5"
-                                        >
-                                            <div className="grid grid-cols-12 gap-2 items-center">
-                                                <div className="col-span-5 text-foreground dark:text-white">
-                                                    <div className="flex items-center gap-2">
-                                                        <Check className="h-3 w-3 text-orange-500 flex-shrink-0" />
-                                                        <span className="truncate">{item.description}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="col-span-2 text-center">
-                                                    <Badge 
-                                                        variant="outline" 
-                                                        className="text-xs capitalize bg-orange-50 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-500/20"
-                                                    >
-                                                        expense
-                                                    </Badge>
-                                                </div>
-                                                <div className="col-span-2 text-center text-foreground dark:text-white">
-                                                    {item.quantity || 1}
-                                                </div>
-                                                <div className="col-span-3 text-right text-orange-600 dark:text-orange-400 font-semibold">
-                                                    {formatCurrency(item.total_price || 0)}
-                                                </div>
-                                            </div>
-                                            {/* Expense-specific details */}
-                                            <div className="mt-2 ml-5 text-xs text-muted-foreground dark:text-gray-400 space-y-0.5">
-                                                {item.category && (
-                                                    <div>
-                                                        <span className="font-medium">Category:</span> {item.category}
-                                                    </div>
-                                                )}
-                                                {item.warranty_period && (
-                                                    <div>
-                                                        <span className="font-medium">Warranty:</span> {item.warranty_period}
-                                                    </div>
-                                                )}
-                                                {item.expense_invoice_number && (
-                                                    <div>
-                                                        <span className="font-medium">Invoice #:</span> {item.expense_invoice_number}
-                                                    </div>
-                                                )}
-                                                {item.expense_vendor && (
-                                                    <div>
-                                                        <span className="font-medium">Vendor:</span> {item.expense_vendor}
-                                                    </div>
-                                                )}
-                                                {item.expense_subtotal && (
-                                                    <div>
-                                                        <span className="font-medium">Subtotal:</span> {formatCurrency(item.expense_subtotal)}
-                                                    </div>
-                                                )}
-                                                {item.expense_tax_amount && item.expense_tax_amount > 0 && (
-                                                    <div>
-                                                        <span className="font-medium">Tax:</span> {formatCurrency(item.expense_tax_amount)} {item.expense_tax_included ? '(included)' : ''}
-                                                    </div>
-                                                )}
-                                                {item.total_cost && item.total_cost > 0 && (
-                                                    <div>
-                                                        <span className="font-medium">Total Cost:</span> {formatCurrency(item.total_cost)}
-                                                    </div>
-                                                )}
-                                                {item.expense_payment_method && (
-                                                    <div>
-                                                        <span className="font-medium">Payment:</span> {item.expense_payment_method.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                                                    </div>
-                                                )}
-                                                {item.expense_cost_date && (
-                                                    <div>
-                                                        <span className="font-medium">Date:</span> {formatDateString(item.expense_cost_date)}
-                                                    </div>
-                                                )}
-                                                {item.expense_parts_description && (
-                                                    <div>
-                                                        <span className="font-medium">Parts:</span> {item.expense_parts_description}
-                                                    </div>
-                                                )}
-                                                {item.notes && (
-                                                    <div>
-                                                        <span className="font-medium">Notes:</span> {item.notes}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div className="flex justify-between items-center pt-2 mt-2 border-t border-orange-200 dark:border-orange-500/20">
-                                        <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Total Shop Expenses:</span>
-                                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                            {formatCurrency(expenseItems.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0))}
-                                        </span>
-                                    </div>
-                                </>
-                            )}
 
                             {invoice.notes && (
                                 <div className="mt-4 pt-4 border-t border-border dark:border-gray-700">
@@ -535,6 +362,68 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                             )}
                         </div>
                     </Card>
+
+                    {/* Expenses Card (from expenses table) */}
+                    {expensesLoading ? (
+                        <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
+                            <div className="p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Expenses</h3>
+                                </div>
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">Loading expenses...</div>
+                            </div>
+                        </Card>
+                    ) : invoiceExpenses.length > 0 ? (
+                        <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
+                            <div className="p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Expenses</h3>
+                                    <Badge variant="outline" className="text-xs">
+                                        {invoiceExpenses.length}
+                                    </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                    {invoiceExpenses.map((expense: any) => {
+                                        const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned'
+                                        return (
+                                            <div key={expense.id} className="relative">
+                                                {isRefunded && (
+                                                    <div className="absolute top-2 right-2 z-10">
+                                                        <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+                                                            <Undo2 className="h-3 w-3" />
+                                                            Refunded
+                                                        </Badge>
+                                                    </div>
+                                                )}
+                                                <div className={isRefunded ? 'opacity-60' : ''}>
+                                                    <ExpenseSummaryCard expense={expense} />
+                                                </div>
+                                                {isRefunded && expense.refund_amount > 0 && (
+                                                    <div className="mt-2 text-right text-xs text-green-600 dark:text-green-400">
+                                                        Refund: {formatCurrency(expense.refund_amount)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                    <Separator className="bg-border dark:bg-gray-700" />
+                                    <div className="flex justify-between items-center pt-1">
+                                        <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Total Expenses:</span>
+                                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                            {formatCurrency(
+                                                invoiceExpenses.reduce((sum: number, exp: any) => {
+                                                    const refund = exp.refund_amount || 0
+                                                    return sum + Math.max(0, exp.total - refund)
+                                                }, 0)
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    ) : null}
 
                     {/* Invoice Summary Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">

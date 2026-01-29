@@ -177,7 +177,7 @@ export const WorkOrderHeader: React.FC<WorkOrderHeaderProps> = ({
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push('/operations/expenses')}
+                        onClick={() => router.push('/expenses')}
                         className="bg-transparent border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                         <Package className="h-4 w-4 mr-2" />
