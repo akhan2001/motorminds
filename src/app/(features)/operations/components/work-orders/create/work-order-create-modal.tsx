@@ -30,7 +30,7 @@ const PanelProvider = dynamic(
     () => import("../../../contexts").then(m => ({ default: m.PanelProvider })),
     { ssr: false }
 )
-import { WalkInVehicleForm } from "./WalkInVehicleForm"
+// import { WalkInVehicleForm } from "./WalkInVehicleForm"
 import { useWorkOrderCreateForm } from "./hooks/use-work-order-create-form"
 import { useCreateTemplateManagement } from "./hooks/use-create-template-management"
 
@@ -206,10 +206,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                                 <div className="p-6 space-y-6">
                                     {/* Customer Type Selection */}
-                                    <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                    {/* <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                         <div className="space-y-4">
                                             <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Type</h3>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 gap-3">
                                                 <button
                                                     className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'registered'
                                                         ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
@@ -233,7 +233,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     {/* Step 1: Customer/Vehicle Information */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
@@ -258,18 +258,22 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 isCreating={true}
                                             />
                                         ) : (
-                                            <WalkInVehicleForm
-                                                data={formData.walkInVehicleInfo}
-                                                onDataChange={handleWalkInVehicleChange}
-                                                shopId={shopId || ""}
-                                                onVehicleSelected={(vehicleId) => {
-                                                    handleFieldChange('vehicleId', vehicleId)
-                                                }}
-                                                onVehicleCreated={(vehicleId) => {
-                                                    handleFieldChange('vehicleId', vehicleId)
-                                                }}
-                                                isEditing={currentStep >= 1}
-                                            />
+                                            // Walk-in vehicle form temporarily hidden
+                                            // <WalkInVehicleForm
+                                            //     data={formData.walkInVehicleInfo}
+                                            //     onDataChange={handleWalkInVehicleChange}
+                                            //     shopId={shopId || ""}
+                                            //     onVehicleSelected={(vehicleId) => {
+                                            //         handleFieldChange('vehicleId', vehicleId)
+                                            //     }}
+                                            //     onVehicleCreated={(vehicleId) => {
+                                            //         handleFieldChange('vehicleId', vehicleId)
+                                            //     }}
+                                            //     isEditing={currentStep >= 1}
+                                            // />
+                                            <div className="p-4 text-center text-muted-foreground">
+                                                Walk-in vehicle form is temporarily disabled.
+                                            </div>
                                         )}
                                     </div>
 

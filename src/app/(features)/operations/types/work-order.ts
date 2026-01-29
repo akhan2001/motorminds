@@ -1,6 +1,7 @@
 // Work order type definitions - matches actual database schema
 import type { StatusTracker } from './status-tracker'
 import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
+import type { Payment } from '../../financials/types/invoice'
 
 export interface WorkOrder {
     id: string
@@ -38,6 +39,10 @@ export interface WorkOrder {
     archived?: boolean
     archived_at?: string | null
     archived_by?: string | null
+
+    // Advance payments (payments made before invoice creation)
+    // Stored as JSONB array similar to invoice payments
+    advance_payments?: Payment[] | null
 }
 
 // Work order with joined customer and vehicle details
