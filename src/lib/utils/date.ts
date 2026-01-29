@@ -134,9 +134,8 @@ export function getCurrentMonthRange(): { start: Date; end: Date } {
 }
 
 /**
- * Get date in local timezone as YYYY-MM-DD string
- * This ensures we get the local date, not UTC date
- * Useful for date inputs and date comparisons
+ * Get local date string (YYYY-MM-DD) from a Date object
+ * This uses the local timezone, not UTC
  */
 export function getLocalDateString(date: Date = new Date()): string {
     const year = date.getFullYear()
@@ -146,9 +145,10 @@ export function getLocalDateString(date: Date = new Date()): string {
 }
 
 /**
- * Convert a date string (YYYY-MM-DD) to a Date object in local timezone
- * Useful for parsing date inputs without timezone conversion issues
+ * Parse a YYYY-MM-DD date string as a local date (not UTC)
+ * This avoids the timezone shift that occurs with new Date('YYYY-MM-DD')
  */
 export function parseLocalDate(dateString: string): Date {
+    // Adding T00:00:00 makes it parse as local time instead of UTC
     return new Date(dateString + 'T00:00:00')
 }

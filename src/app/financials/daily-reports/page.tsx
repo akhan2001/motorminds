@@ -43,8 +43,8 @@ const formatCurrency = (value: number): string => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
 	}).format(value);
 };
 
@@ -93,9 +93,11 @@ export default function DailyReportsPage() {
 
 		setIsFetchingReport(true);
 		try {
+			const timezoneOffset = new Date().getTimezoneOffset(); // e.g., 300 for EST (UTC-5)
 			const params = new URLSearchParams({ 
 				shop_id: shopId,
-				date: selectedDate
+				date: selectedDate,
+				timezoneOffset: timezoneOffset.toString()
 			});
 			
 			const response = await fetch(`/api/financials/reports/daily?${params.toString()}`);
@@ -139,7 +141,7 @@ export default function DailyReportsPage() {
 	};
 
 	const formatDateDisplay = (dateStr: string) => {
-		const date = parseLocalDate(dateStr);
+		const date = new Date(dateStr + 'T00:00:00');
 		return date.toLocaleDateString('en-US', { 
 			weekday: 'long', 
 			year: 'numeric', 
@@ -215,7 +217,7 @@ export default function DailyReportsPage() {
 								type="date"
 								value={selectedDate}
 								onChange={(e) => setSelectedDate(e.target.value)}
-								max={getLocalDateString()}
+								max={new Date().toISOString().split('T')[0]}
 								className="px-3 py-2 border border-border rounded-lg bg-white dark:bg-background text-foreground text-sm"
 							/>
 							{!isToday && (

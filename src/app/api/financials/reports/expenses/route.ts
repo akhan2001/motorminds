@@ -8,20 +8,36 @@ export async function GET(req: NextRequest) {
     const startDateStr = searchParams.get('startDate'); // YYYY-MM-DD format
     const endDateStr = searchParams.get('endDate'); // YYYY-MM-DD format
     const shopId = searchParams.get('shopId');
+    // Timezone offset in minutes from frontend (e.g., 300 for EST = UTC-5)
+    const tzOffset = parseInt(searchParams.get('timezoneOffset') || '0', 10);
 
     if (!startDateStr || !endDateStr || !shopId) {
         return new NextResponse('Missing required query parameters: startDate, endDate, shopId', { status: 400 });
     }
 
     /**
-     * Helper function to check if a date string's date part matches the target date
+     * Convert UTC timestamp to local date (YYYY-MM-DD) using timezone offset
+     * getTimezoneOffset() returns positive minutes for west of UTC
+     * So EST (UTC-5) returns 300, we subtract to go from UTC to local
+     */
+    const toLocalDate = (dateString: string | null | undefined): string | null => {
+        if (!dateString) return null;
+        const utc = new Date(dateString);
+        const local = new Date(utc.getTime() - (tzOffset * 60 * 1000));
+        const y = local.getUTCFullYear();
+        const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(local.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    /**
+     * Check if timestamp's LOCAL date falls within the date range
      */
     const matchesDateRange = (dateString: string | null | undefined): boolean => {
         if (!dateString) return false;
-        // Extract date part (YYYY-MM-DD) from timestamp or date string
-        const date = new Date(dateString);
-        const utcDateStr = date.toISOString().split('T')[0];
-        return utcDateStr >= startDateStr && utcDateStr <= endDateStr;
+        const localDate = toLocalDate(dateString);
+        if (!localDate) return false;
+        return localDate >= startDateStr && localDate <= endDateStr;
     };
 
     try {
@@ -196,6 +212,7 @@ export async function GET(req: NextRequest) {
         const processedWorkOrderExpenses = filteredWorkOrderExpenses.map((item: any) => {
             const invoiceInfo = workOrderInvoiceMap.get(item.work_order_id) || { hasInvoice: false, isPaid: false };
             const vehicle = item.work_order?.vehicle;
+            const rawDate = item.expense_cost_date || item.created_at;
             
             return {
                 id: item.id,
@@ -203,7 +220,7 @@ export async function GET(req: NextRequest) {
                 description: item.description,
                 vendor: item.expense_vendor || 'N/A',
                 invoice_number: item.expense_invoice_number || '',
-                date: item.expense_cost_date || item.created_at,
+                date: toLocalDate(rawDate) || rawDate, // Return local date
                 amount: item.total_price || 0,
                 tax: item.expense_tax_amount || 0,
                 payment_method: item.expense_payment_method || '',
@@ -229,7 +246,7 @@ export async function GET(req: NextRequest) {
                 description: item.description,
                 part_number: item.part_number || '',
                 supplier: item.supplier || 'N/A',
-                date: item.created_at,
+                date: toLocalDate(item.created_at) || item.created_at, // Return local date
                 quantity: item.quantity || 1,
                 unit_cost: item.unit_cost || 0,
                 total_cost: totalCost,
@@ -252,7 +269,7 @@ export async function GET(req: NextRequest) {
             description: item.description || item.cost_name || 'Expense',
             vendor: item.cost_name || 'N/A',
             invoice_number: item.invoice_number || '',
-            date: item.cost_date,
+                date: toLocalDate(item.cost_date) || item.cost_date, // Return local date
             amount: item.amount || 0,
             tax: item.tax_amount || 0,
             category: item.category || 'Other',

@@ -29,7 +29,6 @@ import {
 import { useDebouncedSearch } from '@/app/(features)/admin/hooks/use-debounced-search'
 import { useSuppliers } from '@/app/(features)/suppliers/hooks/use-suppliers'
 import AddExpenseModal from '@/app/financials/efficiency/components/AddExpenseModal'
-import { getLocalDateString } from '@/lib/utils/date'
 
 export default function ExpensesPage() {
     const router = useRouter()

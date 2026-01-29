@@ -6,6 +6,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get("shop_id");
     const dateStr = searchParams.get("date"); // YYYY-MM-DD format
+    // Timezone offset in minutes from frontend (e.g., 300 for EST = UTC-5)
+    const tzOffset = parseInt(searchParams.get("timezoneOffset") || "0", 10);
 
     if (!shopId) {
         return NextResponse.json({ error: "shop_id is required" }, { status: 400 });
@@ -14,30 +16,36 @@ export async function GET(req: NextRequest) {
     // Default to today if no date provided
     const targetDate = dateStr || new Date().toISOString().split('T')[0];
     
-    // Query a wider UTC range (±1 day) to ensure we capture all records regardless of timezone
-    // Then filter in memory to match the exact date
-    const targetDateObj = new Date(targetDate + 'T00:00:00.000Z');
-    const dayBefore = new Date(targetDateObj);
-    dayBefore.setUTCDate(dayBefore.getUTCDate() - 1);
-    const dayAfter = new Date(targetDateObj);
-    dayAfter.setUTCDate(dayAfter.getUTCDate() + 1);
-    
-    const queryStart = dayBefore.toISOString();
-    const queryEnd = dayAfter.toISOString();
+    // Query a wider range (±1 day) to capture all records that might fall on the target date
+    // after timezone conversion
+    const startOfDay = `${targetDate}T00:00:00.000Z`;
+    const endOfDay = `${targetDate}T23:59:59.999Z`;
+    const dayBefore = new Date(new Date(startOfDay).getTime() - 24 * 60 * 60 * 1000).toISOString();
+    const dayAfter = new Date(new Date(endOfDay).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
     /**
-     * Helper function to check if a timestamp's UTC date matches the target date
+     * Convert UTC timestamp to local date (YYYY-MM-DD) using timezone offset
      */
-    const matchesTargetDate = (timestamp: string | null | undefined): boolean => {
-        if (!timestamp) return false;
-        const date = new Date(timestamp);
-        const utcDateStr = date.toISOString().split('T')[0];
-        return utcDateStr === targetDate;
+    const toLocalDate = (dateString: string | null | undefined): string | null => {
+        if (!dateString) return null;
+        const utc = new Date(dateString);
+        const local = new Date(utc.getTime() - (tzOffset * 60 * 1000));
+        const y = local.getUTCFullYear();
+        const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(local.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    /**
+     * Check if timestamp's LOCAL date matches the target date
+     */
+    const matchesTargetDate = (dateString: string | null | undefined): boolean => {
+        if (!dateString) return false;
+        return toLocalDate(dateString) === targetDate;
     };
 
     try {
-        // Fetch work orders completed on this day (based on completed_at timestamp)
-        // Query wider range, then filter by exact date match
+        // Fetch work orders completed around this day (wider range, then filter by local date)
         const { data: allCompletedWorkOrders, error: workOrdersError } = await supabase
             .from("work_orders")
             .select(`
@@ -52,10 +60,10 @@ export async function GET(req: NextRequest) {
             `)
             .eq("shop_id", shopId)
             .eq("status", "completed")
-            .gte("completed_at", queryStart)
-            .lte("completed_at", queryEnd);
+            .gte("completed_at", dayBefore)
+            .lte("completed_at", dayAfter);
         
-        // Filter to only include records where the UTC date matches targetDate
+        // Filter to only include records where LOCAL date matches targetDate
         const completedWorkOrders = (allCompletedWorkOrders || []).filter(wo => 
             matchesTargetDate(wo.completed_at)
         );
@@ -75,8 +83,7 @@ export async function GET(req: NextRequest) {
         const carsCount = uniqueVehicleIds.size;
         const workOrdersCompletedCount = (completedWorkOrders || []).length;
 
-        // Fetch paid invoices for the day (for revenue calculations)
-        // Query wider range, then filter by exact date match
+        // Fetch paid invoices around this day (wider range, then filter by local date)
         const { data: allInvoices, error: invoicesError } = await supabase
             .from("invoices_table")
             .select(`
@@ -94,10 +101,10 @@ export async function GET(req: NextRequest) {
             `)
             .eq("shop_id", shopId)
             .eq("status", "paid")
-            .gte("paid_date", queryStart)
-            .lte("paid_date", queryEnd);
+            .gte("paid_date", dayBefore)
+            .lte("paid_date", dayAfter);
         
-        // Filter to only include records where the UTC date matches targetDate
+        // Filter to only include records where LOCAL date matches targetDate
         const invoices = (allInvoices || []).filter(inv => 
             matchesTargetDate(inv.paid_date)
         );
@@ -152,6 +159,7 @@ export async function GET(req: NextRequest) {
         const vehiclesServiced = (completedWorkOrders || [])
             .filter(wo => wo.vehicle && !Array.isArray(wo.vehicle))
             .map(wo => {
+                // Handle potential array from Supabase join (shouldn't happen but TypeScript thinks it can)
                 const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle;
                 const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
                 return {

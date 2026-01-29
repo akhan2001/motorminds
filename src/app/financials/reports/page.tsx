@@ -226,11 +226,12 @@ const ReportsPage = () => {
 
 		setIsFetchingData(true);
 		try {
-			// Send date strings in YYYY-MM-DD format to avoid timezone issues
+			// Send date strings in YYYY-MM-DD format and timezone offset for proper local date handling
 			const startDateStr = getLocalDateString(dateRange.from);
 			const endDateStr = getLocalDateString(dateRange.to);
+			const timezoneOffset = new Date().getTimezoneOffset(); // e.g., 300 for EST (UTC-5)
 			const response = await fetch(
-				`/api/financials/reports/expenses?startDate=${startDateStr}&endDate=${endDateStr}&shopId=${shopId}`
+				`/api/financials/reports/expenses?startDate=${startDateStr}&endDate=${endDateStr}&shopId=${shopId}&timezoneOffset=${timezoneOffset}`
 			);
 			if (!response.ok) {
 				throw new Error('Failed to fetch expense data');
