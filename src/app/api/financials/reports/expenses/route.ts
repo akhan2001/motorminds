@@ -211,6 +211,8 @@ export async function GET(req: NextRequest) {
             payment_method: item.payment_method || '',
             notes: item.notes || '',
             is_paid: true, // General expenses are considered paid when recorded
+            refund_amount: Number(item.refund_amount) || null,
+            resolution_type: item.resolution_type || null,
         }));
 
         // 8. Process work order expenses - map from new expenses table schema
@@ -238,6 +240,8 @@ export async function GET(req: NextRequest) {
                 license_plate: vehicle?.license_plate,
                 has_invoice: hasInvoice,
                 is_paid: isPaid,
+                refund_amount: Number(item.refund_amount) || null,
+                resolution_type: item.resolution_type || null,
             };
         });
 
@@ -269,14 +273,23 @@ export async function GET(req: NextRequest) {
             };
         });
 
-        // 10. Calculate totals
-        const generalExpensesTotal = processedGeneralExpenses.reduce((sum, e) => sum + e.amount, 0);
+        // 10. Calculate totals (accounting for refunds - net amount = total - refund_amount)
+        const generalExpensesTotal = processedGeneralExpenses.reduce((sum, e) => {
+            const refund = e.refund_amount || 0;
+            return sum + Math.max(0, e.amount - refund);
+        }, 0);
         const generalExpensesTax = processedGeneralExpenses.reduce((sum, e) => sum + e.tax, 0);
 
-        const workOrderExpensesTotal = processedWorkOrderExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const workOrderExpensesTotal = processedWorkOrderExpenses.reduce((sum, e) => {
+            const refund = e.refund_amount || 0;
+            return sum + Math.max(0, e.amount - refund);
+        }, 0);
         const workOrderExpensesTax = processedWorkOrderExpenses.reduce((sum, e) => sum + e.tax, 0);
         const workOrderExpensesPaid = processedWorkOrderExpenses.filter(e => e.is_paid);
-        const workOrderExpensesPaidTotal = workOrderExpensesPaid.reduce((sum, e) => sum + e.amount, 0);
+        const workOrderExpensesPaidTotal = workOrderExpensesPaid.reduce((sum, e) => {
+            const refund = e.refund_amount || 0;
+            return sum + Math.max(0, e.amount - refund);
+        }, 0);
 
         const partsExpensesTotal = processedPartsExpenses.reduce((sum, e) => sum + e.total_cost, 0);
         const partsExpensesPaid = processedPartsExpenses.filter(e => e.is_paid);
