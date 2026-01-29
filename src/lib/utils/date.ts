@@ -28,6 +28,27 @@ export function formatDate(dateString: string, timezone?: string): string {
 }
 
 /**
+ * Format date string handling date-only strings (YYYY-MM-DD) as local dates
+ * Prevents timezone issues when displaying dates without time components
+ */
+export function formatDateLocal(dateString: string | null | undefined): string {
+    if (!dateString) return ''
+    
+    // Handle date-only strings (YYYY-MM-DD) as local dates
+    if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateString.split('-').map(Number)
+        return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        })
+    }
+    
+    // For dates with time components, use the standard formatDate function
+    return formatDate(dateString)
+}
+
+/**
  * Format date string to include time with local timezone
  */
 export function formatDateTime(dateString: string, timezone?: string): string {

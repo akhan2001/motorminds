@@ -10,7 +10,7 @@ import {
     HST_RATE,
     calculateTaxFromSubtotal,
     calculateSubtotalFromTotal,
-} from '../lib/validations/expense-schema'
+} from '@/app/(features)/expenses/lib/validations/expense-schema'
 import {
     VendorSection,
     DescriptionSection,

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { formatCurrency } from '@/lib/utils/currency'
+import { formatDateLocal } from '@/lib/utils/date'
 import type { ExpenseItem } from '../types/expenses'
 
 interface ExpenseSummaryCardProps {
@@ -50,6 +51,14 @@ export function ExpenseSummaryCard({ expense }: ExpenseSummaryCardProps) {
                 
                 {/* Show all available fields if not null/empty */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
+                    {expense.tax_amount && Number(expense.tax_amount) > 0 && (
+                        <div>
+                            <span className="text-muted-foreground">Tax: </span>
+                            <span className="text-foreground">
+                                {formatCurrency(Number(expense.tax_amount))} {expense.tax_included ? '(incl.)' : ''}
+                            </span>
+                        </div>
+                    )}
                     {expense.vendor && (
                         <div>
                             <span className="text-muted-foreground">Vendor: </span>
@@ -60,14 +69,6 @@ export function ExpenseSummaryCard({ expense }: ExpenseSummaryCardProps) {
                         <div>
                             <span className="text-muted-foreground">Subtotal: </span>
                             <span className="text-foreground">{formatCurrency(Number(expense.subtotal))}</span>
-                        </div>
-                    )}
-                    {expense.tax_amount && Number(expense.tax_amount) > 0 && (
-                        <div>
-                            <span className="text-muted-foreground">Tax: </span>
-                            <span className="text-foreground">
-                                {formatCurrency(Number(expense.tax_amount))} {expense.tax_included ? '(incl.)' : ''}
-                            </span>
                         </div>
                     )}
                     {expense.payment_method && (
@@ -82,7 +83,7 @@ export function ExpenseSummaryCard({ expense }: ExpenseSummaryCardProps) {
                         <div>
                             <span className="text-muted-foreground">Date: </span>
                             <span className="text-foreground">
-                                {new Date(expense.expense_date).toLocaleDateString()}
+                                {formatDateLocal(expense.expense_date)}
                             </span>
                         </div>
                     )}

@@ -116,7 +116,7 @@ interface PartsExpense {
 }
 
 const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-US', {
+	return new Intl.NumberFormat('en-CA', {
 		style: 'currency',
 		currency: 'CAD',
 		minimumFractionDigits: 2,
@@ -130,14 +130,14 @@ const formatDate = (dateString: string): string => {
 	if (dateString && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
 		// Parse as local date by appending time
 		const [year, month, day] = dateString.split('-').map(Number);
-		return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+		return new Date(year, month - 1, day).toLocaleDateString('en-CA', {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
 		});
 	}
 	// For full datetime strings, display in local timezone
-	return new Date(dateString).toLocaleDateString('en-US', {
+	return new Date(dateString).toLocaleDateString('en-CA', {
 		month: 'short',
 		day: 'numeric',
 		year: 'numeric'
