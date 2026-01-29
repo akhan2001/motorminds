@@ -72,7 +72,7 @@ interface WorkOrdersPageViewProps {
     onModalClose: () => void
     onWorkOrderSave: (updatedWorkOrder: WorkOrderKanbanItem, formData?: any) => Promise<void>
     onWorkOrderDelete?: (workOrderId: string, options?: { deleteInvoice?: boolean }) => Promise<void>
-    onWorkOrderCreate: (workOrderData: any) => Promise<void>
+    onWorkOrderCreate: (workOrderData: any) => Promise<{ id: string } | void>
     onCreateModalClose: () => void
     onCompletionModalClose: () => void
     onCompletionConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean, generateInvoice?: boolean) => Promise<void>

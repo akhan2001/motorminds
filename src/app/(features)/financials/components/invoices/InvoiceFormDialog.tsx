@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,6 +35,7 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
     const { data: invoice, isLoading } = useInvoice(invoiceId || '')
     const createMutation = useCreateInvoice()
     const updateMutation = useUpdateInvoice()
+    const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
 
     const [formData, setFormData] = useState<InvoiceFormData>({
         customer_id: '',
@@ -200,16 +201,23 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
             }
             
             if (invoiceId) {
+                // Update existing invoice - persist expenses first
+                await expensesListRef.current?.persistAll({ invoiceId })
                 await updateMutation.mutateAsync({
                     id: invoiceId,
                     data: finalFormData
                 })
                 toast.success('Invoice updated successfully')
             } else {
-                await createMutation.mutateAsync({
+                // Create new invoice
+                const createdInvoice = await createMutation.mutateAsync({
                     ...finalFormData,
                     shop_id: shopId
                 })
+                // Persist expenses with the new invoice ID
+                if (createdInvoice?.id) {
+                    await expensesListRef.current?.persistAll({ invoiceId: createdInvoice.id })
+                }
                 toast.success('Invoice created successfully')
             }
             onClose()
@@ -495,11 +503,14 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                                 isEditing={true}
                                             />
 
-                                            {/* Expense Items */}
+                                            {/* Expense Items - unified list when editing existing invoice */}
                                             <InvoiceExpenseItemsAdapter
+                                                ref={expensesListRef}
                                                 items={formData.invoice_items}
                                                 onItemsChange={(items) => setFormData(prev => ({ ...prev, invoice_items: items }))}
                                                 isEditing={true}
+                                                invoiceId={invoice?.id ?? null}
+                                                workOrderId={invoice?.work_order_id ?? null}
                                             />
 
                                             {/* Discount Items */}

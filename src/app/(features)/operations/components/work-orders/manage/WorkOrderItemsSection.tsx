@@ -1,12 +1,13 @@
 // Unified items section component
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { forwardRef, useCallback, useMemo } from 'react'
 
 // Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
 import { WorkOrderLaborItems } from '../shared/items/WorkOrderLaborItems'
 import { WorkOrderPartsItems } from '../shared/items/WorkOrderPartsItems'
-import { WorkOrderExpenseItems } from '../shared/items/expense-items'
+import { ExpenseItemsList, type ExpenseItemsListRef } from '@/app/(features)/expenses/components/ExpenseItemsList'
+import { useExpensesByWorkOrder } from '@/app/(features)/expenses/hooks/use-expenses'
 import { WorkOrderGenericItems } from '../shared/items/WorkOrderGenericItems'
 import { formatCurrency } from '@/lib/utils/currency'
 import type { LaborFormItem, PartFormItem, ExpenseFormItem, GenericFormItem } from './hooks/use-work-order-item-management'
@@ -28,14 +29,24 @@ interface WorkOrderItemsSectionProps {
     onItemDeleted?: (itemId: string) => void
 }
 
-export function WorkOrderItemsSection({
+export const WorkOrderItemsSection = forwardRef<ExpenseItemsListRef, WorkOrderItemsSectionProps>(function WorkOrderItemsSection({
     itemsByType,
     onItemsChange,
     workOrderId,
     isEditing,
     onItemSaved,
     onItemDeleted,
-}: WorkOrderItemsSectionProps) {
+}, ref) {
+    const { data: workOrderExpenses = [] } = useExpensesByWorkOrder(workOrderId)
+    const expensesTotalFromTable = useMemo(
+        () =>
+            workOrderExpenses.reduce(
+                (sum, e) => sum + Number(e.total ?? 0),
+                0
+            ),
+        [workOrderExpenses]
+    )
+
     // Check if there are any legacy items that need to be shown for deletion
     const hasLegacyServices = itemsByType.services.length > 0
     const hasLegacyFees = itemsByType.fees.length > 0
@@ -45,7 +56,7 @@ export function WorkOrderItemsSection({
     const liveTotals = useMemo(() => {
         const laborTotal = itemsByType.labor.reduce((sum, item) => sum + (item.total_price || 0), 0)
         const partsTotal = itemsByType.parts.reduce((sum, item) => sum + (item.total_price || 0), 0)
-        const expensesTotal = itemsByType.expenses.reduce((sum, item) => sum + (item.total_price || 0), 0)
+        const expensesTotal = expensesTotalFromTable
         const servicesTotal = itemsByType.services.reduce((sum, item) => sum + (item.total_price || 0), 0)
         const feesTotal = itemsByType.fees.reduce((sum, item) => sum + (item.total_price || 0), 0)
         const discountsTotal = itemsByType.discounts.reduce((sum, item) => sum + (item.total_price || 0), 0)
@@ -70,7 +81,7 @@ export function WorkOrderItemsSection({
             total,
             hasItems: laborTotal > 0 || partsTotal > 0 || servicesTotal > 0 || feesTotal > 0 || packagesTotal > 0
         }
-    }, [itemsByType])
+    }, [itemsByType, expensesTotalFromTable])
 
     // Memoized callbacks to prevent unnecessary re-renders of child components
     const handleLaborChange = useCallback((items: LaborFormItem[]) => {
@@ -81,9 +92,6 @@ export function WorkOrderItemsSection({
         onItemsChange('part', items)
     }, [onItemsChange])
 
-    const handleExpensesChange = useCallback((items: ExpenseFormItem[]) => {
-        onItemsChange('expense', items)
-    }, [onItemsChange])
 
     const handleServicesChange = useCallback((items: GenericFormItem[]) => {
         onItemsChange('service', items)
@@ -123,10 +131,10 @@ export function WorkOrderItemsSection({
                 onItemDeleted={onItemDeleted}
             />
 
-            <WorkOrderExpenseItems
-                items={itemsByType.expenses}
-                onItemsChange={handleExpensesChange}
+            <ExpenseItemsList
+                ref={ref}
                 workOrderId={workOrderId}
+                sourceType="work_order"
                 isEditing={isEditing}
                 onItemSaved={onItemSaved}
                 onItemDeleted={onItemDeleted}
@@ -246,5 +254,5 @@ export function WorkOrderItemsSection({
             )}
         </div>
     )
-}
+})
 

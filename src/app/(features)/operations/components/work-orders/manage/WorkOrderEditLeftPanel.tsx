@@ -1,8 +1,9 @@
 // Left panel component - main content area
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import type { ExpenseItemsListRef } from '@/app/(features)/expenses/components/ExpenseItemsList'
 // Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
 import { WorkOrderModalHeader } from '../shared/work-order-modal-header'
 import { WorkOrderStatusBar } from '../shared/work-order-status-bar'
@@ -60,8 +61,16 @@ export function WorkOrderEditLeftPanel({
         workOrderDetails.customer_id || undefined
     )
 
+    const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
+
     const handleSave = async () => {
-        // Save items first, then work order
+        // Persist expense items (unified expenses table) first, then other items, then work order
+        const expensesPersisted = await expensesListRef.current?.persistAll()
+        if (expensesPersisted === false) {
+            toast.error('Failed to save expense items')
+            return
+        }
+
         const itemsSaved = await itemManagement.handleSaveAll()
         if (!itemsSaved) {
             return
@@ -266,6 +275,7 @@ export function WorkOrderEditLeftPanel({
                     {/* Work Order Items - Show for editable statuses */}
                     {canEditItems && (
                         <WorkOrderItemsSection
+                            ref={expensesListRef}
                             itemsByType={itemManagement.itemsByType}
                             onItemsChange={itemManagement.handleItemsChange}
                             workOrderId={workOrder.id}
