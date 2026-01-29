@@ -10,6 +10,7 @@ import { Calendar, DollarSign, Loader2, Receipt, Car, ChevronLeft, ChevronRight 
 import { Button } from '@/components/ui/button';
 import { InvoiceQuickView } from '@/components/shared/quick-view/InvoiceQuickView';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
+import { formatDateForFilter } from '@/lib/utils/date';
 
 interface DailyReportData {
 	date: string;
@@ -42,8 +43,8 @@ const formatCurrency = (value: number): string => {
 	return new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'USD',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
 	}).format(value);
 };
 
@@ -57,7 +58,7 @@ export default function DailyReportsPage() {
 	const [dailyReportData, setDailyReportData] = useState<DailyReportData | null>(null);
 	const [isFetchingReport, setIsFetchingReport] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<string>(() => 
-		new Date().toISOString().split('T')[0]
+		formatDateForFilter(new Date())
 	);
 	const router = useRouter();
 	
@@ -118,22 +119,23 @@ export default function DailyReportsPage() {
 	}, [shopId, selectedDate, fetchDailyReport]);
 
 	const goToPreviousDay = () => {
-		const date = new Date(selectedDate);
+		const date = new Date(selectedDate + 'T00:00:00');
 		date.setDate(date.getDate() - 1);
-		setSelectedDate(date.toISOString().split('T')[0]);
+		setSelectedDate(formatDateForFilter(date));
 	};
 
 	const goToNextDay = () => {
-		const date = new Date(selectedDate);
+		const date = new Date(selectedDate + 'T00:00:00');
 		date.setDate(date.getDate() + 1);
-		const today = new Date().toISOString().split('T')[0];
-		if (date.toISOString().split('T')[0] <= today) {
-			setSelectedDate(date.toISOString().split('T')[0]);
+		const today = formatDateForFilter(new Date());
+		const nextDateStr = formatDateForFilter(date);
+		if (nextDateStr <= today) {
+			setSelectedDate(nextDateStr);
 		}
 	};
 
 	const goToToday = () => {
-		setSelectedDate(new Date().toISOString().split('T')[0]);
+		setSelectedDate(formatDateForFilter(new Date()));
 	};
 
 	const formatDateDisplay = (dateStr: string) => {
@@ -213,7 +215,7 @@ export default function DailyReportsPage() {
 								type="date"
 								value={selectedDate}
 								onChange={(e) => setSelectedDate(e.target.value)}
-								max={new Date().toISOString().split('T')[0]}
+								max={formatDateForFilter(new Date())}
 								className="px-3 py-2 border border-border rounded-lg bg-white dark:bg-background text-foreground text-sm"
 							/>
 							{!isToday && (

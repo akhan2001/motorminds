@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useRef } from "react"
 import { toast } from "sonner"
 import { Package, FileText } from "lucide-react"
 
@@ -15,7 +15,7 @@ import { WorkOrderNotes } from "../shared/work-order-notes"
 import { WorkOrderModalFooter } from "../shared/work-order-modal-footer"
 import { WorkOrderLaborItems } from "../shared/items/WorkOrderLaborItems"
 import { WorkOrderPartsItems } from "../shared/items/WorkOrderPartsItems"
-import { WorkOrderExpenseItems } from "../shared/items/expense-items"
+import { ExpenseItemsList, type ExpenseItemsListRef } from "@/app/(features)/expenses/components/ExpenseItemsList"
 import { WorkOrderGenericItems } from "../shared/items/WorkOrderGenericItems"
 import { WorkOrderCostSummary } from "../complete/work-order-cost-summary"
 import { InvoiceHistoryPanel } from "../shared/invoice-history-panel"
@@ -30,13 +30,13 @@ const PanelProvider = dynamic(
     () => import("../../../contexts").then(m => ({ default: m.PanelProvider })),
     { ssr: false }
 )
-import { WalkInVehicleForm } from "./WalkInVehicleForm"
+// import { WalkInVehicleForm } from "./WalkInVehicleForm"
 import { useWorkOrderCreateForm } from "./hooks/use-work-order-create-form"
 import { useCreateTemplateManagement } from "./hooks/use-create-template-management"
 
 export interface WorkOrderCreateModalProps {
     onClose: () => void
-    onSave?: (workOrderData: any) => void
+    onSave?: (workOrderData: any) => Promise<{ id: string } | void>
     className?: string
     shopId?: string
 }
@@ -47,6 +47,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
     shopId
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
 
     // Mock technician options (replace with actual data fetching if needed)
     const technicianOptions = [
@@ -158,14 +159,24 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                 // Don't pass selectedTemplates - items are already in laborItems/partsItems
                 laborItems: formData.laborItems, // Include labor items
                 partsItems: formData.partsItems, // Include parts items
-                expenseItems: formData.expenseItems, // Include expense items
+                expenseItems: formData.expenseItems, // Include expense items (legacy, will be replaced by ExpenseItemsList)
                 serviceItems: formData.serviceItems, // Include service items
                 feeItems: formData.feeItems, // Include fee items
                 discountItems: formData.discountItems, // Include discount items
                 packageItems: formData.packageItems, // Include package items
             }
 
-            await onSave?.(workOrderData)
+            // Save work order first
+            const result = await onSave?.(workOrderData)
+            
+            // If work order was created successfully and we have a work order ID, persist expenses
+            if (result && typeof result === 'object' && 'id' in result) {
+                const createdWorkOrderId = result.id
+                if (createdWorkOrderId) {
+                    await expensesListRef.current?.persistAll({ workOrderId: createdWorkOrderId })
+                }
+            }
+            
             toast.success("Work order created successfully")
             onClose()
         } catch (error) {
@@ -206,10 +217,10 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                             <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                                 <div className="p-6 space-y-6">
                                     {/* Customer Type Selection */}
-                                    <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                    {/* <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                         <div className="space-y-4">
                                             <h3 className="text-lg font-semibold text-foreground dark:text-white">Customer Type</h3>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 gap-3">
                                                 <button
                                                     className={`p-4 border rounded-lg text-center transition-colors ${formData.customerType === 'registered'
                                                         ? 'border-blue-500 bg-blue-500/10 text-blue-500 dark:text-blue-400'
@@ -233,7 +244,7 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     {/* Step 1: Customer/Vehicle Information */}
                                     <div className={`transition-opacity duration-200 ${currentStep >= 1 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
@@ -258,18 +269,22 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 isCreating={true}
                                             />
                                         ) : (
-                                            <WalkInVehicleForm
-                                                data={formData.walkInVehicleInfo}
-                                                onDataChange={handleWalkInVehicleChange}
-                                                shopId={shopId || ""}
-                                                onVehicleSelected={(vehicleId) => {
-                                                    handleFieldChange('vehicleId', vehicleId)
-                                                }}
-                                                onVehicleCreated={(vehicleId) => {
-                                                    handleFieldChange('vehicleId', vehicleId)
-                                                }}
-                                                isEditing={currentStep >= 1}
-                                            />
+                                            // Walk-in vehicle form temporarily hidden
+                                            // <WalkInVehicleForm
+                                            //     data={formData.walkInVehicleInfo}
+                                            //     onDataChange={handleWalkInVehicleChange}
+                                            //     shopId={shopId || ""}
+                                            //     onVehicleSelected={(vehicleId) => {
+                                            //         handleFieldChange('vehicleId', vehicleId)
+                                            //     }}
+                                            //     onVehicleCreated={(vehicleId) => {
+                                            //         handleFieldChange('vehicleId', vehicleId)
+                                            //     }}
+                                            //     isEditing={currentStep >= 1}
+                                            // />
+                                            <div className="p-4 text-center text-muted-foreground">
+                                                Walk-in vehicle form is temporarily disabled.
+                                            </div>
                                         )}
                                     </div>
 
@@ -378,10 +393,11 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
 
                                                 {/* Expense Items */}
                                                 <div className="mb-6">
-                                                    <WorkOrderExpenseItems
-                                                        items={formData.expenseItems}
-                                                        onItemsChange={handleExpenseItemsChange}
-                                                        workOrderId={undefined} // No workOrderId for creation
+                                                    <ExpenseItemsList
+                                                        ref={expensesListRef}
+                                                        workOrderId={null}
+                                                        sourceType="work_order"
+                                                        isEditing={true}
                                                         onItemSaved={handleExpenseItemSaved}
                                                     />
                                                 </div>

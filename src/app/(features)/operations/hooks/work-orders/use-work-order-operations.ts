@@ -29,7 +29,7 @@ export function useWorkOrderOperations(
     /**
      * Handle work order creation
      */
-    const handleWorkOrderCreate = async (workOrderData: any) => {
+    const handleWorkOrderCreate = async (workOrderData: any): Promise<{ id: string } | void> => {
         if (!shopId || !user) {
             console.error('Missing authentication data')
             return
@@ -105,19 +105,26 @@ export function useWorkOrderOperations(
                 newWorkOrder = await createWorkOrderMutation.mutateAsync(payload)
             }
 
-            // Create all work order items using the service
+            // Create all work order items using the service (excluding expenses - handled separately via ExpenseItemsList)
+            const workOrderDataWithoutExpenses = {
+                ...workOrderData,
+                expenseItems: [], // Don't create expense items here - they're handled by ExpenseItemsList
+            }
             const totalItemsCreated = await WorkOrderCreationService.createAllWorkOrderItems(
                 newWorkOrder.id,
-                workOrderData
+                workOrderDataWithoutExpenses
             )
 
             // Show success message with items count
             if (totalItemsCreated > 0) {
                 toast.success(`Work order created with ${totalItemsCreated} items`)
             }
+
+            return { id: newWorkOrder.id }
         } catch (error) {
             console.error('Failed to create work order:', error)
             // Error handling is done in the mutation hook
+            throw error
         }
     }
 
