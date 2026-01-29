@@ -50,7 +50,7 @@ export const sidebarNavSections: NavSection[] = [
 			},
 			{
 				name: "Parts & Expenses",
-				href: "/operations/expenses",
+				href: "/expenses",
 				icon: Package,
 			},
 		],
