@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Trash2, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import AddExpenseModal from '@/app/financials/efficiency/components/AddExpenseModal'
+import AddExpenseModal from '@/app/(features)/expenses/components/AddExpenseModal'
 
 import {
     type WorkOrderExpenseItemFormData,

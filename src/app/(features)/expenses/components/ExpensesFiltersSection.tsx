@@ -13,6 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { EXPENSE_CATEGORIES } from '../lib/validations/expense-schema'
 
 interface ExpensesFiltersSectionProps {
     searchInput: string
@@ -29,7 +30,6 @@ interface ExpensesFiltersSectionProps {
     onSourceTypeChange: (value: 'work_order' | 'invoice' | 'general' | 'all') => void
     category?: string
     onCategoryChange?: (value: string) => void
-    categories?: string[]
     activeSuppliers: { id: string; name: string }[]
     hasActiveFilters: boolean
     onClearAllFilters: () => void
@@ -51,7 +51,6 @@ export function ExpensesFiltersSection({
     onSourceTypeChange,
     category = '',
     onCategoryChange,
-    categories = [],
     activeSuppliers,
     hasActiveFilters,
     onClearAllFilters,
@@ -185,7 +184,7 @@ export function ExpensesFiltersSection({
                             </SelectContent>
                         </Select>
                     </div>
-                    {onCategoryChange && categories && (
+                    {onCategoryChange && (
                         <div className="w-48">
                             <Label htmlFor="category" className="text-sm font-medium mb-2 block">
                                 Category
@@ -199,7 +198,7 @@ export function ExpensesFiltersSection({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Categories</SelectItem>
-                                    {categories.map((cat) => (
+                                    {EXPENSE_CATEGORIES.map((cat) => (
                                         <SelectItem key={cat} value={cat}>
                                             {cat}
                                         </SelectItem>

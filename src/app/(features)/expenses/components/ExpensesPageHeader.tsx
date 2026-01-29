@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Plus } from 'lucide-react'
-import AddExpenseModal from '@/app/financials/efficiency/components/AddExpenseModal'
+import AddExpenseModal from './AddExpenseModal'
 
 interface ExpensesPageHeaderProps {
     title?: string
