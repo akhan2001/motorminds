@@ -16,35 +16,25 @@ import { formatDate } from '@/lib/utils/date'
 import { Receipt, Wallet, FileText } from 'lucide-react'
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView'
 import type { ExpenseItem } from '../types/expenses'
-import EditExpenseModal from '@/app/financials/efficiency/components/EditExpenseModal'
+import { ExpenseDetailDialog } from './ExpenseDetailDialog'
 
 interface ExpensesTableProps {
     items: ExpenseItem[]
     isLoading: boolean
     error: Error | null
     onExpenseUpdated?: () => void
+    shopId?: string
 }
 
-export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: ExpensesTableProps) {
+export function ExpensesTable({ items, isLoading, error, onExpenseUpdated, shopId = '' }: ExpensesTableProps) {
     const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null)
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
     const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null)
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
 
     const handleRowClick = (item: ExpenseItem) => {
-        if (item.source_type === 'general') {
-            // Open edit modal for general expenses
-            setSelectedExpense(item)
-            setIsEditModalOpen(true)
-        } else if (item.work_order_id) {
-            // Open work order quick view for work order expenses
-            setSelectedWorkOrderId(item.work_order_id)
-            setIsQuickViewOpen(true)
-        } else if (item.invoice_id) {
-            // Could open invoice view if needed
-            setSelectedExpense(item)
-            setIsEditModalOpen(true)
-        }
+        setSelectedExpense(item)
+        setIsDetailDialogOpen(true)
     }
 
     const handleCloseQuickView = () => {
@@ -52,16 +42,16 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: Exp
         setSelectedWorkOrderId(null)
     }
 
-    const handleCloseEditModal = () => {
-        setIsEditModalOpen(false)
+    const handleCloseDetailDialog = () => {
+        setIsDetailDialogOpen(false)
         setSelectedExpense(null)
+        onExpenseUpdated?.()
     }
 
-    const handleExpenseUpdated = () => {
-        handleCloseEditModal()
-        if (onExpenseUpdated) {
-            onExpenseUpdated()
-        }
+    const handleViewWorkOrder = (workOrderId: string) => {
+        setIsDetailDialogOpen(false)
+        setSelectedWorkOrderId(workOrderId)
+        setIsQuickViewOpen(true)
     }
 
     const getSourceTypeIcon = (sourceType: ExpenseItem['source_type']) => {
@@ -75,27 +65,12 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: Exp
         return null
     }
 
-    const getSourceTypeBadge = (sourceType: ExpenseItem['source_type']) => {
-        if (sourceType === 'work_order') {
-            return (
-                <Badge variant="outline" className="bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20">
-                    Work Order
-                </Badge>
-            )
-        } else if (sourceType === 'invoice') {
-            return (
-                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
-                    Invoice
-                </Badge>
-            )
-        } else if (sourceType === 'general') {
-            return (
-                <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
-                    General
-                </Badge>
-            )
-        }
-        return null
+    const getSourceTypeBadge = () => {
+        return (
+            <Badge variant="outline" className="bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20">
+                Expense
+            </Badge>
+        )
     }
 
 
@@ -173,18 +148,6 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: Exp
         )
     }
 
-    // Transform expense to the format expected by EditExpenseModal
-    const transformToEditableExpense = (item: ExpenseItem) => ({
-        id: item.id,
-        cost_name: item.description,
-        amount: item.total,
-        category: item.category,
-        cost_date: item.expense_date,
-        payment_method: item.payment_method || undefined,
-        vendor: item.vendor || undefined,
-        notes: item.notes || undefined
-    })
-
     return (
         <>
             <div className="rounded-md border border-border">
@@ -205,17 +168,18 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: Exp
                     <TableBody>
                         {items.map((item) => {
                             const isGeneralExpense = item.source_type === 'general'
+                            const isRefunded = (item.refund_amount && item.refund_amount > 0) || item.resolution_type === 'returned'
 
                             return (
                                 <TableRow
                                     key={item.id}
-                                    className="cursor-pointer hover:bg-muted/50"
+                                    className={`cursor-pointer hover:bg-muted/50 ${isRefunded ? 'bg-red-500/10' : ''}`}
                                     onClick={() => handleRowClick(item)}
                                 >
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             {getSourceTypeIcon(item.source_type)}
-                                            {getSourceTypeBadge(item.source_type)}
+                                            {getSourceTypeBadge()}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -285,21 +249,30 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: Exp
                             <TableCell className="text-right">
                                 <span className="text-foreground">
                                     {formatCurrency(
-                                        items.reduce((sum, item) => sum + item.subtotal, 0)
+                                        items.reduce((sum, item) => {
+                                            const refund = item.refund_amount || 0
+                                            return sum + Math.max(0, item.subtotal - refund)
+                                        }, 0)
                                     )}
                                 </span>
                             </TableCell>
                             <TableCell className="text-right">
                                 <span className="text-foreground">
                                     {formatCurrency(
-                                        items.reduce((sum, item) => sum + (item.tax_amount || 0), 0)
+                                        items.reduce((sum, item) => {
+                                            if (item.refund_amount && item.refund_amount >= item.total) return sum
+                                            return sum + (item.tax_amount || 0)
+                                        }, 0)
                                     )}
                                 </span>
                             </TableCell>
                             <TableCell className="text-right">
                                 <span className="text-foreground text-lg font-bold">
                                     {formatCurrency(
-                                        items.reduce((sum, item) => sum + item.total, 0)
+                                        items.reduce((sum, item) => {
+                                            const refund = item.refund_amount || 0
+                                            return sum + Math.max(0, item.total - refund)
+                                        }, 0)
                                     )}
                                 </span>
                             </TableCell>
@@ -309,23 +282,21 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated }: Exp
                 </Table>
             </div>
 
+            {/* Expense Detail Dialog */}
+            <ExpenseDetailDialog
+                expense={selectedExpense}
+                isOpen={isDetailDialogOpen}
+                onClose={handleCloseDetailDialog}
+                onViewWorkOrder={handleViewWorkOrder}
+                shopId={shopId}
+            />
+
             {/* Work Order Quick View */}
             {selectedWorkOrderId && (
                 <WorkOrderQuickView
                     workOrderId={selectedWorkOrderId}
                     isOpen={isQuickViewOpen}
                     onClose={handleCloseQuickView}
-                />
-            )}
-
-            {/* Edit Expense Modal */}
-            {selectedExpense && (
-                <EditExpenseModal 
-                    expense={transformToEditableExpense(selectedExpense)}
-                    onExpenseUpdated={handleExpenseUpdated}
-                    onExpenseDeleted={handleExpenseUpdated}
-                    open={isEditModalOpen}
-                    onOpenChange={setIsEditModalOpen}
                 />
             )}
         </>

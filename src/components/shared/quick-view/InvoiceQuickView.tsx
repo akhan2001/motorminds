@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon } from 'lucide-react'
+import { FileText, User, Car, Loader2, Check, XCircle, DollarSign, X, CreditCard, LayoutIcon, Receipt, Undo2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { useInvoice } from '@/app/(features)/financials/hooks/use-invoices'
 import { useWorkOrderItems } from '@/app/(features)/operations/hooks/use-work-order-items'
+import { useExpensesByInvoice } from '@/app/(features)/expenses/hooks/use-expenses'
 import { formatCurrency } from '@/lib/utils/currency'
 import { formatDate } from '@/lib/utils/date'
 import { formatPhoneNumber } from '@/lib/utils/formatters'
@@ -26,6 +27,9 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
     
     // Fetch work order items to get expense items (tracking only)
     const { data: workOrderItems = [] } = useWorkOrderItems(invoice?.work_order_id || '')
+    
+    // Fetch expenses from the expenses table linked to this invoice
+    const { data: invoiceExpenses = [], isLoading: expensesLoading } = useExpensesByInvoice(invoice?.id || null)
     
     // Filter expense items from work order (these are tracking only, not on invoice)
     const expenseItems = workOrderItems.filter((item: any) => item.item_type === 'expense' && item.active !== false)
@@ -535,6 +539,83 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                             )}
                         </div>
                     </Card>
+
+                    {/* Expenses Card (from expenses table) */}
+                    {expensesLoading ? (
+                        <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
+                            <div className="p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Expenses</h3>
+                                </div>
+                                <div className="text-sm text-muted-foreground dark:text-gray-400">Loading expenses...</div>
+                            </div>
+                        </Card>
+                    ) : invoiceExpenses.length > 0 ? (
+                        <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
+                            <div className="p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                    <h3 className="text-lg font-semibold text-foreground dark:text-white">Expenses</h3>
+                                    <Badge variant="outline" className="text-xs">
+                                        {invoiceExpenses.length}
+                                    </Badge>
+                                </div>
+                                <div className="space-y-2">
+                                    {invoiceExpenses.map((expense: any) => {
+                                        const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned'
+                                        return (
+                                            <div 
+                                                key={expense.id} 
+                                                className={`bg-background dark:bg-[#0f0f0f] rounded p-3 border ${isRefunded ? 'border-red-500/30 bg-red-500/5' : 'border-border dark:border-[#2a2a2a]'}`}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-foreground dark:text-white text-sm font-medium">{expense.description}</span>
+                                                            {isRefunded && (
+                                                                <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+                                                                    <Undo2 className="h-3 w-3" />
+                                                                    Refunded
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-muted-foreground dark:text-gray-400 text-xs space-y-0.5">
+                                                            {expense.category && <div>Category: {expense.category}</div>}
+                                                            {expense.vendor && <div>Vendor: {expense.vendor}</div>}
+                                                            {expense.expense_date && <div>Date: {formatDateString(expense.expense_date)}</div>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className={`text-sm font-medium ${isRefunded ? 'text-red-600 dark:text-red-400 line-through' : 'text-foreground dark:text-white'}`}>
+                                                            {formatCurrency(expense.total)}
+                                                        </div>
+                                                        {isRefunded && expense.refund_amount > 0 && (
+                                                            <div className="text-xs text-green-600 dark:text-green-400">
+                                                                Refund: {formatCurrency(expense.refund_amount)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                    <Separator className="bg-border dark:bg-gray-700" />
+                                    <div className="flex justify-between items-center pt-1">
+                                        <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Total Expenses:</span>
+                                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                            {formatCurrency(
+                                                invoiceExpenses.reduce((sum: number, exp: any) => {
+                                                    const refund = exp.refund_amount || 0
+                                                    return sum + Math.max(0, exp.total - refund)
+                                                }, 0)
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    ) : null}
 
                     {/* Invoice Summary Card */}
                     <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">

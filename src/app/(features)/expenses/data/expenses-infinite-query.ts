@@ -95,7 +95,7 @@ export function useExpensesInfiniteQuery(
     } = options || {}
 
     return useInfiniteQuery<ExpensesInfiniteResponse>({
-        queryKey: expenseKeys.list(shopId, filters), // Using list key since infiniteList was removed
+        queryKey: expenseKeys.list(shopId, filters as any), // Using list key since infiniteList was removed
         queryFn: ({ signal, pageParam = 1 }) =>
             getExpenses(
                 shopId!,
@@ -104,6 +104,7 @@ export function useExpensesInfiniteQuery(
                 filters,
                 signal
             ),
+        initialPageParam: 1,
         getNextPageParam(lastPage, pages) {
             const page = pages.length
             const currentTotalCount = page * limit

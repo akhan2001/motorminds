@@ -5,6 +5,8 @@ import type {
     UpdateExpenseRequest,
     ExpenseFilters,
     ExpensesResponse,
+    ResolveExpenseRequest,
+    ExpenseResolutionType,
 } from '../types/expenses'
 
 export class ExpensesService {
@@ -79,6 +81,19 @@ export class ExpensesService {
             } else {
                 // Default: exclude archived unless explicitly requested
                 query = query.or('archived.eq.false,archived.is.null')
+            }
+
+            // Resolution filters
+            if (filters.resolution_type) {
+                query = query.eq('resolution_type', filters.resolution_type)
+            }
+
+            // Filter for expenses needing resolution
+            if (filters.needs_resolution === true) {
+                query = query
+                    .is('work_order_id', null)
+                    .not('original_work_order_id', 'is', null)
+                    .is('resolution_type', null)
             }
 
             // Order by date (no pagination)
@@ -532,6 +547,281 @@ export class ExpensesService {
             return uniqueCategories
         } catch (error) {
             console.error('ExpensesService.getUniqueCategories error:', error)
+            throw error
+        }
+    }
+
+    // ==========================================
+    // EXPENSE RESOLUTION METHODS
+    // ==========================================
+
+    /**
+     * Resolve an expense after work order is declined
+     * This applies the resolution type and notes, recording what happened to the cost
+     */
+    static async resolveExpense(
+        id: string,
+        shopId: string,
+        resolution: ResolveExpenseRequest
+    ): Promise<ExpenseItem> {
+        try {
+            const updateData: Record<string, unknown> = {
+                resolution_type: resolution.resolution_type,
+                resolution_note: resolution.resolution_note || null,
+                resolved_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            }
+
+            // Handle refund amount for returned or restocking fee
+            if (resolution.refund_amount !== undefined) {
+                updateData.refund_amount = resolution.refund_amount
+            }
+
+            // Handle reassignment to a different work order
+            if (resolution.resolution_type === 'reassigned' && resolution.new_work_order_id) {
+                updateData.work_order_id = resolution.new_work_order_id
+                // Clear resolution fields since it's now reassigned to active work
+                updateData.resolution_type = 'reassigned'
+            }
+
+            const { data: expense, error } = await this.supabase
+                .from('expenses')
+                .update(updateData)
+                .eq('id', id)
+                .eq('shop_id', shopId)
+                .select()
+                .single()
+
+            if (error) {
+                console.error('Error resolving expense:', error)
+                throw new Error(`Failed to resolve expense: ${error.message}`)
+            }
+
+            if (!expense) {
+                throw new Error('Expense not found')
+            }
+
+            return expense
+        } catch (error) {
+            console.error('ExpensesService.resolveExpense error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Unassign expense from work order (when work order is declined)
+     * This preserves the original_work_order_id for history and sets expense to pending resolution
+     */
+    static async unassignFromWorkOrder(
+        expenseId: string,
+        shopId: string
+    ): Promise<ExpenseItem> {
+        try {
+            // First get the current expense to preserve original work order
+            const { data: currentExpense, error: fetchError } = await this.supabase
+                .from('expenses')
+                .select('work_order_id, original_work_order_id')
+                .eq('id', expenseId)
+                .eq('shop_id', shopId)
+                .single()
+
+            if (fetchError) {
+                console.error('Error fetching expense:', fetchError)
+                throw new Error(`Failed to fetch expense: ${fetchError.message}`)
+            }
+
+            if (!currentExpense) {
+                throw new Error('Expense not found')
+            }
+
+            // Preserve the original work order ID if not already set
+            const originalWorkOrderId = currentExpense.original_work_order_id || currentExpense.work_order_id
+
+            const { data: expense, error } = await this.supabase
+                .from('expenses')
+                .update({
+                    work_order_id: null,
+                    original_work_order_id: originalWorkOrderId,
+                    resolution_type: null,  // Clear any previous resolution
+                    resolved_at: null,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', expenseId)
+                .eq('shop_id', shopId)
+                .select()
+                .single()
+
+            if (error) {
+                console.error('Error unassigning expense:', error)
+                throw new Error(`Failed to unassign expense: ${error.message}`)
+            }
+
+            return expense
+        } catch (error) {
+            console.error('ExpensesService.unassignFromWorkOrder error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Reassign expense to a different work order
+     * This is a resolution action that moves the expense to a new work order
+     */
+    static async reassignToWorkOrder(
+        expenseId: string,
+        shopId: string,
+        newWorkOrderId: string
+    ): Promise<ExpenseItem> {
+        try {
+            // First get the current expense to preserve history
+            const { data: currentExpense, error: fetchError } = await this.supabase
+                .from('expenses')
+                .select('work_order_id, original_work_order_id')
+                .eq('id', expenseId)
+                .eq('shop_id', shopId)
+                .single()
+
+            if (fetchError) {
+                console.error('Error fetching expense:', fetchError)
+                throw new Error(`Failed to fetch expense: ${fetchError.message}`)
+            }
+
+            if (!currentExpense) {
+                throw new Error('Expense not found')
+            }
+
+            // Preserve original if not already set
+            const originalWorkOrderId = currentExpense.original_work_order_id || currentExpense.work_order_id
+
+            const { data: expense, error } = await this.supabase
+                .from('expenses')
+                .update({
+                    work_order_id: newWorkOrderId,
+                    original_work_order_id: originalWorkOrderId,
+                    resolution_type: 'reassigned',
+                    resolution_note: `Reassigned from work order ${originalWorkOrderId}`,
+                    resolved_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', expenseId)
+                .eq('shop_id', shopId)
+                .select()
+                .single()
+
+            if (error) {
+                console.error('Error reassigning expense:', error)
+                throw new Error(`Failed to reassign expense: ${error.message}`)
+            }
+
+            return expense
+        } catch (error) {
+            console.error('ExpensesService.reassignToWorkOrder error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get expenses that need resolution (unassigned from work orders)
+     * These are expenses that have an original_work_order_id but no current work_order_id
+     * and haven't been resolved yet
+     */
+    static async getUnresolvedExpenses(shopId: string): Promise<ExpenseItem[]> {
+        try {
+            const { data, error } = await this.supabase
+                .from('expenses')
+                .select('*')
+                .eq('shop_id', shopId)
+                .is('work_order_id', null)
+                .not('original_work_order_id', 'is', null)
+                .is('resolution_type', null)
+                .or('archived.eq.false,archived.is.null')
+                .order('expense_date', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching unresolved expenses:', error)
+                throw new Error(`Failed to fetch unresolved expenses: ${error.message}`)
+            }
+
+            return data || []
+        } catch (error) {
+            console.error('ExpensesService.getUnresolvedExpenses error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Get expenses by resolution type
+     */
+    static async getExpensesByResolution(
+        shopId: string,
+        resolutionType: ExpenseResolutionType
+    ): Promise<ExpenseItem[]> {
+        try {
+            const { data, error } = await this.supabase
+                .from('expenses')
+                .select('*')
+                .eq('shop_id', shopId)
+                .eq('resolution_type', resolutionType)
+                .or('archived.eq.false,archived.is.null')
+                .order('resolved_at', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching expenses by resolution:', error)
+                throw new Error(`Failed to fetch expenses by resolution: ${error.message}`)
+            }
+
+            return data || []
+        } catch (error) {
+            console.error('ExpensesService.getExpensesByResolution error:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Unassign all expenses from a work order (called when work order is cancelled/declined)
+     * Returns the count of expenses that were unassigned
+     */
+    static async unassignAllFromWorkOrder(
+        workOrderId: string,
+        shopId: string
+    ): Promise<number> {
+        try {
+            // First get all expenses for this work order
+            const { data: expenses, error: fetchError } = await this.supabase
+                .from('expenses')
+                .select('id')
+                .eq('work_order_id', workOrderId)
+                .eq('shop_id', shopId)
+                .or('archived.eq.false,archived.is.null')
+
+            if (fetchError) {
+                console.error('Error fetching work order expenses:', fetchError)
+                throw new Error(`Failed to fetch work order expenses: ${fetchError.message}`)
+            }
+
+            if (!expenses || expenses.length === 0) {
+                return 0
+            }
+
+            // Update all expenses to unassign from work order
+            const { error: updateError } = await this.supabase
+                .from('expenses')
+                .update({
+                    work_order_id: null,
+                    original_work_order_id: workOrderId,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('work_order_id', workOrderId)
+                .eq('shop_id', shopId)
+
+            if (updateError) {
+                console.error('Error unassigning expenses:', updateError)
+                throw new Error(`Failed to unassign expenses: ${updateError.message}`)
+            }
+
+            return expenses.length
+        } catch (error) {
+            console.error('ExpensesService.unassignAllFromWorkOrder error:', error)
             throw error
         }
     }

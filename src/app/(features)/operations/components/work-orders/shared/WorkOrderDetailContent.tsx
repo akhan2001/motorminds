@@ -3,11 +3,12 @@
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Wrench, Calendar, DollarSign, User, Car, Package, Clock, MapPin, Tag, FileText, Archive } from 'lucide-react'
+import { Wrench, Calendar, DollarSign, User, Car, Package, Clock, MapPin, Tag, FileText, Archive, Receipt, Undo2 } from 'lucide-react'
 import { format } from 'date-fns'
 import type { WorkOrderWithDetails, WorkOrderItem } from '../../../types/work-order'
 import { calculateInvoiceTotals } from '../../../../financials/lib/invoice-calculations'
 import { formatCurrency } from '@/lib/utils/currency'
+import { useExpensesByWorkOrder } from '@/app/(features)/expenses/hooks/use-expenses'
 
 interface WorkOrderDetailContentProps {
     workOrder: WorkOrderWithDetails
@@ -78,6 +79,9 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
     // Calculate financial summary from work order items
     const calculations = workOrderItems.length > 0 ? calculateInvoiceTotals(workOrderItems as any) : null
     const TAX_RATE = 0.13
+
+    // Fetch expenses from the expenses table
+    const { data: expenses = [], isLoading: expensesLoading } = useExpensesByWorkOrder(workOrder.id)
 
     return (
         <div className="space-y-6">
@@ -265,6 +269,79 @@ export const WorkOrderDetailContent: React.FC<WorkOrderDetailContentProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Expenses Card */}
+            {expensesLoading ? (
+                <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        <h3 className="text-foreground dark:text-white font-medium">Expenses</h3>
+                    </div>
+                    <div className="text-sm text-muted-foreground dark:text-gray-400">Loading expenses...</div>
+                </div>
+            ) : expenses.length > 0 ? (
+                <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        <h3 className="text-foreground dark:text-white font-medium">Expenses</h3>
+                        <Badge variant="outline" className="text-xs">
+                            {expenses.length}
+                        </Badge>
+                    </div>
+                    <div className="space-y-2">
+                        {expenses.map((expense: any) => {
+                            const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned'
+                            return (
+                                <div 
+                                    key={expense.id} 
+                                    className={`bg-background dark:bg-[#0f0f0f] rounded p-3 border ${isRefunded ? 'border-red-500/30 bg-red-500/5' : 'border-border dark:border-[#2a2a2a]'}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-foreground dark:text-white text-sm font-medium">{expense.description}</span>
+                                                {isRefunded && (
+                                                    <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+                                                        <Undo2 className="h-3 w-3" />
+                                                        Refunded
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="text-muted-foreground dark:text-gray-400 text-xs space-y-0.5">
+                                                {expense.category && <div>Category: {expense.category}</div>}
+                                                {expense.vendor && <div>Vendor: {expense.vendor}</div>}
+                                                {expense.expense_date && <div>Date: {formatDate(expense.expense_date)}</div>}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className={`text-sm font-medium ${isRefunded ? 'text-red-600 dark:text-red-400 line-through' : 'text-foreground dark:text-white'}`}>
+                                                {formatCurrency(expense.total)}
+                                            </div>
+                                            {isRefunded && expense.refund_amount > 0 && (
+                                                <div className="text-xs text-green-600 dark:text-green-400">
+                                                    Refund: {formatCurrency(expense.refund_amount)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                        <Separator className="bg-border dark:bg-[#2a2a2a]" />
+                        <div className="flex justify-between items-center pt-1">
+                            <span className="text-sm font-medium text-muted-foreground dark:text-gray-400">Total Expenses:</span>
+                            <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                {formatCurrency(
+                                    expenses.reduce((sum: number, exp: any) => {
+                                        const refund = exp.refund_amount || 0
+                                        return sum + Math.max(0, exp.total - refund)
+                                    }, 0)
+                                )}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
 
             {/* Work Order Items */}
             {itemsLoading ? (

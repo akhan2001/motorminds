@@ -88,6 +88,7 @@ export default function ExpensesPage() {
                         isLoading={isLoading}
                         error={error as Error | null}
                         onExpenseUpdated={refetch}
+                        shopId={shopId || ''}
                     />
                 </CardContent>
             </Card>

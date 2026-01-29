@@ -1,3 +1,15 @@
+/**
+ * Resolution types for expenses when work orders are declined
+ * These track what happened to the cost after customer declined
+ */
+export type ExpenseResolutionType =
+    | 'returned'        // Full return to supplier
+    | 'credited'        // Supplier credit received
+    | 'restocking_fee'  // Partial return (restocking deduction)
+    | 'written_off'     // Complete loss
+    | 'reassigned'      // Moved to another work order
+    | 'inventory';      // Added to shop inventory
+
 export interface ExpenseItem {
     id: string;
     shop_id: string;
@@ -24,6 +36,12 @@ export interface ExpenseItem {
     updated_at: string;
     archived: boolean | null;
     archived_at: string | null;
+    // Resolution fields for declined work orders
+    resolution_type: ExpenseResolutionType | null;
+    resolution_note: string | null;
+    resolved_at: string | null;
+    original_work_order_id: string | null;  // Immutable - tracks history
+    refund_amount: number | null;           // For partial refunds
 }
 
 export interface CreateExpenseRequest {
@@ -52,6 +70,23 @@ export interface CreateExpenseRequest {
 export interface UpdateExpenseRequest extends Partial<CreateExpenseRequest> {
     archived?: boolean | null;
     archived_at?: string | null;
+    // Resolution fields
+    resolution_type?: ExpenseResolutionType | null;
+    resolution_note?: string | null;
+    resolved_at?: string | null;
+    original_work_order_id?: string | null;
+    refund_amount?: number | null;
+}
+
+/**
+ * Request to resolve an expense (when work order is declined)
+ */
+export interface ResolveExpenseRequest {
+    resolution_type: ExpenseResolutionType;
+    resolution_note?: string | null;
+    refund_amount?: number | null;
+    // For reassignment
+    new_work_order_id?: string | null;
 }
 
 export interface ExpenseFilters {
@@ -64,6 +99,9 @@ export interface ExpenseFilters {
     date_to?: string;
     search?: string;
     archived?: boolean;
+    // Resolution filters
+    resolution_type?: ExpenseResolutionType;
+    needs_resolution?: boolean;  // Expenses with null work_order_id but linked originally
 }
 
 export interface ExpensesResponse {
