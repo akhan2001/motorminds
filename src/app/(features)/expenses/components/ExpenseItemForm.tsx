@@ -41,7 +41,9 @@ export interface ExpenseItemFormProps {
     onCancel?: () => void
 }
 
-const today = () => new Date().toISOString().split('T')[0]
+import { getLocalDateString } from '@/lib/utils/date'
+
+const today = () => getLocalDateString()
 
 function getDefaultValues(
     shopId: string,

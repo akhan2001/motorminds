@@ -157,9 +157,17 @@ export function getCurrentMonthRange(): { start: Date; end: Date } {
 /**
  * Format date to YYYY-MM-DD string in local timezone (date only, no time)
  * Used for filtering expenses by date
+ * Handles date-only strings (YYYY-MM-DD) by parsing as local dates to prevent timezone shift
  */
 export function formatDateForFilter(date: Date | string, timezone?: string): string {
     const tz = timezone || getLocalTimezone()
+    
+    // Handle date-only strings (YYYY-MM-DD) - parse as local date to prevent timezone shift
+    if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Already in YYYY-MM-DD format, return as-is
+        return date
+    }
+    
     const dateObj = typeof date === 'string' ? new Date(date) : date
     
     // Format to local date string (YYYY-MM-DD)
