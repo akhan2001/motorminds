@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAddWorkOrderAdvancePayment } from '../../../hooks/use-work-order-advance-payments'
 import type { PaymentMethod } from '../../../../financials/types/invoice'
 import { formatCurrency } from '@/lib/utils/currency'
+import { getLocalDateString } from '@/lib/utils/date'
 
 interface AddAdvancePaymentDialogProps {
     isOpen: boolean
@@ -41,7 +42,7 @@ export function AddAdvancePaymentDialog({
 }: AddAdvancePaymentDialogProps) {
     const [amount, setAmount] = useState<string>('')
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
-    const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0])
+    const [paymentDate, setPaymentDate] = useState<string>(getLocalDateString())
     const [paymentReference, setPaymentReference] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
     
@@ -50,7 +51,7 @@ export function AddAdvancePaymentDialog({
     // Reset form when dialog opens
     useEffect(() => {
         if (isOpen) {
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getLocalDateString())
             setAmount('')
             setPaymentMethod('')
             setPaymentReference('')
@@ -98,7 +99,7 @@ export function AddAdvancePaymentDialog({
             // Reset form
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getLocalDateString())
             setPaymentReference('')
             setNotes('')
             
@@ -113,7 +114,7 @@ export function AddAdvancePaymentDialog({
         if (!addPayment.isPending) {
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getLocalDateString())
             setPaymentReference('')
             setNotes('')
             onClose()

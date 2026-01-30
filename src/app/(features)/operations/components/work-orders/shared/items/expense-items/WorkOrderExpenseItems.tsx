@@ -26,6 +26,7 @@ import {
 } from '../../../../../data/work-order-items/work-order-item-expense-mutations'
 
 import { ExpenseItemCard } from './ExpenseItemCard'
+import { getLocalDateString } from '@/lib/utils/date'
 
 // Re-export type for backward compatibility
 export type { WorkOrderExpenseItemFormData as ExpenseFormItem } from '../../../../../lib/validations/work-order-expense-items'
@@ -191,7 +192,7 @@ export function WorkOrderExpenseItems({
             expense_vendor: expenseData.vendor || null,
             expense_invoice_number: expenseData.invoice_number || null,
             expense_parts_description: expenseData.parts_description || null,
-            expense_cost_date: expenseData.cost_date || new Date().toISOString().split('T')[0],
+            expense_cost_date: expenseData.cost_date || getLocalDateString(),
             is_billable: false,
         }
 

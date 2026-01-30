@@ -199,7 +199,9 @@ export const ExpenseListFormSchema = z.object({
 export type ExpenseListItemFormData = z.infer<typeof ExpenseListItemSchema>
 export type ExpenseListFormData = z.infer<typeof ExpenseListFormSchema>
 
-const today = () => new Date().toISOString().split('T')[0]
+import { getLocalDateString } from '@/lib/utils/date'
+
+const today = () => getLocalDateString()
 
 export function createDefaultExpenseListItem(id: string): ExpenseListItemFormData {
     return {

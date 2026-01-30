@@ -201,8 +201,10 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
             }
             
             if (invoiceId) {
-                // Update existing invoice - persist expenses first
-                await expensesListRef.current?.persistAll({ invoiceId })
+                // Update existing invoice - persist expenses first (expenses table expects invoice_id UUID, not invoice_number)
+                await expensesListRef.current?.persistAll(
+                    invoice?.id ? { invoiceId: invoice.id } : undefined
+                )
                 await updateMutation.mutateAsync({
                     id: invoiceId,
                     data: finalFormData
@@ -214,9 +216,11 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                     ...finalFormData,
                     shop_id: shopId
                 })
-                // Persist expenses with the new invoice ID
-                if (createdInvoice?.id) {
-                    await expensesListRef.current?.persistAll({ invoiceId: createdInvoice.id })
+                // Persist expenses with the new invoice ID (must use invoice UUID; ref must be set)
+                if (createdInvoice?.id && expensesListRef.current) {
+                    await expensesListRef.current.persistAll({ invoiceId: createdInvoice.id })
+                } else if (createdInvoice?.id && !expensesListRef.current) {
+                    console.warn('Expense list ref not set; expense items were not saved.')
                 }
                 toast.success('Invoice created successfully')
             }
