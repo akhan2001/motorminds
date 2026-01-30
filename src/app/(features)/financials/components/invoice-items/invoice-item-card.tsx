@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import type { InvoiceItem, InvoiceItemType } from '../../types/invoice-items'
 
 interface InvoiceItemCardProps {
@@ -68,13 +69,6 @@ const getItemTypeBadgeColor = (type: InvoiceItemType) => {
         default:
             return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
     }
-}
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(amount)
 }
 
 export const InvoiceItemCard: React.FC<InvoiceItemCardProps> = ({

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Loader2 } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils/currency'
 
 interface InvoiceSyncWarningDialogProps {
     isOpen: boolean
@@ -30,13 +31,6 @@ export function InvoiceSyncWarningDialog({
     totalAmount,
     isSyncing
 }: InvoiceSyncWarningDialogProps) {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
-    }
-
     const handleConfirmClick = () => {
         onConfirm()
     }

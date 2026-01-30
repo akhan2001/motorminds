@@ -2,13 +2,10 @@ import React from 'react'
 import { Document, Page, Text, View, Image } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
 import { modernTemplateStyles } from './modern-template-styles'
+import { formatCurrency } from '@/lib/utils/currency'
 
 export const ModernTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
     const styles = modernTemplateStyles
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
-    }
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-CA', {

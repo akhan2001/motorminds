@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLocalDateString } from '@/lib/utils/date';
+import { formatCurrency } from '@/lib/utils/currency';
 import { ExpenseDetailDialog } from '@/app/(features)/expenses/components/ExpenseDetailDialog';
 import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
@@ -123,15 +124,6 @@ interface PartsExpense {
 	has_invoice: boolean;
 	is_paid: boolean;
 }
-
-const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-CA', {
-		style: 'currency',
-		currency: 'CAD',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2
-	}).format(value);
-};
 
 const formatDate = (dateString: string): string => {
 	// Handle date-only strings (YYYY-MM-DD) to avoid timezone issues

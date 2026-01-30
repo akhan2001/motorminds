@@ -28,6 +28,7 @@ import { useExpensesByInvoice } from '@/app/(features)/expenses/hooks/use-expens
 import { ExpenseRow } from '@/app/(features)/expenses/components/ExpenseRow'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
@@ -156,10 +157,6 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         } else {
             toast.error('No work order associated with this invoice')
         }
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
     }
 
     const formatPhoneNumber = (phone: string | null) => {

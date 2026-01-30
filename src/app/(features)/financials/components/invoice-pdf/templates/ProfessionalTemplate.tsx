@@ -3,11 +3,9 @@ import { Document, Page, Text, View, Image } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
 import { professionalTemplateStyles as styles } from './ProfessionalTemplate.styles'
 import { formatDate, formatTime, formatDateTime } from '@/lib/utils/date'
+import { formatCurrency } from '@/lib/utils/currency'
 
 export const ProfessionalTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
-    }
 
     // Format payment method
     const formatPaymentMethod = (method: string | null) => {

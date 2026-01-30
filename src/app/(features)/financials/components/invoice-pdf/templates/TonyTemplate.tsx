@@ -1,6 +1,7 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
+import { formatCurrency } from '@/lib/utils/currency'
 
 const styles = StyleSheet.create({
     page: {
@@ -325,10 +326,6 @@ const styles = StyleSheet.create({
 })
 
 export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
-    }
-
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-CA', {
             year: 'numeric',

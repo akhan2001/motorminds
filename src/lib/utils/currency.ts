@@ -1,12 +1,17 @@
 // Currency and number formatting utility functions
 
+import { FINANCIAL_CURRENCY, FINANCIAL_LOCALE } from '@/lib/constants/financial'
+
 /**
  * Format number as currency (CAD by default)
+ * 
+ * Uses centralized FINANCIAL_CURRENCY and FINANCIAL_LOCALE constants
+ * to ensure consistent currency formatting across all financial components.
  */
 export function formatCurrency(
     amount?: number, 
-    currency: string = 'CAD',
-    locale: string = 'en-CA'
+    currency: string = FINANCIAL_CURRENCY,
+    locale: string = FINANCIAL_LOCALE
 ): string {
     if (!amount && amount !== 0) return '$0.00'
     
@@ -20,11 +25,14 @@ export function formatCurrency(
 
 /**
  * Format currency with decimal places
+ * 
+ * Uses centralized FINANCIAL_CURRENCY and FINANCIAL_LOCALE constants
+ * to ensure consistent currency formatting across all financial components.
  */
 export function formatCurrencyDetailed(
     amount?: number, 
-    currency: string = 'CAD',
-    locale: string = 'en-CA'
+    currency: string = FINANCIAL_CURRENCY,
+    locale: string = FINANCIAL_LOCALE
 ): string {
     if (!amount && amount !== 0) return '$0.00'
     
