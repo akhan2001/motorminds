@@ -10,7 +10,8 @@ import { Calendar, DollarSign, Loader2, Receipt, Car, ChevronLeft, ChevronRight 
 import { Button } from '@/components/ui/button';
 import { InvoiceQuickView } from '@/components/shared/quick-view/InvoiceQuickView';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
-import { formatDateForFilter, formatDateOnly, getLocalDateString } from '@/lib/utils/date';
+import { formatDateOnly, getTorontoDayBoundsUTC, getTorontoDateString } from '@/lib/utils/date';
+import { formatCurrency } from '@/lib/utils/currency';
 
 interface DailyReportData {
 	date: string;
@@ -39,15 +40,6 @@ interface DailyReportData {
 	}>;
 }
 
-const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2
-	}).format(value);
-};
-
 const formatPercent = (value: number): string => {
 	return `${value.toFixed(1)}%`;
 };
@@ -58,7 +50,7 @@ export default function DailyReportsPage() {
 	const [dailyReportData, setDailyReportData] = useState<DailyReportData | null>(null);
 	const [isFetchingReport, setIsFetchingReport] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<string>(() => 
-		formatDateForFilter(new Date())
+		getTorontoDateString()
 	);
 	const router = useRouter();
 	
@@ -88,12 +80,11 @@ export default function DailyReportsPage() {
 		fetchUserData();
 	}, [router]);
 
-	// Selected date (YYYY-MM-DD) in user's local timezone → UTC ISO bounds for API (store/send UTC)
+	// Convert selected date (YYYY-MM-DD) to Toronto timezone UTC bounds for API
 	const getDayBoundsUTC = useCallback((dateStr: string) => {
-		// Parse as local midnight/end so the range is the calendar day in user's timezone
-		const start = new Date(dateStr + "T00:00:00");
-		const end = new Date(dateStr + "T23:59:59.999");
-		return { iso_timestamp_start: start.toISOString(), iso_timestamp_end: end.toISOString() };
+		// Use centralized Toronto timezone conversion for consistent date boundaries
+		const bounds = getTorontoDayBoundsUTC(dateStr);
+		return { iso_timestamp_start: bounds.start, iso_timestamp_end: bounds.end };
 	}, []);
 
 	const fetchDailyReport = useCallback(async () => {
@@ -132,24 +123,24 @@ export default function DailyReportsPage() {
 	const goToPreviousDay = () => {
 		const date = new Date(selectedDate + 'T00:00:00');
 		date.setDate(date.getDate() - 1);
-		setSelectedDate(formatDateForFilter(date));
+		setSelectedDate(getTorontoDateString(date));
 	};
 
 	const goToNextDay = () => {
 		const date = new Date(selectedDate + 'T00:00:00');
 		date.setDate(date.getDate() + 1);
-		const today = formatDateForFilter(new Date());
-		const nextDateStr = formatDateForFilter(date);
+		const today = getTorontoDateString();
+		const nextDateStr = getTorontoDateString(date);
 		if (nextDateStr <= today) {
 			setSelectedDate(nextDateStr);
 		}
 	};
 
 	const goToToday = () => {
-		setSelectedDate(formatDateForFilter(new Date()));
+		setSelectedDate(getTorontoDateString());
 	};
 
-	const isToday = selectedDate === getLocalDateString();
+	const isToday = selectedDate === getTorontoDateString();
 
 	if (isLoading) {
 		return (
@@ -216,7 +207,7 @@ export default function DailyReportsPage() {
 								type="date"
 								value={selectedDate}
 								onChange={(e) => setSelectedDate(e.target.value)}
-								max={formatDateForFilter(new Date())}
+								max={getTorontoDateString()}
 								className="px-3 py-2 border border-border rounded-lg bg-white dark:bg-background text-foreground text-sm"
 							/>
 							{!isToday && (

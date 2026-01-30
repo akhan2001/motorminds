@@ -12,18 +12,13 @@ import { MoreVertical, CreditCard, Banknote, Building2, Calendar, Receipt, Store
 import EditExpenseModal from "./EditExpenseModal";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { formatDate } from "@/app/financials/utils/format-date";
+import { formatCurrency } from "@/lib/utils/currency";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-    }).format(value || 0);
 
 const PAYMENT_METHOD_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
     credit_card: { 

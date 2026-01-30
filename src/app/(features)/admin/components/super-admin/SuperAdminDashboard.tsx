@@ -9,6 +9,7 @@ import Link from 'next/link'
 import AdminNav from '../AdminNav'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb'
 import { Slash } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils/currency'
 
 interface PlatformStats {
     totalOrganizations: number
@@ -41,15 +42,6 @@ export function SuperAdminDashboard() {
         } finally {
             setLoading(false)
         }
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount)
     }
 
     return (

@@ -1,5 +1,7 @@
 "use client"
 
+import { formatCurrency } from "@/lib/utils/currency"
+
 interface FinancialSummaryCardProps {
 	data: {
 		totalRevenue: number
@@ -11,13 +13,6 @@ interface FinancialSummaryCardProps {
 
 export function FinancialSummaryCard({ data }: FinancialSummaryCardProps) {
 	if (!data) return null
-
-	const formatCurrency = (value: number) => {
-		return new Intl.NumberFormat("en-US", {
-			style: "currency",
-			currency: "USD",
-		}).format(value || 0)
-	}
 
 	return (
 		<div className="h-full rounded-lg border border-border bg-white dark:bg-card p-6">

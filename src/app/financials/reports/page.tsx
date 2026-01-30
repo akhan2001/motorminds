@@ -27,7 +27,8 @@ import {
 	Undo2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getLocalDateString } from '@/lib/utils/date';
+import { getTorontoDateString } from '@/lib/utils/date';
+import { formatCurrency } from '@/lib/utils/currency';
 import { ExpenseDetailDialog } from '@/app/(features)/expenses/components/ExpenseDetailDialog';
 import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses';
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
@@ -123,15 +124,6 @@ interface PartsExpense {
 	has_invoice: boolean;
 	is_paid: boolean;
 }
-
-const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-CA', {
-		style: 'currency',
-		currency: 'CAD',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2
-	}).format(value);
-};
 
 const formatDate = (dateString: string): string => {
 	// Handle date-only strings (YYYY-MM-DD) to avoid timezone issues
@@ -272,7 +264,7 @@ const ReportsPage = () => {
 		setIsFetchingData(true);
 		try {
 			const response = await fetch(
-				`/api/financials/reports/expenses?startDate=${getLocalDateString(dateRange.from)}&endDate=${getLocalDateString(dateRange.to)}&shopId=${shopId}`
+				`/api/financials/reports/expenses?startDate=${getTorontoDateString(dateRange.from)}&endDate=${getTorontoDateString(dateRange.to)}&shopId=${shopId}`
 			);
 			if (!response.ok) {
 				throw new Error('Failed to fetch expense data');
@@ -385,7 +377,7 @@ const ReportsPage = () => {
 		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 		const link = document.createElement('a');
 		link.href = URL.createObjectURL(blob);
-		link.download = `Expense_Report_${dateRange?.from ? getLocalDateString(dateRange.from) : ''}_to_${dateRange?.to ? getLocalDateString(dateRange.to) : ''}.csv`;
+		link.download = `Expense_Report_${dateRange?.from ? getTorontoDateString(dateRange.from) : ''}_to_${dateRange?.to ? getTorontoDateString(dateRange.to) : ''}.csv`;
 		link.click();
 	};
 
@@ -438,7 +430,7 @@ const ReportsPage = () => {
 									<label className="text-sm text-muted-foreground mb-2 block">From Date</label>
 									<Input
 										type="date"
-										value={dateRange?.from ? getLocalDateString(dateRange.from) : ''}
+										value={dateRange?.from ? getTorontoDateString(dateRange.from) : ''}
 										onChange={(e) => {
 											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
 											handleDateRangeChange({
@@ -453,7 +445,7 @@ const ReportsPage = () => {
 									<label className="text-sm text-muted-foreground mb-2 block">To Date</label>
 									<Input
 										type="date"
-										value={dateRange?.to ? getLocalDateString(dateRange.to) : ''}
+										value={dateRange?.to ? getTorontoDateString(dateRange.to) : ''}
 										onChange={(e) => {
 											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
 											handleDateRangeChange({
@@ -461,7 +453,7 @@ const ReportsPage = () => {
 												to: date
 											});
 										}}
-										min={dateRange?.from ? getLocalDateString(dateRange.from) : undefined}
+										min={dateRange?.from ? getTorontoDateString(dateRange.from) : undefined}
 										className="bg-white dark:bg-background border-border text-foreground"
 									/>
 								</div>

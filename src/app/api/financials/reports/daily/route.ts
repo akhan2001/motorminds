@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { formatDateForFilter } from "@/lib/utils/date";
+import { getTorontoDayBoundsUTC, getTorontoDateString } from "@/lib/utils/date";
 
 /** Validate ISO timestamp string (UTC). Returns the string if valid, null otherwise. */
 function parseIsoTimestamp(value: string | null): string | null {
@@ -32,13 +32,12 @@ export async function GET(req: NextRequest) {
         endOfDay = isoTimestampEnd;
         targetDate = dateStr || startOfDay.slice(0, 10);
     } else {
-        // Fallback: build range from date string (server local = UTC in production)
-        targetDate = dateStr || formatDateForFilter(new Date());
-        const [year, month, day] = targetDate.split("-").map(Number);
-        const startOfDayLocal = new Date(year, month - 1, day, 0, 0, 0, 0);
-        const endOfDayLocal = new Date(year, month - 1, day, 23, 59, 59, 999);
-        startOfDay = startOfDayLocal.toISOString();
-        endOfDay = endOfDayLocal.toISOString();
+        // Fallback: use Toronto timezone bounds (works correctly in both DEV and PROD)
+        // This ensures a work order completed at 11:30 PM EST appears on the correct Toronto date
+        targetDate = dateStr || getTorontoDateString();
+        const bounds = getTorontoDayBoundsUTC(targetDate);
+        startOfDay = bounds.start;
+        endOfDay = bounds.end;
     }
 
     try {

@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { EmployeeService } from "@/app/(features)/employees/lib/employee-service"
 import { Employee, EmployeeStatus } from "@/app/(features)/employees/types/employee"
 import { TechnicianWorkOrdersModal } from "./TechnicianWorkOrdersModal"
+import { formatCurrency } from "@/lib/utils/currency"
 
 interface EmployeeListProps {
     shopId: string
@@ -87,13 +88,6 @@ export function EmployeeList({ shopId, onAddNew, onEdit }: EmployeeListProps) {
         } finally {
             setDeletingId(null)
         }
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(amount)
     }
 
     const formatPayFrequency = (frequency: string) => {

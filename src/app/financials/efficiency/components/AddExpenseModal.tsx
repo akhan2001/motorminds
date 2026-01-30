@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import SupplierDropdownSelector from "@/app/(features)/suppliers/components/supplier-dropdown-selector";
 import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
-import { getLocalDateString } from "@/lib/utils/date";
+import { getTorontoDateString } from "@/lib/utils/date";
 
 interface AddExpenseModalProps {
     shopId: string;
@@ -96,7 +96,7 @@ export default function AddExpenseModal({
     const [taxAmount, setTaxAmount] = useState(""); // Auto-calculated tax
     const [totalAmount, setTotalAmount] = useState(""); // Total with tax
     const [category, setCategory] = useState("Parts/Inventory");
-    const [expenseDate, setExpenseDate] = useState(getLocalDateString());
+    const [expenseDate, setExpenseDate] = useState(getTorontoDateString());
     const [paymentMethod, setPaymentMethod] = useState("credit_card"); // Default to credit card
     const [supplierId, setSupplierId] = useState(""); // Selected supplier ID
     const [customVendor, setCustomVendor] = useState(""); // Custom vendor name if not from list
@@ -223,7 +223,7 @@ export default function AddExpenseModal({
             setIncludeTax(true);
             setLastEditedField('subtotal');
             setCategory("Parts/Inventory");
-            setExpenseDate(getLocalDateString());
+            setExpenseDate(getTorontoDateString());
             setPaymentMethod("credit_card");
             setSupplierId("");
             setCustomVendor("");

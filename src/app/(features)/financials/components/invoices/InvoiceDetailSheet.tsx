@@ -8,6 +8,7 @@ import { FileText, Calendar, DollarSign, User, Car, Wrench, Package, CreditCard,
 import { format } from 'date-fns'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import { formatInvoiceDisplayId } from '../../lib/invoice-calculations'
+import { formatCurrency } from '@/lib/utils/currency'
 
 interface InvoiceDetailSheetProps {
     invoice: InvoiceWithDetails | null
@@ -52,13 +53,6 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
             return <Badge className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20">Low</Badge>
         }
         return <Badge className="bg-gray-500/10 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20 dark:border-gray-500/20">Medium</Badge>
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
     }
 
     const formatDate = (dateString: string | null) => {

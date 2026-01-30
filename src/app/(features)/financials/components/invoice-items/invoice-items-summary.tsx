@@ -5,19 +5,13 @@ import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Package, Wrench, Briefcase, DollarSign, Receipt, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import { useInvoiceSummary } from '../../hooks/use-invoice-items'
 
 interface InvoiceItemsSummaryProps {
     invoiceId: string
     className?: string
     showBreakdown?: boolean
-}
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(amount)
 }
 
 export const InvoiceItemsSummary: React.FC<InvoiceItemsSummaryProps> = ({
