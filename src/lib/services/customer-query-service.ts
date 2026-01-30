@@ -115,10 +115,28 @@ export async function queryCustomersForUser(
     // Apply scope-based filtering
     query = applyAccessScopeFilter(query, context, shopFilter)
 
+    // Phone search by digits: use RPC so "(365) 889-0136" matches "3658890136"
+    let phoneMatchIds: string[] | null = null
+    if (!phone && search && search.trim().length >= 2 && search.trim().match(/^\+?[\d\s()-]+$/)) {
+        const digits = search.trim().replace(/\D/g, '')
+        if (digits.length >= 2) {
+            const { data: ids, error: rpcError } = await supabase.rpc('search_customer_ids_by_phone', {
+                digits,
+                shop_ids: context.accessibleShopIds.length > 0 ? context.accessibleShopIds : [context.shopId].filter(Boolean)
+            })
+            if (!rpcError && ids && Array.isArray(ids) && ids.length > 0) {
+                phoneMatchIds = ids as string[]
+            }
+        }
+    }
+
     // Apply search filters
     if (phone) {
         // Exact phone number search
         query = query.eq('customer_phone', phone)
+    } else if (phoneMatchIds !== null && phoneMatchIds.length > 0) {
+        // Restrict to ids from phone RPC (digits match)
+        query = query.in('id', phoneMatchIds)
     } else if (search && search.length >= 2) {
         query = applySearchFilter(query, search)
     }
@@ -126,8 +144,9 @@ export async function queryCustomersForUser(
     // Apply sorting
     query = query.order(sortBy, { ascending: sortDirection === 'asc' })
 
-    // Apply pagination
-    query = query.range(offset, offset + safeLimit - 1)
+    // Apply pagination: when using phone RPC, count is from ids length
+    const rangeEnd = offset + safeLimit - 1
+    query = query.range(offset, rangeEnd)
 
     const { data: customers, error, count } = await query
 
@@ -217,15 +236,19 @@ function applyAccessScopeFilter(
 }
 
 /**
- * Apply search filter based on search term type
+ * Apply search filter based on search term type.
+ * Phone search (digits-only) is handled via RPC above; here we handle formatted phone and other types.
  */
 function applySearchFilter(query: any, search: string): any {
     const trimmedSearch = search.trim()
     
-    // Phone number pattern
+    // Phone number pattern: match by digits so formatted DB values like "(365) 889-0136" match "3658890136"
     if (trimmedSearch.match(/^\+?[\d\s()-]+$/)) {
         const cleanPhone = trimmedSearch.replace(/\D/g, '')
-        return query.ilike('customer_phone', `%${cleanPhone}%`)
+        // Match both formatted string (user typed "(365) 889-0136") and digits (handled via RPC or fallback)
+        return query.or(
+            `customer_phone.ilike.%${trimmedSearch}%,customer_phone.ilike.%${cleanPhone}%`
+        )
     }
     
     // Email pattern
