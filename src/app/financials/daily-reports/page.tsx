@@ -88,16 +88,27 @@ export default function DailyReportsPage() {
 		fetchUserData();
 	}, [router]);
 
+	// Selected date (YYYY-MM-DD) in user's local timezone → UTC ISO bounds for API (store/send UTC)
+	const getDayBoundsUTC = useCallback((dateStr: string) => {
+		// Parse as local midnight/end so the range is the calendar day in user's timezone
+		const start = new Date(dateStr + "T00:00:00");
+		const end = new Date(dateStr + "T23:59:59.999");
+		return { iso_timestamp_start: start.toISOString(), iso_timestamp_end: end.toISOString() };
+	}, []);
+
 	const fetchDailyReport = useCallback(async () => {
 		if (!shopId) return;
 
 		setIsFetchingReport(true);
 		try {
-			const params = new URLSearchParams({ 
+			const { iso_timestamp_start, iso_timestamp_end } = getDayBoundsUTC(selectedDate);
+			const params = new URLSearchParams({
 				shop_id: shopId,
-				date: selectedDate
+				date: selectedDate,
+				iso_timestamp_start,
+				iso_timestamp_end,
 			});
-			
+
 			const response = await fetch(`/api/financials/reports/daily?${params.toString()}`);
 			if (!response.ok) {
 				throw new Error('Failed to fetch daily report data');
