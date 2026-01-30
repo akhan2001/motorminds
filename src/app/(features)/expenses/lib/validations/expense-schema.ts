@@ -199,9 +199,10 @@ export const ExpenseListFormSchema = z.object({
 export type ExpenseListItemFormData = z.infer<typeof ExpenseListItemSchema>
 export type ExpenseListFormData = z.infer<typeof ExpenseListFormSchema>
 
-import { getLocalDateString } from '@/lib/utils/date'
+import { getTorontoDateString } from '@/lib/utils/date'
 
-const today = () => getLocalDateString()
+// Use Toronto timezone for expense dates to ensure consistency with financial reports
+const today = () => getTorontoDateString()
 
 export function createDefaultExpenseListItem(id: string): ExpenseListItemFormData {
     return {

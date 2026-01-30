@@ -33,7 +33,7 @@ import {
     calculateSubtotalFromTotal,
 } from "../lib/validations/expense-schema";
 import type { CreateExpenseRequest } from "../types/expenses";
-import { getLocalDateString } from "@/lib/utils/date";
+import { getTorontoDateString } from "@/lib/utils/date";
 
 interface AddExpenseModalProps {
     shopId: string;
@@ -88,7 +88,7 @@ export default function AddExpenseModal({
     const [taxAmount, setTaxAmount] = useState(""); // Auto-calculated tax
     const [totalAmount, setTotalAmount] = useState(""); // Total with tax
     const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]);
-    const [expenseDate, setExpenseDate] = useState(getLocalDateString());
+    const [expenseDate, setExpenseDate] = useState(getTorontoDateString());
     const [paymentMethod, setPaymentMethod] = useState<string>("credit_card");
     const [supplierId, setSupplierId] = useState(""); // Selected supplier ID
     const [customVendor, setCustomVendor] = useState(""); // Custom vendor name if not from list
@@ -156,7 +156,7 @@ export default function AddExpenseModal({
         setIncludeTax(true);
         setLastEditedField('subtotal');
         setCategory(EXPENSE_CATEGORIES[0]);
-        setExpenseDate(getLocalDateString());
+        setExpenseDate(getTorontoDateString());
         setPaymentMethod("credit_card");
         setSupplierId("");
         setCustomVendor("");

@@ -41,9 +41,10 @@ export interface ExpenseItemFormProps {
     onCancel?: () => void
 }
 
-import { getLocalDateString } from '@/lib/utils/date'
+import { getTorontoDateString } from '@/lib/utils/date'
 
-const today = () => getLocalDateString()
+// Use Toronto timezone for expense dates to ensure consistency with financial reports
+const today = () => getTorontoDateString()
 
 function getDefaultValues(
     shopId: string,
