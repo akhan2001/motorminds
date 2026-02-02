@@ -155,7 +155,9 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                         <CardTitle className="text-sm font-medium text-foreground dark:text-white line-clamp-2">
-                            {truncateText(item.title, 50)}
+                            {item.title?.trim()
+                                ? truncateText(item.title, 50)
+                                : (item.vehicle?.trim() ? truncateText(item.vehicle, 50) : 'Work Order')}
                         </CardTitle>
                         {/* Status Tracker Badges */}
                         {statusTrackers.length > 0 && (

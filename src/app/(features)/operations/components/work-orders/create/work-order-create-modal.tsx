@@ -63,7 +63,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
         currentStep,
         isStep1Complete,
         isStep2Complete,
-        isStep3Complete,
         handleFieldChange,
         handleWalkInVehicleChange,
         handleCustomerTypeChange,
@@ -126,12 +125,14 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
             }
 
             if (!isStep2Complete) {
-                toast.error("Please complete vehicle information")
-                return
-            }
-
-            if (!isStep3Complete) {
-                toast.error("Please enter a work order title")
+                const hasNewVehicleWithTypedFields =
+                    (formData.vehicleId === 'new' || !formData.vehicleId) &&
+                    (formData.vehicleYear?.trim() || formData.vehicleMake?.trim() || formData.vehicleModel?.trim())
+                if (hasNewVehicleWithTypedFields) {
+                    toast.error("Please click “Save Vehicle” to save the vehicle before creating the work order.")
+                } else {
+                    toast.error("Please complete vehicle information (select a vehicle or add and save a new one).")
+                }
                 return
             }
 
@@ -362,9 +363,8 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                         />
                                     </div>
 
-                                    {/* Work Order Items Card - Only show after Step 3 is complete */}
-                                    {isStep3Complete && (
-                                        <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
+                                    {/* Work Order Items Card - shown by default */}
+                                    <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
                                             <div className="p-4">
                                                 <div className="flex items-center gap-2 mb-4">
                                                     <h3 className="text-lg font-semibold text-foreground dark:text-white">Work Order Items</h3>
@@ -455,11 +455,9 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 </div> */}
                                             </div>
                                         </div>
-                                    )}
 
-                                    {/* Optional Sections - Available after Step 3 is complete */}
-                                    {isStep3Complete && (
-                                        <>
+                                    {/* Optional Sections - Cost Summary, Notes */}
+                                    <>
                                             {/* Cost Summary */}
                                             <div className="transition-opacity duration-200">
                                                 <WorkOrderCostSummary
@@ -606,7 +604,6 @@ export const WorkOrderCreateModal: React.FC<WorkOrderCreateModalProps> = ({
                                                 />
                                             </div>
                                         </>
-                                    )}
                                 </div>
                             </div>
 
