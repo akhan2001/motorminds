@@ -40,21 +40,23 @@ export class WorkOrderAdvancePaymentService {
             .select('*')
             .eq('work_order_id', workOrderId)
 
-        if (!itemsError && items && items.length > 0) {
-            // Calculate estimated total from billable items
-            const billableItems = items.filter(item => item.is_billable !== false)
-            const calculations = calculateInvoiceTotals(billableItems as any)
-            const taxRate = 0.13
-            const estimatedTotal = calculations.subtotal + (calculations.subtotal * taxRate)
-            
-            // Calculate remaining balance
-            const remainingBalance = estimatedTotal - totalAdvancePaid
-            
-            // Validate that payment doesn't exceed remaining balance
-            // Use tolerance for floating-point comparison (allow up to 0.01 cents over for rounding)
-            if (estimatedTotal > 0 && payment.amount > remainingBalance + 0.01) {
-                throw new Error(`Payment amount exceeds remaining balance of ${remainingBalance.toFixed(2)}`)
-            }
+        const billableItems = !itemsError && items ? items.filter((item: any) => item.is_billable !== false) : []
+        const hasEstimatedTotal = billableItems.length > 0
+
+        if (!hasEstimatedTotal) {
+            throw new Error(
+                'Add labor or parts to set an estimated total before recording advance payments. Advance payments cannot exceed the work order total.'
+            )
+        }
+
+        const calculations = calculateInvoiceTotals(billableItems as any)
+        const taxRate = 0.13
+        const estimatedTotal = calculations.subtotal + (calculations.subtotal * taxRate)
+        const remainingBalance = estimatedTotal - totalAdvancePaid
+
+        // Validate that payment doesn't exceed remaining balance
+        if (payment.amount > remainingBalance + 0.01) {
+            throw new Error(`Payment amount exceeds remaining balance of ${remainingBalance.toFixed(2)}`)
         }
 
         // Add new payment to array
