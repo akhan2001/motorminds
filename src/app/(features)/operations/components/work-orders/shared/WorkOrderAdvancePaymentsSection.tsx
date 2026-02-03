@@ -103,14 +103,22 @@ export function WorkOrderAdvancePaymentsSection({
                             Advance Payments
                         </CardTitle>
                         {isEditing && (
-                            <Button
-                                size="sm"
-                                onClick={() => setIsAddDialogOpen(true)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Payment
-                            </Button>
+                            <div className="flex flex-col items-end gap-1">
+                                <Button
+                                    size="sm"
+                                    onClick={() => estimatedTotal > 0 && setIsAddDialogOpen(true)}
+                                    disabled={estimatedTotal <= 0}
+                                    className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Payment
+                                </Button>
+                                {estimatedTotal <= 0 && (
+                                    <span className="text-xs text-muted-foreground dark:text-gray-400">
+                                        Add labor or parts to set an estimated total first.
+                                    </span>
+                                )}
+                            </div>
                         )}
                     </div>
                 </CardHeader>
