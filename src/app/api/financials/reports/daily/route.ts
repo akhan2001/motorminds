@@ -100,7 +100,40 @@ export async function GET(req: NextRequest) {
             throw invoicesError;
         }
 
-        // Calculate payment method breakdown
+        // Fetch work orders with advance_payments for this shop (to include in daily total)
+        const { data: workOrdersWithAdvance, error: advanceError } = await supabase
+            .from("work_orders")
+            .select("id, advance_payments")
+            .eq("shop_id", shopId);
+
+        if (advanceError) {
+            console.error("Error fetching work orders for advance payments:", advanceError);
+        }
+
+        // Sum advance payments where payment_date falls within the report day
+        let advancePaymentsTotal = 0;
+        const advancePaymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
+        (workOrdersWithAdvance || []).forEach((wo) => {
+            const payments = (wo.advance_payments as any[] | null) || [];
+            const startMs = new Date(startOfDay).getTime();
+            const endMs = new Date(endOfDay).getTime();
+            payments.forEach((p: any) => {
+                if (p.deleted) return;
+                const paymentDate = p.payment_date ? new Date(p.payment_date).getTime() : 0;
+                if (paymentDate >= startMs && paymentDate <= endMs) {
+                    const amount = Number(p.amount) || 0;
+                    advancePaymentsTotal += amount;
+                    const method = p.payment_method || "other";
+                    if (!advancePaymentMethodBreakdown[method]) {
+                        advancePaymentMethodBreakdown[method] = { count: 0, amount: 0 };
+                    }
+                    advancePaymentMethodBreakdown[method].count += 1;
+                    advancePaymentMethodBreakdown[method].amount += amount;
+                }
+            });
+        });
+
+        // Calculate payment method breakdown (invoices first)
         const paymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
         
         (invoices || []).forEach(inv => {
@@ -127,11 +160,21 @@ export async function GET(req: NextRequest) {
             }
         });
 
-        // Calculate totals
-        const totalRevenue = (invoices || []).reduce(
+        // Merge advance payment method breakdown into main breakdown
+        Object.entries(advancePaymentMethodBreakdown).forEach(([method, data]) => {
+            if (!paymentMethodBreakdown[method]) {
+                paymentMethodBreakdown[method] = { count: 0, amount: 0 };
+            }
+            paymentMethodBreakdown[method].count += data.count;
+            paymentMethodBreakdown[method].amount += data.amount;
+        });
+
+        // Calculate totals (invoice revenue + advance payments for the day)
+        const invoiceRevenue = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.total_amount) || 0), 
             0
         );
+        const totalRevenue = invoiceRevenue + advancePaymentsTotal;
         const totalTax = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.tax_amount) || 0), 
             0
@@ -142,16 +185,19 @@ export async function GET(req: NextRequest) {
         );
 
         // Get vehicle details from completed work orders for the report
-        const vehiclesServiced = (completedWorkOrders || [])
-            .filter(wo => wo.vehicle)
-            .map(wo => ({
-                id: wo.vehicle?.id,
+        // Supabase may return relations as single object or array; normalize to object
+        const vehiclesServiced = (completedWorkOrders || []).map((wo) => {
+            const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle;
+            const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
+            return {
+                id: vehicle?.id,
                 work_order_id: wo.id,
-                description: wo.vehicle ? `${wo.vehicle.year} ${wo.vehicle.make} ${wo.vehicle.model}` : 'Unknown',
-                license_plate: wo.vehicle?.license_plate,
+                description: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
+                license_plate: vehicle?.license_plate,
                 work_order_title: wo.title,
-                customer_name: wo.customer?.customer_name || 'Unknown'
-            }));
+                customer_name: (customer as { customer_name?: string } | null)?.customer_name || 'Unknown',
+            };
+        }).filter((v) => v.id != null);
 
         // Format payment method breakdown for response
         const paymentMethods = Object.entries(paymentMethodBreakdown).map(([method, data]) => ({
@@ -171,6 +217,7 @@ export async function GET(req: NextRequest) {
                 totalRevenue,
                 totalSubtotal,
                 totalTax,
+                advancePaymentsTotal,
             },
             paymentMethods,
             vehiclesServiced,

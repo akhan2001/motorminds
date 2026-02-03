@@ -22,6 +22,7 @@ interface DailyReportData {
 		totalRevenue: number;
 		totalSubtotal: number;
 		totalTax: number;
+		advancePaymentsTotal?: number;
 	};
 	paymentMethods: Array<{
 		method: string;
@@ -259,6 +260,11 @@ export default function DailyReportsPage() {
 								</p>
 								<p className="text-sm text-green-600 dark:text-green-400 mt-2">
 									Tax: {formatCurrency(dailyReportData.summary.totalTax)}
+									{(dailyReportData.summary.advancePaymentsTotal ?? 0) > 0 && (
+										<span className="block mt-1">
+											Includes {formatCurrency(dailyReportData.summary.advancePaymentsTotal!)} from advance payments
+										</span>
+									)}
 								</p>
 							</div>
 							<div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
