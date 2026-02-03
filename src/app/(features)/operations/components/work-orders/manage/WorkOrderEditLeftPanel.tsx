@@ -1,8 +1,9 @@
 // Left panel component - main content area
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import type { ExpenseItemsListRef } from '@/app/(features)/expenses/components/ExpenseItemsList'
 // Direct imports for better tree-shaking (Supabase pattern - no barrel exports)
 import { WorkOrderModalHeader } from '../shared/work-order-modal-header'
 import { WorkOrderStatusBar } from '../shared/work-order-status-bar'
@@ -14,7 +15,9 @@ import { WorkOrderModalFooter } from '../shared/work-order-modal-footer'
 import { WorkOrderItemsSection } from './WorkOrderItemsSection'
 import { WorkOrderDeleteConfirmation } from './work-order-delete-confirmation'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
+import { WorkOrderAdvancePaymentsSection } from '../shared/WorkOrderAdvancePaymentsSection'
 import { canEditWorkOrderItems, shouldShowFinancialSummary } from '../../../lib/constants/work-orders'
+import { workOrderService } from '../../../lib/work-order-service'
 import type { WorkOrderWithDetails, WorkOrderKanbanItem } from '../../../types/work-order'
 import type { WorkOrderItem } from '../../../types/work-order-items'
 
@@ -27,7 +30,7 @@ interface WorkOrderEditLeftPanelProps {
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
     workOrderItems?: WorkOrderItem[]
     technicianOptions?: { id: string; name: string }[]
-    onDelete?: (workOrderId: string) => void
+    onDelete?: (workOrderId: string, options?: { deleteInvoice?: boolean }) => void
     onRevert?: () => void
 }
 
@@ -48,17 +51,60 @@ export function WorkOrderEditLeftPanel({
 
     // Delete confirmation state
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+    
+    // Track selected vehicle ID for updates
+    const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(
+        workOrderDetails.vehicle_id || undefined
+    )
+    
+    // Track selected customer ID for updates
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(
+        workOrderDetails.customer_id || undefined
+    )
+
+    const expensesListRef = useRef<ExpenseItemsListRef | null>(null)
 
     const handleSave = async () => {
-        // Save items first, then work order
+        // Persist expense items (unified expenses table) first, then other items, then work order
+        const expensesPersisted = await expensesListRef.current?.persistAll()
+        if (expensesPersisted === false) {
+            toast.error('Failed to save expense items')
+            return
+        }
+
         const itemsSaved = await itemManagement.handleSaveAll()
         if (!itemsSaved) {
             return
         }
 
+        // Update work order with vehicle_id and/or customer_id if changed
+        const updatePayload: Record<string, any> = {}
+        
+        if (selectedVehicleId !== workOrderDetails.vehicle_id) {
+            updatePayload.vehicle_id = selectedVehicleId || null
+        }
+        
+        if (selectedCustomerId !== workOrderDetails.customer_id) {
+            updatePayload.customer_id = selectedCustomerId || null
+        }
+        
+        if (Object.keys(updatePayload).length > 0) {
+            try {
+                await workOrderService.updateWorkOrder(workOrder.id, updatePayload)
+            } catch (error) {
+                console.error('Error updating work order:', error)
+                toast.error('Failed to update work order')
+                return
+            }
+        }
+
         const workOrderSaved = await form.handleSave(workOrder.id)
-        if (workOrderSaved && onSave) {
-            onSave(workOrder, form.formData)
+        if (workOrderSaved) {
+            if (onSave) {
+                onSave(workOrder, form.formData)
+            }
+            // Close the modal after successful save
+            onClose()
         }
     }
 
@@ -142,17 +188,35 @@ export function WorkOrderEditLeftPanel({
                 >
                     {/* Customer Information */}
                     <CustomerInformation
-                        customerId=""
+                        customerId={selectedCustomerId || ""}
                         customerName={form.formData.customer}
                         customerEmail={form.formData.customerEmail}
                         customerPhone={form.formData.customerPhone}
                         customerAddress={form.formData.customerAddress}
                         isEditing={form.isEditing}
                         onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
+                        onCustomerChange={(customerId) => {
+                            // Update selected customer ID and reset vehicle selection
+                            setSelectedCustomerId(customerId === "new" ? undefined : customerId)
+                            if (customerId !== selectedCustomerId) {
+                                // Reset vehicle selection when customer changes
+                                setSelectedVehicleId(undefined)
+                                form.handleFieldChange('vehicle', '')
+                                form.handleFieldChange('vehicleYear', '')
+                                form.handleFieldChange('vehicleMake', '')
+                                form.handleFieldChange('vehicleModel', '')
+                                form.handleFieldChange('vehicleColor', '')
+                                form.handleFieldChange('vehicleVin', '')
+                                form.handleFieldChange('vehicleLicensePlate', '')
+                                form.handleFieldChange('vehicleMileage', '')
+                            }
+                        }}
                     />
 
                     {/* Vehicle Information */}
                     <VehicleInformation
+                        customerId={selectedCustomerId || undefined}
+                        selectedVehicleId={selectedVehicleId}
                         vehicleId={workOrderDetails.vehicle_id || ""}
                         vehicleYear={form.formData.vehicleYear}
                         vehicleMake={form.formData.vehicleMake}
@@ -162,7 +226,33 @@ export function WorkOrderEditLeftPanel({
                         vehicleLicensePlate={form.formData.vehicleLicensePlate}
                         vehicleMileage={form.formData.vehicleMileage}
                         isEditing={form.isEditing}
+                        isWorkOrderMode={true}
                         onFieldChange={(field: string, value: string) => form.handleFieldChange(field as keyof typeof form.formData, value)}
+                        onVehicleSelect={(vehicleId, vehicleData) => {
+                            // Track selected vehicle ID
+                            setSelectedVehicleId(vehicleId === "new" ? undefined : vehicleId)
+                            
+                            // Update form when vehicle is selected
+                            if (vehicleData && vehicleId !== "new") {
+                                // Update vehicle display name
+                                const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}${vehicleData.licensePlate ? ` (${vehicleData.licensePlate})` : ''}`
+                                form.handleFieldChange('vehicle', vehicleDisplay)
+                            } else if (vehicleId === "new") {
+                                // Clear vehicle display when adding new
+                                setSelectedVehicleId(undefined)
+                                form.handleFieldChange('vehicle', '')
+                            }
+                        }}
+                        onVehicleSaved={(vehicleId, vehicleData) => {
+                            // Update selected vehicle ID when a new vehicle is saved
+                            setSelectedVehicleId(vehicleId)
+                            
+                            // Update form with the newly created vehicle
+                            if (vehicleData) {
+                                const vehicleDisplay = `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}${vehicleData.licensePlate ? ` (${vehicleData.licensePlate})` : ''}`
+                                form.handleFieldChange('vehicle', vehicleDisplay)
+                            }
+                        }}
                     />
 
                     {/* Work Order Information */}
@@ -186,6 +276,7 @@ export function WorkOrderEditLeftPanel({
                     {/* Work Order Items - Show for editable statuses */}
                     {canEditItems && (
                         <WorkOrderItemsSection
+                            ref={expensesListRef}
                             itemsByType={itemManagement.itemsByType}
                             onItemsChange={itemManagement.handleItemsChange}
                             workOrderId={workOrder.id}
@@ -196,9 +287,19 @@ export function WorkOrderEditLeftPanel({
                     )}
 
                     {/* Cost Summary - Show for completed work orders, before Notes */}
-                    {showFinancialSummary && workOrderItems.length > 0 && (
+                    {showFinancialSummary && (workOrderItems.length > 0 || workOrder.id) && (
                         <WorkOrderCostSummary
                             workOrderItems={workOrderItems}
+                            workOrderId={workOrder.id}
+                        />
+                    )}
+
+                    {/* Advance Payments - Show if work order hasn't been invoiced */}
+                    {!workOrderDetails.invoice_id && (
+                        <WorkOrderAdvancePaymentsSection
+                            workOrder={workOrderDetails}
+                            workOrderItems={workOrderItems}
+                            isEditing={form.isEditing}
                         />
                     )}
 
@@ -235,8 +336,8 @@ export function WorkOrderEditLeftPanel({
                     workOrder={workOrder}
                     isOpen={showDeleteConfirmation}
                     onClose={() => setShowDeleteConfirmation(false)}
-                    onConfirm={() => {
-                        onDelete(workOrder.id)
+                    onConfirm={(options) => {
+                        onDelete(workOrder.id, options)
                         setShowDeleteConfirmation(false)
                     }}
                 />

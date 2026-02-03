@@ -30,9 +30,14 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
                         <h4 className="text-xs font-medium text-foreground dark:text-white truncate">
                             {truncateText(item.title, 30)}
                         </h4>
+                        {item.customer && (
+                            <p className="text-xs text-foreground dark:text-gray-300 truncate mt-0.5 font-medium">
+                                {truncateText(item.customer, 28)}
+                            </p>
+                        )}
                         {item.vehicle && (
                             <p className="text-xs text-muted-foreground dark:text-gray-400 truncate mt-0.5">
-                                {truncateText(item.vehicle, 25)}
+                                {truncateText(item.vehicle, 28)}
                             </p>
                         )}
                     </div>

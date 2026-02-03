@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
 	ArrowRight,
 	FileText,
-	Droplet,
+	Calendar,
 	Gauge,
 	Trash,
 } from "lucide-react";
@@ -74,15 +74,15 @@ export default function QuickActions() {
 					isActive={true}
 				/>
 				<ActionCard
-					title="Liquidity (A/R)"
-					description="Monitor unpaid invoices and aging accounts"
-					href="/financials/liquidity"
-					icon={Droplet}
+					title="Daily Reports"
+					description="View cars serviced and payment methods"
+					href="/financials/daily-reports"
+					icon={Calendar}
 					isActive={true}
 				/>
 				<ActionCard
-					title="Financial Reports"
-					description="Generate income statements and other financial reports"
+					title="Expense Reports"
+					description="Track general, parts, and work order expenses"
 					href="/financials/reports"
 					icon={FileText}
 					isActive={true}
@@ -90,8 +90,9 @@ export default function QuickActions() {
 				<ActionCard
 					title="Deleted Records"
 					description="Track deleted work orders / invoices"
+					href="/financials/archived"
 					icon={Trash}
-					isActive={false}
+					isActive={true}
 				/>
 			</div>
 		</div>

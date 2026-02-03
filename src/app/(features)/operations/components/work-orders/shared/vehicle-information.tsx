@@ -1,5 +1,6 @@
 'use client'
 
+import React from "react"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +28,7 @@ export interface VehicleInformationProps {
     vehicleMileage: string
     isEditing: boolean
     isCreating?: boolean
+    isWorkOrderMode?: boolean // When true, restricts YMME/VIN editing (only allows kms, color, plate editing)
     onFieldChange: (field: string, value: string) => void
     onVehicleSelect?: (vehicleId: string, vehicleData?: VehicleOption) => void // Added for vehicle selection
     onVehicleSaved?: (vehicleId: string, vehicleData: any) => void
@@ -49,6 +51,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     vehicleMileage,
     isEditing,
     isCreating = false,
+    isWorkOrderMode = false,
     onFieldChange,
     onVehicleSelect,
     onVehicleSaved,
@@ -59,9 +62,17 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [isSaving, setIsSaving] = useState(false)
     const [vinDecoding, setVinDecoding] = useState(false)
     const [isSavingNewVehicle, setIsSavingNewVehicle] = useState(false)
-    const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
+    const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel' | 'vehicleLicensePlate', string>>>({})
     const [availableModels, setAvailableModels] = useState<string[]>([])
     const [showCustomModel, setShowCustomModel] = useState(false)
+    const [mileageUnit, setMileageUnit] = useState<'km' | 'miles'>('km')
+    // Trigger to refresh the vehicle dropdown when a new vehicle is saved
+    const [vehicleRefreshTrigger, setVehicleRefreshTrigger] = useState(0)
+
+    // When creating a new vehicle, allow full editing even in work order mode
+    const isCreatingNewVehicle = isCreating && (!selectedVehicleId || selectedVehicleId === "new")
+    // Allow full editing in work order mode - vehicles can be edited
+    const shouldRestrictEditing = false
 
     // Normalize vehicleMake to match VEHICLE_MAKES format when component receives it
     useEffect(() => {
@@ -98,7 +109,19 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         }
     }, [vehicleMake, vehicleModel])
 
-    const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string): string | undefined => {
+    // Initialize mileage unit based on current mileage value
+    useEffect(() => {
+        if (vehicleMileage && typeof vehicleMileage === 'string') {
+            const mileageStr = vehicleMileage.toLowerCase()
+            if (mileageStr.includes('mi') || mileageStr.includes('mile')) {
+                setMileageUnit('miles')
+            } else {
+                setMileageUnit('km')
+            }
+        }
+    }, [vehicleMileage])
+
+    const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel' | 'vehicleLicensePlate', value: string): string | undefined => {
         switch (field) {
             case 'vehicleYear':
                 if (!value || value.trim().length === 0) return 'Year is required'
@@ -113,12 +136,15 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             case 'vehicleModel':
                 if (!value || value.trim().length === 0) return 'Model is required'
                 return undefined
+            case 'vehicleLicensePlate':
+                if (!value || value.trim().length === 0) return 'License plate is required'
+                return undefined
             default:
                 return undefined
         }
     }
 
-    const handleBlur = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string) => {
+    const handleBlur = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel' | 'vehicleLicensePlate', value: string) => {
         const error = validateField(field, value)
         if (error) setErrors(prev => ({ ...prev, [field]: error }))
     }
@@ -127,7 +153,8 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         const yearErr = validateField('vehicleYear', vehicleYear)
         const makeErr = validateField('vehicleMake', vehicleMake)
         const modelErr = validateField('vehicleModel', vehicleModel)
-        return !yearErr && !makeErr && !modelErr
+        const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+        return !yearErr && !makeErr && !modelErr && !plateErr
     }
 
     // Handle saving vehicle updates
@@ -139,6 +166,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
 
         // If this is an invoice vehicle (vehicleId === 'existing'), use invoice update function
         if (vehicleId === 'existing' && invoiceNumber && shopId) {
+            const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+            if (plateErr) {
+                setErrors(prev => ({ ...prev, vehicleLicensePlate: plateErr }))
+                toast.error("License plate is required")
+                return
+            }
             setIsSaving(true)
             try {
                 // Dynamically import the invoice utils to avoid circular dependency
@@ -165,10 +198,22 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             return
         }
 
+        // Validate required fields before update (including license plate)
+        const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+        if (plateErr) {
+            setErrors(prev => ({ ...prev, vehicleLicensePlate: plateErr }))
+            toast.error("License plate is required")
+            return
+        }
+
         // Otherwise, update the customer vehicle in the database
         setIsSaving(true)
         try {
             await VehicleService.updateVehicle(vehicleId, {
+                year: vehicleYear,
+                make: vehicleMake,
+                model: vehicleModel,
+                vin: vehicleVin,
                 color: vehicleColor,
                 licensePlate: vehicleLicensePlate,
                 mileage: vehicleMileage
@@ -232,9 +277,10 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         const yearErr = validateField('vehicleYear', vehicleYear)
         const makeErr = validateField('vehicleMake', vehicleMake)
         const modelErr = validateField('vehicleModel', vehicleModel)
-        setErrors(prev => ({ ...prev, vehicleYear: yearErr, vehicleMake: makeErr, vehicleModel: modelErr }))
+        const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+        setErrors(prev => ({ ...prev, vehicleYear: yearErr, vehicleMake: makeErr, vehicleModel: modelErr, vehicleLicensePlate: plateErr }))
         
-        if (yearErr || makeErr || modelErr) {
+        if (yearErr || makeErr || modelErr || plateErr) {
             return
         }
 
@@ -254,6 +300,9 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             
             toast.success(`Vehicle "${savedVehicle.year} ${savedVehicle.make} ${savedVehicle.model}" created successfully`)
             
+            // Refresh the vehicle dropdown to include the new vehicle
+            setVehicleRefreshTrigger(prev => prev + 1)
+            
             // Notify parent component with the new vehicle data
             onVehicleSaved?.(savedVehicle.id, {
                 id: savedVehicle.id,
@@ -266,7 +315,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                 mileage: savedVehicle.mileage
             })
             
-            // Update the vehicle ID to the newly created vehicle
+            // Update the vehicle ID to the newly created vehicle (auto-select)
             onVehicleSelect?.(savedVehicle.id, VehicleService.toVehicleOption(savedVehicle))
             
         } catch (error: any) {
@@ -329,16 +378,17 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         <div className={`space-y-4 ${className}`}>
         <h3 className="text-lg font-medium text-foreground dark:text-white">Vehicle Information</h3>
             <div className="bg-card dark:bg-[#131313] rounded-xl p-6 border border-border dark:border-[#333333]">
-                {/* Vehicle Selection Dropdown (only for creation mode) */}
-                {isCreating && isEditing && customerId && customerId !== "new" && (
+                {/* Vehicle Selection Dropdown - Show in creation mode or work order edit mode when customer exists */}
+                {isEditing && customerId && customerId !== "new" && (isCreating || isWorkOrderMode) && (
                     <div className="mb-4">
                         <VehicleDropdown
                             customerId={customerId}
-                            selectedVehicleId={selectedVehicleId || ""}
+                            selectedVehicleId={selectedVehicleId || vehicleId || ""}
                             onVehicleSelect={handleVehicleSelect}
-                            placeholder="Select Vehicle"
+                            placeholder="Select Vehicle or Add New"
                             className="w-full"
                             isLoading={!customerId}
+                            refreshTrigger={vehicleRefreshTrigger}
                         />
                     </div>
                 )}
@@ -358,11 +408,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 }}
                                 onBlur={() => handleBlur('vehicleYear', vehicleYear)}
                                 className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                    isEditing 
+                                    isEditing
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 } ${errors.vehicleYear ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="2020"
                                 min="1970"
@@ -384,12 +434,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     onFieldChange('vehicleMake', value)
                                     if (errors.vehicleMake) setErrors(prev => ({ ...prev, vehicleMake: undefined }))
                                 }}
-                                disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                disabled={!isEditing}
                             >
                                 <SelectTrigger 
                                     id="vehicle_make"
                                     className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                        isEditing 
+                                        isEditing
                                             ? 'bg-background dark:bg-[#1a1a1a]' 
                                             : 'bg-card dark:bg-[#131313]'
                                     } ${errors.vehicleMake ? 'border-red-500 focus:border-red-500' : ''}`}
@@ -433,7 +483,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                             if (errors.vehicleModel) setErrors(prev => ({ ...prev, vehicleModel: undefined }))
                                         }
                                     }}
-                                    disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                    disabled={!isEditing}
                                 >
                                     <SelectTrigger
                                         id="vehicle_model"
@@ -472,11 +522,11 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 }}
                                 onBlur={() => handleBlur('vehicleModel', vehicleModel)}
                                         className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
-                                            isEditing 
+                                            isEditing
                                                 ? 'bg-background dark:bg-[#1a1a1a]' 
                                                 : 'bg-card dark:bg-[#131313]'
                                         } ${errors.vehicleModel ? 'border-red-500 focus:border-red-500' : ''}`}
-                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing}
                                 required={isCreating && (!selectedVehicleId || selectedVehicleId === "new")}
                                 placeholder="e.g. Civic"
                             />
@@ -490,7 +540,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                                 onFieldChange('vehicleModel', '')
                                             }}
                                             className="mt-1 text-xs text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
-                                            disabled={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                            disabled={!isEditing}
                                         >
                                             Select from list
                                         </Button>
@@ -514,7 +564,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
-                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                readOnly={!isEditing}
                                 placeholder="e.g. Blue"
                             />
                         </div>
@@ -527,18 +577,21 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             <div className="relative">
                                 <Input
                                     value={vehicleVin}
-                                    onChange={(e) => isEditing && onFieldChange('vehicleVin', e.target.value.toUpperCase())}
+                                    onChange={(e) => {
+                                        if (!isEditing) return
+                                        onFieldChange('vehicleVin', e.target.value.toUpperCase())
+                                    }}
                                     className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 pr-20 ${
-                                        isEditing 
+                                        isEditing
                                             ? 'bg-background dark:bg-[#1a1a1a]' 
                                             : 'bg-card dark:bg-[#131313]'
                                     }`}
-                                    readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                    readOnly={!isEditing}
                                     placeholder="17-character VIN"
                                     maxLength={17}
                                 />
-                                {/* VIN Decoder - Only show when creating new vehicle */}
-                                {isEditing && isCreating && (!selectedVehicleId || selectedVehicleId === "new") && vehicleVin && vehicleVin.length === 17 && (
+                                {/* VIN Decoder - Only show when creating new vehicle and not in work order mode */}
+                                {isEditing && !shouldRestrictEditing && isCreating && (!selectedVehicleId || selectedVehicleId === "new") && vehicleVin && vehicleVin.length === 17 && (
                                     <Button
                                         type="button"
                                         size="sm"
@@ -557,18 +610,31 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-muted-foreground dark:text-gray-400">License Plate</Label>
+                            <Label htmlFor="vehicle_license_plate" className="text-muted-foreground dark:text-gray-400">License Plate *</Label>
                             <Input
+                                id="vehicle_license_plate"
                                 value={vehicleLicensePlate}
-                                onChange={(e) => isEditing && onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())}
+                                onChange={(e) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())
+                                    if (errors.vehicleLicensePlate) setErrors(prev => ({ ...prev, vehicleLicensePlate: undefined }))
+                                }}
+                                onBlur={() => handleBlur('vehicleLicensePlate', vehicleLicensePlate)}
                                 className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
                                     isEditing 
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
-                                }`}
-                                readOnly={!isEditing || (isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
+                                } ${errors.vehicleLicensePlate ? 'border-red-500 focus:border-red-500' : ''}`}
+                                readOnly={!isEditing || (shouldRestrictEditing && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="ABC123"
+                                required
                             />
+                            {errors.vehicleLicensePlate && (
+                                <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                    {errors.vehicleLicensePlate}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
@@ -577,9 +643,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                     <div className="flex items-center gap-1 text-xs">
                                         <button
                                             type="button"
-                                            onClick={() => onFieldChange('mileageUnit', 'km')}
+                                            onClick={() => {
+                                                setMileageUnit('km')
+                                                onFieldChange('mileageUnit', 'km')
+                                            }}
                                             className={`px-2 py-0.5 rounded transition-colors ${
-                                                !vehicleMileage?.toString().includes('mi') 
+                                                mileageUnit === 'km'
                                                     ? 'bg-blue-600 text-white' 
                                                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white'
                                             }`}
@@ -589,9 +658,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         <span className="text-muted-foreground">/</span>
                                         <button
                                             type="button"
-                                            onClick={() => onFieldChange('mileageUnit', 'miles')}
+                                            onClick={() => {
+                                                setMileageUnit('miles')
+                                                onFieldChange('mileageUnit', 'miles')
+                                            }}
                                             className={`px-2 py-0.5 rounded transition-colors ${
-                                                vehicleMileage?.toString().includes('mi') 
+                                                mileageUnit === 'miles'
                                                     ? 'bg-blue-600 text-white' 
                                                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white'
                                             }`}
@@ -610,7 +682,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                         : 'bg-card dark:bg-[#131313]'
                                 }`}
                                 readOnly={!isEditing}
-                                placeholder="Current mileage (KM)"
+                                placeholder={mileageUnit === 'miles' ? 'Current mileage (Miles)' : 'Current mileage (KM)'}
                                 type="number"
                             />
                         </div>
@@ -618,7 +690,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     
                     {/* Save New Vehicle Button - Only show when creating new vehicle */}
                     {isCreating && isEditing && (!selectedVehicleId || selectedVehicleId === "new") && (
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-4 flex flex-col items-end gap-1.5">
+                            {isWorkOrderMode && (
+                                <p className="text-xs text-muted-foreground dark:text-gray-400">
+                                    Save the vehicle before creating the work order.
+                                </p>
+                            )}
                             <Button
                                 onClick={handleSaveNewVehicle}
                                 disabled={isSavingNewVehicle || !isFormValid() || !customerId || customerId === "new"}
@@ -633,7 +710,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 ) : (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
-                                        Save Vehicle
+                                        Save Vehicle Info
                                     </>
                                 )}
                             </Button>
@@ -641,7 +718,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     )}
                 </div>
 
-                {/* Save Button - Only show in edit mode when not creating */}
+                {/* Save Button - Show in edit mode when not creating and vehicle exists */}
                 {isEditing && !isCreating && vehicleId && (
                     <div className="mt-4 flex justify-end">
                         <Button

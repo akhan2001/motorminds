@@ -10,12 +10,14 @@ import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
 import { Plus, Trash2, Package } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
+import { useRef, useEffect } from "react";
 
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
 import { useAuth } from "../../../../hooks/use-auth";
+import { TEMPLATE_CATEGORIES } from "../../../work-order-items/templates/Categories/template-categories";
 
 interface PartFormItem {
     id: string;
@@ -52,6 +54,12 @@ export function WorkOrderPartsItems({
 
     const { shopId } = useAuth();
     const { suppliers, loading: suppliersLoading } = useSuppliers();
+    
+    // Use a ref to track the latest items to avoid stale closure issues
+    const itemsRef = useRef(items);
+    useEffect(() => {
+        itemsRef.current = items;
+    }, [items]);
     
     // Filter only active suppliers
     const activeSuppliers = suppliers.filter(supplier => supplier.status === 'active');
@@ -97,12 +105,14 @@ export function WorkOrderPartsItems({
     };
     
     const addItem = () => {
-        if (items.length >= 20) {
+        const currentItems = itemsRef.current;
+        if (currentItems.length >= 20) {
             toast.error(`Maximum 20 part items allowed`);
             return;
         }
-        onItemsChange([...items, { 
-            id: uuidv4(), 
+        const newId = uuidv4();
+        const newItems = [...currentItems, { 
+            id: newId, 
             description: "", 
             part_number: "",
             quantity: 1, 
@@ -114,12 +124,19 @@ export function WorkOrderPartsItems({
             category: "",
             warranty_period: "",
             notes: ""
-        }]);
+        }];
+        // Update ref IMMEDIATELY before calling onItemsChange
+        itemsRef.current = newItems;
+        onItemsChange(newItems);
     };
 
     const removeItem = async (id: string) => {
+        // Use ref to get latest items
+        const currentItems = itemsRef.current;
         // Update local state immediately for better UX
-        const updatedItems = items.filter(item => item.id !== id);
+        const updatedItems = currentItems.filter(item => item.id !== id);
+        // Update ref IMMEDIATELY before calling onItemsChange
+        itemsRef.current = updatedItems;
         onItemsChange(updatedItems);
 
         // If workOrderId exists, try to delete from database
@@ -140,15 +157,17 @@ export function WorkOrderPartsItems({
                 } else {
                     console.error('Error deleting part item:', error);
                     toast.error('Failed to delete item from database');
-                    // Revert local state on error
-                    onItemsChange(items);
+                    // Revert local state on error - use ref for latest
+                    onItemsChange(itemsRef.current);
                 }
             }
         }
     };
 
     const updateItem = (id: string, field: keyof PartFormItem, value: string | number) => {
-        const updatedItems = items.map(item => {
+        // Use ref to get latest items, avoiding stale closure issues
+        const currentItems = itemsRef.current;
+        const updatedItems = currentItems.map(item => {
             if (item.id !== id) return item;
             
             let updatedItem = { ...item };
@@ -206,6 +225,8 @@ export function WorkOrderPartsItems({
             return updatedItem;
         });
         
+        // Update ref IMMEDIATELY before calling onItemsChange
+        itemsRef.current = updatedItems;
         onItemsChange(updatedItems);
     };
 
@@ -217,9 +238,21 @@ export function WorkOrderPartsItems({
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
-                    No parts items added yet. Click "Add Part" to get started.
-                </div>
+                isEditing ? (
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        variant="outline"
+                        className="group w-full py-8 border border-dashed border-border dark:border-[#333333] rounded-lg bg-transparent hover:bg-transparent hover:border-solid hover:border-green-500/50 dark:hover:border-green-500/50 text-muted-foreground dark:text-gray-400 transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                    >
+                        <Plus className="h-5 w-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                        Add Part
+                    </Button>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground dark:text-gray-400 border border-dashed border-border dark:border-[#333333] rounded-lg bg-card dark:bg-[#131313]">
+                        No parts items added yet.
+                    </div>
+                )
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
@@ -259,24 +292,29 @@ export function WorkOrderPartsItems({
                                             value={item.description}
                                             onChange={(value) => updateItem(item.id, 'description', value)}
                                             onTemplateSelect={async (template: WorkOrderItemTemplate) => {
+                                                // Use ref to get latest items to avoid stale closure
+                                                const currentItems = itemsRef.current;
+                                                const currentItem = currentItems.find(i => i.id === item.id) || item;
                                                 // Create updated item with template data
                                                 const updatedItem = {
-                                                    ...item,
+                                                    ...currentItem,
                                                     description: template.name,
-                                                    part_number: template.part_number || item.part_number,
+                                                    part_number: template.part_number || currentItem.part_number,
                                                     quantity: template.quantity,
                                                     unit_price: template.unit_price,
                                                     total_price: template.quantity * template.unit_price,
-                                                    unit_cost: template.unit_cost || item.unit_cost,
-                                                    total_cost: template.unit_cost ? template.quantity * template.unit_cost : item.total_cost,
-                                                    supplier: template.supplier || item.supplier,
-                                                    category: template.category || item.category,
-                                                    warranty_period: template.warranty_period || item.warranty_period,
-                                                    notes: template.description || item.notes,
+                                                    unit_cost: template.unit_cost || currentItem.unit_cost,
+                                                    total_cost: template.unit_cost ? template.quantity * template.unit_cost : currentItem.total_cost,
+                                                    supplier: template.supplier || currentItem.supplier,
+                                                    category: template.category || currentItem.category,
+                                                    warranty_period: template.warranty_period || currentItem.warranty_period,
+                                                    notes: template.description || currentItem.notes,
                                                 };
 
                                                 // Update local state first for immediate UI feedback
-                                                const updatedItems = items.map(i => i.id === item.id ? updatedItem : i);
+                                                const updatedItems = currentItems.map(i => i.id === item.id ? updatedItem : i);
+                                                // Update ref IMMEDIATELY before calling onItemsChange
+                                                itemsRef.current = updatedItems;
                                                 onItemsChange(updatedItems);
 
                                                 // Auto-save to database if workOrderId exists
@@ -286,9 +324,10 @@ export function WorkOrderPartsItems({
                                                         const savedItem = await WorkOrderItemsService.createWorkOrderItem(itemData);
                                                         
                                                         // Update local state with database ID and notify parent
-                                                        const finalItems = items.map(i => 
+                                                        const finalItems = itemsRef.current.map(i => 
                                                             i.id === item.id ? { ...updatedItem, id: savedItem.id } : i
                                                         );
+                                                        itemsRef.current = finalItems;
                                                         onItemsChange(finalItems);
                                                         onItemSaved?.(savedItem);
                                                         
@@ -486,18 +525,26 @@ export function WorkOrderPartsItems({
                                         <Label htmlFor={`part_category_${index}`} className="text-muted-foreground text-xs">
                                             Category
                                         </Label>
-                                        <Input
-                                            id={`part_category_${index}`}
+                                        <Select
                                             value={item.category || ''}
-                                            onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                                            className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
+                                            onValueChange={(value) => updateItem(item.id, 'category', value)}
+                                            disabled={!isEditing}
+                                        >
+                                            <SelectTrigger className={`border-border dark:border-[#333333] text-foreground dark:text-white ${
                                                 isEditing 
                                                     ? 'bg-background dark:bg-[#1a1a1a]' 
                                                     : 'bg-card dark:bg-[#131313]'
-                                            }`}
-                                            disabled={!isEditing}
-                                            placeholder="Category"
-                                        />
+                                            }`}>
+                                                <SelectValue placeholder="Select category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {TEMPLATE_CATEGORIES.map((category) => (
+                                                    <SelectItem key={category} value={category}>
+                                                        {category}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div>
                                         <Label htmlFor={`part_warranty_${index}`} className="text-muted-foreground text-xs">
@@ -541,14 +588,14 @@ export function WorkOrderPartsItems({
                 </div>
             )}
 
-            {/* Add Part Button at Bottom - Only show when editing */}
-            {isEditing && (
+            {/* Add Part Button at Bottom - Only show when editing and items exist */}
+            {isEditing && items.length > 0 && (
                 <div className="pt-3 border-t border-border">
                     <Button
                         type="button"
                         onClick={addItem}
                         size="sm"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Part

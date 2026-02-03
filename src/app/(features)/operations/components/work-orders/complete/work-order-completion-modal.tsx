@@ -4,8 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Car, User, Phone, FileText, ExternalLink } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Car, User, Phone, FileText, ExternalLink, Clock, Loader2, CheckCircle2 } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
+import { useWorkOrderCompletionTemplates } from '../../../hooks/use-active-automated-messages'
+import { formatDelayHours } from '@/app/(features)/messaging/types/message-template'
 import type { WorkOrderCompletionModalProps } from '../../../types/work-order-messaging'
 
 export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> = ({
@@ -13,28 +17,55 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
     isOpen,
     onClose,
     onConfirm,
-    generatedInvoiceNumber
+    generatedInvoiceNumber,
+    // Drag-to-complete flow props
+    onGenerateAndGoToInvoice,
+    onGenerateAndComplete,
+    isGenerating = false
 }) => {
     const router = useRouter()
+    const [enableAutomatedMessage, setEnableAutomatedMessage] = useState(true)
+    
+    // Fetch active automated message templates
+    const { templates: automatedTemplates, isLoading: loadingTemplates } = useWorkOrderCompletionTemplates(isOpen)
+    
+    // Determine which flow we're in
+    const isDragToCompleteFlow = !!(onGenerateAndGoToInvoice && onGenerateAndComplete)
+    
     // Show button if work order has invoice_id OR if an invoice was just generated
     const hasInvoice = !!workOrder.invoice_id || !!generatedInvoiceNumber
     const invoiceNumber = workOrder.invoice_id || generatedInvoiceNumber
 
     const handleCompleteWithoutInvoice = () => {
         // No message sent, no invoice generated
-        onConfirm(false, undefined, false, false)
+        onConfirm(false, undefined, enableAutomatedMessage, false)
         // Modal will be closed by parent after completion
     }
 
     const handleCompleteWithInvoice = () => {
         // No message sent, invoice generated
         // Don't close modal here - parent will keep it open to show "Go to Invoice" button
-        onConfirm(false, undefined, false, true)
+        onConfirm(false, undefined, enableAutomatedMessage, true)
     }
 
     const handleGoToInvoice = () => {
         if (invoiceNumber) {
             router.push(`/financials/invoices?invoice_number=${invoiceNumber}`)
+            onClose()
+        }
+    }
+    
+    // Drag-to-complete flow handlers
+    const handleGenerateAndGoToInvoice = async () => {
+        if (onGenerateAndGoToInvoice) {
+            await onGenerateAndGoToInvoice()
+            onClose()
+        }
+    }
+
+    const handleGenerateAndComplete = async () => {
+        if (onGenerateAndComplete) {
+            await onGenerateAndComplete()
             onClose()
         }
     }
@@ -107,9 +138,9 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                         </div>
                     </div>
 
-                    {/* Automated Follow-Up Toggle - Commented out for now */}
-                    {/* <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
+                    {/* Automated Follow-Up Toggle */}
+                    <div className="bg-blue-500/10 dark:bg-blue-500/10 border border-blue-500/20 dark:border-blue-500/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Clock className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                                 <div>
@@ -125,11 +156,12 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                 id="automated-message"
                                 checked={enableAutomatedMessage}
                                 onCheckedChange={setEnableAutomatedMessage}
+                                disabled={automatedTemplates.length === 0}
                             />
                         </div>
 
                         {/* Show which templates will be triggered */}
-                        {/* {enableAutomatedMessage && (
+                        {enableAutomatedMessage && (
                             <div className="mt-3 pt-3 border-t border-blue-500/20">
                                 {loadingTemplates ? (
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -153,7 +185,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                                             {template.name}
                                                         </span>
                                                         <span className="text-muted-foreground dark:text-gray-400">
-                                                            {' '}• Sends in {formatDelayHours(template.delay_hours)}
+                                                            {' '} - Sends in {formatDelayHours(template.delay_hours)}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -166,7 +198,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                         <p>
                                             No active templates found. Create templates in{' '}
                                             <a 
-                                                href="/messaging/templates" 
+                                                href="/messaging/automated" 
                                                 className="underline hover:text-amber-700 dark:hover:text-amber-300"
                                                 target="_blank"
                                             >
@@ -177,11 +209,48 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                                 )}
                             </div>
                         )}
-                    </div> */}
+                    </div>
                 </div>
 
                 <DialogFooter className="flex-shrink-0 flex gap-3 pt-4 border-t border-border dark:border-[#2a2a2a]">
-                    {hasInvoice ? (
+                    {isDragToCompleteFlow ? (
+                        // Drag-to-complete flow: Show generate invoice options
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={onClose}
+                                disabled={isGenerating}
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleGenerateAndComplete}
+                                disabled={isGenerating}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                {isGenerating ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <FileText className="h-4 w-4 mr-2" />
+                                )}
+                                Complete With Invoice
+                            </Button>
+                            <Button
+                                onClick={handleGenerateAndGoToInvoice}
+                                disabled={isGenerating}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                                {isGenerating ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                )}
+                                Complete & Go to Invoice
+                            </Button>
+                        </>
+                    ) : hasInvoice ? (
+                        // Invoice already generated: Show close and go to invoice
                         <>
                             <Button
                                 variant="outline"
@@ -199,6 +268,7 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                             </Button>
                         </>
                     ) : (
+                        // Standard completion flow: Choose to generate invoice or not
                         <>
                             <Button
                                 variant="outline"

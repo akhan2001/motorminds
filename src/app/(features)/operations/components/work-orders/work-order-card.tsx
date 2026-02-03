@@ -23,6 +23,7 @@ import { useUpdateWorkOrder } from '../../hooks/use-work-orders'
 import type { StatusTracker } from '../../types/status-tracker'
 import { MAX_WORK_ORDER_STATUS_TRACKERS } from '../../lib/status-tracker-constants'
 import { toast } from 'sonner'
+import { formatPhoneNumber } from '@/lib/utils/formatters'
 
 export interface WorkOrderCardProps {
     item: WorkOrderKanbanItem
@@ -154,7 +155,9 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                         <CardTitle className="text-sm font-medium text-foreground dark:text-white line-clamp-2">
-                            {truncateText(item.title, 50)}
+                            {item.title?.trim()
+                                ? truncateText(item.title, 50)
+                                : (item.vehicle?.trim() ? truncateText(item.vehicle, 50) : 'Work Order')}
                         </CardTitle>
                         {/* Status Tracker Badges */}
                         {statusTrackers.length > 0 && (
@@ -271,21 +274,28 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                 {/* Customer & Vehicle Info */}
                 {(item.customer || item.vehicle) && (
                     <div className="text-xs text-foreground dark:text-gray-300 mb-2">
-                        {item.customer && <div className="font-medium">{item.customer}</div>}
+                        {item.customer && (
+                            <div className="font-medium">
+                                {item.customer}
+                                {item.customer_phone && (
+                                    <span className="text-muted-foreground dark:text-gray-400"> {formatPhoneNumber(item.customer_phone)}</span>
+                                )}
+                            </div>
+                        )}
                         {item.vehicle && <div className="text-muted-foreground dark:text-gray-400">{item.vehicle}</div>}
                     </div>
                 )}
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">
                     <div className="flex items-center gap-3">
-                        {item.assignee && (
+                        {/* {item.assignee && (
                             <div className="flex items-center gap-1">
                                 <div className="w-4 h-4 bg-secondary dark:bg-[#444] rounded-full flex items-center justify-center text-xs text-secondary-foreground dark:text-white">
                                     {getInitials(item.assignee)}
                                 </div>
                                 <span>{truncateText(item.assignee, 12)}</span>
                             </div>
-                        )}
+                        )} */}
                         <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>{item.date}</span>

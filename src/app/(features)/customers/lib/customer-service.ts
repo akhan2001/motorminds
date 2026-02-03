@@ -84,6 +84,7 @@ export class CustomerService {
 
     /**
      * Create a new customer
+     * Automatically populates organization_id for MSO shops
      */
     static async createCustomer(shopId: string, customerData: CustomerFormData): Promise<Customer> {
         if (!shopId) {
@@ -94,8 +95,21 @@ export class CustomerService {
             throw new Error('Customer name is required')
         }
 
+        // Fetch shop's organization_id to properly denormalize for MSO access
+        const { data: shopData, error: shopError } = await this.supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single()
+
+        if (shopError) {
+            console.error('Error fetching shop data:', shopError)
+            // Continue without organization_id if shop lookup fails
+        }
+
         const customerPayload = {
             shop_id: shopId,
+            organization_id: shopData?.organization_id || null, // Denormalize org ID for efficient MSO queries
             customer_name: customerData.name.trim(),
             customer_email: customerData.email?.trim() || null,
             customer_phone: customerData.phone?.trim() || '',

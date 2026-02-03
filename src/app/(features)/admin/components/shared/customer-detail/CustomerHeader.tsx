@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/utils/text'
-import { Edit, X, Save, Loader2 } from 'lucide-react'
+import { Edit, X, Save, Loader2, Mail } from 'lucide-react'
 import type { Customer } from './types'
 
 interface CustomerHeaderProps {
@@ -16,6 +16,8 @@ interface CustomerHeaderProps {
     onEditClick?: () => void
     onCancelClick?: () => void
     onSaveClick?: () => void
+    showEmailButton?: boolean
+    onEmailClick?: () => void
 }
 
 export const CustomerHeader: React.FC<CustomerHeaderProps> = ({ 
@@ -24,7 +26,9 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     isSaving = false,
     onEditClick,
     onCancelClick,
-    onSaveClick
+    onSaveClick,
+    showEmailButton = false,
+    onEmailClick
 }) => {
     return (
         <SheetHeader className="pb-4 border-b border-border dark:border-[#222222]">
@@ -81,6 +85,17 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                         </>
                     ) : (
                         <>
+                            {showEmailButton && customer.customer_email && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={onEmailClick}
+                                    className="border-border text-muted-foreground hover:bg-muted hover:text-red-500"
+                                >
+                                    <Mail className="h-4 w-4 mr-1" />
+                                    Email
+                                </Button>
+                            )}
                             <Button
                                 variant="outline"
                                 size="sm"

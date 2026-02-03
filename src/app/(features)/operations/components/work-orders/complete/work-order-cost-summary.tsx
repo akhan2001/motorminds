@@ -1,20 +1,33 @@
-import React from 'react'
+'use client'
+
+import React, { useMemo } from 'react'
 import { WorkOrderItem } from '../../../types/work-order-items'
 import { calculateInvoiceTotals } from '../../../../financials/lib/invoice-calculations'
 import { formatCurrency } from '@/lib/utils/currency'
+import { useExpensesByWorkOrder } from '@/app/(features)/expenses/hooks/use-expenses'
+import { ExpenseSummaryCard } from '@/app/(features)/expenses/components/ExpenseSummaryCard'
+import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses'
 
 interface WorkOrderCostSummaryProps {
 	workOrderItems: WorkOrderItem[]
+	workOrderId?: string | null
 	className?: string
 }
 
 export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({ 
 	workOrderItems, 
+	workOrderId,
 	className = "" 
 }) => {
+	const { data: expenses = [] } = useExpensesByWorkOrder(workOrderId ?? null)
 	const calculations = calculateInvoiceTotals(workOrderItems)
 
 	const TAX_RATE = 0.13
+	
+	// Calculate expense total from unified table
+	const expenseTotalFromTable = useMemo(() => {
+		return expenses.reduce((sum, expense) => sum + Number(expense.total ?? 0), 0)
+	}, [expenses])
 	
 	const getItemStatusColor = (item: WorkOrderItem) => {
 		if (item.active === false) {
@@ -44,11 +57,16 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 			{/* Summary Stats */}
 			<div className="grid grid-cols-2 gap-4 mb-4 text-sm">
 				<div className="text-muted-foreground">
-					<span className="text-foreground font-medium">{workOrderItems.length}</span> total items
+					<span className="text-foreground font-medium">{workOrderItems.length + expenses.length}</span> total items
+					{expenses.length > 0 && (
+						<span className="text-orange-600 dark:text-orange-400 ml-2">
+							({expenses.length} expenses)
+						</span>
+					)}
 				</div>
-				<div className="text-muted-foreground">
+				{/* <div className="text-muted-foreground">
 					<span className="text-foreground font-medium">{calculations.approvedItems.length}</span> approved
-				</div>
+				</div> */}
 				{calculations.rejectedItems.length > 0 && (
 					<div className="text-red-600 dark:text-red-400 col-span-2">
 						<span className="font-medium">{calculations.rejectedItems.length}</span> rejected items
@@ -58,6 +76,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 			
 			{/* Item Breakdown */}
 			<div className="space-y-3">
+				{/* Work Order Items */}
 				{workOrderItems.map((item) => (
 					<div 
 						key={item.id} 
@@ -69,7 +88,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 					>
 						<div className="flex justify-between items-start mb-2">
 							<div className="flex-1">
-								<div className="flex items-center gap-2 mb-1">
+								<div className="flex items-center gap-2 mb-1 flex-wrap">
 									<span className={`text-xs font-medium px-2 py-1 rounded border ${
 										item.active === false 
 											? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20' 
@@ -77,13 +96,11 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 									}`}>
 										{item.item_type.toUpperCase()}
 									</span>
-									<span className={`text-xs font-medium px-2 py-1 rounded border ${
-										item.active === false 
-											? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20' 
-											: 'bg-green-50 dark:bg-green-500/20 text-green-600 dark:text-green-400 border-green-300 dark:border-green-500/20'
-									}`}>
-										{getItemStatusText(item)}
-									</span>
+									{item.active === false && (
+										<span className="text-xs font-medium px-2 py-1 rounded border bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/20">
+											{getItemStatusText(item)}
+										</span>
+									)}
 								</div>
 								<h4 className={`font-medium ${getItemStatusColor(item)}`}>
 									{item.description}
@@ -121,10 +138,16 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 										<span className="text-foreground">{formatCurrency(item.unit_cost)}</span>
 									</div>
 								)}
-								{(item.item_type === 'part' || item.item_type === 'expense') && item.supplier && (
+								{item.item_type === 'part' && item.supplier && (
 									<div>
 										<span className="text-muted-foreground">Supplier: </span>
 										<span className="text-foreground">{item.supplier}</span>
+									</div>
+								)}
+								{item.item_type === 'part' && item.part_number && (
+									<div>
+										<span className="text-muted-foreground">Part #: </span>
+										<span className="text-foreground">{item.part_number}</span>
 									</div>
 								)}
 								{item.category && (
@@ -133,7 +156,7 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 										<span className="text-foreground">{item.category}</span>
 									</div>
 								)}
-								{(item.item_type === 'part' || item.item_type === 'expense') && item.warranty_period && (
+								{item.item_type === 'part' && item.warranty_period && (
 									<div>
 										<span className="text-muted-foreground">Warranty: </span>
 										<span className="text-foreground">{item.warranty_period}</span>
@@ -158,6 +181,11 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 						</div>
 					</div>
 				))}
+				
+				{/* Expense Items from Unified Table */}
+				{expenses.map((expense: ExpenseItem) => (
+					<ExpenseSummaryCard key={expense.id} expense={expense} />
+				))}
 			</div>
 			
 			{/* Totals */}
@@ -180,14 +208,29 @@ export const WorkOrderCostSummary: React.FC<WorkOrderCostSummaryProps> = ({
 							</span>
 						</div>
 					)}
-					{(calculations.expensesTotal !== null && calculations.expensesTotal !== undefined && calculations.expensesTotal !== 0) && (
+					{/* Show expense total from unified table (tracking only, not included in billable totals) */}
+					{expenseTotalFromTable > 0 && (
 						<div className="flex justify-between">
-							<span className="text-muted-foreground">Expenses</span>
-							<span className="text-foreground font-medium">
-								{formatCurrency(calculations.expensesTotal)}
+							<span className="text-muted-foreground">Expenses (Tracking Only):</span>
+							<span className="text-orange-600 dark:text-orange-400 font-medium">
+								{formatCurrency(expenseTotalFromTable)}
 							</span>
 						</div>
 					)}
+					{/* Also show legacy expenses from work_order_items if any */}
+					{calculations.expensesItems && calculations.expensesItems.length > 0 && (() => {
+						const legacyExpenseTotal = calculations.expensesItems.reduce((sum: number, item: WorkOrderItem) => {
+							return sum + (item.total_price || 0)
+						}, 0)
+						return legacyExpenseTotal > 0 && expenseTotalFromTable === 0 ? (
+							<div className="flex justify-between">
+								<span className="text-muted-foreground">Expenses (Tracking Only):</span>
+								<span className="text-orange-600 dark:text-orange-400 font-medium">
+									{formatCurrency(legacyExpenseTotal)}
+								</span>
+							</div>
+						) : null
+					})()}
 					{(calculations.servicesTotal !== null && calculations.servicesTotal !== undefined && calculations.servicesTotal !== 0) && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">Services</span>

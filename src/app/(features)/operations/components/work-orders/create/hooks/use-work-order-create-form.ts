@@ -145,16 +145,20 @@ export function useWorkOrderCreateForm() {
         if (formData.customerType === 'walk_in') {
             return isStep1Complete()
         }
-        return isStep1Complete() &&
-            ((formData.vehicleId && formData.vehicleId !== "" && formData.vehicleId !== "new") ||
-                ((!formData.vehicleId || formData.vehicleId === "new") &&
-                    formData.vehicleMake.trim() &&
-                    formData.vehicleModel.trim() &&
-                    formData.vehicleYear.trim()))
+        // For registered customers: require a SAVED vehicle (real vehicleId).
+        // User must select an existing vehicle OR click "Save Vehicle" for a new one.
+        // Typing year/make/model without saving would otherwise persist placeholders like "2026 Unknown Unknown".
+        return (
+            isStep1Complete() &&
+            !!formData.vehicleId &&
+            formData.vehicleId !== '' &&
+            formData.vehicleId !== 'new'
+        )
     }
 
     const isStep3Complete = () => {
-        return isStep2Complete() && formData.title.trim()
+        // Title is not required; step 3 (work order items, labor, parts) is available once vehicle is set.
+        return isStep2Complete()
     }
 
     // Auto-advance to next step

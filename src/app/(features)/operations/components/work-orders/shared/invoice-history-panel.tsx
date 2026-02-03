@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react'
 import { InvoiceDetailSheet } from '@/app/(features)/financials/components/invoices/InvoiceDetailSheet'
 import type { InvoiceWithDetails } from '@/app/(features)/financials/types/invoice'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 
 interface InvoiceHistoryPanelProps {
     customerId: string | null | undefined
@@ -58,20 +59,13 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
         return <Badge className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20 text-xs">{status}</Badge>
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
-    }
-
     if (!customerId) {
         return (
             <div className="p-4">
                 <Card className="bg-slate-50 dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                     <div className="p-4 text-center">
                         <p className="text-sm text-muted-foreground dark:text-gray-400">
-                            No customer associated with this work order.
+                            No customer associated with this Work Order.
                         </p>
                     </div>
                 </Card>
@@ -246,7 +240,7 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
                                 <div className="flex items-center gap-1">
                                     {invoice.work_order && (
                                         <Badge variant="secondary" className="bg-secondary dark:bg-[#2a2a2a] text-muted-foreground dark:text-gray-300 text-xs px-1 py-0.5">
-                                            WO: {invoice.work_order.work_order_number || invoice.work_order.title}
+                                            Work Order: {invoice.work_order.work_order_number || invoice.work_order.title}
                                         </Badge>
                                     )}
                                 </div>

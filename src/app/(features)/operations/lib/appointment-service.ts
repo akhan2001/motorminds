@@ -525,9 +525,13 @@ export class AppointmentService {
             workOrderId = workOrder.id
         }
 
+        // Update appointment with work order reference and status
         await supabase
             .from('appointments')
-            .update({ status: 'in_progress' })
+            .update({ 
+                status: 'in_progress',
+                work_order_id: workOrderId 
+            })
             .eq('id', appointmentId)
 
         return workOrderId

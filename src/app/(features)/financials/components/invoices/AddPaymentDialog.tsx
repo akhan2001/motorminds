@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAddInvoicePayment } from '../../hooks/use-invoice-payments'
 import type { PaymentMethod } from '../../types/invoice'
 import { formatCurrency } from '@/lib/utils/currency'
+import { getLocalDateString } from '@/lib/utils/date'
 
 interface AddPaymentDialogProps {
     isOpen: boolean
@@ -41,16 +42,22 @@ export function AddPaymentDialog({
 }: AddPaymentDialogProps) {
     const [amount, setAmount] = useState<string>('')
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
-    const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0])
+    const [paymentDate, setPaymentDate] = useState<string>(getLocalDateString())
     const [paymentReference, setPaymentReference] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
     
     const addPayment = useAddInvoicePayment()
 
-    // Auto-set amount to 0 for $0 invoices
+    // Reset form when dialog opens - ensure payment date is always today
     useEffect(() => {
-        if (isOpen && totalAmount === 0) {
-            setAmount('0')
+        if (isOpen) {
+            // Always reset payment date to current date when dialog opens
+            setPaymentDate(getLocalDateString())
+            
+            // Auto-set amount to 0 for $0 invoices
+            if (totalAmount === 0) {
+                setAmount('0')
+            }
         }
     }, [isOpen, totalAmount])
 
@@ -66,7 +73,9 @@ export function AddPaymentDialog({
         }
         
         // For non-zero invoices, payment must be > 0 and <= outstanding balance
-        if (!isZeroInvoice && (paymentAmount <= 0 || paymentAmount > outstandingBalance)) {
+        // Use tolerance for floating-point comparison (allow up to 0.01 cents over for rounding)
+        const exceedsBalance = !isZeroInvoice && paymentAmount > 0 && (paymentAmount - outstandingBalance > 0.01)
+        if (!isZeroInvoice && (paymentAmount <= 0 || exceedsBalance)) {
             return
         }
 
@@ -94,11 +103,14 @@ export function AddPaymentDialog({
             // Reset form
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getLocalDateString())
             setPaymentReference('')
             setNotes('')
+            
+            // Close dialog immediately after successful payment
+            onClose()
         } catch (error) {
-            // Error is handled by the mutation
+            // Error is handled by the mutation - don't close dialog on error
         }
     }
 
@@ -106,7 +118,7 @@ export function AddPaymentDialog({
         if (!addPayment.isPending) {
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getLocalDateString())
             setPaymentReference('')
             setNotes('')
             onClose()
@@ -121,9 +133,14 @@ export function AddPaymentDialog({
     const isZeroInvoice = totalAmount === 0
     
     // For $0 invoices, allow recording a $0 payment
-    // For regular invoices, require amount > 0 and <= outstanding balance
+    // For regular invoices, require amount > 0 and <= outstanding balance (with tolerance for floating-point)
+    // Allow up to 0.01 cents over outstanding balance for rounding precision
+    const isWithinBalance = isZeroInvoice 
+        ? amountValue === 0 
+        : (amountValue > 0 && (amountValue <= outstandingBalance || (amountValue - outstandingBalance) <= 0.01))
+    
     const isValid = (
-        (isZeroInvoice ? amountValue === 0 : (amountValue > 0 && amountValue <= outstandingBalance)) &&
+        isWithinBalance &&
         paymentMethod !== '' &&
         !addPayment.isPending
     )
@@ -137,7 +154,7 @@ export function AddPaymentDialog({
                         Record a payment for this invoice. Outstanding balance: {formatCurrency(outstandingBalance)}
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <div className="space-y-4 py-4">
                         {/* Amount */}
                         <div className="space-y-2">
@@ -148,7 +165,7 @@ export function AddPaymentDialog({
                                     type="number"
                                     step="0.01"
                                     min={isZeroInvoice ? "0" : "0.01"}
-                                    max={isZeroInvoice ? 0 : outstandingBalance}
+                                    max={isZeroInvoice ? 0 : outstandingBalance + 0.01}
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder={isZeroInvoice ? "0.00" : "0.00"}
@@ -170,7 +187,7 @@ export function AddPaymentDialog({
                                     This is a $0 invoice. Recording for tracking purposes.
                                 </p>
                             )}
-                            {!isZeroInvoice && amountValue > outstandingBalance && (
+                            {!isZeroInvoice && amountValue > 0 && (amountValue - outstandingBalance > 0.01) && (
                                 <p className="text-sm text-red-600 dark:text-red-400">
                                     Amount cannot exceed outstanding balance
                                 </p>

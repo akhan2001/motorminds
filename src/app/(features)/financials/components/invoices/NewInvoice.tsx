@@ -17,11 +17,11 @@ import { toast } from 'sonner'
 import { CustomerInformation } from '../../../operations/components/work-orders/shared/customer-information'
 import { VehicleInformation } from '../../../operations/components/work-orders/shared/vehicle-information'
 import { WalkInVehicleForm } from '../../../operations/components/work-orders/create/WalkInVehicleForm'
-import { InvoiceLaborItems } from './InvoiceLaborItems'
-import { InvoicePartsItems } from './InvoicePartsItems'
-import { InvoiceServicesItems } from './InvoiceServicesItems'
-import { InvoicePackagesItems } from './InvoicePackagesItems'
-import { InvoiceDiscountsItems } from './InvoiceDiscountsItems'
+import { InvoiceLaborItemsAdapter } from './items/InvoiceLaborItemsAdapter'
+import { InvoicePartsItemsAdapter } from './items/InvoicePartsItemsAdapter'
+import { InvoiceGenericItemsAdapter } from './items/InvoiceGenericItemsAdapter'
+import { InvoiceExpenseItemsAdapter } from './items/InvoiceExpenseItemsAdapter'
+import { Tag } from 'lucide-react'
 import type { WalkInVehicleInfo } from '../../../customers/types/vehicle'
 
 interface NewInvoiceProps {
@@ -195,9 +195,9 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
 
     const calculateSubtotal = () => {
         return formData.invoice_items.reduce((sum, item) => {
-            // Discounts subtract from subtotal, all other items add
+            // Discounts subtract from subtotal (always use positive value), all other items add
             if ((item as any).item_type === 'discount') {
-                return sum - item.total_price
+                return sum - Math.abs(item.total_price || 0)
             }
             return sum + item.total_price
         }, 0)
@@ -437,43 +437,42 @@ const NewInvoice: React.FC<NewInvoiceProps> = ({ isOpen, onClose, onInvoiceCreat
                                     <h3 className="text-lg font-semibold text-foreground dark:text-white">Invoice Items</h3>
                                 </div>
 
-                                {/* Labor Items */}
+                                {/* Labor / Services Items */}
                                 <div className="mb-6">
-                                    <InvoiceLaborItems
+                                    <InvoiceLaborItemsAdapter
                                         items={formData.invoice_items}
                                         onItemsChange={handleItemsChange}
+                                        isEditing={true}
                                     />
                                 </div>
 
                                 {/* Parts Items */}
                                 <div className="mb-6">
-                                    <InvoicePartsItems
+                                    <InvoicePartsItemsAdapter
                                         items={formData.invoice_items}
                                         onItemsChange={handleItemsChange}
+                                        isEditing={true}
                                     />
                                 </div>
 
-                                {/* Service Items */}
+                                {/* Expense Items */}
                                 <div className="mb-6">
-                                    <InvoiceServicesItems
+                                    <InvoiceExpenseItemsAdapter
                                         items={formData.invoice_items}
                                         onItemsChange={handleItemsChange}
-                                    />
-                                </div>
-
-                                {/* Package Items */}
-                                <div className="mb-6">
-                                    <InvoicePackagesItems
-                                        items={formData.invoice_items}
-                                        onItemsChange={handleItemsChange}
+                                        isEditing={true}
                                     />
                                 </div>
 
                                 {/* Discount Items */}
                                 <div>
-                                    <InvoiceDiscountsItems
+                                    <InvoiceGenericItemsAdapter
                                         items={formData.invoice_items}
                                         onItemsChange={handleItemsChange}
+                                        isEditing={true}
+                                        itemType="discount"
+                                        title="Discounts"
+                                        icon={Tag}
                                     />
                                 </div>
                             </div>

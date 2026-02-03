@@ -1,6 +1,7 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
+import { formatCurrency } from '@/lib/utils/currency'
 
 const styles = StyleSheet.create({
     page: {
@@ -325,10 +326,6 @@ const styles = StyleSheet.create({
 })
 
 export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
-    }
-
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-CA', {
             year: 'numeric',
@@ -337,8 +334,8 @@ export const TonyTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
         })
     }
 
-    // Calculate totals - only active items
-    const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false)
+    // Calculate totals - only active items, exclude expenses (tracking only)
+    const activeItems = invoice.invoice_items.filter(item => (item as any).active !== false && (item as any).item_type !== 'expense')
     
     // Calculate subtotal - discounts subtract from subtotal, all other items add
     const subtotal = activeItems.reduce((sum, item) => {

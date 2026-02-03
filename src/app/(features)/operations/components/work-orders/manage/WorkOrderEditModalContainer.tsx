@@ -12,7 +12,7 @@ export interface WorkOrderEditModalProps {
     workOrder: WorkOrderKanbanItem
     onClose: () => void
     onSave?: (updated: WorkOrderKanbanItem, formData?: any) => void
-    onDelete?: (workOrderId: string) => void
+    onDelete?: (workOrderId: string, options?: { deleteInvoice?: boolean }) => void
     className?: string
 }
 
@@ -37,7 +37,7 @@ export function WorkOrderEditModal({
                 <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8">
                     <div className="flex items-center gap-3">
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        <p className="text-foreground">Loading work order details...</p>
+                        <p className="text-foreground">Loading Work Order details...</p>
                     </div>
                 </div>
             </div>
@@ -50,7 +50,7 @@ export function WorkOrderEditModal({
                 <div className="bg-popover dark:bg-[#131313] text-popover-foreground dark:text-white border-border rounded-lg shadow-lg p-8 max-w-md">
                     <div className="text-center space-y-4">
                         <p className="text-destructive text-lg font-semibold">
-                            {error?.message || 'Failed to load work order details'}
+                            {error?.message || 'Failed to load Work Order details'}
                         </p>
                         <button
                             onClick={onClose}

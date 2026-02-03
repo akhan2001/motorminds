@@ -5,19 +5,13 @@ import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Package, Wrench, Briefcase, DollarSign, Receipt, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import { useInvoiceSummary } from '../../hooks/use-invoice-items'
 
 interface InvoiceItemsSummaryProps {
     invoiceId: string
     className?: string
     showBreakdown?: boolean
-}
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(amount)
 }
 
 export const InvoiceItemsSummary: React.FC<InvoiceItemsSummaryProps> = ({
@@ -129,7 +123,9 @@ export const InvoiceItemsSummary: React.FC<InvoiceItemsSummaryProps> = ({
 
                 {/* Tax */}
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Tax (13%)</span>
+                    <span className="text-gray-400">
+                        Tax {summary.taxRate > 0 ? `(${Math.round(summary.taxRate * 100)}%)` : '(0%)'}
+                    </span>
                     <span className="text-gray-300">{formatCurrency(summary.tax)}</span>
                 </div>
 

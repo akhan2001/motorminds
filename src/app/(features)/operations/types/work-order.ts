@@ -1,6 +1,7 @@
 // Work order type definitions - matches actual database schema
 import type { StatusTracker } from './status-tracker'
 import type { WalkInVehicleInfo } from '../../customers/types/vehicle'
+import type { Payment } from '../../financials/types/invoice'
 
 export interface WorkOrder {
     id: string
@@ -38,6 +39,10 @@ export interface WorkOrder {
     archived?: boolean
     archived_at?: string | null
     archived_by?: string | null
+
+    // Advance payments (payments made before invoice creation)
+    // Stored as JSONB array similar to invoice payments
+    advance_payments?: Payment[] | null
 }
 
 // Work order with joined customer and vehicle details
@@ -106,6 +111,19 @@ export interface WorkOrderItem {
 
     labor_hours?: number
     technician_id?: string
+    
+    is_billable?: boolean // Whether item appears on customer invoices (expenses default false)
+
+    // Expense-specific fields (only populated when item_type = 'expense')
+    // These mirror one_time_costs fields for consistency
+    expense_subtotal?: number | null
+    expense_tax_amount?: number | null
+    expense_tax_included?: boolean | null
+    expense_payment_method?: 'credit_card' | 'debit_card' | 'cash' | 'check' | 'bank_transfer' | 'other' | null
+    expense_vendor?: string | null // Maps to one_time_costs.vendor (replaces supplier for expenses)
+    expense_invoice_number?: string | null // Maps to one_time_costs.invoice_number
+    expense_parts_description?: string | null // Maps to one_time_costs.parts_description
+    expense_cost_date?: string | null // Maps to one_time_costs.cost_date (ISO date string)
 
     created_at: string
     completed_at?: string
@@ -121,6 +139,7 @@ export interface WorkOrderKanbanItem {
     assignee?: string
     date: string
     customer?: string
+    customer_phone?: string
     vehicle?: string
     tags?: string[]
     shop_id?: string

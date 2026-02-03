@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import SupplierDropdownSelector from "@/app/(features)/suppliers/components/supplier-dropdown-selector";
 import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
+import { getTorontoDateString } from "@/lib/utils/date";
 
 interface AddExpenseModalProps {
     shopId: string;
@@ -34,12 +35,16 @@ interface AddExpenseModalProps {
         cost_name: string;
         amount: number;
         subtotal: number;
+        tax_amount?: number;
+        tax_included?: boolean;
+        payment_method?: string;
         category: string;
         vendor: string | null;
         invoice_number: string | null;
         parts_description: string | null;
         warranty: string | null;
         notes: string | null;
+        cost_date?: string;
     }) => void;
     /** Optional controlled open state */
     open?: boolean;
@@ -91,9 +96,7 @@ export default function AddExpenseModal({
     const [taxAmount, setTaxAmount] = useState(""); // Auto-calculated tax
     const [totalAmount, setTotalAmount] = useState(""); // Total with tax
     const [category, setCategory] = useState("Parts/Inventory");
-    const [expenseDate, setExpenseDate] = useState(
-        new Date().toISOString().split("T")[0]
-    );
+    const [expenseDate, setExpenseDate] = useState(getTorontoDateString());
     const [paymentMethod, setPaymentMethod] = useState("credit_card"); // Default to credit card
     const [supplierId, setSupplierId] = useState(""); // Selected supplier ID
     const [customVendor, setCustomVendor] = useState(""); // Custom vendor name if not from list
@@ -188,10 +191,14 @@ export default function AddExpenseModal({
             }
 
             // Prepare expense data for work order callback
+            // Include all fields that mirror one_time_costs schema
             const expenseData = {
                 cost_name: expenseName,
                 amount: parseFloat(totalAmount),
                 subtotal: parseFloat(subtotal),
+                tax_amount: parseFloat(taxAmount) || 0,
+                tax_included: includeTax,
+                payment_method: paymentMethod,
                 category,
                 vendor: supplierId === 'custom' 
                     ? customVendor.trim() || null 
@@ -200,6 +207,7 @@ export default function AddExpenseModal({
                 parts_description: partsDescription.trim() || null,
                 warranty: warranty.trim() || null,
                 notes: notes.trim() || null,
+                cost_date: expenseDate, // Date expense was incurred
             };
 
             // Call work order callback if provided (before resetting form)
@@ -215,7 +223,7 @@ export default function AddExpenseModal({
             setIncludeTax(true);
             setLastEditedField('subtotal');
             setCategory("Parts/Inventory");
-            setExpenseDate(new Date().toISOString().split("T")[0]);
+            setExpenseDate(getTorontoDateString());
             setPaymentMethod("credit_card");
             setSupplierId("");
             setCustomVendor("");

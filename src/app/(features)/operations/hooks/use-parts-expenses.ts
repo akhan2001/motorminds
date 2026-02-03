@@ -3,6 +3,14 @@
 import { useQuery } from '@tanstack/react-query'
 import type { UnifiedExpenseItem } from '@/app/api/operations/expenses/route'
 
+export interface ExpenseFilters {
+    search?: string
+    startDate?: string  // YYYY-MM-DD format
+    endDate?: string    // YYYY-MM-DD format
+    supplier?: string
+    itemType?: 'part' | 'expense' | 'general_expense' | ''
+}
+
 export interface UnifiedExpensesResponse {
     data: UnifiedExpenseItem[]
     count: number
@@ -20,10 +28,11 @@ export function usePartsAndExpenses(
     shopId: string | null, 
     page: number = 1, 
     pageSize: number = 50,
-    includeGeneralExpenses: boolean = false
+    includeGeneralExpenses: boolean = false,
+    filters: ExpenseFilters = {}
 ) {
     return useQuery<UnifiedExpensesResponse>({
-        queryKey: ['parts-expenses', shopId, page, pageSize, includeGeneralExpenses],
+        queryKey: ['parts-expenses', shopId, page, pageSize, includeGeneralExpenses, filters],
         queryFn: async () => {
             if (!shopId) {
                 throw new Error('Shop ID is required')
@@ -35,6 +44,13 @@ export function usePartsAndExpenses(
                 pageSize: pageSize.toString(),
                 includeGeneral: includeGeneralExpenses.toString()
             })
+            
+            // Add filter params if they have values
+            if (filters.search) params.set('search', filters.search)
+            if (filters.startDate) params.set('startDate', filters.startDate)
+            if (filters.endDate) params.set('endDate', filters.endDate)
+            if (filters.supplier) params.set('supplier', filters.supplier)
+            if (filters.itemType) params.set('itemType', filters.itemType)
             
             const response = await fetch(`/api/operations/expenses?${params}`)
             

@@ -2,13 +2,10 @@ import React from 'react'
 import { Document, Page, Text, View, Image } from '@react-pdf/renderer'
 import type { InvoicePDFData } from '../../../types/invoice-pdf'
 import { modernTemplateStyles } from './modern-template-styles'
+import { formatCurrency } from '@/lib/utils/currency'
 
 export const ModernTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
     const styles = modernTemplateStyles
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
-    }
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-CA', {
@@ -27,8 +24,8 @@ export const ModernTemplate: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
         return phone
     }
 
-    // Calculate totals - only active items
-    const activeItems = invoice.invoice_items?.filter(item => (item as any).active !== false) || []
+    // Calculate totals - only active items, exclude expenses (tracking only)
+    const activeItems = invoice.invoice_items?.filter(item => (item as any).active !== false && (item as any).item_type !== 'expense') || []
 
     // Calculate subtotal - discounts subtract from subtotal, all other items add
     const subtotal = activeItems.reduce((sum, item) => {

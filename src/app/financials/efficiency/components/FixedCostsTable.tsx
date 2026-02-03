@@ -12,12 +12,7 @@ import { MoreVertical, Calendar, RefreshCw } from "lucide-react";
 import EditFixedCostModal from "./EditFixedCostModal";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { formatDate } from "@/app/financials/utils/format-date";
-
-const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-    }).format(value || 0);
+import { formatCurrency } from "@/lib/utils/currency";
 
 const FREQUENCY_COLORS: Record<string, string> = {
     daily: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",

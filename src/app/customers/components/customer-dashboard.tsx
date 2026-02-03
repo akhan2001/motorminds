@@ -1,35 +1,12 @@
 import { CustomerTable } from "./customer-table";
-import { OrganizationCustomerTable } from "./organization-customer-table";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CustomerForm } from "./customer-form";
 
 export function CustomerDashboard({ shopId, user }: { shopId: string, user: any }) {
     const [isAdding, setIsAdding] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [useOrganizationTable, setUseOrganizationTable] = useState(false);
-
-    // Check if user has organization access (simple check)
-    useEffect(() => {
-        const checkOrganizationAccess = async () => {
-            if (!user?.id) return;
-            
-            try {
-                // Simple API call to check if user can access organization customers
-                const res = await fetch('/api/customers/organization-check');
-                if (res.ok) {
-                    const data = await res.json();
-                    setUseOrganizationTable(data.hasOrganizationAccess);
-                }
-            } catch (error) {
-                // If check fails, default to regular table (safe fallback)
-                setUseOrganizationTable(false);
-            }
-        };
-        
-        checkOrganizationAccess();
-    }, [user?.id]);
 
     const handleCustomerAdded = () => {
         setIsAdding(false);
@@ -54,22 +31,13 @@ export function CustomerDashboard({ shopId, user }: { shopId: string, user: any 
                     </div>
                 </div>
                 
-                {/* Use OrganizationCustomerTable for MSO shops, regular CustomerTable for individual shops */}
-                {useOrganizationTable ? (
-                    <OrganizationCustomerTable
-                        shopId={shopId}
-                        user={user}
-                        key={refreshKey}
-                        refreshIndex={refreshKey}
-                    />
-                ) : (
-                    <CustomerTable
-                        shopId={shopId}
-                        user={user}
-                        key={refreshKey}
-                        refreshIndex={refreshKey}
-                    />
-                )}
+                {/* Single unified CustomerTable - adapts based on user's access scope */}
+                <CustomerTable
+                    shopId={shopId}
+                    user={user}
+                    key={refreshKey}
+                    refreshIndex={refreshKey}
+                />
 
                 {/* Add Customer Form */}
                 {isAdding && (

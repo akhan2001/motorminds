@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/utils/currency";
+
 interface SummaryCardProps {
     title: string;
     value: number;
@@ -9,10 +11,7 @@ export default function SummaryCard({ title, value, isCurrency = false, unit }: 
 
     let formattedValue = '';
     if (isCurrency) {
-        formattedValue = new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-          }).format(value || 0);
+        formattedValue = formatCurrency(value || 0);
     } else if (unit) {
         formattedValue = `${value.toFixed(2)}${unit}`;
     } else {

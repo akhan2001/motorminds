@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
     const shopId = searchParams.get("shop_id");
     const startDateStr = searchParams.get("start_date");
     const endDateStr = searchParams.get("end_date");
+    const includeArchived = searchParams.get("include_archived") === "true";
 
     if (!shopId) {
         return NextResponse.json({ error: "shop_id is required" }, { status: 400 });
@@ -19,6 +20,11 @@ export async function GET(req: NextRequest) {
             .from("one_time_costs")
             .select("*")
             .eq("shop_id", shopId);
+
+        // By default, exclude archived expenses unless specifically requested
+        if (!includeArchived) {
+            query = query.or('archived.is.null,archived.eq.false');
+        }
 
         if (startDateStr && endDateStr) {
             query = query.gte("cost_date", startDateStr).lte("cost_date", endDateStr);
@@ -92,21 +98,66 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// DELETE remove a one-time cost by id
+// DELETE - archive a one-time cost by id (soft delete)
 export async function DELETE(req: NextRequest) {
     try {
         const supabase = await createClient();
         const body = await req.json();
-        const { id } = body;
+        const { id, permanent = false } = body;
 
         if (!id) {
             return NextResponse.json({ error: "id is required" }, { status: 400 });
         }
 
-        const { error } = await supabase.from("one_time_costs").delete().eq("id", id);
-        if (error) throw error;
+        if (permanent) {
+            // Permanent delete (only for admin use)
+            const { error } = await supabase.from("one_time_costs").delete().eq("id", id);
+            if (error) throw error;
+        } else {
+            // Soft delete - archive the expense
+            const { error } = await supabase
+                .from("one_time_costs")
+                .update({ 
+                    archived: true,
+                    archived_at: new Date().toISOString()
+                })
+                .eq("id", id);
+            if (error) throw error;
+        }
 
         return NextResponse.json({ success: true }, { status: 200 });
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+// PATCH restore an archived expense
+export async function PATCH(req: NextRequest) {
+    try {
+        const supabase = await createClient();
+        const body = await req.json();
+        const { id, action } = body;
+
+        if (!id) {
+            return NextResponse.json({ error: "id is required" }, { status: 400 });
+        }
+
+        if (action === 'restore') {
+            const { data, error } = await supabase
+                .from("one_time_costs")
+                .update({ 
+                    archived: false,
+                    archived_at: null
+                })
+                .eq("id", id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return NextResponse.json(data, { status: 200 });
+        }
+
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

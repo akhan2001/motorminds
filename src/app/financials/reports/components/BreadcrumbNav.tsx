@@ -10,7 +10,7 @@ export default function BreadcrumbNav() {
                 Financials
             </Link>
             <ChevronRight className="w-4 h-4 mx-1 text-muted-foreground" />
-            <span className="font-semibold text-foreground">Reports</span>
+            <span className="font-semibold text-foreground">Expense Reports</span>
         </nav>
     );
 } 

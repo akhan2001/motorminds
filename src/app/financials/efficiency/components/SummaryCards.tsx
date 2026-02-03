@@ -1,6 +1,7 @@
 "use client";
 
 import { DollarSign, TrendingDown, TrendingUp } from "lucide-react";
+import { formatCurrency } from "@/lib/utils/currency";
 
 interface EfficiencyData {
     totalRevenue: number;
@@ -26,7 +27,7 @@ const SummaryCard = ({ title, value, icon, onClick, className }: SummaryCardProp
             {icon}
         </div>
         <p className={`text-3xl font-bold mt-2 ${className || 'text-foreground'}`}>
-            {value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+            {formatCurrency(value)}
         </p>
     </div>
 );

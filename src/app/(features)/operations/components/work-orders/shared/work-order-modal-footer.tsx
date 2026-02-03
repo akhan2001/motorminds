@@ -91,7 +91,7 @@ export const WorkOrderModalFooter: React.FC<WorkOrderModalFooterProps> = ({
                         >
                             {isSubmitting
                                 ? (isCreating ? 'Creating...' : 'Saving...')
-                                : (isCreating ? 'Create Work Order' : 'Save Changes')
+                                : (isCreating ? 'Create Work Order' : 'Save & Close')
                             }
                         </Button>
                     </>

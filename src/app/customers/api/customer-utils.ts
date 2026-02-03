@@ -141,6 +141,13 @@ export async function createNewCustomer(customer: any, shopId: string) {
             console.log('Customer with this phone number already exists:', existingCustomers[0]);
             return existingCustomers[0];
         }
+
+        // Fetch shop's organization_id to properly denormalize for MSO access
+        const { data: shopData } = await supabase
+            .from('shops')
+            .select('organization_id')
+            .eq('id', shopId)
+            .single();
         
         // If no existing customer, create a new one
         const { data, error } = await supabase
@@ -151,7 +158,8 @@ export async function createNewCustomer(customer: any, shopId: string) {
                 customer_phone: customer.customer_phone,
                 customer_address: customer.customer_address || "",
                 created_at: new Date().toISOString(),
-                shop_id: shopId
+                shop_id: shopId,
+                organization_id: shopData?.organization_id || null // Denormalize org ID for MSO access
             })
             .select();
 

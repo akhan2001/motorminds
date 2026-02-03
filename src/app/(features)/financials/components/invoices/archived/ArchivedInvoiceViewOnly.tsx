@@ -13,6 +13,7 @@ import {
 import { useArchivedInvoice } from '../../../hooks/use-archived-invoices'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 
 interface ArchivedInvoiceViewOnlyProps {
     invoiceId: string
@@ -24,10 +25,6 @@ const ArchivedInvoiceViewOnly: React.FC<ArchivedInvoiceViewOnlyProps> = ({ invoi
 
     const handleDownload = () => {
         toast.info('PDF download coming soon')
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
     }
 
     const formatPhoneNumber = (phone: string | null) => {

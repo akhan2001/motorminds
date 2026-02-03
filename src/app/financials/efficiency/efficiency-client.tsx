@@ -74,6 +74,7 @@ export default function EfficiencyClient() {
 	const [dialogTitle, setDialogTitle] = useState("");
 	const [dialogData, setDialogData] = useState<any[]>([]);
 	const [dialogColumns, setDialogColumns] = useState<any[]>([]);
+	const [showArchivedExpenses, setShowArchivedExpenses] = useState(false);
 
 	const handleTimeRangeChange = (newValue: string) => {
 		router.push(`/financials/efficiency?timeRange=${newValue}`);
@@ -186,7 +187,7 @@ export default function EfficiencyClient() {
 
 			const [fixedCostsRes, oneTimeCostsRes, efficiencyRes] = await Promise.all([
 				fetch(`/api/financials/efficiency?shop_id=${shopId}`),
-				fetch(`/api/financials/one-time?shop_id=${shopId}`),
+				fetch(`/api/financials/one-time?shop_id=${shopId}&include_archived=true`),
 				fetch(`/api/financials/efficiency?shop_id=${shopId}&start_date=${start}&end_date=${end}`)
 			]);
 
@@ -299,7 +300,13 @@ export default function EfficiencyClient() {
 								</AddExpenseModal>
 							)}
 						</div>
-						<ExpensesTable expenses={expenses} onExpenseUpdated={() => fetchData(timeRange)} onExpenseDeleted={() => fetchData(timeRange)} />
+						<ExpensesTable 
+							expenses={expenses} 
+							onExpenseUpdated={() => fetchData(timeRange)} 
+							onExpenseDeleted={() => fetchData(timeRange)}
+							showArchived={showArchivedExpenses}
+							onToggleArchived={() => setShowArchivedExpenses(!showArchivedExpenses)}
+						/>
 					</div>
 				</div>
 			</main>

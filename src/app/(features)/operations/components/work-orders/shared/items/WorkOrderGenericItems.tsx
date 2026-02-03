@@ -1,11 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, DollarSign, Tag, Package as PackageIcon } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription
+} from "@/components/ui/dialog";
+import { Plus, Trash2, DollarSign, Tag, Package as PackageIcon, Save, Loader2, BookmarkPlus } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
 import { WorkOrderItem, WorkOrderItemCreateData } from "../../../../types/work-order-items";
@@ -13,6 +22,7 @@ import { WorkOrderItemsService } from "../../../../lib/work-order-items-service"
 import { TemplateDropdown } from "../../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
 import { useAuth } from "../../../../hooks/use-auth";
+import { useCreateWorkOrderItemTemplate } from "../../../../hooks/use-work-order-item-templates";
 
 interface GenericFormItem {
     id: string;
@@ -53,6 +63,9 @@ export function WorkOrderGenericItems({
 }: WorkOrderGenericItemsProps) {
 
     const { shopId } = useAuth();
+    const createTemplateMutation = useCreateWorkOrderItemTemplate();
+    const [saveTemplateItem, setSaveTemplateItem] = useState<GenericFormItem | null>(null);
+    const [templateName, setTemplateName] = useState('');
 
     // Helper function to convert form item to service format
     const convertToWorkOrderItem = (item: GenericFormItem): WorkOrderItemCreateData => ({
@@ -156,6 +169,56 @@ export function WorkOrderGenericItems({
         }));
     };
 
+    // Open save as template dialog
+    const openSaveTemplateDialog = (item: GenericFormItem) => {
+        setSaveTemplateItem(item);
+        setTemplateName(item.description || '');
+    };
+
+    // Close save as template dialog
+    const closeSaveTemplateDialog = () => {
+        setSaveTemplateItem(null);
+        setTemplateName('');
+    };
+
+    // Handle save as template
+    const handleSaveAsTemplate = async () => {
+        if (!saveTemplateItem || !shopId) return;
+
+        // Validate required fields
+        if (!templateName.trim()) {
+            toast.error('Template name is required');
+            return;
+        }
+
+        if (saveTemplateItem.unit_price <= 0) {
+            toast.error('Unit price must be greater than 0');
+            return;
+        }
+
+        if (saveTemplateItem.quantity <= 0) {
+            toast.error('Quantity must be greater than 0');
+            return;
+        }
+
+        try {
+            await createTemplateMutation.mutateAsync({
+                shop_id: shopId,
+                item_type: itemType,
+                name: templateName.trim(),
+                description: saveTemplateItem.notes || null,
+                quantity: saveTemplateItem.quantity,
+                unit_price: saveTemplateItem.unit_price,
+                unit_cost: saveTemplateItem.unit_cost || null,
+                category: saveTemplateItem.category || null,
+                labor_hours: saveTemplateItem.labor_hours || null,
+            });
+            closeSaveTemplateDialog();
+        } catch (error) {
+            // Error is handled by the mutation hook
+        }
+    };
+
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -170,24 +233,36 @@ export function WorkOrderGenericItems({
                     )}
                 </div>
                 {/* Only show Add button if editing and not read-only */}
-                {isEditing && !readOnly && (
+                {/* {isEditing && !readOnly && (
                     <Button
                         type="button"
                         onClick={addItem}
                         variant="outline"
                         size="sm"
-                        className="border-red-300 dark:border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                        className="border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white"
                     >
                         <Plus className="h-4 w-4 mr-1" />
                         Add {title}
                     </Button>
-                )}
+                )} */}
             </div>
 
             {items.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border rounded-lg bg-slate-50 dark:bg-card">
-                    No {itemType} items added yet
-                </div>
+                isEditing && !readOnly ? (
+                    <Button
+                        type="button"
+                        onClick={addItem}
+                        variant="outline"
+                        className="group w-full py-6 border border-dashed border-border rounded-lg bg-transparent hover:bg-transparent hover:border-solid hover:border-blue-500/50 text-muted-foreground text-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                    >
+                        <Plus className="h-4 w-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                        Add {title}
+                    </Button>
+                ) : (
+                    <div className="text-center py-6 text-muted-foreground text-sm border border-dashed border-border rounded-lg">
+                        No {itemType} items added yet
+                    </div>
+                )
             ) : (
                 <div className="space-y-3">
                     {items.map((item, index) => (
@@ -204,15 +279,30 @@ export function WorkOrderGenericItems({
                                     <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
                                 </div>
                                 {isEditing && (
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeItem(item.id)}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-border text-muted-foreground hover:text-foreground hover:bg-muted h-8 px-3"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        {/* Save as Template Button */}
+                                        {!readOnly && item.description && item.unit_price > 0 && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => openSaveTemplateDialog(item)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-green-300 dark:border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 h-8 px-3"
+                                            >
+                                                <BookmarkPlus className="h-4 w-4 mr-1" />
+                                                Save Template
+                                            </Button>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            onClick={() => removeItem(item.id)}
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-border text-muted-foreground hover:text-foreground hover:bg-muted h-8 px-3"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
 
@@ -227,11 +317,8 @@ export function WorkOrderGenericItems({
                                         onTemplateSelect={async (template: WorkOrderItemTemplate) => {
                                             if (readOnly) return; // Don't allow template selection in read-only mode
                                             // Create updated item with template data
-                                            let unitPrice = template.unit_price;
-                                            // For discounts, ensure the unit price is negative
-                                            if (itemType === 'discount' && unitPrice > 0) {
-                                                unitPrice = -unitPrice;
-                                            }
+                                            // For discounts, store as positive values (will be subtracted in calculations)
+                                            let unitPrice = Math.abs(template.unit_price || 0);
 
                                             const updatedItem = {
                                                 ...item,
@@ -304,7 +391,11 @@ export function WorkOrderGenericItems({
                                         type="number"
                                         value={item.unit_price === 0 ? '0' : item.unit_price || ''}
                                         onChange={(e) => {
-                                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                            let value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                            // For discounts, store as positive values (will be subtracted in calculations)
+                                            if (itemType === 'discount') {
+                                                value = Math.abs(value);
+                                            }
                                             updateItem(item.id, 'unit_price', value);
                                         }}
                                         min={itemType === 'discount' ? undefined : "0"}
@@ -397,6 +488,114 @@ export function WorkOrderGenericItems({
                     ))}
                 </div>
             )}
+
+            {/* Save as Template Dialog */}
+            <Dialog open={!!saveTemplateItem} onOpenChange={(open) => !open && closeSaveTemplateDialog()}>
+                <DialogContent className="max-w-md bg-slate-50 dark:bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3 text-foreground">
+                            <div className="flex items-center justify-center w-10 h-10 bg-green-50 dark:bg-green-500/10 rounded-full">
+                                <BookmarkPlus className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            Save as Template
+                        </DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                            Save this {itemType} item as a template for future use.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {saveTemplateItem && (
+                        <div className="space-y-4">
+                            {/* Template Name */}
+                            <div className="space-y-2">
+                                <Label htmlFor="template-name" className="text-foreground">
+                                    Template Name *
+                                </Label>
+                                <Input
+                                    id="template-name"
+                                    value={templateName}
+                                    onChange={(e) => setTemplateName(e.target.value)}
+                                    placeholder="e.g., 10% Loyalty Discount"
+                                    className="bg-white dark:bg-background border-border text-foreground"
+                                    autoFocus
+                                />
+                            </div>
+
+                            {/* Preview of template values */}
+                            <div className="bg-white dark:bg-background rounded-lg p-4 border border-border space-y-2">
+                                <h4 className="text-sm font-medium text-foreground">Template Values</h4>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span className="text-muted-foreground">Type:</span>
+                                        <span className="ml-2 text-foreground capitalize">{itemType}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Quantity:</span>
+                                        <span className="ml-2 text-foreground">{saveTemplateItem.quantity}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Unit Price:</span>
+                                        <span className="ml-2 text-foreground">${saveTemplateItem.unit_price.toFixed(2)}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Total:</span>
+                                        <span className="ml-2 text-foreground font-medium">${saveTemplateItem.total_price.toFixed(2)}</span>
+                                    </div>
+                                    {saveTemplateItem.category && (
+                                        <div className="col-span-2">
+                                            <span className="text-muted-foreground">Category:</span>
+                                            <span className="ml-2 text-foreground">{saveTemplateItem.category}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Validation Messages */}
+                            {(saveTemplateItem.unit_price <= 0 || saveTemplateItem.quantity <= 0) && (
+                                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-300 dark:border-orange-500/20 rounded-lg p-3">
+                                    <p className="text-orange-600 dark:text-orange-300 text-sm">
+                                        Please ensure the item has a valid quantity and unit price before saving as a template.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={closeSaveTemplateDialog}
+                            disabled={createTemplateMutation.isPending}
+                            className="border-border"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveAsTemplate}
+                            disabled={
+                                createTemplateMutation.isPending || 
+                                !templateName.trim() ||
+                                !saveTemplateItem ||
+                                saveTemplateItem.unit_price <= 0 ||
+                                saveTemplateItem.quantity <= 0
+                            }
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                            {createTemplateMutation.isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save Template
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

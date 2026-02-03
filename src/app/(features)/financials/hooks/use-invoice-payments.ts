@@ -34,21 +34,34 @@ export function useRemoveInvoicePayment() {
     return useMutation({
         mutationFn: async ({
             invoiceNumber,
-            paymentId
+            paymentId,
+            deletionReason
         }: {
             invoiceNumber: string
             paymentId: string
+            deletionReason?: string
         }) => {
-            return InvoicePaymentService.removePayment(invoiceNumber, paymentId)
+            return InvoicePaymentService.removePayment(invoiceNumber, paymentId, deletionReason)
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['invoice', variables.invoiceNumber] })
-            queryClient.invalidateQueries({ queryKey: ['invoices'] })
-            queryClient.invalidateQueries({ queryKey: ['invoice-stats'] })
-            toast.success('Payment removed successfully')
+            // Invalidate all invoice-related queries to ensure UI updates
+            // Use partial matching to catch all variations of the invoice query key
+            queryClient.invalidateQueries({ 
+                predicate: (query) => {
+                    const queryKey = query.queryKey
+                    return (
+                        queryKey[0] === 'invoice' && queryKey[1] === variables.invoiceNumber
+                    ) || (
+                        queryKey[0] === 'invoices'
+                    ) || (
+                        queryKey[0] === 'invoice-stats'
+                    )
+                }
+            })
+            toast.success('Payment archived successfully')
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to remove payment')
+            toast.error(error.message || 'Failed to archive payment')
         }
     })
 }
