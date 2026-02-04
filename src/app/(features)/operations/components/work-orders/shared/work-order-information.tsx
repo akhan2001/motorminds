@@ -210,7 +210,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     </div>
                     
                     <div className="space-y-1.5">
-                        <Label className="text-muted-foreground dark:text-gray-400 font-semibold">Customer Requests</Label>
+                        <Label className="text-base font-semibold text-foreground dark:text-white">Customer Requests</Label>
                         <textarea
                             value={description}
                             onChange={(e) => {
