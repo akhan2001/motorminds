@@ -12,11 +12,12 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils/currency'
-import { formatDateOnly } from '@/lib/utils/date'
+import { getTorontoDateString } from '@/lib/utils/date'
 import { Receipt, Wallet, FileText } from 'lucide-react'
 import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView'
 import type { ExpenseItem } from '../types/expenses'
 import { ExpenseDetailDialog } from './ExpenseDetailDialog'
+import EditExpenseModal from '@/app/financials/efficiency/components/EditExpenseModal'
 
 interface ExpensesTableProps {
     items: ExpenseItem[]
@@ -31,6 +32,7 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated, shopI
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
     const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null)
     const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
+    const [expenseToEdit, setExpenseToEdit] = useState<ExpenseItem | null>(null)
 
     const handleRowClick = (item: ExpenseItem) => {
         setSelectedExpense(item)
@@ -234,7 +236,7 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated, shopI
                                     </TableCell>
                                     <TableCell>
                                         <div className="text-muted-foreground text-sm">
-                                            {formatDateOnly(item.expense_date)}
+                                            {item.expense_date ? getTorontoDateString(new Date(item.expense_date.substring(0, 10) + 'T12:00:00')) : '-'}
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -288,8 +290,20 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated, shopI
                 isOpen={isDetailDialogOpen}
                 onClose={handleCloseDetailDialog}
                 onViewWorkOrder={handleViewWorkOrder}
+                onEdit={selectedExpense?.source_type === 'general' ? handleEditFromDetail : undefined}
                 shopId={shopId}
             />
+
+            {/* Edit General Expense Modal (opened from detail dialog) */}
+            {expenseToEdit && (
+                <EditExpenseModal
+                    expense={expenseToEdit}
+                    onExpenseUpdated={handleEditModalClose}
+                    onExpenseDeleted={handleEditModalClose}
+                    open={!!expenseToEdit}
+                    onOpenChange={(open) => !open && handleEditModalClose()}
+                />
+            )}
 
             {/* Work Order Quick View */}
             {selectedWorkOrderId && (
