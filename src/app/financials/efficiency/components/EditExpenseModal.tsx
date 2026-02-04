@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import SupplierDropdownSelector from "@/app/(features)/suppliers/components/supplier-dropdown-selector";
 import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
+import { useUpdateExpense, useDeleteExpense } from "@/app/(features)/expenses/hooks/use-expenses";
 
 interface EditExpenseModalProps {
     expense: any;
@@ -70,6 +71,11 @@ const EXPENSE_CATEGORIES = [
 
 const HST_RATE = 0.13; // 13% HST
 
+/** Unified expenses table uses description, expense_date, warranty_period; legacy one-time uses cost_name, cost_date, warranty */
+function isUnifiedExpense(expense: any): boolean {
+    return !!(expense && "expense_date" in expense && "source_type" in expense);
+}
+
 export default function EditExpenseModal({
     expense,
     onExpenseUpdated,
@@ -88,6 +94,8 @@ export default function EditExpenseModal({
         : setInternalOpen;
 
     const { suppliers } = useSuppliers();
+    const updateExpenseMutation = useUpdateExpense();
+    const deleteExpenseMutation = useDeleteExpense();
 
     // Form state
     const [expenseName, setExpenseName] = useState("");
@@ -156,34 +164,39 @@ export default function EditExpenseModal({
     // Load expense data when modal opens or expense changes
     useEffect(() => {
         if (expense && isOpen) {
-            setExpenseName(expense.cost_name || "");
+            const unified = isUnifiedExpense(expense);
+            setExpenseName(unified ? (expense.description ?? "") : (expense.cost_name ?? ""));
             
-            // Handle amount/subtotal - if subtotal exists use it, otherwise derive from amount
             const storedSubtotal = expense.subtotal;
-            const storedTaxAmount = expense.tax_amount;
             const storedTaxIncluded = expense.tax_included;
+            const totalVal = unified ? (expense.total ?? 0) : parseFloat(expense.amount);
             
             if (storedSubtotal !== undefined && storedSubtotal !== null) {
                 setSubtotal(String(storedSubtotal));
                 setIncludeTax(storedTaxIncluded ?? true);
+                setTaxAmount(String(expense.tax_amount ?? 0));
+                setTotalAmount(String(unified ? (expense.total ?? 0) : (expense.amount ?? 0)));
             } else {
-                // Legacy data - amount is total, reverse calculate subtotal
-                const total = parseFloat(expense.amount) || 0;
+                const total = parseFloat(String(totalVal)) || 0;
                 if (storedTaxIncluded !== false && total > 0) {
                     const sub = total / (1 + HST_RATE);
                     setSubtotal(sub.toFixed(2));
                     setIncludeTax(true);
+                    setTaxAmount((sub * HST_RATE).toFixed(2));
+                    setTotalAmount(total.toFixed(2));
                 } else {
                     setSubtotal(String(total));
                     setIncludeTax(false);
+                    setTaxAmount("0.00");
+                    setTotalAmount(String(total));
                 }
             }
             
             setCategory(expense.category || "Other");
-            setExpenseDate(expense.cost_date ? new Date(expense.cost_date).toISOString().split("T")[0] : "");
+            const dateVal = unified ? expense.expense_date : expense.cost_date;
+            setExpenseDate(dateVal ? new Date(dateVal).toISOString().split("T")[0] : "");
             setPaymentMethod(expense.payment_method || "credit_card");
             
-            // Determine if vendor is from supplier list or custom
             const vendorName = expense.vendor || "";
             const matchingSupplier = suppliers.find(s => s.name === vendorName);
             if (matchingSupplier) {
@@ -199,7 +212,7 @@ export default function EditExpenseModal({
             
             setInvoiceNumber(expense.invoice_number || "");
             setPartsDescription(expense.parts_description || "");
-            setWarranty(expense.warranty || "");
+            setWarranty(unified ? (expense.warranty_period ?? "") : (expense.warranty ?? ""));
             setNotes(expense.notes || "");
         }
     }, [expense, isOpen, suppliers]);
@@ -213,33 +226,55 @@ export default function EditExpenseModal({
         setLoading(true);
 
         try {
-            const response = await fetch("/api/financials/one-time", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id: expense.id,
-                    cost_name: expenseName,
-                    amount: parseFloat(totalAmount),
-                    subtotal: parseFloat(subtotal),
-                    tax_amount: parseFloat(taxAmount) || 0,
-                    tax_included: includeTax,
-                    category,
-                    cost_date: expenseDate,
-                    payment_method: paymentMethod,
-                    vendor: supplierId === 'custom' 
-                        ? customVendor.trim() || null 
-                        : suppliers.find(s => s.id === supplierId)?.name || null,
-                    supplier_id: supplierId !== 'custom' ? supplierId || null : null,
-                    invoice_number: invoiceNumber.trim() || null,
-                    parts_description: partsDescription.trim() || null,
-                    warranty: warranty.trim() || null,
-                    notes: notes.trim() || null,
-                }),
-            });
+            const vendor = supplierId === "custom"
+                ? customVendor.trim() || null
+                : suppliers.find((s) => s.id === supplierId)?.name || null;
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Failed to update expense");
+            if (isUnifiedExpense(expense)) {
+                await updateExpenseMutation.mutateAsync({
+                    id: expense.id,
+                    data: {
+                        description: expenseName,
+                        category,
+                        subtotal: parseFloat(subtotal),
+                        tax_amount: parseFloat(taxAmount) || 0,
+                        tax_included: includeTax,
+                        total: parseFloat(totalAmount),
+                        expense_date: expenseDate,
+                        payment_method: paymentMethod,
+                        vendor,
+                        invoice_number: invoiceNumber.trim() || null,
+                        parts_description: partsDescription.trim() || null,
+                        warranty_period: warranty.trim() || null,
+                        notes: notes.trim() || null,
+                    },
+                });
+            } else {
+                const response = await fetch("/api/financials/one-time", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        id: expense.id,
+                        cost_name: expenseName,
+                        amount: parseFloat(totalAmount),
+                        subtotal: parseFloat(subtotal),
+                        tax_amount: parseFloat(taxAmount) || 0,
+                        tax_included: includeTax,
+                        category,
+                        cost_date: expenseDate,
+                        payment_method: paymentMethod,
+                        vendor,
+                        supplier_id: supplierId !== "custom" ? supplierId || null : null,
+                        invoice_number: invoiceNumber.trim() || null,
+                        parts_description: partsDescription.trim() || null,
+                        warranty: warranty.trim() || null,
+                        notes: notes.trim() || null,
+                    }),
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Failed to update expense");
+                }
             }
 
             onExpenseUpdated();
@@ -258,17 +293,19 @@ export default function EditExpenseModal({
         setError("");
 
         try {
-            const response = await fetch("/api/financials/one-time", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: expense.id }),
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Failed to delete expense");
+            if (isUnifiedExpense(expense)) {
+                await deleteExpenseMutation.mutateAsync(expense.id);
+            } else {
+                const response = await fetch("/api/financials/one-time", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: expense.id }),
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || "Failed to delete expense");
+                }
             }
-
             setShowDeleteConfirm(false);
             setIsOpen(false);
             onExpenseDeleted?.();
@@ -514,7 +551,7 @@ export default function EditExpenseModal({
                         type="button"
                         variant="destructive"
                         onClick={() => setShowDeleteConfirm(true)}
-                        disabled={loading || deleting}
+                        disabled={loading || deleting || updateExpenseMutation.isPending}
                         className="bg-red-600 hover:bg-red-700"
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -530,10 +567,10 @@ export default function EditExpenseModal({
                         </Button>
                         <Button
                             onClick={handleSubmit}
-                            disabled={loading || deleting}
+                            disabled={loading || deleting || updateExpenseMutation.isPending}
                             className="bg-green-600 hover:bg-green-700 text-white"
                         >
-                            {loading ? "Saving..." : "Save Changes"}
+                            {loading || updateExpenseMutation.isPending ? "Saving..." : "Save Changes"}
                         </Button>
                     </div>
                 </DialogFooter>
@@ -551,16 +588,16 @@ export default function EditExpenseModal({
                     <AlertDialogFooter>
                         <AlertDialogCancel 
                             className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                            disabled={deleting}
+                            disabled={deleting || deleteExpenseMutation.isPending}
                         >
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            disabled={deleting}
+                            disabled={deleting || deleteExpenseMutation.isPending}
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >
-                            {deleting ? "Deleting..." : "Delete"}
+                            {deleting || deleteExpenseMutation.isPending ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

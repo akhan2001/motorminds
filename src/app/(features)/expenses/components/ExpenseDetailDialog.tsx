@@ -41,6 +41,7 @@ import {
     Loader2,
     Undo2,
     CheckCircle2,
+    Pencil,
 } from 'lucide-react'
 
 interface ExpenseDetailDialogProps {

@@ -56,6 +56,17 @@ export function ExpensesTable({ items, isLoading, error, onExpenseUpdated, shopI
         setIsQuickViewOpen(true)
     }
 
+    const handleEditFromDetail = (expense: ExpenseItem) => {
+        setIsDetailDialogOpen(false)
+        setExpenseToEdit(expense)
+        setSelectedExpense(null)
+    }
+
+    const handleEditModalClose = () => {
+        setExpenseToEdit(null)
+        onExpenseUpdated?.()
+    }
+
     const getSourceTypeIcon = (sourceType: ExpenseItem['source_type']) => {
         if (sourceType === 'work_order') {
             return <Receipt className="h-4 w-4 text-orange-600 dark:text-orange-400" />
