@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { MessageCircle } from 'lucide-react'
 import { ChatHeader } from './ChatHeader'
@@ -118,15 +117,17 @@ export function ChatArea({
     // Empty state
     if (!selectedPhone) {
         return (
-            <Card className="bg-slate-50 dark:bg-card border-border h-full">
-                <CardContent className="flex-1 flex items-center justify-center h-full">
-                    <div className="text-center">
-                        <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                        <h3 className="text-lg font-medium text-foreground mb-2">
-                            Select a Conversation
+            <Card className="bg-card border border-border rounded-xl h-full flex flex-col">
+                <CardContent className="flex-1 flex items-center justify-center min-h-[320px] p-8">
+                    <div className="text-center max-w-sm">
+                        <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                            <MessageCircle className="h-7 w-7 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-base font-semibold text-foreground mb-1">
+                            Select a conversation
                         </h3>
-                        <p className="text-muted-foreground">
-                            Choose a conversation from the sidebar to start messaging
+                        <p className="text-sm text-muted-foreground">
+                            Choose a conversation from the list to view and send messages.
                         </p>
                     </div>
                 </CardContent>
@@ -135,32 +136,41 @@ export function ChatArea({
     }
 
     return (
-        <Card className="bg-slate-50 dark:bg-card border-border h-full flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex-shrink-0">
-                <ChatHeader
-                    selectedPhone={selectedPhone}
-                    customer={selectedCustomer}
-                    conversations={conversations}
-                    onCustomerClick={onCustomerClick}
-                />
-                <Separator className="bg-border" />
+        <Card className="bg-card border border-border rounded-xl h-full flex flex-col overflow-hidden">
+            <ChatHeader
+                selectedPhone={selectedPhone}
+                customer={selectedCustomer}
+                conversations={conversations}
+                onCustomerClick={onCustomerClick}
+            />
+            <Separator className="bg-border" />
+
+            {/* Messages - scrollable area with proper flex */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+                <div className="p-4 space-y-3 max-w-3xl mx-auto">
+                    {isLoadingMessages ? (
+                        <div className="space-y-3 py-4">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="flex justify-start">
+                                    <div className="h-14 w-3/4 max-w-xs rounded-2xl bg-muted animate-pulse" />
+                                </div>
+                            ))}
+                            <div className="flex justify-end">
+                                <div className="h-12 w-48 rounded-2xl bg-muted animate-pulse" />
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {messages.map((message) => (
+                                <MessageBubble key={message.id} message={message} />
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </>
+                    )}
+                </div>
             </div>
 
-            {/* Messages - scrollable area */}
-            <div className="flex-1 min-h-0 overflow-hidden">
-                <ScrollArea className="h-full">
-                    <div className="space-y-4 p-4">
-                        {messages.map((message) => (
-                            <MessageBubble key={message.id} message={message} />
-                        ))}
-                        <div ref={messagesEndRef} />
-                    </div>
-                </ScrollArea>
-            </div>
-
-            {/* Input - fixed at bottom */}
-            <div className="flex-shrink-0 border-t border-border">
+            <div className="flex-shrink-0 border-t border-border bg-muted/30">
                 <MessageInput
                     value={messageText}
                     onChange={setMessageText}

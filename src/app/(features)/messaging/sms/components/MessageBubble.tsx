@@ -81,27 +81,22 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <div className={cn('flex', isOutbound ? 'justify-end' : 'justify-start')}>
             <div
                 className={cn(
-                    'max-w-[70%] p-3 rounded-lg',
+                    'max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl shadow-sm',
                     isOutbound
-                        ? 'bg-red-600 text-white'
-                        : 'bg-muted text-foreground border border-border'
+                        ? 'bg-red-600 text-white rounded-br-md'
+                        : 'bg-muted text-foreground border border-border rounded-bl-md'
                 )}
             >
-                {/* Media attachments */}
                 {hasMedia && (
                     <MessageMedia
                         mediaUrls={message.media_urls}
                         isOutbound={isOutbound}
                     />
                 )}
-
-                {/* Message text */}
                 {message.message_body && (
-                    <p className="text-sm whitespace-pre-wrap">{message.message_body}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.message_body}</p>
                 )}
-
-                {/* Timestamp and type indicator */}
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-1.5 flex items-center gap-1.5 justify-end">
                     {message.message_type === 'mms' && (
                         <Image
                             className={cn(
@@ -112,7 +107,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                     )}
                     <span
                         className={cn(
-                            'text-xs',
+                            'text-[11px]',
                             isOutbound ? 'text-red-100' : 'text-muted-foreground'
                         )}
                     >
