@@ -162,14 +162,6 @@ export function useSmsMessagesRealtime(
                         )
                     }
 
-                    // Show notification for inbound messages
-                    if (newMessage.direction === 'inbound') {
-                        const mediaText = newMessage.media_count > 0
-                            ? ` (${newMessage.media_count} attachment${newMessage.media_count > 1 ? 's' : ''})`
-                            : ''
-                        toast.success(`New message from ${newMessage.from_number}${mediaText}`)
-                    }
-
                     // Invalidate conversations to update recent_message
                     queryClient.invalidateQueries({
                         queryKey: conversationKeys.list(shopId),

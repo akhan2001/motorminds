@@ -53,16 +53,13 @@ export function MessageInput({
     }
 
     return (
-        <div className="p-4">
-            {/* Media preview */}
+        <div className="p-3">
             <MediaUploadPreview
                 media={uploadedMedia}
                 onRemove={onRemoveMedia}
                 isUploading={isUploading}
             />
-
-            <div className="flex gap-2">
-                {/* Hidden file input */}
+            <div className="flex gap-2 items-end">
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -71,36 +68,30 @@ export function MessageInput({
                     multiple
                     className="hidden"
                 />
-
-                {/* Attach button */}
                 <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    className="self-end"
+                    size="icon"
+                    className="h-9 w-9 flex-shrink-0 rounded-lg"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading || uploadedMedia.length >= MEDIA_CONSTRAINTS.MAX_ATTACHMENTS}
                 >
                     <Paperclip className="h-4 w-4" />
                 </Button>
-
-                {/* Message textarea */}
                 <Textarea
                     placeholder="Type your message..."
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="bg-white dark:bg-background border-border text-foreground resize-none flex-1"
-                    rows={2}
+                    className="min-h-[40px] max-h-32 resize-none flex-1 rounded-lg bg-background border-border"
+                    rows={1}
                     disabled={disabled}
                 />
-
-                {/* Send button */}
                 <Button
                     onClick={onSend}
                     disabled={!canSend || isLoading}
-                    size="sm"
-                    className="self-end bg-red-600 hover:bg-red-700 text-white"
+                    size="icon"
+                    className="h-9 w-9 flex-shrink-0 rounded-lg bg-red-600 hover:bg-red-700 text-white"
                 >
                     {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -109,12 +100,9 @@ export function MessageInput({
                     )}
                 </Button>
             </div>
-
-            {/* Helper text */}
-            <p className="text-xs text-muted-foreground mt-1">
-                {uploadedMedia.length > 0 &&
-                    `${uploadedMedia.length} attachment${uploadedMedia.length > 1 ? 's' : ''} • `}
-                Press Enter to send, Shift+Enter for new line
+            <p className="text-[11px] text-muted-foreground mt-1.5 px-1">
+                {uploadedMedia.length > 0 && `${uploadedMedia.length} attachment${uploadedMedia.length > 1 ? 's' : ''}. `}
+                Enter to send, Shift+Enter for new line
             </p>
         </div>
     )
