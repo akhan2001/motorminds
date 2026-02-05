@@ -13,6 +13,7 @@ import {
     useSmsMessagesRealtime 
 } from '../../hooks/use-sms-messages'
 import { useMediaUpload, useMediaDelete, validateMediaFile, MEDIA_CONSTRAINTS } from '../../hooks/use-sms-media'
+import { useMarkAsRead } from '../../hooks/use-messages-unread'
 import { toast } from 'sonner'
 import type { SmsCustomer, SmsConversation, UploadedMedia } from '../../types/sms'
 
@@ -40,9 +41,18 @@ export function ChatArea({
     const sendMessageMutation = useSendSmsMessage(shopId)
     const uploadMutation = useMediaUpload()
     const deleteMutation = useMediaDelete()
+    const { markAsRead } = useMarkAsRead(shopId)
 
     // Real-time updates
     useSmsMessagesRealtime(shopId, selectedPhone)
+
+    // Mark conversation as read when messages load
+    useEffect(() => {
+        // Only mark as read if we have a selected phone and messages have loaded
+        if (selectedPhone && messages.length > 0 && !isLoadingMessages) {
+            markAsRead(selectedPhone)
+        }
+    }, [selectedPhone, messages.length, isLoadingMessages, markAsRead])
 
     // Scroll to bottom when messages change
     const scrollToBottom = useCallback(() => {
