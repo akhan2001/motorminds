@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'sonner'
 import type { SmsMessage } from '../types/sms'
@@ -156,7 +156,7 @@ export function useMessagesUnread(shopId: string | null | undefined) {
 export function useMarkAsRead(shopId: string | null | undefined) {
     const queryClient = useQueryClient()
 
-    const markAsRead = async (customerPhone: string) => {
+    const markAsRead = useCallback(async (customerPhone: string) => {
         try {
             await markConversationAsRead(customerPhone)
             
@@ -169,7 +169,7 @@ export function useMarkAsRead(shopId: string | null | undefined) {
         } catch (error) {
             console.error('Failed to mark as read:', error)
         }
-    }
+    }, [shopId, queryClient])
 
     return { markAsRead }
 }

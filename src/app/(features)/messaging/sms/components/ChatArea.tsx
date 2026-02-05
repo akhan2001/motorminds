@@ -35,6 +35,7 @@ export function ChatArea({
     const [messageText, setMessageText] = useState('')
     const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([])
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const lastMarkedPhoneRef = useRef<string | null>(null)
 
     // Hooks
     const { data: messages = [], isLoading: isLoadingMessages } = useSmsMessages(shopId, selectedPhone)
@@ -46,13 +47,22 @@ export function ChatArea({
     // Real-time updates
     useSmsMessagesRealtime(shopId, selectedPhone)
 
-    // Mark conversation as read when messages load
+    // Mark conversation as read when messages load (only once per conversation)
     useEffect(() => {
-        // Only mark as read if we have a selected phone and messages have loaded
-        if (selectedPhone && messages.length > 0 && !isLoadingMessages) {
+        // Only mark as read if:
+        // - We have a selected phone
+        // - Messages have loaded (not loading and have at least one message)
+        // - We haven't already marked this conversation as read
+        if (
+            selectedPhone && 
+            !isLoadingMessages && 
+            messages.length > 0 && 
+            lastMarkedPhoneRef.current !== selectedPhone
+        ) {
+            lastMarkedPhoneRef.current = selectedPhone
             markAsRead(selectedPhone)
         }
-    }, [selectedPhone, messages.length, isLoadingMessages, markAsRead])
+    }, [selectedPhone, isLoadingMessages, messages.length, markAsRead])
 
     // Scroll to bottom when messages change
     const scrollToBottom = useCallback(() => {
