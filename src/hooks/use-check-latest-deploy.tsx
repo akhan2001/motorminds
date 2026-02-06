@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { InfoIcon } from 'lucide-react'
 
 /** Default: only show toast if new deployment is at least this many hours newer than current */
-const DEFAULT_MIN_HOURS_NEWER = 24
+const DEFAULT_MIN_HOURS_NEWER = 1 // 1 hour
 
 /** In test mode (NEXT_PUBLIC_TEST_DEPLOYMENT_CHECK=true), show toast on any newer deployment (0 hours) so you can test without waiting 24h */
 function getEffectiveMinHoursNewer(minHoursNewer: number): number {
