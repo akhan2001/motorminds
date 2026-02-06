@@ -38,45 +38,40 @@ export function ChatHeader({
     const displayName = getDisplayName(customer, conversations, selectedPhone)
 
     return (
-        <div className="px-4 py-3 flex items-center gap-3">
-            {/* Avatar */}
-            <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                <User className="h-5 w-5 text-red-600" />
+        <div className="flex-shrink-0 px-4 py-3 flex items-center gap-3 bg-card">
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                <User className="h-5 w-5 text-muted-foreground" />
             </div>
-
-            {/* Info */}
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     {customer?.id ? (
                         <button
                             onClick={() => onCustomerClick?.(customer.id)}
-                            className="text-foreground font-semibold hover:text-red-600 transition-colors flex items-center gap-1 truncate"
+                            className="text-foreground font-semibold hover:text-red-600 transition-colors inline-flex items-center gap-1 truncate max-w-[180px] sm:max-w-none"
                         >
-                            {displayName}
-                            <ExternalLink className="h-3 w-3 opacity-60 flex-shrink-0" />
+                            <span className="truncate">{displayName}</span>
+                            <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 opacity-70" />
                         </button>
                     ) : (
-                        <span className="text-foreground font-semibold truncate">
+                        <span className="text-foreground font-semibold truncate max-w-[200px] sm:max-w-none inline-block">
                             {displayName}
                         </span>
                     )}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground font-mono truncate">
                         {selectedPhone}
                     </span>
                 </div>
-
-                {/* Compact customer details - single line */}
-                {customer && (
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                {(customer?.customer_email || customer?.license_plate) && (
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 truncate">
                         {customer.customer_email && (
-                            <span className="flex items-center gap-1 truncate">
+                            <span className="inline-flex items-center gap-1 min-w-0 truncate max-w-[200px]">
                                 <Mail className="h-3 w-3 flex-shrink-0" />
-                                {customer.customer_email}
+                                <span className="truncate">{customer.customer_email}</span>
                             </span>
                         )}
                         {customer.license_plate && (
-                            <span className="flex items-center gap-1">
-                                <Car className="h-3 w-3 flex-shrink-0" />
+                            <span className="inline-flex items-center gap-1 flex-shrink-0">
+                                <Car className="h-3 w-3" />
                                 {customer.license_plate}
                             </span>
                         )}

@@ -41,9 +41,6 @@ export function ExpenseSummaryCard({ expense, defaultExpanded = true }: ExpenseS
                             )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                            <div className="text-right text-foreground">
-                                <div className="font-semibold">{formatCurrency(Number(expense.total ?? 0))}</div>
-                            </div>
                             <span className="text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>
                                 {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </span>

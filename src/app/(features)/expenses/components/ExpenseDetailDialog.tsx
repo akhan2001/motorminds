@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatCurrency } from '@/lib/utils/currency'
-import { formatDate, formatDateOnly } from '@/lib/utils/date'
+import { formatDate, getTorontoDateString } from '@/lib/utils/date'
 import { ExpensesService } from '../lib/expenses-service'
 import { expenseKeys } from '../data/keys'
 import type { ExpenseItem } from '../types/expenses'
@@ -41,6 +41,7 @@ import {
     Loader2,
     Undo2,
     CheckCircle2,
+    Pencil,
 } from 'lucide-react'
 
 interface ExpenseDetailDialogProps {
@@ -48,7 +49,15 @@ interface ExpenseDetailDialogProps {
     isOpen: boolean
     onClose: () => void
     onViewWorkOrder?: (workOrderId: string) => void
+    /** When provided, enables Edit button (e.g. for general expenses). Call to open edit modal. */
+    onEdit?: (expense: ExpenseItem) => void
     shopId?: string
+}
+
+function formatExpenseDate(dateString: string | null | undefined): string {
+    if (!dateString) return 'N/A'
+    const datePart = dateString.substring(0, 10)
+    return getTorontoDateString(new Date(datePart + 'T12:00:00'))
 }
 
 export function ExpenseDetailDialog({
@@ -56,6 +65,7 @@ export function ExpenseDetailDialog({
     isOpen,
     onClose,
     onViewWorkOrder,
+    onEdit,
     shopId = '',
 }: ExpenseDetailDialogProps) {
     const queryClient = useQueryClient()
@@ -216,7 +226,7 @@ export function ExpenseDetailDialog({
                             <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
                             <div>
                                 <p className="text-xs text-muted-foreground">Date</p>
-                                <p className="text-foreground">{formatDateOnly(expense.expense_date)}</p>
+                                <p className="text-foreground">{formatExpenseDate(expense.expense_date)}</p>
                             </div>
                         </div>
 
@@ -403,7 +413,13 @@ export function ExpenseDetailDialog({
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end pt-2">
+                <div className="flex justify-end gap-2 pt-2">
+                    {onEdit && (
+                        <Button variant="outline" onClick={() => onEdit(expense)} className="gap-2">
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={onClose}>
                         Close
                     </Button>
