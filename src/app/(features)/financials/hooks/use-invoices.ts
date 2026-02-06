@@ -147,6 +147,19 @@ export function useCreateInvoice() {
                 }
             }
 
+            // If linking to a work order, ensure it does not already have an invoice
+            if (data.work_order_id) {
+                const { data: existingRows } = await supabase
+                    .from('invoices_table')
+                    .select('id, invoice_number')
+                    .eq('work_order_id', data.work_order_id)
+                    .limit(1)
+                const existing = Array.isArray(existingRows) ? existingRows[0] : null
+                if (existing) {
+                    throw new Error('This work order already has an invoice. Each work order can only have one invoice.')
+                }
+            }
+
             // Generate invoice number
             const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
             
@@ -444,14 +457,14 @@ export function useCreateInvoiceFromWorkOrder() {
                 throw woError
             }
 
-            // Check if work order already has an invoice by querying invoices_table
-            const { data: existingInvoice } = await supabase
+            // Check if work order already has an invoice (use limit(1) to avoid .single() error when 0 rows)
+            const { data: existingRows } = await supabase
                 .from('invoices_table')
                 .select('id')
                 .eq('work_order_id', work_order_id)
                 .limit(1)
-                .single()
 
+            const existingInvoice = Array.isArray(existingRows) ? existingRows[0] : null
             if (existingInvoice) {
                 throw new Error('This work order has already been converted to an invoice. Each work order can only be converted once.')
             }
@@ -604,6 +617,16 @@ export function useCreateInvoiceFromWorkOrder() {
                 .single()
 
             if (invoiceError) {
+                // Unique constraint violation: another request already created an invoice for this work order
+                if (invoiceError.code === '23505') {
+                    const { data: existingRows } = await supabase
+                        .from('invoices_table')
+                        .select('*')
+                        .eq('work_order_id', work_order_id)
+                        .limit(1)
+                    const existing = Array.isArray(existingRows) ? existingRows[0] : null
+                    if (existing) return existing as Invoice
+                }
                 console.error('Error creating invoice:', invoiceError)
                 throw invoiceError
             }
@@ -824,7 +847,9 @@ export function useSyncInvoiceFromWorkOrder() {
     })
 }
 
-// Check if a work order has an existing invoice and get payment info
+// Check if a work order has an existing invoice and get payment info.
+// Uses .limit(1) without .single() so that 0 rows returns hasInvoice: false and
+// 2+ rows (legacy duplicates) still return hasInvoice: true with the first invoice.
 export async function getWorkOrderInvoiceStatus(workOrderId: string): Promise<{
     hasInvoice: boolean;
     invoice?: {
@@ -834,13 +859,13 @@ export async function getWorkOrderInvoiceStatus(workOrderId: string): Promise<{
         status: string;
     };
 }> {
-    const { data: invoice } = await supabase
+    const { data: rows } = await supabase
         .from('invoices_table')
         .select('invoice_number, amount_paid, total_amount, status')
         .eq('work_order_id', workOrderId)
         .limit(1)
-        .single()
 
+    const invoice = Array.isArray(rows) ? rows[0] : null
     if (!invoice) {
         return { hasInvoice: false }
     }
