@@ -73,6 +73,8 @@ export function WorkOrdersPageContent() {
     // State for drag-to-complete invoice modal
     const [isCompleteInvoiceModalOpen, setIsCompleteInvoiceModalOpen] = useState(false)
     const [dragToCompleteWorkOrder, setDragToCompleteWorkOrder] = useState<typeof pageState.completionWorkOrder | null>(null)
+    // Prevent double-submit on standard completion modal (Complete With Invoice)
+    const [isCompletionWithSyncPending, setIsCompletionWithSyncPending] = useState(false)
 
     const handleGenerateInvoice = async (workOrderId: string) => {
         if (!shopId) {
@@ -81,6 +83,13 @@ export function WorkOrdersPageContent() {
         }
 
         try {
+            // If this work order already has an invoice, go to it instead of creating another
+            const invoiceStatus = await getWorkOrderInvoiceStatus(workOrderId)
+            if (invoiceStatus.hasInvoice && invoiceStatus.invoice?.invoice_number) {
+                router.push(`/financials/invoices?invoice_number=${invoiceStatus.invoice.invoice_number}`)
+                return
+            }
+
             // Find the work order object
             const workOrder = workOrders?.find(wo => wo.id === workOrderId)
             if (!workOrder) {
@@ -146,6 +155,7 @@ export function WorkOrdersPageContent() {
     ) => {
         if (!pageState.completionWorkOrder || !shopId) return
 
+        setIsCompletionWithSyncPending(true)
         try {
             // Check if this work order has an existing invoice
             const invoiceStatus = await getWorkOrderInvoiceStatus(pageState.completionWorkOrder.id)
@@ -210,6 +220,8 @@ export function WorkOrdersPageContent() {
         } catch (error: any) {
             console.error('Error during completion with sync:', error)
             toast.error(error?.message || 'Failed to complete work order')
+        } finally {
+            setIsCompletionWithSyncPending(false)
         }
     }
 
@@ -501,6 +513,7 @@ export function WorkOrdersPageContent() {
             }}
             onCompletionConfirm={handleCompletionConfirmWithSync}
             generatedInvoiceNumber={generatedInvoiceNumber}
+            isCompletionPending={isCompletionWithSyncPending}
             onWorkOrderCompletionAttempt={handleDragToCompleteAttempt}
             onReadyModalClose={pageState.handleReadyModalClose}
             onReadyConfirm={handleReadyConfirm}
