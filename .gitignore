@@ -68,6 +68,7 @@ src/app/(features)/operations/mock-work-orders.json
 /docs/
 
 # Scripts and migrations (operational tools - not production code)
+/scripts/
 /scripts/output/
 /scripts/services.txt
 /scripts/*.csv
