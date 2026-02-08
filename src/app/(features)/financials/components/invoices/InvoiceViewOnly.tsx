@@ -503,7 +503,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 })}
 
                                 {/* Expense Items (Tracking Only - Not Billed) */}
-                                {expenseItems.length > 0 && (
+                                {/* {expenseItems.length > 0 && (
                                     <>
                                         <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-500/20">
                                             <div className="flex items-center gap-2 mb-3">
@@ -575,7 +575,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                             </span>
                                         </div>
                                     </>
-                                )}
+                                )} */}
                             </div>
 
                             {invoice.notes && (
