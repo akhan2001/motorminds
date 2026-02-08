@@ -80,6 +80,7 @@ export async function GET(req: NextRequest) {
             .select(`
                 id,
                 invoice_number,
+                work_order_id,
                 total_amount,
                 subtotal,
                 tax_amount,
@@ -100,6 +101,12 @@ export async function GET(req: NextRequest) {
             throw invoicesError;
         }
 
+        // Work orders that already contributed revenue via a paid invoice on this day.
+        // Exclude their advance payments to avoid double-counting (advance applied to invoice counts only in invoice revenue).
+        const workOrderIdsWithPaidInvoiceInDay = new Set(
+            (invoices || []).map((inv: { work_order_id?: string | null }) => inv.work_order_id).filter(Boolean)
+        );
+
         // Fetch work orders with advance_payments for this shop (to include in daily total)
         const { data: workOrdersWithAdvance, error: advanceError } = await supabase
             .from("work_orders")
@@ -110,17 +117,19 @@ export async function GET(req: NextRequest) {
             console.error("Error fetching work orders for advance payments:", advanceError);
         }
 
-        // Sum advance payments where payment_date falls within the report day
+        // Sum advance payments where payment_date falls within the report day.
+        // Skip work orders in workOrderIdsWithPaidInvoiceInDay (revenue already counted via invoice).
         let advancePaymentsTotal = 0;
         const advancePaymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
+        const startMsAdv = new Date(startOfDay).getTime();
+        const endMsAdv = new Date(endOfDay).getTime();
         (workOrdersWithAdvance || []).forEach((wo) => {
+            if (workOrderIdsWithPaidInvoiceInDay.has(wo.id)) return;
             const payments = (wo.advance_payments as any[] | null) || [];
-            const startMs = new Date(startOfDay).getTime();
-            const endMs = new Date(endOfDay).getTime();
             payments.forEach((p: any) => {
                 if (p.deleted) return;
                 const paymentDate = p.payment_date ? new Date(p.payment_date).getTime() : 0;
-                if (paymentDate >= startMs && paymentDate <= endMs) {
+                if (paymentDate >= startMsAdv && paymentDate <= endMsAdv) {
                     const amount = Number(p.amount) || 0;
                     advancePaymentsTotal += amount;
                     const method = p.payment_method || "other";
