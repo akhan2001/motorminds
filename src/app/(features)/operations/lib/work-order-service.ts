@@ -27,26 +27,64 @@ export class WorkOrderService {
     }
 
     // GET work orders with customer and vehicle details for display
+    // Fetches ALL active work orders (pending, approved, in_progress, waiting_parts, waiting_customer, ready)
+    // and recent completed/invoiced work orders (last 90 days)
     async getWorkOrdersWithDetails(shopId: string, limit: number = 100, offset: number = 0): Promise<WorkOrderWithDetails[]> {
-        const { data, error } = await this.supabase
-            .from('work_orders')
-            .select(`
-                id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
-                customer:customers(id, customer_name, customer_phone, customer_email),
-                vehicle:customer_vehicles(id, year, make, model, license_plate, color),
-                technician:employees(id, first_name, last_name)
-            `)
-            .eq('shop_id', shopId)
-            .eq('archived', false) // Only get non-archived work orders
-            .order('created_at', { ascending: false })
-            .range(offset, offset + limit - 1)
+        const baseQuery = `
+            id, shop_id, customer_id, vehicle_id, appointment_id, assigned_technician_id, title, description, status, priority, created_at, updated_at, started_at, completed_at, archived, customer_type, walk_in_vehicle_info, status_tracker,
+            customer:customers(id, customer_name, customer_phone, customer_email),
+            vehicle:customer_vehicles(id, year, make, model, license_plate, color),
+            technician:employees(id, first_name, last_name)
+        `
 
-        if (error) {
-            console.error('Error fetching work orders with details:', error)
-            throw new Error(`Failed to fetch work orders: ${error.message}`)
+        // Active statuses that should always be shown (no limit)
+        const activeStatuses = ['pending', 'approved', 'in_progress', 'waiting_parts', 'waiting_customer', 'ready']
+        
+        // Fetch ALL active work orders (no limit)
+        const { data: activeWorkOrders, error: activeError } = await this.supabase
+            .from('work_orders')
+            .select(baseQuery)
+            .eq('shop_id', shopId)
+            .eq('archived', false)
+            .in('status', activeStatuses)
+            .order('created_at', { ascending: false })
+
+        if (activeError) {
+            console.error('Error fetching active work orders with details:', activeError)
+            throw new Error(`Failed to fetch active work orders: ${activeError.message}`)
         }
 
-        return data || []
+        // Calculate date 90 days ago for recent completed/invoiced work orders
+        const ninetyDaysAgo = new Date()
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+        const ninetyDaysAgoISO = ninetyDaysAgo.toISOString()
+
+        // Fetch recent completed/invoiced work orders (last 90 days, with limit)
+        const { data: completedWorkOrders, error: completedError } = await this.supabase
+            .from('work_orders')
+            .select(baseQuery)
+            .eq('shop_id', shopId)
+            .eq('archived', false)
+            .in('status', ['completed', 'invoiced'])
+            .gte('completed_at', ninetyDaysAgoISO) // Only recent completed ones
+            .order('completed_at', { ascending: false })
+            .limit(limit)
+
+        if (completedError) {
+            console.error('Error fetching completed work orders with details:', completedError)
+            throw new Error(`Failed to fetch completed work orders: ${completedError.message}`)
+        }
+
+        // Combine and deduplicate by ID (in case a work order appears in both queries)
+        const allWorkOrders = [...(activeWorkOrders || []), ...(completedWorkOrders || [])]
+        const uniqueWorkOrders = Array.from(
+            new Map(allWorkOrders.map(wo => [wo.id, wo])).values()
+        )
+
+        // Sort by created_at descending for consistent ordering
+        return uniqueWorkOrders.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
     }
 
     async getWorkOrderById(id: string): Promise<WorkOrder | null> {
