@@ -6,8 +6,8 @@ import { mergeAdvancePaymentsIntoInvoice, calculateInvoicePaymentTotals } from '
 
 const supabase = createClient()
 
-// Fetch all invoices for a shop
-export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: number = 100, offset: number = 0) {
+// Fetch all invoices for a shop (default limit 1000 so list shows all recent invoices)
+export function useInvoices(shopId: string, filters?: InvoiceFilters, limit: number = 1000, offset: number = 0) {
     return useQuery({
         queryKey: ['invoices', shopId, filters, limit, offset],
         queryFn: async () => {
