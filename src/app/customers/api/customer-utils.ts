@@ -207,6 +207,7 @@ export async function updateCustomer(customerId: string, customerData: any) {
             customer_email: customerData.customerEmail?.trim() || null,
             customer_phone: customerData.customerPhone?.trim() || null,
             customer_address: customerData.customerAddress?.trim() || null,
+            license_plate: customerData.licensePlate?.trim().toUpperCase() || null,
             updated_at: new Date().toISOString()
         };
 

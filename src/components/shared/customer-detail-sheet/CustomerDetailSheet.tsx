@@ -1,6 +1,6 @@
 'use client'
 
-import React, { memo, useState, useEffect, useCallback } from 'react'
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sheet, SheetContent, SheetFooter } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ export interface Customer {
     customer_email?: string
     customer_phone?: string
     customer_address?: string
+    license_plate?: string | null
     shop_id: string
     created_at: string
     updated_at?: string
@@ -135,7 +136,8 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
         customer_name: '',
         customer_email: '',
         customer_phone: '',
-        customer_address: ''
+        customer_address: '',
+        license_plate: ''
     })
 
     // Initialize edit data when customer changes
@@ -145,7 +147,8 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                 customer_name: customer.customer_name || '',
                 customer_email: customer.customer_email === 'NULL' ? '' : (customer.customer_email || ''),
                 customer_phone: customer.customer_phone === 'NULL' ? '' : (customer.customer_phone || ''),
-                customer_address: customer.customer_address === 'NULL' ? '' : (customer.customer_address || '')
+                customer_address: customer.customer_address === 'NULL' ? '' : (customer.customer_address || ''),
+                license_plate: customer.license_plate || ''
             })
         }
     }, [customer])
@@ -170,7 +173,8 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                 customer_name: customer.customer_name || '',
                 customer_email: customer.customer_email === 'NULL' ? '' : (customer.customer_email || ''),
                 customer_phone: customer.customer_phone === 'NULL' ? '' : (customer.customer_phone || ''),
-                customer_address: customer.customer_address === 'NULL' ? '' : (customer.customer_address || '')
+                customer_address: customer.customer_address === 'NULL' ? '' : (customer.customer_address || ''),
+                license_plate: customer.license_plate || ''
             })
         }
         setIsEditing(false)
@@ -198,7 +202,8 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                 customerName: editData.customer_name.trim(),
                 customerEmail: editData.customer_email.trim() || null,
                 customerPhone: editData.customer_phone.trim() || null,
-                customerAddress: editData.customer_address.trim() || null
+                customerAddress: editData.customer_address.trim() || null,
+                licensePlate: editData.license_plate.trim() || null
             })
 
             if (result) {
@@ -256,6 +261,16 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
         setShowEmailDialog(true)
     }, [customer?.customer_email])
 
+    // Extract unique license plates from vehicles for dropdown
+    const availableLicensePlates = useMemo(() => {
+        if (!vehicles || vehicles.length === 0) return []
+        return vehicles
+            .map(v => v.license_plate)
+            .filter((plate): plate is string => Boolean(plate))
+            .filter((plate, idx, arr) => arr.indexOf(plate) === idx) // Deduplicate
+            .sort()
+    }, [vehicles])
+
     if (!customer) return null
 
     return (
@@ -291,6 +306,7 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                             isEditing={isEditing}
                             editData={editData}
                             onFieldChange={handleFieldChange}
+                            availableLicensePlates={availableLicensePlates}
                         />
 
                         {/* Only show other sections when not editing */}
