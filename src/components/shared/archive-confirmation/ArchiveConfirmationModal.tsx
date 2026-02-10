@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { AlertTriangle, Trash2, Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 
@@ -20,7 +21,7 @@ export interface ArchiveConfirmationModalProps {
     isOpen: boolean
     isDeleting?: boolean
     onClose: () => void
-    onConfirm: (options?: { deleteInvoice?: boolean }) => void
+    onConfirm: (options?: { deleteInvoice?: boolean; reason?: string }) => void
     /** Entity summary card (e.g. work order or invoice details) */
     children: React.ReactNode
     /** Shown after password is verified: archiving info box + optional invoice checkbox or paid-invoice warning */
@@ -49,12 +50,14 @@ export function ArchiveConfirmationModal({
     const [isVerifying, setIsVerifying] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [isPasswordVerified, setIsPasswordVerified] = useState(false)
+    const [archiveReason, setArchiveReason] = useState('')
 
     useEffect(() => {
         if (isOpen) {
             setPassword('')
             setError(null)
             setIsPasswordVerified(false)
+            setArchiveReason('')
         }
     }, [isOpen])
 
@@ -92,6 +95,7 @@ export function ArchiveConfirmationModal({
         setPassword('')
         setError(null)
         setIsPasswordVerified(false)
+        setArchiveReason('')
         onClose()
     }
 
@@ -168,7 +172,25 @@ export function ArchiveConfirmationModal({
                         </form>
                     )}
 
-                    {isPasswordVerified && contentAfterPassword}
+                    {isPasswordVerified && (
+                        <>
+                            {contentAfterPassword}
+                            <div className="space-y-2">
+                                <Label htmlFor="archive-reason" className="text-foreground">
+                                    Why are you archiving this {entityLabel}? <span className="text-muted-foreground text-sm">(Optional)</span>
+                                </Label>
+                                <Textarea
+                                    id="archive-reason"
+                                    value={archiveReason}
+                                    onChange={(e) => setArchiveReason(e.target.value)}
+                                    placeholder="Enter reason for archiving..."
+                                    rows={3}
+                                    className="bg-white dark:bg-background border-border text-foreground placeholder-muted-foreground resize-none"
+                                    disabled={isDeleting}
+                                />
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <DialogFooter className="flex gap-3">
@@ -183,7 +205,7 @@ export function ArchiveConfirmationModal({
                     {isPasswordVerified && (
                         <Button
                             variant="destructive"
-                            onClick={() => onConfirm()}
+                            onClick={() => onConfirm({ reason: archiveReason.trim() || undefined })}
                             disabled={isDeleting}
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >

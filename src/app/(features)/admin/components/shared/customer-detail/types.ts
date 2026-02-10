@@ -4,6 +4,7 @@ export interface Customer {
     customer_email?: string
     customer_phone?: string
     customer_address?: string
+    license_plate?: string | null
     shop_id: string
     created_at: string
     updated_at?: string

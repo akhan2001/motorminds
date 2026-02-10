@@ -12,7 +12,7 @@ interface CustomerStatsProps {
 
 export const CustomerStats: React.FC<CustomerStatsProps> = ({ customerHistory }) => {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -37,7 +37,7 @@ export const CustomerStats: React.FC<CustomerStatsProps> = ({ customerHistory })
                 </CardContent>
             </Card>
             
-            <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
+            {/* <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                 <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <CalendarDays className="h-4 w-4 text-orange-500 dark:text-orange-400" />
@@ -47,7 +47,7 @@ export const CustomerStats: React.FC<CustomerStatsProps> = ({ customerHistory })
                         {customerHistory.stats?.totalAppointments || customerHistory.appointments?.length || 0}
                     </p>
                 </CardContent>
-            </Card>
+            </Card> */}
             
             <Card className="bg-card dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a]">
                 <CardContent className="p-4">
