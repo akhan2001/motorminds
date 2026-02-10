@@ -357,7 +357,7 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                     </div>
 
                     {/* Footer with Delete Button */}
-                    {allowDelete && !isEditing && (
+                    {/* {allowDelete && !isEditing && (
                         <SheetFooter className="pt-4 border-t border-border dark:border-[#2a2a2a]">
                             <Button
                                 variant="destructive"
@@ -368,7 +368,7 @@ export const CustomerDetailSheet = memo<CustomerDetailSheetProps>(({
                                 Remove Customer
                             </Button>
                         </SheetFooter>
-                    )}
+                    )} */}
                 </SheetContent>
             </Sheet>
 
