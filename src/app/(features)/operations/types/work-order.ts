@@ -144,6 +144,10 @@ export interface WorkOrderKanbanItem {
     tags?: string[]
     shop_id?: string
     status_tracker?: StatusTracker[] | null // For display with border color - array of status trackers (max 5)
+    first_item?: {
+        item_type: 'labor' | 'part' | 'service'
+        description: string
+    } | null
 }
 
 export interface WorkOrderKanbanColumn {
