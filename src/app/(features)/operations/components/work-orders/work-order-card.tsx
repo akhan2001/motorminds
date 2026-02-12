@@ -154,10 +154,28 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
             <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                        <CardTitle className="text-sm font-medium text-foreground dark:text-white line-clamp-2">
+                        {/* Vehicle Details - First - Most Prominent (Highest Weight & Brightest Color) */}
+                        {item.vehicle && (
+                            <div className="text-sm font-medium text-foreground dark:text-white mb-1">
+                                {item.vehicle}
+                            </div>
+                        )}
+                        
+                        {/* Customer Info - Second - Medium Prominence */}
+                        {item.customer && (
+                            <div className="text-xs text-foreground dark:text-gray-300 font-medium mb-1">
+                                {item.customer}
+                                {item.customer_phone && (
+                                    <span className="text-muted-foreground dark:text-gray-400"> {formatPhoneNumber(item.customer_phone)}</span>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* Title - Third - Less Prominent */}
+                        <CardTitle className="text-xs font-medium text-foreground dark:text-gray-300 line-clamp-2">
                             {item.title?.trim()
                                 ? truncateText(item.title, 50)
-                                : (item.vehicle?.trim() ? truncateText(item.vehicle, 50) : 'Work Order')}
+                                : 'Work Order'}
                         </CardTitle>
                         {/* Status Tracker Badges */}
                         {statusTrackers.length > 0 && (
@@ -264,26 +282,37 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                         </DropdownMenu>
                     </div>
                 </div>
-                {item.description && (
-                    <p className="text-xs text-muted-foreground dark:text-gray-400 line-clamp-2 mt-1">
-                        {truncateText(item.description, 80)}
-                    </p>
-                )}
             </CardHeader>
             <CardContent className="pt-0">
-                {/* Customer & Vehicle Info */}
-                {(item.customer || item.vehicle) && (
-                    <div className="text-xs text-foreground dark:text-gray-300 mb-2">
-                        {item.customer && (
-                            <div className="font-medium">
-                                {item.customer}
-                                {item.customer_phone && (
-                                    <span className="text-muted-foreground dark:text-gray-400"> {formatPhoneNumber(item.customer_phone)}</span>
-                                )}
-                            </div>
-                        )}
-                        {item.vehicle && <div className="text-muted-foreground dark:text-gray-400">{item.vehicle}</div>}
+                {/* Labor / Services / Parts - Fourth */}
+                {item.first_item && (
+                    <div className="mb-2">
+                        <Badge 
+                            variant="secondary" 
+                            className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a] capitalize"
+                        >
+                            {item.first_item.item_type}: {truncateText(item.first_item.description, 40)}
+                        </Badge>
                     </div>
+                )}
+                {item.tags && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                        {item.tags.map((tag, index) => (
+                            <Badge 
+                                key={index} 
+                                variant="secondary" 
+                                className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a]"
+                            >
+                                {tag}
+                            </Badge>
+                        ))}
+                    </div>
+                )}
+                
+                {item.description && (
+                    <p className="text-xs text-muted-foreground dark:text-gray-400 line-clamp-2 mb-2">
+                        {truncateText(item.description, 80)}
+                    </p>
                 )}
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">
@@ -302,20 +331,6 @@ export const WorkOrderCard: React.FC<WorkOrderCardProps> = ({
                         </div>
                     </div>
                 </div>
-                
-                {item.tags && item.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                        {item.tags.map((tag, index) => (
-                            <Badge 
-                                key={index} 
-                                variant="secondary" 
-                                className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a]"
-                            >
-                                {tag}
-                            </Badge>
-                        ))}
-                    </div>
-                )}
             </CardContent>
         </Card>
     )
