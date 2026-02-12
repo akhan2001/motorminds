@@ -102,7 +102,7 @@ export const InvoiceSendModal: React.FC<InvoiceSendModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-popover dark:bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white">
+            <DialogContent className="max-w-2xl !bg-white dark:!bg-[#111111] border-border dark:border-[#2a2a2a] text-popover-foreground dark:text-white shadow-xl">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold text-foreground dark:text-white flex items-center gap-2">
                         <FileText className="h-5 w-5 text-blue-500 dark:text-blue-400" />

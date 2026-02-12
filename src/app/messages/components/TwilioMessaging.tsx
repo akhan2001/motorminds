@@ -106,6 +106,7 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
                         onRefresh={handleRefresh}
                         onCustomerClick={handleCustomerClick}
                         isLoading={isLoadingConversations}
+                        shopId={shopId}
                     />
                 </div>
                 <div className="lg:col-span-8 xl:col-span-9 min-h-0 flex flex-col">
