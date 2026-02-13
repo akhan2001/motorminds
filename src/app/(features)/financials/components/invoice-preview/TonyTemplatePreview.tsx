@@ -2,12 +2,9 @@
 
 import React from 'react'
 import type { InvoicePDFData } from '../../types/invoice-pdf'
+import { formatCurrency } from '@/lib/utils/currency'
 
 export const TonyTemplatePreview: React.FC<InvoicePDFData> = ({ invoice, shop }) => {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
-    }
-
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-CA', {
             year: 'numeric',

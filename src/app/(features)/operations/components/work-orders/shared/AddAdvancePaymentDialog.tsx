@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAddWorkOrderAdvancePayment } from '../../../hooks/use-work-order-advance-payments'
 import type { PaymentMethod } from '../../../../financials/types/invoice'
 import { formatCurrency } from '@/lib/utils/currency'
+import { getTorontoDateString, getTorontoDayBoundsUTC } from '@/lib/utils/date'
 
 interface AddAdvancePaymentDialogProps {
     isOpen: boolean
@@ -41,16 +42,16 @@ export function AddAdvancePaymentDialog({
 }: AddAdvancePaymentDialogProps) {
     const [amount, setAmount] = useState<string>('')
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('')
-    const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0])
+    const [paymentDate, setPaymentDate] = useState<string>(getTorontoDateString())
     const [paymentReference, setPaymentReference] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
     
     const addPayment = useAddWorkOrderAdvancePayment()
 
-    // Reset form when dialog opens
+    // Reset form when dialog opens (use Toronto date so default matches daily report / financial timezone)
     useEffect(() => {
         if (isOpen) {
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getTorontoDateString())
             setAmount('')
             setPaymentMethod('')
             setPaymentReference('')
@@ -84,12 +85,15 @@ export function AddAdvancePaymentDialog({
         }
 
         try {
+            // Use start of selected day in Toronto so daily report attributes payment to the correct date
+            const paymentDateISO = getTorontoDayBoundsUTC(paymentDate).start
+
             await addPayment.mutateAsync({
                 workOrderId,
                 payment: {
                     amount: paymentAmount,
                     payment_method: paymentMethod as PaymentMethod,
-                    payment_date: new Date(paymentDate).toISOString(),
+                    payment_date: paymentDateISO,
                     payment_reference: paymentReference || null,
                     notes: notes || null,
                 }
@@ -98,7 +102,7 @@ export function AddAdvancePaymentDialog({
             // Reset form
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getTorontoDateString())
             setPaymentReference('')
             setNotes('')
             
@@ -113,7 +117,7 @@ export function AddAdvancePaymentDialog({
         if (!addPayment.isPending) {
             setAmount('')
             setPaymentMethod('')
-            setPaymentDate(new Date().toISOString().split('T')[0])
+            setPaymentDate(getTorontoDateString())
             setPaymentReference('')
             setNotes('')
             onClose()

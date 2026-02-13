@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react'
 import { InvoiceDetailSheet } from '@/app/(features)/financials/components/invoices/InvoiceDetailSheet'
 import type { InvoiceWithDetails } from '@/app/(features)/financials/types/invoice'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 
 interface InvoiceHistoryPanelProps {
     customerId: string | null | undefined
@@ -56,13 +57,6 @@ export const InvoiceHistoryPanel: React.FC<InvoiceHistoryPanelProps> = ({
             return <Badge className="bg-orange-500/10 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20 dark:border-orange-500/20 text-xs">Refunded</Badge>
         }
         return <Badge className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20 text-xs">{status}</Badge>
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
     }
 
     if (!customerId) {

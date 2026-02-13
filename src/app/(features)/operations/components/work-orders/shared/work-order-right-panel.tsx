@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { ChatPanel } from './chat-panel'
 import { InvoiceHistoryPanel } from './invoice-history-panel'
 import { WorkOrderCostSummary } from '../complete/work-order-cost-summary'
+import { WorkOrderAdvancePaymentsSection } from './WorkOrderAdvancePaymentsSection'
 import type { WorkOrderItem } from '../../../types/work-order-items'
+import type { WorkOrderWithDetails } from '../../../types/work-order'
 
 // Lazy load heavy components to reduce initial bundle size
 const MiaInsightsIntegration = dynamic(
@@ -23,6 +25,8 @@ export interface WorkOrderRightPanelProps {
     customerId?: string | null
     customerType?: 'registered' | 'walk_in'
     workOrderItems?: WorkOrderItem[]
+    /** Full work order for Cost Summary (e.g. advance payments). Optional. */
+    workOrder?: WorkOrderWithDetails | null
     className?: string
 }
 
@@ -34,6 +38,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
     customerId,
     customerType,
     workOrderItems = [],
+    workOrder = null,
     className = ""
 }) => {
     // Determine if work order is completed (read-only mode)
@@ -172,7 +177,7 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                 )}
 
                 {activeTab === 'summary' && (
-                    <div className="h-full p-4">
+                    <div className="h-full p-4 space-y-4">
                         {workOrderItems.length > 0 || workOrderId ? (
                             <WorkOrderCostSummary
                                 workOrderItems={workOrderItems}
@@ -188,6 +193,13 @@ export const WorkOrderRightPanel: React.FC<WorkOrderRightPanelProps> = ({
                                     No items added yet. Add items to see the cost summary.
                                 </p>
                             </div>
+                        )}
+                        {workOrder && !workOrder.invoice_id && isInProgress && (
+                            <WorkOrderAdvancePaymentsSection
+                                workOrder={workOrder}
+                                workOrderItems={workOrderItems}
+                                isEditing={true}
+                            />
                         )}
                     </div>
                 )}

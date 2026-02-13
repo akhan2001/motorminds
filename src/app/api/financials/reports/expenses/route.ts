@@ -20,12 +20,13 @@ export async function GET(req: NextRequest) {
     const endDateStr = formatDateForFilter(endDate);
 
     try {
-        // 1. Fetch general expenses from unified expenses table (source_type = 'general')
+        // 1. Fetch general expenses from unified expenses table (source_type = 'general' or 'invoice')
+        // Invoice expenses (created directly on invoices without work orders) are included here
         const { data: generalExpensesData, error: generalExpensesError } = await supabase
             .from('expenses')
             .select('*')
             .eq('shop_id', shopId)
-            .eq('source_type', 'general')
+            .in('source_type', ['general', 'invoice'])
             .or('archived.eq.false,archived.is.null')
             .gte('expense_date', startDateStr)
             .lte('expense_date', endDateStr)
@@ -141,10 +142,15 @@ export async function GET(req: NextRequest) {
             return itemDateStr >= startDateStr && itemDateStr <= endDateStr;
         });
 
-        // 4. Get invoice IDs from work order expenses to check payment status
-        // Use invoice_id directly from expenses table for work order expenses
+        // 4. Get invoice IDs from work order expenses AND general/invoice expenses to check payment status
         const invoiceIds = new Set<string>();
         (workOrderExpensesData || []).forEach((expense: any) => {
+            if (expense.invoice_id) {
+                invoiceIds.add(expense.invoice_id);
+            }
+        });
+        // Also collect invoice IDs from general/invoice expenses (for source_type = 'invoice')
+        (generalExpensesData || []).forEach((expense: any) => {
             if (expense.invoice_id) {
                 invoiceIds.add(expense.invoice_id);
             }
@@ -198,22 +204,34 @@ export async function GET(req: NextRequest) {
         }
 
         // 7. Process general expenses - map from new expenses table schema
-        const processedGeneralExpenses = (generalExpensesData || []).map((item: any) => ({
-            id: item.id,
-            type: 'general_expense',
-            description: item.description || 'Expense',
-            vendor: item.vendor || 'N/A',
-            invoice_number: item.invoice_number || '',
-            date: item.expense_date,
-            amount: Number(item.total) || 0,
-            tax: Number(item.tax_amount) || 0,
-            category: item.category || 'Other',
-            payment_method: item.payment_method || '',
-            notes: item.notes || '',
-            is_paid: true, // General expenses are considered paid when recorded
-            refund_amount: Number(item.refund_amount) || null,
-            resolution_type: item.resolution_type || null,
-        }));
+        // Includes both source_type = 'general' and source_type = 'invoice'
+        const processedGeneralExpenses = (generalExpensesData || []).map((item: any) => {
+            // For invoice-linked expenses, check actual invoice payment status
+            const hasInvoice = !!item.invoice_id;
+            const invoiceStatus = item.invoice_id ? invoiceStatusMap.get(item.invoice_id) : null;
+            // General expenses are considered paid when recorded; invoice expenses depend on invoice status
+            const isPaid = item.source_type === 'invoice' ? invoiceStatus === 'paid' : true;
+            
+            return {
+                id: item.id,
+                type: 'general_expense',
+                source_type: item.source_type, // Include for reference ('general' or 'invoice')
+                description: item.description || 'Expense',
+                vendor: item.vendor || 'N/A',
+                invoice_number: item.invoice_number || '',
+                date: item.expense_date,
+                amount: Number(item.total) || 0,
+                tax: Number(item.tax_amount) || 0,
+                category: item.category || 'Other',
+                payment_method: item.payment_method || '',
+                notes: item.notes || '',
+                has_invoice: hasInvoice,
+                is_paid: isPaid,
+                refund_amount: Number(item.refund_amount) || null,
+                resolution_type: item.resolution_type || null,
+                invoice_id: item.invoice_id || null,
+            };
+        });
 
         // 8. Process work order expenses - map from new expenses table schema
         const processedWorkOrderExpenses = (workOrderExpensesData || []).map((item: any) => {

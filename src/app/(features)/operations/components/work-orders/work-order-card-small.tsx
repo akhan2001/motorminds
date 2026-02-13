@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Calendar } from 'lucide-react'
 import { truncateText, getInitials } from '@/lib/utils/text'
 import { getPriorityColor } from '@/lib/utils/status'
@@ -27,17 +28,52 @@ export const WorkOrderCardSmall: React.FC<WorkOrderCardSmallProps> = ({
                 {/* Header Row */}
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0 pr-1">
-                        <h4 className="text-xs font-medium text-foreground dark:text-white truncate">
+                        {/* Vehicle Details - First - Most Prominent (Highest Weight & Brightest Color) */}
+                        {item.vehicle && (
+                            <div className="text-xs font-semibold text-foreground dark:text-white truncate mb-0.5">
+                                {truncateText(item.vehicle, 28)}
+                            </div>
+                        )}
+                        
+                        {/* Customer Info - Second - Medium Prominence */}
+                        {item.customer && (
+                            <div className="text-xs text-foreground dark:text-gray-300 truncate mb-0.5 font-medium">
+                                {truncateText(item.customer, 28)}
+                            </div>
+                        )}
+                        
+                        {/* Title - Third - Less Prominent */}
+                        <h4 className="text-xs font-medium text-foreground dark:text-gray-300 truncate">
                             {truncateText(item.title, 30)}
                         </h4>
-                        {item.vehicle && (
-                            <p className="text-xs text-muted-foreground dark:text-gray-400 truncate mt-0.5">
-                                {truncateText(item.vehicle, 25)}
-                            </p>
-                        )}
                     </div>
                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(item.priority)} flex-shrink-0 mt-0.5`} />
                 </div>
+
+                {/* Labor / Services / Parts - Fourth */}
+                {item.first_item && (
+                    <div className="mb-2">
+                        <Badge 
+                            variant="secondary" 
+                            className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a] capitalize"
+                        >
+                            {item.first_item.item_type}: {truncateText(item.first_item.description, 25)}
+                        </Badge>
+                    </div>
+                )}
+                {item.tags && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                        {item.tags.map((tag, index) => (
+                            <Badge 
+                                key={index} 
+                                variant="secondary" 
+                                className="text-xs bg-secondary dark:bg-[#2a2a2a] text-secondary-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#3a3a3a]"
+                            >
+                                {tag}
+                            </Badge>
+                        ))}
+                    </div>
+                )}
 
                 {/* Bottom Row */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-gray-500">

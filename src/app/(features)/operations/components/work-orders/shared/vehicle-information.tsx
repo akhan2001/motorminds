@@ -62,7 +62,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
     const [isSaving, setIsSaving] = useState(false)
     const [vinDecoding, setVinDecoding] = useState(false)
     const [isSavingNewVehicle, setIsSavingNewVehicle] = useState(false)
-    const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel', string>>>({})
+    const [errors, setErrors] = useState<Partial<Record<'vehicleYear' | 'vehicleMake' | 'vehicleModel' | 'vehicleLicensePlate', string>>>({})
     const [availableModels, setAvailableModels] = useState<string[]>([])
     const [showCustomModel, setShowCustomModel] = useState(false)
     const [mileageUnit, setMileageUnit] = useState<'km' | 'miles'>('km')
@@ -121,7 +121,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         }
     }, [vehicleMileage])
 
-    const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string): string | undefined => {
+    const validateField = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel' | 'vehicleLicensePlate', value: string): string | undefined => {
         switch (field) {
             case 'vehicleYear':
                 if (!value || value.trim().length === 0) return 'Year is required'
@@ -136,12 +136,15 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             case 'vehicleModel':
                 if (!value || value.trim().length === 0) return 'Model is required'
                 return undefined
+            case 'vehicleLicensePlate':
+                if (!value || value.trim().length === 0) return 'License plate is required'
+                return undefined
             default:
                 return undefined
         }
     }
 
-    const handleBlur = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel', value: string) => {
+    const handleBlur = (field: 'vehicleYear' | 'vehicleMake' | 'vehicleModel' | 'vehicleLicensePlate', value: string) => {
         const error = validateField(field, value)
         if (error) setErrors(prev => ({ ...prev, [field]: error }))
     }
@@ -150,7 +153,8 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         const yearErr = validateField('vehicleYear', vehicleYear)
         const makeErr = validateField('vehicleMake', vehicleMake)
         const modelErr = validateField('vehicleModel', vehicleModel)
-        return !yearErr && !makeErr && !modelErr
+        const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+        return !yearErr && !makeErr && !modelErr && !plateErr
     }
 
     // Handle saving vehicle updates
@@ -162,6 +166,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
 
         // If this is an invoice vehicle (vehicleId === 'existing'), use invoice update function
         if (vehicleId === 'existing' && invoiceNumber && shopId) {
+            const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+            if (plateErr) {
+                setErrors(prev => ({ ...prev, vehicleLicensePlate: plateErr }))
+                toast.error("License plate is required")
+                return
+            }
             setIsSaving(true)
             try {
                 // Dynamically import the invoice utils to avoid circular dependency
@@ -185,6 +195,14 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
             } finally {
                 setIsSaving(false)
             }
+            return
+        }
+
+        // Validate required fields before update (including license plate)
+        const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+        if (plateErr) {
+            setErrors(prev => ({ ...prev, vehicleLicensePlate: plateErr }))
+            toast.error("License plate is required")
             return
         }
 
@@ -259,9 +277,10 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
         const yearErr = validateField('vehicleYear', vehicleYear)
         const makeErr = validateField('vehicleMake', vehicleMake)
         const modelErr = validateField('vehicleModel', vehicleModel)
-        setErrors(prev => ({ ...prev, vehicleYear: yearErr, vehicleMake: makeErr, vehicleModel: modelErr }))
+        const plateErr = validateField('vehicleLicensePlate', vehicleLicensePlate)
+        setErrors(prev => ({ ...prev, vehicleYear: yearErr, vehicleMake: makeErr, vehicleModel: modelErr, vehicleLicensePlate: plateErr }))
         
-        if (yearErr || makeErr || modelErr) {
+        if (yearErr || makeErr || modelErr || plateErr) {
             return
         }
 
@@ -591,18 +610,31 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-muted-foreground dark:text-gray-400">License Plate</Label>
+                            <Label htmlFor="vehicle_license_plate" className="text-muted-foreground dark:text-gray-400">License Plate *</Label>
                             <Input
+                                id="vehicle_license_plate"
                                 value={vehicleLicensePlate}
-                                onChange={(e) => isEditing && onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())}
+                                onChange={(e) => {
+                                    if (!isEditing) return
+                                    onFieldChange('vehicleLicensePlate', e.target.value.toUpperCase())
+                                    if (errors.vehicleLicensePlate) setErrors(prev => ({ ...prev, vehicleLicensePlate: undefined }))
+                                }}
+                                onBlur={() => handleBlur('vehicleLicensePlate', vehicleLicensePlate)}
                                 className={`text-foreground dark:text-white border-border dark:border-[#333333] focus:ring-gray-500 ${
                                     isEditing 
                                         ? 'bg-background dark:bg-[#1a1a1a]' 
                                         : 'bg-card dark:bg-[#131313]'
-                                }`}
+                                } ${errors.vehicleLicensePlate ? 'border-red-500 focus:border-red-500' : ''}`}
                                 readOnly={!isEditing || (shouldRestrictEditing && isCreating && !!selectedVehicleId && selectedVehicleId !== "new")}
                                 placeholder="ABC123"
+                                required
                             />
+                            {errors.vehicleLicensePlate && (
+                                <div className="mt-1 text-red-500 dark:text-red-400 text-xs flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                    {errors.vehicleLicensePlate}
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
@@ -658,7 +690,12 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                     
                     {/* Save New Vehicle Button - Only show when creating new vehicle */}
                     {isCreating && isEditing && (!selectedVehicleId || selectedVehicleId === "new") && (
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-4 flex flex-col items-end gap-1.5">
+                            {isWorkOrderMode && (
+                                <p className="text-xs text-muted-foreground dark:text-gray-400">
+                                    Save the vehicle before creating the work order.
+                                </p>
+                            )}
                             <Button
                                 onClick={handleSaveNewVehicle}
                                 disabled={isSavingNewVehicle || !isFormValid() || !customerId || customerId === "new"}
@@ -673,7 +710,7 @@ export const VehicleInformation: React.FC<VehicleInformationProps> = ({
                                 ) : (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
-                                        Save Vehicle
+                                        Save Vehicle Info
                                     </>
                                 )}
                             </Button>

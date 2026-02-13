@@ -25,6 +25,11 @@ import {
 	Car
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getTorontoDateString } from '@/lib/utils/date';
+import { formatCurrency } from '@/lib/utils/currency';
+import { ExpenseDetailDialog } from '@/app/(features)/expenses/components/ExpenseDetailDialog';
+import type { ExpenseItem } from '@/app/(features)/expenses/types/expenses';
+import { WorkOrderQuickView } from '@/components/shared/quick-view/WorkOrderQuickView';
 
 interface ExpenseReportData {
 	generalExpenses: GeneralExpense[];
@@ -59,6 +64,7 @@ interface ExpenseReportData {
 interface GeneralExpense {
 	id: string;
 	type: 'general_expense';
+	source_type: 'general' | 'invoice';
 	description: string;
 	vendor: string;
 	invoice_number: string;
@@ -68,7 +74,11 @@ interface GeneralExpense {
 	category: string;
 	payment_method: string;
 	notes: string;
+	has_invoice: boolean;
 	is_paid: boolean;
+	refund_amount: number | null;
+	resolution_type: string | null;
+	invoice_id: string | null;
 }
 
 interface WorkOrderExpense {
@@ -110,15 +120,6 @@ interface PartsExpense {
 	has_invoice: boolean;
 	is_paid: boolean;
 }
-
-const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2
-	}).format(value);
-};
 
 const formatDate = (dateString: string): string => {
 	return new Date(dateString).toLocaleDateString('en-US', {
@@ -205,7 +206,7 @@ const ReportsPage = () => {
 		setIsFetchingData(true);
 		try {
 			const response = await fetch(
-				`/api/financials/reports/expenses?startDate=${dateRange.from.toISOString()}&endDate=${dateRange.to.toISOString()}&shopId=${shopId}`
+				`/api/financials/reports/expenses?startDate=${getTorontoDateString(dateRange.from)}&endDate=${getTorontoDateString(dateRange.to)}&shopId=${shopId}`
 			);
 			if (!response.ok) {
 				throw new Error('Failed to fetch expense data');
@@ -310,7 +311,7 @@ const ReportsPage = () => {
 		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 		const link = document.createElement('a');
 		link.href = URL.createObjectURL(blob);
-		link.download = `Expense_Report_${dateRange?.from?.toLocaleDateString('en-CA')}_to_${dateRange?.to?.toLocaleDateString('en-CA')}.csv`;
+		link.download = `Expense_Report_${dateRange?.from ? getTorontoDateString(dateRange.from) : ''}_to_${dateRange?.to ? getTorontoDateString(dateRange.to) : ''}.csv`;
 		link.click();
 	};
 
@@ -361,7 +362,7 @@ const ReportsPage = () => {
 									<label className="text-sm text-muted-foreground mb-2 block">From Date</label>
 									<Input
 										type="date"
-										value={dateRange?.from ? dateRange.from.toISOString().split('T')[0] : ''}
+										value={dateRange?.from ? getTorontoDateString(dateRange.from) : ''}
 										onChange={(e) => {
 											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
 											handleDateRangeChange({
@@ -376,7 +377,7 @@ const ReportsPage = () => {
 									<label className="text-sm text-muted-foreground mb-2 block">To Date</label>
 									<Input
 										type="date"
-										value={dateRange?.to ? dateRange.to.toISOString().split('T')[0] : ''}
+										value={dateRange?.to ? getTorontoDateString(dateRange.to) : ''}
 										onChange={(e) => {
 											const date = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
 											handleDateRangeChange({
@@ -384,7 +385,7 @@ const ReportsPage = () => {
 												to: date
 											});
 										}}
-										min={dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined}
+										min={dateRange?.from ? getTorontoDateString(dateRange.from) : undefined}
 										className="bg-white dark:bg-background border-border text-foreground"
 									/>
 								</div>
@@ -513,16 +514,77 @@ const ReportsPage = () => {
 																</tr>
 															</thead>
 															<tbody>
-																{reportData.generalExpenses.map((expense) => (
-																	<tr key={expense.id} className="border-b border-border/50">
-																		<td className="py-3">{formatDate(expense.date)}</td>
-																		<td className="py-3">{expense.vendor}</td>
-																		<td className="py-3 text-muted-foreground">{expense.invoice_number || '-'}</td>
-																		<td className="py-3">{expense.description}</td>
-																		<td className="py-3 text-right font-medium">{formatCurrency(expense.amount)}</td>
-																		<td className="py-3 text-right text-muted-foreground">{formatCurrency(expense.tax)}</td>
-																	</tr>
-																))}
+																{reportData.generalExpenses.map((expense) => {
+																	const isRefunded = (expense.refund_amount && expense.refund_amount > 0) || expense.resolution_type === 'returned';
+																	const netAmount = expense.amount - (expense.refund_amount || 0);
+																	return (
+																		<tr 
+																			key={expense.id} 
+																			className={cn(
+																				"border-b border-border/50 cursor-pointer hover:bg-muted/50 transition-colors",
+																				isRefunded && "bg-red-50/30 dark:bg-red-500/5"
+																			)}
+																			onClick={() => openExpenseDetail(expense)}
+																		>
+																			<td className="py-3">{formatDate(expense.date)}</td>
+																			<td className="py-3">
+																				<div className="flex items-center gap-2">
+																					{expense.vendor}
+																					{expense.source_type === 'invoice' && (
+																						<Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 flex items-center gap-1">
+																							<FileText className="h-3 w-3" />
+																							Invoice
+																						</Badge>
+																					)}
+																					{isRefunded && (
+																						<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+																							<Undo2 className="h-3 w-3" />
+																							Refunded
+																						</Badge>
+																					)}
+																				</div>
+																			</td>
+																			<td className="py-3 text-muted-foreground">{expense.invoice_number || '-'}</td>
+																			<td className="py-3">{expense.description}</td>
+																			<td className="py-3 text-right">
+																				<div className="flex flex-col items-end">
+																					<span className={cn("font-medium", isRefunded && "line-through text-muted-foreground")}>
+																						{formatCurrency(expense.amount)}
+																					</span>
+																					{isRefunded && expense.refund_amount && expense.refund_amount > 0 && (
+																						<span className="text-xs text-green-600 dark:text-green-400">
+																							Net: {formatCurrency(Math.max(0, netAmount))}
+																						</span>
+																					)}
+																				</div>
+																			</td>
+																			<td className="py-3 text-right text-muted-foreground">{formatCurrency(expense.tax)}</td>
+																			<td className="py-3 text-center">
+																				{isRefunded ? (
+																					<Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 flex items-center gap-1">
+																						<Undo2 className="h-3 w-3" />
+																						Refunded
+																					</Badge>
+																				) : expense.is_paid ? (
+																					<Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+																						<CheckCircle2 className="h-3 w-3 mr-1" />
+																						Paid
+																					</Badge>
+																				) : expense.has_invoice ? (
+																					<Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+																						<Clock className="h-3 w-3 mr-1" />
+																						Invoiced
+																					</Badge>
+																				) : (
+																					<Badge variant="outline" className="text-muted-foreground">
+																						<Clock className="h-3 w-3 mr-1" />
+																						Pending
+																					</Badge>
+																				)}
+																			</td>
+																		</tr>
+																	);
+																})}
 															</tbody>
 															<tfoot>
 																<tr className="font-medium">

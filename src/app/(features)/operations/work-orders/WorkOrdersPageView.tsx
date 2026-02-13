@@ -78,6 +78,7 @@ interface WorkOrdersPageViewProps {
     onCompletionConfirm: (sendMessage: boolean, customMessage?: string, enableAutomatedMessages?: boolean, generateInvoice?: boolean) => Promise<void>
     onWorkOrderCompletionAttempt: (item: WorkOrderKanbanItem) => void
     generatedInvoiceNumber?: string | null
+    isCompletionPending?: boolean
     onReadyModalClose: () => void
     onReadyConfirm: (sendMessage: boolean, customMessage?: string) => Promise<void>
     onWorkOrderReadyAttempt: (item: WorkOrderKanbanItem) => void
@@ -117,11 +118,12 @@ export function WorkOrdersPageView({
     onCompletionModalClose,
     onCompletionConfirm,
     onWorkOrderCompletionAttempt,
+    generatedInvoiceNumber,
+    isCompletionPending,
     onReadyModalClose,
     onReadyConfirm,
     onWorkOrderReadyAttempt,
     refetch,
-    generatedInvoiceNumber,
 }: WorkOrdersPageViewProps) {
     return (
         <DragDropProvider
@@ -182,6 +184,7 @@ export function WorkOrdersPageView({
                             onClose={onCompletionModalClose}
                             onConfirm={onCompletionConfirm}
                             generatedInvoiceNumber={generatedInvoiceNumber}
+                            isGenerating={isCompletionPending}
                         />
                     </Suspense>
                 )}

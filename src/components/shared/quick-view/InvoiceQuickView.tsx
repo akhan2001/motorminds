@@ -15,6 +15,7 @@ import { formatDate } from '@/lib/utils/date'
 import { formatPhoneNumber } from '@/lib/utils/formatters'
 import { format } from 'date-fns'
 import { ExpenseSummaryCard } from '@/app/(features)/expenses/components/ExpenseSummaryCard'
+import { MigrationMetadataView } from '@/app/(features)/financials/components/invoices/MigrationMetadataView'
 
 interface InvoiceQuickViewProps {
     invoiceId: string // invoice_number
@@ -362,6 +363,16 @@ export function InvoiceQuickView({ invoiceId, isOpen, onClose }: InvoiceQuickVie
                             )}
                         </div>
                     </Card>
+
+                    {/* Migration data (under Notes) — human-readable */}
+                    {(invoice as any).migration_metadata != null && (
+                        <Card className="bg-slate-50 dark:bg-[#131313] border-border dark:border-[#333333]">
+                            <div className="p-4">
+                                <h3 className="text-lg font-semibold text-foreground dark:text-white mb-3">Migration data</h3>
+                                <MigrationMetadataView migrationMetadata={(invoice as any).migration_metadata} />
+                            </div>
+                        </Card>
+                    )}
 
                     {/* Expenses Card (from expenses table) */}
                     {expensesLoading ? (

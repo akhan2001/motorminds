@@ -15,6 +15,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import type { InvoiceItemType, InvoiceItemFormData, InvoiceItem } from '../../types/invoice-items'
 
 interface InvoiceItemFormProps {
@@ -117,13 +118,6 @@ export const InvoiceItemForm: React.FC<InvoiceItemFormProps> = ({
         }
 
         onSubmit(cleanedData)
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(amount)
     }
 
     return (

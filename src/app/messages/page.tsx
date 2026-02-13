@@ -31,14 +31,58 @@ export default function Messages() {
     }
 
     return (
-        <div className="h-full flex flex-col bg-background">
-            {/* Fixed Header */}
-            <div className="bg-background border-b border-border flex-shrink-0">
-                <div className="px-6 py-4">
-                    <h1 className="text-2xl font-semibold text-foreground">Messages</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Communicate with your customers through SMS and email
-                    </p>
+        <div className="h-screen flex flex-col overflow-hidden bg-background text-foreground">
+            <Nav />
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-4 sm:px-6 pb-4">
+                <div className="container mx-auto max-w-[1400px] w-full h-full flex flex-col min-h-0 overflow-hidden">
+                    <div className="flex-shrink-0 pt-4 pb-3">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Messages</h1>
+                        <p className="text-muted-foreground text-sm mt-0.5">
+                            Communicate with your customers through SMS and email.
+                        </p>
+                    </div>
+
+                    <Tabs defaultValue="sms" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-4">
+                        <TabsList className="grid w-full grid-cols-3 max-w-md bg-muted/60 p-1 rounded-lg h-11 flex-shrink-0">
+                            <TabsTrigger value="sms" className="data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground rounded-md">
+                                <Phone className="h-4 w-4 mr-2" />
+                                SMS
+                            </TabsTrigger>
+                            <TabsTrigger value="email" className="data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground rounded-md">
+                                <Mail className="h-4 w-4 mr-2" />
+                                Email
+                            </TabsTrigger>
+                            <TabsTrigger value="automated" className="data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground rounded-md">
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Automated
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="sms" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-4 data-[state=inactive]:hidden">
+                            {shopId && <TwilioMessaging shopId={shopId} />}
+                        </TabsContent>
+
+                        <TabsContent value="email" className="flex-1 min-h-0 overflow-auto mt-4 data-[state=inactive]:hidden">
+                            <EmailDashboard />
+                        </TabsContent>
+
+                        <TabsContent value="automated" className="flex-1 min-h-0 overflow-auto mt-4 data-[state=inactive]:hidden">
+                            <Card className="bg-card border-border">
+                                <CardContent className="p-8 text-center">
+                                    <h3 className="text-xl font-medium text-foreground">Automated Follow-Up Messages</h3>
+                                    <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                                        Set up automated messages that send to customers after service completion.
+                                    </p>
+                                    <Link href="/messaging" className="inline-block mt-6">
+                                        <Button size="lg">
+                                            Go to Automated Messaging
+                                            <ArrowRight className="h-4 w-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </div>
 

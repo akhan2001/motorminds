@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MessageCircle, Plus, Phone } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/feedback/loading-states'
 
 // Feature hooks
@@ -14,9 +13,6 @@ import { useTwilioPhoneNumbers } from '@/app/(features)/messaging/hooks/use-twil
 // Feature components
 import { ConversationList, ChatArea } from '@/app/(features)/messaging/sms/components'
 import type { SmsCustomer, SmsConversation } from '@/app/(features)/messaging/types/sms'
-
-// Local component
-import SendNewMessage from './SendNewMessage'
 
 interface TwilioMessagingProps {
     shopId: string
@@ -100,56 +96,29 @@ export default function TwilioMessaging({ shopId }: TwilioMessagingProps) {
     }
 
     return (
-        <div className="space-y-6">
-            <Tabs defaultValue="conversations" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-slate-50 dark:bg-muted">
-                    <TabsTrigger
-                        value="conversations"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted"
-                    >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Conversations
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="compose"
-                        className="data-[state=active]:bg-white dark:data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-red-600 hover:bg-muted"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Message
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="conversations" className="mt-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-280px)] min-h-[400px] max-h-[700px]">
-                        {/* Conversations List */}
-                        <div className="lg:col-span-1 h-full overflow-hidden">
-                            <ConversationList
-                                conversations={conversations}
-                                selectedPhone={selectedPhone}
-                                onSelectConversation={handleConversationSelect}
-                                onRefresh={handleRefresh}
-                                onCustomerClick={handleCustomerClick}
-                                isLoading={isLoadingConversations}
-                            />
-                        </div>
-
-                        {/* Chat Area */}
-                        <div className="lg:col-span-2 h-full overflow-hidden">
-                            <ChatArea
-                                shopId={shopId}
-                                selectedPhone={selectedPhone}
-                                selectedCustomer={selectedCustomer}
-                                conversations={conversations}
-                                onCustomerClick={handleCustomerClick}
-                            />
-                        </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="compose" className="space-y-4">
-                    <SendNewMessage onMessageSent={handleRefresh} />
-                </TabsContent>
-            </Tabs>
+        <div className="flex-1 flex flex-col min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full flex-1 min-h-0">
+                <div className="lg:col-span-4 xl:col-span-3 min-h-0 flex flex-col">
+                    <ConversationList
+                        conversations={conversations}
+                        selectedPhone={selectedPhone}
+                        onSelectConversation={handleConversationSelect}
+                        onRefresh={handleRefresh}
+                        onCustomerClick={handleCustomerClick}
+                        isLoading={isLoadingConversations}
+                        shopId={shopId}
+                    />
+                </div>
+                <div className="lg:col-span-8 xl:col-span-9 min-h-0 flex flex-col">
+                    <ChatArea
+                        shopId={shopId}
+                        selectedPhone={selectedPhone}
+                        selectedCustomer={selectedCustomer}
+                        conversations={conversations}
+                        onCustomerClick={handleCustomerClick}
+                    />
+                </div>
+            </div>
         </div>
     )
 }

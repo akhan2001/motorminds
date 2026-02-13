@@ -57,6 +57,29 @@ export function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails):
         return null
     }
 
+    // Get first work order item (if available) - only labor, service, or part (exclude fee and expense)
+    // Sort by created_at ascending to get the first one added
+    let firstItem = null
+    if ((workOrder as any).work_order_items && Array.isArray((workOrder as any).work_order_items) && (workOrder as any).work_order_items.length > 0) {
+        // Filter to only labor, service, or part
+        const validItems = (workOrder as any).work_order_items.filter((item: any) => 
+            item.item_type === 'labor' || item.item_type === 'service' || item.item_type === 'part'
+        )
+        
+        if (validItems.length > 0) {
+            // Sort by created_at ascending to get the first one added
+            const sortedItems = [...validItems].sort((a, b) => {
+                const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+                const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+                return dateA - dateB
+            })
+            firstItem = {
+                item_type: sortedItems[0].item_type,
+                description: sortedItems[0].description
+            }
+        }
+    }
+
     return {
         id: workOrder.id,
         title: workOrder.title,
@@ -70,7 +93,8 @@ export function transformWorkOrderToKanbanItem(workOrder: WorkOrderWithDetails):
         vehicle: vehicleDisplay,
         tags: workOrder.tags || [],
         shop_id: workOrder.shop_id,
-        status_tracker: normalizeStatusTracker(workOrder.status_tracker)
+        status_tracker: normalizeStatusTracker(workOrder.status_tracker),
+        first_item: firstItem
     }
 }
 

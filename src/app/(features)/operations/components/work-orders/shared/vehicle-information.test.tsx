@@ -288,10 +288,11 @@ describe('VehicleInformation Component', () => {
                 vehicleYear="2020"
                 vehicleMake="Toyota"
                 vehicleModel="Camry"
+                vehicleLicensePlate="ABC123"
             />
         )
 
-        const saveButton = screen.getByText(/Save Vehicle/i)
+        const saveButton = screen.getByText(/Save Vehicle Info/i)
         expect(saveButton).toBeDisabled()
         expect(VehicleService.createVehicle).not.toHaveBeenCalled()
     })
@@ -305,10 +306,11 @@ describe('VehicleInformation Component', () => {
                 vehicleYear="2020"
                 vehicleMake="Toyota"
                 vehicleModel="Camry"
+                vehicleLicensePlate="ABC123"
             />
         )
 
-        const saveButton = screen.getByText(/Save Vehicle/i)
+        const saveButton = screen.getByText(/Save Vehicle Info/i)
         fireEvent.click(saveButton)
 
         await waitFor(() => {
@@ -398,10 +400,11 @@ describe('VehicleInformation Component', () => {
                 vehicleYear=""
                 vehicleMake=""
                 vehicleModel=""
+                vehicleLicensePlate=""
             />
         )
 
-        const saveButton = screen.getByText(/Save Vehicle/i)
+        const saveButton = screen.getByText(/Save Vehicle Info/i)
         expect(saveButton).toBeDisabled()
     })
 
@@ -423,10 +426,11 @@ describe('VehicleInformation Component', () => {
                 vehicleYear="2020"
                 vehicleMake="Toyota"
                 vehicleModel="Camry"
+                vehicleLicensePlate="ABC123"
             />
         )
 
-        const saveButton = screen.getByText(/Save Vehicle/i)
+        const saveButton = screen.getByText(/Save Vehicle Info/i)
         fireEvent.click(saveButton)
 
         await waitFor(() => {
@@ -446,10 +450,11 @@ describe('VehicleInformation Component', () => {
                 vehicleYear="2020"
                 vehicleMake="Toyota"
                 vehicleModel="Camry"
+                vehicleLicensePlate="ABC123"
             />
         )
 
-        const saveButton = screen.getByText(/Save Vehicle/i)
+        const saveButton = screen.getByText(/Save Vehicle Info/i)
         fireEvent.click(saveButton)
 
         await waitFor(() => {

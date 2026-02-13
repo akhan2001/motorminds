@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { User, Mail, Phone, MapPin, Building2, Calendar } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Building2, Calendar, Car } from 'lucide-react'
 import { formatPhoneNumber } from '@/utils/format-phone'
 import { formatDate } from './utils'
 import { Input } from '@/components/ui/input'
@@ -16,15 +16,18 @@ interface CustomerContactInfoProps {
         customer_email: string
         customer_phone: string
         customer_address: string
+        license_plate: string
     }
     onFieldChange?: (field: string, value: string) => void
+    availableLicensePlates?: string[]
 }
 
 export const CustomerContactInfo: React.FC<CustomerContactInfoProps> = ({ 
     customer, 
     isEditing = false,
     editData,
-    onFieldChange 
+    onFieldChange,
+    availableLicensePlates = []
 }) => {
     if (isEditing && editData && onFieldChange) {
         return (
@@ -86,6 +89,18 @@ export const CustomerContactInfo: React.FC<CustomerContactInfoProps> = ({
                             placeholder="123 Main St, City, State ZIP"
                         />
                     </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="license_plate" className="text-foreground text-sm">
+                            License Plate
+                        </Label>
+                        <Input
+                            id="license_plate"
+                            value={editData.license_plate || ''}
+                            onChange={(e) => onFieldChange('license_plate', e.target.value.toUpperCase())}
+                            className="bg-white dark:bg-background border-border text-foreground"
+                            placeholder="Enter license plate"
+                        />
+                    </div>
                 </div>
             </div>
         )
@@ -120,6 +135,12 @@ export const CustomerContactInfo: React.FC<CustomerContactInfoProps> = ({
                     <div className="flex items-center gap-2">
                         <Building2 className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
                         <span className="text-foreground dark:text-white">{customer.shops.shop_name}</span>
+                    </div>
+                )}
+                {customer.license_plate && (
+                    <div className="flex items-center gap-2">
+                        <Car className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
+                        <span className="text-foreground dark:text-white">{customer.license_plate}</span>
                     </div>
                 )}
                 <div className="flex items-center gap-2">

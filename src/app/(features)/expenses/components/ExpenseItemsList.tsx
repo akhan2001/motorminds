@@ -172,12 +172,17 @@ export const ExpenseItemsList = forwardRef<ExpenseItemsListRef, ExpenseItemsList
         const overrideWorkOrderId = options?.workOrderId !== undefined ? options.workOrderId : workOrderId
         const overrideInvoiceId = options?.invoiceId !== undefined ? options.invoiceId : invoiceId
         
-        // Build payload with override IDs
+        // Build payload with override IDs (use correct source_type when linking to invoice/work order)
+        const effectiveSourceType = overrideInvoiceId
+            ? 'invoice'
+            : overrideWorkOrderId
+              ? 'work_order'
+              : sourceType
         const buildPayloadWithOverride = (item: ExpenseListItemFormData) => ({
             shop_id: shopId!,
             work_order_id: overrideWorkOrderId ?? null,
             invoice_id: overrideInvoiceId ?? null,
-            source_type: sourceType,
+            source_type: effectiveSourceType,
             description: item.description.trim(),
             category: item.category,
             subtotal: item.subtotal,
@@ -223,8 +228,9 @@ export const ExpenseItemsList = forwardRef<ExpenseItemsListRef, ExpenseItemsList
             deletedIdsRef.current = []
             await refetch()
             return true
-        } catch {
-            return false
+        } catch (err) {
+            // Rethrow so parent can show error (e.g. "Failed to create expense")
+            throw err
         }
     }, [
         shopId,

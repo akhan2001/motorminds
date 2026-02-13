@@ -126,7 +126,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                 <div className="grid grid-cols-1 gap-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <Label className="text-muted-foreground dark:text-gray-400">Title *</Label>
+                            <Label className="text-muted-foreground dark:text-gray-400">Title</Label>
                             {isEditing ? (
                                 <div className="space-y-2">
                                     <Select
@@ -210,7 +210,7 @@ export const WorkOrderInformation: React.FC<WorkOrderInformationProps> = ({
                     </div>
                     
                     <div className="space-y-1.5">
-                        <Label className="text-muted-foreground dark:text-gray-400">Customer Requests</Label>
+                        <Label className="text-base font-semibold text-foreground dark:text-white">Customer Requests</Label>
                         <textarea
                             value={description}
                             onChange={(e) => {

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, Save, Plus, Trash2, User, Car, X, LayoutIcon } from 'lucide-react'
+import { Loader2, Save, Plus, Trash2, User, Car, X, LayoutIcon, FileText } from 'lucide-react'
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useInvoice, useCreateInvoice, useUpdateInvoice } from '../../hooks/use-invoices'
 import type { InvoiceFormData, InvoiceItem } from '../../types/invoice'
@@ -201,8 +201,10 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
             }
             
             if (invoiceId) {
-                // Update existing invoice - persist expenses first
-                await expensesListRef.current?.persistAll({ invoiceId })
+                // Update existing invoice - persist expenses first (expenses table expects invoice_id UUID, not invoice_number)
+                await expensesListRef.current?.persistAll(
+                    invoice?.id ? { invoiceId: invoice.id } : undefined
+                )
                 await updateMutation.mutateAsync({
                     id: invoiceId,
                     data: finalFormData
@@ -214,9 +216,11 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                     ...finalFormData,
                     shop_id: shopId
                 })
-                // Persist expenses with the new invoice ID
-                if (createdInvoice?.id) {
-                    await expensesListRef.current?.persistAll({ invoiceId: createdInvoice.id })
+                // Persist expenses with the new invoice ID (must use invoice UUID; ref must be set)
+                if (createdInvoice?.id && expensesListRef.current) {
+                    await expensesListRef.current.persistAll({ invoiceId: createdInvoice.id })
+                } else if (createdInvoice?.id && !expensesListRef.current) {
+                    console.warn('Expense list ref not set; expense items were not saved.')
                 }
                 toast.success('Invoice created successfully')
             }
@@ -406,6 +410,23 @@ const InvoiceFormDialog: React.FC<InvoiceFormDialogProps> = ({ isOpen, onClose, 
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Recommendations (Notes) Card */}
+                            <div className="bg-slate-50 dark:bg-[#131313] border border-border dark:border-[#333333] rounded-lg">
+                                <div className="p-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                        <h3 className="text-lg font-semibold text-foreground dark:text-white">Recommendations</h3>
+                                    </div>
+                                    <Textarea
+                                        value={formData.notes || ''}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value || null }))}
+                                        className="bg-background dark:bg-[#1a1a1a] border-border dark:border-[#2a2a2a] text-foreground dark:text-white min-h-[100px]"
+                                        placeholder="Recommendations or notes for the customer..."
+                                        rows={4}
+                                    />
                                 </div>
                             </div>
 

@@ -1,41 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { isUserAdmin } from '@/lib/auth/admin-role-checker'
+import { getUserAccessContextFromRequest } from '@/lib/auth/access-context'
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        if (!supabaseAdmin) {
-            console.error('Supabase admin client not configured')
-            return NextResponse.json(
-                { error: 'Database connection not configured' },
-                { status: 500 }
-            )
-        }
-
         const supabase = await createClient()
         
-        // Get the authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
+        // Get user access context (scope-aware: shop, organization, or platform)
+        const context = await getUserAccessContextFromRequest()
+        if (!context) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        // Check if user is admin
-        const adminCheck = await isUserAdmin(user.id)
-        if (!adminCheck) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
         // Await params before accessing properties
         const { id: customerId } = await params
 
+        // Verify customer is accessible to the user (organization-aware)
+        const { data: customer, error: customerError } = await supabase
+            .from('customers')
+            .select('id, shop_id, organization_id')
+            .eq('id', customerId)
+            .maybeSingle()
 
-        // Fetch work orders for the customer using admin client (bypasses RLS)
-        const { data: workOrders, error: workOrdersError } = await supabaseAdmin
+        if (customerError || !customer) {
+            return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+        }
+
+        // Check access based on scope
+        let hasAccess = false
+        if (context.accessScope === 'platform') {
+            hasAccess = true // Platform admins can see all customers
+        } else if (context.accessScope === 'organization' && context.organizationId) {
+            // Organization users can see customers from same org or accessible shops
+            hasAccess = customer.organization_id === context.organizationId || 
+                       (context.shopId && customer.shop_id === context.shopId) ||
+                       context.accessibleShopIds.includes(customer.shop_id)
+        } else {
+            // Shop users can only see customers from their shop
+            hasAccess = (context.shopId && customer.shop_id === context.shopId) || 
+                       context.accessibleShopIds.includes(customer.shop_id)
+        }
+
+        if (!hasAccess) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
+        // Determine which client to use based on access scope
+        // Platform/org admins may need admin client for cross-shop queries
+        const useAdminClient = context.accessScope === 'platform' || 
+                              (context.accessScope === 'organization' && context.organizationId)
+        const queryClient = useAdminClient && supabaseAdmin ? supabaseAdmin : supabase
+
+        // Build shop filter based on access scope
+        let shopFilter: string[] | null = null
+        if (context.accessScope === 'shop' && context.shopId) {
+            shopFilter = [context.shopId]
+        } else if (context.accessScope === 'organization' && context.organizationId) {
+            shopFilter = context.accessibleShopIds.length > 0 ? context.accessibleShopIds : null
+        }
+        // Platform scope: no filter (can see all shops)
+
+
+        // Fetch work orders for the customer
+        let workOrdersQuery = queryClient
             .from('work_orders')
             .select(`
                 id,
@@ -64,6 +95,13 @@ export async function GET(
                 )
             `)
             .eq('customer_id', customerId)
+        
+        // Apply shop filter if needed
+        if (shopFilter && shopFilter.length > 0) {
+            workOrdersQuery = workOrdersQuery.in('shop_id', shopFilter)
+        }
+        
+        const { data: workOrders, error: workOrdersError } = await workOrdersQuery
             .order('created_at', { ascending: false })
             .limit(20)
 
@@ -71,8 +109,8 @@ export async function GET(
             console.error('Error fetching work orders:', workOrdersError)
         }
 
-        // Fetch appointments for the customer using admin client (bypasses RLS)
-        const { data: appointments, error: appointmentsError } = await supabaseAdmin
+        // Fetch appointments for the customer
+        let appointmentsQuery = queryClient
             .from('appointments')
             .select(`
                 id,
@@ -97,6 +135,13 @@ export async function GET(
                 )
             `)
             .eq('customer_id', customerId)
+        
+        // Apply shop filter if needed
+        if (shopFilter && shopFilter.length > 0) {
+            appointmentsQuery = appointmentsQuery.in('shop_id', shopFilter)
+        }
+        
+        const { data: appointments, error: appointmentsError } = await appointmentsQuery
             .order('appointment_date', { ascending: false })
             .limit(20)
 
@@ -105,7 +150,7 @@ export async function GET(
         }
 
         // Fetch invoices for the customer
-        const { data: invoices, error: invoicesError } = await supabase
+        let invoicesQuery = queryClient
             .from('invoices_table')
             .select(`
                 id,
@@ -127,6 +172,13 @@ export async function GET(
                 )
             `)
             .eq('customer_id', customerId)
+        
+        // Apply shop filter if needed
+        if (shopFilter && shopFilter.length > 0) {
+            invoicesQuery = invoicesQuery.in('shop_id', shopFilter)
+        }
+        
+        const { data: invoices, error: invoicesError } = await invoicesQuery
             .order('issue_date', { ascending: false })
             .limit(20)
 

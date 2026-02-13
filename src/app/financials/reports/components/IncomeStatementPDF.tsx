@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getShopInfo } from '@/utils/supabase/supabase-shop';
+import { formatCurrency } from '@/lib/utils/currency';
 
 interface IncomeStatementData {
     totalRevenue: number;
@@ -44,10 +45,6 @@ interface IncomeStatementData {
     endDate: string;
     invoiceCount?: number;
 }
-
-const formatCurrency = (value: number): string => {
-    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
 
 const formatPercent = (value: number): string => {
     return `${value.toFixed(1)}%`;

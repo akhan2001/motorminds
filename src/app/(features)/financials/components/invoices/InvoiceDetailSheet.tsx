@@ -8,6 +8,8 @@ import { FileText, Calendar, DollarSign, User, Car, Wrench, Package, CreditCard,
 import { format } from 'date-fns'
 import type { InvoiceWithDetails } from '../../types/invoice'
 import { formatInvoiceDisplayId } from '../../lib/invoice-calculations'
+import { formatCurrency } from '@/lib/utils/currency'
+import { MigrationMetadataView } from './MigrationMetadataView'
 
 interface InvoiceDetailSheetProps {
     invoice: InvoiceWithDetails | null
@@ -52,13 +54,6 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
             return <Badge className="bg-blue-500/10 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 dark:border-blue-500/20">Low</Badge>
         }
         return <Badge className="bg-gray-500/10 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20 dark:border-gray-500/20">Medium</Badge>
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount)
     }
 
     const formatDate = (dateString: string | null) => {
@@ -338,21 +333,19 @@ export const InvoiceDetailSheet: React.FC<InvoiceDetailSheetProps> = ({
                         </div>
                     )}
 
+                    {/* Migration data (under Notes) — human-readable */}
+                    {(invoice as any).migration_metadata != null && (
+                        <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
+                            <h3 className="text-foreground dark:text-white font-medium mb-3">Migration data</h3>
+                            <MigrationMetadataView migrationMetadata={(invoice as any).migration_metadata} />
+                        </div>
+                    )}
+
                     {/* Description */}
                     {invoice.description && (
                         <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
                             <h3 className="text-foreground dark:text-white font-medium mb-2">Description</h3>
                             <p className="text-muted-foreground dark:text-gray-400 text-sm whitespace-pre-wrap">{invoice.description}</p>
-                        </div>
-                    )}
-
-                    {/* Migration Metadata (if exists) */}
-                    {(invoice as any).migration_metadata && (
-                        <div className="bg-slate-50 dark:bg-[#1a1a1a] rounded-lg p-4 border border-border dark:border-[#2a2a2a]">
-                            <h3 className="text-foreground dark:text-white font-medium mb-2">Migration Data</h3>
-                            <div className="text-xs text-muted-foreground dark:text-gray-400 font-mono bg-background dark:bg-[#0f0f0f] p-2 rounded border border-border dark:border-[#2a2a2a] overflow-x-auto">
-                                <pre>{JSON.stringify((invoice as any).migration_metadata, null, 2)}</pre>
-                            </div>
                         </div>
                     )}
                 </div>

@@ -59,6 +59,7 @@ export function WorkOrderEditRightPanel({
             customerId={workOrderDetails.customer_id}
             customerType={workOrderDetails.customer_type}
             workOrderItems={workOrderItems}
+            workOrder={workOrderDetails}
         />
     )
 }

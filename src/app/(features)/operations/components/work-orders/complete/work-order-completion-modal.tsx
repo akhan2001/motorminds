@@ -273,17 +273,35 @@ export const WorkOrderCompletionModal: React.FC<WorkOrderCompletionModalProps> =
                             <Button
                                 variant="outline"
                                 onClick={handleCompleteWithoutInvoice}
-                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white"
+                                disabled={isGenerating}
+                                className="border-border dark:border-[#2a2a2a] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#1a1a1a] hover:text-foreground dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Complete Without Invoice
+                                {isGenerating ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Completing...
+                                    </>
+                                ) : (
+                                    'Complete Without Invoice'
+                                )}
                             </Button>
                             
                             <Button
                                 onClick={handleCompleteWithInvoice}
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                disabled={isGenerating}
+                                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Complete With Invoice
+                                {isGenerating ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Completing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        Complete With Invoice
+                                    </>
+                                )}
                             </Button>
                         </>
                     )}

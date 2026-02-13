@@ -1,34 +1,44 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { formatDateForFilter } from "@/lib/utils/date";
+import { getTorontoDayBoundsUTC, getTorontoDateString } from "@/lib/utils/date";
+
+/** Validate ISO timestamp string (UTC). Returns the string if valid, null otherwise. */
+function parseIsoTimestamp(value: string | null): string | null {
+    if (!value || typeof value !== "string") return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString();
+}
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get("shop_id");
-    const dateStr = searchParams.get("date"); // YYYY-MM-DD format
+    const dateStr = searchParams.get("date"); // YYYY-MM-DD format (for display)
+    const isoTimestampStart = parseIsoTimestamp(searchParams.get("iso_timestamp_start"));
+    const isoTimestampEnd = parseIsoTimestamp(searchParams.get("iso_timestamp_end"));
 
     if (!shopId) {
         return NextResponse.json({ error: "shop_id is required" }, { status: 400 });
     }
 
-    // Default to today if no date provided (use local timezone)
-    const targetDate = dateStr || formatDateForFilter(new Date());
-    
-    // Parse the date string as a local date (EST/America/Toronto)
-    // When we create a Date from YYYY-MM-DD, JavaScript interprets it as UTC midnight
-    // We need to create it as local midnight instead
-    const [year, month, day] = targetDate.split('-').map(Number);
-    
-    // Create date boundaries in local timezone (EST)
-    // Using Date constructor with local time components creates a date in local timezone
-    const startOfDayLocal = new Date(year, month - 1, day, 0, 0, 0, 0);
-    const endOfDayLocal = new Date(year, month - 1, day, 23, 59, 59, 999);
-    
-    // Convert to UTC ISO strings for database queries
-    // The database stores timestamps in UTC, so we convert local time boundaries to UTC
-    const startOfDay = startOfDayLocal.toISOString();
-    const endOfDay = endOfDayLocal.toISOString();
+    let startOfDay: string;
+    let endOfDay: string;
+    let targetDate: string;
+
+    // Prefer UTC ISO bounds from client (correct in all environments; store/send UTC)
+    if (isoTimestampStart && isoTimestampEnd) {
+        startOfDay = isoTimestampStart;
+        endOfDay = isoTimestampEnd;
+        targetDate = dateStr || startOfDay.slice(0, 10);
+    } else {
+        // Fallback: use Toronto timezone bounds (works correctly in both DEV and PROD)
+        // This ensures a work order completed at 11:30 PM EST appears on the correct Toronto date
+        targetDate = dateStr || getTorontoDateString();
+        const bounds = getTorontoDayBoundsUTC(targetDate);
+        startOfDay = bounds.start;
+        endOfDay = bounds.end;
+    }
 
     try {
         // Fetch work orders completed on this day (based on completed_at timestamp)
@@ -70,6 +80,7 @@ export async function GET(req: NextRequest) {
             .select(`
                 id,
                 invoice_number,
+                work_order_id,
                 total_amount,
                 subtotal,
                 tax_amount,
@@ -90,7 +101,48 @@ export async function GET(req: NextRequest) {
             throw invoicesError;
         }
 
-        // Calculate payment method breakdown
+        // Work orders that already contributed revenue via a paid invoice on this day.
+        // Exclude their advance payments to avoid double-counting (advance applied to invoice counts only in invoice revenue).
+        const workOrderIdsWithPaidInvoiceInDay = new Set(
+            (invoices || []).map((inv: { work_order_id?: string | null }) => inv.work_order_id).filter(Boolean)
+        );
+
+        // Fetch work orders with advance_payments for this shop (to include in daily total)
+        const { data: workOrdersWithAdvance, error: advanceError } = await supabase
+            .from("work_orders")
+            .select("id, advance_payments")
+            .eq("shop_id", shopId);
+
+        if (advanceError) {
+            console.error("Error fetching work orders for advance payments:", advanceError);
+        }
+
+        // Sum advance payments where payment_date falls within the report day.
+        // Skip work orders in workOrderIdsWithPaidInvoiceInDay (revenue already counted via invoice).
+        let advancePaymentsTotal = 0;
+        const advancePaymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
+        const startMsAdv = new Date(startOfDay).getTime();
+        const endMsAdv = new Date(endOfDay).getTime();
+        (workOrdersWithAdvance || []).forEach((wo) => {
+            if (workOrderIdsWithPaidInvoiceInDay.has(wo.id)) return;
+            const payments = (wo.advance_payments as any[] | null) || [];
+            payments.forEach((p: any) => {
+                if (p.deleted) return;
+                const paymentDate = p.payment_date ? new Date(p.payment_date).getTime() : 0;
+                if (paymentDate >= startMsAdv && paymentDate <= endMsAdv) {
+                    const amount = Number(p.amount) || 0;
+                    advancePaymentsTotal += amount;
+                    const method = p.payment_method || "other";
+                    if (!advancePaymentMethodBreakdown[method]) {
+                        advancePaymentMethodBreakdown[method] = { count: 0, amount: 0 };
+                    }
+                    advancePaymentMethodBreakdown[method].count += 1;
+                    advancePaymentMethodBreakdown[method].amount += amount;
+                }
+            });
+        });
+
+        // Calculate payment method breakdown (invoices first)
         const paymentMethodBreakdown: Record<string, { count: number; amount: number }> = {};
         
         (invoices || []).forEach(inv => {
@@ -117,11 +169,21 @@ export async function GET(req: NextRequest) {
             }
         });
 
-        // Calculate totals
-        const totalRevenue = (invoices || []).reduce(
+        // Merge advance payment method breakdown into main breakdown
+        Object.entries(advancePaymentMethodBreakdown).forEach(([method, data]) => {
+            if (!paymentMethodBreakdown[method]) {
+                paymentMethodBreakdown[method] = { count: 0, amount: 0 };
+            }
+            paymentMethodBreakdown[method].count += data.count;
+            paymentMethodBreakdown[method].amount += data.amount;
+        });
+
+        // Calculate totals (invoice revenue + advance payments for the day)
+        const invoiceRevenue = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.total_amount) || 0), 
             0
         );
+        const totalRevenue = invoiceRevenue + advancePaymentsTotal;
         const totalTax = (invoices || []).reduce(
             (sum, inv) => sum + (Number(inv.tax_amount) || 0), 
             0
@@ -132,16 +194,19 @@ export async function GET(req: NextRequest) {
         );
 
         // Get vehicle details from completed work orders for the report
-        const vehiclesServiced = (completedWorkOrders || [])
-            .filter(wo => wo.vehicle)
-            .map(wo => ({
-                id: wo.vehicle?.id,
+        // Supabase may return relations as single object or array; normalize to object
+        const vehiclesServiced = (completedWorkOrders || []).map((wo) => {
+            const vehicle = Array.isArray(wo.vehicle) ? wo.vehicle[0] : wo.vehicle;
+            const customer = Array.isArray(wo.customer) ? wo.customer[0] : wo.customer;
+            return {
+                id: vehicle?.id,
                 work_order_id: wo.id,
-                description: wo.vehicle ? `${wo.vehicle.year} ${wo.vehicle.make} ${wo.vehicle.model}` : 'Unknown',
-                license_plate: wo.vehicle?.license_plate,
+                description: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : 'Unknown',
+                license_plate: vehicle?.license_plate,
                 work_order_title: wo.title,
-                customer_name: wo.customer?.customer_name || 'Unknown'
-            }));
+                customer_name: (customer as { customer_name?: string } | null)?.customer_name || 'Unknown',
+            };
+        }).filter((v) => v.id != null);
 
         // Format payment method breakdown for response
         const paymentMethods = Object.entries(paymentMethodBreakdown).map(([method, data]) => ({
@@ -161,6 +226,7 @@ export async function GET(req: NextRequest) {
                 totalRevenue,
                 totalSubtotal,
                 totalTax,
+                advancePaymentsTotal,
             },
             paymentMethods,
             vehiclesServiced,

@@ -14,6 +14,7 @@ import { getFilteredNavItems } from "@/lib/utils/navigation"
 import { ProfileDropdown } from "@/components/layout/nav/profile-dropdown"
 import { FeedbackDropdown } from "@/components/layout/header/FeedbackDropdown/FeedbackDropdown"
 import { useAdminContextWithRole } from "@/contexts/admin-context"
+import { useMessagesUnread } from "@/app/(features)/messaging/hooks/use-messages-unread"
 
 interface NavProps {
 	sidebarOpen?: boolean
@@ -27,6 +28,9 @@ export function Nav({ sidebarOpen, setSidebarOpen }: NavProps = {}) {
 	const queryClient = useQueryClient()
 	const { data: userRole, isLoading: isLoadingRole } = useUserRole()
 	const { data: shopInfo, isLoading: isLoadingShop } = useShopInfo()
+	
+	// Check for unread messages (only for non-demo users with a shop)
+	const { hasUnread } = useMessagesUnread(shopInfo?.id)
 
 	if (!pathname) {
 		return null
@@ -224,13 +228,16 @@ export function Nav({ sidebarOpen, setSidebarOpen }: NavProps = {}) {
 					{/* Full navigation for non-demo users */}
 					{userRole !== 'demo' && (
 						<>
-							<button
-								className={`p-2 rounded-full border border-border dark:border-[#2a2a2a] ${
-									activeLink === "Messages" ? "text-white bg-red-600" : "text-muted-foreground"
-								} hover:text-foreground hover:bg-accent dark:hover:bg-accent/50 transition-colors duration-200`}
+							<button 
+								className={`relative ${
+									activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
+								} hover:text-foreground transition-colors`} 
 								onClick={() => router.push("/messages")}
 							>
-								<MessageCircleMore className="w-5 h-5" />
+								<MessageCircleMore className="inline-block w-5 h-5" />
+								{hasUnread && (
+									<span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-[#0d0d0d]" />
+								)}
 							</button>
 							{/* Feedback Dropdown */}
 							<div className="p-2 rounded-full border border-border dark:border-[#2a2a2a] text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent/50 transition-colors duration-200">

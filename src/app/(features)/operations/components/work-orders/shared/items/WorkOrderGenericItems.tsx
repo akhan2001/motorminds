@@ -233,18 +233,18 @@ export function WorkOrderGenericItems({
                     )}
                 </div>
                 {/* Only show Add button if editing and not read-only */}
-                {isEditing && !readOnly && (
+                {/* {isEditing && !readOnly && (
                     <Button
                         type="button"
                         onClick={addItem}
                         variant="outline"
                         size="sm"
-                        className="border-red-300 dark:border-red-500/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                        className="border-border dark:border-[#626262] text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-[#626262] hover:text-foreground dark:hover:text-white"
                     >
                         <Plus className="h-4 w-4 mr-1" />
                         Add {title}
                     </Button>
-                )}
+                )} */}
             </div>
 
             {items.length === 0 ? (

@@ -25,9 +25,10 @@ import { useInvoice, useDeleteInvoice, useUpdateInvoice } from '../../hooks/use-
 import { useAuth } from '../../../operations/hooks/use-auth'
 import { useWorkOrderItems } from '../../../operations/hooks/use-work-order-items'
 import { useExpensesByInvoice } from '@/app/(features)/expenses/hooks/use-expenses'
-import { ExpenseRow } from '@/app/(features)/expenses/components/ExpenseRow'
+import { ExpenseSummaryCard } from '@/app/(features)/expenses/components/ExpenseSummaryCard'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/currency'
 import { InvoiceSendModal } from './InvoiceSendModal'
 import { InvoiceSendChoiceModal } from './InvoiceSendChoiceModal'
 import { InvoiceSendSmsModal } from './InvoiceSendSmsModal'
@@ -156,10 +157,6 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
         } else {
             toast.error('No work order associated with this invoice')
         }
-    }
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
     }
 
     const formatPhoneNumber = (phone: string | null) => {
@@ -506,7 +503,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                 })}
 
                                 {/* Expense Items (Tracking Only - Not Billed) */}
-                                {expenseItems.length > 0 && (
+                                {/* {expenseItems.length > 0 && (
                                     <>
                                         <div className="mt-4 pt-4 border-t border-orange-200 dark:border-orange-500/20">
                                             <div className="flex items-center gap-2 mb-3">
@@ -523,8 +520,11 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                             const isUnifiedExpense = 'id' in item && 'description' in item && !('item_type' in item)
                                             
                                             if (isUnifiedExpense) {
-                                                // Use ExpenseRow for unified expenses
-                                                return <ExpenseRow key={item.id || `expense-${index}`} expense={item} index={index} />
+                                                return (
+                                                    <div key={item.id || `expense-${index}`} className="mb-2">
+                                                        <ExpenseSummaryCard expense={item} defaultExpanded={false} />
+                                                    </div>
+                                                )
                                             } else {
                                                 // Legacy expense item from work_order_items
                                                 return (
@@ -575,7 +575,7 @@ const InvoiceViewOnly: React.FC<InvoiceViewOnlyProps> = ({ invoiceId, onEdit, on
                                             </span>
                                         </div>
                                     </>
-                                )}
+                                )} */}
                             </div>
 
                             {invoice.notes && (

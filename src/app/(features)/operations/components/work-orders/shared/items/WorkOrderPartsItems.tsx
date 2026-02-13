@@ -1,22 +1,31 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import { useSuppliers } from "@/app/(features)/suppliers/hooks/use-suppliers";
 
-import { Plus, Trash2, Package } from "lucide-react";
+import { Plus, Trash2, Package, BookmarkPlus, Save, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
-import { useRef, useEffect } from "react";
 
 import { WorkOrderItem, WorkOrderItemFormData, WorkOrderItemCreateData } from "../../../../types/work-order-items";
 import { WorkOrderItemsService } from "../../../../lib/work-order-items-service";
 import { TemplateDropdown } from "../../../work-order-items/shared";
 import type { WorkOrderItemTemplate } from "../../../../types/work-order-item-templates";
 import { useAuth } from "../../../../hooks/use-auth";
+import { useCreateWorkOrderItemTemplate } from "../../../../hooks/use-work-order-item-templates";
 import { TEMPLATE_CATEGORIES } from "../../../work-order-items/templates/Categories/template-categories";
 
 interface PartFormItem {
@@ -54,7 +63,10 @@ export function WorkOrderPartsItems({
 
     const { shopId } = useAuth();
     const { suppliers, loading: suppliersLoading } = useSuppliers();
-    
+    const createTemplateMutation = useCreateWorkOrderItemTemplate();
+    const [saveTemplateItem, setSaveTemplateItem] = useState<PartFormItem | null>(null);
+    const [templateName, setTemplateName] = useState('');
+
     // Use a ref to track the latest items to avoid stale closure issues
     const itemsRef = useRef(items);
     useEffect(() => {
@@ -230,6 +242,52 @@ export function WorkOrderPartsItems({
         onItemsChange(updatedItems);
     };
 
+    const openSaveTemplateDialog = (item: PartFormItem) => {
+        setSaveTemplateItem(item);
+        setTemplateName(item.description || '');
+    };
+
+    const closeSaveTemplateDialog = () => {
+        setSaveTemplateItem(null);
+        setTemplateName('');
+    };
+
+    const handleSaveAsTemplate = async () => {
+        if (!saveTemplateItem || !shopId) return;
+
+        if (!templateName.trim()) {
+            toast.error('Template name is required');
+            return;
+        }
+        if (saveTemplateItem.unit_price <= 0) {
+            toast.error('Unit price must be greater than 0');
+            return;
+        }
+        if (saveTemplateItem.quantity <= 0) {
+            toast.error('Quantity must be greater than 0');
+            return;
+        }
+
+        try {
+            await createTemplateMutation.mutateAsync({
+                shop_id: shopId,
+                item_type: 'part',
+                name: templateName.trim(),
+                description: saveTemplateItem.notes || undefined,
+                quantity: saveTemplateItem.quantity,
+                unit_price: saveTemplateItem.unit_price,
+                unit_cost: saveTemplateItem.unit_cost ?? undefined,
+                category: saveTemplateItem.category || undefined,
+                part_number: saveTemplateItem.part_number || undefined,
+                supplier: saveTemplateItem.supplier || undefined,
+                warranty_period: saveTemplateItem.warranty_period || undefined,
+            });
+            closeSaveTemplateDialog();
+        } catch {
+            // Error handled by mutation hook
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -266,16 +324,30 @@ export function WorkOrderPartsItems({
                                     <h4 className="text-sm font-medium text-green-600 dark:text-green-400">Part Item {index + 1}</h4>
                                 </div>
                                 {isEditing && (
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeItem(item.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
-                                        title="Delete"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        {item.description && item.unit_price > 0 && (
+                                            <Button
+                                                type="button"
+                                                onClick={() => openSaveTemplateDialog(item)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-green-300 dark:border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 h-8 px-3"
+                                            >
+                                                <BookmarkPlus className="h-4 w-4 mr-1" />
+                                                Save Template
+                                            </Button>
+                                        )}
+                                        <Button
+                                            type="button"
+                                            onClick={() => removeItem(item.id)}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-muted-foreground hover:text-foreground hover:bg-muted h-7 w-7 p-0"
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
 
@@ -602,6 +674,117 @@ export function WorkOrderPartsItems({
                     </Button>
                 </div>
             )}
+
+            {/* Save as Template Dialog */}
+            <Dialog open={!!saveTemplateItem} onOpenChange={(open) => !open && closeSaveTemplateDialog()}>
+                <DialogContent className="max-w-md bg-slate-50 dark:bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3 text-foreground">
+                            <div className="flex items-center justify-center w-10 h-10 bg-green-50 dark:bg-green-500/10 rounded-full">
+                                <BookmarkPlus className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            Save as Template
+                        </DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                            Save this part item as a template for future use.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {saveTemplateItem && (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="template-name" className="text-foreground">
+                                    Template Name *
+                                </Label>
+                                <Input
+                                    id="template-name"
+                                    value={templateName}
+                                    onChange={(e) => setTemplateName(e.target.value)}
+                                    placeholder="e.g., Oil Filter - Standard"
+                                    className="bg-white dark:bg-background border-border text-foreground"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="bg-white dark:bg-background rounded-lg p-4 border border-border space-y-2">
+                                <h4 className="text-sm font-medium text-foreground">Template Values</h4>
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span className="text-muted-foreground">Type:</span>
+                                        <span className="ml-2 text-foreground">Part</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Quantity:</span>
+                                        <span className="ml-2 text-foreground">{saveTemplateItem.quantity}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Unit Price:</span>
+                                        <span className="ml-2 text-foreground">${saveTemplateItem.unit_price.toFixed(2)}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Total:</span>
+                                        <span className="ml-2 text-foreground font-medium">${saveTemplateItem.total_price.toFixed(2)}</span>
+                                    </div>
+                                    {saveTemplateItem.part_number && (
+                                        <div className="col-span-2">
+                                            <span className="text-muted-foreground">Part #:</span>
+                                            <span className="ml-2 text-foreground">{saveTemplateItem.part_number}</span>
+                                        </div>
+                                    )}
+                                    {saveTemplateItem.category && (
+                                        <div className="col-span-2">
+                                            <span className="text-muted-foreground">Category:</span>
+                                            <span className="ml-2 text-foreground">{saveTemplateItem.category}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {(saveTemplateItem.unit_price <= 0 || saveTemplateItem.quantity <= 0) && (
+                                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-300 dark:border-orange-500/20 rounded-lg p-3">
+                                    <p className="text-orange-600 dark:text-orange-300 text-sm">
+                                        Please ensure the item has a valid quantity and unit price before saving as a template.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={closeSaveTemplateDialog}
+                            disabled={createTemplateMutation.isPending}
+                            className="border-border"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveAsTemplate}
+                            disabled={
+                                createTemplateMutation.isPending ||
+                                !templateName.trim() ||
+                                !saveTemplateItem ||
+                                saveTemplateItem.unit_price <= 0 ||
+                                saveTemplateItem.quantity <= 0
+                            }
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                            {createTemplateMutation.isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save Template
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

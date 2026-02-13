@@ -23,6 +23,7 @@ export function useCustomerInvoices(
                 .eq('id', shopId)
                 .single()
 
+            // Fetch all invoices for customer (active and archived); `archived` is in select for UI grouping
             let query = supabase
                 .from('invoices_table')
                 .select(`
@@ -37,7 +38,6 @@ export function useCustomerInvoices(
                     shop:shops(id, shop_name)
                 `)
                 .eq('customer_id', customerId)
-                .eq('archived', true) // Only show archived (historical) invoices
                 .order('issue_date', { ascending: false })
                 .limit(50) // Increased limit for organization-wide view
 
