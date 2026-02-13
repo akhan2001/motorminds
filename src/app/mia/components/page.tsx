@@ -5,6 +5,8 @@ import { useChat } from '@ai-sdk/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TextareaAutosize from 'react-textarea-autosize';
+import { toast } from 'sonner';
+import { getChatErrorMessage } from '@/app/chat/utils/chat-error';
 
 // Add LoadingCircle component
 const LoadingCircle = () => (
@@ -16,7 +18,7 @@ const LoadingCircle = () => (
 export default function ChatWindowComponent() {
   const [shopId, setShopId] = useState('850e8400-e29b-41d4-a716-446655440001'); // Default shop ID
   
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
     api: '/mia/api/retrieval',
     body: {
       shop_id: shopId
@@ -27,7 +29,10 @@ export default function ChatWindowComponent() {
         role: 'assistant',
         content: "Hello! I'm your shop assistant. Ask me anything about your customers, orders, or business data."
       }
-    ]
+    ],
+    onError: (e) => {
+      toast.error('Request failed', { description: getChatErrorMessage(e) });
+    }
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,6 +51,11 @@ export default function ChatWindowComponent() {
       </div>
       
       <div className="flex-grow overflow-y-auto p-4">
+        {error && (
+          <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
+            {getChatErrorMessage(error)}
+          </div>
+        )}
         {messages.map((message) => (
           <div 
             key={message.id} 

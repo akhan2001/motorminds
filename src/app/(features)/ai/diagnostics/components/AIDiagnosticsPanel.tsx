@@ -3,6 +3,10 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { useChat, type UIMessage } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
+import { toast } from 'sonner'
+import { AlertCircle } from 'lucide-react'
+import { getChatErrorMessage } from '@/app/chat/utils/chat-error'
+import { Button } from '@/components/ui/button'
 import { DiagnosticsChatForm } from './DiagnosticsChatForm'
 import { DiagnosticsOnboarding } from './DiagnosticsOnboarding'
 import { Message } from './Message'
@@ -77,7 +81,8 @@ export function AIDiagnosticsPanel({
 		}),
 		messages: initialMessages,
 		onError: (error: Error) => {
-			console.error('AI Diagnostics error:', error)
+			const message = getChatErrorMessage(error)
+			toast.error('AI diagnostics request failed', { description: message })
 		}
 	})
 
@@ -127,6 +132,23 @@ export function AIDiagnosticsPanel({
 						<>
 							<ConversationContent>
 								<div className="flex flex-col max-w-[768px] mx-auto pb-12 w-full px-4">
+									{chat.error && (
+										<div className="mb-4 flex items-start gap-3 p-4 rounded-lg bg-red-500/10 dark:bg-red-500/20 border border-red-500/30 text-red-600 dark:text-red-400">
+											<AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+											<div className="flex-1 min-w-0">
+												<p className="font-medium">Request failed</p>
+												<p className="text-sm mt-1 opacity-90">{getChatErrorMessage(chat.error)}</p>
+												<Button
+													variant="ghost"
+													size="sm"
+													className="mt-2 h-8 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+													onClick={() => chat.clearError?.()}
+												>
+													Dismiss
+												</Button>
+											</div>
+										</div>
+									)}
 									{chat.messages.map((message: UIMessage) => (
 										<Message
 											key={message.id}

@@ -9,12 +9,13 @@ import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import { ChatMessageBubble } from "@/app/chat/components/ChatMessageBubble";
 import { IntermediateStep } from "@/app/chat/components/IntermediateStep";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowRight, LoaderCircle, Paperclip, Database, CloudLightning } from "lucide-react";
+import { ArrowDown, ArrowRight, LoaderCircle, Paperclip, Database, CloudLightning, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChatFooter from "@/app/chat/components/ChatFooter";
 
 import { CustomerMentionList, useCustomerMention } from "@/app/chat/components/CustomerMention";
 import { parseEmailMessage } from "@/app/chat/utils/ai-parser";
+import { getChatErrorMessage } from "@/app/chat/utils/chat-error";
 
 
 function ChatMessages(props: {
@@ -223,10 +224,12 @@ export function ChatWindow(props: {
 			}
 		},
 		streamMode: "text",
-		onError: (e) =>
-			toast.error(`Error while processing your request`, {
-				description: e.message,
-		}),
+		onError: (e: Error) => {
+			const message = getChatErrorMessage(e);
+			toast.error("Error while processing your request", {
+				description: message,
+			});
+		},
 		body: {
 			show_intermediate_steps: showIntermediateSteps,
 			look_at_database: lookAtDatabase,
@@ -330,17 +333,36 @@ export function ChatWindow(props: {
 				className="bg-black"
 				contentClassName="py-8 px-2"
 				content={
-					chat.messages.length === 0 ? (
-						<div>{props.emptyStateComponent}</div>
-					) : (
-						<ChatMessages
-							messages={chat.messages}
-							emptyStateComponent={props.emptyStateComponent}
-							sourcesForMessages={sourcesForMessages}
-							shopId={props.shopId}
-							onFormSubmit={handleFormSubmit}
-						/>
-					)
+					<>
+						{chat.error && (
+							<div className="max-w-[768px] mx-auto px-2 mb-4 flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
+								<AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+								<div className="flex-1 min-w-0">
+									<p className="font-medium">Request failed</p>
+									<p className="text-sm mt-1 opacity-90">{getChatErrorMessage(chat.error)}</p>
+									<Button
+										variant="ghost"
+										size="sm"
+										className="mt-2 h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+										onClick={() => chat.clearError?.()}
+									>
+										Dismiss
+									</Button>
+								</div>
+							</div>
+						)}
+						{chat.messages.length === 0 ? (
+							<div>{props.emptyStateComponent}</div>
+						) : (
+							<ChatMessages
+								messages={chat.messages}
+								emptyStateComponent={props.emptyStateComponent}
+								sourcesForMessages={sourcesForMessages}
+								shopId={props.shopId}
+								onFormSubmit={handleFormSubmit}
+							/>
+						)}
+					</>
 				}
 				footer={
 					<div className="sticky bottom-8 px-2">
