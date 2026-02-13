@@ -229,12 +229,13 @@ export function Nav({ sidebarOpen, setSidebarOpen }: NavProps = {}) {
 					{userRole !== 'demo' && (
 						<>
 							<button 
-								className={`relative ${
-									activeLink === "Messages" ? "text-foreground" : "text-muted-foreground"
-								} hover:text-foreground transition-colors`} 
+								className={`relative p-2 rounded-full border border-border dark:border-[#2a2a2a] ${
+									pathname?.startsWith("/messages") ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent dark:hover:bg-accent/50"
+								} transition-colors duration-200`} 
 								onClick={() => router.push("/messages")}
+								aria-label="Messages"
 							>
-								<MessageCircleMore className="inline-block w-5 h-5" />
+								<MessageCircleMore className="h-5 w-5" />
 								{hasUnread && (
 									<span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-[#0d0d0d]" />
 								)}
