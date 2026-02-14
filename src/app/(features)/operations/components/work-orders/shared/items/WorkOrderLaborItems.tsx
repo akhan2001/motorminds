@@ -99,10 +99,6 @@ export function WorkOrderLaborItems({
 
     
     const addItem = () => {
-        if (items.length >= 10) {
-            toast.error(`Maximum 10 services allowed`);
-            return;
-        }
         onItemsChange([...items, { 
             id: uuidv4(), 
             description: "", 

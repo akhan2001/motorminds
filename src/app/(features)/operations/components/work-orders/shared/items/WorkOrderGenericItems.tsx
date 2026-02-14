@@ -104,10 +104,6 @@ export function WorkOrderGenericItems({
     };
 
     const addItem = () => {
-        if (items.length >= 10) {
-            toast.error(`Maximum 10 ${itemType} items allowed`);
-            return;
-        }
         onItemsChange([...items, { 
             id: uuidv4(), 
             description: "", 
