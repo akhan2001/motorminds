@@ -35,6 +35,30 @@ export async function GET(request: NextRequest) {
 
 		const organizationId = shopData?.organization_id // Can be null for non-MSO shops
 
+		// Phone search: use RPC so "(365) 336-5383" matches "3653365383" (digits-only match)
+		let phoneMatchIds: string[] | null = null
+		if (searchTerm.match(/^\+?[\d\s()-]+$/)) {
+			const digits = searchTerm.replace(/\D/g, '')
+			if (digits.length >= 2) {
+				let shopIds: string[] = [shopId]
+				if (orgOnly && organizationId) {
+					const { data: orgShops } = await supabase
+						.from('shops')
+						.select('id')
+						.eq('organization_id', organizationId)
+					shopIds = (orgShops || []).map((s: { id: string }) => s.id)
+					if (shopIds.length === 0) shopIds = [shopId]
+				}
+				const { data: ids, error: rpcError } = await supabase.rpc('search_customer_ids_by_phone', {
+					digits,
+					shop_ids: shopIds,
+				})
+				if (!rpcError && ids && Array.isArray(ids)) {
+					phoneMatchIds = ids.length > 0 ? (ids as string[]) : []
+				}
+			}
+		}
+
 		// Search customers with enhanced selection
 		let dbQuery = supabase
 			.from('customers')
@@ -57,31 +81,27 @@ export async function GET(request: NextRequest) {
 
 		// Filter logic based on organization status and request
 		if (orgOnly && organizationId) {
-			// Organization-wide search (only for MSO shops)
-			// Use OR logic to include:
-			// 1. Customers with matching organization_id (from any shop in the org)
-			// 2. Customers from the current shop (even if they don't have organization_id set)
-			// This ensures customers created before org setup or without org_id are still visible
 			dbQuery = dbQuery.or(`organization_id.eq.${organizationId},shop_id.eq.${shopId}`)
 		} else if (orgOnly && !organizationId) {
-			// Non-MSO shop requesting org search - fall back to shop-only
 			dbQuery = dbQuery.eq('shop_id', shopId)
 		} else {
-			// Default: shop-only search
 			dbQuery = dbQuery.eq('shop_id', shopId)
 		}
 
-		// Optimize search based on input pattern
-		if (searchTerm.match(/^\+?[\d\s()-]+$/)) {
-			// Phone number search - use indexed phone column for fast lookups
-			const cleanPhone = searchTerm.replace(/\D/g, '')
-			dbQuery = dbQuery.or(`customer_phone.ilike.%${cleanPhone}%`)
+		// Apply search filter: phone uses RPC result; others use column filters
+		if (phoneMatchIds !== null && phoneMatchIds.length > 0) {
+			dbQuery = dbQuery.in('id', phoneMatchIds)
+		} else if (phoneMatchIds !== null && phoneMatchIds.length === 0) {
+			return NextResponse.json({
+				customers: [],
+				total: 0,
+				query: searchTerm,
+				organizationId: orgOnly ? organizationId : null,
+				isOrganizationSearch: orgOnly && !!organizationId
+			})
 		} else if (searchTerm.includes('@')) {
-			// Email search - direct column match with partial matching
 			dbQuery = dbQuery.ilike('customer_email', `%${searchTerm}%`)
 		} else {
-			// Name / generic search: use ILIKE for partial matches on name and email
-			// This ensures queries like "Cam" will still match "Cameron"
 			dbQuery = dbQuery.or(
 				`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`
 			)
