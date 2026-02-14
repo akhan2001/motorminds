@@ -118,10 +118,6 @@ export function WorkOrderPartsItems({
     
     const addItem = () => {
         const currentItems = itemsRef.current;
-        if (currentItems.length >= 20) {
-            toast.error(`Maximum 20 part items allowed`);
-            return;
-        }
         const newId = uuidv4();
         const newItems = [...currentItems, { 
             id: newId, 

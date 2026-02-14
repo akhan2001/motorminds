@@ -131,12 +131,8 @@ export function WorkOrderExpenseItems({
 
     // Add item
     const addItem = useCallback(() => {
-        if (fields.length >= 20) {
-            toast.error('Maximum 20 expense items allowed')
-            return
-        }
         append(createDefaultExpenseItem(uuidv4()))
-    }, [fields.length, append])
+    }, [append])
 
     // Remove item
     const removeItem = useCallback((index: number) => {
