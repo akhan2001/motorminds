@@ -1,15 +1,24 @@
 'use client'
 
 import React from 'react'
+import dynamic from 'next/dynamic'
 import { AlertCircle, CheckIcon, ChevronDown, ChevronUp, Loader2, MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tool } from '../elements/Tool'
-import { VehicleDiagnosticsViewer } from '../locator3d/VehicleDiagnosticsViewer'
 import {
 	COMPONENT_LABELS,
 	COMPONENT_TOOLTIPS,
 } from '@/lib/services/diagnostics-3d-component-map'
 import type { DiagnosticComponentId } from '@/lib/services/diagnostics-3d-locator-service'
+
+// Load 3D viewer only on client to avoid R3F/react-reconciler SSR and duplicate-React issues
+const VehicleDiagnosticsViewer = dynamic(
+	() =>
+		import('../locator3d/VehicleDiagnosticsViewer').then((m) => ({
+			default: m.VehicleDiagnosticsViewer,
+		})),
+	{ ssr: false, loading: () => <div className="h-[380px] w-full animate-pulse rounded-lg bg-slate-800/50" /> }
+)
 
 interface ComponentLocationToolRendererProps {
 	toolPart: {

@@ -29,6 +29,13 @@ import {
 } from './motor-daas-utils'
 import { inferDiagnosticComponent } from '@/lib/services/diagnostics-3d-locator-service'
 
+const LOCATION_COMPONENT_PATTERN = /\b(starter|battery|alternator|fuse box|fuse_box|fuse)\b/i
+const PROCEDURE_INTENT_PATTERN =
+	/\b(replace|replacement|remove|removal|install|installation|repair|procedure|steps|how to|r&r|service)\b/i
+const DIAGRAM_INTENT_PATTERN =
+	/\b(wiring|diagram|schematic|circuit|electrical|pinout|connector|ground|grounding|fuse panel)\b/i
+const LOCATION_INTENT_PATTERN = /\b(where|location|located|locate|show me|point out|find)\b/i
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -113,6 +120,28 @@ Returns list of diagrams. Frontend renders them automatically.`,
 
 		execute: async ({ query, mode = 'auto' }: { query: string; mode?: 'auto' | 'browse' | 'search' }) => {
 			try {
+				const normalizedQuery = `${query || ''}`.toLowerCase().trim()
+				const hasProcedureIntent = PROCEDURE_INTENT_PATTERN.test(normalizedQuery)
+				const hasDiagramIntent = DIAGRAM_INTENT_PATTERN.test(normalizedQuery)
+				const hasLocationIntent = LOCATION_INTENT_PATTERN.test(normalizedQuery)
+				const isLocationComponent = LOCATION_COMPONENT_PATTERN.test(normalizedQuery)
+
+				// Guardrail: if model misroutes a location query to wiring diagrams, hand off to 3D location.
+				if ((hasLocationIntent || isLocationComponent) && !hasDiagramIntent && !hasProcedureIntent) {
+					const inferred = inferDiagnosticComponent(query)
+					return {
+						success: false,
+						switchToComponentLocation: true,
+						component: inferred.component,
+						confidence: inferred.confidence,
+						possibleIssue: inferred.possibleIssue,
+						explanation: inferred.explanation,
+						userPrompt: query,
+						message:
+							'This query appears to be a physical component location request. Rendering 3D component location instead of wiring diagrams.',
+					}
+				}
+
 				const executionMode = mode === 'auto' ? await detectWiringDiagramMode(query) : mode
 
 				if (executionMode === 'browse') {

@@ -5,6 +5,7 @@ import { Tool } from '../elements/Tool'
 import { CheckIcon, Loader2, AlertCircle, FileText, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DiagramViewer } from '../diagram-viewer/DiagramViewer'
+import { ComponentLocationToolRenderer } from './ComponentLocationToolRenderer'
 
 interface WiringDiagramsToolRendererProps {
 	toolPart: {
@@ -88,6 +89,24 @@ export function WiringDiagramsToolRenderer({ toolPart }: WiringDiagramsToolRende
 
 	// Success state with output
 	if (state === 'output-available' && output && parsedResult) {
+		if (parsedResult.switchToComponentLocation && parsedResult.component) {
+			return (
+				<ComponentLocationToolRenderer
+					toolPart={{
+						type: 'tool-showComponentLocation',
+						state: 'output-available',
+						output: {
+							component: parsedResult.component,
+							confidence: parsedResult.confidence,
+							possibleIssue: parsedResult.possibleIssue,
+							explanation: parsedResult.explanation,
+							userPrompt: parsedResult.userPrompt || input?.query,
+						},
+					}}
+				/>
+			)
+		}
+
 		// Check if request failed
 		if (parsedResult.success === false) {
 			return (
