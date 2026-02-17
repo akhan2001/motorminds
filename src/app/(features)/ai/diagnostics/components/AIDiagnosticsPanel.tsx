@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useCallback } from 'react'
 import { useChat, type UIMessage } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import * as AICore from 'ai'
 import { toast } from 'sonner'
 import { AlertCircle } from 'lucide-react'
 import { getChatErrorMessage } from '@/app/chat/utils/chat-error'
@@ -20,6 +20,7 @@ interface AIDiagnosticsPanelProps {
 	workOrderId?: string
 	vehicleId?: number
 	baseVehicleId?: number
+	engineId?: number
 	vehicleContext?: SandboxVehicle | null
 	dtcCodes?: string[]
 	reportedIssue?: string
@@ -33,12 +34,15 @@ export function AIDiagnosticsPanel({
 	workOrderId,
 	vehicleId,
 	baseVehicleId,
+	engineId,
 	vehicleContext,
 	dtcCodes = [],
 	reportedIssue,
 	className = '',
 	onClose
 }: AIDiagnosticsPanelProps) {
+	const DefaultChatTransport = (AICore as any).DefaultChatTransport
+
 	// Start with empty messages - context will be passed via API body params
 	const initialMessages = useMemo<UIMessage[]>(() => {
 		return []
@@ -73,7 +77,7 @@ export function AIDiagnosticsPanel({
 						workOrderId,
 						vehicleId: vehicleId || vehicleContext?.motorId,
 						baseVehicleId: baseVehicleId || vehicleContext?.baseVehicleId,
-						engineId: vehicleContext?.engineId,
+						engineId: engineId || vehicleContext?.engineId,
 						vehicleContext: vehicleContextData
 					}
 				}

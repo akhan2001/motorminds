@@ -27,6 +27,7 @@ import {
 	validateSearchResults,
 	isCategoryRelevant,
 } from './motor-daas-utils'
+import { inferDiagnosticComponent } from '@/lib/services/diagnostics-3d-locator-service'
 
 // ============================================================================
 // TYPES
@@ -98,6 +99,7 @@ Auto-detects browse vs search mode:
 
 IMPORTANT:
 - ALWAYS call this tool first for ANY wiring diagram request
+- NEVER use this for physical component location requests (e.g., "where is the starter"). Use showComponentLocation for those.
 - NEVER call getDiagramDetails directly - it's only for viewing details after diagrams are found
 - Pass the user's query directly (e.g., "lights", "headlight", "interior illumination system")
 - The tool handles categorization automatically
@@ -378,6 +380,8 @@ For wiring diagrams, use getWiringDiagrams.`,
 		description: `Get OEM service procedures for a vehicle.
 
 IMPORTANT: Pass ONLY the component name, NOT the vehicle info (vehicle is already in context).
+Do NOT use this tool when the user asks physical location questions like "where is the starter?".
+For physical location requests, use showComponentLocation.
 
 Examples of correct usage:
 - User: "How to replace the timing chain?" → query: "timing chain", category: "timing chain"
@@ -396,6 +400,29 @@ Use category for best results. Falls back to search if no category match.`,
 
 		execute: async ({ query, category }: { query: string; category?: string }) => {
 			try {
+				const combined = `${query || ''} ${category || ''}`.toLowerCase().trim()
+				const hasProcedureIntent =
+					/\b(replace|replacement|remove|removal|install|installation|repair|procedure|steps|how to|r&r|service)\b/i.test(
+						combined
+					)
+				const isLocationComponent = /\b(starter|battery|alternator|fuse box|fuse_box|fuse)\b/i.test(combined)
+
+				// If the model called procedures for a likely location question, hand off to location renderer.
+				if (isLocationComponent && !hasProcedureIntent) {
+					const inferred = inferDiagnosticComponent(query)
+					return {
+						success: false,
+						switchToComponentLocation: true,
+						component: inferred.component,
+						confidence: inferred.confidence,
+						possibleIssue: inferred.possibleIssue,
+						explanation: inferred.explanation,
+						userPrompt: query,
+						message:
+							'This query appears to be a component location request. Rendering 3D component location instead of procedure list.',
+					}
+				}
+
 				// Phase 1: Try category match with confidence-based validation
 				// Following Supabase pattern: explicit mappings with validation
 				const categoryMatch = category
