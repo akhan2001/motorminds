@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Nav } from '@/components/navigation/nav';
+// import { Nav } from '@/components/navigation/nav';
 import BreadcrumbNav from './components/BreadcrumbNav';
 import { checkUser } from '@/utils/supabase/supabase-auth';
 import { getShopId } from '@/utils/supabase/supabase-shop';
@@ -146,7 +146,7 @@ export default function DailyReportsPage() {
 	if (isLoading) {
 		return (
 			<div className="flex flex-col min-h-screen bg-background text-foreground">
-				<Nav />
+				{/* <Nav /> */}
 				<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
 					<BreadcrumbNav />
 					<div className="flex items-center justify-center py-20">
@@ -159,7 +159,7 @@ export default function DailyReportsPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen bg-background text-foreground">
-			<Nav />
+			{/* <Nav /> */}
 			<main className="flex-1 p-8 max-w-7xl mx-auto w-full">
 				<BreadcrumbNav />
 				
